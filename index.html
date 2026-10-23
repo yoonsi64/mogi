@@ -892,6 +892,8 @@
         .flash-speak { position: absolute; top: 8px; right: 8px; width: 44px; height: 44px; border: none; background: none; font-size: 1.2rem; }
         .flash-actions { display: flex; gap: 10px; margin-top: 14px; }
         .setting-note { font-size: 0.75rem; color: var(--text-sub); line-height: 1.6; padding: 2px 0 6px; }
+        .srs-btns.three { grid-template-columns: repeat(3, 1fr); }
+        .write-override { font-size: 0.75rem; color: var(--text-sub); text-align: center; margin-top: 6px; }
         .srs-btns { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
         .srs-btn { padding: 8px 2px 10px; border-radius: 12px; border: 1px solid var(--border-light); background: var(--surface); color: var(--text-main); font: inherit; font-weight: bold; font-size: 0.85rem; white-space: nowrap; letter-spacing: -0.02em; display: flex; flex-direction: column; align-items: center; gap: 2px; }
         .srs-btn small { font-size: 0.72rem; font-weight: bold; color: var(--text-sub); font-variant-numeric: tabular-nums; min-height: 1em; }
@@ -1013,6 +1015,8 @@
         html.dark .flash-start { color: #0d1117; }
         .wordlist-tools { display: flex; gap: 8px; margin-bottom: 8px; }
         .wordlist-tools input { flex: 1; min-width: 0; padding: 9px 10px; font-size: 0.9rem; border: 1px solid var(--border-light); background: var(--surface); color: var(--text-main); border-radius: 8px; }
+        #wordlist-search { flex: 1.25; padding-left: 36px; border-radius: 999px; background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='M15.5 15.5 21 21'/%3E%3C/svg%3E") no-repeat 12px 50% / 17px 17px; }
+        #wordlist-search:focus { outline: none; border-color: var(--active-blue); box-shadow: 0 0 0 2px color-mix(in srgb, var(--active-blue) 25%, transparent); }
         .wordlist-tools select { padding: 8px 6px; font-size: 0.85rem; border: 1px solid var(--border-light); background: var(--surface); color: var(--text-main); border-radius: 8px; }
         .wordlist-toggles { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
         .toggle-chip { padding: 6px 12px; border: 1px solid var(--border-light); background: var(--surface); color: var(--text-sub); border-radius: 16px; font-size: 0.78rem; font-weight: bold; }
@@ -10795,8 +10799,14 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
     }
     function daysBetween(a, b) { return Math.round((parseDateKey(b) - parseDateKey(a)) / 86400000); }
     // What each button would do: { srs, minutes } for a step later today, or { srs, days } for a later day
-    function srsOutcomes(e) {
-        var today = getTodayDateString(), cur = e.srs || { state: 'new', step: 0, reps: 0, lapses: 0 };
+    // Three FSRS decks over the same words: the cards, and the two 意味を書く directions (each its own memory state)
+    var SRS_MODES = { card: { srs: 'srs', due: 'due', box: 'box', newDay: 'srsNewDay' },
+                      def: { srs: 'wsrs', due: 'wdue', box: 'wbox', newDay: 'srsNewDay_def' },
+                      word: { srs: 'wwsrs', due: 'wwdue', box: 'wwbox', newDay: 'srsNewDay_word' } };
+    function srsK(m) { return SRS_MODES[m] || SRS_MODES.card; }
+    function srsMode() { return flash && flash.write ? flash.write : 'card'; }
+    function srsOutcomes(e, mode) {
+        var today = getTodayDateString(), cur = e[srsK(mode).srs] || { state: 'new', step: 0, reps: 0, lapses: 0 };
         var elapsed = cur.last ? Math.max(0, daysBetween(cur.last, today)) : 0;
         var out = {}, days = {};
         [1, 2, 3, 4].forEach(function(g) {
@@ -10826,37 +10836,40 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         return d < 30 ? d + '日' : d < 365 ? (Math.round(d / 30 * 10) / 10) + 'か月' : (Math.round(d / 365 * 10) / 10) + '年';
     }
     // The old 覚えた/まだ boxes become FSRS states once (box n ≈ stability of its last interval)
-    function srsMigrate(e) {
-        if (e.srs) return;
-        if (e.box > 0 && e.due) {
-            var s = FLASH_DAYS[Math.min(e.box, FLASH_DAYS.length) - 1];
-            e.srs = { state: 'review', step: 0, s: s, d: 5, last: dateKey(addDays(parseDateKey(e.due), -s)), reps: e.box, lapses: 0 };
-        } else if (e.lastReviewed) {
+    function srsMigrate(e, mode) {
+        var k = srsK(mode);
+        if (e[k.srs]) return;
+        if (e[k.box] > 0 && e[k.due]) {
+            var s = FLASH_DAYS[Math.min(e[k.box], FLASH_DAYS.length) - 1];
+            e[k.srs] = { state: 'review', step: 0, s: s, d: 5, last: dateKey(addDays(parseDateKey(e[k.due]), -s)), reps: e[k.box], lapses: 0 };
+        } else if (k.srs === 'srs' && e.box === 0 && e.lastReviewed) {      // the old まだ (write mode never sets box)
             e.srs = { state: 'learning', step: 0, s: FSRS_W[0], d: fsrsD0(1), last: dateKey(new Date(e.lastReviewed)), reps: 1, lapses: 0 };
             e.due = getTodayDateString();
+        } else if (e[k.box] === 0 && e[k.due]) {
+            e[k.srs] = { state: 'learning', step: 0, s: FSRS_W[0], d: fsrsD0(1), last: e[k.due], reps: 1, lapses: 0 };
         }
     }
-    function srsIsNew(e) { return !e.srs || e.srs.state === 'new'; }
-    function srsNewLeftToday() {
-        var lim = getSetting('srsNewPerDay', 20), rec = getSetting('srsNewDay', null);
+    function srsIsNew(e, mode) { var st = e[srsK(mode).srs]; return !st || st.state === 'new'; }
+    function srsNewLeftToday(mode) {
+        var lim = getSetting('srsNewPerDay', 20), rec = getSetting(srsK(mode).newDay, null);
         if (lim === 0) return Infinity;
         return Math.max(0, lim - (rec && rec.d === getTodayDateString() ? rec.n : 0));
     }
     // today's cards: learning/relearning first, then reviews (up to the daily limit), then new cards (up to the new-card limit)
-    function srsTodayQueue() {
-        var today = getTodayDateString();
-        wordList.forEach(srsMigrate);
+    function srsTodayQueue(mode) {
+        var today = getTodayDateString(), k = srsK(mode), pool = mode === 'def' || mode === 'word' ? writeWords() : wordList;
+        pool.forEach(function(e) { srsMigrate(e, mode); });
         var learn = [], review = [], fresh = [];
-        wordList.forEach(function(e) {
-            if (srsIsNew(e)) { fresh.push(e); return; }
-            if (e.due && e.due > today) return;
-            (e.srs.state === 'review' ? review : learn).push(e);
+        pool.forEach(function(e) {
+            if (srsIsNew(e, mode)) { fresh.push(e); return; }
+            if (e[k.due] && e[k.due] > today) return;
+            (e[k.srs].state === 'review' ? review : learn).push(e);
         });
-        review.sort(function(a, b) { return (a.due || '').localeCompare(b.due || ''); });
+        review.sort(function(a, b) { return (a[k.due] || '').localeCompare(b[k.due] || ''); });
         var maxRev = getSetting('srsMaxReviews', 200);
         if (maxRev) review = review.slice(0, maxRev);
         fresh.sort(function(a, b) { return a.added - b.added; });
-        var nNew = srsNewLeftToday();
+        var nNew = srsNewLeftToday(mode);
         fresh = fresh.slice(0, nNew === Infinity ? fresh.length : nNew);
         return { learn: learn, review: review, fresh: fresh, all: learn.concat(review, fresh) };
     }
@@ -10867,7 +10880,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
     function writeKeys(write) { return write === 'word' ? { box: 'wwbox', due: 'wwdue' } : write ? { box: 'wbox', due: 'wdue' } : { box: 'box', due: 'due' }; }
     function writeWords() { return wordList.filter(function(e) { return e.writeDef; }); }
     function flashDueWords(write) {
-        if (!write) return srsTodayQueue().all;
+        return srsTodayQueue(write || 'card').all;
         var today = getTodayDateString(), dk = writeKeys(write).due;
         return (write ? writeWords() : wordList).filter(function(e) { return !e[dk] || e[dk] <= today; })
             .sort(function(a, b) { return (a[dk] || '').localeCompare(b[dk] || '') || a.added - b.added; });
@@ -10915,9 +10928,8 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         if (remaining <= 0) {
             var tot = flash.known + flash.again, missedE = (flash.missedIds || []).map(function(id) { return wordList.find(function(w) { return w.id === id; }); }).filter(Boolean);
             wqResult({ title: flash.practiceAll ? 'ひととおり復習しました' : '今日の復習はおわりです', pct: tot ? flash.known / tot * 100 : 100,
-                chips: [[flash.write ? '合っていた' : '正解', flash.known], [flash.write ? '違った' : 'もう一度', flash.again], ['時間', wqClock(Date.now() - (flash.start || Date.now()))]],
-                missed: missedE, note: flash.write ? '合っていた単語は 1日→2日→4日… と間隔をあけてまた出てきます。'
-                    : flash.practiceAll ? 'おさらいなので、次に出てくる日は変わりません。' : '次に出てくる日は、Ankiと同じFSRSで決まります。' + srsTomorrowNote() });
+                chips: [['正解', flash.known], ['もう一度', flash.again], ['時間', wqClock(Date.now() - (flash.start || Date.now()))]],
+                missed: missedE, note: flash.practiceAll ? 'おさらいなので、次に出てくる日は変わりません。' : '次に出てくる日は、Ankiと同じFSRSで決まります。' + srsTomorrowNote() });
             return;
             body.innerHTML = '<div class="flash-done"><div class="flash-done-mark">✓</div>' +
                 '<div class="flash-done-title">' + (flash.practiceAll ? 'ひととおり復習しました' : '今日の復習はおわりです') + '</div>' +
@@ -10933,7 +10945,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         if (flash.write) { renderWriteCard(e, label, body); return; }
         body.innerHTML = '<div class="flash-card' + (flash.revealed ? ' revealed' : '') + '">' +
             (label ? '<div class="flash-source">' + escapeHtml(label) + '</div>' : '') +
-            (!flash.practiceAll ? '<div class="srs-kind ' + srsKind(e) + '">' + { fresh: '新しいカード', learn: '学習中', review: '復習' }[srsKind(e)] + '</div>' : '') +
+            srsKindHtml(e) +
             '<div class="flash-word">' + (flash.revealed ? entryWordHtml(e) : escapeHtml(e.word)) + '</div>' +
             (flash.revealed ?
                 '<div class="flash-meaning' + (e.meaning ? '' : ' empty') + '">' + (e.meaning ? escapeHtml(e.meaning) : '（意味・メモなし）') + '</div>' +
@@ -10957,11 +10969,12 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var v = document.getElementById('flash-view'), n = writeWords().length;
         v.querySelector('.flash-title').textContent = '意味を書く';
         v.querySelector('.flash-progress').textContent = '';
-        var dDef = flashDueWords('def').length, dWord = flashDueWords('word').length;
+        var qD = srsTodayQueue('def'), qW = srsTodayQueue('word'), dDef = qD.all.length, dWord = qW.all.length;
+        var cnt = function(q) { return '新' + q.fresh.length + '・学習' + q.learn.length + '・復習' + q.review.length; };
         v.querySelector('.flash-body').innerHTML = '<div class="write-pick">' +
-            (n ? '<button id="wp-def"><b>意味を書く</b><span>言葉を見て、定義を書く・' + (dDef ? '今日 ' + dDef + '語' : '今日の分は完了 ✓') + '</span></button>' +
-                 '<button id="wp-word"><b>言葉を書く</b><span>定義を見て、日本語の言葉を書く（自動で採点）・' + (dWord ? '今日 ' + dWord + '語' : '今日の分は完了 ✓') + '</span></button>' +
-                 '<div class="write-pick-note">書く練習の定義がある ' + n + '語 で練習します。単語帳の単語をタップすると、定義を追加・変更できます。</div>'
+            (n ? '<button id="wp-def"><b>意味を書く</b><span>言葉を見て、定義を書く・' + (dDef ? cnt(qD) : '今日の分は完了 ✓') + '</span></button>' +
+                 '<button id="wp-word"><b>言葉を書く</b><span>定義を見て、日本語の言葉を書く（自動で採点）・' + (dWord ? cnt(qW) : '今日の分は完了 ✓') + '</span></button>' +
+                 '<div class="write-pick-note">書く練習の定義がある ' + n + '語 で練習します（カードと同じFSRS・それぞれ別のスケジュール）。単語帳の単語をタップすると、定義を追加・変更できます。</div>'
                : '<div class="write-pick-note">まだ「書く練習の定義」がある単語がありません。<br>単語帳の単語をタップして、「書く練習の定義」に短い定義を入れてください（「意味から入れる」で今の意味を写せます）。</div>' +
                  '<button id="wp-back"><b>単語帳に戻る</b></button>') +
             '</div>';
@@ -10984,7 +10997,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var toWord = flash.write === 'word';
         if (!flash.revealed) {
             body.innerHTML = '<div class="flash-card write-card">' +
-                (label ? '<div class="flash-source">' + escapeHtml(label) + '</div>' : '') +
+                (label ? '<div class="flash-source">' + escapeHtml(label) + '</div>' : '') + srsKindHtml(e) +
                 (toWord ? '<div class="wq-dir">この定義の言葉は？</div><div class="wq-prompt meaning">' + escapeHtml(e.writeDef) + '</div>'
                         : '<div class="flash-word">' + escapeHtml(e.word) + '</div>') +
                 (toWord ? '<input class="write-input" id="write-input" style="min-height:0" lang="ja" autocomplete="off" placeholder="日本語の言葉（漢字でもかなでも）" aria-label="言葉">'
@@ -11004,7 +11017,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var mine = (flash.typed || '').trim(), right = toWord && writeWordMatches(e, mine);
         var lastKey = toWord ? 'wroteWord' : 'wrote';
         body.innerHTML = '<div class="flash-card write-card revealed">' +
-            (label ? '<div class="flash-source">' + escapeHtml(label) + '</div>' : '') +
+            (label ? '<div class="flash-source">' + escapeHtml(label) + '</div>' : '') + srsKindHtml(e) +
             (toWord ? '<div class="write-mark ' + (right ? 'ok">◯ 正解' : 'ng">✕') + '</div>' : '') +
             '<div class="flash-word">' + entryWordHtml(e) + '</div>' +
             '<div class="write-compare">' +
@@ -11016,38 +11029,38 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             (e.context ? '<div class="flash-context">' + highlightIn(e.context, e.word) + '</div>' : '') +
             '<button class="flash-speak" aria-label="読み上げ">🔊</button>' +
             '</div>' +
-            '<div class="flash-actions">' + (right ? '<button class="flash-know">次へ</button>'
-                : toWord ? '<button class="flash-again">次へ</button><button class="flash-know">実は合っていた</button>'
-                : '<button class="flash-again">違った</button><button class="flash-know">合っていた</button>') + '</div>';
-        var again = body.querySelector('.flash-again');
-        if (again) again.addEventListener('click', function() { gradeFlash(false); });
-        body.querySelector('.flash-know').addEventListener('click', function() { gradeFlash(true); });
+            '<div class="flash-actions">' + srsButtonsHtml(e, right ? [2, 3, 4] : null) + '</div>' +
+            (toWord && !right ? '<div class="write-override">合っていたなら「難しい」〜「簡単」を選んでください</div>' : '');
+        body.querySelectorAll('.srs-btn').forEach(function(b) { b.addEventListener('click', function() { gradeCard(+b.dataset.g); }); });
         body.querySelector('.flash-speak').addEventListener('click', function() { speakText(escapeHtml(e.reading || e.word)); });
     }
     function srsTomorrowNote() {
-        var t = dateKey(addDays(new Date(), 1)), n = wordList.filter(function(e) { return e.srs && !srsIsNew(e) && e.due === t; }).length;
+        var m = srsMode(), k = srsK(m), t = dateKey(addDays(new Date(), 1)), n = wordList.filter(function(e) { return e[k.srs] && !srsIsNew(e, m) && e[k.due] === t; }).length;
         return n ? '<br>明日の復習：' + n + '枚' : '';
     }
-    function srsKind(e) { return srsIsNew(e) ? 'fresh' : e.srs.state === 'review' ? 'review' : 'learn'; }
-    function srsButtonsHtml(e) {
-        var names = ['', 'もう一度', '難しい', '普通', '簡単'], o = flash.practiceAll ? null : srsOutcomes(e);
-        return '<div class="srs-btns">' + [1, 2, 3, 4].map(function(g) {
+    function srsKind(e) { var m = srsMode(); return srsIsNew(e, m) ? 'fresh' : e[srsK(m).srs].state === 'review' ? 'review' : 'learn'; }
+    function srsKindHtml(e) { return flash.practiceAll ? '' : '<div class="srs-kind ' + srsKind(e) + '">' + { fresh: '新しいカード', learn: '学習中', review: '復習' }[srsKind(e)] + '</div>'; }
+    function srsButtonsHtml(e, grades) {
+        var names = ['', 'もう一度', '難しい', '普通', '簡単'], o = flash.practiceAll ? null : srsOutcomes(e, srsMode());
+        return '<div class="srs-btns' + (grades && grades.length === 3 ? ' three' : '') + '">' + (grades || [1, 2, 3, 4]).map(function(g) {
             return '<button class="srs-btn g' + g + '" data-g="' + g + '"><small>' + (o ? srsLabel(o[g]) : '') + '</small>' + names[g] + '</button>';
         }).join('') + '</div>';
     }
     // grade a card: FSRS moves it on; a step under a day brings it back later in this session
     function gradeCard(g) {
         var e = wordList.find(function(w) { return w.id === flash.queue[flash.pos]; });
+        var mode = srsMode(), k = srsK(mode);
+        if (e && flash.write && (flash.typed || '').trim()) e[flash.write === 'word' ? 'wroteWord' : 'wrote'] = flash.typed.trim();
         if (e && !flash.practiceAll) {
-            var wasNew = srsIsNew(e), o = srsOutcomes(e)[g];
-            e.srs = o.srs;
+            var wasNew = srsIsNew(e, mode), o = srsOutcomes(e, mode)[g];
+            e[k.srs] = o.srs;
             if (o.minutes != null) {
-                e.due = getTodayDateString();
+                e[k.due] = getTodayDateString();
                 var at = Math.min(flash.queue.length, flash.pos + 1 + Math.max(3, Math.round(o.minutes / 2)));
                 flash.queue.splice(at, 0, e.id);      // back later in this session
-            } else e.due = dateKey(addDays(new Date(), o.days));
-            if (wasNew) { var rec = getSetting('srsNewDay', null), t = getTodayDateString(); setSetting('srsNewDay', { d: t, n: (rec && rec.d === t ? rec.n : 0) + 1 }); }
-            e.lastReviewed = Date.now();
+            } else e[k.due] = dateKey(addDays(new Date(), o.days));
+            if (wasNew) { var rec = getSetting(k.newDay, null), t = getTodayDateString(); setSetting(k.newDay, { d: t, n: (rec && rec.d === t ? rec.n : 0) + 1 }); }
+            if (mode === 'card') e.lastReviewed = Date.now();
             saveWordList();
         }
         if (g === 1) { flash.again++; if (e && flash.missedIds.indexOf(e.id) < 0) flash.missedIds.push(e.id); if (flash.practiceAll && e) flash.queue.push(e.id); }
@@ -11055,6 +11068,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         if (navigator.vibrate && getSetting('vibrate', true)) { try { navigator.vibrate(g > 1 ? 12 : [20, 30, 20]); } catch (err) {} }
         flash.pos++;
         flash.revealed = false;
+        flash.typed = '';
         renderFlash();
     }
     function gradeFlash(knew) {
