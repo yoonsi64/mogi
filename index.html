@@ -958,7 +958,7 @@
         html.dark .mset-seg button.on { color: #0d1117; }
         .cloze-card { gap: 14px; }
         .cloze-sentence { font-family: var(--reading-font); font-size: 1.1rem; line-height: 2.1; padding: 6px 2px; }
-        .cloze-blank { display: inline-block; height: 1.5em; vertical-align: -0.35em; margin: 0 3px; border-bottom: 2px solid var(--active-blue); background: color-mix(in srgb, var(--active-blue) 8%, transparent); border-radius: 4px 4px 0 0; color: var(--active-blue); font-weight: bold; text-align: left; padding: 0 4px; }
+        .cloze-blank { display: inline-block; vertical-align: baseline; line-height: 1.35; margin: 0 3px; border-bottom: 2px solid var(--active-blue); background: color-mix(in srgb, var(--active-blue) 8%, transparent); border-radius: 4px 4px 0 0; color: var(--active-blue); font-weight: bold; text-align: left; padding: 0 4px; }
         .cloze-fill { padding: 0 3px; border-radius: 4px; font-weight: bold; }
         .cloze-fill.ok { background: color-mix(in srgb, var(--correct-color) 22%, transparent); color: var(--correct-color); }
         .cloze-fill.ng { background: color-mix(in srgb, var(--incorrect-color) 16%, transparent); color: var(--incorrect-color); }
@@ -11689,7 +11689,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var safe = escapeHtml(it.ctx), w = escapeHtml(it.e.word), i = safe.indexOf(w);
         if (i < 0) return safe;
         var mid = filled ? '<mark class="cloze-fill ' + (right ? 'ok' : 'ng') + '">' + w + '</mark>'
-            : '<span class="cloze-blank" style="min-width:' + Math.max(2.2, it.e.word.length * 1.05) + 'em">' + (wq.opts.hint === 'first' ? escapeHtml(it.e.word.charAt(0)) : '') + '</span>';
+            : '<span class="cloze-blank" style="min-width:' + Math.max(2.2, it.e.word.length * 1.05) + 'em">' + (wq.opts.hint === 'first' ? escapeHtml(it.e.word.charAt(0)) : '&#8203;') + '</span>';
         return safe.slice(0, i) + mid + safe.slice(i + w.length);
     }
     function renderWordCloze() {
