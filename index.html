@@ -957,14 +957,17 @@
         .mset-seg button.on { background: var(--active-blue); color: #fff; font-weight: bold; }
         html.dark .mset-seg button.on { color: #0d1117; }
         .cloze-card { gap: 14px; }
-        .cloze-sentence { font-family: var(--reading-font); font-size: 1.1rem; line-height: 2.1; padding: 6px 2px; }
+        .cloze-sentence { font-family: var(--reading-font); font-size: 1.35rem; line-height: 2.2; padding: 6px 2px; }
         .cloze-blank { display: inline-block; vertical-align: baseline; line-height: 1.35; margin: 0 3px; border-bottom: 2px solid var(--active-blue); background: color-mix(in srgb, var(--active-blue) 8%, transparent); border-radius: 4px 4px 0 0; color: var(--active-blue); font-weight: bold; text-align: left; padding: 0 4px; }
         .cloze-fill { padding: 0 3px; border-radius: 4px; font-weight: bold; }
         .cloze-fill.ok { background: color-mix(in srgb, var(--correct-color) 22%, transparent); color: var(--correct-color); }
         .cloze-fill.ng { background: color-mix(in srgb, var(--incorrect-color) 16%, transparent); color: var(--incorrect-color); }
         .cloze-hint { font-size: 0.88rem; line-height: 1.6; padding: 8px 12px; border-radius: 10px; background: var(--bg-paper); border: 1px dashed var(--border-light); }
         .cloze-hint small { display: block; font-size: 0.7rem; font-weight: bold; color: var(--text-sub); }
-        .cloze-input { min-height: 0; font-size: 1.1rem; text-align: center; }
+        .cloze-blank.typing { padding: 0 2px; white-space: nowrap; }
+        .cloze-first { color: var(--active-blue); font-weight: bold; }
+        .cloze-inline { display: inline-block; vertical-align: baseline; border: none; outline: none; background: transparent; color: var(--text-main); font: inherit; font-weight: bold; line-height: 1.35; padding: 0 2px; margin: 0; max-width: 70vw; border-radius: 0; -webkit-appearance: none; appearance: none; }
+        .cloze-blank.typing:focus-within { background: color-mix(in srgb, var(--active-blue) 16%, transparent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--active-blue) 35%, transparent); }
         .mem-wrap { gap: 10px; }
         .mem-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
         .mem-card { position: relative; aspect-ratio: 3 / 4; padding: 0; border: none; background: none; perspective: 700px; animation: wqIn 0.35s both; }
@@ -11688,8 +11691,12 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
     function clozeSentence(it, filled, right) {
         var safe = escapeHtml(it.ctx), w = escapeHtml(it.e.word), i = safe.indexOf(w);
         if (i < 0) return safe;
+        var first = wq.opts.hint === 'first', rest = it.e.word.length - (first ? 1 : 0);
+        // 書く: the input sits in the blank itself; with the 最初の字 hint that character is already there
         var mid = filled ? '<mark class="cloze-fill ' + (right ? 'ok' : 'ng') + '">' + w + '</mark>'
-            : '<span class="cloze-blank" style="min-width:' + Math.max(2.2, it.e.word.length * 1.05) + 'em">' + (wq.opts.hint === 'first' ? escapeHtml(it.e.word.charAt(0)) : '&#8203;') + '</span>';
+            : '<span class="cloze-blank' + (it.opts ? '' : ' typing') + '"' + (it.opts ? ' style="min-width:' + Math.max(2.2, it.e.word.length * 1.05) + 'em"' : '') + '>' +
+                (first ? '<span class="cloze-first">' + escapeHtml(it.e.word.charAt(0)) + '</span>' : it.opts ? '&#8203;' : '') +
+                (it.opts ? '' : '<input class="cloze-inline" id="cloze-input" lang="ja" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="空欄に入る言葉" style="width:' + Math.max(2.4, rest * 1.15 + 0.8) + 'em">') + '</span>';
         return safe.slice(0, i) + mid + safe.slice(i + w.length);
     }
     function renderWordCloze() {
@@ -11717,7 +11724,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
                 return '<button class="' + cls + '" data-i="' + i + '"' + (done ? ' disabled' : '') + '>' + CIRCLED[i] + ' ' + escapeHtml(x.word) + '</button>';
             }).join('') + '</div>';
         } else if (!done) {
-            html += '<input class="write-input cloze-input" id="cloze-input" lang="ja" autocomplete="off" placeholder="空欄に入る言葉" aria-label="空欄に入る言葉">';
+            html += '<div class="wq-note">空欄をタップして書いてください（漢字でも、かなでも）' + (hint === 'first' ? '。最初の字は書かなくて大丈夫です' : '') + '</div>';
         } else {
             html += '<div class="write-mark ' + (a.right ? 'ok">◯ 正解' : 'ng">✕') + '</div>' +
                 '<div class="write-box mine"><small>あなたの答え</small><div' + (a.typed ? '>' + escapeHtml(a.typed) : ' class="empty">（空欄）') + '</div></div>';
@@ -11750,7 +11757,18 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             });
         } else {
             var inp = document.getElementById('cloze-input');
-            var check = function() { var t = inp.value.trim(); answer(writeWordMatches(e, t), { typed: t }); };
+            var baseW = parseFloat(inp.style.width) || 2.4;
+            inp.addEventListener('input', function() { inp.style.width = Math.max(baseW, inp.value.length * 1.08 + 0.8) + 'em'; });   // grows with kana, which is longer than kanji
+            var check = function() {
+                var t = inp.value.trim(), first = hint === 'first' ? e.word.charAt(0) : '', full = first && t.indexOf(first) !== 0 ? first + t : t;
+                var ok = writeWordMatches(e, full) || writeWordMatches(e, t);
+                // 最初の字 given and the rest written in kana: the rest of the reading counts too (念 + とう → ねんとう)
+                if (!ok && first && t && e.reading) {
+                    var r = toHiragana(e.reading).replace(/\s/g, ''), tt = toHiragana(t).replace(/\s/g, ''), lead = r.length - tt.length;
+                    ok = r.slice(-tt.length) === tt && lead >= 1 && lead <= (hasKanji(first) ? 3 : 1);
+                }
+                answer(ok, { typed: full });
+            };
             document.getElementById('cloze-check').addEventListener('click', check);
             inp.addEventListener('keydown', function(ev) { if (ev.key === 'Enter' && !ev.isComposing) { ev.preventDefault(); check(); } });
             setTimeout(function() { try { inp.focus(); } catch (err) {} }, 50);
