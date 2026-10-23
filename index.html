@@ -18141,7 +18141,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             Object.keys(lg).forEach(function(k) { if (/^(pace|fastread|measure)(#|$)/.test(k)) delete lg[k]; });
             localStorage.setItem('jlptBadgeLog', JSON.stringify(lg)); } catch (e) {}
     })();
-    var BADGE_CATS = [['habit', '習慣'], ['skill', '実力'], ['speed', '読む速さ'], ['words', '単語'], ['adv', '上級読解'], ['mock', '模擬試験'], ['book', '教材'], ['collect', 'コレクション']];
+    var BADGE_CATS = [['habit', '習慣'], ['skill', '実力'], ['review', '誤答と復習'], ['speed', '読む速さ'], ['words', '単語'], ['adv', '上級読解'], ['mock', '模擬試験'], ['book', '教材'], ['collect', 'コレクション']];
     var TIER_NAMES = ['銅', '銀', '金', '朱'];
     var TIER_COLORS = ['#b0703a', '#8a95a1', '#c4960f', '#c0392b'];
     // two levels: 銀・金, three: 銅・銀・金, four: 銅・銀・金・朱
@@ -18157,6 +18157,66 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             else if (masteryStatus(state[unitKey(q.id, -1)]) === 'mastered') n++;
         });
         return n;
+    }
+    // Numbers for the badges added later (習慣・誤答と復習・おみくじ), worked out from the saved history.
+    // Each list holds the time each step was reached, so the earned dates can be filled in too.
+    function newBadgeStats() {
+        var byT = function(x, y) { return x.t - y.t; };
+        var att = attemptLog.filter(function(a) { return a && a.t; }).slice().sort(byT);
+        // 誤答と復習: a question right after being wrong before (per question, per 文章の文法 blank)
+        var wrongs = {}, recovered = {}, recoverTimes = [], rise = [];
+        att.forEach(function(a) {
+            var k = a.id + '_' + (a.b == null ? '' : a.b);
+            if (!a.ok) { wrongs[k] = (wrongs[k] || 0) + 1; return; }
+            if (wrongs[k] && !recovered[k]) { recovered[k] = true; recoverTimes.push(a.t); }
+            if (wrongs[k] >= 2) rise.push(a.t);
+            wrongs[k] = 0;
+        });
+        // 誤答ゼロ: the 誤答ノート was emptied (watched at every pause; jlptMistakeZero keeps the count)
+        var mz = loadJSON('jlptMistakeZero', {});
+        if (!Array.isArray(mz.t)) mz.t = [];
+        var noteNow = getMistakeQuestions().length + getAllModeMistakeIds().length + getRetakeMistakeIds().length;
+        if (noteNow > 0 && !mz.had) { mz.had = true; try { localStorage.setItem('jlptMistakeZero', JSON.stringify(mz)); } catch (e) {} }
+        else if (noteNow === 0 && mz.had) { mz.had = false; mz.t.push(Date.now()); try { localStorage.setItem('jlptMistakeZero', JSON.stringify(mz)); } catch (e) {} }
+        // 習慣
+        var late = att.filter(function(a) { var h = new Date(a.t).getHours(); return h >= 0 && h < 4; }).map(function(a) { return a.t; });
+        var studied = function(k) { var d = dailyStats[k]; return !!(d && d.answered > 0); };
+        var weekends = [];
+        Object.keys(dailyStats).sort().forEach(function(k) {
+            var d = parseDateKey(k);
+            if (isNaN(d) || d.getDay() !== 0 || !studied(k) || !studied(dateKey(addDays(d, -1)))) return;
+            weekends.push(d.getTime() + 12 * 3600000);
+        });
+        // 一日一文: days with at least one reading passage (内容理解 or 文章の文法), longest run of days in a row
+        var readDays = {};
+        att.forEach(function(a) { var q = findQuestion(a.id); if (q && (q.type === 'Comprehension' || q.type === 'Text Grammar')) readDays[dateKey(new Date(a.t))] = true; });
+        var runTimes = [], run = 0, prev = null, best = 0;
+        Object.keys(readDays).sort().forEach(function(k) {
+            var d = parseDateKey(k);
+            run = (prev && Math.round((d - prev) / 86400000) === 1) ? run + 1 : 1;
+            prev = d;
+            if (run > best) { best = run; runTimes[run - 1] = d.getTime() + 12 * 3600000; }
+        });
+        // 追い込み: days studied among the 30 days before the exam date
+        var exam = getSetting('examDate', ''), rushTimes = [];
+        if (exam && /^\d{4}-\d{2}-\d{2}$/.test(exam)) {
+            var ex = parseDateKey(exam), today = dateKey(new Date());
+            for (var i = 30; i >= 1; i--) {
+                var k = dateKey(addDays(ex, -i));
+                if (k <= today && studied(k)) rushTimes.push(parseDateKey(k).getTime() + 12 * 3600000);
+            }
+        }
+        // おみくじ
+        var od = omkData().days, okeys = Object.keys(od).sort(), luckyTimes = [], tiedTimes = [], rareFirst = {};
+        okeys.forEach(function(k) {
+            var e = od[k], start = parseDateKey(k).getTime(), end = start + 86400000;
+            if (e.luckyId && att.some(function(a) { return String(a.id) === String(e.luckyId) && a.ok && a.t >= start && a.t < end; })) luckyTimes.push(start + 12 * 3600000);
+            if (e.tied) tiedTimes.push(start + 12 * 3600000);
+            if (e.kept && e.omaR && OMK_OMA_RARE[e.omaR] && !rareFirst[e.omaR]) rareFirst[e.omaR] = start + 12 * 3600000;
+        });
+        var rareAll = Object.keys(OMK_OMA_RARE), rareTimes = rareAll.map(function(r) { return rareFirst[r] || 0; }).filter(Boolean).sort();
+        return { recover: recoverTimes, rise: rise, zero: mz.t, late: late, weekends: weekends, readRun: runTimes, readBest: best, rush: rushTimes,
+                 lucky: luckyTimes, tied: tiedTimes, rare: rareTimes, rareTotal: rareAll.length };
     }
     function computeBadges(streaks, bestDay, masteredCount) {
         streaks = streaks || computeStreaks();
@@ -18193,6 +18253,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var reviewCount = attemptLog.filter(function(a) { return a.m === 'p' || a.m === 'x'; }).length;
         var learnedCards = wordList.filter(function(e) { return (e.box || 0) >= 3; }).length;
         var earlyBird = attemptLog.some(function(a) { var h = new Date(a.t).getHours(); return h >= 5 && h < 8; });
+        var nb = newBadgeStats();
         // 読む速さ badges count only readings since they were last reset (the reading history itself is kept)
         var speedFrom = +(localStorage.getItem('jlptSpeedBadgeFrom') || 0), sinceReset = function(r) { return (r.t || 0) >= speedFrom; };
         var fastReads = readingLog.filter(function(r) { return sinceReset(r) && r.target && r.ms <= r.target; }).length;
@@ -18216,6 +18277,14 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             { id: 'goal', cat: 'habit', icon: '✅', name: '目標達成', value: goalDays, unit: '日', tiers: tiers([1, 10, 30, 100], '日'), hint: '1日の目標（いまは' + dailyGoal + '問）を達成した日の数' },
             { id: 'daymax', cat: 'habit', icon: '📚', name: '1日の問題数', value: bestDay, unit: '問', tiers: tiers([20, 50], '問'), hint: '1日に解いた問題の数（いちばん多かった日）' },
             { id: 'early', cat: 'habit', icon: '🌅', name: '朝活', ok: earlyBird, hint: '朝5時〜8時に解答する' },
+            { id: 'late', cat: 'habit', icon: '🌙', name: '夜更かし', ok: nb.late.length > 0, hint: '夜0時〜4時に解答する' },
+            { id: 'weekend', cat: 'habit', icon: '⚔️', name: '週末戦士', value: nb.weekends.length, unit: '回', tiers: tiers([4, 12, 30], '回'), hint: '土曜と日曜の両方に学習した週末の数' },
+            { id: 'readdaily', cat: 'habit', icon: '📖', name: '一日一文', value: nb.readBest, unit: '日', tiers: tiers([7, 14, 30], '日'), hint: '毎日1つ以上の文章（内容理解・文章の文法）を解いて続けた日数（最長）' },
+            { id: 'rush', cat: 'habit', icon: '🏁', name: '追い込み', value: nb.rush.length, unit: '日', tiers: tiers([10, 20, 30], '日'), hint: getSetting('examDate', '') ? '試験日までの30日間に学習した日の数（30日すべてで最高位）' : '試験日を設定すると、試験前の30日間に学習した日を数えます' },
+            // 誤答と復習
+            { id: 'notezero', cat: 'review', icon: '🧹', name: '誤答ゼロ', value: nb.zero.length, unit: '回', tiers: tiers([1, 3, 10], '回'), hint: '誤答ノートの問題をすべて解き直して、ノートを空にした回数' },
+            { id: 'retry', cat: 'review', icon: '🛠️', name: '解き直し名人', value: nb.recover.length, unit: '問', tiers: tiers([10, 30, 100], '問'), hint: '一度間違えた問題を、後で正解した数' },
+            { id: 'nanakoro', cat: 'review', icon: '🎎', name: '七転び八起き', ok: nb.rise.length > 0, hint: '2回以上間違えた問題を、ついに正解する' },
             // 実力
             { id: 'perfectday', cat: 'skill', icon: '💯', name: '完璧な一日', ok: perfectDay, hint: '1日に10問以上解いて全問正解（その日が終わった0時に獲得）' },
             { id: 'perfectset', cat: 'skill', icon: '🎯', name: '満点', value: perfectSets, unit: '回', tiers: tiers([1, 5, 20], '回'), hint: '1日分（4問以上）を満点で終えた回数' },
@@ -18282,7 +18351,10 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             { id: 'hoo', cat: 'collect', icon: '🌅', name: '鳳凰', ok: !!seenOp.hoo, secret: true, hint: 'お正月の空に、ごくまれに舞うものを見る（「自動」のとき）' },
             { id: 'nagare', cat: 'collect', icon: '🌠', name: '流れ星', ok: !!seenOp.nagare, secret: true, hint: '七夕の夜空を横切るものを見る（「自動」のとき）' },
             { id: 'omikuji', cat: 'collect', icon: '⛩️', name: 'おみくじ', value: omikujiDrawDates().length, unit: '回', tiers: tiers([1, 10, 50], '回'), hint: '今日の目標を達成して、おみくじを引く' },
-            { id: 'daikichi', cat: 'collect', icon: '🎊', name: '大吉', ok: omikujiDrawDates('大吉').length > 0, secret: true, hint: 'おみくじで大吉を引く' }
+            { id: 'daikichi', cat: 'collect', icon: '🎊', name: '大吉', ok: omikujiDrawDates('大吉').length > 0, secret: true, hint: 'おみくじで大吉を引く' },
+            { id: 'lucky', cat: 'collect', icon: '🍀', name: 'ラッキー問題', value: nb.lucky.length, unit: '回', tiers: tiers([1, 10, 30], '回'), hint: 'おみくじのラッキー問題を、その日のうちに正解した回数' },
+            { id: 'musubi', cat: 'collect', icon: '🎀', name: '結び', value: nb.tied.length, unit: '枚', tiers: tiers([1, 10, 30], '枚'), hint: '凶のおみくじを結んだ数' },
+            { id: 'omacollect', cat: 'collect', icon: '🧧', name: 'お守りコレクター', ok: nb.rare.length >= nb.rareTotal, progress: nb.rare.length + ' / ' + nb.rareTotal, hint: 'めずらしいお守りをすべて持ち帰る' }
         ]);
         return badges;
     }
@@ -18334,6 +18406,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         mocks.sort(byT);
         var seenOp = loadJSON('jlptOpeningsSeen', {});
         var seenAt = function(k) { return typeof seenOp[k] === 'string' ? dayTs(seenOp[k]) : 0; };
+        var nbs = newBadgeStats();
         badges.forEach(function(b) {
             var lv = badgeLevel(b), tiers = b.tiers || [{ n: 1 }];
             for (var i = 1; i <= lv; i++) {
@@ -18353,6 +18426,16 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
                     case 'goal': t = nth(days.filter(function(k) { return !dailyStats[k].legacy && dailyStats[k].answered >= dailyGoal; }).map(dayTs), n); break;
                     case 'daymax': t = nth(days.filter(function(k) { return dailyStats[k].answered >= n; }).map(dayTs), 1); break;
                     case 'early': t = firstAt(attempts, function(a) { var h = new Date(a.t).getHours(); return h >= 5 && h < 8; }); break;
+                    case 'late': t = nbs.late[0] || 0; break;
+                    case 'weekend': t = nth(nbs.weekends, n); break;
+                    case 'readdaily': t = nbs.readRun[n - 1] || 0; break;
+                    case 'rush': t = nth(nbs.rush, n); break;
+                    case 'notezero': t = nth(nbs.zero, n); break;
+                    case 'retry': t = nth(nbs.recover, n); break;
+                    case 'nanakoro': t = nbs.rise[0] || 0; break;
+                    case 'lucky': t = nth(nbs.lucky, n); break;
+                    case 'musubi': t = nth(nbs.tied, n); break;
+                    case 'omacollect': t = nbs.rare.length >= nbs.rareTotal ? nbs.rare[nbs.rare.length - 1] : 0; break;
                     case 'perfectday':
                         var pd = days.filter(function(k) { var d = dailyStats[k]; return !d.legacy && d.answered >= 10 && d.correct === d.answered; })[0];
                         if (pd) t = new Date(pd + 'T00:00:00').getTime() + DAY;      // earned at the midnight after
