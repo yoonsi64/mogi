@@ -904,6 +904,20 @@
         .flash-done-btn { margin-top: 8px; padding: 12px 24px; border-radius: 10px; border: 1px solid var(--border-light); background: var(--surface); color: var(--text-main); font-weight: bold; }
         .flash-start { width: 100%; display: flex; align-items: center; justify-content: space-between; margin: 4px 0 10px; padding: 12px 16px; border: none; border-radius: var(--radius); background: var(--active-blue); color: #fff; font-weight: bold; font-size: 1rem; }
         .flash-start:disabled { opacity: 0.4; }
+        .flash-starts { display: flex; gap: 8px; margin: 4px 0 10px; }
+        .flash-starts .flash-start { flex: 1; min-width: 0; margin: 0; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 14px; }
+        .flash-start.write { background: var(--surface); color: var(--active-blue); box-shadow: inset 0 0 0 2px var(--active-blue); }
+        html.dark .flash-start.write { color: var(--active-blue); }
+        .write-input { width: 100%; min-height: 96px; resize: vertical; padding: 10px 12px; border: 1px solid var(--border-light); border-radius: 10px; background: var(--bg-paper); color: var(--text-main); font: inherit; font-size: 1rem; line-height: 1.6; }
+        .write-input:focus { outline: 2px solid var(--active-blue); outline-offset: 1px; }
+        .write-compare { width: 100%; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+        .write-box { border: 1px solid var(--border-light); border-radius: 10px; padding: 8px 12px; }
+        .write-box small { display: block; font-size: 0.72rem; font-weight: bold; color: var(--text-sub); margin-bottom: 2px; }
+        .write-box.mine { background: var(--bg-paper); }
+        .write-box .empty { color: var(--text-sub); }
+        .write-box div { white-space: pre-line; line-height: 1.7; }
+        .write-kr { color: var(--text-sub); font-size: 0.9rem; }
+        .flash-card.write-card { justify-content: flex-start; overflow-y: auto; }
         .flash-start-sub { font-size: 0.8rem; opacity: 0.9; }
         html.dark .flash-start { color: #0d1117; }
         .wordlist-tools { display: flex; gap: 8px; margin-bottom: 8px; }
@@ -2540,7 +2554,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             <span id="wordlist-count" style="margin-left:auto; align-self:center; font-size:0.8rem; color:var(--text-sub); font-weight:bold;"></span>
             <button id="wordlist-export" class="wordlist-export" title="単語;意味;読み の形でテキストファイルに保存">書き出す</button>
         </div>
-        <button id="flash-start" class="flash-start"><span class="flash-start-label">カードで復習</span><span class="flash-start-sub" id="flash-start-sub"></span></button>
+        <div class="flash-starts"><button id="flash-start" class="flash-start"><span class="flash-start-label">カードで復習</span><span class="flash-start-sub" id="flash-start-sub"></span></button><button id="write-start" class="flash-start write"><span class="flash-start-label">意味を書く</span><span class="flash-start-sub" id="write-start-sub"></span></button></div>
         <div class="wordlist-tools">
             <input type="search" id="wordlist-search" placeholder="検索（単語・読み・意味）" autocomplete="off" lang="ja">
             <select id="wordlist-week" aria-label="週で絞り込む">
@@ -10616,10 +10630,11 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
     // A word counts as 覚えた (badge, can be hidden) after three 覚えた in a row.
     var FLASH_DAYS = [1, 2, 4, 8, 16, 32];
     var flash = null;
-    function flashDueWords() {
-        var today = getTodayDateString();
-        return wordList.filter(function(e) { return !e.due || e.due <= today; })
-            .sort(function(a, b) { return (a.due || '').localeCompare(b.due || '') || a.added - b.added; });
+    // 意味を書く keeps its own schedule (wbox / wdue), so writing and the cards don't move each other's words on
+    function flashDueWords(write) {
+        var today = getTodayDateString(), dk = write ? 'wdue' : 'due';
+        return wordList.filter(function(e) { return !e[dk] || e[dk] <= today; })
+            .sort(function(a, b) { return (a[dk] || '').localeCompare(b[dk] || '') || a.added - b.added; });
     }
     function flashOpen() {
         var v = document.getElementById('flash-view');
@@ -10636,13 +10651,15 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         v.querySelector('.flash-close').addEventListener('click', closeFlashcards);
         document.body.appendChild(v);
     }
-    function startFlashcards() {
-        var due = flashDueWords();
+    function startFlashcards(write) {
+        write = write === true;
+        var due = flashDueWords(write);
         var practiceAll = !due.length;          // nothing due today: go through every word
         var list = practiceAll ? shuffleInPlace(wordList.slice()) : due;
         if (!list.length) return;
-        flash = { queue: list.map(function(e) { return e.id; }), pos: 0, revealed: false, known: 0, again: 0, practiceAll: practiceAll };
+        flash = { queue: list.map(function(e) { return e.id; }), pos: 0, revealed: false, known: 0, again: 0, practiceAll: practiceAll, write: write, typed: '' };
         buildFlashView();
+        document.querySelector('#flash-view .flash-title').textContent = write ? '意味を書く' : 'カードで復習';
         renderFlash();
         document.getElementById('flash-view').classList.add('active');
     }
@@ -10659,7 +10676,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         if (remaining <= 0) {
             body.innerHTML = '<div class="flash-done"><div class="flash-done-mark">✓</div>' +
                 '<div class="flash-done-title">' + (flash.practiceAll ? 'ひととおり復習しました' : '今日の復習はおわりです') + '</div>' +
-                '<div class="flash-done-stats">覚えた <b>' + flash.known + '</b>　まだ <b>' + flash.again + '</b></div>' +
+                '<div class="flash-done-stats">' + (flash.write ? '合っていた' : '覚えた') + ' <b>' + flash.known + '</b>　' + (flash.write ? '違った' : 'まだ') + ' <b>' + flash.again + '</b></div>' +
                 '<div class="flash-done-note">覚えた単語は 1日→2日→4日… と間隔をあけてまた出てきます。</div>' +
                 '<button class="flash-done-btn">単語帳に戻る</button></div>';
             body.querySelector('.flash-done-btn').addEventListener('click', closeFlashcards);
@@ -10668,6 +10685,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var e = wordList.find(function(w) { return w.id === flash.queue[flash.pos]; });
         if (!e) { flash.pos++; renderFlash(); return; }
         var label = textbookLabel(e.qid) || e.source || '';
+        if (flash.write) { renderWriteCard(e, label, body); return; }
         body.innerHTML = '<div class="flash-card' + (flash.revealed ? ' revealed' : '') + '">' +
             (label ? '<div class="flash-source">' + escapeHtml(label) + '</div>' : '') +
             '<div class="flash-word">' + (flash.revealed ? entryWordHtml(e) : escapeHtml(e.word)) + '</div>' +
@@ -10690,16 +10708,56 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             body.querySelector('.flash-card').addEventListener('click', reveal);
         }
     }
+    // 意味を書く: write the meaning in your own words, then compare it with the saved meaning and mark it yourself
+    function renderWriteCard(e, label, body) {
+        var dict = wordDefinitions[e.word] || null;
+        var shown = e.meaning || (dict ? dict.jp : '');
+        if (!flash.revealed) {
+            body.innerHTML = '<div class="flash-card write-card">' +
+                (label ? '<div class="flash-source">' + escapeHtml(label) + '</div>' : '') +
+                '<div class="flash-word">' + escapeHtml(e.word) + '</div>' +
+                '<textarea class="write-input" id="write-input" rows="3" placeholder="意味を書いてください（日本語でも韓国語でも）" aria-label="意味"></textarea>' +
+                '<div class="flash-hint">書いたら「答え合わせ」。わからなければ空のままで大丈夫です</div>' +
+                '</div>' +
+                '<div class="flash-actions"><button class="flash-reveal" id="write-check">答え合わせ</button></div>';
+            var ta = body.querySelector('#write-input');
+            ta.value = flash.typed || '';
+            ta.addEventListener('input', function() { flash.typed = ta.value; });
+            body.querySelector('#write-check').addEventListener('click', function() { flash.typed = ta.value; flash.revealed = true; renderFlash(); });
+            setTimeout(function() { try { ta.focus(); } catch (err) {} }, 50);
+            return;
+        }
+        var mine = (flash.typed || '').trim();
+        body.innerHTML = '<div class="flash-card write-card revealed">' +
+            (label ? '<div class="flash-source">' + escapeHtml(label) + '</div>' : '') +
+            '<div class="flash-word">' + entryWordHtml(e) + '</div>' +
+            '<div class="write-compare">' +
+                '<div class="write-box mine"><small>あなたの答え</small><div' + (mine ? '>' + escapeHtml(mine) : ' class="empty">（空欄）') + '</div></div>' +
+                '<div class="write-box"><small>' + (e.meaning ? '単語帳の意味' : '意味') + '</small><div' + (shown ? '>' + escapeHtml(shown) : ' class="empty">（意味・メモなし）') + '</div>' +
+                    (dict && dict.kr && getSetting('showKorean', true) ? '<div class="write-kr">' + escapeHtml(dict.kr) + '</div>' : '') + '</div>' +
+                (e.meaning && dict && dict.jp && dict.jp !== e.meaning ? '<div class="write-box"><small>辞書</small><div>' + escapeHtml(dict.jp) + '</div></div>' : '') +
+                (e.wrote && e.wrote !== mine ? '<div class="write-box"><small>前回の答え</small><div>' + escapeHtml(e.wrote) + '</div></div>' : '') +
+            '</div>' +
+            (e.context ? '<div class="flash-context">' + highlightIn(e.context, e.word) + '</div>' : '') +
+            '<button class="flash-speak" aria-label="読み上げ">🔊</button>' +
+            '</div>' +
+            '<div class="flash-actions"><button class="flash-again">違った</button><button class="flash-know">合っていた</button></div>';
+        body.querySelector('.flash-again').addEventListener('click', function() { gradeFlash(false); });
+        body.querySelector('.flash-know').addEventListener('click', function() { gradeFlash(true); });
+        body.querySelector('.flash-speak').addEventListener('click', function() { speakText(escapeHtml(e.reading || e.word)); });
+    }
     function gradeFlash(knew) {
         var e = wordList.find(function(w) { return w.id === flash.queue[flash.pos]; });
+        var BOX = flash.write ? 'wbox' : 'box', DUE = flash.write ? 'wdue' : 'due';
+        if (e && flash.write && (flash.typed || '').trim()) e.wrote = flash.typed.trim();
         if (e) {
             if (knew) {
-                e.box = (e.box || 0) + 1;
-                e.due = dateKey(addDays(new Date(), FLASH_DAYS[Math.min(e.box, FLASH_DAYS.length) - 1]));
+                e[BOX] = (e[BOX] || 0) + 1;
+                e[DUE] = dateKey(addDays(new Date(), FLASH_DAYS[Math.min(e[BOX], FLASH_DAYS.length) - 1]));
                 flash.known++;
             } else {
-                e.box = 0;
-                e.due = getTodayDateString();
+                e[BOX] = 0;
+                e[DUE] = getTodayDateString();
                 flash.again++;
                 flash.queue.push(e.id);          // see it again before the end
             }
@@ -10709,9 +10767,11 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         if (navigator.vibrate && getSetting('vibrate', true)) { try { navigator.vibrate(knew ? 12 : [20, 30, 20]); } catch (err) {} }
         flash.pos++;
         flash.revealed = false;
+        flash.typed = '';
         renderFlash();
     }
-    document.getElementById('flash-start').addEventListener('click', startFlashcards);
+    document.getElementById('flash-start').addEventListener('click', function() { startFlashcards(false); });
+    document.getElementById('write-start').addEventListener('click', function() { startFlashcards(true); });
 
     // ---------- 単語帳: search, filters, furigana self-test ----------
     var wlSearch = '', wlWeek = '';
@@ -10736,6 +10796,9 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var due = flashDueWords().length;
         document.getElementById('flash-start-sub').textContent = !wordList.length ? '' : due ? '今日 ' + due + '語' : '今日の分は完了 ✓';
         document.getElementById('flash-start').disabled = !wordList.length;
+        var wdue = flashDueWords(true).length;
+        document.getElementById('write-start-sub').textContent = !wordList.length ? '' : wdue ? '今日 ' + wdue + '語' : '今日の分は完了 ✓';
+        document.getElementById('write-start').disabled = !wordList.length;
     }
     document.getElementById('wordlist-search').addEventListener('input', function(e) { wlSearch = e.target.value.trim(); renderWordListItems(); });
     document.getElementById('wordlist-week').addEventListener('change', function(e) { wlWeek = e.target.value; renderWordListItems(); });
