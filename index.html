@@ -213,11 +213,11 @@
         .font-seg button[data-v="mincho"] { font-family: var(--mincho); }
         .font-seg button[data-v="gothic"] { font-family: var(--gothic); }
         .font-seg button[data-v="kyokasho"] { font-family: var(--kyokasho); }
-        /* six choices: 3 × 2 grid that fills the row */
+        /* three choices in one row that fills the width */
         .seg.font-seg { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; margin-top: 6px; }
+        .seg.font-seg button { min-height: 40px; font-size: 0.9rem; }
         .seg.font-seg button { border-left: none; border-top: none; }
         .seg.font-seg button:not(:nth-child(3n)) { border-right: 1px solid var(--border-dark); }
-        .seg.font-seg button:nth-child(-n+3) { border-bottom: 1px solid var(--border-dark); }
         .font-preview .fp-label { display: block; font-family: var(--gothic); font-size: 0.68rem; font-weight: bold; color: var(--text-sub); letter-spacing: 1px; }
         .font-preview .fp-option { margin-top: 6px; padding: 6px 10px; background: var(--surface); border: 1px solid var(--border-light); border-radius: 8px; line-height: 1.6; }
         .font-preview .fp-num { margin-right: 8px; }
