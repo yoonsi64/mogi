@@ -891,6 +891,16 @@
         .flash-context { font-family: var(--reading-font); font-size: 0.9rem; color: var(--text-sub); line-height: 1.8; text-align: left; border-top: 1px dashed var(--border-light); padding-top: 12px; width: 100%; }
         .flash-speak { position: absolute; top: 8px; right: 8px; width: 44px; height: 44px; border: none; background: none; font-size: 1.2rem; }
         .flash-actions { display: flex; gap: 10px; margin-top: 14px; }
+        .setting-note { font-size: 0.75rem; color: var(--text-sub); line-height: 1.6; padding: 2px 0 6px; }
+        .srs-btns { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .srs-btn { padding: 8px 2px 10px; border-radius: 12px; border: 1px solid var(--border-light); background: var(--surface); color: var(--text-main); font: inherit; font-weight: bold; font-size: 0.85rem; white-space: nowrap; letter-spacing: -0.02em; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+        .srs-btn small { font-size: 0.72rem; font-weight: bold; color: var(--text-sub); font-variant-numeric: tabular-nums; min-height: 1em; }
+        .srs-btn.g1 { color: #b8312f; border-color: color-mix(in srgb, #b8312f 45%, var(--border-light)); }
+        .srs-btn.g2 { color: #9a6a00; }
+        .srs-btn.g3 { color: var(--correct-color); border-color: color-mix(in srgb, var(--correct-color) 45%, var(--border-light)); }
+        .srs-btn.g4 { color: var(--active-blue); }
+        .srs-kind { position: absolute; top: 34px; left: 16px; font-size: 0.7rem; font-weight: bold; padding: 2px 8px; border-radius: 8px; background: var(--bg-paper); border: 1px solid var(--border-light); color: var(--text-sub); }
+        .srs-kind.fresh { color: var(--active-blue); } .srs-kind.learn { color: #b8312f; } .srs-kind.review { color: var(--correct-color); }
         .flash-actions button { flex: 1; padding: 16px 10px; border-radius: 12px; font-size: 1.05rem; font-weight: bold; border: 1px solid var(--border-light); background: var(--surface); color: var(--text-main); }
         .flash-actions .flash-reveal { background: var(--active-blue); border-color: var(--active-blue); color: #fff; }
         .flash-actions .flash-again { color: var(--incorrect-color); border-color: var(--incorrect-color); }
@@ -2554,12 +2564,19 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         <div id="stats-content"></div>
     </div>
     <div id="settings-view">
-        <nav class="stats-jump settings-jump" aria-label="設定の項目"><button data-go="set-g-goal">目標</button><button data-go="set-g-solve">問題を解くとき</button><button data-go="set-g-display">文字と表示</button><button data-go="set-g-fun">演出</button><button data-go="set-g-you">あなた</button><button data-go="backup-card">データ</button></nav>
+        <nav class="stats-jump settings-jump" aria-label="設定の項目"><button data-go="set-g-goal">目標</button><button data-go="set-g-solve">問題を解くとき</button><button data-go="set-g-cards">単語カード</button><button data-go="set-g-display">文字と表示</button><button data-go="set-g-fun">演出</button><button data-go="set-g-you">あなた</button><button data-go="backup-card">データ</button></nav>
         <div class="stat-card settings-group" id="set-g-goal">
             <div class="stat-card-title">目標</div>
             <div class="setting-row wrap exam-setting"><span>試験日</span><span class="exam-setting-controls"><input type="date" id="set-exam-date" class="exam-date-input" aria-label="試験日"><button id="set-exam-next" class="exam-quick"></button><button id="set-exam-clear" class="exam-clear" aria-label="試験日を削除" title="試験日を削除">×</button></span></div>
             <div class="setting-row"><span>1日の目標</span><span class="goal-controls" style="margin:0"><button id="set-goal-minus" aria-label="目標を減らす">−</button><b id="set-goal-value" style="min-width:48px; text-align:center;"></b><button id="set-goal-plus" aria-label="目標を増やす">＋</button></span></div>
             <div class="setting-row wrap"><span>読む速さの目標</span><span class="rsgoal-controls"><span class="seg" id="set-rsgoal"><button data-v="book">標準</button><button data-v="custom">自分で決める</button></span><span class="goal-controls" id="rsgoal-stepper" style="margin:0"><button id="set-rsgoal-minus" aria-label="目標を下げる">−</button><b id="set-rsgoal-value"></b><button id="set-rsgoal-plus" aria-label="目標を上げる">＋</button></span></span><div class="stat-sub rsgoal-note" id="rsgoal-note"></div></div>
+        </div>
+        <div class="stat-card settings-group" id="set-g-cards">
+            <div class="stat-card-title">単語カード（Ankiと同じFSRS）</div>
+            <div class="setting-row wrap"><span>1日の新しいカード</span><span class="seg" id="set-srs-new"><button data-v="10">10</button><button data-v="20">20</button><button data-v="30">30</button><button data-v="50">50</button><button data-v="0">無制限</button></span></div>
+            <div class="setting-row wrap"><span>1日の復習の上限</span><span class="seg" id="set-srs-rev"><button data-v="100">100</button><button data-v="200">200</button><button data-v="500">500</button><button data-v="0">無制限</button></span></div>
+            <div class="setting-row wrap"><span>目標の記憶率</span><span class="seg" id="set-srs-ret"><button data-v="0.85">85%</button><button data-v="0.9">90%</button><button data-v="0.95">95%</button></span></div>
+            <div class="setting-note">記憶率を上げると、忘れにくくなるかわりに復習の回数が増えます（Ankiの初期設定は90%）。</div>
         </div>
         <div class="stat-card settings-group" id="set-g-solve">
             <div class="stat-card-title">問題を解くとき</div>
@@ -9236,6 +9253,9 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         markSeg('set-autonext', getSetting('autoNext', false) ? 'on' : 'off');
         markSeg('set-vibrate', getSetting('vibrate', true) ? 'on' : 'off');
         markSeg('set-timer', getSetting('showTimer', true) ? 'on' : 'off');
+        markSeg('set-srs-new', String(getSetting('srsNewPerDay', 20)));
+        markSeg('set-srs-rev', String(getSetting('srsMaxReviews', 200)));
+        markSeg('set-srs-ret', String(srsRetention()));
         refreshReadingGoalSetting();
         document.getElementById('set-nickname').value = getSetting('nickname', '');
         markSeg('set-honorific', getSetting('honorific', 'さん'));
@@ -9250,6 +9270,11 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
     });
     document.querySelectorAll('#set-omikuji-sound button').forEach(function(b) {
         b.addEventListener('click', function() { setSetting('omikujiSound', b.dataset.v === 'on'); markSeg('set-omikuji-sound', b.dataset.v); if (b.dataset.v === 'on') omkSound('bell', 0.8); });
+    });
+    [['set-srs-new', 'srsNewPerDay'], ['set-srs-rev', 'srsMaxReviews'], ['set-srs-ret', 'srsRetention']].forEach(function(cfg) {
+        document.querySelectorAll('#' + cfg[0] + ' button').forEach(function(b) {
+            b.addEventListener('click', function() { setSetting(cfg[1], parseFloat(b.dataset.v)); markSeg(cfg[0], b.dataset.v); });
+        });
     });
     document.querySelectorAll('#set-korean button').forEach(function(b) {
         b.addEventListener('click', function() { setSetting('showKorean', b.dataset.v === 'on'); markSeg('set-korean', b.dataset.v); });
@@ -10736,10 +10761,105 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         });
     }
 
-    // ---------- 単語帳 flashcards (spaced repetition) ----------
-    // 覚えた → next review in 1, 2, 4, 8, 16, then 32 days. まだ → back into today's pile.
-    // A word counts as 覚えた (badge, can be hidden) after three 覚えた in a row.
+    // ---------- 単語帳 flashcards: Anki's scheduler (FSRS-5) ----------
+    // FSRS is the open-source scheduler Anki uses (open-spaced-repetition, MIT licence); this follows FSRS-5 with its
+    // default parameters. Each card keeps its memory state in e.srs = { state, step, s (stability, days),
+    // d (difficulty 1–10), last (date of the last review), reps, lapses }, and e.due (the date it is next shown).
+    // Like Anki: new cards go through learning steps (1分・10分), forgotten ones through a relearning step (10分),
+    // and the 4 buttons are もう一度・難しい・普通・簡単. Steps under a day come back later in the same session.
+    // (意味を書く still uses the simple 1・2・4・8… schedule below.)
     var FLASH_DAYS = [1, 2, 4, 8, 16, 32];
+    var FSRS_W = [0.40255, 1.18385, 3.173, 15.69105, 7.1949, 0.5345, 1.4604, 0.0046, 1.54575, 0.1192, 1.01925, 1.9395, 0.11, 0.29605, 2.2698, 0.2315, 2.9898, 0.51655, 0.6621];
+    var FSRS_DECAY = -0.5, FSRS_FACTOR = 19 / 81, SRS_LEARN = [1, 10], SRS_RELEARN = [10];
+    function srsRetention() { var r = getSetting('srsRetention', 0.9); return r >= 0.7 && r <= 0.99 ? r : 0.9; }
+    function fsrsD0(g) { return Math.min(10, Math.max(1, FSRS_W[4] - Math.exp(FSRS_W[5] * (g - 1)) + 1)); }
+    function fsrsNextD(d, g) {
+        var dd = d - FSRS_W[6] * (g - 3);
+        dd = d + (dd - d) * (10 - d) / 9;                                   // linear damping
+        return Math.min(10, Math.max(1, FSRS_W[7] * fsrsD0(4) + (1 - FSRS_W[7]) * dd));   // mean reversion
+    }
+    function fsrsR(t, s) { return Math.pow(1 + FSRS_FACTOR * t / s, FSRS_DECAY); }
+    function fsrsInterval(s) {
+        var i = s / FSRS_FACTOR * (Math.pow(srsRetention(), 1 / FSRS_DECAY) - 1);
+        return Math.min(36500, Math.max(1, Math.round(i)));
+    }
+    // the memory state after answering with grade g (1–4), `elapsed` days after the last review
+    function fsrsMemory(srs, g, elapsed) {
+        if (!srs.s) return { s: FSRS_W[g - 1], d: fsrsD0(g) };
+        var s = srs.s, d = srs.d;
+        if (elapsed <= 0) return { s: s * Math.exp(FSRS_W[17] * (g - 3 + FSRS_W[18])), d: fsrsNextD(d, g) };   // same day
+        var r = fsrsR(elapsed, s), ns;
+        if (g === 1) ns = Math.min(s, FSRS_W[11] * Math.pow(d, -FSRS_W[12]) * (Math.pow(s + 1, FSRS_W[13]) - 1) * Math.exp(FSRS_W[14] * (1 - r)));
+        else ns = s * (Math.exp(FSRS_W[8]) * (11 - d) * Math.pow(s, -FSRS_W[9]) * (Math.exp(FSRS_W[10] * (1 - r)) - 1) * (g === 2 ? FSRS_W[15] : 1) * (g === 4 ? FSRS_W[16] : 1) + 1);
+        return { s: Math.max(0.01, ns), d: fsrsNextD(d, g) };
+    }
+    function daysBetween(a, b) { return Math.round((parseDateKey(b) - parseDateKey(a)) / 86400000); }
+    // What each button would do: { srs, minutes } for a step later today, or { srs, days } for a later day
+    function srsOutcomes(e) {
+        var today = getTodayDateString(), cur = e.srs || { state: 'new', step: 0, reps: 0, lapses: 0 };
+        var elapsed = cur.last ? Math.max(0, daysBetween(cur.last, today)) : 0;
+        var out = {}, days = {};
+        [1, 2, 3, 4].forEach(function(g) {
+            var m = fsrsMemory(cur, g, elapsed);
+            var n = { state: cur.state, step: cur.step || 0, s: m.s, d: m.d, last: today, reps: (cur.reps || 0) + 1, lapses: cur.lapses || 0 };
+            var learning = cur.state === 'new' || cur.state === 'learning', relearning = cur.state === 'relearning';
+            if (learning || relearning) {
+                var steps = learning ? SRS_LEARN : SRS_RELEARN, st = cur.state === 'new' ? 0 : (cur.step || 0);
+                if (g === 1) { n.state = learning ? 'learning' : 'relearning'; n.step = 0; out[g] = { srs: n, minutes: steps[0] }; return; }
+                if (g === 2) { n.state = learning ? 'learning' : 'relearning'; n.step = st; out[g] = { srs: n, minutes: st === 0 && steps.length > 1 ? Math.round((steps[0] + steps[1]) / 2) : steps[st] }; return; }
+                if (g === 3 && st + 1 < steps.length) { n.state = learning ? 'learning' : 'relearning'; n.step = st + 1; out[g] = { srs: n, minutes: steps[st + 1] }; return; }
+                n.state = 'review'; n.step = 0; days[g] = fsrsInterval(n.s); out[g] = { srs: n, days: days[g] };
+                return;
+            }
+            // review card
+            if (g === 1) { n.state = 'relearning'; n.step = 0; n.lapses++; out[g] = { srs: n, minutes: SRS_RELEARN[0] }; return; }
+            n.state = 'review'; days[g] = fsrsInterval(n.s); out[g] = { srs: n, days: days[g] };
+        });
+        // keep 難しい ≤ 普通 < 簡単, as Anki does
+        if (out[2].days && out[3].days) { out[2].days = Math.min(out[2].days, out[3].days); out[3].days = Math.max(out[3].days, out[2].days + 1); }
+        if (out[3].days && out[4].days) out[4].days = Math.max(out[4].days, out[3].days + 1);
+        return out;
+    }
+    function srsLabel(o) {
+        if (o.minutes != null) return o.minutes < 60 ? o.minutes + '分' : Math.round(o.minutes / 60) + '時間';
+        var d = o.days;
+        return d < 30 ? d + '日' : d < 365 ? (Math.round(d / 30 * 10) / 10) + 'か月' : (Math.round(d / 365 * 10) / 10) + '年';
+    }
+    // The old 覚えた/まだ boxes become FSRS states once (box n ≈ stability of its last interval)
+    function srsMigrate(e) {
+        if (e.srs) return;
+        if (e.box > 0 && e.due) {
+            var s = FLASH_DAYS[Math.min(e.box, FLASH_DAYS.length) - 1];
+            e.srs = { state: 'review', step: 0, s: s, d: 5, last: dateKey(addDays(parseDateKey(e.due), -s)), reps: e.box, lapses: 0 };
+        } else if (e.lastReviewed) {
+            e.srs = { state: 'learning', step: 0, s: FSRS_W[0], d: fsrsD0(1), last: dateKey(new Date(e.lastReviewed)), reps: 1, lapses: 0 };
+            e.due = getTodayDateString();
+        }
+    }
+    function srsIsNew(e) { return !e.srs || e.srs.state === 'new'; }
+    function srsNewLeftToday() {
+        var lim = getSetting('srsNewPerDay', 20), rec = getSetting('srsNewDay', null);
+        if (lim === 0) return Infinity;
+        return Math.max(0, lim - (rec && rec.d === getTodayDateString() ? rec.n : 0));
+    }
+    // today's cards: learning/relearning first, then reviews (up to the daily limit), then new cards (up to the new-card limit)
+    function srsTodayQueue() {
+        var today = getTodayDateString();
+        wordList.forEach(srsMigrate);
+        var learn = [], review = [], fresh = [];
+        wordList.forEach(function(e) {
+            if (srsIsNew(e)) { fresh.push(e); return; }
+            if (e.due && e.due > today) return;
+            (e.srs.state === 'review' ? review : learn).push(e);
+        });
+        review.sort(function(a, b) { return (a.due || '').localeCompare(b.due || ''); });
+        var maxRev = getSetting('srsMaxReviews', 200);
+        if (maxRev) review = review.slice(0, maxRev);
+        fresh.sort(function(a, b) { return a.added - b.added; });
+        var nNew = srsNewLeftToday();
+        fresh = fresh.slice(0, nNew === Infinity ? fresh.length : nNew);
+        return { learn: learn, review: review, fresh: fresh, all: learn.concat(review, fresh) };
+    }
     var flash = null;
     // 意味を書く keeps its own schedule (wbox / wdue), so writing and the cards don't move each other's words on
     // 意味を書く has two directions, each with its own schedule: 'def' (word → write the definition: wbox/wdue)
@@ -10747,6 +10867,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
     function writeKeys(write) { return write === 'word' ? { box: 'wwbox', due: 'wwdue' } : write ? { box: 'wbox', due: 'wdue' } : { box: 'box', due: 'due' }; }
     function writeWords() { return wordList.filter(function(e) { return e.writeDef; }); }
     function flashDueWords(write) {
+        if (!write) return srsTodayQueue().all;
         var today = getTodayDateString(), dk = writeKeys(write).due;
         return (write ? writeWords() : wordList).filter(function(e) { return !e[dk] || e[dk] <= today; })
             .sort(function(a, b) { return (a[dk] || '').localeCompare(b[dk] || '') || a.added - b.added; });
@@ -10770,7 +10891,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         if (write === true) { pickWriteDirection(); return; }
         write = write === 'def' || write === 'word' ? write : false;
         var due = flashDueWords(write);
-        var practiceAll = !due.length;          // nothing due today: go through every word
+        var practiceAll = !due.length;          // nothing due today: go through every word (cards: a practice run that doesn't change the schedule)
         var list = practiceAll ? shuffleInPlace((write ? writeWords() : wordList).slice()) : due;
         if (!list.length) return;
         flash = { queue: list.map(function(e) { return e.id; }), pos: 0, revealed: false, known: 0, again: 0, practiceAll: practiceAll, write: write, typed: '', start: Date.now(), missedIds: [] };
@@ -10794,8 +10915,9 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         if (remaining <= 0) {
             var tot = flash.known + flash.again, missedE = (flash.missedIds || []).map(function(id) { return wordList.find(function(w) { return w.id === id; }); }).filter(Boolean);
             wqResult({ title: flash.practiceAll ? 'ひととおり復習しました' : '今日の復習はおわりです', pct: tot ? flash.known / tot * 100 : 100,
-                chips: [[flash.write ? '合っていた' : '覚えた', flash.known], [flash.write ? '違った' : 'まだ', flash.again], ['時間', wqClock(Date.now() - (flash.start || Date.now()))]],
-                missed: missedE, note: '覚えた単語は 1日→2日→4日… と間隔をあけてまた出てきます。' });
+                chips: [[flash.write ? '合っていた' : '正解', flash.known], [flash.write ? '違った' : 'もう一度', flash.again], ['時間', wqClock(Date.now() - (flash.start || Date.now()))]],
+                missed: missedE, note: flash.write ? '合っていた単語は 1日→2日→4日… と間隔をあけてまた出てきます。'
+                    : flash.practiceAll ? 'おさらいなので、次に出てくる日は変わりません。' : '次に出てくる日は、Ankiと同じFSRSで決まります。' + srsTomorrowNote() });
             return;
             body.innerHTML = '<div class="flash-done"><div class="flash-done-mark">✓</div>' +
                 '<div class="flash-done-title">' + (flash.practiceAll ? 'ひととおり復習しました' : '今日の復習はおわりです') + '</div>' +
@@ -10811,6 +10933,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         if (flash.write) { renderWriteCard(e, label, body); return; }
         body.innerHTML = '<div class="flash-card' + (flash.revealed ? ' revealed' : '') + '">' +
             (label ? '<div class="flash-source">' + escapeHtml(label) + '</div>' : '') +
+            (!flash.practiceAll ? '<div class="srs-kind ' + srsKind(e) + '">' + { fresh: '新しいカード', learn: '学習中', review: '復習' }[srsKind(e)] + '</div>' : '') +
             '<div class="flash-word">' + (flash.revealed ? entryWordHtml(e) : escapeHtml(e.word)) + '</div>' +
             (flash.revealed ?
                 '<div class="flash-meaning' + (e.meaning ? '' : ' empty') + '">' + (e.meaning ? escapeHtml(e.meaning) : '（意味・メモなし）') + '</div>' +
@@ -10818,12 +10941,9 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
                 '<button class="flash-speak" aria-label="読み上げ">🔊</button>'
                 : '<div class="flash-hint">読みと意味を思い出してから、めくってください</div>') +
             '</div>' +
-            '<div class="flash-actions">' + (flash.revealed ?
-                '<button class="flash-again">まだ</button><button class="flash-know">覚えた</button>' :
-                '<button class="flash-reveal">答えを見る</button>') + '</div>';
+            '<div class="flash-actions">' + (flash.revealed ? srsButtonsHtml(e) : '<button class="flash-reveal">答えを見る</button>') + '</div>';
         if (flash.revealed) {
-            body.querySelector('.flash-again').addEventListener('click', function() { gradeFlash(false); });
-            body.querySelector('.flash-know').addEventListener('click', function() { gradeFlash(true); });
+            body.querySelectorAll('.srs-btn').forEach(function(b) { b.addEventListener('click', function() { gradeCard(+b.dataset.g); }); });
             body.querySelector('.flash-speak').addEventListener('click', function() { speakText(escapeHtml(e.reading || e.word)); });
         } else {
             var reveal = function() { flash.revealed = true; renderFlash(); };
@@ -10903,6 +11023,39 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         if (again) again.addEventListener('click', function() { gradeFlash(false); });
         body.querySelector('.flash-know').addEventListener('click', function() { gradeFlash(true); });
         body.querySelector('.flash-speak').addEventListener('click', function() { speakText(escapeHtml(e.reading || e.word)); });
+    }
+    function srsTomorrowNote() {
+        var t = dateKey(addDays(new Date(), 1)), n = wordList.filter(function(e) { return e.srs && !srsIsNew(e) && e.due === t; }).length;
+        return n ? '<br>明日の復習：' + n + '枚' : '';
+    }
+    function srsKind(e) { return srsIsNew(e) ? 'fresh' : e.srs.state === 'review' ? 'review' : 'learn'; }
+    function srsButtonsHtml(e) {
+        var names = ['', 'もう一度', '難しい', '普通', '簡単'], o = flash.practiceAll ? null : srsOutcomes(e);
+        return '<div class="srs-btns">' + [1, 2, 3, 4].map(function(g) {
+            return '<button class="srs-btn g' + g + '" data-g="' + g + '"><small>' + (o ? srsLabel(o[g]) : '') + '</small>' + names[g] + '</button>';
+        }).join('') + '</div>';
+    }
+    // grade a card: FSRS moves it on; a step under a day brings it back later in this session
+    function gradeCard(g) {
+        var e = wordList.find(function(w) { return w.id === flash.queue[flash.pos]; });
+        if (e && !flash.practiceAll) {
+            var wasNew = srsIsNew(e), o = srsOutcomes(e)[g];
+            e.srs = o.srs;
+            if (o.minutes != null) {
+                e.due = getTodayDateString();
+                var at = Math.min(flash.queue.length, flash.pos + 1 + Math.max(3, Math.round(o.minutes / 2)));
+                flash.queue.splice(at, 0, e.id);      // back later in this session
+            } else e.due = dateKey(addDays(new Date(), o.days));
+            if (wasNew) { var rec = getSetting('srsNewDay', null), t = getTodayDateString(); setSetting('srsNewDay', { d: t, n: (rec && rec.d === t ? rec.n : 0) + 1 }); }
+            e.lastReviewed = Date.now();
+            saveWordList();
+        }
+        if (g === 1) { flash.again++; if (e && flash.missedIds.indexOf(e.id) < 0) flash.missedIds.push(e.id); if (flash.practiceAll && e) flash.queue.push(e.id); }
+        else flash.known++;
+        if (navigator.vibrate && getSetting('vibrate', true)) { try { navigator.vibrate(g > 1 ? 12 : [20, 30, 20]); } catch (err) {} }
+        flash.pos++;
+        flash.revealed = false;
+        renderFlash();
     }
     function gradeFlash(knew) {
         var e = wordList.find(function(w) { return w.id === flash.queue[flash.pos]; });
@@ -11286,7 +11439,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
 
     // ---------- 単語帳: search, filters, furigana self-test ----------
     var wlSearch = '', wlWeek = '';
-    function isLearned(e) { return (e.box || 0) >= 3; }
+    function isLearned(e) { return e.srs ? e.srs.state === 'review' && e.srs.s >= 7 : (e.box || 0) >= 3; }
     function wordMatchesFilters(e) {
         if (getSetting('wlHideLearned', false) && isLearned(e)) return false;
         if (wlWeek) {
@@ -11304,8 +11457,8 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var hl = document.getElementById('wordlist-hide-learned'), hf = document.getElementById('wordlist-hide-furigana');
         hl.classList.toggle('on', !!getSetting('wlHideLearned', false)); hl.setAttribute('aria-pressed', String(!!getSetting('wlHideLearned', false)));
         hf.classList.toggle('on', !!getSetting('wlHideFurigana', false)); hf.setAttribute('aria-pressed', String(!!getSetting('wlHideFurigana', false)));
-        var due = flashDueWords().length;
-        document.getElementById('flash-start-sub').textContent = !wordList.length ? '' : due ? '今日 ' + due + '語' : '今日の分は完了 ✓';
+        var sq = srsTodayQueue();
+        document.getElementById('flash-start-sub').textContent = !wordList.length ? '' : sq.all.length ? '新' + sq.fresh.length + '・学習' + sq.learn.length + '・復習' + sq.review.length : '今日の分は完了 ✓';
         document.getElementById('flash-start').disabled = !wordList.length;
         var nDef = writeWords().length;
         document.getElementById('write-start-sub').textContent = !wordList.length ? '' : nDef ? '定義あり ' + nDef + '語' : '定義を追加して使う';
@@ -18833,7 +18986,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             });
         });
         var reviewCount = attemptLog.filter(function(a) { return a.m === 'p' || a.m === 'x'; }).length;
-        var learnedCards = wordList.filter(function(e) { return (e.box || 0) >= 3; }).length;
+        var learnedCards = wordList.filter(function(e) { return isLearned(e); }).length;
         var earlyBird = attemptLog.some(function(a) { var h = new Date(a.t).getHours(); return h >= 5 && h < 8; });
         var nb = newBadgeStats();
         // 読む速さ badges count only readings since they were last reset (the reading history itself is kept)
@@ -18881,7 +19034,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             { id: 'measure', cat: 'speed', icon: '📏', name: '計測', value: roAllB.length, unit: '回', tiers: tiers([1, 10, 30], '回'), hint: 'ホームの「読む速さを測る」で読んだ回数' },
             // 単語
             { id: 'wordlist', cat: 'words', icon: '📒', name: '単語帳', value: wordList.length, unit: '語', tiers: tiers([10, 50, 100, 200], '語'), hint: '単語帳にためた語の数' },
-            { id: 'cards', cat: 'words', icon: '🃏', name: 'カード', value: learnedCards, unit: '語', tiers: tiers([10, 30, 100], '語'), hint: 'カードで「覚えた」になった語の数（3回続けて覚えた）' },
+            { id: 'cards', cat: 'words', icon: '🃏', name: 'カード', value: learnedCards, unit: '語', tiers: tiers([10, 30, 100], '語'), hint: 'カードで覚えた語の数（次の復習まで1週間以上あいた語）' },
             // 上級読解
             { id: 'advread', cat: 'adv', icon: '📖', name: '通読', ok: advP.some(function(pr) { return pr.read; }), hint: '上級読解の文章を通読する（手引き1にチェック）' },
             { id: 'advq', cat: 'adv', icon: '✍️', name: '問いに向き合う', ok: advP.some(function(pr) { return pr.qTotal && pr.answered === pr.qTotal; }), hint: '上級読解の1編で、すべての問いに自分の答えを書く' },
