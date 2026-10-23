@@ -918,6 +918,7 @@
         .flash-start { width: 100%; display: flex; align-items: center; justify-content: space-between; margin: 4px 0 10px; padding: 12px 16px; border: none; border-radius: var(--radius); background: var(--active-blue); color: #fff; font-weight: bold; font-size: 1rem; }
         .flash-start:disabled { opacity: 0.4; }
         .flash-starts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 4px 0 10px; }
+        .flash-starts #flash-start { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; }
         .wq-card { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 18px 16px; border: 1px solid var(--border-light); border-radius: 16px; background: var(--surface); overflow-y: auto; position: relative; }
         .wq-dir { font-size: 0.75rem; font-weight: bold; color: var(--text-sub); }
         .wq-prompt { text-align: center; padding: 10px 4px 6px; }
@@ -951,6 +952,26 @@
         .mset-seg button:first-child { border-left: none; }
         .mset-seg button.on { background: var(--active-blue); color: #fff; font-weight: bold; }
         html.dark .mset-seg button.on { color: #0d1117; }
+        .mem-wrap { gap: 10px; }
+        .mem-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+        .mem-card { position: relative; aspect-ratio: 3 / 4; padding: 0; border: none; background: none; perspective: 700px; animation: wqIn 0.35s both; }
+        .mem-grid.rows-5 .mem-card { aspect-ratio: 4 / 5; }
+        .mem-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform 0.38s cubic-bezier(.3, .7, .3, 1.1); }
+        .mem-card.up .mem-inner { transform: rotateY(180deg); }
+        .mem-back, .mem-front { position: absolute; inset: 0; border-radius: 10px; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .mem-back { background-color: #24427a; background-image: radial-gradient(circle at 50% 100%, transparent 38%, rgba(255,255,255,.14) 39%, rgba(255,255,255,.14) 44%, transparent 45%, transparent 56%, rgba(255,255,255,.14) 57%, rgba(255,255,255,.14) 62%, transparent 63%); background-size: 22px 11px; box-shadow: inset 0 0 0 3px #24427a, inset 0 0 0 4px rgba(255,255,255,.5); }
+        .mem-back::after { content: '試'; width: 26px; height: 26px; border-radius: 5px; background: #b8312f; color: #fff; font-family: var(--mincho); font-size: 0.85rem; display: flex; align-items: center; justify-content: center; transform: rotate(-6deg); box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+        .mem-front { transform: rotateY(180deg); background: var(--bg-paper); border: 1px solid var(--border-light); padding: 4px; text-align: center; }
+        .mem-w { font-family: var(--reading-font); font-weight: bold; font-size: 1rem; line-height: 1.25; word-break: break-all; }
+        .mem-r { font-size: 0.85rem; font-weight: bold; line-height: 1.3; word-break: break-all; }
+        .mem-m { font-size: 0.68rem; line-height: 1.35; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 6; overflow: hidden; word-break: break-word; }
+        .mem-card.word .mem-front { background: var(--surface); border-color: var(--active-blue); }
+        .mem-card.done .mem-front { border-color: var(--correct-color); background: color-mix(in srgb, var(--correct-color) 12%, var(--bg-paper)); }
+        .mem-card.done { opacity: 0.75; transition: opacity 0.4s 0.4s; }
+        .mem-card.pop .mem-inner { animation: memPop 0.45s cubic-bezier(.2, .9, .3, 1.4); }
+        @keyframes memPop { 0% { transform: rotateY(180deg) scale(1); } 40% { transform: rotateY(180deg) scale(1.12); } 100% { transform: rotateY(180deg) scale(1); } }
+        .mem-card.bad .mem-front { border-color: var(--incorrect-color); animation: wqShake 0.35s; }
+        @media (prefers-reduced-motion: reduce) { .mem-inner { transition: none; } .mem-card, .mem-card.pop .mem-inner { animation: none; } }
         .wq-hud { display: flex; justify-content: center; gap: 18px; font-size: 0.8rem; color: var(--text-sub); }
         .wq-hud b { color: var(--text-main); font-variant-numeric: tabular-nums; }
         .wq-card { position: relative; }
@@ -2662,7 +2683,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             <span id="wordlist-count" style="margin-left:auto; align-self:center; font-size:0.8rem; color:var(--text-sub); font-weight:bold;"></span>
             <button id="wordlist-export" class="wordlist-export" title="単語;意味;単語[ふりがな] の形でテキストファイル（.txt）に保存" aria-label="単語帳を.txtファイルに書き出す"><svg class="dl-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 17v3h16v-3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>書き出す</button>
         </div>
-        <div class="flash-starts"><button id="flash-start" class="flash-start"><span class="flash-start-label">カードで復習</span><span class="flash-start-sub" id="flash-start-sub"></span></button><button id="write-start" class="flash-start write"><span class="flash-start-label">意味を書く</span><span class="flash-start-sub" id="write-start-sub"></span></button><button id="mc-start" class="flash-start write"><span class="flash-start-label">四択クイズ</span><span class="flash-start-sub" id="mc-start-sub"></span></button><button id="match-start" class="flash-start write"><span class="flash-start-label">マッチング</span><span class="flash-start-sub" id="match-start-sub"></span></button></div>
+        <div class="flash-starts"><button id="flash-start" class="flash-start"><span class="flash-start-label">カードで復習</span><span class="flash-start-sub" id="flash-start-sub"></span></button><button id="write-start" class="flash-start write"><span class="flash-start-label">意味を書く</span><span class="flash-start-sub" id="write-start-sub"></span></button><button id="mc-start" class="flash-start write"><span class="flash-start-label">四択クイズ</span><span class="flash-start-sub" id="mc-start-sub"></span></button><button id="match-start" class="flash-start write"><span class="flash-start-label">マッチング</span><span class="flash-start-sub" id="match-start-sub"></span></button><button id="mem-start" class="flash-start write"><span class="flash-start-label">神経衰弱</span><span class="flash-start-sub" id="mem-start-sub"></span></button></div>
         <div class="wordlist-tools">
             <input type="search" id="wordlist-search" placeholder="検索" aria-label="検索（単語・読み・意味）" autocomplete="off" lang="ja">
             <select id="wordlist-week" aria-label="週で絞り込む">
@@ -11119,7 +11140,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var lines = String(e.meaning || '').split('\n').map(function(l) { return l.trim(); }).filter(Boolean);
         if (e.dictForm && lines[0] === e.dictForm) lines.shift();
         // a conjugated word's first line is usually its 辞書形 (maybe in kanji, e.g. おとろえて → 衰える): it gives the answer away
-        else if (lines.length > 1 && (e.dictForm || dictionaryForm(e.word) || /(?:[てでただず]|ない|ます|れる|せる)$/.test(e.word)) && /^[^\s、,，/／;；]{1,10}$/.test(lines[0]) && /[うくぐすつぬぶむるい]$/.test(lines[0])) lines.shift();
+        else if (lines.length > 1 && (e.dictForm || dictionaryForm(e.word) || /(?:[てでただずば]|ない|ます|れる|せる|たら|よう|ろ)$/.test(e.word)) && /^[^\s、,，/／;；]{1,10}$/.test(lines[0]) && /[うくぐすつぬぶむるい]$/.test(lines[0])) lines.shift();
         var t = lines.join(' / ');
         if (!t) { var d = wordDefinitions[e.word] || (e.dictForm && wordDefinitions[e.dictForm]); if (d) t = d.jp + (d.kr && getSetting('showKorean', true) ? ' / ' + d.kr : ''); }
         return t;
@@ -11460,6 +11481,135 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             });
         });
     }
+    // ---------- 単語帳: 神経衰弱 (memory) ----------
+    // Every card face down; turn two over and find a word and its partner (meaning or reading).
+    // Settings (remembered): what the partner card shows, how many pairs, and a 3-second look at the start.
+    function memOpts() {
+        var o = getSetting('memOpts', null) || {};
+        return { side: o.side === 'reading' ? 'reading' : 'meaning', pairs: [4, 6, 8, 10].indexOf(o.pairs) > -1 ? o.pairs : 6, peek: o.peek === 3 ? 3 : 0 };
+    }
+    function startWordMemory() {
+        wqOpen('神経衰弱');
+        wq = null;
+        var o = memOpts();
+        var body = document.querySelector('#flash-view .flash-body');
+        document.querySelector('#flash-view .flash-progress').textContent = '';
+        var seg = function(key, label, items) {
+            return '<div class="mset-row"><div class="mset-label">' + label + '</div><div class="mset-seg" data-key="' + key + '">' +
+                items.map(function(it) { return '<button data-v="' + it[0] + '"' + (String(o[key]) === String(it[0]) ? ' class="on"' : '') + '>' + it[1] + '</button>'; }).join('') + '</div></div>';
+        };
+        var draw = function() {
+            var pool = matchPool(o.side).length, ok = pool >= o.pairs;
+            var bk = 'mem:' + o.side + ':' + o.pairs + ':' + o.peek, best = (getSetting('wqBests', null) || {})[bk];
+            body.innerHTML = '<div class="wq-card mset">' +
+                seg('side', '組み合わせ', [['meaning', '言葉 ↔ 意味'], ['reading', '言葉 ↔ 読み']]) +
+                seg('pairs', 'ペアの数', [[4, '4組'], [6, '6組'], [8, '8組'], [10, '10組']]) +
+                seg('peek', '最初に見る', [[0, 'なし'], [3, '3秒']]) +
+                '<div class="wq-note">' + (ok ? '使える単語 ' + pool + '語 → ' + o.pairs * 2 + '枚のカード' : '使える単語が足りません（' + pool + '語・' + o.pairs + '組には' + o.pairs + '語必要）') +
+                (best != null ? '<br>この設定の自己ベスト：' + best + '手' : '') + '<br>2枚ずつめくって、言葉と' + (o.side === 'reading' ? '読み' : '意味') + 'のペアを見つけます</div>' +
+                '</div><div class="flash-actions"><button class="flash-know" id="mset-go"' + (ok ? '' : ' disabled') + '>始める</button></div>';
+            body.querySelectorAll('.mset-seg button').forEach(function(b) {
+                b.addEventListener('click', function() {
+                    var key = b.parentNode.dataset.key, v = b.dataset.v;
+                    o[key] = key === 'side' ? v : parseInt(v, 10);
+                    setSetting('memOpts', o);
+                    draw();
+                });
+            });
+            document.getElementById('mset-go').addEventListener('click', function() { runWordMemory(o); });
+        };
+        draw();
+    }
+    function runWordMemory(o) {
+        var words = shuffleInPlace(matchPool(o.side).slice()).slice(0, o.pairs);
+        if (words.length < o.pairs) return;
+        var cards = [];
+        words.forEach(function(e) { cards.push({ e: e, side: 'L' }); cards.push({ e: e, side: 'R' }); });
+        shuffleInPlace(cards);
+        wq = { kind: 'memory', opts: o, cards: cards, open: [], found: 0, moves: 0, miss: 0, combo: 0, bestCombo: 0, start: 0, lock: true, missedIds: [] };
+        wqOpen('神経衰弱');
+        var body = document.querySelector('#flash-view .flash-body');
+        document.querySelector('#flash-view .flash-progress').textContent = '';
+        var face = function(c) {
+            if (c.side === 'L') return '<span class="mem-w">' + escapeHtml(c.e.word) + '</span>';
+            return o.side === 'reading' ? '<span class="mem-r">' + escapeHtml(toHiragana(c.e.reading)) + '</span>' : '<span class="mem-m">' + escapeHtml(wqClip(wqMeaning(c.e), 40)) + '</span>';
+        };
+        var rows = Math.ceil(cards.length / 4);
+        body.innerHTML = '<div class="wq-card mem-wrap"><div class="mem-grid rows-' + rows + '">' + cards.map(function(c, i) {
+                return '<button class="mem-card' + (c.side === 'L' ? ' word' : '') + '" data-i="' + i + '" style="animation-delay:' + (i * 30) + 'ms" aria-label="カード"><span class="mem-inner"><span class="mem-back" aria-hidden="true"></span><span class="mem-front">' + face(c) + '</span></span></button>';
+            }).join('') + '</div>' +
+            '<div class="wq-hud"><span>手数 <b id="mem-moves">0</b></span><span>ペア <b id="mem-found">0</b>/' + words.length + '</span><span>コンボ <b id="mem-combo">0</b></span><span>⏱ <b id="wq-clock">0:00</b></span></div>' +
+            (o.peek ? '<div class="wq-note" id="mem-peek">よく見て覚えてください…</div>' : '') + '</div>';
+        var els = body.querySelectorAll('.mem-card');
+        var go = function() {
+            wq.lock = false; wq.start = Date.now();
+            var tid = wq.timer = setInterval(function() {
+                if (!wq || wq.kind !== 'memory' || wq.timer !== tid) { clearInterval(tid); return; }
+                var c = document.getElementById('wq-clock'); if (c) c.textContent = wqClock(Date.now() - wq.start);
+            }, 500);
+        };
+        if (o.peek) {
+            setTimeout(function() { els.forEach(function(el) { el.classList.add('up'); }); }, 500);
+            setTimeout(function() {
+                if (!wq || wq.kind !== 'memory') return;
+                els.forEach(function(el) { el.classList.remove('up'); });
+                var n = document.getElementById('mem-peek'); if (n) n.remove();
+                setTimeout(go, 350);
+            }, 500 + o.peek * 1000);
+        } else setTimeout(go, 300);
+        els.forEach(function(el) {
+            el.addEventListener('click', function() {
+                if (!wq || wq.kind !== 'memory' || wq.lock) return;
+                var i = +el.dataset.i, c = wq.cards[i];
+                if (c.done || wq.open.indexOf(i) > -1) return;
+                el.classList.add('up');
+                wq.open.push(i);
+                if (wq.open.length < 2) return;
+                wq.moves++;
+                document.getElementById('mem-moves').textContent = wq.moves;
+                var a = wq.open[0], b2 = wq.open[1], ca = wq.cards[a], cb = wq.cards[b2], ea = els[a], eb = els[b2];
+                wq.open = [];
+                if (ca.e.id === cb.e.id && ca.side !== cb.side) {
+                    ca.done = cb.done = true; wq.found++; wq.combo++; wq.bestCombo = Math.max(wq.bestCombo, wq.combo);
+                    document.getElementById('mem-found').textContent = wq.found;
+                    document.getElementById('mem-combo').textContent = wq.combo;
+                    var colors = wq.combo >= 4 ? ['#d4a017', '#f6c94c', '#fff3c4'] : wq.combo >= 2 ? ['#b8312f', '#e07a5f', '#f6c94c'] : ['#2e9e5b', '#7fd39b', '#ffffff'];
+                    setTimeout(function() {
+                        ea.classList.add('done', 'pop'); eb.classList.add('done', 'pop');
+                        wqBurst(ea, colors, 12); wqBurst(eb, colors, 12);
+                        if (wq.combo >= 2) wqFloat(eb, 'コンボ ×' + wq.combo, wq.combo >= 4 ? 'gold' : 'hot');
+                    }, 320);
+                    speakText(escapeHtml(ca.e.reading || ca.e.word));
+                    if (navigator.vibrate && getSetting('vibrate', true)) { try { navigator.vibrate(12); } catch (err) {} }
+                    if (wq.found === wq.cards.length / 2) {
+                        clearInterval(wq.timer);
+                        var ms = Date.now() - wq.start, pairs = wq.found, moves = wq.moves, again = wq.opts;
+                        var missE = wq.missedIds.map(function(mid) { return wordList.find(function(w) { return String(w.id) === String(mid); }); }).filter(Boolean);
+                        var bk = 'mem:' + again.side + ':' + again.pairs + ':' + again.peek, best = wqBest(bk, moves, true);
+                        setTimeout(function() {
+                            wqResult({ title: '神経衰弱', pct: pairs / moves * 100, big: moves, bigLabel: '手',
+                                best: best.isNew ? '🏆 自己ベスト更新！（前回まで ' + best.old + '手）' : best.first ? 'この設定の初記録：' + moves + '手' : 'この設定の自己ベスト：' + best.old + '手',
+                                chips: [['ペア', pairs], ['手数', moves], ['最高コンボ', wq.bestCombo], ['時間', wqClock(ms)]],
+                                missed: missE, note: pairs === moves ? '一度もまちがえずに全部そろえました！' : 'いちばん少ない手数は ' + pairs + '手です。',
+                                again: function() { runWordMemory(again); } });
+                        }, 1100);
+                    }
+                } else {
+                    wq.miss++; wq.combo = 0; wq.lock = true;
+                    document.getElementById('mem-combo').textContent = 0;
+                    // a card you've already seen once and still missed counts as a word to look at again
+                    [ca, cb].forEach(function(c) { if (c.seen && wq.missedIds.indexOf(String(c.e.id)) < 0) wq.missedIds.push(String(c.e.id)); });
+                    ca.seen = cb.seen = true;
+                    setTimeout(function() { ea.classList.add('bad'); eb.classList.add('bad'); }, 380);
+                    setTimeout(function() {
+                        ea.classList.remove('up', 'bad'); eb.classList.remove('up', 'bad');
+                        if (wq) wq.lock = false;
+                    }, 1050);
+                }
+            });
+        });
+    }
+    document.getElementById('mem-start').addEventListener('click', startWordMemory);
     document.getElementById('mc-start').addEventListener('click', startWordMC);
     document.getElementById('match-start').addEventListener('click', startWordMatch);
     document.getElementById('flash-start').addEventListener('click', function() { startFlashcards(false); });
@@ -11495,6 +11645,9 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var mco = matchOpts && mcOpts();
         document.getElementById('mc-start-sub').textContent = { w2m: '言葉→意味', m2w: '意味→言葉', mix: 'まぜる', w2r: '言葉→読み' }[mco.kind] + '・' + (mco.count ? mco.count + '問' : 'すべて');
         document.getElementById('mc-start').disabled = !wordList.length;
+        var mmo = memOpts();
+        document.getElementById('mem-start-sub').textContent = (mmo.side === 'reading' ? '読み・' : '') + mmo.pairs + '組' + (mmo.peek ? '・最初に見る' : '');
+        document.getElementById('mem-start').disabled = !wordList.length;
         var mo = matchOpts();
         document.getElementById('match-start-sub').textContent = (mo.side === 'reading' ? '読み・' : '') + mo.pairs + '組ずつ・' + (mo.rounds ? mo.rounds + '回' : 'すべて');
         document.getElementById('match-start').disabled = !wordList.length;
