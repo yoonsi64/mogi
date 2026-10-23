@@ -938,6 +938,53 @@
         .mset-seg button:first-child { border-left: none; }
         .mset-seg button.on { background: var(--active-blue); color: #fff; font-weight: bold; }
         html.dark .mset-seg button.on { color: #0d1117; }
+        .wq-hud { display: flex; justify-content: center; gap: 18px; font-size: 0.8rem; color: var(--text-sub); }
+        .wq-hud b { color: var(--text-main); font-variant-numeric: tabular-nums; }
+        .wq-card { position: relative; }
+        .wq-tile.enter { animation: wqIn 0.35s cubic-bezier(.2, .9, .3, 1.2) both; }
+        @keyframes wqIn { from { opacity: 0; transform: translateY(10px) scale(0.92); } to { opacity: 1; transform: none; } }
+        .wq-tile.pop { animation: wqPop 0.45s cubic-bezier(.2, .9, .3, 1.4); }
+        @keyframes wqPop { 0% { transform: scale(1); } 35% { transform: scale(1.12); box-shadow: 0 0 0 6px color-mix(in srgb, var(--correct-color) 30%, transparent); } 100% { transform: scale(1); } }
+        .wq-tile.done { transition: opacity 0.4s; }
+        .wq-fx { position: fixed; inset: 0; pointer-events: none; z-index: 5; overflow: hidden; }
+        .wq-spark { position: fixed; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; animation: wqSpark 0.7s ease-out forwards; }
+        @keyframes wqSpark { to { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; } }
+        .wq-float { position: fixed; transform: translate(-50%, -50%); font-weight: 800; font-size: 1.05rem; color: var(--correct-color); text-shadow: 0 1px 0 var(--bg-paper), 0 0 6px var(--bg-paper); animation: wqFloatUp 1.05s ease-out forwards; white-space: nowrap; }
+        .wq-float.hot { color: #b8312f; font-size: 1.2rem; }
+        .wq-float.gold { color: #c08a00; font-size: 1.35rem; }
+        @keyframes wqFloatUp { 0% { opacity: 0; transform: translate(-50%, -30%) scale(0.7); } 20% { opacity: 1; transform: translate(-50%, -60%) scale(1.1); } 100% { opacity: 0; transform: translate(-50%, -160%) scale(1); } }
+        .wq-clear { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%) rotate(-8deg); padding: 6px 18px; border: 4px solid #b8312f; border-radius: 10px; color: #b8312f; font-size: 2rem; font-weight: 900; letter-spacing: 0.15em; background: color-mix(in srgb, var(--surface) 85%, transparent); animation: wqStamp 0.4s cubic-bezier(.2, .9, .3, 1.3) both; pointer-events: none; }
+        @keyframes wqStamp { from { opacity: 0; transform: translate(-50%, -50%) rotate(-8deg) scale(2.2); } to { opacity: 1; transform: translate(-50%, -50%) rotate(-8deg) scale(1); } }
+        .wq-confetti, .wq-petal { position: fixed; top: -20px; width: 8px; height: 13px; border-radius: 2px; animation: wqFall linear forwards; }
+        .wq-petal { width: 12px; height: 10px; border-radius: 12px 0 12px 0; }
+        @keyframes wqFall { to { transform: translate(var(--drift), 110vh) rotate(var(--spin)); } }
+        .wq-result { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; overflow-y: auto; padding: 8px 0; }
+        .wq-res-title { font-size: 0.9rem; font-weight: bold; color: var(--text-sub); letter-spacing: 0.1em; }
+        .wq-ring { position: relative; width: 150px; height: 150px; }
+        .wq-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+        .wq-ring circle { fill: none; stroke-width: 10; }
+        .wq-ring-bg { stroke: var(--border-light); }
+        .wq-ring-fg { stroke: var(--active-blue); stroke-linecap: round; transition: stroke-dashoffset 1s cubic-bezier(.3, .8, .3, 1); }
+        .wq-result.perfect .wq-ring-fg { stroke: #b8312f; } .wq-result.great .wq-ring-fg { stroke: var(--correct-color); } .wq-result.low .wq-ring-fg { stroke: #d4a017; }
+        .wq-ring-num { position: absolute; inset: 0; display: flex; align-items: baseline; justify-content: center; padding-top: 52px; gap: 3px; }
+        .wq-ring-num b { font-size: 2.6rem; line-height: 1; font-variant-numeric: tabular-nums; }
+        .wq-ring-num small { font-size: 0.9rem; color: var(--text-sub); font-weight: bold; }
+        .wq-stamp { position: absolute; right: -18px; bottom: -6px; width: 58px; height: 58px; border: 3px solid #b8312f; border-radius: 50%; color: #b8312f; font-weight: 900; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; transform: rotate(-14deg); background: var(--bg-paper); animation: wqStamp2 0.45s 0.9s cubic-bezier(.2, .9, .3, 1.3) both; }
+        @keyframes wqStamp2 { from { opacity: 0; transform: rotate(-14deg) scale(2.4); } to { opacity: 1; transform: rotate(-14deg) scale(1); } }
+        .wq-grade { font-family: var(--reading-font); font-size: 1.7rem; font-weight: 800; animation: wqIn 0.5s 0.5s both; }
+        .wq-result.perfect .wq-grade { color: #b8312f; } .wq-result.great .wq-grade { color: var(--correct-color); }
+        .wq-best { font-size: 0.85rem; font-weight: bold; color: #b07d00; animation: wqIn 0.5s 0.8s both; }
+        .wq-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+        .wq-chip { min-width: 70px; padding: 6px 10px; border: 1px solid var(--border-light); border-radius: 12px; background: var(--surface); animation: wqIn 0.4s both; }
+        .wq-chip:nth-child(2) { animation-delay: 0.08s; } .wq-chip:nth-child(3) { animation-delay: 0.16s; } .wq-chip:nth-child(4) { animation-delay: 0.24s; }
+        .wq-chip small { display: block; font-size: 0.7rem; color: var(--text-sub); font-weight: bold; }
+        .wq-chip b { font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+        .wq-missed { width: 100%; }
+        .wq-missed small { display: block; font-size: 0.72rem; color: var(--text-sub); font-weight: bold; margin-bottom: 6px; }
+        .wq-missed > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+        .wq-miss { padding: 6px 10px; border-radius: 10px; border: 1px solid var(--border-light); background: var(--bg-paper); color: var(--text-main); font-family: var(--reading-font); font-size: 1rem; }
+        .wq-res-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        @media (prefers-reduced-motion: reduce) { .wq-tile.enter, .wq-tile.pop, .wq-grade, .wq-best, .wq-chip, .wq-stamp, .wq-clear { animation: none; } .wq-ring-fg { transition: none; } }
         .wq-note { font-size: 0.78rem; color: var(--text-sub); text-align: center; }
         .flash-starts .flash-start { flex: 1; min-width: 0; margin: 0; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 14px; }
         .flash-start.write { background: var(--surface); color: var(--active-blue); box-shadow: inset 0 0 0 2px var(--active-blue); }
@@ -10726,7 +10773,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var practiceAll = !due.length;          // nothing due today: go through every word
         var list = practiceAll ? shuffleInPlace((write ? writeWords() : wordList).slice()) : due;
         if (!list.length) return;
-        flash = { queue: list.map(function(e) { return e.id; }), pos: 0, revealed: false, known: 0, again: 0, practiceAll: practiceAll, write: write, typed: '' };
+        flash = { queue: list.map(function(e) { return e.id; }), pos: 0, revealed: false, known: 0, again: 0, practiceAll: practiceAll, write: write, typed: '', start: Date.now(), missedIds: [] };
         buildFlashView();
         document.querySelector('#flash-view .flash-title').textContent = write === 'word' ? '言葉を書く' : write ? '意味を書く' : 'カードで復習';
         renderFlash();
@@ -10735,7 +10782,9 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
     function closeFlashcards() {
         var v = document.getElementById('flash-view');
         if (v) v.classList.remove('active');
+        if (wq && wq.timer) clearInterval(wq.timer);
         flash = null; wq = null;
+        var fx = document.querySelector('#flash-view .wq-fx'); if (fx) fx.innerHTML = '';
         if (wordlistView.style.display !== 'none') renderWordListItems();
     }
     function renderFlash() {
@@ -10743,6 +10792,11 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var remaining = flash.queue.length - flash.pos;
         v.querySelector('.flash-progress').textContent = remaining > 0 ? 'のこり ' + remaining : '';
         if (remaining <= 0) {
+            var tot = flash.known + flash.again, missedE = (flash.missedIds || []).map(function(id) { return wordList.find(function(w) { return w.id === id; }); }).filter(Boolean);
+            wqResult({ title: flash.practiceAll ? 'ひととおり復習しました' : '今日の復習はおわりです', pct: tot ? flash.known / tot * 100 : 100,
+                chips: [[flash.write ? '合っていた' : '覚えた', flash.known], [flash.write ? '違った' : 'まだ', flash.again], ['時間', wqClock(Date.now() - (flash.start || Date.now()))]],
+                missed: missedE, note: '覚えた単語は 1日→2日→4日… と間隔をあけてまた出てきます。' });
+            return;
             body.innerHTML = '<div class="flash-done"><div class="flash-done-mark">✓</div>' +
                 '<div class="flash-done-title">' + (flash.practiceAll ? 'ひととおり復習しました' : '今日の復習はおわりです') + '</div>' +
                 '<div class="flash-done-stats">' + (flash.write ? '合っていた' : '覚えた') + ' <b>' + flash.known + '</b>　' + (flash.write ? '違った' : 'まだ') + ' <b>' + flash.again + '</b></div>' +
@@ -10862,6 +10916,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             } else {
                 e[BOX] = 0;
                 e[DUE] = getTodayDateString();
+                if (flash.missedIds && flash.missedIds.indexOf(e.id) < 0) flash.missedIds.push(e.id);
                 flash.again++;
                 flash.queue.push(e.id);          // see it again before the end
             }
@@ -10897,15 +10952,101 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         document.querySelector('#flash-view .flash-title').textContent = title;
         document.getElementById('flash-view').classList.add('active');
     }
-    function wqDone(stats, note, again) {
+    // ---------- end screens and effects for the 単語帳 modes ----------
+    function wqCalm() { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
+    function wqLayer() {
+        var v = document.getElementById('flash-view'), l = v.querySelector('.wq-fx');
+        if (!l) { l = document.createElement('div'); l.className = 'wq-fx'; l.setAttribute('aria-hidden', 'true'); v.appendChild(l); }
+        return l;
+    }
+    // a burst of sparks from the middle of an element
+    function wqBurst(el, colors, n) {
+        if (!el || wqCalm()) return;
+        var r = el.getBoundingClientRect(), l = wqLayer();
+        for (var i = 0; i < (n || 12); i++) {
+            var sp = document.createElement('i'), a = Math.PI * 2 * i / (n || 12) + Math.random() * 0.5, d = 34 + Math.random() * 40;
+            sp.className = 'wq-spark';
+            sp.style.left = (r.left + r.width / 2) + 'px'; sp.style.top = (r.top + r.height / 2) + 'px';
+            sp.style.setProperty('--dx', Math.cos(a) * d + 'px'); sp.style.setProperty('--dy', Math.sin(a) * d + 'px');
+            sp.style.background = colors[i % colors.length];
+            l.appendChild(sp);
+            setTimeout(function(x) { x.remove(); }.bind(null, sp), 750);
+        }
+    }
+    // a word that floats up from an element (コンボ, +1 …)
+    function wqFloat(el, text, cls) {
+        if (!el) return;
+        var r = el.getBoundingClientRect(), f = document.createElement('div');
+        f.className = 'wq-float' + (cls ? ' ' + cls : '');
+        f.textContent = text;
+        f.style.left = (r.left + r.width / 2) + 'px'; f.style.top = (r.top) + 'px';
+        wqLayer().appendChild(f);
+        setTimeout(function() { f.remove(); }, 1100);
+    }
+    // falling paper: confetti, or 桜 petals for a perfect score
+    function wqConfetti(petals) {
+        if (wqCalm()) return;
+        var l = wqLayer(), colors = petals ? ['#f6c6d0', '#f9d8df', '#f2b3c2', '#fff0f3'] : ['#b8312f', '#d4a017', '#2f6f8f', '#006600', '#e07a5f', '#7a4f8f'];
+        for (var i = 0; i < (petals ? 36 : 60); i++) {
+            var c = document.createElement('i');
+            c.className = petals ? 'wq-petal' : 'wq-confetti';
+            c.style.left = Math.random() * 100 + 'vw';
+            c.style.background = colors[i % colors.length];
+            c.style.animationDelay = (Math.random() * 0.8) + 's';
+            c.style.animationDuration = (1.8 + Math.random() * 1.6) + 's';
+            c.style.setProperty('--drift', (Math.random() * 80 - 40) + 'px');
+            c.style.setProperty('--spin', (Math.random() * 720 - 360) + 'deg');
+            l.appendChild(c);
+            setTimeout(function(x) { x.remove(); }.bind(null, c), 4400);
+        }
+    }
+    function wqChime() { try { if (typeof omkSound === 'function') omkSound('bell', 0.5); } catch (e) {} }
+    function wqClock(ms) { var s = Math.max(0, Math.round(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+    // personal bests per mode and setting: higher is better for 'score', lower for 'time'
+    function wqBest(key, value, lowerIsBetter) {
+        var all = getSetting('wqBests', null) || {}, old = all[key];
+        var better = old == null || (lowerIsBetter ? value < old : value > old);
+        if (better) { all[key] = value; setSetting('wqBests', all); }
+        return { isNew: better && old != null, first: old == null, old: old };
+    }
+    // r: { title, pct, big, bigLabel, chips: [[label, value]], missed: [entries], best: html, note, again }
+    function wqResult(r) {
         var body = document.querySelector('#flash-view .flash-body');
         document.querySelector('#flash-view .flash-progress').textContent = '';
-        body.innerHTML = '<div class="flash-done"><div class="flash-done-mark">✓</div><div class="flash-done-title">おつかれさまでした</div>' +
-            '<div class="flash-done-stats">' + stats + '</div>' + (note ? '<div class="flash-done-note">' + note + '</div>' : '') +
-            '<button class="flash-done-btn wq-again">もう一度</button><button class="flash-done-btn wq-back">単語帳に戻る</button></div>';
-        body.querySelector('.wq-again').addEventListener('click', again);
+        var pct = Math.max(0, Math.min(100, Math.round(r.pct)));
+        var grade = pct === 100 ? ['満点', 'perfect'] : pct >= 80 ? ['お見事', 'great'] : pct >= 60 ? ['いい調子', 'good'] : pct >= 40 ? ['あと一歩', 'ok'] : ['伸びしろ十分', 'low'];
+        var C = 2 * Math.PI * 54;
+        body.innerHTML = '<div class="wq-result ' + grade[1] + '">' +
+            '<div class="wq-res-title">' + escapeHtml(r.title) + '</div>' +
+            '<div class="wq-ring"><svg viewBox="0 0 128 128" aria-hidden="true"><circle class="wq-ring-bg" cx="64" cy="64" r="54"/>' +
+                '<circle class="wq-ring-fg" cx="64" cy="64" r="54" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="' + C.toFixed(1) + '"/></svg>' +
+                '<div class="wq-ring-num"><b id="wq-count">' + (r.big != null ? r.big : 0) + '</b><small>' + escapeHtml(r.bigLabel || '%') + '</small></div>' +
+                (pct === 100 ? '<div class="wq-stamp">満点</div>' : '') + '</div>' +
+            '<div class="wq-grade">' + grade[0] + '</div>' +
+            (r.best ? '<div class="wq-best">' + r.best + '</div>' : '') +
+            '<div class="wq-chips">' + (r.chips || []).map(function(c) { return '<div class="wq-chip"><small>' + c[0] + '</small><b>' + c[1] + '</b></div>'; }).join('') + '</div>' +
+            (r.missed && r.missed.length ? '<div class="wq-missed"><small>まちがえた語（タップで読み上げ）</small><div>' +
+                r.missed.map(function(e) { return '<button class="wq-miss" data-id="' + e.id + '">' + entryWordHtml(e) + '</button>'; }).join('') + '</div></div>' : '') +
+            (r.note ? '<div class="flash-done-note">' + r.note + '</div>' : '') +
+            '<div class="wq-res-actions">' + (r.again ? '<button class="flash-done-btn wq-again">もう一度</button>' : '') + '<button class="flash-done-btn wq-back">単語帳に戻る</button></div>' +
+            '</div>';
+        if (r.again) body.querySelector('.wq-again').addEventListener('click', r.again);
         body.querySelector('.wq-back').addEventListener('click', closeFlashcards);
+        body.querySelectorAll('.wq-miss').forEach(function(b) {
+            b.addEventListener('click', function() { var e = wordList.find(function(w) { return String(w.id) === b.dataset.id; }); if (e) speakText(escapeHtml(e.reading || e.word)); });
+        });
+        // the ring fills and the number counts up
+        var fg = body.querySelector('.wq-ring-fg'), num = document.getElementById('wq-count'), target = r.big != null ? r.big : pct;
+        requestAnimationFrame(function() { requestAnimationFrame(function() { fg.style.strokeDashoffset = (C * (1 - pct / 100)).toFixed(1); }); });
+        if (typeof target === 'number' && !wqCalm()) {
+            var t0 = performance.now();
+            (function step(t) { var k = Math.min(1, (t - t0) / 900); num.textContent = Math.round(target * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(step); })(t0);
+        }
+        if (pct === 100) { wqConfetti(true); wqChime(); }
+        else if (pct >= 80) wqConfetti(false);
     }
+    // older callers
+    function wqDone(stats, note, again) { wqResult({ title: 'おつかれさまでした', pct: 100, chips: [], note: stats + (note ? '<br>' + note : ''), again: again }); }
     // 四択 settings (remembered): kind of question, how many, and how many choices
     //   kind: 'w2m' word → meaning, 'm2w' meaning → word, 'mix' both, 'w2r' word → reading
     function mcOpts() {
@@ -10964,7 +11105,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
                 var t = mcText(x, ask); if (!t || seen[t]) return false; seen[t] = true; return true;
             }).slice(0, o.choices - 1);
             return { e: e, ask: ask, toWord: ask === 'word', opts: shuffleInPlace([e].concat(others)) };
-        }), pos: 0, ok: 0, answered: -1, missed: [] };
+        }), pos: 0, ok: 0, answered: -1, missed: [], streak: 0, bestStreak: 0, start: Date.now() };
         wqOpen('四択クイズ');
         renderWordMC();
     }
@@ -10972,8 +11113,12 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var body = document.querySelector('#flash-view .flash-body');
         if (wq.pos >= wq.items.length) {
             var miss = wq.missed.map(function(e) { return escapeHtml(e.word); }).join('、');
-            var again = wq.opts;
-            wqDone('正解 <b>' + wq.ok + '</b> / ' + wq.items.length, miss ? 'まちがえた語：' + miss : '全問正解！', function() { runWordMC(again); });
+            var again = wq.opts, n = wq.items.length, pctMC = n ? wq.ok / n * 100 : 0;
+            var bk = 'mc:' + again.kind + ':' + again.count + ':' + again.choices, best = wqBest(bk, Math.round(pctMC));
+            wqResult({ title: '四択クイズ', pct: pctMC, big: wq.ok, bigLabel: '/ ' + n,
+                best: best.isNew ? '🏆 自己ベスト更新！（前回まで ' + best.old + '%）' : '',
+                chips: [['正答率', Math.round(pctMC) + '%'], ['最高連続', wq.bestStreak + '問'], ['時間', wqClock(Date.now() - wq.start)]],
+                missed: wq.missed, again: function() { runWordMC(again); } });
             return;
         }
         document.querySelector('#flash-view .flash-progress').textContent = (wq.pos + 1) + ' / ' + wq.items.length;
@@ -10995,7 +11140,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             b.addEventListener('click', function() {
                 var i = +b.dataset.i, right = it.opts[i].id === e.id;
                 wq.answered = i;
-                if (right) wq.ok++; else wq.missed.push(e);
+                if (right) { wq.ok++; wq.streak++; wq.bestStreak = Math.max(wq.bestStreak, wq.streak); } else { wq.missed.push(e); wq.streak = 0; }
                 speakText(escapeHtml(e.reading || e.word));          // say the word once you've answered
                 if (navigator.vibrate && getSetting('vibrate', true)) { try { navigator.vibrate(right ? 12 : [20, 30, 20]); } catch (err) {} }
                 renderWordMC();
@@ -11053,48 +11198,78 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             var r = pool.slice(i, i + o.pairs);
             if (r.length >= 3) rounds.push(r);
         }
-        wq = { kind: 'match', opts: o, rounds: rounds, round: 0, miss: 0, start: Date.now() };
+        wq = { kind: 'match', opts: o, rounds: rounds, round: 0, miss: 0, start: Date.now(), combo: 0, bestCombo: 0, missedIds: [] };
         wqOpen('マッチング');
         newMatchRound();
     }
     function newMatchRound() {
         var words = wq.rounds[wq.round];
-        wq.left = shuffleInPlace(words.slice()); wq.right = shuffleInPlace(words.slice()); wq.done = {}; wq.sel = null;
+        wq.left = shuffleInPlace(words.slice()); wq.right = shuffleInPlace(words.slice()); wq.done = {}; wq.sel = null; wq.just = null; wq.enter = true;
         renderWordMatch();
+        wq.enter = false;
+        // a running clock while you match
+        clearInterval(wq.timer);
+        var tid = wq.timer = setInterval(function() {
+            var c = document.getElementById('wq-clock');
+            if (!wq || wq.kind !== 'match' || wq.timer !== tid) { clearInterval(tid); return; }
+            if (!c) return;
+            c.textContent = wqClock(Date.now() - wq.start);
+        }, 500);
     }
     function renderWordMatch() {
         var body = document.querySelector('#flash-view .flash-body');
         document.querySelector('#flash-view .flash-progress').textContent = (wq.round + 1) + ' / ' + wq.rounds.length;
         var tile = function(e, side) {
             var sel = wq.sel && wq.sel.side === side && wq.sel.id === e.id;
-            return '<button class="wq-tile' + (side === 'L' ? ' word' : '') + (wq.done[e.id] ? ' done' : '') + (sel ? ' sel' : '') + '" data-side="' + side + '" data-id="' + e.id + '"' + (wq.done[e.id] ? ' disabled' : '') + '>' +
+            var k = (side === 'L' ? wq.left : wq.right).indexOf(e);
+            return '<button class="wq-tile' + (side === 'L' ? ' word' : '') + (wq.done[e.id] ? ' done' : '') + (String(wq.just) === String(e.id) ? ' pop' : '') + (sel ? ' sel' : '') + (wq.enter ? ' enter' : '') + '"' +
+                (wq.enter ? ' style="animation-delay:' + (k * 45 + (side === 'R' ? 20 : 0)) + 'ms"' : '') + ' data-side="' + side + '" data-id="' + e.id + '"' + (wq.done[e.id] ? ' disabled' : '') + '>' +
                 '<span>' + escapeHtml(side === 'L' ? e.word : wq.opts && wq.opts.side === 'reading' ? toHiragana(e.reading) : wqClip(wqMeaning(e), 46)) + '</span></button>';
         };
         var reading = wq.opts && wq.opts.side === 'reading';
         body.innerHTML = '<div class="wq-card"><div class="wq-dir">' + (reading ? '言葉と読みを組み合わせてください' : '言葉と意味を組み合わせてください') + '</div><div class="wq-match' + (wq.left.length > 5 ? ' compact' : '') + (reading ? ' reading' : '') + '">' +
             '<div class="wq-col">' + wq.left.map(function(e) { return tile(e, 'L'); }).join('') + '</div>' +
             '<div class="wq-col">' + wq.right.map(function(e) { return tile(e, 'R'); }).join('') + '</div>' +
-            '</div><div class="wq-note">まちがい ' + wq.miss + '</div></div>';
+            '</div><div class="wq-hud"><span>まちがい <b>' + wq.miss + '</b></span><span>コンボ <b>' + wq.combo + '</b></span><span>⏱ <b id="wq-clock">' + wqClock(Date.now() - wq.start) + '</b></span></div></div>';
         body.querySelectorAll('.wq-tile').forEach(function(b) {
             b.addEventListener('click', function() {
                 var side = b.dataset.side, id = b.dataset.id;
                 if (!wq.sel || wq.sel.side === side) { wq.sel = (wq.sel && wq.sel.side === side && wq.sel.id === id) ? null : { side: side, id: id }; renderWordMatch(); return; }
                 if (String(wq.sel.id) === String(id)) {
-                    wq.done[id] = true; wq.sel = null;
+                    var firstTile = body.querySelector('.wq-tile[data-side="' + wq.sel.side + '"][data-id="' + wq.sel.id + '"]');
+                    wq.done[id] = true; wq.sel = null; wq.just = id;
+                    wq.combo++; wq.bestCombo = Math.max(wq.bestCombo, wq.combo);
+                    var sparkC = wq.combo >= 5 ? ['#d4a017', '#f6c94c', '#fff3c4'] : wq.combo >= 3 ? ['#b8312f', '#e07a5f', '#f6c94c'] : ['#2e9e5b', '#7fd39b', '#ffffff'];
+                    wqBurst(b, sparkC, wq.combo >= 3 ? 16 : 10); wqBurst(firstTile, sparkC, wq.combo >= 3 ? 16 : 10);
+                    if (wq.combo >= 2) wqFloat(b, 'コンボ ×' + wq.combo, wq.combo >= 5 ? 'gold' : wq.combo >= 3 ? 'hot' : '');
                     var hit = wq.left.find(function(x) { return String(x.id) === String(id); });
                     if (hit) speakText(escapeHtml(hit.reading || hit.word));         // say the word once it's matched
                     if (navigator.vibrate && getSetting('vibrate', true)) { try { navigator.vibrate(12); } catch (err) {} }
                     if (Object.keys(wq.done).length === wq.left.length) {
-                        if (wq.round + 1 < wq.rounds.length) { wq.round++; setTimeout(newMatchRound, 350); }
+                        var last = wq.round + 1 >= wq.rounds.length;
+                        setTimeout(function() {
+                            var card = document.querySelector('#flash-view .wq-card');
+                            if (card && !last) { var st = document.createElement('div'); st.className = 'wq-clear'; st.textContent = 'クリア'; card.appendChild(st); wqChime(); }
+                        }, 260);
+                        if (!last) { wq.round++; setTimeout(function() { if (wq && wq.kind === 'match') newMatchRound(); }, 1000); }
                         else {
-                            var sec = Math.round((Date.now() - wq.start) / 1000), n = wq.rounds.reduce(function(a, r) { return a + r.length; }, 0);
-                            var again = wq.opts;
-                            setTimeout(function() { wqDone(n + '組　まちがい <b>' + wq.miss + '</b>　' + Math.floor(sec / 60) + '分' + (sec % 60) + '秒', '', function() { runWordMatch(again); }); }, 350);
+                            clearInterval(wq.timer);
+                            var ms = Date.now() - wq.start, n = wq.rounds.reduce(function(a, r) { return a + r.length; }, 0);
+                            var again = wq.opts, pctM = n / (n + wq.miss) * 100, missE = wq.missedIds.map(function(mid) { return wordList.find(function(w) { return String(w.id) === String(mid); }); }).filter(Boolean);
+                            var bk = 'match:' + again.side + ':' + again.pairs + ':' + again.rounds, best = wq.miss === 0 ? wqBest(bk, Math.round(ms / 1000), true) : { isNew: false };
+                            var bestNow = (getSetting('wqBests', null) || {})[bk];
+                            setTimeout(function() {
+                                wqResult({ title: 'マッチング', pct: pctM, big: Math.round(ms / 1000), bigLabel: '秒',
+                                    best: best.isNew ? '🏆 自己ベスト更新！（前回まで ' + wqClock(best.old * 1000) + '）' : bestNow != null ? 'ノーミスの自己ベスト ' + wqClock(bestNow * 1000) : '',
+                                    chips: [['組', n], ['まちがい', wq.miss], ['最高コンボ', wq.bestCombo], ['時間', wqClock(ms)]],
+                                    missed: missE, again: function() { runWordMatch(again); } });
+                            }, 700);
                         }
                     }
                     renderWordMatch();
                 } else {
-                    wq.miss++;
+                    wq.miss++; wq.combo = 0;
+                    [id, wq.sel.id].forEach(function(mid) { if (wq.missedIds.indexOf(String(mid)) < 0 && wq.left.some(function(x) { return String(x.id) === String(mid); })) wq.missedIds.push(String(mid)); });
                     var other = body.querySelector('.wq-tile[data-side="' + wq.sel.side + '"][data-id="' + wq.sel.id + '"]');
                     wq.sel = null;
                     [b, other].forEach(function(t) { if (t) { t.classList.remove('sel'); t.classList.add('bad'); } });
