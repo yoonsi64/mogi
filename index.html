@@ -11635,8 +11635,80 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         return { how: o.how === 'choose' ? 'choose' : 'type', count: [5, 10, 20, 0].indexOf(o.count) > -1 ? o.count : 10, hint: ['meaning', 'first', 'none'].indexOf(o.hint) > -1 ? o.hint : 'meaning' };
     }
     // the sentences a word was found in (its own and the other places), only those that contain it as written
+    // Every 穴埋め question is a whole sentence: rebuilt from the question the word was found in (the passage,
+    // the sentence with 文章の文法 blanks filled in, or the answer choices), cut at 。！？ or a line break.
+    // A saved snippet is only used as it is when it is already a full sentence. Words with no sentence are left out.
+    var clozeCache = {};
+    function plainOf(html) {
+        return String(html || '').replace(/<rt>[\s\S]*?<\/rt>|<rp>[\s\S]*?<\/rp>/g, '').replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|li|tr|h\d)>/gi, '\n')
+            .replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
+    }
+    function questionTexts(q) {
+        var out = [];
+        if (q.passage) out.push(plainOf(q.passage));
+        if (q.intro) out.push(plainOf(q.intro));
+        if (q.sentence && q.fragments && q.correctOrder) {
+            var k = 0, ord = q.correctOrder;
+            out.push(plainOf(q.sentence.replace(/\[\s*★?\s*\]/g, function() { var f = q.fragments[ord[k++]]; return f == null ? '' : f; })));
+        } else if (q.sentence) {
+            var sen = q.sentence;
+            if (q.blanks) q.blanks.forEach(function(b, i) { sen = sen.split('[[' + (i + 1) + ']]').join(b.options[b.correct]).split('[[' + (i + 1) + 'b]]').join(''); });
+            sen = sen.replace(/\[\s*\]/g, q.options && q.correct != null ? String(q.options[q.correct]).split('/')[0] : '');
+            out.push(plainOf(sen.replace(/\n/g, '\n')));
+        }
+        (q.options || []).forEach(function(o) { out.push(plainOf(o)); });
+        return out;
+    }
+    function readingTextFor(source) {
+        if (!source || typeof READINGS === 'undefined') return '';
+        var id = Object.keys(READINGS).filter(function(k) { var r = READINGS[k]; return r && r.title && String(source).slice(-(r.title.length + 1)) === '・' + r.title; })[0];
+        if (!id) return '';
+        if (clozeCache['@' + id] != null) return clozeCache['@' + id];
+        var txt = READINGS[id].pages.map(function(pg) { return pg.lines.join(''); }).join('')
+            .replace(/\{r\|([^|{}]+)\|[^{}]*\}/g, '$1').replace(/\{[^|{}]*\|([^{}]+)\}/g, '$1').replace(/[{}]/g, '').replace(/　/g, '\n');
+        return (clozeCache['@' + id] = txt);
+    }
+    function sentenceAround(text, word, hint) {
+        text = String(text).replace(/([^\x00-\x7f]) +(?=[^\x00-\x7f])/g, '$1');      // spaces left between Japanese words by the markup
+        var best = null, from = 0, i;
+        while ((i = text.indexOf(word, from)) > -1) {
+            var a = i, b = i + word.length;
+            while (a > 0 && !/[。！？!?\n]/.test(text[a - 1])) a--;
+            while (b < text.length && !/[。！？!?\n]/.test(text[b])) b++;
+            if (b < text.length && text[b] !== '\n') b++;
+            while (b < text.length && /[」』）)]/.test(text[b])) b++;
+            var sen = text.slice(a, b).replace(/^[\s　]+|[\s　]+$/g, '');
+            var score = hint && sen.indexOf(hint) > -1 ? 2 : 0;
+            if (!best || score > best.score) best = { sen: sen, score: score };
+            from = i + 1;
+        }
+        return best && best.sen;
+    }
+    function looksLikeSentence(t, word) {
+        return !!t && t.indexOf(word) > -1 && t.length >= 8 && !/^[…、，,。]/.test(t) && !/…$/.test(t) && /[。！？!?」』）)]$/.test(t);
+    }
+    function clozeSentenceFor(e, ctx, qid) {
+        var key = e.id + '|' + (qid || '') + '|' + (ctx || '');
+        if (clozeCache.hasOwnProperty(key)) return clozeCache[key];
+        var q = qid ? findQuestion(qid) : null, out = null;
+        if (q) {
+            var hint = String(ctx || '').replace(/^…|…$/g, '').replace(/^[、。\s　]+/, '').slice(0, 12);
+            var texts = questionTexts(q);
+            for (var k = 0; k < texts.length && !out; k++) {
+                var sen = sentenceAround(texts[k], e.word, hint);
+                if (sen && sen.length >= 6) out = sen;
+            }
+        }
+        if (!out && !qid && e.source) { var rt = readingTextFor(e.source); if (rt) { var rs = sentenceAround(rt, e.word, String(ctx || '').replace(/^…|…$/g, '').slice(0, 12)); if (rs && rs.length >= 6) out = rs; } }
+        if (!out && looksLikeSentence(String(ctx || '').trim(), e.word)) out = String(ctx).trim();
+        return (clozeCache[key] = out);
+    }
     function clozeContexts(e) {
-        return [e.context].concat((e.others || []).map(function(o) { return o.context; })).filter(function(c) { return c && e.word && c.indexOf(e.word) > -1; });
+        if (!e.word) return [];
+        var places = [{ c: e.context, q: e.qid }].concat((e.others || []).map(function(o) { return { c: o.context, q: o.qid }; }));
+        var seen = {}, out = [];
+        places.forEach(function(p) { var s = clozeSentenceFor(e, p.c, p.q); if (s && !seen[s]) { seen[s] = true; out.push(s); } });
+        return out;
     }
     function clozePool(filtered) { return wordList.filter(function(e) { return clozeContexts(e).length && (!filtered || wordMatchesFilters(e)); }); }
     function startWordCloze() {
@@ -11677,7 +11749,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var picks = shuffleInPlace(pool.slice());
         if (o.count) picks = picks.slice(0, o.count);
         wq = { kind: 'cloze', opts: o, items: picks.map(function(e) {
-            var ctxs = clozeContexts(e), ctx = ctxs[Math.floor(Math.random() * ctxs.length)].replace(/^[、。，．,.」』）)\s　]+/, '');
+            var ctxs = clozeContexts(e), ctx = ctxs[Math.floor(Math.random() * ctxs.length)];
             var opts = null;
             if (o.how === 'choose') {
                 var seen = {}; seen[e.word] = true;
