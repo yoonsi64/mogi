@@ -9014,6 +9014,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
     });
 
     var retakeConfirmed = false;
+    function isPassageQ(q) { return !!q && (q.type === 'Comprehension' || q.type === 'Text Grammar'); }
     nextBtn.addEventListener('click', function() {
         speechSession++;
         window.speechSynthesis.cancel();
@@ -9095,12 +9096,18 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             loadQuestion();
             return;
         }
+        var prevQ = currentQuestions[currentIndex];
         currentIndex++;
         if (currentIndex < currentQuestions.length) {
             var nKey = currentModeKey();
             resumeData[nKey] = currentIndex;
             localStorage.setItem('jlptResume', JSON.stringify(resumeData));
             loadQuestion();
+            // a new reading passage starts at the top (questions on the same passage keep the reader's place)
+            var nextQ = currentQuestions[currentIndex];
+            if (isPassageQ(prevQ) || isPassageQ(nextQ)) {
+                if (!(prevQ && nextQ && prevQ.group && prevQ.group === nextQ.group)) window.scrollTo(0, 0);
+            }
         } else {
             showResults();
         }
