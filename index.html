@@ -206,6 +206,9 @@
         .setting-row:last-child { border-bottom: none; }
         .setting-row.wrap { flex-wrap: wrap; }
         .setting-row.wrap .seg { margin-left: auto; }
+        .setting-row.stack { flex-direction: column; align-items: stretch; gap: 8px; }
+        .setting-row.stack .seg { display: flex; margin-left: 0; }
+        .setting-row.stack .seg button { flex: 1; min-width: 0; padding: 8px 2px; font-family: inherit; }
         .font-seg button { font-weight: normal; }
         .font-seg button[data-v="mincho"] { font-family: var(--mincho); }
         .font-seg button[data-v="gothic"] { font-family: var(--gothic); }
@@ -894,9 +897,9 @@
         .flash-speak { position: absolute; top: 8px; right: 8px; width: 44px; height: 44px; border: none; background: none; font-size: 1.2rem; }
         .flash-actions { display: flex; gap: 10px; margin-top: 14px; }
         .setting-note { font-size: 0.75rem; color: var(--text-sub); line-height: 1.6; padding: 2px 0 6px; }
-        .srs-reset { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
-        .srs-reset button { padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border-light); background: var(--surface); color: var(--text-main); font: inherit; font-size: 0.82rem; }
-        .srs-reset button.danger { color: #b8312f; border-color: color-mix(in srgb, #b8312f 50%, var(--border-light)); font-weight: bold; }
+        .srs-reset { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .srs-reset button { border-radius: 10px; min-height: 36px; padding: 8px 2px; border: 1px solid var(--border-dark); background: var(--surface); color: var(--text-sub); font: inherit; font-size: 0.8rem; font-weight: bold; white-space: nowrap; }
+        .srs-reset button.danger { color: #b8312f; border-color: #b8312f; }
         .srs-btns.three { grid-template-columns: repeat(3, 1fr); }
         .write-override { font-size: 0.75rem; color: var(--text-sub); text-align: center; margin-top: 6px; }
         .srs-btns { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
@@ -2582,11 +2585,11 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         </div>
         <div class="stat-card settings-group" id="set-g-cards">
             <div class="stat-card-title">単語カード（Ankiと同じFSRS）</div>
-            <div class="setting-row wrap"><span>1日の新しいカード</span><span class="seg" id="set-srs-new"><button data-v="10">10</button><button data-v="20">20</button><button data-v="30">30</button><button data-v="50">50</button><button data-v="0">無制限</button></span></div>
-            <div class="setting-row wrap"><span>1日の復習の上限</span><span class="seg" id="set-srs-rev"><button data-v="100">100</button><button data-v="200">200</button><button data-v="500">500</button><button data-v="0">無制限</button></span></div>
-            <div class="setting-row wrap"><span>目標の記憶率</span><span class="seg" id="set-srs-ret"><button data-v="0.85">85%</button><button data-v="0.9">90%</button><button data-v="0.95">95%</button></span></div>
+            <div class="setting-row stack"><span>1日の新しいカード</span><span class="seg" id="set-srs-new"><button data-v="10">10</button><button data-v="20">20</button><button data-v="30">30</button><button data-v="50">50</button><button data-v="0">無制限</button></span></div>
+            <div class="setting-row stack"><span>1日の復習の上限</span><span class="seg" id="set-srs-rev"><button data-v="100">100</button><button data-v="200">200</button><button data-v="500">500</button><button data-v="0">無制限</button></span></div>
+            <div class="setting-row stack"><span>目標の記憶率</span><span class="seg" id="set-srs-ret"><button data-v="0.85">85%</button><button data-v="0.9">90%</button><button data-v="0.95">95%</button></span></div>
             <div class="setting-note">記憶率を上げると、忘れにくくなるかわりに復習の回数が増えます（Ankiの初期設定は90%）。</div>
-            <div class="setting-row wrap"><span>スケジュールをリセット</span><span class="srs-reset" id="set-srs-reset"><button data-v="card">カード</button><button data-v="def">意味を書く</button><button data-v="word">言葉を書く</button><button data-v="all" class="danger">すべて</button></span></div>
+            <div class="setting-row stack"><span>スケジュールをリセット</span><span class="srs-reset" id="set-srs-reset"><button data-v="card">カード</button><button data-v="def">意味を書く</button><button data-v="word">言葉を書く</button><button data-v="all" class="danger">すべて</button></span></div>
             <div class="setting-note">選んだ練習の記録（覚え具合・次に出る日）を消して、すべての単語を新しいカードに戻します。単語・意味・定義はそのままです。単語帳の「元に戻す」で取り消せます。</div>
         </div>
         <div class="stat-card settings-group" id="set-g-solve">
