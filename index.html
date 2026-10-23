@@ -918,7 +918,11 @@
         .flash-start { width: 100%; display: flex; align-items: center; justify-content: space-between; margin: 4px 0 10px; padding: 12px 16px; border: none; border-radius: var(--radius); background: var(--active-blue); color: #fff; font-weight: bold; font-size: 1rem; }
         .flash-start:disabled { opacity: 0.4; }
         .flash-starts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 4px 0 10px; }
-        .flash-starts #flash-start { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; }
+        .wl-modes { margin: 4px 0 10px; }
+        .wl-modes-label { font-size: 0.72rem; font-weight: bold; color: var(--text-sub); letter-spacing: 0.1em; margin: 8px 0 4px; }
+        .wl-modes .flash-starts { margin: 0; }
+        .flash-start.game { background: var(--surface); color: #b8312f; box-shadow: inset 0 0 0 2px #b8312f; }
+        html.dark .flash-start.game { color: #ff8a8a; box-shadow: inset 0 0 0 2px #ff8a8a; }
         .wq-card { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 18px 16px; border: 1px solid var(--border-light); border-radius: 16px; background: var(--surface); overflow-y: auto; position: relative; }
         .wq-dir { font-size: 0.75rem; font-weight: bold; color: var(--text-sub); }
         .wq-prompt { text-align: center; padding: 10px 4px 6px; }
@@ -952,6 +956,15 @@
         .mset-seg button:first-child { border-left: none; }
         .mset-seg button.on { background: var(--active-blue); color: #fff; font-weight: bold; }
         html.dark .mset-seg button.on { color: #0d1117; }
+        .cloze-card { gap: 14px; }
+        .cloze-sentence { font-family: var(--reading-font); font-size: 1.1rem; line-height: 2.1; padding: 6px 2px; }
+        .cloze-blank { display: inline-block; height: 1.5em; vertical-align: -0.35em; margin: 0 3px; border-bottom: 2px solid var(--active-blue); background: color-mix(in srgb, var(--active-blue) 8%, transparent); border-radius: 4px 4px 0 0; color: var(--active-blue); font-weight: bold; text-align: left; padding: 0 4px; }
+        .cloze-fill { padding: 0 3px; border-radius: 4px; font-weight: bold; }
+        .cloze-fill.ok { background: color-mix(in srgb, var(--correct-color) 22%, transparent); color: var(--correct-color); }
+        .cloze-fill.ng { background: color-mix(in srgb, var(--incorrect-color) 16%, transparent); color: var(--incorrect-color); }
+        .cloze-hint { font-size: 0.88rem; line-height: 1.6; padding: 8px 12px; border-radius: 10px; background: var(--bg-paper); border: 1px dashed var(--border-light); }
+        .cloze-hint small { display: block; font-size: 0.7rem; font-weight: bold; color: var(--text-sub); }
+        .cloze-input { min-height: 0; font-size: 1.1rem; text-align: center; }
         .mem-wrap { gap: 10px; }
         .mem-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
         .mem-card { position: relative; aspect-ratio: 3 / 4; padding: 0; border: none; background: none; perspective: 700px; animation: wqIn 0.35s both; }
@@ -2684,7 +2697,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             <span id="wordlist-count" style="margin-left:auto; align-self:center; font-size:0.8rem; color:var(--text-sub); font-weight:bold;"></span>
             <button id="wordlist-export" class="wordlist-export" title="単語;意味;単語[ふりがな] の形でテキストファイル（.txt）に保存" aria-label="単語帳を.txtファイルに書き出す"><svg class="dl-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 17v3h16v-3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>書き出す</button>
         </div>
-        <div class="flash-starts"><button id="flash-start" class="flash-start"><span class="flash-start-label">カードで復習</span><span class="flash-start-sub" id="flash-start-sub"></span></button><button id="write-start" class="flash-start write"><span class="flash-start-label">書いて覚える</span><span class="flash-start-sub" id="write-start-sub"></span></button><button id="mc-start" class="flash-start write"><span class="flash-start-label">四択クイズ</span><span class="flash-start-sub" id="mc-start-sub"></span></button><button id="match-start" class="flash-start write"><span class="flash-start-label">マッチング</span><span class="flash-start-sub" id="match-start-sub"></span></button><button id="mem-start" class="flash-start write"><span class="flash-start-label">神経衰弱</span><span class="flash-start-sub" id="mem-start-sub"></span></button></div>
+        <div class="wl-modes"><div class="wl-modes-label">学習</div><div class="flash-starts"><button id="flash-start" class="flash-start"><span class="flash-start-label">カードで復習</span><span class="flash-start-sub" id="flash-start-sub"></span></button><button id="write-start" class="flash-start write"><span class="flash-start-label">書いて覚える</span><span class="flash-start-sub" id="write-start-sub"></span></button></div><div class="wl-modes-label">ゲーム</div><div class="flash-starts games"><button id="mc-start" class="flash-start game"><span class="flash-start-label">四択クイズ</span><span class="flash-start-sub" id="mc-start-sub"></span></button><button id="match-start" class="flash-start game"><span class="flash-start-label">マッチング</span><span class="flash-start-sub" id="match-start-sub"></span></button><button id="mem-start" class="flash-start game"><span class="flash-start-label">神経衰弱</span><span class="flash-start-sub" id="mem-start-sub"></span></button><button id="cloze-start" class="flash-start game"><span class="flash-start-label">穴埋め</span><span class="flash-start-sub" id="cloze-start-sub"></span></button></div></div>
         <div class="wordlist-tools">
             <input type="search" id="wordlist-search" placeholder="検索" aria-label="検索（単語・読み・意味）" autocomplete="off" lang="ja">
             <select id="wordlist-week" aria-label="週で絞り込む">
@@ -11612,6 +11625,138 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         });
     }
     document.getElementById('mem-start').addEventListener('click', startWordMemory);
+    // ---------- 単語帳: 穴埋め (fill the word back into the sentence you found it in) ----------
+    // Settings (remembered): answer by typing or by choosing, how many questions, and the hint shown.
+    function clozeOpts() {
+        var o = getSetting('clozeOpts', null) || {};
+        return { how: o.how === 'choose' ? 'choose' : 'type', count: [5, 10, 20, 0].indexOf(o.count) > -1 ? o.count : 10, hint: ['meaning', 'first', 'none'].indexOf(o.hint) > -1 ? o.hint : 'meaning' };
+    }
+    // the sentences a word was found in (its own and the other places), only those that contain it as written
+    function clozeContexts(e) {
+        return [e.context].concat((e.others || []).map(function(o) { return o.context; })).filter(function(c) { return c && e.word && c.indexOf(e.word) > -1; });
+    }
+    function clozePool(filtered) { return wordList.filter(function(e) { return clozeContexts(e).length && (!filtered || wordMatchesFilters(e)); }); }
+    function startWordCloze() {
+        wqOpen('穴埋め');
+        wq = null;
+        var o = clozeOpts();
+        var body = document.querySelector('#flash-view .flash-body');
+        document.querySelector('#flash-view .flash-progress').textContent = '';
+        var seg = function(key, label, items) {
+            return '<div class="mset-row"><div class="mset-label">' + label + '</div><div class="mset-seg" data-key="' + key + '">' +
+                items.map(function(it) { return '<button data-v="' + it[0] + '"' + (String(o[key]) === String(it[0]) ? ' class="on"' : '') + '>' + it[1] + '</button>'; }).join('') + '</div></div>';
+        };
+        var draw = function() {
+            var pool = clozePool(true).length, all = clozePool(false).length, ok = pool >= 1 && (o.how === 'type' || all >= 4);
+            var q = o.count ? Math.min(o.count, pool) : pool;
+            body.innerHTML = '<div class="wq-card mset">' +
+                seg('how', '答え方', [['type', '書く'], ['choose', '選ぶ']]) +
+                seg('count', '問題数', [[5, '5問'], [10, '10問'], [20, '20問'], [0, 'すべて']]) +
+                seg('hint', 'ヒント', [['meaning', '意味'], ['first', '最初の字'], ['none', 'なし']]) +
+                '<div class="wq-note">' + (ok ? '使える単語 ' + pool + '語 → ' + q + '問' : '使える単語が足りません') +
+                '<br>単語を見つけた文の、その単語が空欄になります。' + (o.how === 'type' ? '漢字でも、かなでも、辞書形でも正解です。' : '4つから選びます。') + '</div>' +
+                '</div><div class="flash-actions"><button class="flash-know" id="mset-go"' + (ok ? '' : ' disabled') + '>始める</button></div>';
+            body.querySelectorAll('.mset-seg button').forEach(function(b) {
+                b.addEventListener('click', function() {
+                    var key = b.parentNode.dataset.key, v = b.dataset.v;
+                    o[key] = key === 'count' ? parseInt(v, 10) : v;
+                    setSetting('clozeOpts', o);
+                    draw();
+                });
+            });
+            document.getElementById('mset-go').addEventListener('click', function() { runWordCloze(o); });
+        };
+        draw();
+    }
+    function runWordCloze(o) {
+        var pool = clozePool(true), all = clozePool(false);
+        if (!pool.length) return;
+        var picks = shuffleInPlace(pool.slice());
+        if (o.count) picks = picks.slice(0, o.count);
+        wq = { kind: 'cloze', opts: o, items: picks.map(function(e) {
+            var ctxs = clozeContexts(e), ctx = ctxs[Math.floor(Math.random() * ctxs.length)].replace(/^[、。，．,.」』）)\s　]+/, '');
+            var opts = null;
+            if (o.how === 'choose') {
+                var seen = {}; seen[e.word] = true;
+                opts = shuffleInPlace([e].concat(shuffleInPlace(all.filter(function(x) { return x.id !== e.id; })).filter(function(x) { if (seen[x.word]) return false; seen[x.word] = true; return true; }).slice(0, 3)));
+            }
+            return { e: e, ctx: ctx, opts: opts };
+        }), pos: 0, ok: 0, answered: null, missed: [], streak: 0, bestStreak: 0, start: Date.now() };
+        wqOpen('穴埋め');
+        renderWordCloze();
+    }
+    function clozeSentence(it, filled, right) {
+        var safe = escapeHtml(it.ctx), w = escapeHtml(it.e.word), i = safe.indexOf(w);
+        if (i < 0) return safe;
+        var mid = filled ? '<mark class="cloze-fill ' + (right ? 'ok' : 'ng') + '">' + w + '</mark>'
+            : '<span class="cloze-blank" style="min-width:' + Math.max(2.2, it.e.word.length * 1.05) + 'em">' + (wq.opts.hint === 'first' ? escapeHtml(it.e.word.charAt(0)) : '') + '</span>';
+        return safe.slice(0, i) + mid + safe.slice(i + w.length);
+    }
+    function renderWordCloze() {
+        var body = document.querySelector('#flash-view .flash-body');
+        if (wq.pos >= wq.items.length) {
+            var n = wq.items.length, pct = n ? wq.ok / n * 100 : 0, again = wq.opts;
+            var bk = 'cloze:' + again.how + ':' + again.count + ':' + again.hint, best = wqBest(bk, Math.round(pct));
+            wqResult({ title: '穴埋め', pct: pct, big: wq.ok, bigLabel: '/ ' + n,
+                best: best.isNew ? '🏆 自己ベスト更新！（前回まで ' + best.old + '%）' : '',
+                chips: [['正答率', Math.round(pct) + '%'], ['最高連続', wq.bestStreak + '問'], ['時間', wqClock(Date.now() - wq.start)]],
+                missed: wq.missed, again: function() { runWordCloze(again); } });
+            return;
+        }
+        document.querySelector('#flash-view .flash-progress').textContent = (wq.pos + 1) + ' / ' + wq.items.length;
+        var it = wq.items[wq.pos], e = it.e, a = wq.answered, done = !!a, hint = wq.opts.hint;
+        var label = textbookLabel(e.qid) || e.source || '';
+        var html = '<div class="wq-card cloze-card">' +
+            (label ? '<div class="wq-dir">' + escapeHtml(label) + '</div>' : '') +
+            '<div class="cloze-sentence">' + clozeSentence(it, done, done && a.right) + '</div>' +
+            (!done && hint === 'meaning' && wqMeaning(e) ? '<div class="cloze-hint"><small>意味</small>' + escapeHtml(wqClip(wqMeaning(e), 90)) + '</div>' : '');
+        if (it.opts) {
+            html += '<div class="wq-opts">' + it.opts.map(function(x, i) {
+                var cls = 'wq-opt word';
+                if (done && x.id === e.id) cls += ' correct'; else if (done && a.pick === i) cls += ' wrong';
+                return '<button class="' + cls + '" data-i="' + i + '"' + (done ? ' disabled' : '') + '>' + CIRCLED[i] + ' ' + escapeHtml(x.word) + '</button>';
+            }).join('') + '</div>';
+        } else if (!done) {
+            html += '<input class="write-input cloze-input" id="cloze-input" lang="ja" autocomplete="off" placeholder="空欄に入る言葉" aria-label="空欄に入る言葉">';
+        } else {
+            html += '<div class="write-mark ' + (a.right ? 'ok">◯ 正解' : 'ng">✕') + '</div>' +
+                '<div class="write-box mine"><small>あなたの答え</small><div' + (a.typed ? '>' + escapeHtml(a.typed) : ' class="empty">（空欄）') + '</div></div>';
+        }
+        if (done) html += '<div class="wq-after"><b>' + entryWordHtml(e) + '</b><br>' + escapeHtml(wqMeaning(e) || '') + '</div>';
+        html += '</div><div class="flash-actions">' + (done ? (!a.right && !it.opts ? '<button class="flash-again" id="cloze-ok">実は合っていた</button>' : '') + '<button class="flash-know" id="wq-next">' + (wq.pos + 1 < wq.items.length ? '次へ' : '結果を見る') + '</button>'
+            : it.opts ? '' : '<button class="flash-reveal" id="cloze-check">答え合わせ</button>') + '</div>';
+        body.innerHTML = html;
+        var answer = function(right, extra) {
+            wq.answered = Object.assign({ right: right }, extra);
+            if (right) { wq.ok++; wq.streak++; wq.bestStreak = Math.max(wq.bestStreak, wq.streak); } else { wq.missed.push(e); wq.streak = 0; }
+            speakText(escapeHtml(e.reading || e.word));
+            if (navigator.vibrate && getSetting('vibrate', true)) { try { navigator.vibrate(right ? 12 : [20, 30, 20]); } catch (err) {} }
+            renderWordCloze();
+            if (right) { var m = document.querySelector('.cloze-fill'); if (m) wqBurst(m, ['#2e9e5b', '#7fd39b', '#f6c94c'], 12); }
+        };
+        if (done) {
+            document.getElementById('wq-next').addEventListener('click', function() { wq.pos++; wq.answered = null; renderWordCloze(); });
+            var fix = document.getElementById('cloze-ok');
+            if (fix) fix.addEventListener('click', function() {
+                wq.ok++; wq.streak++; wq.bestStreak = Math.max(wq.bestStreak, wq.streak);
+                wq.missed = wq.missed.filter(function(x) { return x !== e; });
+                wq.answered.right = true; renderWordCloze();
+            });
+            return;
+        }
+        if (it.opts) {
+            body.querySelectorAll('.wq-opt').forEach(function(b) {
+                b.addEventListener('click', function() { var i = +b.dataset.i; answer(it.opts[i].id === e.id, { pick: i }); });
+            });
+        } else {
+            var inp = document.getElementById('cloze-input');
+            var check = function() { var t = inp.value.trim(); answer(writeWordMatches(e, t), { typed: t }); };
+            document.getElementById('cloze-check').addEventListener('click', check);
+            inp.addEventListener('keydown', function(ev) { if (ev.key === 'Enter' && !ev.isComposing) { ev.preventDefault(); check(); } });
+            setTimeout(function() { try { inp.focus(); } catch (err) {} }, 50);
+        }
+    }
+    document.getElementById('cloze-start').addEventListener('click', startWordCloze);
     document.getElementById('mc-start').addEventListener('click', startWordMC);
     document.getElementById('match-start').addEventListener('click', startWordMatch);
     document.getElementById('flash-start').addEventListener('click', function() { startFlashcards(false); });
@@ -11647,6 +11792,9 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var mco = matchOpts && mcOpts();
         document.getElementById('mc-start-sub').textContent = { w2m: '言葉→意味', m2w: '意味→言葉', mix: 'まぜる', w2r: '言葉→読み' }[mco.kind] + '・' + (mco.count ? mco.count + '問' : 'すべて');
         document.getElementById('mc-start').disabled = !wordList.length;
+        var cz = clozeOpts();
+        document.getElementById('cloze-start-sub').textContent = (cz.how === 'choose' ? '選ぶ' : '書く') + '・' + (cz.count ? cz.count + '問' : 'すべて');
+        document.getElementById('cloze-start').disabled = !wordList.length;
         var mmo = memOpts();
         document.getElementById('mem-start-sub').textContent = (mmo.side === 'reading' ? '読み・' : '') + mmo.pairs + '組' + (mmo.peek ? '・最初に見る' : '');
         document.getElementById('mem-start').disabled = !wordList.length;
