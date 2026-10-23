@@ -818,10 +818,6 @@
         @keyframes bsIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
         @keyframes bsSeal { 0% { opacity: 0; transform: scale(1.9) rotate(-24deg); } 60% { opacity: 1; transform: scale(0.9) rotate(-8deg); } 100% { transform: scale(1) rotate(-8deg); } }
         @media (prefers-reduced-motion: reduce) { .badge-stamp, .bs-seal { animation: none; } .bs-seal { transform: rotate(-8deg); } }
-        .home-goal { width: 85%; max-width: 320px; margin-top: 18px; text-align: left; }
-        .home-goal-label { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: bold; margin-bottom: 6px; }
-        .home-goal .progress-track { height: 8px; }
-        .home-review-btn { margin-top: 14px; padding: 10px 16px; border: 2px solid var(--border-dark); background: #fff; font-weight: bold; font-size: 0.9rem; }
         .backup-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .backup-actions button { padding: 12px 6px; border: 1px solid var(--border-dark); background: #fff; font-weight: bold; font-size: 0.85rem; }
         .backup-actions button.primary { background: var(--text-main); color: #fff; border-color: var(--text-main); }
@@ -2655,7 +2651,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         </div>
         <div class="stat-card dev-card" id="dev-card" style="display:none">
             <div class="stat-card-title">開発者メニュー</div>
-            <div class="setting-row wrap"><span>起動画面の演出</span><span class="opening-controls"><select id="set-opening" class="opening-select" aria-label="起動画面の演出"><option value="auto">自動</option><optgroup label="季節"><option value="sakura">桜</option><option value="fuji">富士と桜（まれ）</option><option value="aoba">青葉</option><option value="momiji">紅葉</option><option value="snow">雪</option></optgroup><optgroup label="行事"><option value="shogatsu">お正月</option><option value="hoo">お正月・鳳凰（ごくまれ）</option><option value="setsubun">節分</option><option value="hinamatsuri">ひな祭り</option><option value="kodomo">こどもの日</option><option value="tanabata">七夕</option><option value="nagare">七夕・流れ星（まれ）</option><option value="hanabi">花火</option><option value="ootama">花火・三尺玉（まれ）</option><option value="obon">お盆</option><option value="tsukimi">お月見</option><option value="xmas">クリスマス</option><option value="omisoka">大晦日</option><option value="jlpt">JLPT 試験日</option></optgroup><option value="off">オフ</option></select><button class="opening-preview" id="set-opening-preview">見てみる</button></span><div class="stat-sub rsgoal-note" id="opening-note"></div></div>
+            <div class="setting-row wrap"><span>起動画面を選んで試す</span><span class="opening-controls"><select id="set-opening" class="opening-select" aria-label="起動画面の演出"><option value="auto">自動</option><optgroup label="季節"><option value="sakura">桜</option><option value="fuji">富士と桜（まれ）</option><option value="aoba">青葉</option><option value="momiji">紅葉</option><option value="snow">雪</option></optgroup><optgroup label="行事"><option value="shogatsu">お正月</option><option value="hoo">お正月・鳳凰（ごくまれ）</option><option value="setsubun">節分</option><option value="hinamatsuri">ひな祭り</option><option value="kodomo">こどもの日</option><option value="tanabata">七夕</option><option value="nagare">七夕・流れ星（まれ）</option><option value="hanabi">花火</option><option value="ootama">花火・三尺玉（まれ）</option><option value="obon">お盆</option><option value="tsukimi">お月見</option><option value="xmas">クリスマス</option><option value="omisoka">大晦日</option><option value="jlpt">JLPT 試験日</option></optgroup><option value="off">オフ</option></select><button class="opening-preview" id="set-opening-preview">見てみる</button></span><div class="stat-sub rsgoal-note" id="opening-note"></div></div>
             <button id="dev-hide" class="dev-hide">開発者メニューを隠す</button>
         </div>
         <div class="app-credit" id="app-credit">モギ — JLPT N1 模擬問題<br>Shiori と Claude がつくりました</div>
@@ -9413,17 +9409,6 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
     backToQuizBtnStats.addEventListener('click', returnHome);
     backToQuizBtnBookmarks.addEventListener('click', returnHome);
     backToQuizBtnMistakes.addEventListener('click', returnHome);
-
-    function renderHomeGoal() {
-        var today = dailyStats[getTodayDateString()] || { answered: 0, correct: 0 };
-        var pct = Math.min(100, Math.round((today.answered / dailyGoal) * 100));
-        var due = getReviewQuestionIds().length;
-        return '<div class="home-goal">' +
-            '<div class="home-goal-label"><span>今日の目標</span><span>' + today.answered + ' / ' + dailyGoal + '問' + (today.answered >= dailyGoal ? ' ✓' : '') + '</span></div>' +
-            '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
-            '</div>' +
-            (due > 0 ? '<button class="home-review-btn" id="home-review-btn">今日の復習（' + due + '問）</button>' : '');
-    }
 
     weekButtons.forEach(function(btn) {
         btn.addEventListener('click', function(e) {
