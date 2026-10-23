@@ -920,8 +920,9 @@
         .wq-after b { font-family: var(--reading-font); font-size: 1.1rem; }
         .wq-match { display: grid; grid-template-columns: 2fr 3fr; gap: 8px; align-content: start; }
         .wq-col { display: flex; flex-direction: column; gap: 8px; }
-        .wq-tile { min-height: 56px; padding: 8px 10px; border: 1px solid var(--border-light); border-radius: 12px; background: var(--bg-paper); color: var(--text-main); font: inherit; font-size: 0.85rem; line-height: 1.4; text-align: left; }
-        .wq-tile.word { font-family: var(--reading-font); font-size: 1.05rem; font-weight: bold; text-align: center; }
+        .wq-tile { height: 76px; overflow: hidden; display: flex; align-items: center; justify-content: flex-start; padding: 6px 10px; border: 1px solid var(--border-light); border-radius: 12px; background: var(--bg-paper); color: var(--text-main); font: inherit; font-size: 0.85rem; line-height: 1.4; text-align: left; }
+        .wq-tile.word { font-family: var(--reading-font); font-size: 1.05rem; font-weight: bold; text-align: center; justify-content: center; }
+        .wq-tile span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; word-break: break-word; }
         .wq-tile.sel { border-color: var(--active-blue); box-shadow: inset 0 0 0 2px var(--active-blue); }
         .wq-tile.done { border-color: var(--correct-color); background: color-mix(in srgb, var(--correct-color) 14%, var(--bg-paper)); opacity: 0.55; }
         .wq-tile.bad { animation: wqShake 0.35s; border-color: var(--incorrect-color, #c0392b); }
@@ -10870,6 +10871,8 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         if (e.writeDef) return e.writeDef;
         var lines = String(e.meaning || '').split('\n').map(function(l) { return l.trim(); }).filter(Boolean);
         if (e.dictForm && lines[0] === e.dictForm) lines.shift();
+        // a conjugated word's first line is usually its 辞書形 (maybe in kanji, e.g. おとろえて → 衰える): it gives the answer away
+        else if (lines.length > 1 && (e.dictForm || dictionaryForm(e.word) || /(?:[てでただず]|ない|ます|れる|せる)$/.test(e.word)) && /^[^\s、,，/／;；]{1,10}$/.test(lines[0]) && /[うくぐすつぬぶむるい]$/.test(lines[0])) lines.shift();
         var t = lines.join(' / ');
         if (!t) { var d = wordDefinitions[e.word] || (e.dictForm && wordDefinitions[e.dictForm]); if (d) t = d.jp + (d.kr && getSetting('showKorean', true) ? ' / ' + d.kr : ''); }
         return t;
@@ -10957,7 +10960,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var tile = function(e, side) {
             var sel = wq.sel && wq.sel.side === side && wq.sel.id === e.id;
             return '<button class="wq-tile' + (side === 'L' ? ' word' : '') + (wq.done[e.id] ? ' done' : '') + (sel ? ' sel' : '') + '" data-side="' + side + '" data-id="' + e.id + '"' + (wq.done[e.id] ? ' disabled' : '') + '>' +
-                escapeHtml(side === 'L' ? e.word : wqClip(wqMeaning(e), 46)) + '</button>';
+                '<span>' + escapeHtml(side === 'L' ? e.word : wqClip(wqMeaning(e), 46)) + '</span></button>';
         };
         body.innerHTML = '<div class="wq-card"><div class="wq-dir">言葉と意味を組み合わせてください</div><div class="wq-match">' +
             '<div class="wq-col">' + wq.left.map(function(e) { return tile(e, 'L'); }).join('') + '</div>' +
@@ -10969,6 +10972,8 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
                 if (!wq.sel || wq.sel.side === side) { wq.sel = (wq.sel && wq.sel.side === side && wq.sel.id === id) ? null : { side: side, id: id }; renderWordMatch(); return; }
                 if (String(wq.sel.id) === String(id)) {
                     wq.done[id] = true; wq.sel = null;
+                    var hit = wq.left.find(function(x) { return String(x.id) === String(id); });
+                    if (hit) speakText(escapeHtml(hit.reading || hit.word));         // say the word once it's matched
                     if (navigator.vibrate && getSetting('vibrate', true)) { try { navigator.vibrate(12); } catch (err) {} }
                     if (Object.keys(wq.done).length === wq.left.length) {
                         if (wq.round + 1 < wq.rounds.length) { wq.round++; setTimeout(newMatchRound, 350); }
