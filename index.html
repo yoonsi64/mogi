@@ -964,10 +964,10 @@
         .cloze-fill.ng { background: color-mix(in srgb, var(--incorrect-color) 16%, transparent); color: var(--incorrect-color); }
         .cloze-hint { font-size: 0.88rem; line-height: 1.6; padding: 8px 12px; border-radius: 10px; background: var(--bg-paper); border: 1px dashed var(--border-light); }
         .cloze-hint small { display: block; font-size: 0.7rem; font-weight: bold; color: var(--text-sub); }
-        .cloze-blank.typing { padding: 0 2px; white-space: nowrap; }
+        .cloze-blank.typing { padding: 1px 4px; white-space: nowrap; border: 2px solid var(--active-blue); border-radius: 7px; background: var(--surface); box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12); cursor: text; }
         .cloze-first { color: var(--active-blue); font-weight: bold; }
         .cloze-inline { display: inline-block; vertical-align: baseline; border: none; outline: none; background: transparent; color: var(--text-main); font: inherit; font-weight: bold; line-height: 1.35; padding: 0 2px; margin: 0; max-width: 70vw; border-radius: 0; -webkit-appearance: none; appearance: none; }
-        .cloze-blank.typing:focus-within { background: color-mix(in srgb, var(--active-blue) 16%, transparent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--active-blue) 35%, transparent); }
+        .cloze-blank.typing:focus-within { background: var(--surface); box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12), 0 0 0 3px color-mix(in srgb, var(--active-blue) 30%, transparent); }
         .mem-wrap { gap: 10px; }
         .mem-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
         .mem-card { position: relative; aspect-ratio: 3 / 4; padding: 0; border: none; background: none; perspective: 700px; animation: wqIn 0.35s both; }
@@ -11830,6 +11830,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         } else {
             var inp = document.getElementById('cloze-input');
             var baseW = parseFloat(inp.style.width) || 2.4;
+            inp.parentNode.addEventListener('click', function() { inp.focus(); });
             inp.addEventListener('input', function() { inp.style.width = Math.max(baseW, inp.value.length * 1.08 + 0.8) + 'em'; });   // grows with kana, which is longer than kanji
             var check = function() {
                 var t = inp.value.trim(), first = hint === 'first' ? e.word.charAt(0) : '', full = first && t.indexOf(first) !== 0 ? first + t : t;
