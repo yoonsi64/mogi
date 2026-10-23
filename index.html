@@ -927,6 +927,17 @@
         .wq-tile.done { border-color: var(--correct-color); background: color-mix(in srgb, var(--correct-color) 14%, var(--bg-paper)); opacity: 0.55; }
         .wq-tile.bad { animation: wqShake 0.35s; border-color: var(--incorrect-color, #c0392b); }
         @keyframes wqShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        .wq-match.compact .wq-tile { height: 58px; }
+        .wq-match.compact .wq-tile span { -webkit-line-clamp: 2; }
+        .wq-match.reading { grid-template-columns: 1fr 1fr; }
+        .wq-match.reading .wq-tile { justify-content: center; text-align: center; font-size: 1rem; }
+        .mset { gap: 18px; justify-content: center; }
+        .mset-label { font-size: 0.8rem; font-weight: bold; color: var(--text-sub); margin-bottom: 6px; }
+        .mset-seg { display: flex; border: 1px solid var(--border-light); border-radius: 10px; overflow: hidden; }
+        .mset-seg button { flex: 1; padding: 10px 4px; border: none; border-left: 1px solid var(--border-light); background: var(--bg-paper); color: var(--text-main); font: inherit; font-size: 0.9rem; }
+        .mset-seg button:first-child { border-left: none; }
+        .mset-seg button.on { background: var(--active-blue); color: #fff; font-weight: bold; }
+        html.dark .mset-seg button.on { color: #0d1117; }
         .wq-note { font-size: 0.78rem; color: var(--text-sub); text-align: center; }
         .flash-starts .flash-start { flex: 1; min-width: 0; margin: 0; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 14px; }
         .flash-start.write { background: var(--surface); color: var(--active-blue); box-shadow: inset 0 0 0 2px var(--active-blue); }
@@ -10940,12 +10951,57 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         });
     }
     // マッチング: rounds of 5 pairs; tap a word, then its meaning
+    // マッチング settings (remembered): what the right side shows, pairs per round, and how many rounds (0 = all)
+    function matchOpts() {
+        var o = getSetting('matchOpts', null) || {};
+        return { side: o.side === 'reading' ? 'reading' : 'meaning', pairs: [3, 4, 5, 6, 8].indexOf(o.pairs) > -1 ? o.pairs : 5, rounds: [1, 3, 5, 0].indexOf(o.rounds) > -1 ? o.rounds : 3 };
+    }
+    function matchPool(side) {
+        return side === 'reading'
+            ? wordList.filter(function(e) { return e.reading && hasKanji(e.word) && toHiragana(e.reading) !== toHiragana(e.word) && wordMatchesFilters(e); })
+            : wqPool(true);
+    }
     function startWordMatch() {
-        var pool = shuffleInPlace(wqPool(true));
+        wqOpen('マッチング');
+        wq = null;
+        var o = matchOpts();
+        var body = document.querySelector('#flash-view .flash-body');
+        document.querySelector('#flash-view .flash-progress').textContent = '';
+        var seg = function(key, list) {
+            return '<div class="mset-row"><div class="mset-label">' + list.label + '</div><div class="mset-seg" data-key="' + key + '">' +
+                list.items.map(function(it) { return '<button data-v="' + it[0] + '"' + (String(o[key]) === String(it[0]) ? ' class="on"' : '') + '>' + it[1] + '</button>'; }).join('') + '</div></div>';
+        };
+        var draw = function() {
+            var pool = matchPool(o.side).length, per = o.pairs, can = Math.floor(pool / per) + (pool % per >= 3 ? 1 : 0);
+            var n = o.rounds ? Math.min(o.rounds, can) : can;
+            body.innerHTML = '<div class="wq-card mset">' +
+                seg('side', { label: '組み合わせ', items: [['meaning', '言葉 ↔ 意味'], ['reading', '言葉 ↔ 読み']] }) +
+                seg('pairs', { label: '1回の組数', items: [[3, '3'], [4, '4'], [5, '5'], [6, '6'], [8, '8']] }) +
+                seg('rounds', { label: '回数', items: [[1, '1回'], [3, '3回'], [5, '5回'], [0, 'すべて']] }) +
+                '<div class="wq-note">' + (pool < 3 ? '使える単語が足りません（' + pool + '語）' : '使える単語 ' + pool + '語 → ' + n + '回・' + Math.min(pool, n * per) + '組') +
+                (o.side === 'reading' ? '<br>漢字のある単語を、読み（ひらがな）と組み合わせます' : '') + '</div>' +
+                '</div><div class="flash-actions"><button class="flash-know" id="mset-go"' + (pool < 3 ? ' disabled' : '') + '>始める</button></div>';
+            body.querySelectorAll('.mset-seg button').forEach(function(b) {
+                b.addEventListener('click', function() {
+                    var key = b.parentNode.dataset.key, v = b.dataset.v;
+                    o[key] = key === 'side' ? v : parseInt(v, 10);
+                    setSetting('matchOpts', o);
+                    draw();
+                });
+            });
+            document.getElementById('mset-go').addEventListener('click', function() { runWordMatch(o); });
+        };
+        draw();
+    }
+    function runWordMatch(o) {
+        var pool = shuffleInPlace(matchPool(o.side).slice());
         if (pool.length < 3) return;
         var rounds = [];
-        for (var i = 0; i < pool.length && rounds.length < 3; i += 5) { var r = pool.slice(i, i + 5); if (r.length >= 3) rounds.push(r); }
-        wq = { kind: 'match', rounds: rounds, round: 0, miss: 0, start: Date.now() };
+        for (var i = 0; i < pool.length && (!o.rounds || rounds.length < o.rounds); i += o.pairs) {
+            var r = pool.slice(i, i + o.pairs);
+            if (r.length >= 3) rounds.push(r);
+        }
+        wq = { kind: 'match', opts: o, rounds: rounds, round: 0, miss: 0, start: Date.now() };
         wqOpen('マッチング');
         newMatchRound();
     }
@@ -10960,9 +11016,10 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var tile = function(e, side) {
             var sel = wq.sel && wq.sel.side === side && wq.sel.id === e.id;
             return '<button class="wq-tile' + (side === 'L' ? ' word' : '') + (wq.done[e.id] ? ' done' : '') + (sel ? ' sel' : '') + '" data-side="' + side + '" data-id="' + e.id + '"' + (wq.done[e.id] ? ' disabled' : '') + '>' +
-                '<span>' + escapeHtml(side === 'L' ? e.word : wqClip(wqMeaning(e), 46)) + '</span></button>';
+                '<span>' + escapeHtml(side === 'L' ? e.word : wq.opts && wq.opts.side === 'reading' ? toHiragana(e.reading) : wqClip(wqMeaning(e), 46)) + '</span></button>';
         };
-        body.innerHTML = '<div class="wq-card"><div class="wq-dir">言葉と意味を組み合わせてください</div><div class="wq-match">' +
+        var reading = wq.opts && wq.opts.side === 'reading';
+        body.innerHTML = '<div class="wq-card"><div class="wq-dir">' + (reading ? '言葉と読みを組み合わせてください' : '言葉と意味を組み合わせてください') + '</div><div class="wq-match' + (wq.left.length > 5 ? ' compact' : '') + (reading ? ' reading' : '') + '">' +
             '<div class="wq-col">' + wq.left.map(function(e) { return tile(e, 'L'); }).join('') + '</div>' +
             '<div class="wq-col">' + wq.right.map(function(e) { return tile(e, 'R'); }).join('') + '</div>' +
             '</div><div class="wq-note">まちがい ' + wq.miss + '</div></div>';
@@ -10979,7 +11036,8 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
                         if (wq.round + 1 < wq.rounds.length) { wq.round++; setTimeout(newMatchRound, 350); }
                         else {
                             var sec = Math.round((Date.now() - wq.start) / 1000), n = wq.rounds.reduce(function(a, r) { return a + r.length; }, 0);
-                            setTimeout(function() { wqDone(n + '組　まちがい <b>' + wq.miss + '</b>　' + Math.floor(sec / 60) + '分' + (sec % 60) + '秒', '', startWordMatch); }, 350);
+                            var again = wq.opts;
+                            setTimeout(function() { wqDone(n + '組　まちがい <b>' + wq.miss + '</b>　' + Math.floor(sec / 60) + '分' + (sec % 60) + '秒', '', function() { runWordMatch(again); }); }, 350);
                         }
                     }
                     renderWordMatch();
@@ -11028,8 +11086,9 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var withMeaning = wqPool(true).length, allMeaning = wqPool(false).length;
         document.getElementById('mc-start-sub').textContent = allMeaning < 4 ? '意味のある語が4語必要' : withMeaning + '語から10問';
         document.getElementById('mc-start').disabled = allMeaning < 4 || !withMeaning;
-        document.getElementById('match-start-sub').textContent = withMeaning < 3 ? '意味のある語が3語必要' : '5組ずつ・' + Math.min(3, Math.floor(withMeaning / 5) || 1) + '回';
-        document.getElementById('match-start').disabled = withMeaning < 3;
+        var mo = matchOpts();
+        document.getElementById('match-start-sub').textContent = (mo.side === 'reading' ? '読み・' : '') + mo.pairs + '組ずつ・' + (mo.rounds ? mo.rounds + '回' : 'すべて');
+        document.getElementById('match-start').disabled = !wordList.length;
     }
     document.getElementById('wordlist-search').addEventListener('input', function(e) { wlSearch = e.target.value.trim(); renderWordListItems(); });
     document.getElementById('wordlist-week').addEventListener('change', function(e) { wlWeek = e.target.value; renderWordListItems(); });
