@@ -842,9 +842,9 @@
         .word-item-speak:active { background: var(--accent-soft); }
         /* 単語帳: furigana below the word */
         .word-item-word ruby, .home-word-text ruby { ruby-position: under; -webkit-ruby-position: after; }
-        .wordlist-export { margin-left: 8px; display: inline-flex; align-items: center; gap: 4px; }
-        .wordlist-export .dl-ic { width: 15px; height: 15px; flex: none; }
-        .wordlist-export small { font-size: 0.68rem; opacity: 0.7; font-weight: normal; }
+        .wordlist-export { margin-left: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; line-height: 1; }
+        .wordlist-export .dl-ic { width: 15px; height: 15px; flex: none; display: block; }
+        .wordlist-export small { display: block; line-height: 1; transform: translateY(-1px); font-size: 0.68rem; opacity: 0.7; font-weight: normal; }
         .wl-undo-group { margin-left: auto; display: inline-flex; gap: 6px; }
         .wl-undo { display: inline-flex; align-items: center; justify-content: center; width: 40px; min-height: 36px; padding: 0 !important; border: 1px solid var(--border-light); border-radius: 18px; background: var(--bg-paper); color: var(--text-main); cursor: pointer; }
         .wl-undo svg { width: 18px; height: 18px; }
