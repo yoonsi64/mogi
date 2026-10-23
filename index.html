@@ -10906,14 +10906,64 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         body.querySelector('.wq-again').addEventListener('click', again);
         body.querySelector('.wq-back').addEventListener('click', closeFlashcards);
     }
-    // 四択: 10 questions; each asks either word → meaning or meaning → word
+    // 四択 settings (remembered): kind of question, how many, and how many choices
+    //   kind: 'w2m' word → meaning, 'm2w' meaning → word, 'mix' both, 'w2r' word → reading
+    function mcOpts() {
+        var o = getSetting('mcOpts', null) || {};
+        return { kind: ['w2m', 'm2w', 'mix', 'w2r'].indexOf(o.kind) > -1 ? o.kind : 'mix', count: [5, 10, 20, 0].indexOf(o.count) > -1 ? o.count : 10, choices: [3, 4, 5].indexOf(o.choices) > -1 ? o.choices : 4 };
+    }
+    function mcPools(kind) {
+        if (kind === 'w2r') {
+            var r = wordList.filter(function(e) { return e.reading && hasKanji(e.word) && toHiragana(e.reading) !== toHiragana(e.word); });
+            return { pick: r.filter(wordMatchesFilters), all: r };
+        }
+        return { pick: wqPool(true), all: wqPool(false) };
+    }
     function startWordMC() {
-        var pool = wqPool(true), all = wqPool(false);
-        if (pool.length < 1 || all.length < 4) return;
-        var picks = shuffleInPlace(pool.slice()).slice(0, 10);
-        wq = { kind: 'mc', items: picks.map(function(e) {
-            var others = shuffleInPlace(all.filter(function(o) { return o.id !== e.id && wqMeaning(o) !== wqMeaning(e) && o.word !== e.word; })).slice(0, 3);
-            return { e: e, toWord: Math.random() < 0.4, opts: shuffleInPlace([e].concat(others)) };
+        wqOpen('四択クイズ');
+        wq = null;
+        var o = mcOpts();
+        var body = document.querySelector('#flash-view .flash-body');
+        document.querySelector('#flash-view .flash-progress').textContent = '';
+        var seg = function(key, label, items) {
+            return '<div class="mset-row"><div class="mset-label">' + label + '</div><div class="mset-seg" data-key="' + key + '">' +
+                items.map(function(it) { return '<button data-v="' + it[0] + '"' + (String(o[key]) === String(it[0]) ? ' class="on"' : '') + '>' + it[1] + '</button>'; }).join('') + '</div></div>';
+        };
+        var draw = function() {
+            var pools = mcPools(o.kind), n = pools.pick.length, ok = n >= 1 && pools.all.length >= o.choices;
+            var q = o.count ? Math.min(o.count, n) : n;
+            body.innerHTML = '<div class="wq-card mset">' +
+                seg('kind', '問題の種類', [['w2m', '言葉→意味'], ['m2w', '意味→言葉'], ['mix', 'まぜる'], ['w2r', '言葉→読み']]) +
+                seg('count', '問題数', [[5, '5問'], [10, '10問'], [20, '20問'], [0, 'すべて']]) +
+                seg('choices', '選択肢', [[3, '3つ'], [4, '4つ'], [5, '5つ']]) +
+                '<div class="wq-note">' + (ok ? '使える単語 ' + n + '語 → ' + q + '問' : '使える単語が足りません（' + pools.all.length + '語・選択肢' + o.choices + 'つには' + o.choices + '語必要）') +
+                (o.kind === 'w2r' ? '<br>漢字のある単語の読み方を選びます' : '') + '</div>' +
+                '</div><div class="flash-actions"><button class="flash-know" id="mset-go"' + (ok ? '' : ' disabled') + '>始める</button></div>';
+            body.querySelectorAll('.mset-seg button').forEach(function(b) {
+                b.addEventListener('click', function() {
+                    var key = b.parentNode.dataset.key, v = b.dataset.v;
+                    o[key] = key === 'kind' ? v : parseInt(v, 10);
+                    setSetting('mcOpts', o);
+                    draw();
+                });
+            });
+            document.getElementById('mset-go').addEventListener('click', function() { runWordMC(o); });
+        };
+        draw();
+    }
+    function mcText(e, what) { return what === 'reading' ? toHiragana(e.reading) : what === 'word' ? e.word : wqMeaning(e); }
+    function runWordMC(o) {
+        var pools = mcPools(o.kind);
+        if (!pools.pick.length || pools.all.length < o.choices) return;
+        var picks = shuffleInPlace(pools.pick.slice());
+        if (o.count) picks = picks.slice(0, o.count);
+        wq = { kind: 'mc', opts: o, items: picks.map(function(e) {
+            var ask = o.kind === 'w2r' ? 'reading' : o.kind === 'm2w' || (o.kind === 'mix' && Math.random() < 0.4) ? 'word' : 'meaning';
+            var seen = {}; seen[mcText(e, ask)] = true;
+            var others = shuffleInPlace(pools.all.filter(function(x) { return x.id !== e.id; })).filter(function(x) {
+                var t = mcText(x, ask); if (!t || seen[t]) return false; seen[t] = true; return true;
+            }).slice(0, o.choices - 1);
+            return { e: e, ask: ask, toWord: ask === 'word', opts: shuffleInPlace([e].concat(others)) };
         }), pos: 0, ok: 0, answered: -1, missed: [] };
         wqOpen('四択クイズ');
         renderWordMC();
@@ -10922,7 +10972,8 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var body = document.querySelector('#flash-view .flash-body');
         if (wq.pos >= wq.items.length) {
             var miss = wq.missed.map(function(e) { return escapeHtml(e.word); }).join('、');
-            wqDone('正解 <b>' + wq.ok + '</b> / ' + wq.items.length, miss ? 'まちがえた語：' + miss : '全問正解！', startWordMC);
+            var again = wq.opts;
+            wqDone('正解 <b>' + wq.ok + '</b> / ' + wq.items.length, miss ? 'まちがえた語：' + miss : '全問正解！', function() { runWordMC(again); });
             return;
         }
         document.querySelector('#flash-view .flash-progress').textContent = (wq.pos + 1) + ' / ' + wq.items.length;
@@ -10931,10 +10982,10 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             var cls = 'wq-opt' + (it.toWord ? ' word' : '');
             if (done && o.id === e.id) cls += ' correct';
             else if (done && i === wq.answered) cls += ' wrong';
-            return '<button class="' + cls + '" data-i="' + i + '"' + (done ? ' disabled' : '') + '>' + CIRCLED[i] + ' ' + escapeHtml(it.toWord ? o.word : wqClip(wqMeaning(o), 70)) + '</button>';
+            return '<button class="' + cls + '" data-i="' + i + '"' + (done ? ' disabled' : '') + '>' + CIRCLED[i] + ' ' + escapeHtml(it.ask === 'meaning' ? wqClip(wqMeaning(o), 70) : mcText(o, it.ask)) + '</button>';
         }).join('');
         body.innerHTML = '<div class="wq-card">' +
-            '<div class="wq-dir">' + (it.toWord ? 'この意味の言葉は？' : 'この言葉の意味は？') + '</div>' +
+            '<div class="wq-dir">' + (it.toWord ? 'この意味の言葉は？' : it.ask === 'reading' ? 'この言葉の読み方は？' : 'この言葉の意味は？') + '</div>' +
             '<div class="wq-prompt ' + (it.toWord ? 'meaning' : 'word') + '">' + escapeHtml(it.toWord ? wqClip(wqMeaning(e), 120) : e.word) + '</div>' +
             '<div class="wq-opts">' + opts + '</div>' +
             (done ? '<div class="wq-after"><b>' + entryWordHtml(e) + '</b><br>' + escapeHtml(wqMeaning(e)) + '</div>' : '') +
@@ -10945,6 +10996,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
                 var i = +b.dataset.i, right = it.opts[i].id === e.id;
                 wq.answered = i;
                 if (right) wq.ok++; else wq.missed.push(e);
+                speakText(escapeHtml(e.reading || e.word));          // say the word once you've answered
                 if (navigator.vibrate && getSetting('vibrate', true)) { try { navigator.vibrate(right ? 12 : [20, 30, 20]); } catch (err) {} }
                 renderWordMC();
             });
@@ -11084,8 +11136,9 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         document.getElementById('write-start-sub').textContent = !wordList.length ? '' : nDef ? '定義あり ' + nDef + '語' : '定義を追加して使う';
         document.getElementById('write-start').disabled = !wordList.length;
         var withMeaning = wqPool(true).length, allMeaning = wqPool(false).length;
-        document.getElementById('mc-start-sub').textContent = allMeaning < 4 ? '意味のある語が4語必要' : withMeaning + '語から10問';
-        document.getElementById('mc-start').disabled = allMeaning < 4 || !withMeaning;
+        var mco = matchOpts && mcOpts();
+        document.getElementById('mc-start-sub').textContent = { w2m: '言葉→意味', m2w: '意味→言葉', mix: 'まぜる', w2r: '言葉→読み' }[mco.kind] + '・' + (mco.count ? mco.count + '問' : 'すべて');
+        document.getElementById('mc-start').disabled = !wordList.length;
         var mo = matchOpts();
         document.getElementById('match-start-sub').textContent = (mo.side === 'reading' ? '読み・' : '') + mo.pairs + '組ずつ・' + (mo.rounds ? mo.rounds + '回' : 'すべて');
         document.getElementById('match-start').disabled = !wordList.length;
