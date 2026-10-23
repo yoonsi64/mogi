@@ -962,6 +962,15 @@
         .cloze-fill { padding: 0 3px; border-radius: 4px; font-weight: bold; }
         .cloze-fill.ok { background: color-mix(in srgb, var(--correct-color) 22%, transparent); color: var(--correct-color); }
         .cloze-fill.ng { background: color-mix(in srgb, var(--incorrect-color) 16%, transparent); color: var(--incorrect-color); }
+        .cloze-bank { border: 1px solid var(--border-light); border-radius: 4px; padding: 8px 10px 10px; background: var(--bg-paper); }
+        .cloze-bank small { display: block; font-size: 0.7rem; font-weight: bold; color: var(--text-sub); margin-bottom: 6px; }
+        .cloze-bank > div { display: flex; flex-wrap: wrap; gap: 6px; }
+        .cloze-chip { padding: 6px 10px; border: 1px solid var(--border-dark); border-radius: 3px; background: var(--surface); color: var(--text-main); font-family: var(--reading-font); font-size: 1rem; font-weight: bold; }
+        .cloze-chip.used { text-decoration: line-through; color: var(--text-sub); opacity: 0.45; }
+        .cloze-chip.correct { border-color: var(--correct-color); color: var(--correct-color); background: color-mix(in srgb, var(--correct-color) 14%, var(--surface)); }
+        .cloze-chip.wrong { border-color: var(--incorrect-color); color: var(--incorrect-color); background: color-mix(in srgb, var(--incorrect-color) 12%, var(--surface)); }
+        .cloze-chip:disabled { opacity: 1; }
+        .cloze-chip.used:disabled { opacity: 0.45; }
         .cloze-hint { font-size: 0.88rem; line-height: 1.6; padding: 8px 12px; border-radius: 10px; background: var(--bg-paper); border: 1px dashed var(--border-light); }
         .cloze-hint small { display: block; font-size: 0.7rem; font-weight: bold; color: var(--text-sub); }
         .cloze-blank.typing { padding: 1px 4px; white-space: nowrap; border: 2px solid var(--active-blue); border-radius: 2px; background: var(--surface); box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12); cursor: text; }
@@ -11632,7 +11641,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
     // Settings (remembered): answer by typing or by choosing, how many questions, and the hint shown.
     function clozeOpts() {
         var o = getSetting('clozeOpts', null) || {};
-        return { how: o.how === 'choose' ? 'choose' : 'type', count: [5, 10, 20, 0].indexOf(o.count) > -1 ? o.count : 10, hint: ['meaning', 'first', 'none'].indexOf(o.hint) > -1 ? o.hint : 'meaning' };
+        return { how: ['choose', 'bank'].indexOf(o.how) > -1 ? o.how : 'type', count: [5, 10, 20, 0].indexOf(o.count) > -1 ? o.count : 10, hint: ['meaning', 'first', 'none'].indexOf(o.hint) > -1 ? o.hint : 'meaning' };
     }
     // the sentences a word was found in (its own and the other places), only those that contain it as written
     // Every 穴埋め question is a whole sentence: rebuilt from the question the word was found in (the passage,
@@ -11725,11 +11734,11 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             var pool = clozePool(true).length, all = clozePool(false).length, ok = pool >= 1 && (o.how === 'type' || all >= 4);
             var q = o.count ? Math.min(o.count, pool) : pool;
             body.innerHTML = '<div class="wq-card mset">' +
-                seg('how', '答え方', [['type', '書く'], ['choose', '選ぶ']]) +
+                seg('how', '答え方', [['type', '書く'], ['choose', '選ぶ'], ['bank', '語群']]) +
                 seg('count', '問題数', [[5, '5問'], [10, '10問'], [20, '20問'], [0, 'すべて']]) +
                 seg('hint', 'ヒント', [['meaning', '意味'], ['first', '最初の字'], ['none', 'なし']]) +
                 '<div class="wq-note">' + (ok ? '使える単語 ' + pool + '語 → ' + q + '問' : '使える単語が足りません') +
-                '<br>単語を見つけた文の、その単語が空欄になります。' + (o.how === 'type' ? '漢字でも、かなでも、辞書形でも正解です。' : '4つから選びます。') + '</div>' +
+                '<br>単語を見つけた文の、その単語が空欄になります。' + (o.how === 'type' ? '漢字でも、かなでも、辞書形でも正解です。' : o.how === 'bank' ? '10問ごとの答えが語群に並びます。正しく入れた言葉は消えていきます。' : '4つから選びます。') + '</div>' +
                 '</div><div class="flash-actions"><button class="flash-know" id="mset-go"' + (ok ? '' : ' disabled') + '>始める</button></div>';
             body.querySelectorAll('.mset-seg button').forEach(function(b) {
                 b.addEventListener('click', function() {
@@ -11755,20 +11764,20 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
                 var seen = {}; seen[e.word] = true;
                 opts = shuffleInPlace([e].concat(shuffleInPlace(all.filter(function(x) { return x.id !== e.id; })).filter(function(x) { if (seen[x.word]) return false; seen[x.word] = true; return true; }).slice(0, 3)));
             }
-            return { e: e, ctx: ctx, opts: opts };
-        }), pos: 0, ok: 0, answered: null, missed: [], streak: 0, bestStreak: 0, start: Date.now() };
+            return { e: e, ctx: ctx, opts: opts, bank: o.how === 'bank' };
+        }), pos: 0, ok: 0, answered: null, missed: [], streak: 0, bestStreak: 0, start: Date.now(), used: {}, bankOrder: {} };
         wqOpen('穴埋め');
         renderWordCloze();
     }
     function clozeSentence(it, filled, right) {
         var safe = escapeHtml(it.ctx), w = escapeHtml(it.e.word), i = safe.indexOf(w);
         if (i < 0) return safe;
-        var first = wq.opts.hint === 'first', rest = it.e.word.length - (first ? 1 : 0);
+        var first = wq.opts.hint === 'first', rest = it.e.word.length - (first ? 1 : 0), pick = !!(it.opts || it.bank);
         // 書く: the input sits in the blank itself; with the 最初の字 hint that character is already there
         var mid = filled ? '<mark class="cloze-fill ' + (right ? 'ok' : 'ng') + '">' + w + '</mark>'
-            : '<span class="cloze-blank' + (it.opts ? '' : ' typing') + '"' + (it.opts ? ' style="min-width:' + Math.max(2.2, it.e.word.length * 1.05) + 'em"' : '') + '>' +
-                (first ? '<span class="cloze-first">' + escapeHtml(it.e.word.charAt(0)) + '</span>' : it.opts ? '&#8203;' : '') +
-                (it.opts ? '' : '<input class="cloze-inline" id="cloze-input" lang="ja" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="空欄に入る言葉" style="width:' + Math.max(2.4, rest * 1.15 + 0.8) + 'em">') + '</span>';
+            : '<span class="cloze-blank' + (pick ? '' : ' typing') + '"' + (pick ? ' style="min-width:' + Math.max(2.2, it.e.word.length * 1.05) + 'em"' : '') + '>' +
+                (first ? '<span class="cloze-first">' + escapeHtml(it.e.word.charAt(0)) + '</span>' : pick ? '&#8203;' : '') +
+                (pick ? '' : '<input class="cloze-inline" id="cloze-input" lang="ja" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="空欄に入る言葉" style="width:' + Math.max(2.4, rest * 1.15 + 0.8) + 'em">') + '</span>';
         return safe.slice(0, i) + mid + safe.slice(i + w.length);
     }
     function renderWordCloze() {
@@ -11795,6 +11804,16 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
                 if (done && x.id === e.id) cls += ' correct'; else if (done && a.pick === i) cls += ' wrong';
                 return '<button class="' + cls + '" data-i="' + i + '"' + (done ? ' disabled' : '') + '>' + CIRCLED[i] + ' ' + escapeHtml(x.word) + '</button>';
             }).join('') + '</div>';
+        } else if (it.bank) {
+            // 語群: the answers of this block of 10, in a fixed shuffled order; words already placed are crossed out
+            var blk = Math.floor(wq.pos / 10);
+            if (!wq.bankOrder[blk]) wq.bankOrder[blk] = shuffleInPlace(wq.items.slice(blk * 10, blk * 10 + 10).map(function(x) { return x.e; }));
+            html += '<div class="cloze-bank"><small>語群（' + (blk * 10 + 1) + '〜' + Math.min(wq.items.length, blk * 10 + 10) + '問目）</small><div>' + wq.bankOrder[blk].map(function(x) {
+                var used = wq.used[x.id] && !(done && x.id === e.id), cls = 'cloze-chip';
+                if (used) cls += ' used';
+                if (done && x.id === e.id) cls += ' correct'; else if (done && a.pick === x.id) cls += ' wrong';
+                return '<button class="' + cls + '" data-id="' + x.id + '"' + (done || used ? ' disabled' : '') + '>' + escapeHtml(x.word) + '</button>';
+            }).join('') + '</div></div>';
         } else if (!done) {
             html += '<div class="wq-note">空欄をタップして書いてください（漢字でも、かなでも）' + (hint === 'first' ? '。最初の字は書かなくて大丈夫です' : '') + '</div>';
         } else {
@@ -11802,8 +11821,8 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
                 '<div class="write-box mine"><small>あなたの答え</small><div' + (a.typed ? '>' + escapeHtml(a.typed) : ' class="empty">（空欄）') + '</div></div>';
         }
         if (done) html += '<div class="wq-after"><b>' + entryWordHtml(e) + '</b><br>' + escapeHtml(wqMeaning(e) || '') + '</div>';
-        html += '</div><div class="flash-actions">' + (done ? (!a.right && !it.opts ? '<button class="flash-again" id="cloze-ok">実は合っていた</button>' : '') + '<button class="flash-know" id="wq-next">' + (wq.pos + 1 < wq.items.length ? '次へ' : '結果を見る') + '</button>'
-            : it.opts ? '' : '<button class="flash-reveal" id="cloze-check">答え合わせ</button>') + '</div>';
+        html += '</div><div class="flash-actions">' + (done ? (!a.right && !it.opts && !it.bank ? '<button class="flash-again" id="cloze-ok">実は合っていた</button>' : '') + '<button class="flash-know" id="wq-next">' + (wq.pos + 1 < wq.items.length ? '次へ' : '結果を見る') + '</button>'
+            : it.opts || it.bank ? '' : '<button class="flash-reveal" id="cloze-check">答え合わせ</button>') + '</div>';
         body.innerHTML = html;
         var answer = function(right, extra) {
             wq.answered = Object.assign({ right: right }, extra);
@@ -11823,7 +11842,11 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             });
             return;
         }
-        if (it.opts) {
+        if (it.bank) {
+            body.querySelectorAll('.cloze-chip:not([disabled])').forEach(function(b) {
+                b.addEventListener('click', function() { var id = b.dataset.id, ok = String(id) === String(e.id); if (ok) wq.used[e.id] = true; answer(ok, { pick: id }); });
+            });
+        } else if (it.opts) {
             body.querySelectorAll('.wq-opt').forEach(function(b) {
                 b.addEventListener('click', function() { var i = +b.dataset.i; answer(it.opts[i].id === e.id, { pick: i }); });
             });
@@ -11884,7 +11907,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         document.getElementById('mc-start-sub').textContent = { w2m: '言葉→意味', m2w: '意味→言葉', mix: 'まぜる', w2r: '言葉→読み' }[mco.kind] + '・' + (mco.count ? mco.count + '問' : 'すべて');
         document.getElementById('mc-start').disabled = !wordList.length;
         var cz = clozeOpts();
-        document.getElementById('cloze-start-sub').textContent = (cz.how === 'choose' ? '選ぶ' : '書く') + '・' + (cz.count ? cz.count + '問' : 'すべて');
+        document.getElementById('cloze-start-sub').textContent = ({ choose: '選ぶ', bank: '語群', type: '書く' }[cz.how]) + '・' + (cz.count ? cz.count + '問' : 'すべて');
         document.getElementById('cloze-start').disabled = !wordList.length;
         var mmo = memOpts();
         document.getElementById('mem-start-sub').textContent = (mmo.side === 'reading' ? '読み・' : '') + mmo.pairs + '組' + (mmo.peek ? '・最初に見る' : '');
