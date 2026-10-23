@@ -904,7 +904,29 @@
         .flash-done-btn { margin-top: 8px; padding: 12px 24px; border-radius: 10px; border: 1px solid var(--border-light); background: var(--surface); color: var(--text-main); font-weight: bold; }
         .flash-start { width: 100%; display: flex; align-items: center; justify-content: space-between; margin: 4px 0 10px; padding: 12px 16px; border: none; border-radius: var(--radius); background: var(--active-blue); color: #fff; font-weight: bold; font-size: 1rem; }
         .flash-start:disabled { opacity: 0.4; }
-        .flash-starts { display: flex; gap: 8px; margin: 4px 0 10px; }
+        .flash-starts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 4px 0 10px; }
+        .wq-card { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 18px 16px; border: 1px solid var(--border-light); border-radius: 16px; background: var(--surface); overflow-y: auto; position: relative; }
+        .wq-dir { font-size: 0.75rem; font-weight: bold; color: var(--text-sub); }
+        .wq-prompt { text-align: center; padding: 10px 4px 6px; }
+        .wq-prompt.word { font-family: var(--reading-font); font-size: 2.3rem; font-weight: bold; line-height: 1.5; }
+        .wq-prompt.meaning { font-size: 1.05rem; line-height: 1.7; }
+        .wq-opts { display: flex; flex-direction: column; gap: 8px; }
+        .wq-opt { text-align: left; padding: 12px 14px; border: 1px solid var(--border-light); border-radius: 12px; background: var(--bg-paper); color: var(--text-main); font: inherit; font-size: 0.95rem; line-height: 1.5; }
+        .wq-opt.word { font-family: var(--reading-font); font-size: 1.15rem; font-weight: bold; }
+        .wq-opt.correct { border-color: var(--correct-color); background: color-mix(in srgb, var(--correct-color) 14%, var(--bg-paper)); }
+        .wq-opt.wrong { border-color: var(--incorrect-color, #c0392b); background: color-mix(in srgb, var(--incorrect-color, #c0392b) 12%, var(--bg-paper)); }
+        .wq-opt:disabled { color: var(--text-main); opacity: 1; }
+        .wq-after { border-top: 1px dashed var(--border-light); padding-top: 10px; font-size: 0.9rem; line-height: 1.7; }
+        .wq-after b { font-family: var(--reading-font); font-size: 1.1rem; }
+        .wq-match { display: grid; grid-template-columns: 2fr 3fr; gap: 8px; align-content: start; }
+        .wq-col { display: flex; flex-direction: column; gap: 8px; }
+        .wq-tile { min-height: 56px; padding: 8px 10px; border: 1px solid var(--border-light); border-radius: 12px; background: var(--bg-paper); color: var(--text-main); font: inherit; font-size: 0.85rem; line-height: 1.4; text-align: left; }
+        .wq-tile.word { font-family: var(--reading-font); font-size: 1.05rem; font-weight: bold; text-align: center; }
+        .wq-tile.sel { border-color: var(--active-blue); box-shadow: inset 0 0 0 2px var(--active-blue); }
+        .wq-tile.done { border-color: var(--correct-color); background: color-mix(in srgb, var(--correct-color) 14%, var(--bg-paper)); opacity: 0.55; }
+        .wq-tile.bad { animation: wqShake 0.35s; border-color: var(--incorrect-color, #c0392b); }
+        @keyframes wqShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        .wq-note { font-size: 0.78rem; color: var(--text-sub); text-align: center; }
         .flash-starts .flash-start { flex: 1; min-width: 0; margin: 0; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 14px; }
         .flash-start.write { background: var(--surface); color: var(--active-blue); box-shadow: inset 0 0 0 2px var(--active-blue); }
         html.dark .flash-start.write { color: var(--active-blue); }
@@ -939,6 +961,18 @@
         #word-sheet { z-index: 3950; }
         .word-sheet-dim { position: fixed; inset: 0; z-index: 3940; background: rgba(0,0,0,0.28); opacity: 0; pointer-events: none; transition: opacity 0.2s; }
         .word-sheet-dim.active { opacity: 1; pointer-events: auto; }
+        .word-sheet-def-row { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; font-size: 0.78rem; font-weight: bold; color: var(--text-sub); }
+        .word-sheet-def { width: 100%; margin-top: 4px; font-size: max(16px, 0.95rem); padding: 8px; border: 1px solid var(--border-light); background: var(--bg-paper); color: var(--text-main); }
+        .word-item-def { margin-top: 4px; font-size: 0.85rem; line-height: 1.6; padding: 4px 8px; border-left: 3px solid var(--active-blue); background: var(--bg-paper); }
+        .word-item-def.empty { border-left-color: var(--border-light); color: var(--text-sub); font-size: 0.78rem; }
+        .word-item-def b { font-size: 0.72rem; color: var(--active-blue); margin-right: 6px; }
+        .write-mark { font-size: 1.6rem; font-weight: bold; text-align: center; }
+        .write-mark.ok { color: var(--correct-color); } .write-mark.ng { color: var(--incorrect-color); }
+        .write-pick { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+        .write-pick button { padding: 18px 16px; border-radius: 14px; border: 1px solid var(--border-light); background: var(--surface); color: var(--text-main); text-align: left; font: inherit; }
+        .write-pick button b { display: block; font-size: 1.1rem; margin-bottom: 4px; }
+        .write-pick button span { font-size: 0.82rem; color: var(--text-sub); }
+        .write-pick .write-pick-note { font-size: 0.8rem; color: var(--text-sub); line-height: 1.6; text-align: center; }
         .word-sheet-autosave { flex: 1; align-self: center; font-size: 0.75rem; color: var(--text-sub); }
         .word-sheet-context { font-size: 0.85rem; color: var(--text-sub); line-height: 1.6; max-height: 5em; overflow-y: auto; }
         .word-mark { background: #fff3b0; color: var(--text-main); font-weight: bold; padding: 0 1px; }
@@ -2554,7 +2588,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             <span id="wordlist-count" style="margin-left:auto; align-self:center; font-size:0.8rem; color:var(--text-sub); font-weight:bold;"></span>
             <button id="wordlist-export" class="wordlist-export" title="単語;意味;読み の形でテキストファイルに保存">書き出す</button>
         </div>
-        <div class="flash-starts"><button id="flash-start" class="flash-start"><span class="flash-start-label">カードで復習</span><span class="flash-start-sub" id="flash-start-sub"></span></button><button id="write-start" class="flash-start write"><span class="flash-start-label">意味を書く</span><span class="flash-start-sub" id="write-start-sub"></span></button></div>
+        <div class="flash-starts"><button id="flash-start" class="flash-start"><span class="flash-start-label">カードで復習</span><span class="flash-start-sub" id="flash-start-sub"></span></button><button id="write-start" class="flash-start write"><span class="flash-start-label">意味を書く</span><span class="flash-start-sub" id="write-start-sub"></span></button><button id="mc-start" class="flash-start write"><span class="flash-start-label">四択クイズ</span><span class="flash-start-sub" id="mc-start-sub"></span></button><button id="match-start" class="flash-start write"><span class="flash-start-label">マッチング</span><span class="flash-start-sub" id="match-start-sub"></span></button></div>
         <div class="wordlist-tools">
             <input type="search" id="wordlist-search" placeholder="検索（単語・読み・意味）" autocomplete="off" lang="ja">
             <select id="wordlist-week" aria-label="週で絞り込む">
@@ -2666,6 +2700,8 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             <button class="word-adjust" id="word-grow-right" aria-label="次の字を足す">後＋</button>
         </div>
         <textarea id="word-sheet-meaning" class="word-sheet-meaning" placeholder="意味・メモ（任意）" rows="2"></textarea>
+        <div class="word-sheet-def-row"><label for="word-sheet-def">書く練習の定義</label><button type="button" class="word-adjust" id="word-sheet-def-copy">意味から入れる</button></div>
+        <input id="word-sheet-def" class="word-sheet-def" type="text" autocomplete="off" placeholder="「意味を書く」で使う短い定義（任意）">
         <div class="dict-row" id="word-sheet-dicts"><span class="dict-label">辞書</span><button class="dict-btn" data-dict="ja">国語</button><button class="dict-btn" data-dict="ko">日韓</button><button class="dict-btn" data-dict="koex">日韓例文</button><button class="dict-btn" data-dict="en">和英</button><button class="dict-paste" id="word-sheet-paste">貼り付け</button></div>
         <div id="word-sheet-context" class="word-sheet-context"></div>
         <div class="confirm-actions">
@@ -9915,9 +9951,11 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             meaningEl.value = meaningEl.value.replace(/\n$/, '');
         }
         delete meaningEl.dataset.edited;
+        document.getElementById('word-sheet-def').value = existing && existing.writeDef ? existing.writeDef : '';
         renderWordSheet();
         state.origInput = document.getElementById('word-sheet-word').value;
         state.origMeaning = meaningEl.value;
+        state.origDef = document.getElementById('word-sheet-def').value;
         definitionPopup.classList.remove('active');
         blankPopup.classList.remove('active');
         document.getElementById('app-toast').classList.remove('show');   // don't cover the sheet's buttons
@@ -10341,7 +10379,8 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var st = wordSheetState;
         if (!st) return false;
         return document.getElementById('word-sheet-word').value !== st.origInput ||
-            document.getElementById('word-sheet-meaning').value !== st.origMeaning;
+            document.getElementById('word-sheet-meaning').value !== st.origMeaning ||
+            document.getElementById('word-sheet-def').value !== (st.origDef || '');
     }
     // Closing the sheet (✕, 閉じる, Back) while editing a 単語帳 entry keeps the changes
     function closeWordSheet() {
@@ -10405,6 +10444,8 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         }
         entry.word = word;
         entry.meaning = meaning;
+        var wdef = document.getElementById('word-sheet-def').value.trim();
+        if (wdef) entry.writeDef = wdef; else delete entry.writeDef;
         if (parsed.furigana) {                       // your own furigana
             entry.furigana = parsed.furigana;
             entry.reading = parsed.reading;
@@ -10544,6 +10585,17 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         if (wordSheetState) { wordSheetState.text = null; renderWordSheet(); }
     });
     document.getElementById('word-sheet-meaning').addEventListener('input', function(e) { e.target.dataset.edited = '1'; });
+    // 意味から入れる: start the write-practice definition from the meaning (without its 辞書形 line)
+    document.getElementById('word-sheet-def-copy').addEventListener('click', function() {
+        var lines = document.getElementById('word-sheet-meaning').value.split('\n').map(function(l) { return l.trim(); }).filter(Boolean);
+        var plain = (parseBracketFurigana(document.getElementById('word-sheet-word').value) || { word: document.getElementById('word-sheet-word').value.trim() }).word;
+        var d = dictionaryForm(plain);
+        if (d && lines[0] === d.form) lines.shift();
+        var t = lines.join('、');
+        if (!t) { var dd = wordDefinitions[plain] || (d && wordDefinitions[d.form]); if (dd) t = dd.jp; }
+        var box = document.getElementById('word-sheet-def');
+        if (t) { box.value = t; box.focus(); } else showToast('意味がまだありません');
+    });
 
     // Where a question is in the textbook: weeks 1–3 are numbered straight through each day
     // (e.g. 漢字読み 1–6, 文脈規定 7–13), week 4 is one passage, week 5 has passages (1)–(4).
@@ -10631,9 +10683,13 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
     var FLASH_DAYS = [1, 2, 4, 8, 16, 32];
     var flash = null;
     // 意味を書く keeps its own schedule (wbox / wdue), so writing and the cards don't move each other's words on
+    // 意味を書く has two directions, each with its own schedule: 'def' (word → write the definition: wbox/wdue)
+    // and 'word' (definition → write the word: wwbox/wwdue). Both use only the words with a 書く練習の定義.
+    function writeKeys(write) { return write === 'word' ? { box: 'wwbox', due: 'wwdue' } : write ? { box: 'wbox', due: 'wdue' } : { box: 'box', due: 'due' }; }
+    function writeWords() { return wordList.filter(function(e) { return e.writeDef; }); }
     function flashDueWords(write) {
-        var today = getTodayDateString(), dk = write ? 'wdue' : 'due';
-        return wordList.filter(function(e) { return !e[dk] || e[dk] <= today; })
+        var today = getTodayDateString(), dk = writeKeys(write).due;
+        return (write ? writeWords() : wordList).filter(function(e) { return !e[dk] || e[dk] <= today; })
             .sort(function(a, b) { return (a[dk] || '').localeCompare(b[dk] || '') || a.added - b.added; });
     }
     function flashOpen() {
@@ -10652,21 +10708,22 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         document.body.appendChild(v);
     }
     function startFlashcards(write) {
-        write = write === true;
+        if (write === true) { pickWriteDirection(); return; }
+        write = write === 'def' || write === 'word' ? write : false;
         var due = flashDueWords(write);
         var practiceAll = !due.length;          // nothing due today: go through every word
-        var list = practiceAll ? shuffleInPlace(wordList.slice()) : due;
+        var list = practiceAll ? shuffleInPlace((write ? writeWords() : wordList).slice()) : due;
         if (!list.length) return;
         flash = { queue: list.map(function(e) { return e.id; }), pos: 0, revealed: false, known: 0, again: 0, practiceAll: practiceAll, write: write, typed: '' };
         buildFlashView();
-        document.querySelector('#flash-view .flash-title').textContent = write ? '意味を書く' : 'カードで復習';
+        document.querySelector('#flash-view .flash-title').textContent = write === 'word' ? '言葉を書く' : write ? '意味を書く' : 'カードで復習';
         renderFlash();
         document.getElementById('flash-view').classList.add('active');
     }
     function closeFlashcards() {
         var v = document.getElementById('flash-view');
         if (v) v.classList.remove('active');
-        flash = null;
+        flash = null; wq = null;
         if (wordlistView.style.display !== 'none') renderWordListItems();
     }
     function renderFlash() {
@@ -10708,48 +10765,83 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             body.querySelector('.flash-card').addEventListener('click', reveal);
         }
     }
-    // 意味を書く: write the meaning in your own words, then compare it with the saved meaning and mark it yourself
+    // 意味を書く: first choose which way round
+    function pickWriteDirection() {
+        buildFlashView();
+        var v = document.getElementById('flash-view'), n = writeWords().length;
+        v.querySelector('.flash-title').textContent = '意味を書く';
+        v.querySelector('.flash-progress').textContent = '';
+        var dDef = flashDueWords('def').length, dWord = flashDueWords('word').length;
+        v.querySelector('.flash-body').innerHTML = '<div class="write-pick">' +
+            (n ? '<button id="wp-def"><b>意味を書く</b><span>言葉を見て、定義を書く・' + (dDef ? '今日 ' + dDef + '語' : '今日の分は完了 ✓') + '</span></button>' +
+                 '<button id="wp-word"><b>言葉を書く</b><span>定義を見て、日本語の言葉を書く（自動で採点）・' + (dWord ? '今日 ' + dWord + '語' : '今日の分は完了 ✓') + '</span></button>' +
+                 '<div class="write-pick-note">書く練習の定義がある ' + n + '語 で練習します。単語帳の単語をタップすると、定義を追加・変更できます。</div>'
+               : '<div class="write-pick-note">まだ「書く練習の定義」がある単語がありません。<br>単語帳の単語をタップして、「書く練習の定義」に短い定義を入れてください（「意味から入れる」で今の意味を写せます）。</div>' +
+                 '<button id="wp-back"><b>単語帳に戻る</b></button>') +
+            '</div>';
+        v.classList.add('active');
+        var on = function(id, fn) { var b = document.getElementById(id); if (b) b.addEventListener('click', fn); };
+        on('wp-def', function() { startFlashcards('def'); });
+        on('wp-word', function() { startFlashcards('word'); });
+        on('wp-back', closeFlashcards);
+    }
+    // writing the word: kanji, kana or the 辞書形 all count; spaces, brackets and katakana/hiragana don't matter
+    function writeWordMatches(e, typed) {
+        var norm = function(t) { return toHiragana(String(t || '').replace(/[\s　\[\]［］（）()「」]/g, '')); };
+        var t = norm(typed);
+        if (!t) return false;
+        var plainFuri = e.furigana ? (parseBracketFurigana(e.furigana) || {}).word : '';
+        return [e.word, e.reading, e.dictForm, plainFuri, e.furigana ? (parseBracketFurigana(e.furigana) || {}).reading : '']
+            .filter(Boolean).some(function(x) { return norm(x) === t; });
+    }
     function renderWriteCard(e, label, body) {
-        var dict = wordDefinitions[e.word] || null;
-        var shown = e.meaning || (dict ? dict.jp : '');
+        var toWord = flash.write === 'word';
         if (!flash.revealed) {
             body.innerHTML = '<div class="flash-card write-card">' +
                 (label ? '<div class="flash-source">' + escapeHtml(label) + '</div>' : '') +
-                '<div class="flash-word">' + escapeHtml(e.word) + '</div>' +
-                '<textarea class="write-input" id="write-input" rows="3" placeholder="意味を書いてください（日本語でも韓国語でも）" aria-label="意味"></textarea>' +
-                '<div class="flash-hint">書いたら「答え合わせ」。わからなければ空のままで大丈夫です</div>' +
+                (toWord ? '<div class="wq-dir">この定義の言葉は？</div><div class="wq-prompt meaning">' + escapeHtml(e.writeDef) + '</div>'
+                        : '<div class="flash-word">' + escapeHtml(e.word) + '</div>') +
+                (toWord ? '<input class="write-input" id="write-input" style="min-height:0" lang="ja" autocomplete="off" placeholder="日本語の言葉（漢字でもかなでも）" aria-label="言葉">'
+                        : '<textarea class="write-input" id="write-input" rows="3" placeholder="定義を書いてください（日本語でも韓国語でも）" aria-label="定義"></textarea>') +
+                '<div class="flash-hint">' + (toWord ? '書いたら「答え合わせ」。自動で採点します' : '書いたら「答え合わせ」。わからなければ空のままで大丈夫です') + '</div>' +
                 '</div>' +
                 '<div class="flash-actions"><button class="flash-reveal" id="write-check">答え合わせ</button></div>';
             var ta = body.querySelector('#write-input');
             ta.value = flash.typed || '';
             ta.addEventListener('input', function() { flash.typed = ta.value; });
-            body.querySelector('#write-check').addEventListener('click', function() { flash.typed = ta.value; flash.revealed = true; renderFlash(); });
+            var check = function() { flash.typed = ta.value; flash.revealed = true; renderFlash(); };
+            body.querySelector('#write-check').addEventListener('click', check);
+            if (toWord) ta.addEventListener('keydown', function(ev) { if (ev.key === 'Enter' && !ev.isComposing) { ev.preventDefault(); check(); } });
             setTimeout(function() { try { ta.focus(); } catch (err) {} }, 50);
             return;
         }
-        var mine = (flash.typed || '').trim();
+        var mine = (flash.typed || '').trim(), right = toWord && writeWordMatches(e, mine);
+        var lastKey = toWord ? 'wroteWord' : 'wrote';
         body.innerHTML = '<div class="flash-card write-card revealed">' +
             (label ? '<div class="flash-source">' + escapeHtml(label) + '</div>' : '') +
+            (toWord ? '<div class="write-mark ' + (right ? 'ok">◯ 正解' : 'ng">✕') + '</div>' : '') +
             '<div class="flash-word">' + entryWordHtml(e) + '</div>' +
             '<div class="write-compare">' +
                 '<div class="write-box mine"><small>あなたの答え</small><div' + (mine ? '>' + escapeHtml(mine) : ' class="empty">（空欄）') + '</div></div>' +
-                '<div class="write-box"><small>' + (e.meaning ? '単語帳の意味' : '意味') + '</small><div' + (shown ? '>' + escapeHtml(shown) : ' class="empty">（意味・メモなし）') + '</div>' +
-                    (dict && dict.kr && getSetting('showKorean', true) ? '<div class="write-kr">' + escapeHtml(dict.kr) + '</div>' : '') + '</div>' +
-                (e.meaning && dict && dict.jp && dict.jp !== e.meaning ? '<div class="write-box"><small>辞書</small><div>' + escapeHtml(dict.jp) + '</div></div>' : '') +
-                (e.wrote && e.wrote !== mine ? '<div class="write-box"><small>前回の答え</small><div>' + escapeHtml(e.wrote) + '</div></div>' : '') +
+                '<div class="write-box"><small>書く練習の定義</small><div>' + escapeHtml(e.writeDef) + '</div></div>' +
+                (e.meaning && e.meaning !== e.writeDef ? '<div class="write-box"><small>単語帳の意味</small><div>' + escapeHtml(e.meaning) + '</div></div>' : '') +
+                (e[lastKey] && e[lastKey] !== mine ? '<div class="write-box"><small>前回の答え</small><div>' + escapeHtml(e[lastKey]) + '</div></div>' : '') +
             '</div>' +
             (e.context ? '<div class="flash-context">' + highlightIn(e.context, e.word) + '</div>' : '') +
             '<button class="flash-speak" aria-label="読み上げ">🔊</button>' +
             '</div>' +
-            '<div class="flash-actions"><button class="flash-again">違った</button><button class="flash-know">合っていた</button></div>';
-        body.querySelector('.flash-again').addEventListener('click', function() { gradeFlash(false); });
+            '<div class="flash-actions">' + (right ? '<button class="flash-know">次へ</button>'
+                : toWord ? '<button class="flash-again">次へ</button><button class="flash-know">実は合っていた</button>'
+                : '<button class="flash-again">違った</button><button class="flash-know">合っていた</button>') + '</div>';
+        var again = body.querySelector('.flash-again');
+        if (again) again.addEventListener('click', function() { gradeFlash(false); });
         body.querySelector('.flash-know').addEventListener('click', function() { gradeFlash(true); });
         body.querySelector('.flash-speak').addEventListener('click', function() { speakText(escapeHtml(e.reading || e.word)); });
     }
     function gradeFlash(knew) {
         var e = wordList.find(function(w) { return w.id === flash.queue[flash.pos]; });
-        var BOX = flash.write ? 'wbox' : 'box', DUE = flash.write ? 'wdue' : 'due';
-        if (e && flash.write && (flash.typed || '').trim()) e.wrote = flash.typed.trim();
+        var BOX = writeKeys(flash.write).box, DUE = writeKeys(flash.write).due;
+        if (e && flash.write && (flash.typed || '').trim()) e[flash.write === 'word' ? 'wroteWord' : 'wrote'] = flash.typed.trim();
         if (e) {
             if (knew) {
                 e[BOX] = (e[BOX] || 0) + 1;
@@ -10770,6 +10862,135 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         flash.typed = '';
         renderFlash();
     }
+    // ---------- 単語帳: 四択クイズ and マッチング ----------
+    // Practice only (the card schedules are not touched). They use the words that have a meaning: the 単語帳 note
+    // (without its 辞書形 line) or else Mogi's own dictionary. The search and book filters above the list apply.
+    var wq = null;
+    function wqMeaning(e) {
+        if (e.writeDef) return e.writeDef;
+        var lines = String(e.meaning || '').split('\n').map(function(l) { return l.trim(); }).filter(Boolean);
+        if (e.dictForm && lines[0] === e.dictForm) lines.shift();
+        var t = lines.join(' / ');
+        if (!t) { var d = wordDefinitions[e.word] || (e.dictForm && wordDefinitions[e.dictForm]); if (d) t = d.jp + (d.kr && getSetting('showKorean', true) ? ' / ' + d.kr : ''); }
+        return t;
+    }
+    function wqClip(t, n) { return t.length > n ? t.slice(0, n - 1) + '…' : t; }
+    function wqPool(filtered) {
+        return wordList.filter(function(e) { return wqMeaning(e) && (!filtered || wordMatchesFilters(e)); });
+    }
+    function wqOpen(title) {
+        buildFlashView();
+        document.querySelector('#flash-view .flash-title').textContent = title;
+        document.getElementById('flash-view').classList.add('active');
+    }
+    function wqDone(stats, note, again) {
+        var body = document.querySelector('#flash-view .flash-body');
+        document.querySelector('#flash-view .flash-progress').textContent = '';
+        body.innerHTML = '<div class="flash-done"><div class="flash-done-mark">✓</div><div class="flash-done-title">おつかれさまでした</div>' +
+            '<div class="flash-done-stats">' + stats + '</div>' + (note ? '<div class="flash-done-note">' + note + '</div>' : '') +
+            '<button class="flash-done-btn wq-again">もう一度</button><button class="flash-done-btn wq-back">単語帳に戻る</button></div>';
+        body.querySelector('.wq-again').addEventListener('click', again);
+        body.querySelector('.wq-back').addEventListener('click', closeFlashcards);
+    }
+    // 四択: 10 questions; each asks either word → meaning or meaning → word
+    function startWordMC() {
+        var pool = wqPool(true), all = wqPool(false);
+        if (pool.length < 1 || all.length < 4) return;
+        var picks = shuffleInPlace(pool.slice()).slice(0, 10);
+        wq = { kind: 'mc', items: picks.map(function(e) {
+            var others = shuffleInPlace(all.filter(function(o) { return o.id !== e.id && wqMeaning(o) !== wqMeaning(e) && o.word !== e.word; })).slice(0, 3);
+            return { e: e, toWord: Math.random() < 0.4, opts: shuffleInPlace([e].concat(others)) };
+        }), pos: 0, ok: 0, answered: -1, missed: [] };
+        wqOpen('四択クイズ');
+        renderWordMC();
+    }
+    function renderWordMC() {
+        var body = document.querySelector('#flash-view .flash-body');
+        if (wq.pos >= wq.items.length) {
+            var miss = wq.missed.map(function(e) { return escapeHtml(e.word); }).join('、');
+            wqDone('正解 <b>' + wq.ok + '</b> / ' + wq.items.length, miss ? 'まちがえた語：' + miss : '全問正解！', startWordMC);
+            return;
+        }
+        document.querySelector('#flash-view .flash-progress').textContent = (wq.pos + 1) + ' / ' + wq.items.length;
+        var it = wq.items[wq.pos], e = it.e, done = wq.answered > -1;
+        var opts = it.opts.map(function(o, i) {
+            var cls = 'wq-opt' + (it.toWord ? ' word' : '');
+            if (done && o.id === e.id) cls += ' correct';
+            else if (done && i === wq.answered) cls += ' wrong';
+            return '<button class="' + cls + '" data-i="' + i + '"' + (done ? ' disabled' : '') + '>' + CIRCLED[i] + ' ' + escapeHtml(it.toWord ? o.word : wqClip(wqMeaning(o), 70)) + '</button>';
+        }).join('');
+        body.innerHTML = '<div class="wq-card">' +
+            '<div class="wq-dir">' + (it.toWord ? 'この意味の言葉は？' : 'この言葉の意味は？') + '</div>' +
+            '<div class="wq-prompt ' + (it.toWord ? 'meaning' : 'word') + '">' + escapeHtml(it.toWord ? wqClip(wqMeaning(e), 120) : e.word) + '</div>' +
+            '<div class="wq-opts">' + opts + '</div>' +
+            (done ? '<div class="wq-after"><b>' + entryWordHtml(e) + '</b><br>' + escapeHtml(wqMeaning(e)) + '</div>' : '') +
+            '</div>' + (done ? '<div class="flash-actions"><button class="flash-know" id="wq-next">' + (wq.pos + 1 < wq.items.length ? '次へ' : '結果を見る') + '</button></div>' : '');
+        if (done) { document.getElementById('wq-next').addEventListener('click', function() { wq.pos++; wq.answered = -1; renderWordMC(); }); return; }
+        body.querySelectorAll('.wq-opt').forEach(function(b) {
+            b.addEventListener('click', function() {
+                var i = +b.dataset.i, right = it.opts[i].id === e.id;
+                wq.answered = i;
+                if (right) wq.ok++; else wq.missed.push(e);
+                if (navigator.vibrate && getSetting('vibrate', true)) { try { navigator.vibrate(right ? 12 : [20, 30, 20]); } catch (err) {} }
+                renderWordMC();
+            });
+        });
+    }
+    // マッチング: rounds of 5 pairs; tap a word, then its meaning
+    function startWordMatch() {
+        var pool = shuffleInPlace(wqPool(true));
+        if (pool.length < 3) return;
+        var rounds = [];
+        for (var i = 0; i < pool.length && rounds.length < 3; i += 5) { var r = pool.slice(i, i + 5); if (r.length >= 3) rounds.push(r); }
+        wq = { kind: 'match', rounds: rounds, round: 0, miss: 0, start: Date.now() };
+        wqOpen('マッチング');
+        newMatchRound();
+    }
+    function newMatchRound() {
+        var words = wq.rounds[wq.round];
+        wq.left = shuffleInPlace(words.slice()); wq.right = shuffleInPlace(words.slice()); wq.done = {}; wq.sel = null;
+        renderWordMatch();
+    }
+    function renderWordMatch() {
+        var body = document.querySelector('#flash-view .flash-body');
+        document.querySelector('#flash-view .flash-progress').textContent = (wq.round + 1) + ' / ' + wq.rounds.length;
+        var tile = function(e, side) {
+            var sel = wq.sel && wq.sel.side === side && wq.sel.id === e.id;
+            return '<button class="wq-tile' + (side === 'L' ? ' word' : '') + (wq.done[e.id] ? ' done' : '') + (sel ? ' sel' : '') + '" data-side="' + side + '" data-id="' + e.id + '"' + (wq.done[e.id] ? ' disabled' : '') + '>' +
+                escapeHtml(side === 'L' ? e.word : wqClip(wqMeaning(e), 46)) + '</button>';
+        };
+        body.innerHTML = '<div class="wq-card"><div class="wq-dir">言葉と意味を組み合わせてください</div><div class="wq-match">' +
+            '<div class="wq-col">' + wq.left.map(function(e) { return tile(e, 'L'); }).join('') + '</div>' +
+            '<div class="wq-col">' + wq.right.map(function(e) { return tile(e, 'R'); }).join('') + '</div>' +
+            '</div><div class="wq-note">まちがい ' + wq.miss + '</div></div>';
+        body.querySelectorAll('.wq-tile').forEach(function(b) {
+            b.addEventListener('click', function() {
+                var side = b.dataset.side, id = b.dataset.id;
+                if (!wq.sel || wq.sel.side === side) { wq.sel = (wq.sel && wq.sel.side === side && wq.sel.id === id) ? null : { side: side, id: id }; renderWordMatch(); return; }
+                if (String(wq.sel.id) === String(id)) {
+                    wq.done[id] = true; wq.sel = null;
+                    if (navigator.vibrate && getSetting('vibrate', true)) { try { navigator.vibrate(12); } catch (err) {} }
+                    if (Object.keys(wq.done).length === wq.left.length) {
+                        if (wq.round + 1 < wq.rounds.length) { wq.round++; setTimeout(newMatchRound, 350); }
+                        else {
+                            var sec = Math.round((Date.now() - wq.start) / 1000), n = wq.rounds.reduce(function(a, r) { return a + r.length; }, 0);
+                            setTimeout(function() { wqDone(n + '組　まちがい <b>' + wq.miss + '</b>　' + Math.floor(sec / 60) + '分' + (sec % 60) + '秒', '', startWordMatch); }, 350);
+                        }
+                    }
+                    renderWordMatch();
+                } else {
+                    wq.miss++;
+                    var other = body.querySelector('.wq-tile[data-side="' + wq.sel.side + '"][data-id="' + wq.sel.id + '"]');
+                    wq.sel = null;
+                    [b, other].forEach(function(t) { if (t) { t.classList.remove('sel'); t.classList.add('bad'); } });
+                    if (navigator.vibrate && getSetting('vibrate', true)) { try { navigator.vibrate([20, 30, 20]); } catch (err) {} }
+                    setTimeout(renderWordMatch, 380);
+                }
+            });
+        });
+    }
+    document.getElementById('mc-start').addEventListener('click', startWordMC);
+    document.getElementById('match-start').addEventListener('click', startWordMatch);
     document.getElementById('flash-start').addEventListener('click', function() { startFlashcards(false); });
     document.getElementById('write-start').addEventListener('click', function() { startFlashcards(true); });
 
@@ -10796,9 +11017,14 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var due = flashDueWords().length;
         document.getElementById('flash-start-sub').textContent = !wordList.length ? '' : due ? '今日 ' + due + '語' : '今日の分は完了 ✓';
         document.getElementById('flash-start').disabled = !wordList.length;
-        var wdue = flashDueWords(true).length;
-        document.getElementById('write-start-sub').textContent = !wordList.length ? '' : wdue ? '今日 ' + wdue + '語' : '今日の分は完了 ✓';
+        var nDef = writeWords().length;
+        document.getElementById('write-start-sub').textContent = !wordList.length ? '' : nDef ? '定義あり ' + nDef + '語' : '定義を追加して使う';
         document.getElementById('write-start').disabled = !wordList.length;
+        var withMeaning = wqPool(true).length, allMeaning = wqPool(false).length;
+        document.getElementById('mc-start-sub').textContent = allMeaning < 4 ? '意味のある語が4語必要' : withMeaning + '語から10問';
+        document.getElementById('mc-start').disabled = allMeaning < 4 || !withMeaning;
+        document.getElementById('match-start-sub').textContent = withMeaning < 3 ? '意味のある語が3語必要' : '5組ずつ・' + Math.min(3, Math.floor(withMeaning / 5) || 1) + '回';
+        document.getElementById('match-start').disabled = withMeaning < 3;
     }
     document.getElementById('wordlist-search').addEventListener('input', function(e) { wlSearch = e.target.value.trim(); renderWordListItems(); });
     document.getElementById('wordlist-week').addEventListener('change', function(e) { wlWeek = e.target.value; renderWordListItems(); });
@@ -10851,6 +11077,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             return '<div class="word-item" data-id="' + e.id + '">' +
                 '<div class="word-item-word"><span class="word-item-no" aria-hidden="true">' + (i + 1) + '</span>' + entryWordHtml(e) + '<button class="word-item-speak" aria-label="「' + escapeHtml(e.word) + '」を読み上げ" title="読み上げ">🔊</button>' + (isLearned(e) ? '<span class="word-learned" title="カードで3回続けて覚えた">覚えた</span>' : '') + '</div>' +
                 '<div class="word-item-meaning' + (e.meaning ? '' : ' empty') + '">' + (e.meaning ? escapeHtml(e.meaning) : 'タップして意味・メモを追加') + '</div>' +
+                '<div class="word-item-def' + (e.writeDef ? '' : ' empty') + '">' + (e.writeDef ? '<b>書く練習</b>' + escapeHtml(e.writeDef) : '✎ タップして書く練習の定義を追加') + '</div>' +
                 (e.context ? '<div class="word-item-context">' + highlightIn(e.context, e.word) + '</div>' : '') +
                 '<div class="word-item-meta"><span>' + (textbookLabel(e.qid) ? '<b class="word-item-qnum">' + escapeHtml(textbookLabel(e.qid)) + '</b>' : escapeHtml(e.source || '')) + (e.qid || e.source ? '・' : '') + d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate() + '</span>' +
                 (e.qid && findQuestion(e.qid) ? '<button class="word-item-open" data-qid="' + e.qid + '">問題を見る</button>' : '') + '</div>' +
