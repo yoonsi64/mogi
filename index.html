@@ -214,8 +214,6 @@
         .font-seg button[data-v="gothic"] { font-family: var(--gothic); }
         .font-seg button[data-v="antique"] { font-family: var(--antique); }
         .font-seg button[data-v="kyokasho"] { font-family: var(--kyokasho); }
-        .font-seg button[data-v="chocolate"] { font-family: var(--chocolate); }
-        .font-seg button[data-v="wenkai"] { font-family: var(--wenkai); }
         /* six choices: 3 × 2 grid that fills the row */
         .seg.font-seg { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; margin-top: 6px; }
         .seg.font-seg button { border-left: none; border-top: none; }
@@ -1304,22 +1302,16 @@
         html.dark { --pen: #ff6b5e; --shadow: 0 1px 2px rgba(0,0,0,0.4); }
         :root { --gothic: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Yu Gothic', 'YuGothic', 'Meiryo', 'Noto Sans JP', 'Noto Sans CJK JP', sans-serif;
                 --antique: 'Zen Kaku Gothic Antique', var(--gothic);
-                --chocolate: 'Chocolate Classical Sans', var(--gothic);
-                --wenkai: 'LXGW WenKai Mono TC', 'Klee One', var(--kyokasho);
                 --kyokasho: 'Klee One', 'UD Digi Kyokasho N-R', 'UD デジタル 教科書体 N-R', 'YuKyokasho', var(--mincho);
                 --reading-font: var(--mincho); --option-font: var(--mincho); }
         /* 本文の書体 (passages and questions) */
         html[data-font="gothic"] { --reading-font: var(--gothic); }
         html[data-font="antique"] { --reading-font: var(--antique); }
         html[data-font="kyokasho"] { --reading-font: var(--kyokasho); }
-        html[data-font="chocolate"] { --reading-font: var(--chocolate); }
-        html[data-font="wenkai"] { --reading-font: var(--wenkai); }
         /* 選択肢の書体 (answer choices) */
         html[data-option-font="gothic"] { --option-font: var(--gothic); }
         html[data-option-font="antique"] { --option-font: var(--antique); }
         html[data-option-font="kyokasho"] { --option-font: var(--kyokasho); }
-        html[data-option-font="chocolate"] { --option-font: var(--chocolate); }
-        html[data-option-font="wenkai"] { --option-font: var(--wenkai); }
 
         .explain-sub { margin-top: 8px; font-size: 0.8rem; font-weight: bold; color: var(--text-sub); }
         .explain-opts { margin: 2px 0 0; padding: 0; list-style: none; }
@@ -2598,8 +2590,8 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         <div class="stat-card settings-group" id="set-g-display">
             <div class="stat-card-title">文字と表示</div>
             <div class="setting-row"><span>文字サイズ</span><span class="seg" id="set-size"><button data-v="s">小</button><button data-v="m">中</button><button data-v="l">大</button></span></div>
-            <div class="setting-row wrap"><span>本文の書体</span><span class="seg font-seg" id="set-font"><button data-v="mincho">明朝</button><button data-v="gothic">ゴシック</button><button data-v="antique">アンティーク</button><button data-v="kyokasho">教科書体</button><button data-v="chocolate">Chocolate</button><button data-v="wenkai">文楷</button></span></div>
-            <div class="setting-row wrap"><span>選択肢の書体</span><span class="seg font-seg" id="set-option-font"><button data-v="mincho">明朝</button><button data-v="gothic">ゴシック</button><button data-v="antique">アンティーク</button><button data-v="kyokasho">教科書体</button><button data-v="chocolate">Chocolate</button><button data-v="wenkai">文楷</button></span></div>
+            <div class="setting-row wrap"><span>本文の書体</span><span class="seg font-seg" id="set-font"><button data-v="mincho">明朝</button><button data-v="gothic">ゴシック</button><button data-v="antique">アンティーク</button><button data-v="kyokasho">教科書体</button></span></div>
+            <div class="setting-row wrap"><span>選択肢の書体</span><span class="seg font-seg" id="set-option-font"><button data-v="mincho">明朝</button><button data-v="gothic">ゴシック</button><button data-v="antique">アンティーク</button><button data-v="kyokasho">教科書体</button></span></div>
             <div class="font-preview" id="font-preview"><div class="fp-passage"><span class="fp-label">本文</span>次の文章を読んで、<ruby>後<rt>あと</rt></ruby>の問いに対する答えとして最もよいものを選びなさい。</div><div class="fp-option"><span class="fp-label">選択肢</span><span class="fp-num">①</span>筆者の考えに合うものを選ぶ</div></div>
             <div class="setting-row"><span>ふりがな</span><span class="seg" id="set-furigana"><button data-v="on">表示</button><button data-v="off">非表示</button></span></div>
             <div class="setting-row"><span>単語の韓国語訳</span><span class="seg" id="set-korean"><button data-v="on">表示</button><button data-v="off">非表示</button></span></div>
@@ -13017,16 +13009,15 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
     function fontSetting(key) {
         var v = key === 'optionFont' ? getSetting('optionFont', getSetting('font', 'mincho')) : getSetting('font', 'mincho');
         if (v === 'maru' || v === 'ud') v = 'antique';
-        return ['mincho', 'gothic', 'antique', 'kyokasho', 'chocolate', 'wenkai'].indexOf(v) > -1 ? v : 'mincho';
+        if (v === 'chocolate') v = 'gothic';          // the two Chinese fonts were removed: the nearest Japanese one
+        if (v === 'wenkai') v = 'kyokasho';
+        return ['mincho', 'gothic', 'antique', 'kyokasho'].indexOf(v) > -1 ? v : 'mincho';
     }
     // アンティーク and 教科書体 use free web fonts (cached for offline use by the service worker).
     // Without a connection the closest font on the device is used instead.
     var READING_WEB_FONTS = {
         antique: 'https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+Antique:wght@400;500;700&display=swap',
-        kyokasho: 'https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&display=swap',
-        chocolate: 'https://fonts.googleapis.com/css2?family=Chocolate+Classical+Sans&display=swap',
-        // 文楷 also loads Klee One, which supplies any kana it lacks
-        wenkai: ['https://fonts.googleapis.com/css2?family=LXGW+WenKai+Mono+TC&display=swap', 'https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&display=swap']
+        kyokasho: 'https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&display=swap'
     };
     function loadReadingFont(font) {
         var urls = READING_WEB_FONTS[font];
