@@ -843,7 +843,9 @@
         .word-item-speak:active { background: var(--accent-soft); }
         /* 単語帳: furigana below the word */
         .word-item-word ruby, .home-word-text ruby { ruby-position: under; -webkit-ruby-position: after; }
-        .wordlist-export { margin-left: 8px; }
+        .wordlist-export { margin-left: 8px; display: inline-flex; align-items: center; gap: 4px; }
+        .wordlist-export .dl-ic { width: 15px; height: 15px; flex: none; }
+        .wordlist-export small { font-size: 0.68rem; opacity: 0.7; font-weight: normal; }
         .wl-undo-group { margin-left: auto; display: inline-flex; gap: 6px; }
         .wl-undo { display: inline-flex; align-items: center; justify-content: center; width: 40px; min-height: 36px; padding: 0 !important; border: 1px solid var(--border-light); border-radius: 18px; background: var(--bg-paper); color: var(--text-main); cursor: pointer; }
         .wl-undo svg { width: 18px; height: 18px; }
@@ -892,6 +894,9 @@
         .flash-speak { position: absolute; top: 8px; right: 8px; width: 44px; height: 44px; border: none; background: none; font-size: 1.2rem; }
         .flash-actions { display: flex; gap: 10px; margin-top: 14px; }
         .setting-note { font-size: 0.75rem; color: var(--text-sub); line-height: 1.6; padding: 2px 0 6px; }
+        .srs-reset { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+        .srs-reset button { padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border-light); background: var(--surface); color: var(--text-main); font: inherit; font-size: 0.82rem; }
+        .srs-reset button.danger { color: #b8312f; border-color: color-mix(in srgb, #b8312f 50%, var(--border-light)); font-weight: bold; }
         .srs-btns.three { grid-template-columns: repeat(3, 1fr); }
         .write-override { font-size: 0.75rem; color: var(--text-sub); text-align: center; margin-top: 6px; }
         .srs-btns { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
@@ -2581,6 +2586,8 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             <div class="setting-row wrap"><span>1日の復習の上限</span><span class="seg" id="set-srs-rev"><button data-v="100">100</button><button data-v="200">200</button><button data-v="500">500</button><button data-v="0">無制限</button></span></div>
             <div class="setting-row wrap"><span>目標の記憶率</span><span class="seg" id="set-srs-ret"><button data-v="0.85">85%</button><button data-v="0.9">90%</button><button data-v="0.95">95%</button></span></div>
             <div class="setting-note">記憶率を上げると、忘れにくくなるかわりに復習の回数が増えます（Ankiの初期設定は90%）。</div>
+            <div class="setting-row wrap"><span>スケジュールをリセット</span><span class="srs-reset" id="set-srs-reset"><button data-v="card">カード</button><button data-v="def">意味を書く</button><button data-v="word">言葉を書く</button><button data-v="all" class="danger">すべて</button></span></div>
+            <div class="setting-note">選んだ練習の記録（覚え具合・次に出る日）を消して、すべての単語を新しいカードに戻します。単語・意味・定義はそのままです。単語帳の「元に戻す」で取り消せます。</div>
         </div>
         <div class="stat-card settings-group" id="set-g-solve">
             <div class="stat-card-title">問題を解くとき</div>
@@ -2666,7 +2673,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             <button data-sort="new" class="active">新しい順</button>
             <button data-sort="kana">五十音順</button>
             <span id="wordlist-count" style="margin-left:auto; align-self:center; font-size:0.8rem; color:var(--text-sub); font-weight:bold;"></span>
-            <button id="wordlist-export" class="wordlist-export" title="単語;意味;読み の形でテキストファイルに保存">書き出す</button>
+            <button id="wordlist-export" class="wordlist-export" title="単語;意味;単語[ふりがな] の形でテキストファイル（.txt）に保存" aria-label="単語帳を.txtファイルに書き出す"><svg class="dl-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 17v3h16v-3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>書き出す<small>.txt</small></button>
         </div>
         <div class="flash-starts"><button id="flash-start" class="flash-start"><span class="flash-start-label">カードで復習</span><span class="flash-start-sub" id="flash-start-sub"></span></button><button id="write-start" class="flash-start write"><span class="flash-start-label">意味を書く</span><span class="flash-start-sub" id="write-start-sub"></span></button><button id="mc-start" class="flash-start write"><span class="flash-start-label">四択クイズ</span><span class="flash-start-sub" id="mc-start-sub"></span></button><button id="match-start" class="flash-start write"><span class="flash-start-label">マッチング</span><span class="flash-start-sub" id="match-start-sub"></span></button></div>
         <div class="wordlist-tools">
@@ -9275,6 +9282,30 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
     document.querySelectorAll('#set-omikuji-sound button').forEach(function(b) {
         b.addEventListener('click', function() { setSetting('omikujiSound', b.dataset.v === 'on'); markSeg('set-omikuji-sound', b.dataset.v); if (b.dataset.v === 'on') omkSound('bell', 0.8); });
     });
+    // スケジュールをリセット: back to new cards for one practice (or all of them)
+    function resetSrs(modes) {
+        var before = wordBegin();
+        wordList.forEach(function(e) {
+            modes.forEach(function(m) {
+                var k = srsK(m);
+                delete e[k.srs]; delete e[k.due]; delete e[k.box];
+                if (m === 'card') delete e.lastReviewed;
+            });
+        });
+        modes.forEach(function(m) { setSetting(srsK(m).newDay, null); });
+        saveWordList();
+        wordCommit(before, 'スケジュールのリセット');
+    }
+    document.querySelectorAll('#set-srs-reset button').forEach(function(b) {
+        b.addEventListener('click', function() {
+            var v = b.dataset.v, modes = v === 'all' ? ['card', 'def', 'word'] : [v];
+            var name = { card: 'カード', def: '意味を書く', word: '言葉を書く', all: 'すべての練習' }[v];
+            showConfirm('スケジュールをリセット', '「' + name + '」の記録を消して、' + wordList.length + '語すべてを新しいカードに戻します。\n単語・意味・定義は消えません。', 'リセットする', true, function() {
+                resetSrs(modes);
+                showToast('「' + name + '」のスケジュールをリセットしました');
+            });
+        });
+    });
     [['set-srs-new', 'srsNewPerDay'], ['set-srs-rev', 'srsMaxReviews'], ['set-srs-ret', 'srsRetention']].forEach(function(cfg) {
         document.querySelectorAll('#' + cfg[0] + ' button').forEach(function(b) {
             b.addEventListener('click', function() { setSetting(cfg[1], parseFloat(b.dataset.v)); markSeg(cfg[0], b.dataset.v); });
@@ -10131,7 +10162,14 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         if (currentWordSort === 'kana') items.sort(function(a, b) { return a.word.localeCompare(b.word, 'ja'); });
         else items.sort(function(a, b) { return b.added - a.added; });
         var field = function(s) { return String(s || '').replace(/\r?\n+/g, ' / ').replace(/;/g, '；').trim(); };
-        return items.map(function(e) { return field(e.word) + ';' + field(e.meaning) + ';' + field(bracketReadingFor(e)); }).join('\n') + '\n';
+        // 単語;意味;単語[ふりがな] — the third field is always filled: the word itself when it has no kanji
+        var def = function(e) {
+            if (e.meaning) return e.meaning;
+            if (e.writeDef) return e.writeDef;
+            var d = wordDefinitions[e.word] || (e.dictForm && wordDefinitions[e.dictForm]);
+            return d ? d.jp + (d.kr ? ' / ' + d.kr : '') : '';
+        };
+        return items.map(function(e) { return field(e.word) + ';' + field(def(e)) + ';' + field(bracketReadingFor(e) || e.word); }).join('\n') + '\n';
     }
     function exportWordList() {
         if (!wordList.length) { showToast('単語帳は空です'); return; }
@@ -10139,7 +10177,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var d = new Date();
         var name = 'mogi-tangocho-' + d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + '.txt';
         var showText = function() {
-            showTextDialog('単語帳（テキスト）', '下のテキストをコピーしてください。1行に1語、「単語;意味;読み」の形です（読みは 痴[ち]人[じん] の形）。', text, '閉じる', function(v, close) { close(); }, true);
+            showTextDialog('単語帳（テキスト）', '下のテキストをコピーしてください。1行に1語、「単語;意味;単語[ふりがな]」の形です（例：痴[ち]人[じん]の 愛[あい]）。', text, '閉じる', function(v, close) { close(); }, true);
         };
         try {
             saveTextFile(name, 'text/plain', text, function(ok, cancelled) {
@@ -10148,7 +10186,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
                 showToast('「' + name + '」を保存しました（' + wordList.length + '語）', 3500);
             });
         } catch (err) {
-            showTextDialog('単語帳（テキスト）', '下のテキストをコピーしてください。1行に1語、「単語;意味;読み」の形です（読みは 痴[ち]人[じん] の形）。', text, '閉じる', function(v, close) { close(); }, true);
+            showTextDialog('単語帳（テキスト）', '下のテキストをコピーしてください。1行に1語、「単語;意味;単語[ふりがな]」の形です（例：痴[ち]人[じん]の 愛[あい]）。', text, '閉じる', function(v, close) { close(); }, true);
         }
     }
 
