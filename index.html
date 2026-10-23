@@ -1067,6 +1067,7 @@
         .write-pick button { padding: 18px 16px; border-radius: 14px; border: 1px solid var(--border-light); background: var(--surface); color: var(--text-main); text-align: left; font: inherit; }
         .write-pick button b { display: block; font-size: 1.1rem; margin-bottom: 4px; }
         .write-pick button span { font-size: 0.82rem; color: var(--text-sub); }
+        .write-pick button:disabled { opacity: 0.45; }
         .write-pick .write-pick-note { font-size: 0.8rem; color: var(--text-sub); line-height: 1.6; text-align: center; }
         .word-sheet-autosave { flex: 1; align-self: center; font-size: 0.75rem; color: var(--text-sub); }
         .word-sheet-context { font-size: 0.85rem; color: var(--text-sub); line-height: 1.6; max-height: 5em; overflow-y: auto; }
@@ -2683,7 +2684,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             <span id="wordlist-count" style="margin-left:auto; align-self:center; font-size:0.8rem; color:var(--text-sub); font-weight:bold;"></span>
             <button id="wordlist-export" class="wordlist-export" title="単語;意味;単語[ふりがな] の形でテキストファイル（.txt）に保存" aria-label="単語帳を.txtファイルに書き出す"><svg class="dl-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 17v3h16v-3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>書き出す</button>
         </div>
-        <div class="flash-starts"><button id="flash-start" class="flash-start"><span class="flash-start-label">カードで復習</span><span class="flash-start-sub" id="flash-start-sub"></span></button><button id="write-start" class="flash-start write"><span class="flash-start-label">意味を書く</span><span class="flash-start-sub" id="write-start-sub"></span></button><button id="mc-start" class="flash-start write"><span class="flash-start-label">四択クイズ</span><span class="flash-start-sub" id="mc-start-sub"></span></button><button id="match-start" class="flash-start write"><span class="flash-start-label">マッチング</span><span class="flash-start-sub" id="match-start-sub"></span></button><button id="mem-start" class="flash-start write"><span class="flash-start-label">神経衰弱</span><span class="flash-start-sub" id="mem-start-sub"></span></button></div>
+        <div class="flash-starts"><button id="flash-start" class="flash-start"><span class="flash-start-label">カードで復習</span><span class="flash-start-sub" id="flash-start-sub"></span></button><button id="write-start" class="flash-start write"><span class="flash-start-label">書いて覚える</span><span class="flash-start-sub" id="write-start-sub"></span></button><button id="mc-start" class="flash-start write"><span class="flash-start-label">四択クイズ</span><span class="flash-start-sub" id="mc-start-sub"></span></button><button id="match-start" class="flash-start write"><span class="flash-start-label">マッチング</span><span class="flash-start-sub" id="match-start-sub"></span></button><button id="mem-start" class="flash-start write"><span class="flash-start-label">神経衰弱</span><span class="flash-start-sub" id="mem-start-sub"></span></button></div>
         <div class="wordlist-tools">
             <input type="search" id="wordlist-search" placeholder="検索" aria-label="検索（単語・読み・意味）" autocomplete="off" lang="ja">
             <select id="wordlist-week" aria-label="週で絞り込む">
@@ -11002,15 +11003,16 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
     function pickWriteDirection() {
         buildFlashView();
         var v = document.getElementById('flash-view'), n = writeWords().length;
-        v.querySelector('.flash-title').textContent = '意味を書く';
+        v.querySelector('.flash-title').textContent = '書いて覚える';
         v.querySelector('.flash-progress').textContent = '';
         var qD = srsTodayQueue('def'), qW = srsTodayQueue('word'), dDef = qD.all.length, dWord = qW.all.length;
         var cnt = function(q) { return '新' + q.fresh.length + '・学習' + q.learn.length + '・復習' + q.review.length; };
+        // both directions are always shown; until a word has a 書く練習の定義 they are greyed out
         v.querySelector('.flash-body').innerHTML = '<div class="write-pick">' +
-            (n ? '<button id="wp-def"><b>意味を書く</b><span>言葉を見て、定義を書く・' + (dDef ? cnt(qD) : '今日の分は完了 ✓') + '</span></button>' +
-                 '<button id="wp-word"><b>言葉を書く</b><span>定義を見て、日本語の言葉を書く（自動で採点）・' + (dWord ? cnt(qW) : '今日の分は完了 ✓') + '</span></button>' +
-                 '<div class="write-pick-note">書く練習の定義がある ' + n + '語 で練習します（カードと同じFSRS・それぞれ別のスケジュール）。単語帳の単語をタップすると、定義を追加・変更できます。</div>'
-               : '<div class="write-pick-note">まだ「書く練習の定義」がある単語がありません。<br>単語帳の単語をタップして、「書く練習の定義」に短い定義を入れてください（「意味から入れる」で今の意味を写せます）。</div>' +
+            '<button id="wp-def"' + (n ? '' : ' disabled') + '><b>意味を書く</b><span>言葉を見て、定義を書く' + (n ? '・' + (dDef ? cnt(qD) : '今日の分は完了 ✓') : '') + '</span></button>' +
+            '<button id="wp-word"' + (n ? '' : ' disabled') + '><b>言葉を書く</b><span>定義を見て、日本語の言葉を書く（自動で採点）' + (n ? '・' + (dWord ? cnt(qW) : '今日の分は完了 ✓') : '') + '</span></button>' +
+            (n ? '<div class="write-pick-note">書く練習の定義がある ' + n + '語 で練習します（カードと同じFSRS・それぞれ別のスケジュール）。単語帳の単語をタップすると、定義を追加・変更できます。</div>'
+               : '<div class="write-pick-note">どちらも「書く練習の定義」がある単語で練習します。まだありません。<br>単語帳の単語をタップして、「書く練習の定義」に短い定義を入れてください（「意味から入れる」で今の意味を写せます）。</div>' +
                  '<button id="wp-back"><b>単語帳に戻る</b></button>') +
             '</div>';
         v.classList.add('active');
