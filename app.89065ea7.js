@@ -4107,6 +4107,7 @@
     }
     function studyTick() {
         if (typeof isResettingAll !== 'undefined' && isResettingAll) return;
+        if (!gardenLive()) { studyClock = Date.now(); return; }      // nothing counts until the garden is in the app
         var now = Date.now(), ms = now - studyClock;
         if (ms < 1000) return;
         studyClock = now;
@@ -4137,6 +4138,19 @@
         return { total: total, days: days };
     }
     function gardenMinutes() { return Math.floor(studyTotals().total / 60); }
+    // The timer starts with the garden: the first time this device has the painter (garden.js), anything this
+    // device recorded before then is cleared, so every device starts the garden from zero.
+    function gardenLive() {
+        if (!window.MogiGarden) return false;
+        try {
+            if (!localStorage.getItem('mogiGardenStarted')) {
+                localStorage.setItem('mogiGardenStarted', String(Date.now()));
+                studyTime = {};
+                localStorage.setItem(STUDY_KEY, '{}');
+            }
+        } catch (e) {}
+        return true;
+    }
 
     // ---------- 学びの庭: the card on the home screen and the full view ----------
     // The painting itself is garden.js (window.MogiGarden), loaded after the app. The card is one element that is
@@ -14186,11 +14200,11 @@
             { id: 'weekend', cat: 'habit', icon: '⚔️', name: '週末戦士', value: nb.weekends.length, unit: '回', tiers: tiers([4, 12, 30, 52, 100], '回'), hint: '土曜と日曜の両方に学習した週末の数' },
             { id: 'readdaily', cat: 'habit', icon: '📖', name: '一日一文', value: nb.readBest, unit: '日', tiers: tiers([7, 14, 30, 60, 100], '日'), hint: '毎日1つ以上の文章（内容理解・文章の文法）を解いて続けた日数（最長）' },
             { id: 'rush', cat: 'habit', icon: '🏁', name: '追い込み', value: nb.rush.length, unit: '日', tiers: tiers([10, 20, 25, 28, 30], '日'), hint: getSetting('examDate', '') ? '試験日までの30日間に学習した日の数（30日すべてで最高位）' : '試験日を設定すると、試験前の30日間に学習した日を数えます' },
-            // 学びの庭
-            { id: 'gdhours', cat: 'garden', icon: '🌱', name: '庭づくり', value: Math.floor(gdT.total / 3600), unit: '時間', tiers: tiers([1, 10, 50, 150, 500], '時間'), hint: '問題・読解・模試・単語帳のゲームで、手を動かして学習した時間の合計（500時間で庭が完成）' },
-            { id: 'gdfocus', cat: 'garden', icon: '🍵', name: '集中', value: gdBestDay, unit: '分', tiers: [{ n: 30, label: '30分' }, { n: 60, label: '1時間' }, { n: 120, label: '2時間' }, { n: 180, label: '3時間' }, { n: 300, label: '5時間' }], hint: '1日に手を動かして学習した時間（いちばん長かった日）' },
-            { id: 'gdwater', cat: 'garden', icon: '💧', name: '水やり', value: gdBestRun, unit: '日', tiers: tiers([3, 7, 14, 30, 100], '日'), hint: '毎日15分以上、手を動かして学習した日が続いた数（最長）' },
-            { id: 'gdseasons', cat: 'garden', icon: '🍁', name: '四季の庭', value: Object.keys(gdSeasons).length, unit: 'つ', tiers: [{ n: 1, label: '1つ' }, { n: 2, label: '2つ' }, { n: 3, label: '3つ' }, { n: 4, label: '春夏秋冬' }], hint: '1日1時間以上学習した日がある季節の数（春・夏・秋・冬）' },
+            // 学びの庭 (only once the garden is in the app)
+            { id: 'gdhours', cat: gardenLive() ? 'garden' : 'off', icon: '🌱', name: '庭づくり', value: Math.floor(gdT.total / 3600), unit: '時間', tiers: tiers([1, 10, 50, 150, 500], '時間'), hint: '問題・読解・模試・単語帳のゲームで、手を動かして学習した時間の合計（500時間で庭が完成）' },
+            { id: 'gdfocus', cat: gardenLive() ? 'garden' : 'off', icon: '🍵', name: '集中', value: gdBestDay, unit: '分', tiers: [{ n: 30, label: '30分' }, { n: 60, label: '1時間' }, { n: 120, label: '2時間' }, { n: 180, label: '3時間' }, { n: 300, label: '5時間' }], hint: '1日に手を動かして学習した時間（いちばん長かった日）' },
+            { id: 'gdwater', cat: gardenLive() ? 'garden' : 'off', icon: '💧', name: '水やり', value: gdBestRun, unit: '日', tiers: tiers([3, 7, 14, 30, 100], '日'), hint: '毎日15分以上、手を動かして学習した日が続いた数（最長）' },
+            { id: 'gdseasons', cat: gardenLive() ? 'garden' : 'off', icon: '🍁', name: '四季の庭', value: Object.keys(gdSeasons).length, unit: 'つ', tiers: [{ n: 1, label: '1つ' }, { n: 2, label: '2つ' }, { n: 3, label: '3つ' }, { n: 4, label: '春夏秋冬' }], hint: '1日1時間以上学習した日がある季節の数（春・夏・秋・冬）' },
             // 誤答と復習
             { id: 'notezero', cat: 'review', icon: '🧹', name: '誤答ゼロ', value: nb.zero.length, unit: '回', tiers: tiers([1, 3, 10, 20, 50], '回'), hint: '誤答ノートの問題をすべて解き直して、ノートを空にした回数' },
             { id: 'retry', cat: 'review', icon: '🛠️', name: '解き直し名人', value: nb.recover.length, unit: '問', tiers: tiers([10, 30, 100, 200, 400], '問'), hint: '一度間違えた問題を、後で正解した数' },
@@ -14278,7 +14292,7 @@
             { id: 'musubi', cat: 'collect', icon: '🎀', name: '結び', value: nb.tied.length, unit: '枚', tiers: tiers([1, 10, 30, 50, 100], '枚'), hint: '凶のおみくじを結んだ数' },
             { id: 'omacollect', cat: 'collect', icon: '🧧', name: 'お守りコレクター', ok: nb.rare.length >= nb.rareTotal, progress: nb.rare.length + ' / ' + nb.rareTotal, hint: 'めずらしいお守りをすべて持ち帰る' }
         ]);
-        return badges;
+        return badges.filter(function(bg) { return bg.cat !== 'off'; });
     }
     function badgeColor(b, lv) { return b.tiers ? TIER_COLORS[tierIdx(lv - 1, b.tiers.length)] : '#b8312f'; }
     function badgeTileHtml(b) {
