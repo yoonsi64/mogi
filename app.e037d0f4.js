@@ -6642,10 +6642,9 @@
         if (card) {
             card.classList.add('wq-over', 'wq-shake');
             card.querySelectorAll('.wq-clear').forEach(function(x) { x.remove(); });
-            var veil = document.createElement('div'); veil.className = 'wq-timeup-veil'; card.appendChild(veil);
             var st = document.createElement('div'); st.className = 'wq-timeup'; st.innerHTML = '<b>タイムアップ</b><small>時間切れ</small>'; card.appendChild(st);
-            // keep both on what's in view if the board is scrolled
-            if (card.scrollTop) { veil.style.inset = 'auto 0'; veil.style.top = card.scrollTop + 'px'; veil.style.height = card.clientHeight + 'px'; st.style.top = (card.scrollTop + card.clientHeight / 2) + 'px'; }
+            // keep it on what's in view if the board is scrolled
+            if (card.scrollTop) st.style.top = (card.scrollTop + card.clientHeight / 2) + 'px';
         }
         // the hit lands when the seal does
         setTimeout(function() {

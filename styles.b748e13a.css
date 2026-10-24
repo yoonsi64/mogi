@@ -1004,8 +1004,6 @@
         @keyframes wqLow { to { transform: scale(1.2); } }
         .wq-hud .ta-score b { color: var(--active-blue); font-size: 1rem; }
         /* タイムアップ: the board darkens, a big red seal slams down and the card shudders */
-        .wq-timeup-veil { position: absolute; inset: 0; z-index: 2; border-radius: inherit; pointer-events: none; background: radial-gradient(ellipse at 50% 50%, rgba(25, 8, 8, 0.38), rgba(25, 8, 8, 0.72)); animation: wqVeil 0.3s ease-out both; }
-        @keyframes wqVeil { from { opacity: 0; } }
         .wq-timeup { position: absolute; left: 50%; top: 50%; z-index: 3; transform: translate(-50%, -50%) rotate(-9deg); pointer-events: none; text-align: center; white-space: nowrap;
             padding: 12px 22px 10px; color: #c0262d; background: #fbf5ea; border: 5px solid #c0262d; border-radius: 6px;
             box-shadow: inset 0 0 0 3px #fbf5ea, inset 0 0 0 5px #c0262d, 0 22px 44px rgba(0, 0, 0, 0.5);
@@ -1026,7 +1024,6 @@
         .flash-view.game .wq-card:not(.mset) .wq-after { border-top: none; }
         .flash-view.game .cloze-hint { border: none; }
         .flash-view.game .wq-tile, .flash-view.game .wq-opt, .flash-view.game .cloze-bank { box-shadow: 0 2px 8px rgba(30, 20, 5, 0.16); }
-        .flash-view.game .wq-timeup-veil { border-radius: 14px; }
         .flash-view.game { background: var(--gs-paper, #f6f3ec); }
         .flash-view.game > .flash-head, .flash-view.game > .flash-body { position: relative; z-index: 1; }
         .flash-view.game .flash-head { align-self: stretch; padding: 4px 12px 4px 4px; border-radius: 10px; background: color-mix(in srgb, var(--bg-paper) 70%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
@@ -1066,7 +1063,7 @@
         .wq-missed > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
         .wq-miss { padding: 6px 10px; border-radius: 10px; border: 1px solid var(--border-light); background: var(--bg-paper); color: var(--text-main); font-family: var(--reading-font); font-size: 1rem; }
         .wq-res-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-        @media (prefers-reduced-motion: reduce) { .wq-tile.enter, .wq-tile.pop, .wq-tile.done.pop, .wq-grade, .wq-best, .wq-chip, .wq-stamp, .wq-clear, #wq-clock.low, .wq-timeup, .wq-timeup-veil, .wq-card.wq-shake { animation: none; } .wq-ring-fg { transition: none; } }
+        @media (prefers-reduced-motion: reduce) { .wq-tile.enter, .wq-tile.pop, .wq-tile.done.pop, .wq-grade, .wq-best, .wq-chip, .wq-stamp, .wq-clear, #wq-clock.low, .wq-timeup, .wq-card.wq-shake { animation: none; } .wq-ring-fg { transition: none; } }
         .wq-note { font-size: 0.78rem; color: var(--text-sub); text-align: center; }
         .flash-starts .flash-start { flex: 1; min-width: 0; margin: 0; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 14px; }
         .flash-start.write { background: var(--surface); color: var(--active-blue); box-shadow: inset 0 0 0 2px var(--active-blue); }
