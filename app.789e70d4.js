@@ -6548,6 +6548,7 @@
         if (!list.length) return;
         flash = { queue: list.map(function(e) { return e.id; }), pos: 0, revealed: false, known: 0, again: 0, practiceAll: practiceAll, write: write, typed: '', start: Date.now(), missedIds: [] };
         buildFlashView();
+        learnBg();
         document.querySelector('#flash-view .flash-title').textContent = write === 'word' ? '言葉を書く' : write ? '意味を書く' : 'カードで復習';
         renderFlash();
         document.getElementById('flash-view').classList.add('active');
@@ -6605,6 +6606,7 @@
     // 意味を書く: first choose which way round
     function pickWriteDirection() {
         buildFlashView();
+        learnBg();
         var v = document.getElementById('flash-view'), n = writeWords().length;
         v.querySelector('.flash-title').textContent = '書いて覚える';
         v.querySelector('.flash-progress').textContent = '';
@@ -6758,8 +6760,15 @@
         buildFlashView();
         document.querySelector('#flash-view .flash-title').textContent = title;
         document.getElementById('flash-view').classList.add('active');
+        document.getElementById('flash-view').classList.remove('learn');
         wagaraPick();
         sceneStart();
+    }
+    // 学習 (カード・書いて覚える): a 和柄 behind the whole session; a new one each time you start from the 単語帳
+    function learnBg() {
+        var v = document.getElementById('flash-view');
+        if (!v.classList.contains('learn') || !v.classList.contains('active')) wagaraPick();
+        v.classList.add('learn');
     }
     // ---------- 和柄: traditional patterns behind the game settings screen (nippon.com「日本の伝統文様」より) ----------
     // [id, name, reading, meaning, 'line' | 'fill', tile width, tile height, svg with __F__ / __B__ for the colors]
