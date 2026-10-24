@@ -4244,7 +4244,7 @@
             '<div class="gd-bar"><i style="width:' + pct + '%"></i></div>' +
             '<div class="gd-next">' + (nx ? '<span>' + (dev ? '次 ─ ' + escapeHtml(gdLabel(nx)) + '　あと' : '次の変化まで あと') + gdFmt(nx.min - s.min) + '</span>'
                                           : '<span>' + gdWorld(s.w).k + 'が完成しました ─ 四季めぐり</span>') +
-            '<span class="gd-step">' + (s.stage + 1) + ' / ' + s.stages.length + '</span></div>';
+            (nx ? '<span class="gd-step">' + gdFmt(s.min - cur.min) + ' / ' + gdFmt(nx.min - cur.min) + '</span>' : '') + '</div>';
     }
     // ---------- めずらしい生き物: rare animals that show up now and then (the painter decides; we keep the log) ----------
     // each device keeps its own log (jlptRareSeen_<device> = { 'garden:kawasemi': firstSeenMs, ... }) so two devices never overwrite each other
