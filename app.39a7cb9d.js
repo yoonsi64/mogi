@@ -10158,6 +10158,7 @@
         document.querySelector('#ar-view .ar-tabs').innerHTML = tabs.map(function(t) { return '<button data-t="' + t[0] + '">' + t[1] + '</button>'; }).join('');
         document.getElementById('ar-view').style.setProperty('--ar-zoom', arZoom());
         document.getElementById('ar-view').classList.add('active');
+        document.getElementById('ar-view').classList.toggle('ar-nofuri', !getSetting('arFuri', true));
         renderAr();
     }
     function closeReading() {
@@ -10236,8 +10237,10 @@
         var player = '<button class="ar-rate" aria-label="読み上げの速さ ' + arRate() + '倍" title="読み上げの速さ（押すたびに変わります）">' + arRateLabel(arRate()) + '</button>' +
             (t && t.idx > 0 ? '<button class="ar-restart" aria-label="最初から読み上げ" title="最初から">' + AR_ICONS.restart + '</button>' : '') +
             '<button class="ar-play' + (playing ? ' on' : '') + '" aria-label="' + (playing ? '一時停止' : '読み上げ') + '" title="' + (playing ? '一時停止' : (t && t.idx > 0 ? '続きから読み上げ' : '読み上げ')) + '">' + (playing ? AR_ICONS.pause : AR_ICONS.play) + '</button>';
-        if (ar.tab !== 'text') return playing || (t && t.idx > 0) ? player : '';
-        return '<span class="seg ar-mode"><button data-m="v"' + (mode === 'v' ? ' class="active"' : '') + '>縦</button><button data-m="h"' + (mode === 'h' ? ' class="active"' : '') + '>横</button></span>' + player;
+        var furiOn = getSetting('arFuri', true);
+        var furi = ar.tab === 'words' ? '' : '<button class="ar-furi' + (furiOn ? ' on' : '') + '" aria-pressed="' + furiOn + '" aria-label="ふりがな ' + (furiOn ? '表示中' : '非表示') + '" title="ふりがなの表示・非表示"><ruby>漢<rt>かん</rt></ruby></button>';
+        if (ar.tab !== 'text') return furi + (playing || (t && t.idx > 0) ? player : '');
+        return furi + '<span class="seg ar-mode"><button data-m="v"' + (mode === 'v' ? ' class="active"' : '') + '>縦</button><button data-m="h"' + (mode === 'h' ? ' class="active"' : '') + '>横</button></span>' + player;
     }
     function arRefreshTools() {
         var tools = document.querySelector('#ar-view .ar-tools');
@@ -10245,6 +10248,15 @@
         tools.innerHTML = arToolsHtml();
         tools.querySelectorAll('.ar-mode button').forEach(function(b) {
             b.addEventListener('click', function() { arSavePos(); advState(ar.id).mode = b.dataset.m; saveAdv(); renderAr(); });
+        });
+        var furiB = tools.querySelector('.ar-furi');
+        if (furiB) furiB.addEventListener('click', function() {
+            var on = !getSetting('arFuri', true);
+            setSetting('arFuri', on);
+            document.getElementById('ar-view').classList.toggle('ar-nofuri', !on);
+            showToast(on ? 'ふりがなを表示' : 'ふりがなを非表示', 1200);
+            arRefreshTools();
+            if (ar.tab === 'text' && arLayout(advState(ar.id)) === 'h') arPlacePageBadges(document.querySelector('#ar-view .ar-book.ar-h'));
         });
         var play = tools.querySelector('.ar-play'), back = tools.querySelector('.ar-restart'), rate = tools.querySelector('.ar-rate');
         if (rate) rate.addEventListener('click', function() {

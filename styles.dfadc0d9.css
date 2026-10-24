@@ -600,6 +600,13 @@
         .ar-tabs { display: flex; width: 100%; }
         .ar-tabs button { flex: 1; font-size: 0.82rem; padding: 7px 4px; }
         .ar-tools { display: flex; align-items: center; gap: 8px; }
+        .ar-furi { flex: 0 0 auto; width: 36px; height: 32px; padding: 0; border: 1px solid var(--border-light); border-radius: 8px; background: var(--surface); color: var(--text-sub); font-family: var(--reading-font); font-size: 0.95rem; line-height: 1; position: relative; }
+        .ar-furi ruby { ruby-position: over; }
+        .ar-furi rt { font-size: 0.5em; }
+        .ar-furi.on { border-color: var(--active-blue); color: var(--active-blue); background: color-mix(in srgb, var(--active-blue) 10%, var(--surface)); }
+        .ar-furi:not(.on)::after { content: ''; position: absolute; left: 7px; right: 7px; top: 50%; border-top: 1.5px solid currentColor; transform: rotate(-35deg); }
+        #ar-view.ar-nofuri .ar-body rt { display: none; }
+        #ar-view.ar-nofuri .ar-body .aw-rb rt { display: revert; }
         .ar-head-title { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.95rem; }
         .ar-mode button { font-size: 0.8rem; padding: 5px 10px; }
         .ar-play, .ar-restart { width: 36px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border-light); background: var(--surface); color: var(--text-main); border-radius: 8px; cursor: pointer; padding: 0; }
