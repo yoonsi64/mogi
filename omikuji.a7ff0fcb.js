@@ -176,7 +176,7 @@
             s.start(at, Math.random() * 0.8, dur + 0.05); return last;
         };
         var tone = function(freq, at, peak, decay, type, attack) { var o = ctx.createOscillator(); o.type = type || 'sine'; o.frequency.value = freq; env(o, peak * st, at, decay, attack); o.start(at); o.stop(at + decay + 0.1); };
-        var sweep = function(at, dur, f0, f1, q, peak, rise) {      // a breath of noise whose colour slides upward
+        var sweep = function(at, dur, f0, f1, q, peak, rise) {      // a breath of noise whose color slides upward
             var b = noise(at, dur, [['bandpass', f0, q]]);
             b.frequency.setValueAtTime(f0, at); b.frequency.exponentialRampToValueAtTime(f1, at + dur * .75);
             var g = ctx.createGain(); g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(peak * st, at + rise); g.gain.exponentialRampToValueAtTime(0.0001, at + dur * .96);
@@ -466,7 +466,7 @@
         var thread = OMK_THREAD[rt ? rt.thread : 'gold'], bord = OMK_THREAD[rt ? rt.border : 'gold'];
         var id = 'oma' + (++omkOmaN), font = 'font-family:var(--omk-font);font-weight:700';
         var chars = label.split('');
-        // the cord in a colour that stands out from the cloth, as on real ones: white on red, red on everything else.
+        // the cord in a color that stands out from the cloth, as on real ones: white on red, red on everything else.
         // [body, lit top, shaded underside]
         var CORD = { red: ['#c42e27', '#f2826f', '#6e120e'], white: ['#ece5d6', '#ffffff', '#9d927e'], gold: ['#d4a63a', '#fbe7a6', '#86601c'] };
         var cordName = rt ? (rare === 'goshiki' ? 'gold' : 'red')

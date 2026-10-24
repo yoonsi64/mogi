@@ -485,7 +485,7 @@
         .lib-body .week-row:first-child { margin-top: 10px; }
         .toc-page { font-size: 0.7rem; color: var(--text-sub); font-weight: normal; white-space: nowrap; }
         .week-row.toc-empty { opacity: 0.5; margin-bottom: 8px; }
-        /* まとめて解く: a soft pill in the book's colour, clearly different from the outlined 全範囲 button */
+        /* まとめて解く: a soft pill in the book's color, clearly different from the outlined 全範囲 button */
         .unit-all-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 8px; padding: 9px 14px; border: none; border-radius: 999px;
                         background: var(--surface-2); background: color-mix(in srgb, var(--lib-color) 15%, var(--surface)); color: var(--lib-color); font-weight: bold; font-size: 0.85rem; }
         html.dark .unit-all-btn { background: color-mix(in srgb, var(--lib-color) 28%, var(--surface)); color: #f1d9bd; }
@@ -555,6 +555,30 @@
         .kw-chip:disabled { opacity: 0.35; text-decoration: line-through; cursor: default; }
         .dev-btn { padding: 8px 16px; border: 1px solid var(--border-light); border-radius: 8px; background: var(--surface); color: var(--text-main); font: inherit; font-weight: bold; }
         /* 画廊: the prints one to a page, swiped sideways */
+        /* 難易度 (開発者メニュー) */
+        .df-view { z-index: 3850; }
+        .df-bars { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 10px; }
+        .df-bar { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px 6px; border: 1px solid var(--border-light); border-radius: 8px; background: var(--surface); color: var(--text-main); font: inherit; cursor: pointer; }
+        .df-bar.on { border-color: var(--lv); box-shadow: inset 0 0 0 1px var(--lv); }
+        .df-bar-col { width: 100%; height: 46px; display: flex; align-items: flex-end; justify-content: center; }
+        .df-bar-col i { width: 60%; background: var(--lv); border-radius: 3px 3px 0 0; min-height: 2px; }
+        .df-bar b { font-size: 0.95rem; } .df-bar small { font-size: 0.7rem; color: var(--text-sub); }
+        .df-filters { display: flex; gap: 8px; margin-bottom: 8px; }
+        .df-filters select { flex: 1; min-width: 0; padding: 8px; border: 1px solid var(--border-light); border-radius: 8px; background: var(--surface); color: var(--text-main); font: inherit; font-size: 0.85rem; }
+        .df-note { font-size: 0.75rem; color: var(--text-sub); margin: 4px 0 10px; }
+        .df-row { border: 1px solid var(--border-light); border-radius: 8px; background: var(--surface); margin-bottom: 8px; }
+        .df-row > summary { list-style: none; display: flex; gap: 10px; padding: 10px 12px; cursor: pointer; }
+        .df-row > summary::-webkit-details-marker { display: none; }
+        .df-lv { flex: 0 0 auto; width: 28px; height: 28px; border-radius: 6px; background: var(--lv); color: #fff; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+        .df-main { min-width: 0; flex: 1; }
+        .df-meta { font-size: 0.7rem; color: var(--text-sub); }
+        .df-q { font-size: 0.88rem; line-height: 1.55; margin: 2px 0 4px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        .df-why { font-size: 0.8rem; color: var(--text-main); line-height: 1.5; border-left: 3px solid var(--lv); padding-left: 8px; }
+        .df-detail { padding: 0 12px 12px 50px; font-size: 0.85rem; line-height: 1.7; }
+        .df-detail ol { margin: 4px 0; padding-left: 1.4em; }
+        .df-detail li.ok { color: var(--correct-color); font-weight: bold; }
+        .df-detail .df-pass { max-height: 40vh; overflow: auto; font-size: 0.8rem; color: var(--text-sub); border: 1px solid var(--border-light); border-radius: 6px; padding: 6px 10px; margin-bottom: 6px; }
+        .df-detail .df-pass p { margin: 0 0 0.5em; }
         .gallery-view { position: fixed; inset: 0; z-index: 3850; background: #171513; color: #f1ebe0; display: none; flex-direction: column; }
         .gallery-view.active { display: flex; }
         .gal-head { display: flex; align-items: center; gap: 10px; padding: 12px 16px 6px; }
@@ -875,7 +899,7 @@
         .badge .badge-icon { position: relative; }
         .badge-star { position: absolute; bottom: -3px; right: -8px; font-style: normal; font-size: 0.8rem; line-height: 1; color: #e0a800; text-shadow: 0 0 2px var(--surface, #fff), 0 0 2px var(--surface, #fff); }
         .badge.mystery { border-style: dashed; letter-spacing: .1em; }
-        /* grouped badges; earned ones take their level's colour (銅・銀・金・プラチナ・ダイヤ) */
+        /* grouped badges; earned ones take their level's color (銅・銀・金・プラチナ・ダイヤ) */
         .badge-cat { display: flex; justify-content: space-between; font-size: 0.74rem; font-weight: bold; color: var(--text-sub); letter-spacing: 1px; margin: 14px 2px 6px; }
         .badge-cat:first-of-type { margin-top: 4px; }
         .badge { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 1px; border-radius: 8px; min-height: 78px; }
