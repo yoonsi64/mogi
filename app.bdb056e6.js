@@ -5136,7 +5136,7 @@
     }
     var LONG_PRESS_MS = 500;
     var LONG_PRESS_MOVE_PX = 10;
-    var LONG_PRESS_TARGETS = '.ar-line, .ar-h p, .ar-card-q, .kj-q, .sentence-text, .reading-box p, .reading-box td, .reading-box, .reading-intro, .option-btn, .comp-sentence, .drag-item, .inline-slot, .direction-box, .reading-notes, .question-text';
+    var LONG_PRESS_TARGETS = '.ar-line, .ar-h p, .ar-card-q, .kj-q, .kj-res-sent, .ar-ex > div:first-of-type, .ab-say, .kw-text, .sentence-text, .reading-box p, .reading-box td, .reading-box, .reading-intro, .option-btn, .comp-sentence, .drag-item, .inline-slot, .direction-box, .reading-notes, .question-text';
     var pressTimer = null, pressStart = null, suppressClickUntil = 0;
     var wordSheetState = null;   // { text, start, end, context, qid, editId }
     var currentWordSort = 'new';
@@ -10757,17 +10757,29 @@
     function arKanjiItemHtml(key, it, st) {
         var res = st.kanji[key] || {}, done = res.ok !== undefined;
         return '<div class="kj-item' + (res.ok === true ? ' ok' : res.ok === false ? ' ng' : '') + '" data-k="' + key + '">' +
-            '<div class="kj-q">' + escapeHtml(it.pre || '') + '<u>' + escapeHtml(it.k) + '</u>' + escapeHtml(it.post || '') + '</div>' +
+            '<div class="kj-q">' + escapeHtml(it.pre || '') + arKjBlank(it.k) + escapeHtml(it.post || '') + '</div>' +
             '<div class="kj-opts">' + arShuffled(it.opts, ar.id + key).map(function(o) {
                 var cls = done ? (o === it.a ? ' right' : o === res.v ? ' wrong' : '') : '';
                 return '<button class="kj-opt' + cls + '" data-v="' + escapeHtml(o) + '"' + (done ? ' disabled' : '') + '>' + escapeHtml(o) + '</button>';
             }).join('') + '</div>' +
             '<div class="kj-res">' + arKanjiResult(it, res) + '</div></div>';
     }
+    // 漢字 items underline the kana to write (ショウカイ); 練習 items are a blank to fill: （　）, ＿＿＿＿ or （売り上げ→　）
+    function arKjBlank(k) {
+        var m = /^[（(]\s*([^）)]*?)\s*[）)]$/.exec(k);
+        if (m || /^[＿_]+$/.test(k)) {
+            var hint = m ? m[1].replace(/[　\s]+$/, '') : '';
+            return '<span class="kj-gap">' + (hint ? '<span class="kj-gap-hint">' + escapeHtml(hint) + '</span>' : '') + '</span>';
+        }
+        return '<u>' + escapeHtml(k) + '</u>';
+    }
+    function arKjSentence(it) { return (it.pre || '') + it.a + (it.post || ''); }
     function arKanjiResult(it, res) {
         if (res.ok === undefined) return '';
         var full = escapeHtml(it.pre || '') + '<b>' + escapeHtml(it.a) + '</b>' + escapeHtml(it.post || '');
-        return (res.ok ? '<span class="kj-mark">○</span>' : '<span class="kj-mark">✕</span>正解は ') + full + (it.note ? '<span class="kj-note">' + escapeHtml(it.note) + '</span>' : '');
+        return '<div class="kj-res-row"><span class="kj-res-text">' + (res.ok ? '<span class="kj-mark">○</span>' : '<span class="kj-mark">✕</span>正解は ') + '<span class="kj-res-sent">' + full + '</span></span>' +
+            '<button class="kj-say" aria-label="読み上げ"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7.5h3l4-3.5v12l-4-3.5H3z" fill="currentColor"/><path d="M13 7a4 4 0 0 1 0 6M15.2 5a7 7 0 0 1 0 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button></div>' +
+            (it.note ? '<span class="kj-note">' + escapeHtml(it.note) + '</span>' : '');
     }
     function renderArKanji(body, r, st) {
         var all = arKanjiItems(r), ok = all.filter(function(x) { return st.kanji[x.key] && st.kanji[x.key].ok; }).length;
@@ -10798,11 +10810,17 @@
                         else if (o === btn) o.classList.add('wrong');
                     });
                     box.querySelector('.kj-res').innerHTML = arKanjiResult(it, st.kanji[box.dataset.k]);
+                    if (it.pre || it.post) speakText(escapeHtml(arKjSentence(it)));          // hear the finished sentence
                     body.querySelector('.kj-score b').textContent = all.filter(function(x) { return st.kanji[x.key] && st.kanji[x.key].ok; }).length;
                 });
             });
         });
         document.getElementById('kj-reset').addEventListener('click', function() { st.kanji = {}; saveAdv(); renderArKanji(body, r, st); body.scrollTop = 0; });
+        body.addEventListener('click', function(e) {
+            var b = e.target.closest('.kj-say'); if (!b) return;
+            var box = b.closest('.kj-item'), it = byKey[box.dataset.k];
+            if (it) speakText(escapeHtml(arKjSentence(it)));
+        });
     }
     function arIntroHtml(r) { return '<div class="ar-pre"><span class="ar-pre-k">読む前に</span><p lang="ko">' + escapeHtml(r.intro) + '</p></div>'; }
     function arPlainLine(t) { return String(t).replace(/\{r\|([^|{}]+)\|[^{}]+\}/g, '$1').replace(/<[^>]+>/g, '').replace(/\[(\d+)\]/g, '（　）'); }
