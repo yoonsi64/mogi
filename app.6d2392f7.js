@@ -5581,8 +5581,71 @@
         var p = typeof spec === 'string' ? parseBracketFurigana(spec) : spec;
         if (!p) return escapeHtml(spec || '');
         return p.segs.map(function(s) {
-            return s.base ? '<ruby>' + escapeHtml(s.base) + '<rt>' + escapeHtml(s.rt) + '</rt></ruby>' : escapeHtml(s.text);
+            if (!s.base) return escapeHtml(s.text);
+            var sp = Array.from(s.base).length > 1 ? rubySplitFor(s.base, s.rt) : null;          // 実社会[じっしゃかい] → 実(じっ)社(しゃ)会(かい)
+            return '<ruby>' + (sp ? sp.map(function(x) { return escapeHtml(x[0]) + '<rt>' + escapeHtml(x[1]) + '</rt>'; }).join('') : escapeHtml(s.base) + '<rt>' + escapeHtml(s.rt) + '</rt>') + '</ruby>';
         }).join('');
+    }
+    // ---------- furigana per kanji ----------
+    // Every reading the app has seen over a single kanji (the questions' ruby, the reading books' furigana, the
+    // 単語帳's own [ ] furigana) is collected; a word's reading is then split so that each kanji gets one of its
+    // known readings (also with the usual sound changes: 社→じゃ, 学→がっ). Used only when exactly one split fits.
+    var kanjiReadings = null;
+    function kanjiReadingsMap() {
+        if (kanjiReadings) return kanjiReadings;
+        var m = {};
+        var add = function(ch, r) { r = toHiragana(r || ''); if (!ch || !r || !hasKanji(ch)) return; (m[ch] = m[ch] || {})[r] = true; };
+        var rubyRe = /<ruby>((?:[^<]|<rt>[^<]*<\/rt>|<rp>[^<]*<\/rp>)*?)<\/ruby>/g;
+        var fromHtml = function(t) {
+            if (typeof t !== 'string' || t.indexOf('<rt>') < 0) return;
+            var mm; rubyRe.lastIndex = 0;
+            while ((mm = rubyRe.exec(t))) mm[1].replace(/<rp>[^<]*<\/rp>/g, '').replace(/([^<]+)<rt>([^<]*)<\/rt>/g, function(x, b, r) { if (Array.from(b).length === 1) add(b, r); });
+        };
+        quizData.forEach(function(q) { [q.passage, q.sentence, q.intro].concat(q.options || []).forEach(fromHtml); });
+        if (typeof READINGS !== 'undefined') Object.keys(READINGS).forEach(function(id) {
+            var r = READINGS[id], texts = [];
+            (r.pages || []).forEach(function(pg) { texts = texts.concat(pg.lines); });
+            (r.bunkei || []).forEach(function(b) { texts = texts.concat(b.s); });
+            if (r.kaiwa) r.kaiwa.lines.forEach(function(l) { texts.push(l[1]); });
+            texts.join('').replace(/\{r\|([^|{}]+)\|([^{}]+)\}/g, function(x, b, rd) {
+                var ch = Array.from(b), ps = rd.split('/');
+                if (ch.length === 1) add(b, rd); else if (ps.length === ch.length) ch.forEach(function(c, i) { add(c, ps[i]); });
+            });
+        });
+        (wordList || []).forEach(function(e) {
+            var p = e.furigana && parseBracketFurigana(e.furigana);
+            if (p) p.segs.forEach(function(s) { if (s.base && Array.from(s.base).length === 1) add(s.base, s.rt); });
+        });
+        return (kanjiReadings = m);
+    }
+    function kanjiSplitGuess(base, rd) {
+        var chars = Array.from(base), r = toHiragana(rd), map = kanjiReadingsMap();
+        if (chars.length < 2 || chars.some(function(c) { return !map[c] && c !== '々'; })) return null;
+        var DAK = { か: 'が', き: 'ぎ', く: 'ぐ', け: 'げ', こ: 'ご', さ: 'ざ', し: 'じ', す: 'ず', せ: 'ぜ', そ: 'ぞ', た: 'だ', ち: 'ぢ', つ: 'づ', て: 'で', と: 'ど', は: 'ば', ひ: 'び', ふ: 'ぶ', へ: 'べ', ほ: 'ぼ' };
+        var HAN = { は: 'ぱ', ひ: 'ぴ', ふ: 'ぷ', へ: 'ぺ', ほ: 'ぽ' };
+        var forms = function(c, prev) {
+            var base = c === '々' ? (prev ? Object.keys(map[prev] || {}) : []) : Object.keys(map[c]), out = {};
+            base.forEach(function(x) {
+                out[x] = true;
+                var f = x[0];
+                if (DAK[f]) out[DAK[f] + x.slice(1)] = true;
+                if (HAN[f]) out[HAN[f] + x.slice(1)] = true;
+                if (x.length > 1 && /[つくちき]$/.test(x)) out[x.slice(0, -1) + 'っ'] = true;
+            });
+            return Object.keys(out);
+        };
+        var found = [];
+        (function go(i, pos, acc) {
+            if (found.length > 1) return;
+            if (i === chars.length) { if (pos === r.length) found.push(acc.slice()); return; }
+            forms(chars[i], chars[i - 1]).forEach(function(f) {
+                if (r.substr(pos, f.length) === f) { acc.push(f); go(i + 1, pos + f.length, acc); acc.pop(); }
+            });
+        })(0, 0, []);
+        if (found.length !== 1) return null;
+        // keep the reading's own script (katakana stays katakana)
+        var at = 0;
+        return chars.map(function(c, i) { var piece = rd.substr(at, found[0][i].length); at += found[0][i].length; return [c, piece]; });
     }
     // Furigana for a saved word: your own [ ] version first, otherwise the reading over the kanji part
     function entryWordHtml(e) {
@@ -5752,8 +5815,11 @@
             });
         }
         var found = knownRubySplits[core + '|' + toHiragana(coreR)] || null;
-        // a reading longer than two kana would push its kanji apart: keep those words as one reading
-        if (found && found.some(function(x) { return x[1].length > 2; })) return null;
+        if (!found && typeof awSplitFor === 'function') {          // the reading books' furigana (国技 → こく/ぎ)
+            var sp = awSplitFor(core, coreR);
+            if (sp) found = Array.from(core).map(function(ch, i) { return [ch, sp[i]]; });
+        }
+        if (!found) found = kanjiSplitGuess(core, coreR);          // each kanji with one of its known readings
         return found;
     }
     function rubySegHtml(base, r) {
@@ -10220,7 +10286,8 @@
             start = i = end; i--;
         }
         if (start < text.length && text.slice(start).replace(/[\s　]/g, '')) out.push({ s: start, e: text.length, text: text.slice(start).replace(/[\s　]/g, '') });
-        out = out.filter(function(x) { return x.text; });
+        // read Japanese only: the Korean subtitle (일본의 국기) and anything else in Hangul is skipped
+        out = out.filter(function(x) { return x.text && !/[\uac00-\ud7af\u1100-\u11ff\u3130-\u318f]/.test(x.text); });
         out.text = text;
         return out;
     }
@@ -10259,7 +10326,7 @@
         var nodes = [], text = '';
         if (!book) return { nodes: nodes, text: text };
         var walker = document.createTreeWalker(book, NodeFilter.SHOW_TEXT, {
-            acceptNode: function(n) { return n.parentElement.closest('rt, .ar-pganchor, .ar-pgbadge, .ar-title, .ar-author, .ar-h-title, .ar-h-author') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; }
+            acceptNode: function(n) { return n.parentElement.closest('rt, .ar-pganchor, .ar-pgbadge, .ar-title, .ar-author, .ar-h-title, .ar-h-author, .ar-pre') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; }
         });
         var n;
         while ((n = walker.nextNode())) { nodes.push({ n: n, s: text.length }); text += n.data; }
