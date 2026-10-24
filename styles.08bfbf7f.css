@@ -524,6 +524,9 @@
         .ab-ex { font-size: 0.82rem; line-height: 1.65; margin: 6px 0 8px; padding: 6px 8px; border-radius: 6px; background: var(--bg-paper); }
         .ab-list { margin: 0; padding: 0; list-style: none; }
         .ab-list li { border-top: 1px dashed var(--border-light); }
+        .ab-say.ab-src { margin: 6px 0 4px; padding: 8px 10px; border-left: 3px solid var(--ar-q-color, #6a63b8); background: var(--bg-paper); border-radius: 0 6px 6px 0; }
+        .ab-say.ab-src b { text-decoration: underline; text-underline-offset: 4px; }
+        .ab-say.ab-src small { display: block; font-family: var(--gothic); font-size: 0.68rem; color: var(--text-sub); line-height: 1.4; }
         .ab-say { display: block; width: 100%; border: none; background: none; padding: 8px 2px; text-align: left; color: var(--text-main); font-family: var(--reading-font); font-size: 1.02rem; line-height: 2; cursor: pointer; }
         .ab-say b { color: #a3305f; }
         html.dark .ab-say b { color: #e07aa6; }
