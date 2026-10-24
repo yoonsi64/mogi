@@ -1069,8 +1069,8 @@
         .wq-match { display: grid; grid-template-columns: 2fr 3fr; gap: 8px; align-content: start; }
         .wq-col { display: flex; flex-direction: column; gap: 8px; }
         /* マッチング: the tiles are paper 札 with a thin inner rule, like karuta; the chosen one is inked in 藍, a match is sealed in 朱 */
-        .wq-match { --wq-ink: #2d4f7f; --wq-shu: #b8312f; --wq-rule: color-mix(in srgb, var(--text-main) 16%, transparent); --wq-card: color-mix(in srgb, var(--surface) 92%, #f3ecdc); }
-        html.dark .wq-match { --wq-ink: #9db8e6; --wq-shu: #e2766d; --wq-rule: color-mix(in srgb, var(--text-main) 22%, transparent); --wq-card: var(--surface); }
+        .flash-view { --wq-ink: #2d4f7f; --wq-shu: #b8312f; --wq-rule: color-mix(in srgb, var(--text-main) 16%, transparent); --wq-card: color-mix(in srgb, var(--surface) 92%, #f3ecdc); }
+        html.dark .flash-view { --wq-ink: #9db8e6; --wq-shu: #e2766d; --wq-rule: color-mix(in srgb, var(--text-main) 22%, transparent); --wq-card: var(--surface); }
         .wq-tile { position: relative; height: 76px; overflow: hidden; display: flex; align-items: center; justify-content: flex-start; padding: 8px 14px; border: 1px solid color-mix(in srgb, var(--text-main) 22%, transparent); border-radius: 5px; background: var(--wq-card); color: var(--text-main); font: inherit; font-size: 0.84rem; line-height: 1.5; text-align: left;
             box-shadow: inset 0 0 0 3px var(--wq-card), inset 0 0 0 4px var(--wq-rule), 0 1px 0 rgba(30, 20, 5, 0.05), 0 3px 10px rgba(30, 20, 5, 0.10); transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, color 0.18s ease; -webkit-tap-highlight-color: transparent; }
         .wq-tile.word { font-family: var(--mincho, var(--reading-font)); font-size: 1.14rem; font-weight: 700; letter-spacing: 0.04em; text-align: center; justify-content: center; }
@@ -1124,26 +1124,32 @@
         .cloze-inline { display: inline-block; vertical-align: baseline; border: none; outline: none; background: transparent; color: var(--text-main); font: inherit; font-weight: bold; line-height: 1.35; padding: 0 2px; margin: 0; max-width: 70vw; border-radius: 0; -webkit-appearance: none; appearance: none; }
         .cloze-blank.typing:focus-within { background: var(--surface); box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12), 0 0 0 3px color-mix(in srgb, var(--active-blue) 30%, transparent); }
         .mem-wrap { gap: 10px; }
-        .mem-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
-        .mem-card { position: relative; aspect-ratio: 3 / 4; padding: 0; border: none; background: none; perspective: 700px; animation: wqIn 0.35s both; }
+        /* 神経衰弱: the same paper 札 as マッチング. Backs are 藍 with a faint 青海波 and a cream frame and crest, like a hanafuda back */
+        .mem-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .mem-card { position: relative; aspect-ratio: 3 / 4; padding: 0; border: none; background: none; perspective: 700px; animation: wqIn 0.4s cubic-bezier(.2, .8, .3, 1) both; -webkit-tap-highlight-color: transparent; }
         .mem-grid.rows-5 .mem-card { aspect-ratio: 4 / 5; }
-        .mem-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform 0.38s cubic-bezier(.3, .7, .3, 1.1); }
+        .mem-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform 0.42s cubic-bezier(.35, .1, .25, 1); }
         .mem-card.up .mem-inner { transform: rotateY(180deg); }
-        .mem-back, .mem-front { position: absolute; inset: 0; border-radius: 10px; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .mem-back { background-color: #24427a; background-image: radial-gradient(circle at 50% 100%, transparent 38%, rgba(255,255,255,.14) 39%, rgba(255,255,255,.14) 44%, transparent 45%, transparent 56%, rgba(255,255,255,.14) 57%, rgba(255,255,255,.14) 62%, transparent 63%); background-size: 22px 11px; box-shadow: inset 0 0 0 3px #24427a, inset 0 0 0 4px rgba(255,255,255,.5); }
-        .mem-back::after { content: '試'; width: 26px; height: 26px; border-radius: 5px; background: #b8312f; color: #fff; font-family: var(--mincho); font-size: 0.85rem; display: flex; align-items: center; justify-content: center; transform: rotate(-6deg); box-shadow: 0 1px 2px rgba(0,0,0,.3); }
-        .mem-front { transform: rotateY(180deg); background: var(--bg-paper); border: 1px solid var(--border-light); padding: 4px; text-align: center; }
-        .mem-w { font-family: var(--reading-font); font-weight: bold; font-size: 1rem; line-height: 1.25; word-break: break-all; }
-        .mem-r { font-size: 0.85rem; font-weight: bold; line-height: 1.3; word-break: break-all; }
-        .mem-m { font-size: 0.68rem; line-height: 1.35; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 6; overflow: hidden; word-break: break-word; }
-        .mem-card.word .mem-front { background: var(--surface); border-color: var(--active-blue); }
-        .mem-card.done .mem-front { border-color: var(--correct-color); background: color-mix(in srgb, var(--correct-color) 12%, var(--bg-paper)); }
-        .mem-card.done { opacity: 0; visibility: hidden; transform: scale(0.7); pointer-events: none; transition: opacity 0.45s 0.5s, transform 0.45s 0.5s, visibility 0s 1s; }
-        .mem-card.pop .mem-inner { animation: memPop 0.45s cubic-bezier(.2, .9, .3, 1.4); }
-        .mem-card.done.pop { transform: scale(0.7); }
-        @keyframes memPop { 0% { transform: rotateY(180deg) scale(1); } 40% { transform: rotateY(180deg) scale(1.12); } 100% { transform: rotateY(180deg) scale(1); } }
-        .mem-card.bad .mem-front { border-color: var(--incorrect-color); animation: wqShake 0.35s; }
-        @media (prefers-reduced-motion: reduce) { .mem-inner { transition: none; } .mem-card, .mem-card.pop .mem-inner { animation: none; } }
+        .mem-back, .mem-front { position: absolute; inset: 0; border-radius: 5px; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .mem-back { --mb: #22406f; background-color: var(--mb); border: 1px solid color-mix(in srgb, var(--mb) 70%, #000);
+            background-image: radial-gradient(circle at 50% 100%, transparent 38%, rgba(255,255,255,.07) 39%, rgba(255,255,255,.07) 43%, transparent 44%, transparent 57%, rgba(255,255,255,.07) 58%, rgba(255,255,255,.07) 62%, transparent 63%); background-size: 20px 10px;
+            box-shadow: inset 0 0 0 4px var(--mb), inset 0 0 0 5px rgba(243, 236, 220, 0.55), 0 1px 0 rgba(30, 20, 5, 0.06), 0 3px 10px rgba(30, 20, 5, 0.16); }
+        .mem-back::after { content: '試'; width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid rgba(243, 236, 220, 0.7); box-shadow: inset 0 0 0 2.5px var(--mb), inset 0 0 0 3.3px rgba(243, 236, 220, 0.45); background: var(--mb); color: rgba(243, 236, 220, 0.85); font-family: var(--mincho); font-size: 0.82rem; display: flex; align-items: center; justify-content: center; }
+        .mem-front { transform: rotateY(180deg); background: var(--wq-card); border: 1px solid color-mix(in srgb, var(--text-main) 22%, transparent); padding: 8px 6px; text-align: center; color: var(--text-main);
+            box-shadow: inset 0 0 0 3px var(--wq-card), inset 0 0 0 4px var(--wq-rule), 0 3px 10px rgba(30, 20, 5, 0.12); }
+        .mem-w { font-family: var(--mincho, var(--reading-font)); font-weight: 700; font-size: 1.05rem; letter-spacing: 0.03em; line-height: 1.25; word-break: break-all; }
+        .mem-r { font-size: 0.86rem; font-weight: bold; line-height: 1.3; word-break: break-all; }
+        .mem-m { font-size: 0.68rem; line-height: 1.45; color: color-mix(in srgb, var(--text-main) 86%, transparent); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 6; overflow: hidden; word-break: break-word; }
+        .mem-card.word .mem-front::before { content: ''; position: absolute; top: 8px; left: 50%; width: 14px; height: 2px; margin-left: -7px; border-radius: 1px; background: var(--wq-shu); opacity: 0.75; }
+        /* a pair: both cards are inked in 藍 and sealed 合, a line ties them, then they fold away */
+        .mem-card.pair .mem-front { color: var(--wq-ink); border-color: var(--wq-ink); background: color-mix(in srgb, var(--wq-ink) 7%, var(--wq-card));
+            box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--wq-ink) 7%, var(--wq-card)), inset 0 0 0 4.5px var(--wq-ink), 0 3px 10px rgba(30, 20, 5, 0.12); }
+        .mem-card.pair .mem-front::after { content: '合'; position: absolute; bottom: 6px; right: 6px; width: 18px; height: 18px; border: 1.5px solid var(--wq-shu); border-radius: 50%; color: var(--wq-shu); font-family: var(--mincho, serif); font-size: 10px; font-weight: 700; line-height: 15px; text-align: center; animation: wqSeal 0.26s cubic-bezier(.2, .9, .3, 1.2) both; }
+        .mem-card.done { pointer-events: none; transform-origin: 50% 100%; animation: wqFold 0.6s cubic-bezier(.5, 0, .75, 0) forwards; }
+        .mem-card.done.late { animation-delay: 0.08s; }
+        .mem-card.bad .mem-front { border-color: var(--wq-shu); color: var(--wq-shu); animation: wqNudge 0.32s ease;
+            box-shadow: inset 0 0 0 3px var(--wq-card), inset 0 0 0 4px color-mix(in srgb, var(--wq-shu) 55%, transparent), 0 3px 10px rgba(30, 20, 5, 0.12); }
+        @media (prefers-reduced-motion: reduce) { .mem-inner { transition: none; } .mem-card, .mem-card.done { animation: none; } .mem-card.done { visibility: hidden; } .mem-card.pair .mem-front::after { animation: none; } }
         .wq-hud { display: flex; justify-content: center; gap: 18px; font-size: 0.8rem; color: var(--text-sub); }
         .wq-hud b { color: var(--text-main); font-variant-numeric: tabular-nums; }
         .wq-card { position: relative; }
@@ -1160,10 +1166,6 @@
             transform: rotate(-12deg); animation: wqSeal 0.26s cubic-bezier(.2, .9, .3, 1.2) both; }
         @keyframes wqSeal { from { opacity: 0; transform: rotate(-12deg) scale(1.6); } to { opacity: 0.92; transform: rotate(-12deg) scale(1); } }
         @keyframes wqFold { 0% { transform: perspective(500px) rotateX(0); opacity: 1; } 100% { transform: perspective(500px) rotateX(78deg) translateY(4px); opacity: 0; visibility: hidden; } }
-        .wq-tie { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
-        .wq-tie path { fill: none; stroke: var(--wq-ink, #2d4f7f); stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: var(--len); stroke-dashoffset: var(--len); animation: wqTieDraw 0.3s ease-out forwards, wqTieFade 0.35s 0.62s ease forwards; }
-        @keyframes wqTieDraw { to { stroke-dashoffset: 0; } }
-        @keyframes wqTieFade { to { opacity: 0; } }
         @keyframes wqVanish { 0% { opacity: 1; transform: scale(1); } 30% { opacity: 1; transform: scale(1.1); box-shadow: 0 0 0 6px color-mix(in srgb, var(--correct-color) 30%, transparent); } 100% { opacity: 0; transform: scale(0.7); visibility: hidden; } }
         .wq-fx { position: fixed; inset: 0; pointer-events: none; z-index: 5; overflow: hidden; }
         .wq-spark { position: fixed; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; animation: wqSpark 0.7s ease-out forwards; }
@@ -1257,7 +1259,7 @@
         .wq-missed > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
         .wq-miss { padding: 6px 10px; border-radius: 10px; border: 1px solid var(--border-light); background: var(--bg-paper); color: var(--text-main); font-family: var(--reading-font); font-size: 1rem; }
         .wq-res-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-        @media (prefers-reduced-motion: reduce) { .wq-tie, .wq-tile.done.pop::after { display: none; } .wq-tile.enter, .wq-tile.pop, .wq-tile.done.pop, .wq-grade, .wq-best, .wq-chip, .wq-stamp, .wq-clear, #wq-clock.low, #wq-clock.bump, .wq-timeup, .wq-card.wq-shake { animation: none; } .wq-ring-fg { transition: none; } }
+        @media (prefers-reduced-motion: reduce) { .wq-tile.done.pop::after { display: none; } .wq-tile.enter, .wq-tile.pop, .wq-tile.done.pop, .wq-grade, .wq-best, .wq-chip, .wq-stamp, .wq-clear, #wq-clock.low, #wq-clock.bump, .wq-timeup, .wq-card.wq-shake { animation: none; } .wq-ring-fg { transition: none; } }
         .wq-note { font-size: 0.78rem; color: var(--text-sub); text-align: center; }
         .flash-starts .flash-start { flex: 1; min-width: 0; margin: 0; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 14px; }
         .flash-start.write { background: var(--surface); color: var(--active-blue); box-shadow: inset 0 0 0 2px var(--active-blue); }
