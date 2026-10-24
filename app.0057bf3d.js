@@ -9799,6 +9799,7 @@
         ],
         // 회화 (CD-02): fill the blanks while listening (answers from the book)
         kaiwa: {
+            audio: 'audio/dk-1-kaiwa.mp3',      // CD-02
             answers: ['国技', '思い浮かべる', '分がある', '戦略', '煮込んだ', '条件', '活躍して', '腕を上げて', 'ふさわしい', '品格'],
             lines: [
                 ['A', '日本の[1]って、何か知ってる？'],
@@ -9942,6 +9943,7 @@
                 '今の仕事を{r|辞|や}めることは、私を信じている家族を{r|裏切|うら/ぎ}ること<b>にほかなりません</b>。'] }
         ],
         kaiwa: {
+            audio: 'audio/dk-2-kaiwa.mp3',      // CD-04
             answers: ['コミュニティ', 'やりとり', 'つながり', '流出した', 'だまし取られ', '警告', 'ハッキング', '欠点', '検索する', '気がおけない'],
             lines: [
                 ['A', '高校の{r|同級生|どう/きゅう/せい}の、{r|小田|お/だ}さんって覚えてる？　彼女、去年結婚して、今はアメリカに住んでいるらしいよ。'],
@@ -10091,6 +10093,7 @@
         renderAr();
     }
     function closeReading() {
+        arStopAudio();
         arSavePos();
         if (arTts && arTts.playing) arTtsPause();      // closing pauses; the next 読み上げ continues from here
         var v = document.getElementById('ar-view');
@@ -10099,7 +10102,9 @@
         hideFootnote();
         if (navActiveTab() === 'home' && !document.body.classList.contains('in-quiz')) showHomePlaceholder();
     }
+    function arStopAudio() { document.querySelectorAll('#ar-view audio').forEach(function(a) { try { a.pause(); } catch (e) {} }); }
     function arSetTab(t) {
+        arStopAudio();
         arSavePos();
         ar.tab = t;
         advState(ar.id).tab = t; saveAdv();
@@ -10837,6 +10842,17 @@
         var ok = function(n) { return st.kaiwa[n] === ans[n - 1]; };
         var firstOpen = function() { for (var n = 1; n <= ans.length; n++) if (!ok(n)) return n; return null; };
         act = firstOpen();
+        var player = null;
+        if (kw.audio) {
+            player = document.createElement('div'); player.className = 'kw-player';
+            player.innerHTML = '<span class="kw-player-k">音声</span><audio controls preload="metadata" src="' + kw.audio + '"></audio>' +
+                '<button class="kw-rate" aria-label="再生の速さ">1.0×</button>';
+            var au = player.querySelector('audio'), rb = player.querySelector('.kw-rate'), RATES = [1, 0.85, 0.7, 1.15];
+            au.playbackRate = Number(getSetting('kwRate', 1)) || 1; rb.textContent = (au.playbackRate === 1 ? '1.0' : au.playbackRate) + '×';
+            rb.addEventListener('click', function() { var r = RATES[(RATES.indexOf(au.playbackRate) + 1) % RATES.length]; au.playbackRate = r; setSetting('kwRate', r); rb.textContent = (r === 1 ? '1.0' : r) + '×'; });
+            au.addEventListener('play', function() { try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) {} });
+            au.addEventListener('error', function() { player.classList.add('kw-noaudio'); player.querySelector('.kw-player-k').textContent = '音声を読み込めませんでした'; });
+        }
         var draw = function() {
             var right = ans.filter(function(a, i) { return ok(i + 1); }).length;
             var lines = kw.lines.map(function(l, li) {
@@ -10851,9 +10867,11 @@
             ans.forEach(function(a, i) { if (ok(i + 1)) used[a] = true; });
             var bank = arShuffled(ans, ar.id + 'kaiwa').map(function(a) { return '<button class="kw-chip"' + (used[a] ? ' disabled' : '') + ' data-v="' + escapeHtml(a) + '">' + escapeHtml(a) + '</button>'; }).join('');
             body.innerHTML = '<div class="kj-score"><span>正解 <b>' + right + '</b> / ' + ans.length + '</span><span><button class="ar-link" id="kw-show">答えを見る</button>　<button class="ar-link" id="kw-reset">やり直す</button></span></div>' +
-                '<div class="ar-intro">本文に関連した会話です。（　）をタップして、下の語群から入る言葉を選びましょう（本ではCDを聞きながら書き取ります。🔊で読み上げを聞けます）。答えは本の正答です。</div>' +
+                '<div class="ar-intro">' + (player ? '本文に関連した会話です。音声を聞きながら（　）をタップして、下の語群から入る言葉を選びましょう。🔊は一行ずつの読み上げです。答えは本の正答です。'
+                    : '本文に関連した会話です。（　）をタップして、下の語群から入る言葉を選びましょう（本ではCDを聞きながら書き取ります。🔊で読み上げを聞けます）。答えは本の正答です。') + '</div>' +
                 '<div class="kw-dialog">' + lines + '</div>' +
                 '<div class="kw-bank">' + (act ? '<div class="kw-bank-k">' + '①②③④⑤⑥⑦⑧⑨⑩'.charAt(act - 1) + ' に入る言葉</div>' : '<div class="kw-bank-k done">全部できました</div>') + '<div class="kw-chips">' + bank + '</div></div>';
+            if (player) body.insertBefore(player, body.firstChild);          // a direct child of the scroller, so it stays at the top while you scroll
             body.querySelectorAll('.kw-blank').forEach(function(b) {
                 b.addEventListener('click', function() { var n = +b.dataset.n; if (st.kaiwa[n] && !ok(n)) { delete st.kaiwa[n]; saveAdv(); } act = n; draw(); });
             });
@@ -10868,7 +10886,7 @@
                 });
             });
             body.querySelectorAll('.kw-say').forEach(function(b) {
-                b.addEventListener('click', function() { var l = kw.lines[b.dataset.l][1]; speakText(escapeHtml(arPlainLine(l.replace(/\[(\d+)\]/g, function(m, n) { return ans[n - 1]; })))); });
+                b.addEventListener('click', function() { if (player) player.querySelector('audio').pause(); var l = kw.lines[b.dataset.l][1]; speakText(escapeHtml(arPlainLine(l.replace(/\[(\d+)\]/g, function(m, n) { return ans[n - 1]; })))); });
             });
             document.getElementById('kw-show').addEventListener('click', function() { ans.forEach(function(a, i) { st.kaiwa[i + 1] = a; }); saveAdv(); act = null; draw(); });
             document.getElementById('kw-reset').addEventListener('click', function() { st.kaiwa = {}; saveAdv(); act = 1; draw(); body.scrollTop = 0; });

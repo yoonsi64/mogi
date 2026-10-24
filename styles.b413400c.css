@@ -523,6 +523,12 @@
         .ab-say { display: block; width: 100%; border: none; background: none; padding: 8px 2px; text-align: left; color: var(--text-main); font-family: var(--reading-font); font-size: 1.02rem; line-height: 2; cursor: pointer; }
         .ab-say b { color: #a3305f; }
         html.dark .ab-say b { color: #e07aa6; }
+        .kw-player { position: sticky; top: -14px; z-index: 2; display: flex; align-items: center; gap: 8px; margin: -14px calc(var(--rp-side, 16px) * -1) 10px; padding: 6px var(--rp-side, 16px); background: color-mix(in srgb, var(--bg-paper) 94%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); border-bottom: 1px solid var(--border-light); }
+        .kw-player-k { flex: 0 0 auto; font-size: 0.72rem; font-weight: bold; color: #7a3a63; }
+        html.dark .kw-player-k { color: #d68bb9; }
+        .kw-player audio { flex: 1; min-width: 0; height: 36px; }
+        .kw-rate { flex: 0 0 auto; padding: 4px 8px; border: 1px solid var(--border-light); border-radius: 6px; background: var(--surface); color: var(--text-main); font-size: 0.78rem; font-weight: bold; font-variant-numeric: tabular-nums; }
+        .kw-player.kw-noaudio audio, .kw-player.kw-noaudio .kw-rate { display: none; }
         .kw-dialog { display: flex; flex-direction: column; gap: 6px; padding-bottom: 8px; }
         .kw-line { display: flex; align-items: flex-start; gap: 8px; }
         .kw-who { flex: 0 0 auto; width: 24px; height: 24px; margin-top: 4px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.78rem; font-weight: bold; color: #fff; }

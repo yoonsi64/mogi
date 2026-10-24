@@ -2,7 +2,7 @@
 // The page itself (index.html) is always asked for fresh, so updates show right away; the big script and style
 // files carry a fingerprint in their names and never change once published, so they are kept on the device and
 // served from there, and only re-downloaded when a new version has a new name.
-var ASSETS = ["app.5105ed97.js", "gistsync.0d0b2fab.js", "omikuji.1bfee276.js", "opening.ba01fa98.js", "styles.7b33a44d.css"];
+var ASSETS = ["app.0057bf3d.js", "gistsync.0d0b2fab.js", "omikuji.1bfee276.js", "opening.ba01fa98.js", "styles.b413400c.css"];
 var CACHE = 'mogi-' + ASSETS.join('|').length + '-' + ASSETS.map(function(a) { return a.split('.')[1]; }).join('');
 var FINGERPRINTED = /\.[0-9a-f]{8}\.(js|css)$/;
 self.addEventListener('install', function(e) {
@@ -28,7 +28,7 @@ self.addEventListener('fetch', function(e) {
     // the page, the prints and the icons: the newest from the site, the saved copy when there is no internet
     e.respondWith(
         fetch(req, { cache: 'no-cache' }).then(function(res) {
-            if (res && res.ok) { var copy = res.clone(); caches.open(CACHE).then(function(c) { c.put(req, copy); }); }
+            if (res && res.status === 200) { var copy = res.clone(); caches.open(CACHE).then(function(c) { return c.put(req, copy); }).catch(function() {}); }
             return res;
         }).catch(function() {
             return caches.match(req).then(function(hit) { return hit || caches.match('./index.html') || caches.match('./'); });
