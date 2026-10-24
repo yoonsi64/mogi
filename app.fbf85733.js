@@ -6528,7 +6528,11 @@
         v.innerHTML = '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="wq-hanko" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB">' +
             '<feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="4" result="w"/><feDisplacementMap in="SourceGraphic" in2="w" scale="2.6" xChannelSelector="R" yChannelSelector="G" result="r"/>' +
             '<feTurbulence type="fractalNoise" baseFrequency="0.62" numOctaves="2" seed="11" result="g"/><feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -3.6 2.85" result="sp"/><feComposite in="r" in2="sp" operator="in" result="s"/>' +
-            '<feTurbulence type="fractalNoise" baseFrequency="0.016 0.024" numOctaves="2" seed="17" result="p"/><feColorMatrix in="p" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1.5 0.2" result="pr"/><feComposite in="s" in2="pr" operator="in"/></filter></svg>' +
+            '<feTurbulence type="fractalNoise" baseFrequency="0.016 0.024" numOctaves="2" seed="17" result="p"/><feColorMatrix in="p" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1.5 0.2" result="pr"/><feComposite in="s" in2="pr" operator="in"/></filter>' +
+            '<filter id="wq-hanko-round" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB">' +
+            '<feTurbulence type="fractalNoise" baseFrequency="0.3" numOctaves="1" seed="4" result="w"/><feDisplacementMap in="SourceGraphic" in2="w" scale="0.9" xChannelSelector="R" yChannelSelector="G" result="r"/>' +
+            '<feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="2" seed="11" result="g"/><feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -3.6 2.95" result="sp"/><feComposite in="r" in2="sp" operator="in" result="s"/>' +
+            '<feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="17" result="p"/><feColorMatrix in="p" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1.4 0.3" result="pr"/><feComposite in="s" in2="pr" operator="in"/></filter></svg>' +
             '<div class="flash-head"><button class="flash-close" aria-label="閉じる">✕</button>' +
             '<span class="flash-title">カードで復習</span><span class="flash-progress"></span></div>' +
             '<div class="flash-body"></div>';
@@ -6927,21 +6931,24 @@
             document.body.appendChild(v);
             v.querySelector('.gal-close').addEventListener('click', closeGallery);
             var track = v.querySelector('.gal-track'), dots = v.querySelectorAll('.gal-dots i');
+            var imgs = v.querySelectorAll('.gal-item img');
             var mark = function() {
                 var i = Math.round(track.scrollLeft / track.clientWidth);
+                [i - 1, i, i + 1, i + 2].forEach(function(k) { var im = imgs[k]; if (im && im.loading !== 'eager') im.loading = 'eager'; });   // load the neighbors before you swipe to them
                 dots.forEach(function(d, k) { d.classList.toggle('on', k === i); });
                 v.querySelector('.gal-count').textContent = (i + 1) + ' / ' + GS_ART.length;
             };
-            track.addEventListener('scroll', function() { clearTimeout(track._t); track._t = setTimeout(mark, 60); });
+            track.addEventListener('scroll', function() { clearTimeout(track._t); track._t = setTimeout(mark, 40); }, { passive: true });
             dots.forEach(function(d) { d.addEventListener('click', function() { track.scrollTo({ left: track.clientWidth * +d.dataset.i, behavior: 'smooth' }); }); });
             v._mark = mark;
         }
         v.classList.add('active');
+        document.body.classList.add('gal-on');
         var tr = v.querySelector('.gal-track');
         tr.scrollLeft = tr.clientWidth * (start || 0);
         v._mark();
     }
-    function closeGallery() { var v = document.getElementById('gallery-view'); if (v) v.classList.remove('active'); }
+    function closeGallery() { var v = document.getElementById('gallery-view'); if (v) v.classList.remove('active'); document.body.classList.remove('gal-on'); }
     function galleryOpen() { var v = document.getElementById('gallery-view'); return !!(v && v.classList.contains('active')); }
     function sceneOn() { return getSetting('gameScene', true); }
     function sceneStart() {
