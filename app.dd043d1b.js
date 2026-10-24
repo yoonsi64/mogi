@@ -12766,10 +12766,10 @@
             localStorage.setItem('jlptBadgeLog', JSON.stringify(lg)); } catch (e) {}
     })();
     var BADGE_CATS = [['habit', '習慣'], ['skill', '実力'], ['review', '誤答と復習'], ['speed', '読む速さ'], ['words', '単語'], ['adv', '読解'], ['mock', '模擬試験'], ['book', '教材'], ['collect', 'コレクション']];
-    var TIER_NAMES = ['銅', '銀', '金', '朱'];
-    var TIER_COLORS = ['#b0703a', '#8a95a1', '#c4960f', '#c0392b'];
-    // two levels: 銀・金, three: 銅・銀・金, four: 銅・銀・金・朱
-    function tierIdx(i, max) { return max === 2 ? i + 1 : i; }
+    var TIER_NAMES = ['銅', '銀', '金', 'プラチナ', 'ダイヤ'];
+    var TIER_COLORS = ['#b0703a', '#8a95a1', '#c4960f', '#4f8f8c', '#2f7fd6'];
+    // every tiered badge has five levels: 銅・銀・金・プラチナ・ダイヤ
+    function tierIdx(i, max) { return i; }
     function badgeLevel(b) {
         if (!b.tiers) return b.ok ? 1 : 0;
         return b.tiers.filter(function(t) { return b.value >= t.n; }).length;
@@ -12896,42 +12896,42 @@
             { id: 'first', cat: 'habit', icon: '✏️', name: 'はじめの一問', ok: attemptLog.length > 0 || Object.keys(dailyStats).length > 0, hint: '1問解答する' },
             { id: 'examdate', cat: 'habit', icon: '📅', name: '決意の日', ok: !!getSetting('examDate', ''), hint: '設定で試験日を決める' },
             { id: 'backup', cat: 'habit', icon: '💾', name: '備えあれば', ok: !!localStorage.getItem('jlptLastBackup'), hint: 'バックアップを保存する' },
-            { id: 'streak', cat: 'habit', icon: '🔥', name: '連続学習', value: streaks.best, unit: '日', tiers: tiers([3, 7, 14, 30], '日'), hint: '続けて学習した日数（最長）' },
-            { id: 'days', cat: 'habit', icon: '🗓️', name: '学習日数', value: streaks.totalDays, unit: '日', tiers: tiers([10, 30, 100, 200], '日'), hint: '学習した日の合計' },
-            { id: 'goal', cat: 'habit', icon: '✅', name: '目標達成', value: goalDays, unit: '日', tiers: tiers([1, 10, 30, 100], '日'), hint: '1日の目標（いまは' + dailyGoal + '問）を達成した日の数' },
-            { id: 'daymax', cat: 'habit', icon: '📚', name: '1日の問題数', value: bestDay, unit: '問', tiers: tiers([20, 50], '問'), hint: '1日に解いた問題の数（いちばん多かった日）' },
+            { id: 'streak', cat: 'habit', icon: '🔥', name: '連続学習', value: streaks.best, unit: '日', tiers: tiers([3, 7, 14, 30, 100], '日'), hint: '続けて学習した日数（最長）' },
+            { id: 'days', cat: 'habit', icon: '🗓️', name: '学習日数', value: streaks.totalDays, unit: '日', tiers: tiers([10, 30, 100, 200, 365], '日'), hint: '学習した日の合計' },
+            { id: 'goal', cat: 'habit', icon: '✅', name: '目標達成', value: goalDays, unit: '日', tiers: tiers([1, 10, 30, 100, 200], '日'), hint: '1日の目標（いまは' + dailyGoal + '問）を達成した日の数' },
+            { id: 'daymax', cat: 'habit', icon: '📚', name: '1日の問題数', value: bestDay, unit: '問', tiers: tiers([20, 50, 100, 150, 200], '問'), hint: '1日に解いた問題の数（いちばん多かった日）' },
             { id: 'early', cat: 'habit', icon: '🌅', name: '朝活', ok: earlyBird, hint: '朝5時〜8時に解答する' },
             { id: 'late', cat: 'habit', icon: '🌙', name: '夜更かし', ok: nb.late.length > 0, hint: '夜0時〜4時に解答する' },
-            { id: 'weekend', cat: 'habit', icon: '⚔️', name: '週末戦士', value: nb.weekends.length, unit: '回', tiers: tiers([4, 12, 30], '回'), hint: '土曜と日曜の両方に学習した週末の数' },
-            { id: 'readdaily', cat: 'habit', icon: '📖', name: '一日一文', value: nb.readBest, unit: '日', tiers: tiers([7, 14, 30], '日'), hint: '毎日1つ以上の文章（内容理解・文章の文法）を解いて続けた日数（最長）' },
-            { id: 'rush', cat: 'habit', icon: '🏁', name: '追い込み', value: nb.rush.length, unit: '日', tiers: tiers([10, 20, 30], '日'), hint: getSetting('examDate', '') ? '試験日までの30日間に学習した日の数（30日すべてで最高位）' : '試験日を設定すると、試験前の30日間に学習した日を数えます' },
+            { id: 'weekend', cat: 'habit', icon: '⚔️', name: '週末戦士', value: nb.weekends.length, unit: '回', tiers: tiers([4, 12, 30, 52, 100], '回'), hint: '土曜と日曜の両方に学習した週末の数' },
+            { id: 'readdaily', cat: 'habit', icon: '📖', name: '一日一文', value: nb.readBest, unit: '日', tiers: tiers([7, 14, 30, 60, 100], '日'), hint: '毎日1つ以上の文章（内容理解・文章の文法）を解いて続けた日数（最長）' },
+            { id: 'rush', cat: 'habit', icon: '🏁', name: '追い込み', value: nb.rush.length, unit: '日', tiers: tiers([10, 20, 25, 28, 30], '日'), hint: getSetting('examDate', '') ? '試験日までの30日間に学習した日の数（30日すべてで最高位）' : '試験日を設定すると、試験前の30日間に学習した日を数えます' },
             // 誤答と復習
-            { id: 'notezero', cat: 'review', icon: '🧹', name: '誤答ゼロ', value: nb.zero.length, unit: '回', tiers: tiers([1, 3, 10], '回'), hint: '誤答ノートの問題をすべて解き直して、ノートを空にした回数' },
-            { id: 'retry', cat: 'review', icon: '🛠️', name: '解き直し名人', value: nb.recover.length, unit: '問', tiers: tiers([10, 30, 100], '問'), hint: '一度間違えた問題を、後で正解した数' },
+            { id: 'notezero', cat: 'review', icon: '🧹', name: '誤答ゼロ', value: nb.zero.length, unit: '回', tiers: tiers([1, 3, 10, 20, 50], '回'), hint: '誤答ノートの問題をすべて解き直して、ノートを空にした回数' },
+            { id: 'retry', cat: 'review', icon: '🛠️', name: '解き直し名人', value: nb.recover.length, unit: '問', tiers: tiers([10, 30, 100, 200, 400], '問'), hint: '一度間違えた問題を、後で正解した数' },
             { id: 'nanakoro', cat: 'review', icon: '🎎', name: '七転び八起き', ok: nb.rise.length > 0, hint: '2回以上間違えた問題を、ついに正解する' },
             // 実力
             { id: 'perfectday', cat: 'skill', icon: '💯', name: '完璧な一日', ok: perfectDay, hint: '1日に10問以上解いて全問正解（その日が終わった0時に獲得）' },
-            { id: 'perfectset', cat: 'skill', icon: '🎯', name: '満点', value: perfectSets, unit: '回', tiers: tiers([1, 5, 20], '回'), hint: '1日分（4問以上）を満点で終えた回数' },
-            { id: 'weekacc', cat: 'skill', icon: '📊', name: '週間正答率', value: bestWeekAcc, unit: '%', noRemain: true, tiers: tiers([70, 80, 90], '%'), hint: '7日間で50問以上解いたときの正答率（いちばん高かった7日間）' },
-            { id: 'mastery', cat: 'skill', icon: '🌳', name: '習得', value: masteredCount, unit: '問', tiers: tiers([50, 150, 300], '問'), hint: '2回以上続けて正解した問題の数' },
-            { id: 'review', cat: 'skill', icon: '🔍', name: '復習', value: reviewCount, unit: '問', tiers: tiers([20, 100, 300], '問'), hint: '「今日の復習」・苦手の練習・間違えた問題の解き直しで解いた問題の数' },
+            { id: 'perfectset', cat: 'skill', icon: '🎯', name: '満点', value: perfectSets, unit: '回', tiers: tiers([1, 5, 20, 50, 100], '回'), hint: '1日分（4問以上）を満点で終えた回数' },
+            { id: 'weekacc', cat: 'skill', icon: '📊', name: '週間正答率', value: bestWeekAcc, unit: '%', noRemain: true, tiers: tiers([70, 80, 90, 95, 98], '%'), hint: '7日間で50問以上解いたときの正答率（いちばん高かった7日間）' },
+            { id: 'mastery', cat: 'skill', icon: '🌳', name: '習得', value: masteredCount, unit: '問', tiers: tiers([50, 150, 300, 450, 600], '問'), hint: '2回以上続けて正解した問題の数' },
+            { id: 'review', cat: 'skill', icon: '🔍', name: '復習', value: reviewCount, unit: '問', tiers: tiers([20, 100, 300, 600, 1000], '問'), hint: '「今日の復習」・苦手の練習・間違えた問題の解き直しで解いた問題の数' },
             { id: 'comeback', cat: 'skill', icon: '📈', name: 'リベンジ', ok: comeback, hint: '解き直して前回より点数を上げる' },
-            { id: 'intime', cat: 'skill', icon: '⏱️', name: '時間内', value: beatTargets, unit: '回', tiers: tiers([1, 5, 20], '回'), hint: '目標解答時間がある日を、時間内に75%以上の正解で終えた回数' },
+            { id: 'intime', cat: 'skill', icon: '⏱️', name: '時間内', value: beatTargets, unit: '回', tiers: tiers([1, 5, 20, 50, 100], '回'), hint: '目標解答時間がある日を、時間内に75%以上の正解で終えた回数' },
             // 読む速さ
-            { id: 'pace', cat: 'speed', icon: '⚡', name: '読む速さ', value: bestPace, unit: '字/分', tiers: tiers([400, 600, 800], '字/分'), hint: '文章を1分あたり何字で読めたか（内容理解・「読む速さを測る」の最高。母語話者は約650〜800字/分）' },
-            { id: 'fastread', cat: 'speed', icon: '👀', name: '目標ペース', value: fastReads, unit: '回', tiers: tiers([5, 20, 50], '回'), hint: '内容理解の文章を目標ペース内で読んだ回数' },
-            { id: 'measure', cat: 'speed', icon: '📏', name: '計測', value: roAllB.length, unit: '回', tiers: tiers([1, 10, 30], '回'), hint: 'ホームの「読む速さを測る」で読んだ回数' },
+            { id: 'pace', cat: 'speed', icon: '⚡', name: '読む速さ', value: bestPace, unit: '字/分', tiers: tiers([400, 600, 800, 900, 1000], '字/分'), hint: '文章を1分あたり何字で読めたか（内容理解・「読む速さを測る」の最高。母語話者は約650〜800字/分）' },
+            { id: 'fastread', cat: 'speed', icon: '👀', name: '目標ペース', value: fastReads, unit: '回', tiers: tiers([5, 20, 50, 100, 200], '回'), hint: '内容理解の文章を目標ペース内で読んだ回数' },
+            { id: 'measure', cat: 'speed', icon: '📏', name: '計測', value: roAllB.length, unit: '回', tiers: tiers([1, 10, 30, 60, 100], '回'), hint: 'ホームの「読む速さを測る」で読んだ回数' },
             // 単語
-            { id: 'wordlist', cat: 'words', icon: '📒', name: '単語帳', value: wordList.length, unit: '語', tiers: tiers([10, 50, 100, 200], '語'), hint: '単語帳にためた語の数' },
-            { id: 'cards', cat: 'words', icon: '🃏', name: 'カード', value: learnedCards, unit: '語', tiers: tiers([10, 30, 100], '語'), hint: 'カードで覚えた語の数（次の復習まで1週間以上あいた語）' },
+            { id: 'wordlist', cat: 'words', icon: '📒', name: '単語帳', value: wordList.length, unit: '語', tiers: tiers([10, 50, 100, 200, 500], '語'), hint: '単語帳にためた語の数' },
+            { id: 'cards', cat: 'words', icon: '🃏', name: 'カード', value: learnedCards, unit: '語', tiers: tiers([10, 30, 100, 200, 400], '語'), hint: 'カードで覚えた語の数（次の復習まで1週間以上あいた語）' },
             // 上級読解
             { id: 'advread', cat: 'adv', icon: '📖', name: '通読', ok: advP.some(function(pr) { return pr.read; }), hint: '読解の文章を通読する（「通読」にチェック）' },
             { id: 'advq', cat: 'adv', icon: '✍️', name: '問いに向き合う', ok: advP.some(function(pr) { return pr.qTotal && pr.answered === pr.qTotal; }), hint: '読解の1編（1課）で、すべての問いに答える' },
             { id: 'advkanji', cat: 'adv', icon: '🈴', name: '漢字と語彙', ok: advP.some(function(pr) { return pr.kanjiTotal && pr.kanjiOk === pr.kanjiTotal; }), hint: '読解の1編（1課）で、「漢字と語彙」「練習」をすべて正解する' },
             { id: 'advlisten', cat: 'adv', icon: '🎧', name: '聞き通す', ok: advIds.some(function(id) { return advState(id).heardAll; }), hint: '読解の文章の読み上げを、最後まで聞く' },
             { id: 'kwheard', cat: 'adv', icon: '📻', name: '会話を聞く', ok: advIds.some(function(id) { return advState(id).kaiwaHeard; }), hint: '「会話」の音声を、最後まで通して聞く' },
-            { id: 'kwclear', cat: 'adv', icon: '👂', name: '聞き取り', value: advIds.filter(function(id) { return advState(id).kaiwaClear; }).length, unit: '課', tiers: tiers([1, 3, 6], '課'), hint: '「会話」の（　）を、「答えを見る」を使わずに全部正解する（課の数）' },
-            { id: 'advall', cat: 'adv', icon: '🏮', name: '一課修了', value: advP.filter(function(pr) { return pr.pct === 100; }).length, unit: '編', tiers: tiers([1, 3, 6], '編'), hint: '1編（1課）の本文・問い・練習・会話をすべて終える（進み具合100%）' }
+            { id: 'kwclear', cat: 'adv', icon: '👂', name: '聞き取り', value: advIds.filter(function(id) { return advState(id).kaiwaClear; }).length, unit: '課', tiers: tiers([1, 3, 6, 10, 15], '課'), hint: '「会話」の（　）を、「答えを見る」を使わずに全部正解する（課の数）' },
+            { id: 'advall', cat: 'adv', icon: '🏮', name: '一課修了', value: advP.filter(function(pr) { return pr.pct === 100; }).length, unit: '編', tiers: tiers([1, 3, 6, 10, 15], '編'), hint: '1編（1課）の本文・問い・練習・会話をすべて終える（進み具合100%）' }
         ];
         // 模擬試験 (from the finished sittings in jlptMockHistory)
         if (mockLibs().length) {
@@ -12944,12 +12944,12 @@
                 });
             });
             var mkFull = function(h) { return !h.timeUp && h.ans !== undefined && h.ans === h.n; };    // every question answered, before time ran out
-            var mkTime = mkAll.reduce(function(mx, h) { return Math.max(mx, !mkFull(h) ? 0 : (h.lim && h.lim - h.ms >= 30 * 60000) ? 2 : 1); }, 0);
+            var mkTime = mkAll.reduce(function(mx, h) { return Math.max(mx, !mkFull(h) ? 0 : !h.lim ? 1 : 1 + Math.min(4, Math.floor(Math.max(0, h.lim - h.ms) / 600000))); }, 0);   // 1 = in time, then +1 per 10 minutes left (up to 40)
             var mkBest = mkAll.reduce(function(mx, h) { return Math.max(mx, h.n ? Math.floor(h.ok / h.n * 100) : 0); }, 0);
             badges = badges.concat([
                 { id: 'mock1', cat: 'mock', icon: '📝', name: '初受験', ok: mkAll.length > 0, hint: 'ホームの「模擬試験」を最後まで受けて採点する' },
-                { id: 'mocktime', cat: 'mock', icon: '⌛', name: '時間配分', value: mkTime, noRemain: true, tiers: [{ n: 1, label: '時間内に完走' }, { n: 2, label: '残り30分' }], hint: '全問に答えて制限時間内に終える／30分以上残して終える' },
-                { id: 'mockscore', cat: 'mock', icon: '🌸', name: '模試の得点', value: mkBest, noRemain: true, tiers: [{ n: 70, label: '七分咲き（7割）' }, { n: 80, label: '八分咲き（8割）' }, { n: 90, label: '満開（9割）' }], hint: '模擬試験の正答率（いちばん高かった回）' },
+                { id: 'mocktime', cat: 'mock', icon: '⌛', name: '時間配分', value: mkTime, noRemain: true, tiers: [{ n: 1, label: '時間内に完走' }, { n: 2, label: '残り10分' }, { n: 3, label: '残り20分' }, { n: 4, label: '残り30分' }, { n: 5, label: '残り40分' }], hint: '全問に答えて制限時間内に終える／時間を残して終える' },
+                { id: 'mockscore', cat: 'mock', icon: '🌸', name: '模試の得点', value: mkBest, noRemain: true, tiers: [{ n: 70, label: '七分咲き（7割）' }, { n: 80, label: '八分咲き（8割）' }, { n: 90, label: '満開（9割）' }, { n: 95, label: '花吹雪（95%）' }, { n: 100, label: '千本桜（満点）' }], hint: '模擬試験の正答率（いちばん高かった回）' },
                 { id: 'mock3', cat: 'mock', icon: '🥁', name: '三拍子', ok: mkAll.some(function(h) { return Array.isArray(h.secs) && h.secs.length >= 3 && h.secs.every(function(x) { return x.n && x.ok / x.n >= 0.7; }); }), hint: '1回の模擬試験で、文字・語彙／文法／読解の3つとも7割以上正解する' },
                 { id: 'mockagain', cat: 'mock', icon: '🔁', name: '雪辱', ok: mkComeback, hint: '同じ模擬試験を受け直して、前回より点数を上げる' },
                 { id: 'mockall', cat: 'mock', icon: '📚', name: '全回受験', ok: mockLibs().every(function(lib) { return (mockHist[lib.id] || []).length > 0; }), hint: 'すべての模擬試験（' + mockLibs().map(mockTitle).join('・') + '）を受け終える' },
@@ -12980,16 +12980,16 @@
         // コレクション: the opening screens
         badges = badges.concat([
             { id: 'seasons', cat: 'collect', icon: '🍂', name: '四季', ok: seasonsSeen === 4, hint: '起動画面で春・夏・秋・冬の演出をすべて見る（「自動」のとき）' },
-            { id: 'events', cat: 'collect', icon: '🎏', name: '年中行事', value: eventsSeen, unit: 'つ', tiers: [{ n: 5, label: '5つ' }, { n: 11, label: '皆勤（11）' }], hint: '起動画面で見た行事の演出の数（「自動」のとき）' },
+            { id: 'events', cat: 'collect', icon: '🎏', name: '年中行事', value: eventsSeen, unit: 'つ', tiers: [{ n: 3, label: '3つ' }, { n: 5, label: '5つ' }, { n: 7, label: '7つ' }, { n: 9, label: '9つ' }, { n: 11, label: '皆勤（11）' }], hint: '起動画面で見た行事の演出の数（「自動」のとき）' },
             { id: 'jlptday', cat: 'collect', icon: '🎌', name: '合格祈願', ok: !!seenOp.jlpt, hint: 'JLPT試験日の起動画面を見る（「自動」のとき）' },
             { id: 'fuji', cat: 'collect', icon: '🗻', name: '富士と桜', ok: !!seenOp.fuji, hint: '春の起動画面で、まれに出会える景色を見る（「自動」のとき）' },
             { id: 'ootama', cat: 'collect', icon: '🎆', name: '三尺玉', ok: !!seenOp.ootama, hint: '花火の夜に、ひときわ大きな一輪を見る（「自動」のとき）' },
             { id: 'hoo', cat: 'collect', icon: '🌅', name: '鳳凰', ok: !!seenOp.hoo, secret: true, hint: 'お正月の空に、ごくまれに舞うものを見る（「自動」のとき）' },
             { id: 'nagare', cat: 'collect', icon: '🌠', name: '流れ星', ok: !!seenOp.nagare, secret: true, hint: '七夕の夜空を横切るものを見る（「自動」のとき）' },
-            { id: 'omikuji', cat: 'collect', icon: '⛩️', name: 'おみくじ', value: omikujiDrawDates().length, unit: '回', tiers: tiers([1, 10, 50], '回'), hint: '今日の目標を達成して、おみくじを引く' },
+            { id: 'omikuji', cat: 'collect', icon: '⛩️', name: 'おみくじ', value: omikujiDrawDates().length, unit: '回', tiers: tiers([1, 10, 50, 100, 365], '回'), hint: '今日の目標を達成して、おみくじを引く' },
             { id: 'daikichi', cat: 'collect', icon: '🎊', name: '大吉', ok: omikujiDrawDates('大吉').length > 0, secret: true, hint: 'おみくじで大吉を引く' },
-            { id: 'lucky', cat: 'collect', icon: '🍀', name: 'ラッキー問題', value: nb.lucky.length, unit: '回', tiers: tiers([1, 10, 30], '回'), hint: 'おみくじのラッキー問題を、その日のうちに正解した回数' },
-            { id: 'musubi', cat: 'collect', icon: '🎀', name: '結び', value: nb.tied.length, unit: '枚', tiers: tiers([1, 10, 30], '枚'), hint: '凶のおみくじを結んだ数' },
+            { id: 'lucky', cat: 'collect', icon: '🍀', name: 'ラッキー問題', value: nb.lucky.length, unit: '回', tiers: tiers([1, 10, 30, 60, 100], '回'), hint: 'おみくじのラッキー問題を、その日のうちに正解した回数' },
+            { id: 'musubi', cat: 'collect', icon: '🎀', name: '結び', value: nb.tied.length, unit: '枚', tiers: tiers([1, 10, 30, 50, 100], '枚'), hint: '凶のおみくじを結んだ数' },
             { id: 'omacollect', cat: 'collect', icon: '🧧', name: 'お守りコレクター', ok: nb.rare.length >= nb.rareTotal, progress: nb.rare.length + ' / ' + nb.rareTotal, hint: 'めずらしいお守りをすべて持ち帰る' }
         ]);
         return badges;
