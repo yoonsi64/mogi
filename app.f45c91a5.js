@@ -4626,7 +4626,7 @@
         html += '<div class="home-section"><span>JLPT 教材</span><span>' + LIBRARIES.length + '冊</span></div>';
         var dueMap = dueByDay();
         LIBRARIES.forEach(function(lib) { html += libCardHtml(lib, last, dueMap); });
-        html += '<div class="home-section ar-home-section"><span>上級読解</span><span>' + READING_BOOKS.length + '冊</span></div>';
+        html += '<div class="home-section ar-home-section"><span>読解</span><span>' + READING_BOOKS.length + '冊</span></div>';
         READING_BOOKS.forEach(function(b) { html += readingBookCardHtml(b); });
         html += '</div>';
         quizContainer.innerHTML = html;
@@ -9636,9 +9636,335 @@
     };
     var advStore = loadJSON('jlptAdvReading', {});
     if (!advStore || Array.isArray(advStore)) advStore = {};
+    // ===== 다락원 일본어 독해 중급 (古賀万紀子・青木優子) =====
+    // A horizontal reader: each 課 has the 本文, 読解問題, 単語 및 表現, 文型 (4), 練習問題 and a 会話 to fill in.
+    // The answers to 読解問題・練習問題・会話 are the book's own (부록).
+    READING_BOOKS.push({
+        id: 'darakwon-dokkai-chukyu',
+        title: '다락원 일본어 독해 중급',
+        short: '독해 중급',
+        publisher: '다락원',
+        edition: '古賀万紀子・青木優子 共著　중급 학습자를 대상으로 한 독해 교재（능시 N2 수준）',
+        isbn: '978-89-277-1055-4',
+        badge: '中',
+        color: '#7a3a63',
+        cover: 'data:image/jpeg;base64,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',
+        unit: '課',
+        layout: 'h',
+        labels: { q: '問題', kanji: '練習' },
+        toc: [{ part: '目次', chapters: [{ items: [
+            { id: 'dk-1', no: 1, title: '日本の国技', author: '～というと・～にあたって・～であろうと・～いかんでは' },
+            { id: 'dk-2', no: 2, title: 'SNS', author: '～にかかわらず・～を契機に・～つつ・～にほかならない' },
+            { no: 3, title: 'ソーシャルコマース', author: '～ではあるまいか・～とは・～あっての・～に相違ない' },
+            { no: 4, title: '男性語と女性語', author: '～ならでは・～きらいがある・～上で・～ことだ' },
+            { no: 5, title: 'アニメと町おこし', author: '～や否や・～を皮切りとして・～とあれば・～といったらない' },
+            { no: 6, title: 'フリーター', author: '～と相まって・～を余儀なくされる・～にもまして・～はさておき' },
+            { no: 7, title: '国際結婚', author: '～をめぐる・～とはいえ・～どころか・～次第で' },
+            { no: 8, title: 'モンスターペアレント', author: '～がたい・～ずにはいられない・～といい～といい・～てほしいものだ' },
+            { no: 9, title: '樋口一葉', author: '～ようにも～ない・～たら最後・～ことか・～ことなく' },
+            { no: 10, title: 'ことわざ', author: '～まい・～ようが～まいが・～ことに(は)・～きり' },
+            { no: 11, title: 'ストーカー', author: '～あまり(に)・～極まる・～であれ～であれ・～たところで' },
+            { no: 12, title: '東日本大震災', author: '～に至る・～ですら・～てからというもの(は)・～なり' },
+            { no: 13, title: '国際協力', author: '～に応じて・～っぱなし・～にとどまらず・～以上' },
+            { no: 14, title: '異常気象', author: '～かのように・～とはいうものの・～ないことには・～ずにはすまない' },
+            { no: 15, title: '裁判員制度', author: '～べく・～といえども・～かたわら・～かねない' }
+        ] }] }]
+    });
+    READINGS['dk-1'] = {
+        id: 'dk-1', book: 'darakwon-dokkai-chukyu', no: 1, chapter: '日本の国技',
+        title: '日本の国技',
+        author: '일본의 국기',
+        authorHtml: '일본의 국기',
+        // the 課's opening page: questions to think about before reading
+        intro: '세계 각국의 국기(國技)에는 어떠한 스포츠가 있습니까? 일본에서 옛날부터 가까이 해 온 스포츠는 무엇이라고 생각합니까? 또한 국기(國技)는 그 나라에게 있어 어떤 의미가 있다고 생각합니까?',
+        tabs: [['text', '本文'], ['q', '問題'], ['words', '単語'], ['bunkei', '文型'], ['kanji', '練習'], ['kaiwa', '会話']],
+        exNote: '本の模範解答です。',
+        pages: [
+            { p: 10, lines: [
+                '　ふつう私たちが「{r|国技|こく/ぎ}」と呼ぶスポーツには{r|二種類|に/しゅ/るい}あります。国が{r|正式|せい/しき}に国技',
+                'として{r|認|みと}めているものと、国民に深く{r|親|した}しまれているものです。{r|前者|ぜん/しゃ}の例は、',
+                '韓国のテコンドーやカナダのアイスホッケーなどです。日本では、国が{r|定|さだ}めて',
+                'いるものはありませんが、国技というと、多くの国民が{r|相撲|すもう}を{r|思|おも}い{r|浮|う}かべます。',
+                '　相撲の{r|起源|き/げん}は非常に古く、1500年以上前だと考えられています。{r|元々|もと/もと}は、{r|神様|かみ/さま}',
+                'への{r|感謝|かん/しゃ}を{r|示|しめ}すためにお{r|祭|まつ}りで{r|行|おこな}われていたものです。今でも日本{r|各地|かく/ち}の{r|神社|じん/じゃ}',
+                'のお祭りで相撲が行われていますが、その一方で、{r|格闘技|かく/とう/ぎ}の{r|一種|いっ/しゅ}としても{r|国内|こく/ない}',
+                '{r|外|がい}で高い人気を集めています。',
+                '　基本的なルールは、{r|丸|まる}い{r|土俵|ど/ひょう}の中で二人が{r|組|く}み{r|合|あ}い、土俵の外に出たり、{r|地面|じ/めん}',
+                'に体がついたりした方が{r|負|ま}けです。{r|競技|きょう/ぎ}の{r|際|さい}は、{r|上半身|じょう/はん/しん}は{r|裸|はだか}で、{r|下半身|か/はん/しん}に「まわし」',
+                'を{r|身|み}につけます。相撲の選手を「{r|力士|りき/し}」といいますが、「{r|相撲取|すもう/と}り」や「お相撲',
+                'さん」とも呼びます。',
+                '　相撲の{r|試合|し/あい}は、{r|年齢|ねん/れい}や{r|身長|しん/ちょう}、{r|体重|たい/じゅう}に関係なく行われるので、体重の重い方に',
+                '{r|分|ぶ}があるといえます。そのため、力士にとっては太ることも{r|重要|じゅう/よう}な{r|戦略|せん/りゃく}になり',
+                'ます。力士の基本的な食事は、肉や魚、野菜など多くの{r|食材|しょく/ざい}を{r|煮込|に/こ}んだ「ちゃんこ',
+                '{r|鍋|なべ}」という鍋料理です。このちゃんこ鍋を食べた後、デザートに甘いものを{r|大量|たい/りょう}',
+                'に食べ、すぐに{r|床|とこ}に{r|就|つ}くことで、力士たちは体重を{r|増|ふ}やしているのです。',
+                '　力士になるにあたって、日本人であることは{r|条件|じょう/けん}に{r|含|ふく}まれていません。その',
+                'ため、ハワイ、モンゴル、ヨーロッパ{r|諸国|しょ/こく}など、{r|出身|しゅっ/しん}も様々な外国人力士が{r|大勢|おお/ぜい}',
+                '{r|活躍|かつ/やく}しています。ただし、外国人であろうと、日本語でのインタビューや{r|地域|ち/いき}',
+                'の人との{r|交流|こう/りゅう}のためには日本語を覚える必要があります。力士たちは、日本人',
+                'に{r|囲|かこ}まれて生活しながら日本語学習にも{r|精|せい}を出し、どんどん{r|腕|うで}を{r|上|あ}げていきます。'
+            ] },
+            { p: 11, lines: [
+                '　力士は10の{r|階級|かい/きゅう}に分けられており、{r|成績|せい/せき}いかんでは下の階級に落ちることも',
+                'あります。ただし、一番上の「{r|横綱|よこ/づな}」だけは、{r|引退|いん/たい}するまで階級が{r|下|さ}がることは',
+                'ありません。横綱になると、相撲{r|界|かい}の顔として国民から{r|注目|ちゅう/もく}されるため、強さ',
+                'だけでなく、その{r|地位|ち/い}にふさわしい{r|品格|ひん/かく}も{r|求|もと}められます。強い上に{r|礼儀|れい/ぎ}も忘れず、',
+                '日本を{r|代表|だい/ひょう}するスポーツに{r|真面目|ま/じ/め}に{r|取|と}り{r|組|く}んでいるからこそ、日本人は力士たち',
+                'を{r|応援|おう/えん}したいと思うのでしょう。'
+            ] }
+        ],
+        // 読解問題 (answers: the book's 모범답)
+        qTitle: '読解問題',
+        tebiki: [
+            { t: 'どのようなスポーツが「国技」と呼ばれますか。', ex: '国が正式に国技として認めているものと、国民に深く親しまれているもの。', quote: '国が正式に国技', page: 10 },
+            { t: '相撲の基本的なルールは何ですか。', ex: '丸い土俵の中で二人が組み合い、土俵の外に出たり、地面に体がついたりした方が負け。', quote: '基本的なルール', page: 10 },
+            { t: '力士はどのように体重を増やしますか。', ex: '肉や魚、野菜など多くの食材を煮込んだ「ちゃんこ鍋」を食べた後、デザートに甘いものを大量に食べ、すぐに寝る。', quote: '力士の基本的な食事', page: 10 },
+            { t: '外国人力士たちの日本語が上達していくのはなぜですか。', ex: '日本人に囲まれて生活しながら、日本語学習に精を出すから。', quote: '力士たちは、日本人', page: 10 },
+            { t: '日本人はなぜ力士たちを応援したいと思うのでしょうか。', ex: '強い上に礼儀も忘れず、日本を代表するスポーツに真面目に取り組んでいるから。', quote: '強い上に', page: 11 }
+        ],
+        // 練習問題 ❷-2: make a sentence from the Korean, with the given words
+        ronriTitle: '短文を作りなさい（次の言葉を使って）',
+        ronri: [
+            { t: '사회인으로서 어울리는 말씨와 행동을 하도록 유념하세요.', note: 'ふさわしい・言葉づかい・心がける', ex: '社会人としてふさわしい言葉づかいと行動をするように心がけなさい。' },
+            { t: '한국 요리라고 하면 많은 사람들은 매운 요리를 떠올립니다.', note: '辛い・思い浮かべる', ex: '韓国料理というと、多くの人々は辛い料理を思い浮かべます。' },
+            { t: '요즘 아이들은 어렸을 때부터 인터넷에 친숙해져 있습니다.', note: '幼い・親しむ', ex: '最近の子供たちは、幼い頃からインターネットに親しんでいます。' },
+            { t: '의논을 거듭한 결과, 다음 대회의 개최지가 정식으로 결정되었습니다.', note: '話し合い・重ねる・開催地・正式に', ex: '話し合いを重ねた結果、次の大会の開催地が正式に決定されました。' }
+        ],
+        // 練習問題 ❶ 文型 and ❷-1 言葉の使い方, as choices (answers from the book; the wrong choices are Claude's)
+        kanjiIntro: '（　）に入るものを選びましょう。答えは本の正答です。ほかの選択肢は Claude が作りました。',
+        kanji: [
+            { title: '文型：（　）に入る言葉を選んで、文を完成させなさい。', wide: true, items: [
+                { pre: '外国人で', k: '（　　　）', post: '、力士は日本語を覚える必要があります。', a: 'あろうと', opts: ['というと', 'あたって', 'あろうと', 'いかんでは'] },
+                { pre: '国技', k: '（　　　）', post: '、多くの日本人が相撲を思い浮かべます。', a: 'というと', opts: ['というと', 'あたって', 'あろうと', 'いかんでは'] },
+                { pre: '試合の成績', k: '（　　　）', post: '、階級が下がることもあります。', a: 'いかんでは', opts: ['というと', 'あたって', 'あろうと', 'いかんでは'] },
+                { pre: '力士になるに', k: '（　　　）', post: '、日本人かどうかは関係ありません。', a: 'あたって', opts: ['というと', 'あたって', 'あろうと', 'いかんでは'] }
+            ] },
+            { title: '文型：～というと・～にあたって・～であろうと・～いかんでは を使って、文を完成させなさい。', wide: true, items: [
+                { pre: '国内での', k: '（売り上げ→　　）', post: '、海外への出荷数を減らした方がよい。', a: '売り上げいかんでは', opts: ['売り上げいかんでは', '売り上げというと', '売り上げにあたって', '売り上げであろうと'] },
+                { k: '（子供→　　）', post: '、公共のルールは守らなければならない。', a: '子供であろうと', opts: ['子供であろうと', '子供というと', '子供にあたって', '子供いかんでは'] },
+                { pre: '授業を', k: '（受ける→　　）', post: '、一人一台、電卓を用意して来てください。', a: '受けるにあたって', opts: ['受けるにあたって', '受けるというと', '受けるであろうと', '受けるいかんでは'] },
+                { pre: '日本人の', k: '（映画監督→　　）', post: '、宮崎駿が有名です。', a: '映画監督というと', opts: ['映画監督というと', '映画監督にあたって', '映画監督であろうと', '映画監督いかんでは'] }
+            ] },
+            { title: '言葉の使い方：定める・精を出す・活躍する・腕を上げる・思い浮かべる・含む から選んで、適当な形にしなさい。', wide: true, items: [
+                { pre: '牛乳は、カルシウムを多く', k: '＿＿＿＿', post: 'います。', a: '含んで', opts: ['含んで', '定めて', '活躍して', '精を出して'] },
+                { pre: '兄はゴルフの', k: '＿＿＿＿', post: 'ために、毎日2時間も練習しています。', a: '腕を上げる', opts: ['腕を上げる', '精を出す', '思い浮かべる', '含む'] },
+                { pre: '二十歳以下は飲酒ができないと、法律で', k: '＿＿＿＿', post: 'います。', a: '定められて', opts: ['定められて', '含まれて', '思い浮かべて', '活躍して'], note: '「定めて」も正解です。' },
+                { pre: '昇進したのがきっかけで、彼は以前よりも仕事に', k: '＿＿＿＿', post: 'ようになりました。', a: '精を出す', opts: ['精を出す', '腕を上げる', '活躍する', '定める'] },
+                { pre: '海外で', k: '＿＿＿＿', post: 'いる日本人選手のニュースを聞くと、嬉しくなります。', a: '活躍して', opts: ['活躍して', '精を出して', '含んで', '腕を上げて'] }
+            ] }
+        ],
+        // 단어 및 표현
+        words: [
+            { sec: '本文', list: [
+                ['国技', 'こくぎ', '국기, 나라의 전통적 기예'], ['正式に', 'せいしきに', '정식으로'], ['認める', 'みとめる', '인정하다'],
+                ['親しむ', 'したしむ', '가까이하다, 친숙하다'], ['前者', 'ぜんしゃ', '전자'], ['定める', 'さだめる', '정하다'],
+                ['相撲', 'すもう', '스모'], ['思い浮かべる', 'おもいうかべる', '회상하다, 떠올리다'], ['起源', 'きげん', '기원'],
+                ['示す', 'しめす', '(나타내) 보이다'], ['お祭り', 'おまつり', '마츠리, 축제'], ['格闘技', 'かくとうぎ', '격투기'],
+                ['一種', 'いっしゅ', '일종'], ['土俵', 'どひょう', '씨름판'], ['組み合う', 'くみあう', '맞붙어 싸우다'],
+                ['負け', 'まけ', '짐, 패배'], ['上半身', 'じょうはんしん', '상반신'], ['裸', 'はだか', '알몸, 맨몸'],
+                ['下半身', 'かはんしん', '하반신'], ['まわし', '', '샅바 구실을 하는 씨름꾼의 옷'], ['力士', 'りきし', '씨름꾼, 씨름 선수(=相撲取り)'],
+                ['分がある', 'ぶがある', '승산이 있다'], ['戦略', 'せんりゃく', '전략'], ['煮込む', 'にこむ', '푹 끓이다'],
+                ['ちゃんこ鍋', 'ちゃんこなべ', '씨름꾼이 먹는 냄비 요리'], ['床に就く', 'とこにつく', '잠자리에 들다'], ['増やす', 'ふやす', '늘리다'],
+                ['条件', 'じょうけん', '조건'], ['含む', 'ふくむ', '포함하다'], ['諸国', 'しょこく', '여러 나라'],
+                ['大勢', 'おおぜい', '많이, 많은 사람'], ['活躍する', 'かつやくする', '활약하다'], ['地域', 'ちいき', '지역'],
+                ['囲む', 'かこむ', '둘러싸다'], ['精を出す', 'せいをだす', '힘내다, 열심히 힘쓰다'], ['腕を上げる', 'うでをあげる', '실력을 높이다'],
+                ['階級', 'かいきゅう', '계급'], ['横綱', 'よこづな', '요코즈나(스모에서 최고의 지위)'], ['引退する', 'いんたいする', '은퇴하다'],
+                ['ふさわしい', '', '어울리다'], ['品格', 'ひんかく', '품격'], ['取り組む', 'とりくむ', '대응하다, 몰두하다']
+            ] },
+            { sec: '文型', list: [
+                ['挙げる', 'あげる', '(예 등을) 들다'], ['設立', 'せつりつ', '설립'], ['健康', 'けんこう', '건강'], ['市役所', 'しやくしょ', '시청'],
+                ['我が社', 'わがしゃ', '우리 회사'], ['届ける', 'とどける', '보내다, 전하다'], ['反する', 'はんする', '반하다'],
+                ['付き合い', 'つきあい', '사귐, 교제'], ['貧乏', 'びんぼう', '가난, 가난뱅이'], ['貿易', 'ぼうえき', '무역'],
+                ['価値', 'かち', '가치'], ['悪化する', 'あっかする', '악화되다']
+            ] }
+        ],
+        // 문형연습
+        bunkei: [
+            { p: '～というと', ko: '~라고 하면', ex: '어떤 화제에 대해 바로 떠오르는 이미지를 말할 때 사용한다.', s: [
+                '日本の{r|観光名所|かん/こう/めい/しょ}<b>というと</b>、{r|京都|きょう/と}が{r|挙|あ}げられます。',
+                '外国人に日本語を教えている<b>というと</b>、英語が{r|得意|とく/い}だと思われるが、そんなことはない。',
+                '{r|健康食品|けん/こう/しょく/ひん}<b>というと</b>、どれも高いイメージがあります。'] },
+            { p: '～にあたって', ko: '~을 할 때에, ~하기에 앞서', ex: '무엇인가 특별한 때나 행동하기 전에, 그것에 대한 적극적인 자세를 나타낼 때 사용한다.', s: [
+                'このイベントに{r|参加|さん/か}する<b>にあたって</b>、{r|皆|みな}さんに{r|注意|ちゅう/い}しておきたいことがあります。',
+                '{r|我|わ}が{r|社|しゃ}の{r|設立|せつ/りつ}<b>にあたって</b>は、多くの方々にご{r|協力|きょう/りょく}いただきました。',
+                '{r|引|ひ}っ{r|越|こ}し<b>にあたって</b>、{r|市役所|し/やく/しょ}に書類を{r|届|とど}けなければいけません。'] },
+            { p: '～であろうと', ko: '~이든, ~도', ex: '\'비록 ~이어도, ~에 관계없이\'라는 의미를 나타낸다. 뒤에는 말하는 사람의 주관적인 판단이나 추측을 나타내는 문장이 오는 일이 많다.', s: [
+                '先輩の{r|頼|たの}み<b>であろうと</b>、自分の{r|意志|い/し}に{r|反|はん}することはできない。',
+                '{r|金持|かね/も}ち<b>であろうと</b>、{r|貧乏|びん/ぼう}<b>であろうと</b>、{r|命|いのち}の{r|価値|か/ち}は変わらない。',
+                'どんな{r|美人|び/じん}<b>であろうと</b>、{r|性格|せい/かく}が悪ければ、好きにはならないだろう。'] },
+            { p: '～いかんでは', ko: '~에 따라서는', ex: '\'~에 따라서 뭔가가 달라진다, 뭔가를 결정한다\'라고 할 때 사용한다. 「～次第で」와 의미나 사용법이 같지만 좀더 딱딱한 표현이다.', s: [
+                '{r|結婚|けっ/こん}に{r|関|かん}する彼の考え方<b>いかんでは</b>、{r|今後|こん/ご}の{r|付|つ}き{r|合|あ}いを考え直したい。',
+                'テストの結果<b>いかんでは</b>、{r|卒業|そつ/ぎょう}ができなくなってしまう。',
+                '{r|貿易|ぼう/えき}問題への{r|対応|たい/おう}<b>いかんでは</b>、{r|両国|りょう/こく}の関係が{r|悪化|あっ/か}するかもしれない。'] }
+        ],
+        // 회화 (CD-02): fill the blanks while listening (answers from the book)
+        kaiwa: {
+            answers: ['国技', '思い浮かべる', '分がある', '戦略', '煮込んだ', '条件', '活躍して', '腕を上げて', 'ふさわしい', '品格'],
+            lines: [
+                ['A', '日本の[1]って、何か知ってる？'],
+                ['B', '{r|相撲|すもう}じゃない？　私も{r|国技館|こく/ぎ/かん}に見に行ったことがあるよ。'],
+                ['A', '僕は、相撲っていうと、[2]のは太った男の人なんだけど。'],
+                ['B', 'うん。大きな男の人が二人で{r|組|く}み{r|合|あ}うのは、すごく{r|迫力|はく/りょく}があって面白いよね。'],
+                ['A', '組み合う時は、やっぱり体が大きい方に[3]ものなのかな？'],
+                ['B', 'そうね。太るのも{r|一種|いっ/しゅ}の[4]だから、お相撲さんは毎日たくさんの{r|食材|しょく/ざい}を[5]ちゃんこ{r|鍋|なべ}を食べているのよ。'],
+                ['A', 'へぇ。他に、何かお相撲さんになるための[6]ってあるの？　日本人じゃないとダメとか。'],
+                ['B', 'ううん、それはないよ。{r|実際|じっ/さい}、たくさんの外国人{r|力士|りき/し}が[7]いるでしょう？'],
+                ['A', 'そういえば、この前もモンゴル{r|出身|しゅっ/しん}の力士がテレビに出ていたな。すごく日本語が上手でびっくりしたんだ。'],
+                ['B', '日本で{r|暮|く}らしながら、{r|周|まわ}りの人とコミュニケーションを取ったり、日本語でインタビューに答えたりすることで、日本語の[8]いくんだって。'],
+                ['A', 'なるほど。'],
+                ['B', 'それに、お相撲さんは、強いだけじゃなく、国技をするのに[9]人じゃないとなれないの。つまり、[10]も大事なのよ。'],
+                ['A', 'ふぅん。お相撲さんって、思ったより大変なんだね。'],
+                ['B', 'もし良ければ、今度一緒に、国技館に相撲を見に行こうよ。']
+            ]
+        }
+    };
+    READINGS['dk-2'] = {
+        id: 'dk-2', book: 'darakwon-dokkai-chukyu', no: 2, chapter: 'SNS',
+        title: 'SNS',
+        author: '소셜 네트워킹 서비스',
+        authorHtml: '소셜 네트워킹 서비스',
+        intro: '여러분은 SNS(Social Networking Service, 소셜 네트워킹 서비스)를 이용한 적이 있습니까? 일본이나 한국의 유명 SNS 사이트에서는 어떤 일이 가능할까요? 또 SNS의 장점과 단점에는 어떤 것이 있을까요?',
+        tabs: [['text', '本文'], ['q', '問題'], ['words', '単語'], ['bunkei', '文型'], ['kanji', '練習'], ['kaiwa', '会話']],
+        exNote: '本の模範解答です。',
+        pages: [
+            { p: 20, lines: [
+                '　SNSサイトとは、人と人とがコミュニケーションを取るためのコミュニティ',
+                '{r|型|がた}のWebサイトのことで、日本のmixi、韓国のCyworld、アメリカのMySpace、',
+                'Facebookなどがその例です。SNSの目的は、自分の日記や写真を{r|公開|こう/かい}したり、',
+                '他の人と{r|情報|じょう/ほう}を{r|共有|きょう/ゆう}したり、{r|趣味|しゅ/み}が合う友人を探したりして、人とのつながり',
+                'を{r|深|ふか}めていくことです。',
+                '　SNSの{r|長所|ちょう/しょ}は、{r|国籍|こく/せき}や{r|年齢|ねん/れい}にかかわらず、{r|実際|じっ/さい}に会ったことのない人や、遠く',
+                '{r|離|はな}れている人とでも、{r|密|みつ}なコミュニケーションが取れるという点です。その人',
+                'がどんな人か、どんな生活を送っているのか、今何を考えているのか、といった',
+                'プライベートな情報まで知ることができるため、気がおけない友人のように',
+                '{r|親|した}しみが感じられるのでしょう。また、名前やキーワードで利用者を{r|検索|けん/さく}する',
+                'こともできるので、長く離れていた友人とSNSで「{r|再会|さい/かい}」し、それからまた{r|交流|こう/りゅう}',
+                'が始まる、ということもあります。中には、SNSで知り合った人とやりとりを',
+                'しているうちに親しくなり、{r|結婚|けっ/こん}したという例もあるそうです。',
+                '　しかし、SNSには{r|欠点|けっ/てん}もあります。{r|個人|こ/じん}情報の{r|漏|ろう}えいの{r|危険性|き/けん/せい}が、その{r|最|さい}たる',
+                'ものでしょう。2011年、Cyworldの会員の個人情報がハッキングにより{r|流出|りゅう/しゅつ}する',
+                'という事件がありました。IDだけでなく、名前や{r|携帯|けい/たい}電話番号、メールアドレ',
+                'ス、{r|住民登録|じゅう/みん/とう/ろく}番号などの情報が流出し、サイトの{r|運営者|うん/えい/しゃ}や利用者はその{r|対応|たい/おう}に',
+                '{r|追|お}われることとなりました。こうした事件を{r|契機|けい/き}に、個人情報の{r|管理|かん/り}に対する',
+                '{r|警告|けい/こく}の声も上がっています。',
+                '　また、プロフィールを{r|詐称|さ/しょう}して他の人になりすましたり、{r|詐欺|さ/ぎ}を{r|働|はたら}いたりする',
+                'など、SNSを利用した{r|犯罪|はん/ざい}も{r|増加|ぞう/か}しています。また、{r|口車|くち/ぐるま}にのせられて{r|金品|きん/ぴん}を',
+                'だまし{r|取|と}られるなどのトラブルも多数{r|報告|ほう/こく}されていますが、このような犯罪が'
+            ] },
+            { p: 21, lines: [
+                '{r|生|う}まれるのも、SNSの持つ{r|親密性|しん/みつ/せい}が原因だといえるでしょう。会ったことも',
+                'ない相手だと知りつつも、サイトを{r|通|つう}じてやりとりするうち、親しくなった',
+                '気がして心を{r|許|ゆる}してしまう、そうしたSNSの{r|特徴|とく/ちょう}や人間の{r|心理|しん/り}を{r|巧|たく}みに利用し',
+                'ているのです。',
+                '　たとえコミュニケーションが目的であっても、インターネットサイトに情報',
+                'を公開するということは、世界中に情報を公開するということにほかなりま',
+                'せん。そうした危険性を知り、{r|常識|じょう/しき}と{r|責任感|せき/にん/かん}を持ってサイトを利用することが',
+                '大切です。'
+            ] }
+        ],
+        qTitle: '読解問題',
+        tebiki: [
+            { t: 'SNSサイトの目的とは何ですか。', ex: '自分の日記や写真を公開したり、他の人と情報を共有したり、趣味が合う友人を探したりして、人とのつながりを深めていくこと。', quote: 'SNSの目的は', page: 20 },
+            { t: 'SNSで知り合った人に、友人のような親しみを感じるのはなぜですか。', ex: 'その人がどんな人か、どんな生活を送っているのか、今何を考えているのか、といったプライベートな情報まで知ることができるため。', quote: 'プライベートな情報まで', page: 20 },
+            { t: 'SNSの最大の欠点とは何ですか。', ex: '個人情報の漏えいの危険性（があること）。', quote: 'SNSには欠点もあります', page: 20 },
+            { t: 'SNSを利用した犯罪が生まれるのはなぜですか。', ex: '会ったこともない相手だと知りつつも、サイトを通じてやりとりするうち、親しくなった気がして心を許してしまう、そうしたSNSの特徴や人間の心理を巧みに利用しているから。', quote: 'ない相手だと知りつつも', page: 21 },
+            { t: 'SNSサイトを利用する時に大切なのは、どのようなことですか。', ex: '世界中に情報を公開するという危険性を知り、常識と責任感を持つこと。', quote: 'そうした危険性を知り', page: 21 }
+        ],
+        ronriTitle: '短文を作りなさい（次の言葉を使って）',
+        ronri: [
+            { t: '직원인 체하고 회사에 침입한 죄로 체포되었습니다.', note: 'なりすます・侵入する・逮捕', ex: '職員になりすまし会社に侵入した罪で、逮捕されました。' },
+            { t: '자신과 같은 사투리를 말하는 사람을 만나면 친밀감이 솟아납니다.', note: '方言・親しみ・わく', ex: '自分と同じ方言を話す人に会うと、親しみがわきます。' },
+            { t: '인기 사회자가 돌연 은퇴했기 때문에, 방송국은 대응에 쫓기고 있습니다.', note: '突然・引退する・対応', ex: '人気司会者が突然引退したため、放送局は対応に追われています。' },
+            { t: '메일을 주고 받는 것을 통해, 그녀에게 마음을 터놓게 되었습니다.', note: 'やりとり・～を通じて・心を許す', ex: 'メールのやりとりを通じて、彼女に心を許すようになりました。' }
+        ],
+        kanjiIntro: '（　）に入るものを選びましょう。答えは本の正答です。ほかの選択肢は Claude が作りました。',
+        kanji: [
+            { title: '文型：（　）に入る言葉を選んで、文を完成させなさい。', wide: true, items: [
+                { pre: 'インターネット上に情報を公開することは、世界中に公開することに', k: '（　　　）', post: 'のです。', a: 'ほかならない', opts: ['かかわらず', '契機に', 'つつ', 'ほかならない'] },
+                { pre: 'SNSは、国籍や年齢に', k: '（　　　）', post: '、誰でも利用することができます。', a: 'かかわらず', opts: ['かかわらず', '契機に', 'つつ', 'ほかならない'] },
+                { pre: '会ったこともない相手だと知り', k: '（　　　）', post: '、心を許してしまいました。', a: 'つつ', opts: ['かかわらず', '契機に', 'つつ', 'ほかならない'] },
+                { pre: '個人情報の流出事件を', k: '（　　　）', post: '、情報管理に対する警告の声が上がりました。', a: '契機に', opts: ['かかわらず', '契機に', 'つつ', 'ほかならない'] }
+            ] },
+            { title: '文型：～にかかわらず・～を契機に・～つつ・～にほかならない を使って、文を完成させなさい。', wide: true, items: [
+                { pre: '問題の', k: '（大小→　　）', post: '、困ったことがあれば何でも相談してください。', a: '大小にかかわらず', opts: ['大小にかかわらず', '大小を契機に', '大小につつ', '大小にほかならない'] },
+                { pre: '一人暮らしの時はほとんどしなかったが、', k: '（結婚→　　）', post: '料理をするようになった。', a: '結婚を契機に', opts: ['結婚を契機に', '結婚にかかわらず', '結婚にほかならない', '結婚しつつ'] },
+                { pre: 'このチームが優勝できたのは、一人一人の努力の', k: '（成果→　　）', post: 'だろう。', a: '成果にほかならない', opts: ['成果にほかならない', '成果にかかわらず', '成果を契機に', '成果つつ'] },
+                { pre: '恋愛ドラマなどくだらないと', k: '（言う→　　）', post: '、つい見てしまう。', a: '言いつつ', opts: ['言いつつ', '言うにかかわらず', '言うのを契機に', '言うにほかならない'] }
+            ] },
+            { title: '言葉の使い方：深める・流出する・増加する・共有する・検索する・詐称する から選んで、適当な形にしなさい。', wide: true, items: [
+                { pre: '彼は、経歴を', k: '＿＿＿＿', post: '罪で、会社を解雇されました。', a: '詐称した', opts: ['詐称した', '流出した', '共有した', '検索した'] },
+                { pre: 'インターネットで', k: '＿＿＿＿', post: 'ば、簡単に情報が手に入る世の中になりました。', a: '検索すれ', opts: ['検索すれ', '共有すれ', '詐称すれ', '深めれ'] },
+                { pre: '中国の文化に対する理解を', k: '＿＿＿＿', post: 'ために、一年間留学することを決めました。', a: '深める', opts: ['深める', '共有する', '増加する', '検索する'] },
+                { pre: 'アメリカでは年々、肥満人口が', k: '＿＿＿＿', post: 'おり、重大な社会問題となっています。', a: '増加して', opts: ['増加して', '流出して', '深めて', '共有して'] },
+                { pre: '製品の情報が', k: '＿＿＿＿', post: 'ため、発売が延期になりました。', a: '流出した', opts: ['流出した', '増加した', '共有した', '詐称した'] }
+            ] }
+        ],
+        words: [
+            { sec: '本文', list: [
+                ['コミュニティ型', 'コミュニティがた', '커뮤니티형'], ['共有する', 'きょうゆうする', '공유하다'], ['つながり', '', '관계, 유대'],
+                ['深める', 'ふかめる', '깊게 하다'], ['長所', 'ちょうしょ', '장점'], ['国籍', 'こくせき', '국적'],
+                ['実際に', 'じっさいに', '실제로'], ['密な', 'みつな', '밀접한'], ['～といった', '', '~와 같은'],
+                ['プライベートな', '', '사적인, 개인적인'], ['気がおけない', 'きがおけない', '허물없이 지낼 수 있다'], ['親しみ', 'したしみ', '친밀감, 친근감'],
+                ['検索する', 'けんさくする', '검색하다'], ['交流', 'こうりゅう', '교류'], ['やりとり', '', '주고받음'],
+                ['欠点', 'けってん', '결점, 단점'], ['漏えい', 'ろうえい', '누설'], ['危険性', 'きけんせい', '위험성'],
+                ['最たる', 'さいたる', '제일의, 으뜸가는'], ['ハッキング', '', '해킹'], ['流出する', 'りゅうしゅつする', '유출되다'],
+                ['運営者', 'うんえいしゃ', '운영자'], ['対応に追われる', 'たいおうにおわれる', '대응에 쫓기다'], ['警告', 'けいこく', '경고'],
+                ['詐称する', 'さしょうする', '사칭하다'], ['～になりすます', '', '~인 체하다'], ['詐欺を働く', 'さぎをはたらく', '사기를 치다'],
+                ['犯罪', 'はんざい', '범죄'], ['増加する', 'ぞうかする', '증가하다'], ['口車にのせる', 'くちぐるまにのせる', '감언이설로 속이다'],
+                ['金品', 'きんぴん', '금품'], ['だまし取る', 'だましとる', '속여서 빼앗다'], ['親密性', 'しんみつせい', '친밀성'],
+                ['～を通じて', '～をつうじて', '~을 통해'], ['心を許す', 'こころをゆるす', '마음을 터놓다'], ['特徴', 'とくちょう', '특징'],
+                ['巧みに', 'たくみに', '교묘하게'], ['常識', 'じょうしき', '상식'], ['責任感', 'せきにんかん', '책임감']
+            ] },
+            { sec: '文型', list: [
+                ['殺す', 'ころす', '죽이다'], ['対象', 'たいしょう', '대상'], ['募集する', 'ぼしゅうする', '모집하다'], ['検査', 'けんさ', '검사'],
+                ['有無', 'うむ', '유무'], ['興味', 'きょうみ', '흥미'], ['性別', 'せいべつ', '성별'], ['情熱', 'じょうねつ', '정열, 열정'],
+                ['改めて', 'あらためて', '새삼스럽게, 다시금'], ['違法', 'いほう', '위법'], ['探し求める', 'さがしもとめる', '구하러 찾아다니다'],
+                ['裏切る', 'うらぎる', '배신하다'], ['手を染める', 'てをそめる', '손을 대다, 관계하다'], ['諦める', 'あきらめる', '포기하다'],
+                ['つい', '', '그만, 나도 모르게'], ['仕事を辞める', 'しごとをやめる', '일을 그만두다']
+            ] }
+        ],
+        bunkei: [
+            { p: '～にかかわらず', ko: '~에 관계없이', ex: '\'~가 어떻든 관계없이\'라는 의미를 나타낸다. 「~」에는 「大小」「有無」 등 정반대의 뜻을 가진 말을 조합한 숙어가 올 때가 많다.', s: [
+                '理由<b>にかかわらず</b>、人を{r|殺|ころ}すのはしてはいけないことだ。',
+                'この{r|検査|けん/さ}は、{r|性別|せい/べつ}<b>にかかわらず</b>、40歳以上の人全員が{r|対象|たい/しょう}です。',
+                '{r|経験|けい/けん}の{r|有無|う/む}<b>にかかわらず</b>、仕事に{r|情熱|じょう/ねつ}を持って{r|取|と}り{r|組|く}む人を{r|募集|ぼ/しゅう}しています。'] },
+            { p: '～を契機に', ko: '~을 계기로', ex: '\'~을 계기로 해서\'라는 의미로, 어떤 말이나 행동, 일이 변하게 된 원인・동기를 나타낸다.', s: [
+                '韓国へ旅行に行ったの<b>を{r|契機|けい/き}に</b>、韓国の文化に{r|興味|きょう/み}を持った。',
+                '{r|入院|にゅう/いん}<b>を契機に</b>、{r|健康|けん/こう}の大切さについて{r|改|あらた}めて考えるようになった。',
+                '大学{r|進学|しん/がく}<b>を契機に</b>、大学の近くで{r|一人暮|ひと/り/ぐ}らしをすることにした。'] },
+            { p: '～つつ', ko: '~하면서', ex: '\'~하면서\'라는 의미로, 두 개의 동작이 병행하여 이루어지는 것을 나타낸다.', s: [
+                '{r|違法|い/ほう}だと知り<b>つつ</b>、金のために{r|犯罪|はん/ざい}に手を{r|染|そ}めてしまった。',
+                '勉強しなければならないと思い<b>つつ</b>も、ついテレビを見てしまう。',
+                'このレポートは、先輩のアドバイスを{r|参考|さん/こう}にし<b>つつ</b>、自分で書いたものです。'] },
+            { p: '～にほかならない', ko: '바로 ~이다, ~임에 틀림없다', ex: '\'~이외의 것은 결코 없다\'라는 의미로, 「~」에 들어가는 말을 강조해서 말하는 표현이다.', s: [
+                'あの人こそ、私たちが{r|探|さが}し{r|求|もと}めていた人<b>にほかならない</b>。',
+                '{r|試合|し/あい}の途中で{r|諦|あきら}めることは、{r|負|ま}けを{r|認|みと}めること<b>にほかならない</b>。',
+                '今の仕事を{r|辞|や}めることは、私を信じている家族を{r|裏切|うら/ぎ}ること<b>にほかなりません</b>。'] }
+        ],
+        kaiwa: {
+            answers: ['コミュニティ', 'やりとり', 'つながり', '流出した', 'だまし取られ', '警告', 'ハッキング', '欠点', '検索する', '気がおけない'],
+            lines: [
+                ['A', '高校の{r|同級生|どう/きゅう/せい}の、{r|小田|お/だ}さんって覚えてる？　彼女、去年結婚して、今はアメリカに住んでいるらしいよ。'],
+                ['B', 'そうなんだ！　なんでそんなこと知ってるの？'],
+                ['A', 'SNSの[1]で、{r|偶然|ぐう/ぜん}彼女を見つけたんだよ。それから、何度かメッセージで[2]したんだ。'],
+                ['B', 'アメリカに住んでいる昔の同級生とインターネットで再会するなんて、{r|不思議|ふ/し/ぎ}な[3]ね。'],
+                ['A', 'あや子ちゃんは、SNSはやらないの？'],
+                ['B', 'だって、なんだか{r|怖|こわ}いんだもん。個人情報が[4]り、お金を[5]たりする事件もあったし…。'],
+                ['A', 'あぁ。だから最近は情報{r|保護|ほ/ご}のために、パスワードをできるだけ難しいものにするように[6]されているんだ。'],
+                ['B', 'それでも、パスワードが[7]される{r|危険|き/けん}もあるでしょう？'],
+                ['A', 'うん。{r|確|たし}かにそういう[8]もあるけど、やっぱりSNSは楽しいものだよ。僕はSNSで、ヨーロッパやアフリカの人とも知り合ったんだ。'],
+                ['B', 'え、どうやって？'],
+                ['A', 'キーワードで[9]だけで、自分と同じ{r|趣味|しゅ/み}の人を見つけることができるんだ。それからメッセージを送ったり、{r|互|たが}いの情報を{r|交換|こう/かん}したりしながら{r|仲良|なか/よ}くなって、今ではすっかり[10]友達みたいな存在だよ。'],
+                ['B', 'へぇ…なんだか楽しそう。私もちょっとだけ、やってみようかな？'],
+                ['A', 'じゃあ僕が使っているサイトを紹介するよ。一緒に楽しもう。']
+            ]
+        }
+    };
+    function arBookOf(r) { return READING_BOOKS.filter(function(b) { return b.id === (r && r.book); })[0] || READING_BOOKS[0]; }
+    function arLayout(st, r) { return st.mode || arBookOf(r || (ar && ar.r)).layout || 'v'; }
     function advState(id) {
         var st = advStore[id] || (advStore[id] = {});
-        st.ans = st.ans || {}; st.done = st.done || {}; st.kanji = st.kanji || {}; st.pos = st.pos || {};
+        st.ans = st.ans || {}; st.done = st.done || {}; st.kanji = st.kanji || {}; st.pos = st.pos || {}; st.kaiwa = st.kaiwa || {};
         return st;
     }
     function saveAdv() { try { localStorage.setItem('jlptAdvReading', JSON.stringify(advStore)); } catch (e) {} }
@@ -9680,14 +10006,14 @@
 
     // ---------- Home: 上級読解 book cards ----------
     function readingBookCardHtml(b) {
-        var open = libIsOpen(b, null), body = '', n = 0, pctSum = 0, total = 0;
+        var open = libIsOpen(b, null), body = '', n = 0, pctSum = 0, total = 0, lb = b.labels || { q: '問い', kanji: '漢字' };
         b.toc.forEach(function(sec) {
             body += '<div class="toc-head toc-l0">' + escapeHtml(sec.part) + '</div>';
             sec.chapters.forEach(function(ch) {
-                body += '<div class="ar-ch"><span class="ar-ch-no">' + ch.no + '</span>' + escapeHtml(ch.title) + '</div>';
+                if (ch.title) body += '<div class="ar-ch"><span class="ar-ch-no">' + ch.no + '</span>' + escapeHtml(ch.title) + '</div>';
                 ch.items.forEach(function(it) {
                     if (!it.kind) total++;
-                    var label = it.kind ? '<span class="ar-kind">' + escapeHtml(it.kind) + '</span>'
+                    var label = it.no ? '<span class="ar-kind">第' + it.no + '課</span>' : it.kind ? '<span class="ar-kind">' + escapeHtml(it.kind) + '</span>'
                         : (it.genre ? '<span class="ar-genre">《' + escapeHtml(it.genre) + '》</span>' : '');
                     if (!it.id || !READINGS[it.id]) {
                         body += '<div class="ar-todo"><span class="ar-todo-main">' + label +
@@ -9700,8 +10026,8 @@
                     body += '<button class="ar-item" data-id="' + it.id + '">' +
                         '<span class="ar-item-main">' + label + '<b>' + escapeHtml(it.title) + '</b><small>' + escapeHtml(it.author) + '</small>' +
                         '<span class="ar-chips"><span class="ar-chip' + (p.read ? ' done' : '') + '" data-t="text" title="本文を開く">' + (p.read ? '通読 ✓' : '未読') + '</span>' +
-                        '<span class="ar-chip' + (p.answered === p.qTotal ? ' done' : '') + '" data-t="q" title="問いを開く">問い ' + p.answered + '/' + p.qTotal + '</span>' +
-                        '<span class="ar-chip' + (p.kanjiOk === p.kanjiTotal ? ' done' : '') + '" data-t="kanji" title="漢字と語彙を開く">漢字 ' + p.kanjiOk + '/' + p.kanjiTotal + '</span></span></span>' +
+                        '<span class="ar-chip' + (p.answered === p.qTotal ? ' done' : '') + '" data-t="q" title="' + lb.q + 'を開く">' + lb.q + ' ' + p.answered + '/' + p.qTotal + '</span>' +
+                        '<span class="ar-chip' + (p.kanjiOk === p.kanjiTotal ? ' done' : '') + '" data-t="kanji" title="' + lb.kanji + 'を開く">' + lb.kanji + ' ' + p.kanjiOk + '/' + p.kanjiTotal + '</span></span></span>' +
                         '<span class="ar-item-go" aria-hidden="true">›</span></button>';
                 });
             });
@@ -9710,7 +10036,7 @@
         return '<section class="lib-card ar-lib' + (open ? ' open' : '') + '" data-lib="' + b.id + '" style="--lib-color:' + b.color + '">' +
             '<button class="lib-head" aria-expanded="' + open + '">' + libCoverHtml(b, '') +
                 '<span class="lib-head-text"><span class="lib-title">' + escapeHtml(b.title) + '</span>' +
-                '<span class="lib-meta">' + escapeHtml(b.publisher) + '・' + total + '編中' + n + '編</span>' +
+                '<span class="lib-meta">' + escapeHtml(b.publisher) + '・' + total + (b.unit || '編') + '中' + n + (b.unit || '編') + '</span>' +
                 '<span class="lib-progress"><span class="lib-progress-track"><i style="width:' + pct + '%"></i></span><span class="lib-progress-num">' + pct + '%</span></span></span>' +
                 '<span class="lib-chevron" aria-hidden="true">›</span></button>' +
             '<div class="lib-body">' + body +
@@ -9728,10 +10054,10 @@
         v.id = 'ar-view'; v.className = 'rp-view ar-view';
         v.setAttribute('role', 'dialog'); v.setAttribute('aria-label', '上級読解');
         v.innerHTML = '<div class="rp-head"><button class="flash-close ar-close" aria-label="閉じる">✕</button><span class="rp-title ar-head-title"></span><span class="ar-tools"></span></div>' +
-            '<div class="ar-tabbar"><span class="seg ar-tabs">' + AR_TABS.map(function(t) { return '<button data-t="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</span></div>' +
+            '<div class="ar-tabbar"><span class="seg ar-tabs"></span></div>' +
             '<div class="rp-body ar-body"></div>';
         v.querySelector('.ar-close').addEventListener('click', closeReading);
-        v.querySelectorAll('.ar-tabs button').forEach(function(b) { b.addEventListener('click', function() { arSetTab(b.dataset.t); }); });
+        v.querySelector('.ar-tabs').addEventListener('click', function(e) { var b = e.target.closest('button[data-t]'); if (b) arSetTab(b.dataset.t); });
         var body = v.querySelector('.ar-body'), saveTimer = null;
         var pill = document.createElement('button');
         pill.className = 'ar-zoom-pill'; pill.type = 'button';
@@ -9757,6 +10083,9 @@
         buildArView();
         var st = advState(id);
         ar = { id: id, r: READINGS[id], tab: tab || st.tab || 'text' };
+        var tabs = ar.r.tabs || AR_TABS;
+        if (!tabs.some(function(t) { return t[0] === ar.tab; })) ar.tab = 'text';
+        document.querySelector('#ar-view .ar-tabs').innerHTML = tabs.map(function(t) { return '<button data-t="' + t[0] + '">' + t[1] + '</button>'; }).join('');
         document.getElementById('ar-view').style.setProperty('--ar-zoom', arZoom());
         document.getElementById('ar-view').classList.add('active');
         renderAr();
@@ -9785,7 +10114,7 @@
         else st.pos.h = document.querySelector('#ar-view .ar-body').scrollTop;
         saveAdv();
     }
-    function arSource() { return ar ? (READING_BOOKS[0].short + '・' + ar.r.title) : ''; }
+    function arSource() { return ar ? (arBookOf(ar.r).short + '・' + ar.r.title) : ''; }
 
     function arBookHtml(r) {
         var maxLen = 0;
@@ -9816,7 +10145,7 @@
         restart: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 2.5h2v11h-2zM14 2.5v11L5.5 8z"/></svg>'
     };
     function arToolsHtml() {
-        var mode = advState(ar.id).mode || 'v', t = arTts && arTts.id === ar.id ? arTts : null;
+        var mode = arLayout(advState(ar.id)), t = arTts && arTts.id === ar.id ? arTts : null;
         var playing = !!(t && t.playing);
         var player = '<button class="ar-rate" aria-label="読み上げの速さ ' + arRate() + '倍" title="読み上げの速さ（押すたびに変わります）">' + arRateLabel(arRate()) + '</button>' +
             (t && t.idx > 0 ? '<button class="ar-restart" aria-label="最初から読み上げ" title="最初から">' + AR_ICONS.restart + '</button>' : '') +
@@ -10032,15 +10361,18 @@
         v.querySelector('.ar-zoom-ctl').style.display = ar.tab === 'text' ? '' : 'none';
         v.querySelector('.ar-zoom-val').textContent = Math.round(arZoom() * 100) + '%';
         arRefreshTools();
-        body.classList.toggle('ar-body-v', ar.tab === 'text' && (st.mode || 'v') === 'v');
+        body.classList.toggle('ar-body-v', ar.tab === 'text' && arLayout(st, r) === 'v');
         if (ar.tab === 'text') renderArText(body, r, st);
         else if (ar.tab === 'q') renderArQuestions(body, r, st);
         else if (ar.tab === 'kanji') renderArKanji(body, r, st);
+        else if (ar.tab === 'words') renderArWords(body, r);
+        else if (ar.tab === 'bunkei') renderArBunkei(body, r);
+        else if (ar.tab === 'kaiwa') renderArKaiwa(body, r, st);
         else renderArAbout(body, r);
     }
 
     function renderArText(body, r, st) {
-        var mode = st.mode || 'v';
+        var mode = arLayout(st, r);
         var marksOn = getSetting('arMarks', true);
         var pagebar = '<div class="ar-pagebar" role="navigation" aria-label="ページへ移動"><span class="ar-pagebar-label">ページ</span>' +
             r.pages.map(function(pg) { return '<button data-p="' + pg.p + '" aria-label="' + pg.p + 'ページへ">' + pg.p + '</button>'; }).join('') + '</div>';
@@ -10048,7 +10380,7 @@
         var hint = '<div class="ar-hint-row"><div class="ar-hint"><span class="nowrap">タップ：<span class="ar-mark-demo"></span>問い・下線・＊</span>　<span class="nowrap">' + (window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches ? 'なぞる・長押し' : '長押し') + '：単語帳</span>　<span class="nowrap">ピンチ：文字の大きさ</span></div>' + toggle + '</div>';
         body.innerHTML = pagebar + (mode === 'v'
             ? arBookHtml(r)
-            : '<div class="ar-book ar-h"><h2 class="ar-h-title">' + escapeHtml(r.title) + '</h2><div class="ar-h-author">' + r.authorHtml + '</div>' + arParagraphsHtml(r) + '</div>') + hint;
+            : '<div class="ar-book ar-h"><h2 class="ar-h-title">' + escapeHtml(r.title) + '</h2><div class="ar-h-author">' + r.authorHtml + '</div>' + (r.intro ? arIntroHtml(r) : '') + arParagraphsHtml(r) + '</div>') + hint;
         var book = body.querySelector('.ar-book');
         book.classList.toggle('no-marks', !marksOn);
         if (mode === 'h') arPlacePageBadges(book);
@@ -10348,20 +10680,20 @@
             (opts.show ? '<button class="ar-link" data-show="' + escapeHtml(opts.show) + '">本文で見る ›</button>' : '') +
             (opts.check ? '<label class="ar-check"><input type="checkbox" data-k="' + key + '"' + (st.done[key] ? ' checked' : '') + '> 通読した</label>'
                 : '<textarea class="ar-ans" data-k="' + key + '" rows="3" placeholder="自分の答え・考えを書く（自動で保存されます）">' + escapeHtml(st.ans[key] || '') + '</textarea>') +
-            (opts.ex ? '<details class="ar-ex"><summary>解答例を見る</summary><div>' + escapeHtml(opts.ex) + '</div><div class="ar-ex-note">Claude が作った解答例です（本の解答ではありません）。</div></details>' : '') +
+            (opts.ex ? '<details class="ar-ex"><summary>' + (ar.r.exNote ? '解答を見る' : '解答例を見る') + '</summary><div>' + escapeHtml(opts.ex) + '</div><div class="ar-ex-note">' + escapeHtml(ar.r.exNote || 'Claude が作った解答例です（本の解答ではありません）。') + '</div></details>' : '') +
             '</div>';
     }
     function renderArQuestions(body, r, st) {
-        var html = '<div class="ar-intro">答えは書くと自動で保存されます。解答例は、自分で考えてから開きましょう。</div>';
+        var html = (r.intro ? arIntroHtml(r) : '') + '<div class="ar-intro">答えは書くと自動で保存されます。' + (r.exNote ? '解答は' : '解答例は') + '、自分で考えてから開きましょう。</div>';
         var mk = Object.keys(r.marks || {});
         if (mk.length) html += '<section class="ar-sec"><h3 class="ar-sec-title">本文中の問い</h3>' + mk.map(function(n) {
             return arCardHtml('m' + n, '?', r.marks[n].q, { ex: r.marks[n].ex, show: 'mark:' + n });
         }).join('') + '</section>';
-        html += '<section class="ar-sec"><h3 class="ar-sec-title">学習の手引き</h3>' + r.tebiki.map(function(t, i) {
+        html += '<section class="ar-sec"><h3 class="ar-sec-title">' + escapeHtml(r.qTitle || '学習の手引き') + '</h3>' + r.tebiki.map(function(t, i) {
             return arCardHtml('t' + (i + 1), i + 1, t.t, { check: t.read, ex: t.ex, show: t.quote ? t.page + ':' + t.quote : '' });
         }).join('') + '</section>';
-        if (r.ronri && r.ronri.length) html += '<section class="ar-sec"><h3 class="ar-sec-title">論理の力</h3>' + r.ronri.map(function(t, i) {
-            return arCardHtml('r' + (i + 1), i + 1, t.t, { note: t.note });
+        if (r.ronri && r.ronri.length) html += '<section class="ar-sec"><h3 class="ar-sec-title">' + escapeHtml(r.ronriTitle || '論理の力') + '</h3>' + r.ronri.map(function(t, i) {
+            return arCardHtml('r' + (i + 1), i + 1, t.t, { note: t.note, ex: t.ex });
         }).join('') + '</section>';
         if (r.gengo && r.gengo.length) html += '<section class="ar-sec"><h3 class="ar-sec-title">言語活動</h3>' + r.gengo.map(function(t, i) {
             return arCardHtml('g' + (i + 1), i + 1, t.t, {});
@@ -10412,10 +10744,10 @@
     function renderArKanji(body, r, st) {
         var all = arKanjiItems(r), ok = all.filter(function(x) { return st.kanji[x.key] && st.kanji[x.key].ok; }).length;
         var html = '<div class="kj-score"><span>正解 <b>' + ok + '</b> / ' + all.length + '</span><button class="ar-link" id="kj-reset">やり直す</button></div>' +
-            '<div class="ar-intro">傍線部に合う漢字を選びましょう。選択肢は、字形や音の似た漢字を Claude が選んだものです。</div>';
+            '<div class="ar-intro">' + escapeHtml(r.kanjiIntro || '傍線部に合う漢字を選びましょう。選択肢は、字形や音の似た漢字を Claude が選んだものです。') + '</div>';
         r.kanji.forEach(function(sec, si) {
             html += '<section class="ar-sec"><h3 class="ar-sec-title"><span class="ar-qno">' + (si + 1) + '</span>' + escapeHtml(sec.title) + '</h3>';
-            if (sec.items) html += '<div class="kj-grid">' + sec.items.map(function(it, i) { return arKanjiItemHtml(si + '-' + i, it, st); }).join('') + '</div>';
+            if (sec.items) html += '<div class="' + (sec.wide ? 'kj-list' : 'kj-grid') + '">' + sec.items.map(function(it, i) { return arKanjiItemHtml(si + '-' + i, it, st); }).join('') + '</div>';
             if (sec.pairs) html += '<div class="kj-pairs">' + sec.pairs.map(function(p, pi) {
                 return '<div class="kj-pair">' + p.map(function(it, j) { return arKanjiItemHtml(si + '-' + pi + '-' + j, it, st); }).join('') + '</div>';
             }).join('') + '</div>';
@@ -10443,6 +10775,93 @@
             });
         });
         document.getElementById('kj-reset').addEventListener('click', function() { st.kanji = {}; saveAdv(); renderArKanji(body, r, st); body.scrollTop = 0; });
+    }
+    function arIntroHtml(r) { return '<div class="ar-pre"><span class="ar-pre-k">読む前に</span><p lang="ko">' + escapeHtml(r.intro) + '</p></div>'; }
+    function arPlainLine(t) { return String(t).replace(/\{r\|([^|{}]+)\|[^{}]+\}/g, '$1').replace(/<[^>]+>/g, '').replace(/\[(\d+)\]/g, '（　）'); }
+    // 単語: the book's word list with its Korean meanings. Tap a word to hear it; ＋ puts it in the 単語帳.
+    function renderArWords(body, r) {
+        var passage = r.pages.map(function(pg) { return pg.lines.map(arPlainLine).join(''); }).join('');
+        var total = 0;
+        var html = '<div class="ar-intro">本の「단어 및 표현」です。言葉をタップすると読み上げます。＋で単語帳に追加（意味は韓国語のまま入ります）。</div>';
+        r.words.forEach(function(sec, si) {
+            html += '<section class="ar-sec"><h3 class="ar-sec-title">' + escapeHtml(sec.sec) + '</h3><div class="aw-list">' + sec.list.map(function(w, i) {
+                total++;
+                var inList = !!findWordEntry(w[0]);
+                return '<div class="aw-row"><button class="aw-say" data-s="' + si + '" data-i="' + i + '"><b>' + escapeHtml(w[0]) + '</b>' + (w[1] && w[1] !== w[0] ? '<small>' + escapeHtml(w[1]) + '</small>' : '') + '</button>' +
+                    '<span class="aw-ko" lang="ko">' + escapeHtml(w[2]) + '</span>' +
+                    '<button class="aw-add' + (inList ? ' in' : '') + '" data-s="' + si + '" data-i="' + i + '" aria-label="' + escapeHtml(w[0]) + 'を単語帳に追加">' + (inList ? '✓' : '＋') + '</button></div>';
+            }).join('') + '</div></section>';
+        });
+        body.innerHTML = html;
+        body.scrollTop = 0;
+        body.querySelectorAll('.aw-say').forEach(function(b) {
+            b.addEventListener('click', function() { var w = r.words[b.dataset.s].list[b.dataset.i]; speakText(escapeHtml(w[1] || w[0])); });
+        });
+        body.querySelectorAll('.aw-add').forEach(function(b) {
+            b.addEventListener('click', function() {
+                var w = r.words[b.dataset.s].list[b.dataset.i], stem = w[0].replace(/(する|[うくぐすつぬぶむる])$/, '');
+                var ctx = sentenceAround(passage, w[0]) || (stem.length > 0 && sentenceAround(passage, stem)) || '';
+                openWordSheet({ word: w[0], context: ctx || '', qid: null, source: arSource() });
+                var m = document.getElementById('word-sheet-meaning');
+                if (!findWordEntry(w[0])) m.value = w[2];
+                wordSheetState.origMeaning = m.value;
+            });
+        });
+    }
+    // 文型: the 課's four patterns, the book's Korean explanation and its examples (tap an example to hear it)
+    function renderArBunkei(body, r) {
+        body.innerHTML = '<div class="ar-intro">本の「문형연습」です。例文をタップすると読み上げます。</div>' + r.bunkei.map(function(b, i) {
+            return '<section class="ar-card ab-card"><div class="ab-head"><span class="ar-qno">' + (i + 1) + '</span><b class="ab-p">' + escapeHtml(b.p) + '</b><span class="ab-ko" lang="ko">' + escapeHtml(b.ko) + '</span></div>' +
+                '<p class="ab-ex" lang="ko">' + escapeHtml(b.ex) + '</p>' +
+                '<ul class="ab-list">' + b.s.map(function(t) { return '<li><button class="ab-say" data-t="' + escapeHtml(arPlainLine(t)) + '">' + arMarkup(t) + '</button></li>'; }).join('') + '</ul></section>';
+        }).join('');
+        body.scrollTop = 0;
+        body.querySelectorAll('.ab-say').forEach(function(b) { b.addEventListener('click', function() { speakText(escapeHtml(b.dataset.t)); }); });
+    }
+    // 会話: the dialogue with its blanks. Tap a blank, then a word from the 語群; tap 🔊 to hear the line.
+    function renderArKaiwa(body, r, st) {
+        var kw = r.kaiwa, ans = kw.answers, act = null;
+        var ok = function(n) { return st.kaiwa[n] === ans[n - 1]; };
+        var firstOpen = function() { for (var n = 1; n <= ans.length; n++) if (!ok(n)) return n; return null; };
+        act = firstOpen();
+        var draw = function() {
+            var right = ans.filter(function(a, i) { return ok(i + 1); }).length;
+            var lines = kw.lines.map(function(l, li) {
+                var html = arMarkup(l[1]).replace(/\[(\d+)\]/g, function(m, n) {
+                    n = +n; var v = st.kaiwa[n], cls = v ? (ok(n) ? ' ok' : ' ng') : '';
+                    return '<button class="kw-blank' + cls + (act === n ? ' act' : '') + '" data-n="' + n + '"><i>' + '①②③④⑤⑥⑦⑧⑨⑩'.charAt(n - 1) + '</i>' + (v ? escapeHtml(v) : '') + '</button>';
+                });
+                return '<div class="kw-line"><span class="kw-who kw-' + l[0] + '">' + l[0] + '</span><span class="kw-text">' + html + '</span><button class="kw-say" data-l="' + li + '" aria-label="この行を聞く">' +
+                    '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7.5h3l4-3.5v12l-4-3.5H3z" fill="currentColor"/><path d="M13 7a4 4 0 0 1 0 6M15.2 5a7 7 0 0 1 0 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button></div>';
+            }).join('');
+            var used = {};
+            ans.forEach(function(a, i) { if (ok(i + 1)) used[a] = true; });
+            var bank = arShuffled(ans, ar.id + 'kaiwa').map(function(a) { return '<button class="kw-chip"' + (used[a] ? ' disabled' : '') + ' data-v="' + escapeHtml(a) + '">' + escapeHtml(a) + '</button>'; }).join('');
+            body.innerHTML = '<div class="kj-score"><span>正解 <b>' + right + '</b> / ' + ans.length + '</span><span><button class="ar-link" id="kw-show">答えを見る</button>　<button class="ar-link" id="kw-reset">やり直す</button></span></div>' +
+                '<div class="ar-intro">本文に関連した会話です。（　）をタップして、下の語群から入る言葉を選びましょう（本ではCDを聞きながら書き取ります。🔊で読み上げを聞けます）。答えは本の正答です。</div>' +
+                '<div class="kw-dialog">' + lines + '</div>' +
+                '<div class="kw-bank">' + (act ? '<div class="kw-bank-k">' + '①②③④⑤⑥⑦⑧⑨⑩'.charAt(act - 1) + ' に入る言葉</div>' : '<div class="kw-bank-k done">全部できました</div>') + '<div class="kw-chips">' + bank + '</div></div>';
+            body.querySelectorAll('.kw-blank').forEach(function(b) {
+                b.addEventListener('click', function() { var n = +b.dataset.n; if (st.kaiwa[n] && !ok(n)) { delete st.kaiwa[n]; saveAdv(); } act = n; draw(); });
+            });
+            body.querySelectorAll('.kw-chip').forEach(function(c) {
+                c.addEventListener('click', function() {
+                    if (!act) return;
+                    st.kaiwa[act] = c.dataset.v; saveAdv();
+                    var good = ok(act);
+                    vibrateFor(good);
+                    if (good) act = firstOpen();
+                    var keep = body.scrollTop; draw(); body.scrollTop = keep;
+                });
+            });
+            body.querySelectorAll('.kw-say').forEach(function(b) {
+                b.addEventListener('click', function() { var l = kw.lines[b.dataset.l][1]; speakText(escapeHtml(arPlainLine(l.replace(/\[(\d+)\]/g, function(m, n) { return ans[n - 1]; })))); });
+            });
+            document.getElementById('kw-show').addEventListener('click', function() { ans.forEach(function(a, i) { st.kaiwa[i + 1] = a; }); saveAdv(); act = null; draw(); });
+            document.getElementById('kw-reset').addEventListener('click', function() { st.kaiwa = {}; saveAdv(); act = 1; draw(); body.scrollTop = 0; });
+        };
+        draw();
+        body.scrollTop = 0;
     }
     function renderArAbout(body, r) {
         body.innerHTML = '<div class="ar-card ar-bio"><div class="ar-bio-head">' + (r.bio.photo ? '<img class="ar-bio-photo" src="' + r.bio.photo + '" alt="' + escapeHtml(r.author) + '">' : '') +
