@@ -31,7 +31,7 @@
     function note(k) {
         if (!isKey(k) || !token()) return;
         dirty[k] = Date.now(); saveMarks();
-        if (ready && !TICK[k]) schedule(15000);
+        if (ready && !TICK[k] && k.indexOf('jlptStudyTime') !== 0) schedule(15000);
     }
     Storage.prototype.setItem = function(k, v) {
         var before = this === ls ? rawGet.call(this, k) : null;

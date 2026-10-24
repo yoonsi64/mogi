@@ -4075,6 +4075,312 @@
         localStorage.setItem('jlptTimeSpent', JSON.stringify(timeSpent));
     }
 
+    // ---------- 学びの庭: active study time ----------
+    // Stricter than 学習時間 above: it counts only while a question, reading, mock test or 単語帳 game is open,
+    // and you touched something in the last 90 s (150 s while reading), or audio / 読み上げ is playing.
+    // Each device keeps its own record (jlptStudyTime_<device>), so studying on two devices adds up instead of
+    // one copy replacing the other when they sync; the garden adds all of them together.
+    var studyDevice = (function() {
+        try {
+            var d = localStorage.getItem('mogiDeviceId');
+            if (!d) { d = Math.random().toString(36).slice(2, 8); localStorage.setItem('mogiDeviceId', d); }
+            return d;
+        } catch (e) { return 'local'; }
+    })();
+    var STUDY_KEY = 'jlptStudyTime_' + studyDevice;
+    var studyTime = loadJSON(STUDY_KEY, {});
+    var studyClock = Date.now();
+    function studyScreen() {
+        var b = document.body;
+        if (b.classList.contains('in-quiz') || b.classList.contains('mock-open')) return 'quiz';
+        var ar = document.getElementById('ar-view');
+        if (ar && ar.classList.contains('active')) return 'read';
+        var fv = document.getElementById('flash-view');
+        if (fv && fv.classList.contains('active')) return 'quiz';
+        return null;
+    }
+    function studyMediaPlaying() {
+        try { if (window.speechSynthesis && window.speechSynthesis.speaking && !window.speechSynthesis.paused) return true; } catch (e) {}
+        var on = false;
+        document.querySelectorAll('audio').forEach(function(a) { if (!a.paused && !a.ended) on = true; });
+        return on;
+    }
+    function studyTick() {
+        if (typeof isResettingAll !== 'undefined' && isResettingAll) return;
+        var now = Date.now(), ms = now - studyClock;
+        if (ms < 1000) return;
+        studyClock = now;
+        var screen = studyScreen();
+        if (document.hidden || !screen) return;
+        if (now - lastActivity > (screen === 'read' ? 150000 : 90000) && !studyMediaPlaying()) return;
+        var sec = Math.min(15, Math.round(ms / 1000));
+        var before = gardenMinutes();
+        var day = getTodayDateString();
+        studyTime[day] = (studyTime[day] || 0) + sec;
+        try { localStorage.setItem(STUDY_KEY, JSON.stringify(studyTime)); } catch (e) {}
+        gardenNoteGrowth(before, gardenMinutes());
+    }
+    setInterval(studyTick, 10000);
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) studyTick(); else studyClock = Date.now();
+    });
+    // every device's record, added up: { total: seconds, days: { 'YYYY-MM-DD': seconds } }
+    function studyTotals() {
+        var days = {}, total = 0;
+        try {
+            Object.keys(localStorage).forEach(function(k) {
+                if (k.indexOf('jlptStudyTime_') !== 0) return;
+                var m = k === STUDY_KEY ? studyTime : JSON.parse(localStorage.getItem(k) || '{}') || {};
+                Object.keys(m).forEach(function(d) { var v = +m[d] || 0; days[d] = (days[d] || 0) + v; total += v; });
+            });
+        } catch (e) {}
+        return { total: total, days: days };
+    }
+    function gardenMinutes() { return Math.floor(studyTotals().total / 60); }
+
+    // ---------- 学びの庭: the card on the home screen and the full view ----------
+    // The painting itself is garden.js (window.MogiGarden), loaded after the app. The card is one element that is
+    // kept and moved back into each new home screen, so its painting and animation never start over.
+    var GD = { el: null, ctrl: null, view: null, vctrl: null, preview: null, dev: null };
+    var GD_SEASON = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
+    var GD_LIGHT = { morning: '朝', day: '昼', dusk: '夕暮れ', night: '夜' };
+    function gdEngine() { return window.MogiGarden || null; }
+    function gdFmt(min) {
+        min = Math.max(0, Math.round(min));
+        var h = Math.floor(min / 60), m = min % 60;
+        return h ? h + '時間' + (m ? m + '分' : '') : m + '分';
+    }
+    function gdState() {
+        var E = gdEngine(), tot = studyTotals(), min = Math.floor(tot.total / 60), now = new Date();
+        var monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7)), week = 0;
+        Object.keys(tot.days).forEach(function(d) {
+            var p = d.split('-'), t = new Date(+p[0], +p[1] - 1, +p[2]);
+            if (t >= monday) week += tot.days[d];
+        });
+        var stage = E ? E.stageFor(min) : 0, stages = E ? E.STAGES : [];
+        return { min: min, week: Math.floor(week / 60), today: Math.floor((tot.days[getTodayDateString()] || 0) / 60),
+                 stage: stage, stages: stages, next: stages[stage + 1] || null,
+                 season: E ? E.seasonFor(now) : 'autumn', light: E ? E.lightFor(now) : 'day' };
+    }
+    function gdInfoHtml(s, shown) {
+        var st = s.stages[shown] || {}, nx = s.next, cur = s.stages[s.stage] || { min: 0 };
+        var pct = nx ? Math.max(2, Math.min(100, Math.round((s.min - cur.min) / (nx.min - cur.min) * 100))) : 100;
+        return '<div class="gd-row"><span class="gd-title">庭</span><span class="gd-total">合計 <b>' + gdFmt(s.min) + '</b></span></div>' +
+            '<div class="gd-desc">' + escapeHtml(st.desc || st.name || '') + '<span class="gd-dot">・</span>今週 ' + gdFmt(s.week) + '</div>' +
+            '<div class="gd-bar"><i style="width:' + pct + '%"></i></div>' +
+            '<div class="gd-next">' + (nx ? '<span>次 ─ ' + escapeHtml(nx.name) + '　あと' + gdFmt(nx.min - s.min) + '</span>'
+                                          : '<span>庭が完成しました ─ 四季めぐり</span>') +
+            '<span class="gd-step">' + (s.stage + 1) + ' / ' + s.stages.length + '</span></div>';
+    }
+    function gardenSlotHtml() { return '<div id="home-garden-slot"></div>'; }
+    function gdMountCard() {
+        var slot = document.getElementById('home-garden-slot'), E = gdEngine();
+        if (!slot) return;
+        if (!E) { slot.remove(); return; }        // garden.js arrives a moment after the app: the home is redrawn then
+        if (!GD.el) {
+            GD.el = document.createElement('div');
+            GD.el.className = 'gd-card'; GD.el.id = 'gd-card';
+            GD.el.setAttribute('role', 'button'); GD.el.tabIndex = 0; GD.el.setAttribute('aria-label', '学びの庭を開く');
+            GD.el.innerHTML = '<div class="gd-scene"><span class="gd-tag"></span></div><div class="gd-info"></div>';
+            GD.el.addEventListener('click', openGarden);
+            GD.el.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openGarden(); } });
+        }
+        slot.replaceWith(GD.el);
+        var s = gdState();
+        GD.el.querySelector('.gd-info').innerHTML = gdInfoHtml(s, s.stage);
+        GD.el.querySelector('.gd-tag').textContent = GD_SEASON[s.season] + '・' + GD_LIGHT[s.light];
+        var o = { stage: s.stage, season: s.season, light: s.light, quality: 'card', animate: true };
+        if (!GD.ctrl) {
+            o.onReady = gdCheckStageUp;
+            GD.ctrl = E.mount(GD.el.querySelector('.gd-scene'), o);
+        } else {
+            if (GD.shown !== s.stage + s.season + s.light && !GD.revealing) GD.ctrl.update(o);
+            GD.ctrl.resume();
+            gdCheckStageUp();
+        }
+        if (!GD.revealing) GD.shown = s.stage + s.season + s.light;
+    }
+    // reached a new stage since the garden was last seen: play the reveal on the card
+    function gdCheckStageUp() {
+        var s = gdState(), seen = parseInt(localStorage.getItem('jlptGardenSeen'), 10);
+        if (isNaN(seen) || seen > s.stage) { localStorage.setItem('jlptGardenSeen', String(s.stage)); return; }
+        if (s.stage <= seen || !GD.ctrl || !GD.el || !GD.el.isConnected) return;
+        localStorage.setItem('jlptGardenSeen', String(s.stage));
+        GD.revealing = true;
+        setTimeout(function() {
+            GD.ctrl.playStageUp(seen, s.stage);
+            GD.shown = s.stage + s.season + s.light;
+            setTimeout(function() { GD.revealing = false; }, 2800);
+        }, 400);
+        showToast('学びの庭に「' + s.stages[s.stage].name + '」ができました');
+    }
+    // while studying: a quiet note when the garden grows (the reveal waits for the home screen)
+    function gardenNoteGrowth(beforeMin, afterMin) {
+        var E = gdEngine();
+        if (!E) return;
+        var a = E.stageFor(beforeMin), b = E.stageFor(afterMin);
+        if (b > a) showToast('🌱 学びの庭に「' + E.STAGES[b].name + '」ができました');
+    }
+    // the animation rests whenever the card is not on screen (another page, a reading or quiz on top, the full view)
+    setInterval(function() {
+        if (!GD.ctrl || !GD.el) return;
+        var away = !GD.el.isConnected || document.hidden || !!studyScreen() || gardenOpen() || !onHomeNow();
+        if (away !== GD.away) { GD.away = away; if (away) GD.ctrl.pause(); else GD.ctrl.resume(); }
+    }, 1000);
+    window.addEventListener('load', function() {
+        if (gdEngine() && onHomeNow() && !document.getElementById('gd-card') && quizContainer.querySelector('.home')) showHomePlaceholder();
+    });
+
+    function gardenOpen() { return !!(GD.view && GD.view.classList.contains('active')); }
+    function openGarden() {
+        var E = gdEngine();
+        if (!E) return;
+        if (!GD.view) {
+            GD.view = document.createElement('div');
+            GD.view.id = 'gd-view'; GD.view.className = 'gd-view';
+            GD.view.innerHTML =
+                '<div class="gd-top"><button class="gd-close" aria-label="閉じる">✕</button><div class="gd-top-title">学びの庭<small></small></div></div>' +
+                '<div class="gd-main">' +
+                '<div class="gd-stagebox"><div class="gd-zoom"><div class="gd-zoom-inner"><div class="gd-scene gd-scene-full"></div></div>' +
+                '<button class="gd-zoom-reset" hidden>元の大きさ</button><div class="gd-hint">ピンチで拡大・ドラッグで移動</div></div></div>' +
+                '<div class="gd-side"><div class="gd-info"></div><div class="gd-back" hidden><button>いまの庭に戻る</button></div>' +
+                '<div class="gd-dev"></div><div class="gd-list-title">庭の歩み</div><div class="gd-list"></div></div>' +
+                '</div>';
+            document.body.appendChild(GD.view);
+            if (window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches) GD.view.querySelector('.gd-hint').textContent = 'ホイールで拡大・ドラッグで移動';
+            GD.view.querySelector('.gd-close').addEventListener('click', closeGarden);
+            GD.view.querySelector('.gd-back button').addEventListener('click', function() { gdShowStage(null); });
+            GD.view.querySelector('.gd-list').addEventListener('click', function(e) {
+                var b = e.target.closest('.gd-st.done, .gd-st.now');
+                if (b) gdShowStage(+b.dataset.i);
+            });
+            gdPinch(GD.view.querySelector('.gd-zoom'), GD.view.querySelector('.gd-zoom-inner'), GD.view.querySelector('.gd-zoom-reset'));
+        }
+        GD.preview = null; GD.dev = null;
+        GD.view.classList.add('active');
+        document.body.classList.add('gd-on');
+        GD.zoomReset && GD.zoomReset();
+        gdRenderView();
+        var s = gdState();
+        GD.vctrl = E.mount(GD.view.querySelector('.gd-scene-full'), gdViewOpts(s));
+        syncNavHistory();
+    }
+    function closeGarden() {
+        if (!GD.view) return;
+        GD.view.classList.remove('active');
+        document.body.classList.remove('gd-on');
+        if (GD.vctrl) { GD.vctrl.destroy(); GD.vctrl = null; }
+        GD.view.querySelector('.gd-scene-full').innerHTML = '';
+        syncNavHistory();
+    }
+    function gdViewOpts(s) {
+        var d = GD.dev || {};
+        return { stage: d.stage != null ? d.stage : GD.preview != null ? GD.preview : s.stage,
+                 season: d.season || s.season, light: d.light || s.light, quality: 'full', animate: true };
+    }
+    function gdShowStage(i) {
+        var s = gdState();
+        GD.preview = (i == null || i === s.stage) ? null : i;
+        if (GD.vctrl) GD.vctrl.update(gdViewOpts(s));
+        gdRenderView();
+    }
+    function gdRenderView() {
+        var s = gdState(), o = gdViewOpts(s), shown = o.stage;
+        GD.view.querySelector('.gd-top-title small').textContent = GD_SEASON[o.season] + '・' + GD_LIGHT[o.light];
+        GD.view.querySelector('.gd-info').innerHTML = gdInfoHtml(s, shown) +
+            '<div class="gd-today">今日 ' + gdFmt(s.today) + '　問題・読解・模試・単語帳のゲームを開いて手を動かしている時間だけを数えます。</div>';
+        GD.view.querySelector('.gd-back').hidden = GD.preview == null;
+        GD.view.querySelector('.gd-list').innerHTML = s.stages.map(function(st, i) {
+            var cls = i < s.stage ? 'done' : i === s.stage ? 'now' : i === s.stage + 1 ? 'next' : 'locked';
+            return '<button class="gd-st ' + cls + (i === shown ? ' shown' : '') + '" data-i="' + i + '"' + (cls === 'next' || cls === 'locked' ? ' disabled' : '') + '>' +
+                '<span class="gd-st-n">' + (i + 1) + '</span><span class="gd-st-name">' + escapeHtml(st.name) + '</span>' +
+                '<span class="gd-st-min">' + (st.min ? gdFmt(st.min) : '—') + '</span>' +
+                '<span class="gd-st-mark">' + (cls === 'done' ? '✓' : cls === 'now' ? 'いま' : cls === 'next' ? 'あと' + gdFmt(st.min - s.min) : '') + '</span></button>';
+        }).join('');
+        var dev = GD.view.querySelector('.gd-dev');
+        if (!getSetting('devMenu', false)) { dev.innerHTML = ''; return; }
+        var sel = function(id, list, val) {
+            return '<select data-k="' + id + '">' + list.map(function(x) { return '<option value="' + x[0] + '"' + (String(x[0]) === String(val) ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select>';
+        };
+        dev.innerHTML = '<div class="gd-dev-title">開発者メニュー・見え方を試す</div>' +
+            sel('stage', s.stages.map(function(st, i) { return [i, (i + 1) + ' ' + st.name]; }), o.stage) +
+            sel('season', Object.keys(GD_SEASON).map(function(k) { return [k, GD_SEASON[k]]; }), o.season) +
+            sel('light', Object.keys(GD_LIGHT).map(function(k) { return [k, GD_LIGHT[k]]; }), o.light) +
+            '<button data-k="up">段階アップを見る</button><button data-k="reset">元に戻す</button>';
+        dev.querySelectorAll('select').forEach(function(x) {
+            x.addEventListener('change', function() {
+                GD.dev = GD.dev || {};
+                GD.dev[x.dataset.k] = x.dataset.k === 'stage' ? +x.value : x.value;
+                if (GD.vctrl) GD.vctrl.update(gdViewOpts(gdState()));
+                gdRenderView();
+            });
+        });
+        dev.querySelector('[data-k="up"]').addEventListener('click', function() {
+            var to = gdViewOpts(gdState()).stage || 1;
+            if (GD.vctrl) GD.vctrl.playStageUp(to - 1, to);
+        });
+        dev.querySelector('[data-k="reset"]').addEventListener('click', function() {
+            GD.dev = null; GD.preview = null;
+            if (GD.vctrl) GD.vctrl.update(gdViewOpts(gdState()));
+            gdRenderView();
+        });
+    }
+    // two fingers zoom (up to 4×) around the point between them, one finger moves it once zoomed, double-tap zooms in
+    // or out; on a computer the wheel zooms and dragging moves
+    function gdPinch(box, el, reset) {
+        var s = 1, tx = 0, ty = 0, MAX = 4, pinch = null, pan = null, lastTap = 0, drag = null;
+        var apply = function(animate) {
+            var w = box.clientWidth, h = box.clientHeight;
+            s = Math.min(MAX, Math.max(1, s));
+            tx = Math.min(0, Math.max(w - w * s, tx)); ty = Math.min(0, Math.max(h - h * s, ty));
+            if (s < 1.01) { s = 1; tx = 0; ty = 0; }
+            el.style.transition = animate ? 'transform .3s ease' : 'none';
+            el.style.transform = s === 1 ? '' : 'translate(' + tx + 'px,' + ty + 'px) scale(' + s + ')';
+            box.classList.toggle('zoomed', s > 1);
+            reset.hidden = s === 1;
+        };
+        var zoomAt = function(px, py, ns) { tx = px - (px - tx) * ns / s; ty = py - (py - ty) * ns / s; s = ns; };
+        var local = function(t) { var r = box.getBoundingClientRect(); return { x: t.clientX - r.left, y: t.clientY - r.top }; };
+        var dist = function(a, b) { return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY); };
+        box.addEventListener('touchstart', function(e) {
+            if (e.touches.length === 2) {
+                var a = e.touches[0], b = e.touches[1];
+                pinch = { d: dist(a, b), s: s, tx: tx, ty: ty, m: local({ clientX: (a.clientX + b.clientX) / 2, clientY: (a.clientY + b.clientY) / 2 }) };
+                pan = null; e.preventDefault();
+            } else if (e.touches.length === 1) {
+                var now = Date.now(), p = local(e.touches[0]);
+                if (now - lastTap < 300) {
+                    if (s > 1) { s = 1; tx = 0; ty = 0; } else zoomAt(p.x, p.y, 2.5);
+                    apply(true); lastTap = 0; e.preventDefault(); return;
+                }
+                lastTap = now;
+                if (s > 1) pan = { x: e.touches[0].clientX, y: e.touches[0].clientY, tx: tx, ty: ty };
+            }
+        }, { passive: false });
+        box.addEventListener('touchmove', function(e) {
+            if (pinch && e.touches.length === 2) {
+                var a = e.touches[0], b = e.touches[1], m = local({ clientX: (a.clientX + b.clientX) / 2, clientY: (a.clientY + b.clientY) / 2 });
+                var ns = Math.min(MAX, Math.max(1, pinch.s * dist(a, b) / pinch.d));
+                tx = m.x - (pinch.m.x - pinch.tx) * ns / pinch.s; ty = m.y - (pinch.m.y - pinch.ty) * ns / pinch.s; s = ns;
+                apply(false); e.preventDefault();
+            } else if (pan && e.touches.length === 1 && s > 1) {
+                tx = pan.tx + e.touches[0].clientX - pan.x; ty = pan.ty + e.touches[0].clientY - pan.y;
+                apply(false); e.preventDefault();
+            }
+        }, { passive: false });
+        box.addEventListener('touchend', function(e) { if (e.touches.length < 2) pinch = null; if (!e.touches.length) pan = null; apply(false); });
+        box.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            var p = local(e); zoomAt(p.x, p.y, Math.min(MAX, Math.max(1, s * Math.exp(-e.deltaY / (e.ctrlKey ? 100 : 300))))); apply(false);
+        }, { passive: false });
+        box.addEventListener('mousedown', function(e) { if (s > 1) { drag = { x: e.clientX, y: e.clientY, tx: tx, ty: ty }; e.preventDefault(); } });
+        window.addEventListener('mousemove', function(e) { if (drag) { tx = drag.tx + e.clientX - drag.x; ty = drag.ty + e.clientY - drag.y; apply(false); } });
+        window.addEventListener('mouseup', function() { drag = null; });
+        box.addEventListener('dblclick', function(e) { var p = local(e); if (s > 1) { s = 1; tx = 0; ty = 0; } else zoomAt(p.x, p.y, 2.5); apply(true); });
+        reset.addEventListener('click', function() { s = 1; tx = 0; ty = 0; apply(true); });
+        GD.zoomReset = function() { s = 1; tx = 0; ty = 0; apply(false); };
+    }
+
     function getHeatmapStyle(seconds) {
         if (!seconds || seconds <= 0) return { bg: '#ffffff', text: '#555555', level: 0 };
         if (seconds <= 300)  return { bg: '#e3f0fb', text: '#2c5a8a', level: 1 };
@@ -4624,6 +4930,7 @@
             (todayRec.answered >= dailyGoal ? '<b>今日の目標を達成しました ✓</b><br>' : 'あと <b>' + Math.max(0, dailyGoal - todayRec.answered) + '問</b> で今日の目標達成<br>') +
             '連続学習 <b>' + streaks.current + '日</b>　正答率 <b>' + (todayRec.answered ? Math.round(todayRec.correct / todayRec.answered * 100) + '%' : '—') + '</b>' +
             '</div></div>' +
+            gardenSlotHtml() +
             omikujiHomeHtml() +
             (function() {
                 var w = todaysWord();
@@ -4651,6 +4958,7 @@
         READING_BOOKS.forEach(function(b) { html += readingBookCardHtml(b); });
         html += '</div>';
         quizContainer.innerHTML = html;
+        gdMountCard();
         restoreHomeSpot();          // in the same frame as the new page, so it never shows at the top first
         bindMockSection(quizContainer);
         setTimeout(function() { checkNewBadges(); }, 350);
@@ -8261,7 +8569,7 @@
 
             // Clear the in-memory copies too, so the app is empty even if the reload below is blocked
             reportAnswers = {}; allModeAnswers = {}; reviewAnswers = {}; userAnswers = reportAnswers; answerMode = 'report';
-            allModeMistakes = {}; progressData = {}; resumeData = {}; shuffledOrders = {}; timeSpent = {};
+            allModeMistakes = {}; progressData = {}; resumeData = {}; shuffledOrders = {}; timeSpent = {}; studyTime = {};
             correctPerDay = {}; categoryStats = {}; bookmarkedQuestions = []; mistakeTimestamps = {}; wordList = [];
             statsData = { total: 0, correct: 0 }; statsAnsweredFlags = {}; attemptLog = []; dailyStats = {};
             dailyGoal = 20; currentQuestions = []; answerHistory = [];
@@ -12630,7 +12938,8 @@
         if (typeof dictPanelOpen === 'function' && dictPanelOpen()) d++;
         if (typeof flashOpen === 'function' && flashOpen()) d++;
         if (typeof galleryOpen === 'function' && galleryOpen()) d++;
-        if (typeof diffOpen === 'function' && diffOpen()) d++;          // the 画廊 sits on top of the results (or 設定): Back closes it first
+        if (typeof diffOpen === 'function' && diffOpen()) d++;
+        if (typeof gardenOpen === 'function' && gardenOpen()) d++;          // the 画廊 sits on top of the results (or 設定): Back closes it first
         if (typeof rpOpen === 'function' && rpOpen()) d += (rp && rp.state !== 'list') ? 2 : 1;
         if (typeof arOpen === 'function' && arOpen()) d++;
         if (typeof mockOpen === 'function' && mockOpen()) d += mockGridOpen() ? 2 : 1;
@@ -12654,6 +12963,7 @@
         }
     }
     function navBackOneLevel() {
+        if (gardenOpen()) { closeGarden(); return; }
         if (galleryOpen()) { closeGallery(); return; }
         if (diffOpen()) { closeDiffView(); return; }
         if (dictPanelOpen()) { closeDictionaryPanel(); return; }
@@ -13725,7 +14035,7 @@
             Object.keys(lg).forEach(function(k) { if (/^(pace|fastread|measure)(#|$)/.test(k)) delete lg[k]; });
             localStorage.setItem('jlptBadgeLog', JSON.stringify(lg)); } catch (e) {}
     })();
-    var BADGE_CATS = [['habit', '習慣'], ['skill', '実力'], ['review', '誤答と復習'], ['speed', '読む速さ'], ['words', '単語'], ['adv', '読解'], ['mock', '模擬試験'], ['book', '教材'], ['collect', 'コレクション']];
+    var BADGE_CATS = [['habit', '習慣'], ['garden', '学びの庭'], ['skill', '実力'], ['review', '誤答と復習'], ['speed', '読む速さ'], ['words', '単語'], ['adv', '読解'], ['mock', '模擬試験'], ['book', '教材'], ['collect', 'コレクション']];
     var TIER_NAMES = ['銅', '銀', '金', 'プラチナ', 'ダイヤ'];
     var TIER_COLORS = ['#b0703a', '#8a95a1', '#c4960f', '#4f8f8c', '#2f7fd6'];
     // every tiered badge has five levels: 銅・銀・金・プラチナ・ダイヤ
@@ -13850,6 +14160,17 @@
         var seasonsSeen = [['sakura', 'fuji'], ['aoba'], ['momiji'], ['snow']].filter(function(g) { return g.some(function(k) { return seenOp[k]; }); }).length;
         var eventsSeen = ['shogatsu', 'setsubun', 'hinamatsuri', 'kodomo', 'tanabata', 'hanabi', 'obon', 'tsukimi', 'xmas', 'omisoka', 'jlpt'].filter(function(k) { return seenOp[k] || (k === 'shogatsu' && seenOp.hoo) || (k === 'tanabata' && seenOp.nagare) || (k === 'hanabi' && seenOp.ootama); }).length;
         var tiers = function(list, unit) { return list.map(function(t) { return typeof t === 'number' ? { n: t, label: t + unit } : t; }); };
+        // 学びの庭: active study time (every device added up)
+        var gdT = studyTotals(), gdDays = Object.keys(gdT.days).sort(), gdBestDay = 0, gdRun = 0, gdBestRun = 0, gdPrev = null, gdSeasons = {};
+        gdDays.forEach(function(d) {
+            var sec = gdT.days[d], p = d.split('-'), t = new Date(+p[0], +p[1] - 1, +p[2]);
+            gdBestDay = Math.max(gdBestDay, Math.floor(sec / 60));
+            if (sec >= 3600) gdSeasons[['winter', 'winter', 'spring', 'spring', 'spring', 'summer', 'summer', 'summer', 'autumn', 'autumn', 'autumn', 'winter'][t.getMonth()]] = 1;
+            if (sec >= 900) {
+                gdRun = gdPrev && Math.round((t - gdPrev) / 86400000) === 1 ? gdRun + 1 : 1;
+                gdPrev = t; gdBestRun = Math.max(gdBestRun, gdRun);
+            }
+        });
 
         var badges = [
             // 習慣
@@ -13865,6 +14186,11 @@
             { id: 'weekend', cat: 'habit', icon: '⚔️', name: '週末戦士', value: nb.weekends.length, unit: '回', tiers: tiers([4, 12, 30, 52, 100], '回'), hint: '土曜と日曜の両方に学習した週末の数' },
             { id: 'readdaily', cat: 'habit', icon: '📖', name: '一日一文', value: nb.readBest, unit: '日', tiers: tiers([7, 14, 30, 60, 100], '日'), hint: '毎日1つ以上の文章（内容理解・文章の文法）を解いて続けた日数（最長）' },
             { id: 'rush', cat: 'habit', icon: '🏁', name: '追い込み', value: nb.rush.length, unit: '日', tiers: tiers([10, 20, 25, 28, 30], '日'), hint: getSetting('examDate', '') ? '試験日までの30日間に学習した日の数（30日すべてで最高位）' : '試験日を設定すると、試験前の30日間に学習した日を数えます' },
+            // 学びの庭
+            { id: 'gdhours', cat: 'garden', icon: '🌱', name: '庭づくり', value: Math.floor(gdT.total / 3600), unit: '時間', tiers: tiers([1, 10, 50, 150, 500], '時間'), hint: '問題・読解・模試・単語帳のゲームで、手を動かして学習した時間の合計（500時間で庭が完成）' },
+            { id: 'gdfocus', cat: 'garden', icon: '🍵', name: '集中', value: gdBestDay, unit: '分', tiers: [{ n: 30, label: '30分' }, { n: 60, label: '1時間' }, { n: 120, label: '2時間' }, { n: 180, label: '3時間' }, { n: 300, label: '5時間' }], hint: '1日に手を動かして学習した時間（いちばん長かった日）' },
+            { id: 'gdwater', cat: 'garden', icon: '💧', name: '水やり', value: gdBestRun, unit: '日', tiers: tiers([3, 7, 14, 30, 100], '日'), hint: '毎日15分以上、手を動かして学習した日が続いた数（最長）' },
+            { id: 'gdseasons', cat: 'garden', icon: '🍁', name: '四季の庭', value: Object.keys(gdSeasons).length, unit: 'つ', tiers: [{ n: 1, label: '1つ' }, { n: 2, label: '2つ' }, { n: 3, label: '3つ' }, { n: 4, label: '春夏秋冬' }], hint: '1日1時間以上学習した日がある季節の数（春・夏・秋・冬）' },
             // 誤答と復習
             { id: 'notezero', cat: 'review', icon: '🧹', name: '誤答ゼロ', value: nb.zero.length, unit: '回', tiers: tiers([1, 3, 10, 20, 50], '回'), hint: '誤答ノートの問題をすべて解き直して、ノートを空にした回数' },
             { id: 'retry', cat: 'review', icon: '🛠️', name: '解き直し名人', value: nb.recover.length, unit: '問', tiers: tiers([10, 30, 100, 200, 400], '問'), hint: '一度間違えた問題を、後で正解した数' },

@@ -596,6 +596,73 @@
         .gal-track { will-change: scroll-position; overscroll-behavior-x: contain; }
         .gal-item { contain: layout paint; }
         body.gal-on #flash-view, body.gal-on #app { visibility: hidden; }   /* nothing animates or repaints underneath while the 画廊 is open */
+        /* 学びの庭: the card on the home screen */
+        .gd-card { border: 1px solid var(--border-dark); background: var(--surface); margin-bottom: 10px; overflow: hidden; cursor: pointer; border-radius: var(--radius, 10px); -webkit-tap-highlight-color: transparent; }
+        .gd-scene { position: relative; aspect-ratio: 4 / 3; background: #e6dfcf; overflow: hidden; }
+        .gd-tag { position: absolute; z-index: 3; left: 8px; top: 8px; font-size: 0.68rem; padding: 2px 9px; background: rgba(24, 18, 10, 0.42); color: #fff; border-radius: 999px; pointer-events: none; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+        .gd-tag:empty { display: none; }
+        .gd-info { padding: 10px 14px 12px; }
+        .gd-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+        .gd-title { font-family: var(--mincho); font-size: 1.5rem; font-weight: 700; color: var(--text-main); line-height: 1.2; }
+        .gd-total { font-size: 0.78rem; color: var(--text-sub); white-space: nowrap; }
+        .gd-total b { font-size: 1rem; color: var(--text-main); }
+        .gd-desc { font-size: 0.8rem; color: var(--text-sub); margin: 3px 0 9px; }
+        .gd-dot { opacity: 0.6; margin: 0 2px; }
+        .gd-bar { height: 5px; background: var(--track); border-radius: 3px; overflow: hidden; }
+        .gd-bar i { display: block; height: 100%; background: linear-gradient(90deg, #b5452c, #d97a3f); border-radius: 3px; transition: width 0.6s ease; }
+        .gd-next { display: flex; justify-content: space-between; gap: 10px; margin-top: 7px; font-size: 0.78rem; font-weight: bold; color: #b5452c; }
+        .gd-step { color: var(--text-sub); font-weight: normal; white-space: nowrap; }
+        @media (min-width: 900px) {
+            .gd-card { display: grid; grid-template-columns: minmax(0, 400px) 1fr; align-items: center; }
+            .gd-info { padding: 16px 22px; }
+        }
+        /* 学びの庭: the full view, which zooms */
+        .gd-view { position: fixed; inset: 0; z-index: 3800; background: #14120f; color: #efe7d8; display: none; flex-direction: column; }
+        .gd-view.active { display: flex; }
+        body.gd-on #app, body.gd-on #flash-view { visibility: hidden; }
+        .gd-top { display: flex; align-items: center; gap: 12px; padding: calc(8px + env(safe-area-inset-top)) 12px 8px; flex-shrink: 0; }
+        .gd-close { width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, 0.1); color: #fff; font-size: 1rem; }
+        .gd-top-title { font-family: var(--mincho); font-weight: 700; font-size: 1.1rem; letter-spacing: 0.15em; }
+        .gd-top-title small { margin-left: 10px; font-family: var(--gothic); font-weight: normal; letter-spacing: 0; opacity: 0.65; font-size: 0.75rem; }
+        .gd-main { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .gd-zoom { position: relative; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; touch-action: none; background: #0c0b09; }
+        .gd-zoom.zoomed { cursor: grab; }
+        .gd-zoom-inner { width: 100%; height: 100%; transform-origin: 0 0; will-change: transform; }
+        .gd-zoom .gd-scene { aspect-ratio: auto; width: 100%; height: 100%; background: #2a2620; }
+        .gd-zoom-reset { position: absolute; right: 10px; bottom: 10px; z-index: 4; border: 0; border-radius: 999px; padding: 6px 12px; font-size: 0.75rem; background: rgba(0, 0, 0, 0.55); color: #fff; }
+        .gd-hint { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 4; font-size: 0.7rem; color: #fff; background: rgba(0, 0, 0, 0.42); padding: 3px 10px; border-radius: 999px; pointer-events: none; white-space: nowrap; animation: gdHint 5s ease forwards; }
+        @keyframes gdHint { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
+        .gd-zoom.zoomed .gd-hint { display: none; }
+        .gd-side { padding: 14px 16px calc(28px + env(safe-area-inset-bottom)); max-width: 640px; margin: 0 auto; }
+        .gd-side .gd-info { padding: 0; }
+        .gd-view .gd-title { color: #f5ecdb; }
+        .gd-view .gd-total, .gd-view .gd-desc, .gd-view .gd-step { color: #b6ad9d; }
+        .gd-view .gd-total b { color: #f5ecdb; }
+        .gd-view .gd-bar { background: rgba(255, 255, 255, 0.12); }
+        .gd-view .gd-next { color: #e48a52; }
+        .gd-today { font-size: 0.72rem; color: #8f8778; margin-top: 10px; line-height: 1.6; }
+        .gd-back button { margin-top: 12px; border: 1px solid rgba(255, 255, 255, 0.25); background: transparent; color: #f5ecdb; border-radius: 999px; padding: 6px 14px; font-size: 0.8rem; }
+        .gd-list-title { margin: 20px 0 8px; font-size: 0.78rem; color: #a59c8c; letter-spacing: 0.15em; }
+        .gd-list { display: grid; gap: 4px; }
+        .gd-st { display: grid; grid-template-columns: 22px 1fr auto 4.5em; gap: 10px; align-items: center; padding: 9px 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.04); border: 1px solid transparent; color: #ebe2d2; text-align: left; font-size: 0.85rem; font-family: inherit; }
+        .gd-st-n { color: #8a8274; font-size: 0.72rem; text-align: right; }
+        .gd-st-min { color: #8a8274; font-size: 0.72rem; }
+        .gd-st-mark { font-size: 0.72rem; text-align: right; color: #e48a52; white-space: nowrap; }
+        .gd-st.done .gd-st-mark { color: #93c07c; }
+        .gd-st.now { background: rgba(228, 138, 82, 0.15); border-color: rgba(228, 138, 82, 0.5); }
+        .gd-st.shown:not(.now) { border-color: rgba(245, 236, 219, 0.6); }
+        .gd-st.next { opacity: 0.75; }
+        .gd-st.locked { opacity: 0.38; }
+        .gd-dev { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 6px; }
+        .gd-dev:empty { display: none; }
+        .gd-dev-title { width: 100%; font-size: 0.72rem; color: #a59c8c; }
+        .gd-dev select, .gd-dev button { background: #2a2620; color: #efe7d8; border: 1px solid #4a443a; border-radius: 6px; padding: 5px 8px; font-size: 0.78rem; }
+        @media (min-width: 900px), (orientation: landscape) and (max-height: 560px) {
+            .gd-main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; overflow: hidden; }
+            .gd-stagebox { display: flex; align-items: center; justify-content: center; min-height: 0; padding: 0 0 12px 12px; }
+            .gd-zoom { width: min(100%, calc((100vh - 72px) * 4 / 3)); border-radius: 8px; }
+            .gd-side { overflow-y: auto; max-width: none; margin: 0; }
+        }
         .gal-cap { padding: 14px 22px calc(10px + env(safe-area-inset-bottom)); text-align: center; }
         .gal-series { font-size: 0.78rem; color: #a9a097; letter-spacing: 0.15em; }
         .gal-name { font-family: var(--mincho); font-size: 1.35rem; font-weight: 700; margin: 2px 0; line-height: 1.3; }
