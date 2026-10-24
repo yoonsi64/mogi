@@ -7158,6 +7158,9 @@
         { src: 'art/mishima.webp', phone: true, paper: '#ece4d2', pos: '55% 50%', title: '甲州三嶌越', ruby: [['甲州', 'こうしゅう'], ['三嶌越', 'みしまごえ']], en: 'Mishima Pass in Kai Province', series: '富嶽三十六景', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1830–32年頃' },
         { src: 'art/sekiya.webp', paper: '#ece4d2', pos: '45% 50%', title: '隅田川関屋の里', ruby: [['隅田川', 'すみだがわ'], ['関屋', 'せきや'], 'の', ['里', 'さと']], en: 'Sekiya Village on the Sumida River', series: '富嶽三十六景', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1830–32年頃' },
         { src: 'art/wave.webp', phone: true, paper: '#ece4d2', pos: '40% 50%', title: '神奈川沖浪裏', ruby: [['神奈川', 'かながわ'], ['沖', 'おき'], ['浪裏', 'なみうら']], en: 'Under the Wave off Kanagawa (The Great Wave)', series: '富嶽三十六景', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1830–32年頃' },
+        { src: 'art/kajikazawa.webp', phone: true, paper: '#ece4d2', pos: '56% 50%', title: '甲州石班沢', ruby: [['甲州', 'こうしゅう'], ['石班沢', 'かじかざわ']], en: 'Kajikazawa in Kai Province', series: '富嶽三十六景', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1830–32年頃' },
+        { src: 'art/menami.webp', phone: true, paper: '#9aa38c', pos: '50% 50%', title: '女浪', ruby: [['女浪', 'めなみ']], en: 'Feminine Wave', series: '小布施・上町祭屋台天井絵', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1845年（弘化2年）' },
+        { src: 'art/tiger.webp', paper: '#ddd0aa', pos: '35% 50%', title: '雪中虎図', ruby: [['雪中', 'せっちゅう'], ['虎図', 'こず']], en: 'Tiger in the Snow', series: '肉筆画', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1849年（嘉永2年）' },
         { src: 'art/haboku.webp', phone: true, paper: '#d9cfb3', pos: '50% 55%', title: '破墨山水図', ruby: [['破墨', 'はぼく'], ['山水図', 'さんすいず']], en: 'Splashed-ink Landscape (Haboku sansui)', series: '水墨画・国宝', artist: '雪舟等楊', artistEn: 'Sesshū Tōyō', year: '1495年（明応4年）' },
     ];
     // ---------- 難易度 (開発者メニュー): every question rated 1–5, with the reason ----------
