@@ -4453,7 +4453,7 @@
                      if (!gardenOpen()) return;
                      if (name === 'rare' && !GD.devMode) rareRecord(gdViewWorld(), info, true);
                      if (name === 'rainbow' && !GD.devMode) skyRecord('rainbow');
-                     if (window.MogiSound && getSetting('gdSound', true) && (!gdSkyOpen() || name === 'thunder' || name === 'firework')) MogiSound.cue(name, name === 'thunder' || name === 'firework' ? info && info.delay : info && info.id);
+                     if (window.MogiSound && getSetting('gdSound', true) && (!gdSkyOpen() || name === 'thunder' || name === 'firework')) MogiSound.cue(gdCueName(name), name === 'thunder' || name === 'firework' ? info && info.delay : info && info.id);
                  } };
     }
     function gdShowStage(i) {
@@ -4562,6 +4562,8 @@
             gdRenderView(); gdSoundUpdate();
         });
     }
+    var GD_CUE_ALIAS = { bees: 'fuji', startle: 'bird' };       // painter cue names that share a sound
+    function gdCueName(n) { return GD_CUE_ALIAS[n] || n; }
     function gdSceneTap(x, y) {
         if (!GD.vctrl || !GD.vctrl.tap || gdSkyOpen()) return;
         var r = GD.view.querySelector('.gd-scene-full').getBoundingClientRect();
@@ -4657,7 +4659,7 @@
             onCue: function(name, info) {
                 if (name === 'rare') rareRecord(w, info, true);
                 if (name === 'rainbow') skyRecord('rainbow');
-                if (window.MogiSound && getSetting('gdSound', true)) MogiSound.cue(name, name === 'thunder' || name === 'firework' ? info && info.delay : info && info.id);
+                if (window.MogiSound && getSetting('gdSound', true)) MogiSound.cue(gdCueName(name), name === 'thunder' || name === 'firework' ? info && info.delay : info && info.id);
             } });
         if (window.MogiSound) {
             MogiSound.unlock();
