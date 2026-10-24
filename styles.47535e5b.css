@@ -1124,7 +1124,7 @@
         .cloze-inline { display: inline-block; vertical-align: baseline; border: none; outline: none; background: transparent; color: var(--text-main); font: inherit; font-weight: bold; line-height: 1.35; padding: 0 2px; margin: 0; max-width: 70vw; border-radius: 0; -webkit-appearance: none; appearance: none; }
         .cloze-blank.typing:focus-within { background: var(--surface); box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12), 0 0 0 3px color-mix(in srgb, var(--active-blue) 30%, transparent); }
         .mem-wrap { gap: 10px; }
-        /* 神経衰弱: the same paper 札 as マッチング. Backs are 藍 with a faint 青海波 and a cream frame and crest, like a hanafuda back */
+        /* 神経衰弱: the same paper 札 as マッチング. Backs are 藍 with one of the 和柄 in cream, a cream frame and crest, like a hanafuda back */
         .mem-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
         .mem-card { position: relative; aspect-ratio: 3 / 4; padding: 0; border: none; background: none; perspective: 700px; animation: wqIn 0.4s cubic-bezier(.2, .8, .3, 1) both; -webkit-tap-highlight-color: transparent; }
         .mem-grid.rows-5 .mem-card { aspect-ratio: 4 / 5; }
@@ -1132,7 +1132,7 @@
         .mem-card.up .mem-inner { transform: rotateY(180deg); }
         .mem-back, .mem-front { position: absolute; inset: 0; border-radius: 5px; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .mem-back { --mb: #22406f; background-color: var(--mb); border: 1px solid color-mix(in srgb, var(--mb) 70%, #000);
-            background-image: radial-gradient(circle at 50% 100%, transparent 38%, rgba(255,255,255,.07) 39%, rgba(255,255,255,.07) 43%, transparent 44%, transparent 57%, rgba(255,255,255,.07) 58%, rgba(255,255,255,.07) 62%, transparent 63%); background-size: 20px 10px;
+            background-image: var(--wg-back, radial-gradient(circle at 50% 100%, transparent 38%, rgba(255,255,255,.07) 39%, rgba(255,255,255,.07) 43%, transparent 44%, transparent 57%, rgba(255,255,255,.07) 58%, rgba(255,255,255,.07) 62%, transparent 63%)); background-size: var(--wg-back-size, 20px 10px); background-position: center;
             box-shadow: inset 0 0 0 4px var(--mb), inset 0 0 0 5px rgba(243, 236, 220, 0.55), 0 1px 0 rgba(30, 20, 5, 0.06), 0 3px 10px rgba(30, 20, 5, 0.16); }
         .mem-back::after { content: '試'; width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid rgba(243, 236, 220, 0.7); box-shadow: inset 0 0 0 2.5px var(--mb), inset 0 0 0 3.3px rgba(243, 236, 220, 0.45); background: var(--mb); color: rgba(243, 236, 220, 0.85); font-family: var(--mincho); font-size: 0.82rem; display: flex; align-items: center; justify-content: center; }
         .mem-front { transform: rotateY(180deg); background: var(--wq-card); border: 1px solid color-mix(in srgb, var(--text-main) 22%, transparent); padding: 8px 6px; text-align: center; color: var(--text-main);

@@ -6790,6 +6790,10 @@
         v.style.setProperty('--wg', 'url("data:image/svg+xml,' + encodeURIComponent(w[7].replace(/__F__/g, fg).replace(/__B__/g, bg)) + '")');
         v.style.setProperty('--wg-size', w[5] + 'px ' + w[6] + 'px');
         v.style.setProperty('--wg-bg', bg);
+        // the same pattern, in cream on 藍, for the backs of the 神経衰弱 cards (a little smaller, so the motif reads on a small card)
+        var mb = '#22406f', bfg = wgMix('#f3ecdc', mb, w[4] === 'fill' ? 0.2 : 0.32), k = 0.62;
+        v.style.setProperty('--wg-back', 'url("data:image/svg+xml,' + encodeURIComponent(w[7].replace(/__F__/g, bfg).replace(/__B__/g, mb)) + '")');
+        v.style.setProperty('--wg-back-size', (w[5] * k).toFixed(1) + 'px ' + (w[6] * k).toFixed(1) + 'px');
     }
     // ---------- ゲームの背景: a print behind the four games ----------
     // One of six public-domain woodblock prints, picked at random each time a game opens, filling the screen behind the cards.
