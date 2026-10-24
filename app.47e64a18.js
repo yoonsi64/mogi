@@ -10200,10 +10200,10 @@
                 { pre: '個人情報の流出事件を', k: '（　　　）', post: '、情報管理に対する警告の声が上がりました。', a: '契機に', opts: ['かかわらず', '契機に', 'つつ', 'ほかならない'] }
             ] },
             { title: '文型：～にかかわらず・～を契機に・～つつ・～にほかならない を使って、文を完成させなさい。', wide: true, items: [
-                { pre: '問題の', k: '（大小→　　）', post: '、困ったことがあれば何でも相談してください。', a: '大小にかかわらず', opts: ['大小にかかわらず', '大小を契機に', '大小につつ', '大小にほかならない'] },
-                { pre: '一人暮らしの時はほとんどしなかったが、', k: '（結婚→　　）', post: '料理をするようになった。', a: '結婚を契機に', opts: ['結婚を契機に', '結婚にかかわらず', '結婚にほかならない', '結婚しつつ'] },
-                { pre: 'このチームが優勝できたのは、一人一人の努力の', k: '（成果→　　）', post: 'だろう。', a: '成果にほかならない', opts: ['成果にほかならない', '成果にかかわらず', '成果を契機に', '成果つつ'] },
-                { pre: '恋愛ドラマなどくだらないと', k: '（言う→　　）', post: '、つい見てしまう。', a: '言いつつ', opts: ['言いつつ', '言うにかかわらず', '言うのを契機に', '言うにほかならない'] }
+                { pre: '問題の', k: '（大小→　　）', post: '、困ったことがあれば何でも相談してください。', a: '大小にかかわらず', opts: ['大小にかかわらず', '大小を契機に', '大小を気にしつつ', '大小にほかならず'] },
+                { pre: '一人暮らしの時はほとんどしなかったが、', k: '（結婚→　　）', post: '料理をするようになった。', a: '結婚を契機に', opts: ['結婚を契機に', '結婚にかかわらず', '結婚にほかならず', '結婚しつつ'] },
+                { pre: 'このチームが優勝できたのは、一人一人の努力の', k: '（成果→　　）', post: 'だろう。', a: '成果にほかならない', opts: ['成果にほかならない', '成果にかかわらず', '成果を契機に', '成果を上げつつ'] },
+                { pre: '恋愛ドラマなどくだらないと', k: '（言う→　　）', post: '、つい見てしまう。', a: '言いつつ', opts: ['言いつつ', '言う言わないにかかわらず', '言ったのを契機に', '言うことにほかならず'] }
             ] },
             { title: '言葉の使い方：深める・流出する・増加する・共有する・検索する・詐称する から選んで、適当な形にしなさい。', wide: true, items: [
                 { pre: '彼は、経歴を', k: '＿＿＿＿', post: '罪で、会社を解雇されました。', a: '詐称した', opts: ['詐称した', '流出した', '共有した', '検索した'] },
@@ -11127,7 +11127,7 @@
     function arKanjiItemHtml(key, it, st) {
         var res = st.kanji[key] || {}, done = res.ok !== undefined;
         return '<div class="kj-item' + (res.ok === true ? ' ok' : res.ok === false ? ' ng' : '') + '" data-k="' + key + '">' +
-            '<div class="kj-q">' + escapeHtml(it.pre || '') + arKjBlank(it.k) + escapeHtml(it.post || '') + '</div>' +
+            '<div class="kj-q">' + escapeHtml(it.pre || '') + arKjBlank(it.k, done && (it.pre || it.post) ? it.a : '') + escapeHtml(it.post || '') + '</div>' +
             '<div class="kj-opts">' + arShuffled(it.opts, ar.id + key).map(function(o) {
                 var cls = done ? (o === it.a ? ' right' : o === res.v ? ' wrong' : '') : '';
                 return '<button class="kj-opt' + cls + '" data-v="' + escapeHtml(o) + '"' + (done ? ' disabled' : '') + '>' + escapeHtml(o) + '</button>';
@@ -11135,11 +11135,13 @@
             '<div class="kj-res">' + arKanjiResult(it, res) + '</div></div>';
     }
     // 漢字 items underline the kana to write (ショウカイ); 練習 items are a blank to fill: （　）, ＿＿＿＿ or （売り上げ→　）
-    function arKjBlank(k) {
+    function arKjBlank(k, filled) {
         var m = /^[（(]\s*([^）)]*?)\s*[）)]$/.exec(k);
+        if (filled && (m || /^[＿_]+$/.test(k))) return '<span class="kj-gap filled">' + escapeHtml(filled) + '</span>';
         if (m || /^[＿_]+$/.test(k)) {
-            var hint = m ? m[1].replace(/[　\s]+$/, '') : '';
-            return '<span class="kj-gap">' + (hint ? '<span class="kj-gap-hint">' + escapeHtml(hint) + '</span>' : '') + '</span>';
+            var hint = m ? m[1].replace(/[　\s]*→?[　\s]*$/, '') : '';          // （大小→　）: the word to change, without the arrow
+            // an empty box still holds a zero-width character, so it lines up on the text's baseline like the filled ones
+            return '<span class="kj-gap">' + (hint ? '<span class="kj-gap-hint">' + escapeHtml(hint) + '</span>' : '\u200b') + '</span>';
         }
         return '<u>' + escapeHtml(k) + '</u>';
     }
@@ -11180,6 +11182,8 @@
                         else if (o === btn) o.classList.add('wrong');
                     });
                     box.querySelector('.kj-res').innerHTML = arKanjiResult(it, st.kanji[box.dataset.k]);
+                    var gap = box.querySelector('.kj-gap');
+                    if (gap && (it.pre || it.post)) { gap.className = 'kj-gap filled'; gap.textContent = it.a; }
                     if (it.pre || it.post) speakText(escapeHtml(arKjSentence(it)));          // hear the finished sentence
                     body.querySelector('.kj-score b').textContent = all.filter(function(x) { return st.kanji[x.key] && st.kanji[x.key].ok; }).length;
                 });
