@@ -7878,8 +7878,21 @@
     document.getElementById('wordlist-hide-learned').addEventListener('click', function() { setSetting('wlHideLearned', !getSetting('wlHideLearned', false)); renderWordListItems(); });
     document.getElementById('wordlist-hide-furigana').addEventListener('click', function() { setSetting('wlHideFurigana', !getSetting('wlHideFurigana', false)); renderWordListItems(); });
 
+    function wlGamesArt() {
+        var box = document.getElementById('wl-games');
+        if (!box || typeof GS_ART === 'undefined') return;
+        if (!getSetting('gameScene', true)) { box.classList.remove('art'); box.style.backgroundImage = ''; var c0 = box.querySelector('.wl-art-cap'); if (c0) c0.remove(); return; }
+        var i = Math.floor(Math.random() * GS_ART.length), a = GS_ART[i];
+        box.classList.add('art');
+        box.style.backgroundImage = 'url("' + a.src + '")'; box.style.backgroundPosition = a.pos;
+        box.style.setProperty('--gs-paper', a.paper);
+        var cap = box.querySelector('.wl-art-cap');
+        if (!cap) { cap = document.createElement('button'); cap.className = 'wl-art-cap'; cap.addEventListener('click', function() { openGallery(+cap.dataset.i); }); box.appendChild(cap); }
+        cap.dataset.i = i; cap.textContent = a.title + '・' + a.artist; cap.setAttribute('aria-label', '画廊で「' + a.title + '」を見る');
+    }
     function showWordList() {
         setAnswerMode(false);
+        wlGamesArt();
         setNav('review', 'words'); currentReviewSub = 'words';
         quizView.style.display = 'none'; dashboardView.style.display = 'none'; statsView.style.display = 'none'; bookmarksView.style.display = 'none'; mistakesView.style.display = 'none';
         wordlistView.style.display = 'block';
