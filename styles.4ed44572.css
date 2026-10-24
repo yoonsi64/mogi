@@ -1052,11 +1052,6 @@
         .wl-modes-label { font-size: 0.72rem; font-weight: bold; color: var(--text-sub); letter-spacing: 0.1em; margin: 8px 0 4px; }
         .wl-modes .flash-starts { margin: 0; }
         .flash-start.game { background: var(--surface); color: #b8312f; box-shadow: inset 0 0 0 2px #b8312f; }
-        /* ゲーム: the four buttons sit on one of the prints (a different one each time you open the 単語帳) */
-        .flash-starts.games.art { position: relative; padding: 14px 12px 26px; border-radius: var(--radius); background-color: var(--gs-paper, #ece4d2); background-size: cover; isolation: isolate; overflow: hidden; }
-        .flash-starts.games.art .flash-start.game { background: color-mix(in srgb, var(--surface) 84%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); box-shadow: inset 0 0 0 2px #b8312f, 0 2px 8px rgba(30, 20, 5, 0.18); }
-        html.dark .flash-starts.games.art .flash-start.game { box-shadow: inset 0 0 0 2px #ff8a8a, 0 2px 8px rgba(0, 0, 0, 0.4); }
-        .wl-art-cap { position: absolute; right: 8px; bottom: 5px; padding: 1px 8px; border: none; border-radius: 10px; background: rgba(20, 16, 12, 0.55); color: #f1ebe0; font: inherit; font-size: 0.66rem; letter-spacing: 0.05em; cursor: pointer; }
         html.dark .flash-start.game { color: #ff8a8a; box-shadow: inset 0 0 0 2px #ff8a8a; }
         .wq-card { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 18px 16px; border: 1px solid var(--border-light); border-radius: 16px; background: var(--surface); overflow-y: auto; position: relative; }
         .wq-dir { font-size: 0.75rem; font-weight: bold; color: var(--text-sub); }
@@ -1085,6 +1080,10 @@
         .wq-match.reading { grid-template-columns: 1fr 1fr; }
         .wq-match.reading .wq-tile { justify-content: center; text-align: center; font-size: 1rem; }
         .mset { gap: 18px; justify-content: center; }
+        /* 青海波: the game settings screen (mode, rounds, pairs…) sits on a traditional wave pattern; the print appears once the game starts */
+        .flash-view:has(.wq-card.mset) { background: #f3ecdc url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='24' viewBox='0 0 48 24'><defs><g id='w'><circle r='24' fill='%23f3ecdc'/><circle r='22' fill='none' stroke='%232d4f7f' stroke-opacity='.34' stroke-width='1.6'/><circle r='16.5' fill='none' stroke='%232d4f7f' stroke-opacity='.34' stroke-width='1.6'/><circle r='11' fill='none' stroke='%232d4f7f' stroke-opacity='.34' stroke-width='1.6'/><circle r='5.5' fill='none' stroke='%232d4f7f' stroke-opacity='.34' stroke-width='1.6'/></g></defs><use href='%23w' x='0' y='0'/><use href='%23w' x='48' y='0'/><use href='%23w' x='24' y='12'/><use href='%23w' x='0' y='24'/><use href='%23w' x='48' y='24'/><use href='%23w' x='24' y='36'/></svg>") repeat; background-size: 48px 24px; }
+        html.dark .flash-view:has(.wq-card.mset) { background: #1c1f26 url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='24' viewBox='0 0 48 24'><defs><g id='w'><circle r='24' fill='%231c1f26'/><circle r='22' fill='none' stroke='%238fa9d6' stroke-opacity='.22' stroke-width='1.6'/><circle r='16.5' fill='none' stroke='%238fa9d6' stroke-opacity='.22' stroke-width='1.6'/><circle r='11' fill='none' stroke='%238fa9d6' stroke-opacity='.22' stroke-width='1.6'/><circle r='5.5' fill='none' stroke='%238fa9d6' stroke-opacity='.22' stroke-width='1.6'/></g></defs><use href='%23w' x='0' y='0'/><use href='%23w' x='48' y='0'/><use href='%23w' x='24' y='12'/><use href='%23w' x='0' y='24'/><use href='%23w' x='48' y='24'/><use href='%23w' x='24' y='36'/></svg>") repeat; background-size: 48px 24px; }
+        .flash-view:has(.wq-card.mset) > .gs { display: none; }
         .mset-label { font-size: 0.8rem; font-weight: bold; color: var(--text-sub); margin-bottom: 6px; }
         .mset-seg { display: flex; border: 1px solid var(--border-light); border-radius: 10px; overflow: hidden; }
         .mset-seg button { flex: 1; padding: 10px 4px; border: none; border-left: 1px solid var(--border-light); background: var(--bg-paper); color: var(--text-main); font: inherit; font-size: 0.9rem; }
