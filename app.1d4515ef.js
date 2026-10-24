@@ -6163,7 +6163,12 @@
         var v = document.createElement('div');
         v.id = 'flash-view'; v.className = 'flash-view';
         v.setAttribute('role', 'dialog'); v.setAttribute('aria-label', 'カードで復習');
-        v.innerHTML = '<div class="flash-head"><button class="flash-close" aria-label="閉じる">✕</button>' +
+        // 印影: the stamps (クリア・タイムアップ・満点) go through this filter so their edges are rough, the ink misses in specks and the pressure is uneven
+        v.innerHTML = '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="wq-hanko" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB">' +
+            '<feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="4" result="w"/><feDisplacementMap in="SourceGraphic" in2="w" scale="2.6" xChannelSelector="R" yChannelSelector="G" result="r"/>' +
+            '<feTurbulence type="fractalNoise" baseFrequency="0.62" numOctaves="2" seed="11" result="g"/><feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -3.6 2.85" result="sp"/><feComposite in="r" in2="sp" operator="in" result="s"/>' +
+            '<feTurbulence type="fractalNoise" baseFrequency="0.016 0.024" numOctaves="2" seed="17" result="p"/><feColorMatrix in="p" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1.5 0.2" result="pr"/><feComposite in="s" in2="pr" operator="in"/></filter></svg>' +
+            '<div class="flash-head"><button class="flash-close" aria-label="閉じる">✕</button>' +
             '<span class="flash-title">カードで復習</span><span class="flash-progress"></span></div>' +
             '<div class="flash-body"></div>';
         v.querySelector('.flash-close').addEventListener('click', closeFlashcards);

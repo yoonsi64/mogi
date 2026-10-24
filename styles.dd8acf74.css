@@ -953,7 +953,7 @@
         .wq-tile { height: 76px; overflow: hidden; display: flex; align-items: center; justify-content: flex-start; padding: 6px 10px; border: 1px solid var(--border-light); border-radius: 12px; background: var(--bg-paper); color: var(--text-main); font: inherit; font-size: 0.85rem; line-height: 1.4; text-align: left; }
         .wq-tile.word { font-family: var(--reading-font); font-size: 1.05rem; font-weight: bold; text-align: center; justify-content: center; }
         .wq-tile span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; word-break: break-word; }
-        .wq-tile.sel { border-color: var(--active-blue); box-shadow: inset 0 0 0 2px var(--active-blue); }
+        .wq-tile.sel { border-color: var(--active-blue); background: color-mix(in srgb, var(--active-blue) 16%, var(--bg-paper)); color: var(--active-blue); font-weight: bold; box-shadow: inset 0 0 0 2px var(--active-blue), 0 0 0 3px color-mix(in srgb, var(--active-blue) 35%, transparent), 0 4px 14px rgba(0, 0, 0, 0.18); transform: scale(1.04); z-index: 1; }
         .wq-tile.done { border-color: var(--correct-color); background: color-mix(in srgb, var(--correct-color) 14%, var(--bg-paper)); opacity: 0; visibility: hidden; pointer-events: none; }
         .wq-tile.bad { animation: wqShake 0.35s; border-color: var(--incorrect-color, #c0392b); }
         @keyframes wqShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
@@ -970,8 +970,8 @@
         html.dark .mset-seg button.on { color: #0d1117; }
         .cloze-card { gap: 14px; }
         .cloze-sentence { font-family: var(--reading-font); font-size: 1.35rem; line-height: 2.2; padding: 6px 2px; }
-        .cloze-blank { display: inline-block; vertical-align: baseline; line-height: 1.35; margin: 0 3px; border-bottom: 2px solid var(--active-blue); background: color-mix(in srgb, var(--active-blue) 8%, transparent); border-radius: 4px 4px 0 0; color: var(--active-blue); font-weight: bold; text-align: left; padding: 0 4px; }
-        .cloze-fill { padding: 0 3px; border-radius: 4px; font-weight: bold; }
+        .cloze-blank { display: inline-block; vertical-align: baseline; line-height: 1.35; margin: 0 3px; border: 2px solid var(--active-blue); background: var(--surface); border-radius: 2px; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12); padding: 1px 4px; color: var(--active-blue); font-weight: bold; text-align: left; }
+        .cloze-fill { padding: 0 3px; border-radius: 2px; font-weight: bold; }
         .cloze-fill.ok { background: color-mix(in srgb, var(--correct-color) 22%, transparent); color: var(--correct-color); }
         .cloze-fill.ng { background: color-mix(in srgb, var(--incorrect-color) 16%, transparent); color: var(--incorrect-color); }
         .cloze-bank { border: 1px solid var(--border-light); border-radius: 4px; padding: 8px 10px 10px; background: var(--bg-paper); }
@@ -1032,11 +1032,12 @@
         .wq-hud .ta-score b { color: var(--active-blue); font-size: 1rem; }
         /* タイムアップ: the board darkens, a big red seal slams down and the card shudders */
         .wq-timeup { position: absolute; left: 50%; top: 50%; z-index: 3; transform: translate(-50%, -50%) rotate(-9deg); pointer-events: none; text-align: center; white-space: nowrap;
-            padding: 12px 22px 10px; color: #c0262d; background: #fbf5ea; border: 5px solid #c0262d; border-radius: 6px;
-            box-shadow: inset 0 0 0 3px #fbf5ea, inset 0 0 0 5px #c0262d, 0 22px 44px rgba(0, 0, 0, 0.5);
-            font-family: var(--mincho); font-weight: 900; animation: wqSlam 0.42s cubic-bezier(.3, 1.4, .5, 1) both; }
-        .wq-timeup b { display: block; font-size: clamp(2rem, 10vw, 2.6rem); line-height: 1.1; letter-spacing: 0.06em; text-shadow: 0 0 1px #c0262d; }
-        .wq-timeup small { display: block; margin-top: 4px; padding-top: 4px; border-top: 2px solid #c0262d; font-size: 0.78rem; letter-spacing: 0.6em; text-indent: 0.6em; }
+            padding: 12px 22px 10px; color: #c8372d; border: 5px solid #c8372d; border-radius: 4px;
+            box-shadow: inset 0 0 0 3px transparent, inset 0 0 0 5px #c8372d;
+            font-family: var(--mincho); font-weight: 900; mix-blend-mode: multiply; filter: url(#wq-hanko); animation: wqSlam 0.42s cubic-bezier(.3, 1.4, .5, 1) both; }
+        html.dark .wq-timeup, html.dark .wq-clear, html.dark .wq-stamp { mix-blend-mode: normal; }
+        .wq-timeup b { display: block; font-size: clamp(2rem, 10vw, 2.6rem); line-height: 1.1; letter-spacing: 0.06em; }
+        .wq-timeup small { display: block; margin-top: 4px; padding-top: 4px; border-top: 2px solid #c8372d; font-size: 0.78rem; letter-spacing: 0.6em; text-indent: 0.6em; }
         @keyframes wqSlam { 0% { opacity: 0; transform: translate(-50%, -50%) rotate(-22deg) scale(3.2); filter: blur(6px); } 60% { opacity: 1; transform: translate(-50%, -50%) rotate(-8deg) scale(0.92); filter: blur(0); } 100% { opacity: 1; transform: translate(-50%, -50%) rotate(-9deg) scale(1); } }
         .wq-card.wq-shake { animation: wqTimeShake 0.4s 0.26s ease-out both; }
         /* ---------- ゲームの背景: a print behind the game modes, kept below the panels ---------- */
@@ -1066,7 +1067,7 @@
         @keyframes wqTimeShake { 0%, 100% { transform: none; } 15% { transform: translate(-7px, 4px); } 30% { transform: translate(6px, -4px); } 45% { transform: translate(-5px, 2px); } 60% { transform: translate(3px, -2px); } 80% { transform: translate(-1px, 1px); } }
         .wq-card.wq-over .wq-tile, .wq-card.wq-over .mem-card { pointer-events: none; opacity: 0.5; transition: opacity 0.3s; }
         @keyframes wqFloatUp { 0% { opacity: 0; transform: translate(-50%, -30%) scale(0.7); } 20% { opacity: 1; transform: translate(-50%, -60%) scale(1.1); } 100% { opacity: 0; transform: translate(-50%, -160%) scale(1); } }
-        .wq-clear { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%) rotate(-8deg); padding: 6px 18px; border: 4px solid #b8312f; border-radius: 10px; color: #b8312f; font-size: 2rem; font-weight: 900; letter-spacing: 0.15em; background: color-mix(in srgb, var(--surface) 85%, transparent); animation: wqStamp 0.4s cubic-bezier(.2, .9, .3, 1.3) both; pointer-events: none; }
+        .wq-clear { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%) rotate(-8deg); padding: 4px 18px 2px; border: 4px solid #c8372d; border-radius: 4px; color: #c8372d; font-family: var(--mincho); font-size: 2.2rem; font-weight: 900; letter-spacing: 0.15em; text-indent: 0.15em; mix-blend-mode: multiply; filter: url(#wq-hanko); animation: wqStamp 0.4s cubic-bezier(.2, .9, .3, 1.3) both; pointer-events: none; }
         @keyframes wqStamp { from { opacity: 0; transform: translate(-50%, -50%) rotate(-8deg) scale(2.2); } to { opacity: 1; transform: translate(-50%, -50%) rotate(-8deg) scale(1); } }
         /* petals on the results: each one falls (outer), sways side to side (middle) and flips over as it goes (inner) */
         .wq-fallpiece { position: fixed; top: -28px; width: 14px; height: 14px; animation: wqFall linear forwards; }
@@ -1087,7 +1088,7 @@
         .wq-ring-num { position: absolute; inset: 0; display: flex; align-items: baseline; justify-content: center; padding-top: 52px; gap: 3px; }
         .wq-ring-num b { font-size: 2.6rem; line-height: 1; font-variant-numeric: tabular-nums; }
         .wq-ring-num small { font-size: 0.9rem; color: var(--text-sub); font-weight: bold; }
-        .wq-stamp { position: absolute; right: -18px; bottom: -6px; width: 58px; height: 58px; border: 3px solid #b8312f; border-radius: 50%; color: #b8312f; font-weight: 900; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; transform: rotate(-14deg); background: var(--bg-paper); animation: wqStamp2 0.45s 0.9s cubic-bezier(.2, .9, .3, 1.3) both; }
+        .wq-stamp { position: absolute; right: -18px; bottom: -6px; width: 58px; height: 58px; border: 3px solid #c8372d; border-radius: 50%; color: #c8372d; font-family: var(--mincho); font-weight: 900; font-size: 1rem; display: flex; align-items: center; justify-content: center; transform: rotate(-14deg); mix-blend-mode: multiply; filter: url(#wq-hanko); animation: wqStamp2 0.45s 0.9s cubic-bezier(.2, .9, .3, 1.3) both; }
         @keyframes wqStamp2 { from { opacity: 0; transform: rotate(-14deg) scale(2.4); } to { opacity: 1; transform: rotate(-14deg) scale(1); } }
         .wq-grade { font-family: var(--reading-font); font-size: 1.7rem; font-weight: 800; animation: wqIn 0.5s 0.5s both; }
         .wq-result.perfect .wq-grade { color: #b8312f; } .wq-result.great .wq-grade { color: var(--correct-color); }
