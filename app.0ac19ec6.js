@@ -15034,7 +15034,8 @@
         gdDays.forEach(function(d) {
             var sec = gdT.days[d], p = d.split('-'), t = new Date(+p[0], +p[1] - 1, +p[2]);
             gdBestDay = Math.max(gdBestDay, Math.floor(sec / 60));
-            if (sec >= 3600) gdSeasons[['winter', 'winter', 'spring', 'spring', 'spring', 'summer', 'summer', 'summer', 'autumn', 'autumn', 'autumn', 'winter'][t.getMonth()]] = 1;
+            // each season of each year counts once (December goes with the January and February after it)
+            if (sec >= 3600) gdSeasons[['winter', 'winter', 'spring', 'spring', 'spring', 'summer', 'summer', 'summer', 'autumn', 'autumn', 'autumn', 'winter'][t.getMonth()] + (t.getFullYear() + (t.getMonth() === 11 ? 1 : 0))] = 1;
             if (sec >= 900) {
                 gdRun = gdPrev && Math.round((t - gdPrev) / 86400000) === 1 ? gdRun + 1 : 1;
                 gdPrev = t; gdBestRun = Math.max(gdBestRun, gdRun);
@@ -15059,7 +15060,7 @@
             { id: 'gdhours', cat: gardenLive() ? 'garden' : 'off', icon: '🌱', name: '庭づくり', value: Math.floor(gdT.total / 3600), unit: '時間', tiers: tiers([1, 10, 50, 150, 500], '時間'), hint: '問題・読解・模試・単語帳のゲームで、手を動かして学習した時間の合計（500時間で庭が完成）' },
             { id: 'gdfocus', cat: gardenLive() ? 'garden' : 'off', icon: '🍵', name: '集中', value: gdBestDay, unit: '分', tiers: [{ n: 30, label: '30分' }, { n: 60, label: '1時間' }, { n: 120, label: '2時間' }, { n: 180, label: '3時間' }, { n: 300, label: '5時間' }], hint: '1日に手を動かして学習した時間（いちばん長かった日）' },
             { id: 'gdwater', cat: gardenLive() ? 'garden' : 'off', icon: '💧', name: '水やり', value: gdBestRun, unit: '日', tiers: tiers([3, 7, 14, 30, 100], '日'), hint: '毎日15分以上、手を動かして学習した日が続いた数（最長）' },
-            { id: 'gdseasons', cat: gardenLive() ? 'garden' : 'off', icon: '🍁', name: '四季の庭', value: Object.keys(gdSeasons).length, unit: 'つ', tiers: [{ n: 1, label: '1つ' }, { n: 2, label: '2つ' }, { n: 3, label: '3つ' }, { n: 4, label: '春夏秋冬' }], hint: '1日1時間以上学習した日がある季節の数（春・夏・秋・冬）' },
+            { id: 'gdseasons', cat: gardenLive() ? 'garden' : 'off', icon: '🍁', name: '四季の庭', value: Object.keys(gdSeasons).length, unit: '季', tiers: [{ n: 1, label: '1季' }, { n: 2, label: '2季' }, { n: 3, label: '3季' }, { n: 4, label: '四季（1年）' }, { n: 8, label: '四季を2巡（2年）' }], hint: '1日1時間以上学習した日がある季節の数。年ごとに数えるので、同じ季節も次の年にまた数えます（8季で四季を2巡）' },
             // 誤答と復習
             { id: 'notezero', cat: 'review', icon: '🧹', name: '誤答ゼロ', value: nb.zero.length, unit: '回', tiers: tiers([1, 3, 10, 20, 50], '回'), hint: '誤答ノートの問題をすべて解き直して、ノートを空にした回数' },
             { id: 'retry', cat: 'review', icon: '🛠️', name: '解き直し名人', value: nb.recover.length, unit: '問', tiers: tiers([10, 30, 100, 200, 400], '問'), hint: '一度間違えた問題を、後で正解した数' },
