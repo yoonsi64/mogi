@@ -10826,9 +10826,33 @@
     function arPlainLine(t) { return String(t).replace(/\{r\|([^|{}]+)\|[^{}]+\}/g, '$1').replace(/<[^>]+>/g, '').replace(/\[(\d+)\]/g, '（　）'); }
     // 単語: the book's word list with its Korean meanings. Tap a word to hear it; ＋ puts it in the 単語帳.
     // furigana under the kanji, centered on them and free to run past their edges (ruby would spread the kanji apart)
+    // Each kanji gets its own reading where the book splits it that way somewhere (国技 → 国(こく)技(ぎ));
+    // readings that belong to the whole word stay whole (相撲 すもう).
+    var awSplits = null;
+    function awSplitFor(base, rd) {
+        if (!awSplits) {
+            awSplits = { '仕事|しごと': ['し', 'ごと'] };
+            Object.keys(READINGS).forEach(function(id) {
+                var r = READINGS[id], texts = [];
+                (r.pages || []).forEach(function(pg) { texts = texts.concat(pg.lines); });
+                (r.bunkei || []).forEach(function(b) { texts = texts.concat(b.s); });
+                if (r.kaiwa) r.kaiwa.lines.forEach(function(l) { texts.push(l[1]); });
+                texts.join('').replace(/\{r\|([^|{}]+)\|([^{}]+)\}/g, function(m, b, r2) {
+                    var ps = r2.split('/');
+                    if (ps.length > 1 && ps.length === Array.from(b).length) awSplits[b + '|' + toHiragana(ps.join(''))] = ps;
+                });
+            });
+        }
+        return awSplits[base + '|' + toHiragana(rd)] || null;
+    }
     function awUnderHtml(html) {
         return html.replace(/<ruby>([\s\S]*?)<\/ruby>/g, function(m, inner) {
-            return inner.replace(/([^<]+)<rt>([^<]*)<\/rt>/g, '<span class="aw-fg">$1<i>$2</i></span>');
+            var segs = [];
+            inner.replace(/([^<]+)<rt>([^<]*)<\/rt>/g, function(mm, a, r) { segs.push([a, r]); });
+            if (segs.length === 1) { var sp = awSplitFor(segs[0][0], segs[0][1]); if (sp) segs = Array.from(segs[0][0]).map(function(ch, i) { return [ch, sp[i]]; }); }
+            // one kanji, one reading: a ruby per kanji, so each reading sits under its own kanji (a long one widens its kanji a little, as in print)
+            if (segs.length > 1) return segs.map(function(x) { return '<ruby class="aw-rb">' + x[0] + '<rt>' + x[1] + '</rt></ruby>'; }).join('');
+            return '<span class="aw-fg">' + segs[0][0] + '<i>' + segs[0][1] + '</i></span>';
         });
     }
     function renderArWords(body, r) {
