@@ -6393,12 +6393,12 @@
     // ---------- ゲームの背景: a print behind the four games ----------
     // One of six public-domain woodblock prints, picked at random each time a game opens, filling the screen behind the cards.
     var GS_ART = [          // public-domain woodblock prints; pos keeps the heart of each print in view when it is cropped to a phone
-        { src: 'art/katakura.jpg', paper: '#ece4d2', pos: '46% 50%', title: '駿州片倉茶園ノ不二', en: 'Fuji from the Tea Plantation of Katakura in Suruga Province', series: '富嶽三十六景', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1830–32年頃' },
-        { src: 'art/noboto.jpg', paper: '#ece4d2', pos: '46% 50%', title: '登戸浦', en: 'Noboto Bay', series: '富嶽三十六景', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1830–32年頃' },
-        { src: 'art/tamagawa.jpg', paper: '#ece4d2', pos: '60% 50%', title: '武州玉川', en: 'The Tama River in Musashi Province', series: '富嶽三十六景', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1830–32年頃' },
-        { src: 'art/gotenyama.jpg', paper: '#ece4d2', pos: '45% 50%', title: '東海道品川御殿山ノ不二', en: 'Fuji from Gotenyama at Shinagawa on the Tōkaidō', series: '富嶽三十六景', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1830–32年頃' },
-        { src: 'art/shimomeguro.jpg', paper: '#ece4d2', pos: '56% 50%', title: '下目黒', en: 'Shimo-Meguro', series: '富嶽三十六景', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1830–32年頃' },
-        { src: 'art/arashiyama.jpg', paper: '#ece4d2', pos: '48% 50%', title: '嵐山満花', en: 'Arashiyama in Full Bloom', series: '京都名所之内', artist: '歌川広重', artistEn: 'Utagawa Hiroshige', year: '1834年頃' }
+        { src: 'art/katakura.jpg', paper: '#ece4d2', pos: '46% 50%', title: '駿州片倉茶園ノ不二', ruby: [['駿州', 'すんしゅう'], ['片倉', 'かたくら'], ['茶園', 'ちゃえん'], 'ノ', ['不二', 'ふじ']], en: 'Fuji from the Tea Plantation of Katakura in Suruga Province', series: '富嶽三十六景', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1830–32年頃' },
+        { src: 'art/noboto.jpg', paper: '#ece4d2', pos: '46% 50%', title: '登戸浦', ruby: [['登戸', 'のぼと'], ['浦', 'うら']], en: 'Noboto Bay', series: '富嶽三十六景', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1830–32年頃' },
+        { src: 'art/tamagawa.jpg', paper: '#ece4d2', pos: '60% 50%', title: '武州玉川', ruby: [['武州', 'ぶしゅう'], ['玉川', 'たまがわ']], en: 'The Tama River in Musashi Province', series: '富嶽三十六景', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1830–32年頃' },
+        { src: 'art/gotenyama.jpg', paper: '#ece4d2', pos: '45% 50%', title: '東海道品川御殿山ノ不二', ruby: [['東海道', 'とうかいどう'], ['品川', 'しながわ'], ['御殿山', 'ごてんやま'], 'ノ', ['不二', 'ふじ']], en: 'Fuji from Gotenyama at Shinagawa on the Tōkaidō', series: '富嶽三十六景', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1830–32年頃' },
+        { src: 'art/shimomeguro.jpg', paper: '#ece4d2', pos: '56% 50%', title: '下目黒', ruby: [['下目黒', 'しもめぐろ']], en: 'Shimo-Meguro', series: '富嶽三十六景', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1830–32年頃' },
+        { src: 'art/arashiyama.jpg', paper: '#ece4d2', pos: '48% 50%', title: '嵐山満花', ruby: [['嵐山', 'あらしやま'], ['満花', 'まんか']], en: 'Arashiyama in Full Bloom', series: '京都名所之内', artist: '歌川広重', artistEn: 'Utagawa Hiroshige', year: '1834年頃' }
     ];
     // ---------- 画廊: the prints, one by one, with their titles (開発者メニュー) ----------
     function openGallery(start) {
@@ -6407,9 +6407,12 @@
             v = document.createElement('div'); v.id = 'gallery-view'; v.className = 'gallery-view'; v.setAttribute('role', 'dialog'); v.setAttribute('aria-label', '画廊');
             v.innerHTML = '<div class="gal-head"><button class="flash-close gal-close" aria-label="閉じる">✕</button><span class="gal-title">画廊</span><span class="gal-count"></span></div>' +
                 '<div class="gal-track">' + GS_ART.map(function(a, i) {
+                    var rb = function(parts) { return parts.map(function(x) { return typeof x === 'string' ? escapeHtml(x) : '<ruby>' + escapeHtml(x[0]) + '<rt>' + escapeHtml(x[1]) + '</rt></ruby>'; }).join(''); };
+                    var seriesRb = a.series === '富嶽三十六景' ? [['富嶽', 'ふがく'], ['三十六景', 'さんじゅうろっけい']] : [['京都', 'きょうと'], ['名所', 'めいしょ'], ['之内', 'のうち']];
+                    var artistRb = a.artist === '葛飾北斎' ? [['葛飾', 'かつしか'], ['北斎', 'ほくさい']] : [['歌川', 'うたがわ'], ['広重', 'ひろしげ']];
                     return '<figure class="gal-item" data-i="' + i + '"><div class="gal-pic"><img src="' + a.src + '" alt="' + escapeHtml(a.title) + '" loading="lazy" decoding="async"></div>' +
-                        '<figcaption class="gal-cap"><div class="gal-series">' + escapeHtml(a.series) + '</div><div class="gal-name">' + escapeHtml(a.title) + '</div><div class="gal-en">' + escapeHtml(a.en) + '</div>' +
-                        '<div class="gal-by">' + escapeHtml(a.artist) + '（' + escapeHtml(a.artistEn) + '）・' + escapeHtml(a.year) + '</div>' +
+                        '<figcaption class="gal-cap"><div class="gal-series">' + rb(seriesRb) + '</div><div class="gal-name">' + rb(a.ruby) + '</div><div class="gal-en">' + escapeHtml(a.en) + '</div>' +
+                        '<div class="gal-by">' + rb(artistRb) + '（' + escapeHtml(a.artistEn) + '）・' + escapeHtml(a.year) + '</div>' +
                         '<div class="gal-pd">パブリックドメイン</div></figcaption></figure>';
                 }).join('') + '</div><div class="gal-dots">' + GS_ART.map(function(a, i) { return '<i data-i="' + i + '"></i>'; }).join('') + '</div>';
             document.body.appendChild(v);
