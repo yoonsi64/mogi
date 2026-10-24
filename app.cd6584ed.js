@@ -6392,12 +6392,12 @@
     // ---------- ゲームの背景: a print behind the four games ----------
     // One of six public-domain woodblock prints, picked at random each time a game opens, filling the screen behind the cards.
     var GS_ART = [          // Hokusai's 富嶽三十六景, and Hiroshige's 嵐山満花 from 京都名所; pos keeps the heart of each print in view on a phone
-        { src: 'art/katakura.jpg', paper: '#0c1438', pos: '46% 50%' },      // 駿州片倉茶園ノ不二
-        { src: 'art/noboto.jpg', paper: '#010120', pos: '46% 50%' },        // 登戸浦
-        { src: 'art/tamagawa.jpg', paper: '#0a175f', pos: '60% 50%' },      // 武州玉川
-        { src: 'art/gotenyama.jpg', paper: '#020951', pos: '45% 50%' },     // 東海道品川御殿山ノ不二
-        { src: 'art/shimomeguro.jpg', paper: '#060829', pos: '56% 50%' },   // 下目黒
-        { src: 'art/arashiyama.jpg', paper: '#f0e4dd', pos: '48% 50%' }     // 京都名所之内 あらし山満花
+        { src: 'art/katakura.jpg', paper: '#ece4d2', pos: '46% 50%' },      // 駿州片倉茶園ノ不二
+        { src: 'art/noboto.jpg', paper: '#ece4d2', pos: '46% 50%' },        // 登戸浦
+        { src: 'art/tamagawa.jpg', paper: '#ece4d2', pos: '60% 50%' },      // 武州玉川
+        { src: 'art/gotenyama.jpg', paper: '#ece4d2', pos: '45% 50%' },     // 東海道品川御殿山ノ不二
+        { src: 'art/shimomeguro.jpg', paper: '#ece4d2', pos: '56% 50%' },   // 下目黒
+        { src: 'art/arashiyama.jpg', paper: '#ece4d2', pos: '48% 50%' }     // 京都名所之内 あらし山満花
     ];
     function sceneOn() { return getSetting('gameScene', true); }
     function sceneStart() {
@@ -6448,20 +6448,31 @@
         setTimeout(function() { f.remove(); }, 1100);
     }
     // falling paper: confetti, or 桜 petals for a perfect score
-    function wqConfetti(petals) {
+    // what falls on the results screen: the pieces of the opening scene for today (or the chosen opening), so petals in
+    // spring, leaves in autumn, snow in winter; seasons whose opening has nothing falling use the plain season's pieces
+    function wqSeasonPieces() {
+        try {
+            var setting = getSetting('openingSeason', 'auto'), kind = setting === 'auto' || setting === 'off' ? seasonForToday() : setting;
+            var imgs = wvSeasonHtml(kind, true);
+            if (!imgs.length) { var m = new Date().getMonth() + 1; imgs = wvSeasonHtml(m >= 3 && m <= 5 ? 'sakura' : m >= 6 && m <= 8 ? 'aoba' : m >= 9 && m <= 11 ? 'momiji' : 'snow', true); }
+            return imgs;
+        } catch (e) { return []; }
+    }
+    function wqConfetti(many) {
         if (wqCalm()) return;
-        var l = wqLayer(), colors = petals ? ['#f6c6d0', '#f9d8df', '#f2b3c2', '#fff0f3'] : ['#b8312f', '#d4a017', '#2f6f8f', '#006600', '#e07a5f', '#7a4f8f'];
-        for (var i = 0; i < (petals ? 36 : 60); i++) {
-            var c = document.createElement('i');
-            c.className = petals ? 'wq-petal' : 'wq-confetti';
+        var l = wqLayer(), imgs = wqSeasonPieces(), n = many ? 48 : 30;
+        for (var i = 0; i < n; i++) {
+            var c = document.createElement('i'), im = imgs.length ? imgs[Math.floor(Math.random() * imgs.length)] : null;
+            c.className = 'wq-fallpiece' + (im && im.g ? ' gentle' : '');
             c.style.left = Math.random() * 100 + 'vw';
-            c.style.background = colors[i % colors.length];
-            c.style.animationDelay = (Math.random() * 0.8) + 's';
-            c.style.animationDuration = (1.8 + Math.random() * 1.6) + 's';
-            c.style.setProperty('--drift', (Math.random() * 80 - 40) + 'px');
-            c.style.setProperty('--spin', (Math.random() * 720 - 360) + 'deg');
+            if (im) { var sz = (12 + Math.random() * 8) * (im.s || 1); c.style.width = c.style.height = sz.toFixed(1) + 'px'; c.style.backgroundImage = im.i; }
+            else { c.style.width = '8px'; c.style.height = '13px'; c.style.borderRadius = '2px'; c.style.background = ['#b8312f', '#d4a017', '#2f6f8f', '#006600'][i % 4]; }
+            c.style.animationDelay = (Math.random() * 1.2) + 's';
+            c.style.animationDuration = (im && im.g ? 3.2 + Math.random() * 2 : 2.2 + Math.random() * 1.8) + 's';
+            c.style.setProperty('--drift', (Math.random() * 100 - 50) + 'px');
+            c.style.setProperty('--spin', (im && im.g ? Math.random() * 90 - 45 : Math.random() * 720 - 360) + 'deg');
             l.appendChild(c);
-            setTimeout(function(x) { x.remove(); }.bind(null, c), 4400);
+            setTimeout(function(x) { x.remove(); }.bind(null, c), 6500);
         }
     }
     function wqChime() { try { if (typeof omkSound === 'function') omkSound('bell', 0.5); } catch (e) {} }

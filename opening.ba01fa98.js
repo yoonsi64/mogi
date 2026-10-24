@@ -27,9 +27,10 @@
         if (m === 12 && d >= 26) return 'omisoka';         // 年の瀬・大晦日 (12/26–12/31)
         return m >= 3 && m <= 5 ? 'sakura' : m >= 6 && m <= 8 ? 'aoba' : m >= 9 && m <= 11 ? 'momiji' : 'snow';
     }
-    function wvSeasonHtml(kind) {
+    // imgsOnly: just the season's falling pieces ({ i: image, s: size, g: gentle }), for the word-game results
+    function wvSeasonHtml(kind, imgsOnly) {
         if (!kind || kind === 'auto') kind = seasonForToday();
-        if (kind === 'off') return '';
+        if (kind === 'off') return imgsOnly ? [] : '';
         var svg = function(body) { return "url('data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">' + body + '</svg>') + "')"; };
         var leaf = function(c) { return svg('<path d="M10 1l2 5 5-2-2 5 4 2-5 1 1 5-5-3-5 3 1-5-5-1 4-2-2-5 5 2z" fill="' + c + '"/><path d="M10 14v5" stroke="' + c + '" stroke-width="1.2"/>'); };
         var petal = function(c) { return svg('<path d="M10 2c4 3 6 8 0 16C4 10 6 5 10 2z" fill="' + c + '"/><path d="M10 2l-1.2 2.2L10 3.6l1.2.6z" fill="#fff" opacity=".7"/>'); };
@@ -275,6 +276,7 @@
             : kind === 'hanabi' || kind === 'ootama' || kind === 'tsukimi' ? []
             : [{ i: dendrite('#9dbbe0'), g: 1, gl: 1, s: 1.2 }, { i: snow('#c9d9ec'), s: 0.6 }, { i: plate('#a9c6e8'), g: 1, s: 0.9 }, { i: stellar('#b0c9e8'), g: 1, gl: 1, s: 1 },
                 { i: snow('#b7cbe3'), s: 0.45 }, { i: dendrite('#b4cbe8'), g: 1, s: 0.85 }, { i: stellar('#c0d4ee'), g: 1, s: 0.75 }, { i: snow('#dbe6f3'), s: 0.55 }, { i: plate('#b8d0ec'), g: 1, gl: 1, s: 0.7 }];      // 冬: many kinds of snow
+        if (imgsOnly) return imgs.map(function(m) { return m.i ? m : { i: m }; });
         var out = wvSceneHtml(kind), gentle = kind === 'tanabata' || kind === 'nagare' || kind === 'xmas' || kind === 'obon', up = kind === 'obon',      // お盆: lanterns rise
             count = { sakura: 22, fuji: 16, aoba: 16, momiji: 20, tanabata: 10, nagare: 10, xmas: 24, shogatsu: 14, hoo: 14, obon: 14, setsubun: 16, hinamatsuri: 18, jlpt: 14, kodomo: 16, omisoka: 6 }[kind] || 22;
         if (!imgs.length) count = 0;
