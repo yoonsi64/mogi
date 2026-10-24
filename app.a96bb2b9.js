@@ -4246,6 +4246,46 @@
                                           : '<span>' + gdWorld(s.w).k + 'が完成しました ─ 四季めぐり</span>') +
             '<span class="gd-step">' + (s.stage + 1) + ' / ' + s.stages.length + '</span></div>';
     }
+    // ---------- めずらしい生き物: rare animals that show up now and then (the painter decides; we keep the log) ----------
+    // each device keeps its own log (jlptRareSeen_<device> = { 'garden:kawasemi': firstSeenMs, ... }) so two devices never overwrite each other
+    var RARE_KEY = 'jlptRareSeen_' + studyDevice;
+    function rareSeen() {
+        var all = {};
+        try {
+            Object.keys(localStorage).forEach(function(k) {
+                if (k.indexOf('jlptRareSeen_') !== 0) return;
+                var m = JSON.parse(localStorage.getItem(k) || '{}') || {};
+                Object.keys(m).forEach(function(id) { if (!all[id] || m[id] < all[id]) all[id] = m[id]; });
+            });
+        } catch (e) {}
+        return all;
+    }
+    function rareList(w) { var E = gdEngineFor(w); return E && E.RARE ? E.RARE : []; }
+    function rareRecord(w, info, inView) {
+        if (!info || !info.id) return;
+        var key = w + ':' + info.id, seen = rareSeen(), first = !seen[key];
+        if (first) {
+            var mine = loadJSON(RARE_KEY, {}); mine[key] = Date.now();
+            try { localStorage.setItem(RARE_KEY, JSON.stringify(mine)); } catch (e) {}
+            showToast('✨ はじめて出会いました：' + (info.name || info.id));
+            if (gardenOpen()) gdRenderView();
+            setTimeout(function() { checkNewBadges(); }, 400);
+        } else if (inView) showToast((info.name || info.id) + 'が来ています');
+    }
+    function rareHtml(w, dev) {
+        var list = rareList(w);
+        if (!list.length) return '';
+        var seen = rareSeen(), n = list.filter(function(r) { return seen[w + ':' + r.id]; }).length;
+        return '<div class="gd-list-title">出会った生き物 <span class="gd-rare-n">' + n + ' / ' + list.length + '</span></div><div class="gd-rare">' +
+            list.map(function(r) {
+                var t = seen[w + ':' + r.id];
+                if (!t && !dev) return '<div class="gd-rare-item locked"><b>？？？</b><small>' + escapeHtml((r.season || []).map(function(x) { return GD_SEASON[x]; }).join('・')) + '</small></div>';
+                var d = t ? new Date(t) : null;
+                return '<div class="gd-rare-item' + (t ? '' : ' unseen') + '"><b>' + escapeHtml(r.name) + '</b><small>' + escapeHtml(r.desc || '') +
+                    (d ? '　' + (d.getMonth() + 1) + '月' + d.getDate() + '日' : '') + '</small>' +
+                    (dev ? '<button class="gd-summon" data-id="' + escapeHtml(r.id) + '">呼ぶ</button>' : '') + '</div>';
+            }).join('') + '</div>';
+    }
     function gardenSlotHtml() { return '<div id="home-garden-slot"></div>'; }
     function gdMountCard() {
         var slot = document.getElementById('home-garden-slot'), E = gdEngine();
@@ -4265,7 +4305,8 @@
         var s = gdState();
         GD.el.querySelector('.gd-info').innerHTML = gdInfoHtml(s, s.stage);
         GD.el.querySelector('.gd-tag').textContent = GD_SEASON[s.season] + '・' + GD_LIGHT[s.light] + (s.event ? '・' + GD_EVENTS[s.event] : '');
-        var o = { stage: s.stage, season: s.season, light: s.light, event: s.event, quality: 'card', animate: true };
+        var o = { stage: s.stage, season: s.season, light: s.light, event: s.event, quality: 'card', animate: true,
+                  onCue: function(name, info) { if (name === 'rare' && GD.el && GD.el.isConnected && onHomeNow()) rareRecord(GD.ctrlWorld || worldActive(), info, false); } };
         if (!GD.ctrl) {
             o.onReady = gdCheckStageUp;
             GD.ctrl = E.mount(GD.el.querySelector('.gd-scene'), o);
@@ -4336,7 +4377,7 @@
                 '<button class="gd-lookup" hidden>☾ 見上げる</button>' +
                 '<div class="gd-sky" aria-hidden="true"><div class="gd-sky-canvas"></div><button class="gd-sky-back">↓ 戻る</button></div></div></div>' +
                 '<div class="gd-side"><div class="gd-info"></div><div class="gd-back" hidden><button></button></div>' +
-                '<div class="gd-dev"></div><div class="gd-list-title"></div><div class="gd-list"></div></div>' +
+                '<div class="gd-dev"></div><div class="gd-list-title"></div><div class="gd-list"></div><div class="gd-rare-box"></div></div>' +
                 '</div>';
             document.body.appendChild(GD.view);
             if (window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches) GD.view.querySelector('.gd-hint').textContent = 'ホイールで拡大・ドラッグで移動';
@@ -4362,6 +4403,10 @@
                 if (!b) return;
                 if (GD.devMode) { GD.dev = GD.dev || {}; GD.dev.stage = +b.dataset.i; if (GD.vctrl) GD.vctrl.update(gdViewOpts(gdState(gdViewWorld()))); gdRenderView(); gdSoundUpdate(); }
                 else gdShowStage(+b.dataset.i);
+            });
+            GD.view.querySelector('.gd-rare-box').addEventListener('click', function(e) {
+                var sm = e.target.closest('.gd-summon');
+                if (sm && GD.vctrl && GD.vctrl._summon) GD.vctrl._summon(sm.dataset.id);
             });
             GD.view.querySelector('.gd-lookup').addEventListener('click', gdOpenSky);
             GD.view.querySelector('.gd-sky-back').addEventListener('click', gdCloseSky);
@@ -4394,7 +4439,11 @@
                  season: d.season || s.season, light: d.light || s.light,
                  event: d.event !== undefined ? (d.event || null) : s.event,
                  quality: 'full', animate: true,
-                 onCue: function(name) { if (window.MogiSound && gardenOpen() && !gdSkyOpen()) MogiSound.cue(name); } };
+                 onCue: function(name, info) {
+                     if (!gardenOpen()) return;
+                     if (name === 'rare' && !GD.devMode) rareRecord(gdViewWorld(), info, true);
+                     if (window.MogiSound && !gdSkyOpen() && getSetting('gdSound', true)) MogiSound.cue(name, info && info.id);
+                 } };
     }
     function gdShowStage(i) {
         var s = gdState();
@@ -4425,7 +4474,7 @@
         GD.view.querySelector('.gd-sky').setAttribute('aria-hidden', 'false');
         if (GD.vctrl) GD.vctrl.pause();
         var box = GD.view.querySelector('.gd-sky-canvas'); box.innerHTML = '';
-        GD.sky = MogiSky.mount(box, { date: new Date(), light: o.light, season: o.season, world: w });
+        GD.sky = MogiSky.mount(box, { date: new Date(), light: o.light, season: o.season, world: w, stage: o.stage, event: o.event });
         gdSoundUpdate();
         syncNavHistory();
     }
@@ -4460,6 +4509,7 @@
                 '<span class="gd-st-min">' + (st.min ? gdFmt(st.min) : '—') + '</span>' +
                 '<span class="gd-st-mark">' + (cls === 'done' ? '✓' : cls === 'now' ? 'いま' : cls === 'next' ? 'あと' + gdFmt(st.min - s.min) : '') + '</span></button>';
         }).join('');
+        GD.view.querySelector('.gd-rare-box').innerHTML = rareHtml(w, dev);
         var devBox = GD.view.querySelector('.gd-dev');
         if (!dev) { devBox.innerHTML = ''; return; }
         var sel = function(id, list, val) {
@@ -15168,6 +15218,7 @@
             { id: 'gdfocus', cat: gardenLive() ? 'garden' : 'off', icon: '🍵', name: '集中', value: gdBestDay, unit: '分', tiers: [{ n: 30, label: '30分' }, { n: 60, label: '1時間' }, { n: 120, label: '2時間' }, { n: 180, label: '3時間' }, { n: 300, label: '5時間' }], hint: '1日に手を動かして学習した時間（いちばん長かった日）' },
             { id: 'gdwater', cat: gardenLive() ? 'garden' : 'off', icon: '💧', name: '水やり', value: gdBestRun, unit: '日', tiers: tiers([3, 7, 14, 30, 100], '日'), hint: '毎日15分以上、手を動かして学習した日が続いた数（最長）' },
             { id: 'gdseasons', cat: gardenLive() ? 'garden' : 'off', icon: '🍁', name: '四季の庭', value: Object.keys(gdSeasons).length, unit: '季', tiers: [{ n: 1, label: '1季' }, { n: 2, label: '2季' }, { n: 3, label: '3季' }, { n: 4, label: '四季（1年）' }, { n: 8, label: '四季を2巡（2年）' }], hint: '1日1時間以上学習した日がある季節の数。年ごとに数えるので、同じ季節も次の年にまた数えます（8季で四季を2巡）' },
+            { id: 'gdrare', cat: gardenLive() ? 'garden' : 'off', icon: '🐇', name: '出会い', value: Object.keys(rareSeen()).length, unit: '種', tiers: [{ n: 1, label: '1種' }, { n: 3, label: '3種' }, { n: 6, label: '6種' }, { n: 10, label: '10種' }, { n: Math.max(12, rareList('garden').length + rareList('town').length), label: 'すべて' }], hint: '庭や町にときどき現れるめずらしい生き物に出会った数' },
             // 誤答と復習
             { id: 'notezero', cat: 'review', icon: '🧹', name: '誤答ゼロ', value: nb.zero.length, unit: '回', tiers: tiers([1, 3, 10, 20, 50], '回'), hint: '誤答ノートの問題をすべて解き直して、ノートを空にした回数' },
             { id: 'retry', cat: 'review', icon: '🛠️', name: '解き直し名人', value: nb.recover.length, unit: '問', tiers: tiers([10, 30, 100, 200, 400], '問'), hint: '一度間違えた問題を、後で正解した数' },
