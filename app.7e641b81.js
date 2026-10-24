@@ -6403,6 +6403,7 @@
         { src: 'art/wave.jpg', paper: '#ece4d2', pos: '40% 50%', title: '神奈川沖浪裏', ruby: [['神奈川', 'かながわ'], ['沖', 'おき'], ['浪裏', 'なみうら']], en: 'Under the Wave off Kanagawa (The Great Wave)', series: '富嶽三十六景', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1830–32年頃' },
         { src: 'art/ume.jpg', paper: '#ece4d2', pos: '50% 60%', title: '蒲田の梅園', ruby: [['蒲田', 'かまた'], 'の', ['梅園', 'うめぞの']], en: 'The Plum Garden at Kamata', series: '東都名所', artist: '歌川広重', artistEn: 'Utagawa Hiroshige', year: '1830年代' },
         { src: 'art/haboku.jpg', paper: '#d9cfb3', pos: '45% 50%', title: '破墨山水図', ruby: [['破墨', 'はぼく'], ['山水図', 'さんすいず']], en: 'Landscape in the Splashed-ink Style', series: '水墨画', artist: '作者未詳', artistEn: 'artist unknown', year: '室町時代（16世紀頃）' },
+        { src: 'art/kajikazawa.jpg', paper: '#ece4d2', pos: '52% 50%', title: '甲州石班澤', ruby: [['甲州', 'こうしゅう'], ['石班澤', 'かじかざわ']], en: 'Kajikazawa in Kai Province', series: '富嶽三十六景', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1830–32年頃' },
         { src: 'art/arashiyama.jpg', paper: '#ece4d2', pos: '48% 50%', title: '嵐山満花', ruby: [['嵐山', 'あらしやま'], ['満花', 'まんか']], en: 'Arashiyama in Full Bloom', series: '京都名所之内', artist: '歌川広重', artistEn: 'Utagawa Hiroshige', year: '1834年頃' }
     ];
     // ---------- 画廊: the prints, one by one, with their titles (開発者メニュー) ----------
