@@ -6694,9 +6694,17 @@
     }
     function taClock(ms) { return wqClock(Math.ceil(Math.max(0, ms) / 1000) * 1000); }
     function wqMissedEntries(ids) { return ids.map(function(mid) { return wordList.find(function(w) { return String(w.id) === String(mid); }); }).filter(Boolean); }
+    // +5秒 / −3秒: a small pill that pops out above the clock and drifts up
     function wqTimeShift(sec) {
         var c = document.getElementById('wq-clock');
-        if (c) wqFloat(c, (sec > 0 ? '+' : '−') + Math.abs(sec) + '秒', sec > 0 ? '' : 'hot');
+        if (!c) return;
+        var r = c.getBoundingClientRect(), f = document.createElement('div');
+        f.className = 'wq-tshift' + (sec > 0 ? ' plus' : ' minus');
+        f.innerHTML = '<b>' + (sec > 0 ? '+' : '−') + Math.abs(sec) + '</b><small>秒</small>';
+        f.style.left = (r.left + r.width / 2) + 'px'; f.style.top = (r.top - 6) + 'px';
+        wqLayer().appendChild(f);
+        c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); setTimeout(function() { c.classList.remove('bump'); }, 400);
+        setTimeout(function() { f.remove(); }, 1300);
     }
     // time's up: stop the clock, stamp the board, then show the result
     function wqTimeUp(after) {
