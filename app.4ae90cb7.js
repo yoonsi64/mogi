@@ -7263,7 +7263,7 @@
         if (card) {
             card.classList.add('wq-over', 'wq-shake');
             card.querySelectorAll('.wq-clear').forEach(function(x) { x.remove(); });
-            var st = document.createElement('div'); st.className = 'wq-timeup'; st.innerHTML = '<b>タイムアップ</b><small>時間切れ</small>'; card.appendChild(st);
+            var st = document.createElement('div'); st.className = 'wq-timeup'; st.innerHTML = '<div><b>タイムアップ</b><small>時間切れ</small></div>'; card.appendChild(st);
             // keep it on what's in view if the board is scrolled
             if (card.scrollTop) st.style.top = (card.scrollTop + card.clientHeight / 2) + 'px';
         }
@@ -7411,7 +7411,7 @@
                         if (wq.ta) { wq.cleared++; wq.deadline += 5000; wq.rounds.push(wqTake(wq, wq.pool, wq.opts.pairs)); }
                         setTimeout(function() {
                             var card = document.querySelector('#flash-view .wq-card');
-                            if (card && !last && wq && !wq.over) { var st = document.createElement('div'); st.className = 'wq-clear'; st.textContent = 'クリア'; card.appendChild(st); wqChime(); if (wq.ta) wqTimeShift(5); }
+                            if (card && !last && wq && !wq.over) { var st = document.createElement('div'); st.className = 'wq-clear'; st.innerHTML = '<span>クリア</span>'; card.appendChild(st); wqChime(); if (wq.ta) wqTimeShift(5); }
                         }, 260);
                         if (!last) { wq.round++; setTimeout(function() { if (wq && wq.kind === 'match') newMatchRound(); }, wq.ta ? 750 : 1000); }
                         else {
@@ -7590,7 +7590,7 @@
                         setTimeout(function() {
                             if (wq !== snapB || wq.over) return;
                             var card = document.querySelector('#flash-view .wq-card');
-                            if (card) { var stp = document.createElement('div'); stp.className = 'wq-clear'; stp.textContent = 'クリア'; card.appendChild(stp); }
+                            if (card) { var stp = document.createElement('div'); stp.className = 'wq-clear'; stp.innerHTML = '<span>クリア</span>'; card.appendChild(stp); }
                             wqChime(); wqTimeShift(10);
                         }, 420);
                         setTimeout(function() { if (wq === snapB) memDeal(); }, 1400);

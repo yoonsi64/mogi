@@ -1180,10 +1180,10 @@
         .wq-hud .ta-score b { color: var(--active-blue); font-size: 1rem; }
         /* タイムアップ: the board darkens, a big red seal slams down and the card shudders */
         .wq-timeup { position: absolute; left: 50%; top: 50%; z-index: 3; transform: translate(-50%, -50%) rotate(-9deg); pointer-events: none; text-align: center; white-space: nowrap;
-            padding: 12px 22px 10px; color: #c8372d; border: 5px solid #c8372d; border-radius: 4px;
-            box-shadow: inset 0 0 0 3px transparent, inset 0 0 0 5px #c8372d;
-            font-family: var(--mincho); font-weight: 900; mix-blend-mode: multiply; filter: url(#wq-hanko); animation: wqSlam 0.42s cubic-bezier(.3, 1.4, .5, 1) both; }
-        html.dark .wq-timeup, html.dark .wq-clear, html.dark .wq-stamp { mix-blend-mode: normal; }
+            padding: 8px; border-radius: 6px; background: color-mix(in srgb, #fbf7ee 93%, transparent); box-shadow: 0 8px 26px rgba(20, 12, 4, 0.35), 0 0 0 1px rgba(20, 12, 4, 0.08); animation: wqSlam 0.42s cubic-bezier(.3, 1.4, .5, 1) both; }
+        .wq-timeup > div { padding: 12px 22px 10px; color: #c8372d; border: 5px solid #c8372d; border-radius: 4px; box-shadow: inset 0 0 0 3px transparent, inset 0 0 0 5px #c8372d;
+            font-family: var(--mincho); font-weight: 900; mix-blend-mode: multiply; filter: url(#wq-hanko); }
+        html.dark .wq-timeup > div, html.dark .wq-clear > span, html.dark .wq-stamp { mix-blend-mode: normal; }
         .wq-timeup b { display: block; font-size: clamp(2rem, 10vw, 2.6rem); line-height: 1.1; letter-spacing: 0.06em; }
         .wq-timeup small { display: block; margin-top: 4px; padding-top: 4px; border-top: 2px solid #c8372d; font-size: 0.78rem; letter-spacing: 0.6em; text-indent: 0.6em; }
         @keyframes wqSlam { 0% { opacity: 0; transform: translate(-50%, -50%) rotate(-22deg) scale(3.2); filter: blur(6px); } 60% { opacity: 1; transform: translate(-50%, -50%) rotate(-8deg) scale(0.92); filter: blur(0); } 100% { opacity: 1; transform: translate(-50%, -50%) rotate(-9deg) scale(1); } }
@@ -1222,7 +1222,9 @@
         #wq-clock.bump { animation: wqBump 0.35s ease-out; }
         @keyframes wqBump { 40% { transform: scale(1.25); } }
         @keyframes wqFloatUp { 0% { opacity: 0; transform: translate(-50%, -30%) scale(0.7); } 20% { opacity: 1; transform: translate(-50%, -60%) scale(1.1); } 100% { opacity: 0; transform: translate(-50%, -160%) scale(1); } }
-        .wq-clear { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%) rotate(-8deg); padding: 4px 18px 2px; border: 4px solid #c8372d; border-radius: 4px; color: #c8372d; font-family: var(--mincho); font-size: 2.2rem; font-weight: 900; letter-spacing: 0.15em; text-indent: 0.15em; mix-blend-mode: multiply; filter: url(#wq-hanko); animation: wqStamp 0.4s cubic-bezier(.2, .9, .3, 1.3) both; pointer-events: none; }
+        /* the stamps sit on a small sheet of paper, so they read on any print or pattern behind them */
+        .wq-clear { position: absolute; left: 50%; top: 42%; z-index: 3; transform: translate(-50%, -50%) rotate(-8deg); padding: 7px; border-radius: 6px; background: color-mix(in srgb, #fbf7ee 93%, transparent); box-shadow: 0 6px 22px rgba(20, 12, 4, 0.32), 0 0 0 1px rgba(20, 12, 4, 0.08); animation: wqStamp 0.4s cubic-bezier(.2, .9, .3, 1.3) both; pointer-events: none; }
+        .wq-clear > span { display: block; padding: 4px 18px 2px; border: 4px solid #c8372d; border-radius: 4px; color: #c8372d; font-family: var(--mincho); font-size: 2.2rem; font-weight: 900; letter-spacing: 0.15em; text-indent: 0.15em; line-height: 1.3; mix-blend-mode: multiply; filter: url(#wq-hanko); }
         @keyframes wqStamp { from { opacity: 0; transform: translate(-50%, -50%) rotate(-8deg) scale(2.2); } to { opacity: 1; transform: translate(-50%, -50%) rotate(-8deg) scale(1); } }
         /* petals on the results: each one falls (outer), sways side to side (middle) and flips over as it goes (inner) */
         .wq-fallpiece { position: fixed; top: -28px; width: 14px; height: 14px; animation: wqFall linear forwards; }
