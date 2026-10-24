@@ -1,11 +1,31 @@
-// モギ offline helper: always asks the site for the newest version first (so updates show right away),
-// and only falls back to the saved copy when there is no internet.
-var CACHE = 'mogi-v1';
-self.addEventListener('install', function() { self.skipWaiting(); });
-self.addEventListener('activate', function(e) { e.waitUntil(self.clients.claim()); });
+// モギ offline helper.
+// The page itself (index.html) is always asked for fresh, so updates show right away; the big script and style
+// files carry a fingerprint in their names and never change once published, so they are kept on the device and
+// served from there, and only re-downloaded when a new version has a new name.
+var ASSETS = ["app.53a65bc6.js", "gistsync.0d0b2fab.js", "omikuji.1bfee276.js", "opening.8aaddd8f.js", "styles.e04f795e.css"];
+var CACHE = 'mogi-' + ASSETS.join('|').length + '-' + ASSETS.map(function(a) { return a.split('.')[1]; }).join('');
+var FINGERPRINTED = /\.[0-9a-f]{8}\.(js|css)$/;
+self.addEventListener('install', function(e) {
+    e.waitUntil(caches.open(CACHE).then(function(c) { return c.addAll(ASSETS.map(function(a) { return './' + a; })).catch(function() {}); }).then(function() { return self.skipWaiting(); }));
+});
+self.addEventListener('activate', function(e) {
+    e.waitUntil(caches.keys().then(function(keys) {
+        return Promise.all(keys.filter(function(k) { return k !== CACHE; }).map(function(k) { return caches.delete(k); }));
+    }).then(function() { return self.clients.claim(); }));
+});
 self.addEventListener('fetch', function(e) {
     var req = e.request;
     if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
+    if (FINGERPRINTED.test(new URL(req.url).pathname)) {
+        // a published file never changes: use the saved copy, fetch it once if we don't have it
+        e.respondWith(caches.open(CACHE).then(function(c) {
+            return c.match(req).then(function(hit) {
+                return hit || fetch(req).then(function(res) { if (res && res.ok) c.put(req, res.clone()); return res; });
+            });
+        }));
+        return;
+    }
+    // the page, the prints and the icons: the newest from the site, the saved copy when there is no internet
     e.respondWith(
         fetch(req, { cache: 'no-cache' }).then(function(res) {
             if (res && res.ok) { var copy = res.clone(); caches.open(CACHE).then(function(c) { c.put(req, copy); }); }
