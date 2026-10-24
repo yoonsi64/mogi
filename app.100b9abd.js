@@ -10489,7 +10489,7 @@
             ] }
         ],
         kanjiIntro: '本の「漢字の読み方」です。読みを選びましょう。読みは本のとおりです。ほかの選択肢は Claude が作りました。',
-        kanji: [{ title: '次の言葉の読み方を選ぼう。', items: [
+        kanji: [{ title: '次の言葉の読み方を選ぼう。', yomi: true, items: [
             { k: '肌', a: 'はだ', opts: ['はだ', 'はだえ', 'ひふ', 'きめ'] },
             { k: '霧', a: 'きり', opts: ['もや', 'きり', 'かすみ', 'む'] },
             { k: '店先', a: 'みせさき', opts: ['てんせん', 'みせざき', 'みせさき', 'たなさき'] },
@@ -10606,7 +10606,7 @@
             5: { word: '俳句', text: '五七五の十七音から成る短い詩。発句。' }
         },
         kanjiIntro: '本の「漢字の読み方」です。読みを選びましょう。読みは本のとおりです。ほかの選択肢は Claude が作りました。',
-        kanji: [{ title: '次の言葉の読み方を選ぼう。', items: [
+        kanji: [{ title: '次の言葉の読み方を選ぼう。', yomi: true, items: [
             { k: '住む', a: 'すむ', opts: ['すむ', 'じゅうむ', 'すまむ', 'とむ'] },
             { k: '生け垣', a: 'いけがき', opts: ['なまけがき', 'いけかき', 'うけがき', 'いけがき'] },
             { k: '横隊', a: 'おうたい', opts: ['よこたい', 'おうだい', 'おうたい', 'こうたい'] },
@@ -10733,7 +10733,7 @@
             ] }
         ],
         kanjiIntro: '本の「漢字の読み方」です。読みを選びましょう。読みは本のとおりです。ほかの選択肢は Claude が作りました。',
-        kanji: [{ title: '次の言葉の読み方を選ぼう。', items: [
+        kanji: [{ title: '次の言葉の読み方を選ぼう。', yomi: true, items: [
             { k: '迎える', a: 'むかえる', opts: ['げいえる', 'むかえる', 'むがえる', 'こたえる'] },
             { k: '官庁', a: 'かんちょう', opts: ['かんちょ', 'かんてい', 'かんちょう', 'がんちょう'] },
             { k: '一斉', a: 'いっせい', opts: ['いっせい', 'いちせい', 'いっさい', 'いっせ'] },
@@ -10922,7 +10922,7 @@
             ] }
         ],
         kanjiIntro: '本の「漢字の読み方」です。読みを選びましょう。読みは本のとおりです。ほかの選択肢は Claude が作りました。',
-        kanji: [{ title: '次の言葉の読み方を選ぼう。', items: [
+        kanji: [{ title: '次の言葉の読み方を選ぼう。', yomi: true, items: [
             { k: '赤褐色', a: 'せっかっしょく', opts: ['せきかつしょく', 'せっかっしょく', 'あかかっしょく', 'せっかつしょく'] },
             { k: '幹', a: 'みき', opts: ['かん', 'えだ', 'みき', 'から'] },
             { k: '清らかな', a: 'きよらかな', opts: ['きよらかな', 'せいらかな', 'すがらかな', 'さやらかな'] },
@@ -11119,7 +11119,7 @@
             ] }
         ],
         kanjiIntro: '本の「漢字の読み方」です。読みを選びましょう。読みは本のとおりです。ほかの選択肢は Claude が作りました。',
-        kanji: [{ title: '次の言葉の読み方を選ぼう。', items: [
+        kanji: [{ title: '次の言葉の読み方を選ぼう。', yomi: true, items: [
             { k: '国境', a: 'こっきょう', opts: ['こくきょう', 'こっきょう', 'こっけい', 'こっこう'] },
             { k: '兵隊', a: 'へいたい', opts: ['へいだい', 'ひょうたい', 'へいたい', 'へいでい'] },
             { k: '石碑', a: 'せきひ', opts: ['せきひ', 'いしひ', 'せっぴ', 'しゃくひ'] },
@@ -13028,7 +13028,7 @@
     function arKanjiItemHtml(key, it, st) {
         var res = st.kanji[key] || {}, done = res.ok !== undefined;
         return '<div class="kj-item' + (res.ok === true ? ' ok' : res.ok === false ? ' ng' : '') + '" data-k="' + key + '">' +
-            '<div class="kj-q">' + escapeHtml(it.pre || '') + arKjBlank(it.k, done && (it.pre || it.post) ? it.a : '') + escapeHtml(it.post || '') + '</div>' +
+            '<div class="kj-q' + (!it.pre && !it.post && it.k.length > 3 ? ' long' : '') + '">' + escapeHtml(it.pre || '') + arKjBlank(it.k, done && (it.pre || it.post) ? it.a : '') + escapeHtml(it.post || '') + '</div>' +
             '<div class="kj-opts">' + arShuffled(it.opts, ar.id + key).map(function(o) {
                 var cls = done ? (o === it.a ? ' right' : o === res.v ? ' wrong' : '') : '';
                 return '<button class="kj-opt' + cls + '" data-v="' + escapeHtml(o) + '"' + (done ? ' disabled' : '') + '>' + escapeHtml(o) + '</button>';
@@ -13060,7 +13060,7 @@
             '<div class="ar-intro">' + escapeHtml(r.kanjiIntro || '傍線部に合う漢字を選びましょう。選択肢は、字形や音の似た漢字を Claude が選んだものです。') + '</div>';
         r.kanji.forEach(function(sec, si) {
             html += '<section class="ar-sec"><h3 class="ar-sec-title"><span class="ar-qno">' + (si + 1) + '</span>' + escapeHtml(sec.title) + '</h3>';
-            if (sec.items) html += '<div class="' + (sec.wide ? 'kj-list' : 'kj-grid') + '">' + sec.items.map(function(it, i) { return arKanjiItemHtml(si + '-' + i, it, st); }).join('') + '</div>';
+            if (sec.items) html += '<div class="' + (sec.yomi ? 'kj-yomi' : sec.wide ? 'kj-list' : 'kj-grid') + '">' + sec.items.map(function(it, i) { return arKanjiItemHtml(si + '-' + i, it, st); }).join('') + '</div>';
             if (sec.pairs) html += '<div class="kj-pairs">' + sec.pairs.map(function(p, pi) {
                 return '<div class="kj-pair">' + p.map(function(it, j) { return arKanjiItemHtml(si + '-' + pi + '-' + j, it, st); }).join('') + '</div>';
             }).join('') + '</div>';

@@ -841,6 +841,19 @@
         .ar-pop-k { display: block; font-size: 0.72rem; color: var(--active-blue); font-weight: bold; margin-bottom: 2px; }
         .ar-pop-note { display: block; font-size: 0.7rem; color: var(--text-sub); margin-top: 4px; }
         .ar-pop-btn { display: block; margin-top: 8px; padding: 6px 12px; border: 1px solid var(--active-blue); background: none; color: var(--active-blue); border-radius: 6px; font-weight: bold; font-size: 0.8rem; cursor: pointer; }
+        /* 読み方 (a word and four readings): one row per word, the word large on the left, the readings in a 2×2 beside it */
+        .kj-yomi { display: grid; grid-template-columns: 1fr; gap: 8px; }
+        @media (min-width: 720px) { .kj-yomi { grid-template-columns: 1fr 1fr; } }
+        .kj-yomi .kj-item { display: grid; grid-template-columns: 5.4rem minmax(0, 1fr); grid-template-areas: "q opts" "res res"; align-items: center; column-gap: 12px; padding: 10px 12px; }
+        .kj-yomi .kj-item .kj-q { grid-area: q; align-self: center; margin: 0; text-align: center; font-family: var(--mincho); font-weight: 600; font-size: 1.45rem; line-height: 1.3; letter-spacing: 0.02em; line-break: anywhere; }
+        .kj-yomi .kj-item .kj-q.long { font-size: 1.2rem; }
+        .kj-yomi .kj-q u { text-decoration: none; }
+        .kj-yomi .kj-opts { grid-area: opts; gap: 6px; }
+        .kj-yomi .kj-opt { font-size: 0.98rem; padding: 9px 4px; white-space: nowrap; overflow: hidden; letter-spacing: 0.03em; line-height: 1.2; }
+        .kj-yomi .kj-res { grid-area: res; margin-top: 6px; }
+        .kj-yomi .kj-res:empty { display: none; }
+        .kj-yomi .kj-item.ok { border-color: color-mix(in srgb, var(--correct-color) 45%, var(--border-light)); }
+        .kj-yomi .kj-item.ng { border-color: color-mix(in srgb, #c94a4a 45%, var(--border-light)); }
         .kj-score { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; margin-bottom: 8px; }
         .kj-score b { font-size: 1.15rem; }
         .kj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
