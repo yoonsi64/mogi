@@ -2255,7 +2255,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
 @keyframes omkSay { 50% { transform: scale(1.25); } }
 .omk-word-saved { flex: none; padding: 2px 8px; border-radius: 10px; background: rgba(120,180,110,.16); color: #bfe0b0; font-size: .66rem; font-weight: bold; white-space: nowrap; }
 .omk-word-saved.fresh { animation: omkKeepText .4s ease-out both; }
-.omk-word-def { grid-area: def; display: flex; flex-wrap: wrap; column-gap: 8px; min-width: 0; padding: 0 8px 2px; }
+.omk-word-def { grid-area: def; display: flex; flex-direction: column; row-gap: 1px; min-width: 0; padding: 0 8px 2px; }
 .omk-word-meaning { font-size: .78rem; line-height: 1.4; }
 .omk-word-kr { font-size: .7rem; color: rgba(234,223,202,.65); line-height: 1.35; }
 @media (max-width: 360px) { .omk-word-text { font-size: 1.2rem; } .omk-swipehint { letter-spacing: 0; } }
