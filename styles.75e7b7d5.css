@@ -1723,6 +1723,12 @@
         html[data-option-font="gothic"] { --option-font: var(--gothic); }
         html[data-option-font="kyokasho"] { --option-font: var(--kyokasho); }
 
+        .explain-card.mx .mx-head { font-size: 1.02rem; margin-bottom: 4px; }
+        .explain-card.mx .mx-mean { margin: 2px 0 6px; }
+        .explain-card.mx .mx-k { display: inline-block; margin-right: 6px; padding: 0 6px; border-radius: 4px; font-size: 0.72rem; background: var(--accent-soft, #e8f1fb); color: var(--active-blue); vertical-align: 1px; }
+        .explain-card.mx .mx-point { line-height: 1.8; padding: 6px 0 2px; }
+        .explain-card.mx .mx-ex { line-height: 1.8; padding: 2px 0; }
+        .explain-card.mx .mx-ex b { color: var(--active-blue); }
         .explain-sub { margin-top: 8px; font-size: 0.8rem; font-weight: bold; color: var(--text-sub); }
         .explain-opts { margin: 2px 0 0; padding: 0; list-style: none; }
         .explain-opts li { padding: 3px 0; border-top: 1px dashed var(--border-light); }
