@@ -5621,8 +5621,12 @@
         });
         return (kanjiReadings = m);
     }
+    // words whose reading divides by kanji in dictionaries even though a kanji reads unusually there
+    var KANJI_SPLIT_WORDS = { '名残|なごり': ['な', 'ごり'], '何卒|なにとぞ': ['なに', 'とぞ'] };
     function kanjiSplitGuess(base, rd) {
         var chars = Array.from(base), r = toHiragana(rd), map = kanjiReadingsMap();
+        var fixed = KANJI_SPLIT_WORDS[base + '|' + r];
+        if (fixed) { var at0 = 0; return chars.map(function(c, i) { var piece = rd.substr(at0, fixed[i].length); at0 += fixed[i].length; return [c, piece]; }); }
         if (chars.length < 2 || chars.some(function(c) { return !map[c] && c !== '々'; })) return null;
         var DAK = { か: 'が', き: 'ぎ', く: 'ぐ', け: 'げ', こ: 'ご', さ: 'ざ', し: 'じ', す: 'ず', せ: 'ぜ', そ: 'ぞ', た: 'だ', ち: 'ぢ', つ: 'づ', て: 'で', と: 'ど', は: 'ば', ひ: 'び', ふ: 'ぶ', へ: 'べ', ほ: 'ぼ' };
         var HAN = { は: 'ぱ', ひ: 'ぴ', ふ: 'ぷ', へ: 'ぺ', ほ: 'ぽ' };
