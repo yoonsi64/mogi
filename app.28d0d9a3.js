@@ -6488,17 +6488,23 @@
         if (wqCalm()) return;
         var l = wqLayer(), imgs = wqSeasonPieces(), n = many ? 48 : 30;
         for (var i = 0; i < n; i++) {
-            var c = document.createElement('i'), im = imgs.length ? imgs[Math.floor(Math.random() * imgs.length)] : null;
-            c.className = 'wq-fallpiece' + (im && im.g ? ' gentle' : '');
-            c.style.left = Math.random() * 100 + 'vw';
-            if (im) { var sz = (12 + Math.random() * 8) * (im.s || 1); c.style.width = c.style.height = sz.toFixed(1) + 'px'; c.style.backgroundImage = im.i; }
-            else { c.style.width = '8px'; c.style.height = '13px'; c.style.borderRadius = '2px'; c.style.background = ['#b8312f', '#d4a017', '#2f6f8f', '#006600'][i % 4]; }
-            c.style.animationDelay = (Math.random() * 1.2) + 's';
-            c.style.animationDuration = (im && im.g ? 3.2 + Math.random() * 2 : 2.2 + Math.random() * 1.8) + 's';
-            c.style.setProperty('--drift', (Math.random() * 100 - 50) + 'px');
-            c.style.setProperty('--spin', (im && im.g ? Math.random() * 90 - 45 : Math.random() * 720 - 360) + 'deg');
+            var c = document.createElement('i'), im = imgs.length ? imgs[Math.floor(Math.random() * imgs.length)] : null, r = function(a, b) { return a + Math.random() * (b - a); };
+            c.className = 'wq-fallpiece';
+            c.innerHTML = '<b class="sw"><b class="lf"></b></b>';
+            c.style.left = r(-4, 100) + 'vw';
+            var sz = (12 + Math.random() * 8) * (im && im.s || 1), dur = r(3.8, 6.5);
+            c.style.width = c.style.height = sz.toFixed(1) + 'px';
+            c.style.setProperty('--img', im ? im.i : 'linear-gradient(#f3a8bf, #f3a8bf)');
+            c.style.animationDelay = r(0, 1.6) + 's';
+            c.style.animationDuration = dur + 's';
+            c.style.setProperty('--drift', r(-30, 90) + 'px');           // a light breeze from the left
+            c.style.setProperty('--a', r(14, 38) + 'px');                // how far it sways
+            c.style.setProperty('--sway', r(1.1, 2.2) + 's');
+            c.style.setProperty('--flip', r(0.9, 1.8) + 's');
+            c.style.setProperty('--ph', -r(0, 3) + 's');
+            c.style.setProperty('--r0', r(0, 360).toFixed(0) + 'deg');
             l.appendChild(c);
-            setTimeout(function(x) { x.remove(); }.bind(null, c), 6500);
+            setTimeout(function(x) { x.remove(); }.bind(null, c), (dur + 1.8) * 1000);
         }
     }
     function wqChime() { try { if (typeof omkSound === 'function') omkSound('bell', 0.5); } catch (e) {} }
