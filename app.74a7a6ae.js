@@ -4092,6 +4092,7 @@
     var studyClock = Date.now();
     function studyScreen() {
         var b = document.body;
+        if (typeof focusCounting === 'function' && focusCounting()) return 'focus';
         if (b.classList.contains('in-quiz') || b.classList.contains('mock-open')) return 'quiz';
         var ar = document.getElementById('ar-view');
         if (ar && ar.classList.contains('active')) return 'read';
@@ -4113,7 +4114,7 @@
         studyClock = now;
         var screen = studyScreen();
         if (document.hidden || !screen) return;
-        if (now - lastActivity > (screen === 'read' ? 150000 : 90000) && !studyMediaPlaying()) return;
+        if (screen !== 'focus' && now - lastActivity > (screen === 'read' ? 150000 : 90000) && !studyMediaPlaying()) return;
         var sec = Math.min(15, Math.round(ms / 1000));
         var before = gardenMinutes();
         var day = getTodayDateString();
@@ -4307,6 +4308,7 @@
         if (GD.ctrl && GD.ctrlWorld !== worldActive()) { GD.ctrl.destroy(); GD.ctrl = null; GD.shown = null; }   // switched between 庭 and 町
         var s = gdState();
         GD.el.querySelector('.gd-info').innerHTML = gdInfoHtml(s, s.stage);
+        if (onHomeNow()) skyRecordState(s);
         GD.el.querySelector('.gd-tag').textContent = GD_SEASON[s.season] + '・' + GD_LIGHT[s.light] + (s.weather && s.weather !== 'clear' ? '・' + GD_WEATHER[s.weather] : '') + (s.event ? '・' + GD_EVENTS[s.event] : '') + (s.fireworks ? '・花火' : '');
         var o = { stage: s.stage, season: s.season, light: s.light, event: s.event, weather: s.weather, fireworks: s.fireworks, date: new Date(), quality: 'card', animate: true,
                   onCue: function(name, info) { if (name === 'rare' && GD.el && GD.el.isConnected && onHomeNow()) rareRecord(GD.ctrlWorld || worldActive(), info, false); } };
@@ -4379,7 +4381,7 @@
                 '<button class="gd-zoom-reset" hidden>元の大きさ</button><div class="gd-hint">ピンチで拡大・ドラッグで移動</div>' +
                 '<button class="gd-lookup" hidden>☾ 見上げる</button>' +
                 '<div class="gd-sky" aria-hidden="true"><div class="gd-sky-canvas"></div><button class="gd-sky-back">↓ 戻る</button></div></div></div>' +
-                '<div class="gd-side"><div class="gd-info"></div><div class="gd-back" hidden><button></button></div>' +
+                '<div class="gd-side"><div class="gd-info"></div><button class="gd-focus-btn">🍵 集中モード</button><div class="gd-back" hidden><button></button></div>' +
                 '<div class="gd-dev"></div><div class="gd-list-title"></div><div class="gd-list"></div><div class="gd-rare-box"></div></div>' +
                 '</div>';
             document.body.appendChild(GD.view);
@@ -4412,9 +4414,11 @@
                 if (sm && GD.vctrl && GD.vctrl._summon) GD.vctrl._summon(sm.dataset.id);
             });
             GD.view.querySelector('.gd-lookup').addEventListener('click', gdOpenSky);
+            GD.view.querySelector('.gd-focus-btn').addEventListener('click', function() { openFocus(); });
             GD.view.querySelector('.gd-sky-back').addEventListener('click', gdCloseSky);
             gdPinch(GD.view.querySelector('.gd-zoom'), GD.view.querySelector('.gd-zoom-inner'), GD.view.querySelector('.gd-zoom-reset'));
         }
+        if (!devMode) skyRecordState(gdState());
         GD.preview = null; GD.dev = null; GD.devMode = devMode; GD.devWorld = devMode ? worldActive() : null;
         if (devMode && !gdEngineFor(GD.devWorld)) GD.devWorld = window.MogiGarden ? 'garden' : 'town';
         GD.view.classList.toggle('dev', devMode);
@@ -4448,6 +4452,7 @@
                  onCue: function(name, info) {
                      if (!gardenOpen()) return;
                      if (name === 'rare' && !GD.devMode) rareRecord(gdViewWorld(), info, true);
+                     if (name === 'rainbow' && !GD.devMode) skyRecord('rainbow');
                      if (window.MogiSound && getSetting('gdSound', true) && (!gdSkyOpen() || name === 'thunder' || name === 'firework')) MogiSound.cue(name, name === 'thunder' || name === 'firework' ? info && info.delay : info && info.id);
                  } };
     }
@@ -4480,7 +4485,12 @@
         GD.view.querySelector('.gd-sky').setAttribute('aria-hidden', 'false');
         if (GD.vctrl) GD.vctrl.pause();
         var box = GD.view.querySelector('.gd-sky-canvas'); box.innerHTML = '';
-        GD.sky = MogiSky.mount(box, { date: o.date || new Date(), light: o.light, season: o.season, world: w, stage: o.stage, event: o.event, weather: o.weather, fireworks: o.fireworks });
+        GD.sky = MogiSky.mount(box, { date: o.date || new Date(), light: o.light, season: o.season, world: w, stage: o.stage, event: o.event, weather: o.weather, fireworks: o.fireworks,
+            onCue: function(name) {
+                if (GD.devMode) return;
+                if (name === 'shootingstar') { skyRecord('shootingstar'); var md = (new Date().getMonth() + 1) * 100 + new Date().getDate(); if ((md >= 810 && md <= 814) || (md >= 1212 && md <= 1215)) skyRecord('meteor'); }
+                if (name === 'rainbow') skyRecord('rainbow');
+            } });
         gdSoundUpdate();
         syncNavHistory();
     }
@@ -4515,7 +4525,8 @@
                 '<span class="gd-st-min">' + (st.min ? gdFmt(st.min) : '—') + '</span>' +
                 '<span class="gd-st-mark">' + (cls === 'done' ? '✓' : cls === 'now' ? 'いま' : cls === 'next' ? 'あと' + gdFmt(st.min - s.min) : '') + '</span></button>';
         }).join('');
-        GD.view.querySelector('.gd-rare-box').innerHTML = rareHtml(w, dev);
+        GD.view.querySelector('.gd-rare-box').innerHTML = rareHtml(w, dev) + skyHtml();
+        GD.view.querySelector('.gd-focus-btn').hidden = dev;
         var devBox = GD.view.querySelector('.gd-dev');
         if (!dev) { devBox.innerHTML = ''; return; }
         var sel = function(id, list, val) {
@@ -4551,10 +4562,190 @@
             gdRenderView(); gdSoundUpdate();
         });
     }
+    function gdSceneTap(x, y) {
+        if (!GD.vctrl || !GD.vctrl.tap || gdSkyOpen()) return;
+        var r = GD.view.querySelector('.gd-scene-full').getBoundingClientRect();
+        if (!r.width) return;
+        try { GD.vctrl.tap((x - r.left) / r.width, (y - r.top) / r.height); } catch (e) {}
+    }
+    // ---------- 空の記録: weather and sky sights you have actually seen (on the card or in the view) ----------
+    var SKY_KEY = 'jlptSkySeen_' + studyDevice;
+    var SKY_SIGHTS = [
+        ['rain', '雨', '庭や町に降る雨'], ['storm', '雷雨', '夏の夕立と稲妻'], ['snow', '雪', '雪の降る景色'],
+        ['rainbow', '虹', '雨上がりの虹'], ['fireworks', '花火', '夏の夜の花火大会'], ['shootingstar', '流れ星', '見上げた空の流れ星'],
+        ['meteor', '流星群', 'ペルセウス座・ふたご座流星群の夜'], ['typhoon', '台風', 'めったにない嵐の日'], ['blizzard', '吹雪', 'めったにない吹雪の日']
+    ];
+    function skySeen() {
+        var all = {};
+        try {
+            Object.keys(localStorage).forEach(function(k) {
+                if (k.indexOf('jlptSkySeen_') !== 0) return;
+                var m = JSON.parse(localStorage.getItem(k) || '{}') || {};
+                Object.keys(m).forEach(function(id) { if (!all[id] || m[id] < all[id]) all[id] = m[id]; });
+            });
+        } catch (e) {}
+        return all;
+    }
+    function skyRecord(id) {
+        if (!id || !SKY_SIGHTS.some(function(x) { return x[0] === id; }) || skySeen()[id]) return;
+        var mine = loadJSON(SKY_KEY, {}); mine[id] = Date.now();
+        try { localStorage.setItem(SKY_KEY, JSON.stringify(mine)); } catch (e) {}
+        var name = SKY_SIGHTS.filter(function(x) { return x[0] === id; })[0][1];
+        showToast('☁ 空の記録：はじめての「' + name + '」');
+        if (gardenOpen()) gdRenderView();
+        setTimeout(function() { checkNewBadges(); }, 400);
+    }
+    function skyRecordState(st) {
+        if (!st || GD.devMode) return;
+        if (st.weather && /^(rain|storm|snow|typhoon|blizzard)$/.test(st.weather)) skyRecord(st.weather);
+        if (st.fireworks) skyRecord('fireworks');
+    }
+    function skyHtml() {
+        var seen = skySeen(), n = SKY_SIGHTS.filter(function(x) { return seen[x[0]]; }).length;
+        return '<div class="gd-list-title">空の記録 <span class="gd-rare-n">' + n + ' / ' + SKY_SIGHTS.length + '</span></div><div class="gd-rare">' +
+            SKY_SIGHTS.map(function(x) {
+                var t = seen[x[0]];
+                if (!t) return '<div class="gd-rare-item locked"><b>？？？</b><small>&nbsp;</small></div>';
+                var d = new Date(t);
+                return '<div class="gd-rare-item"><b>' + x[1] + '</b><small>' + x[2] + '　' + (d.getMonth() + 1) + '月' + d.getDate() + '日</small></div>';
+            }).join('') + '</div>';
+    }
+    // ---------- 集中モード: the garden or town full screen, with its sounds, as a calm study timer ----------
+    // While the timer is in a 集中 period the time counts as study time (the screen is kept awake; 休憩 does not count).
+    var FOCUS_PLANS = [[25, 5, '25分＋休憩5分'], [50, 10, '50分＋休憩10分'], [15, 3, '15分＋休憩3分'], [0, 0, '時間を決めない']];
+    function focusOpen() { return !!(GD.focus && GD.focus.el.classList.contains('active')); }
+    function focusPlan() { return FOCUS_PLANS[getSetting('focusPlan', 0)] || FOCUS_PLANS[0]; }
+    function openFocus() {
+        var w = worldActive(), E = gdEngineFor(w);
+        if (!E) return;
+        if (!GD.focus) {
+            var el = document.createElement('div');
+            el.className = 'gd-focus';
+            el.innerHTML = '<div class="gf-scene"></div><div class="gf-shade"></div>' +
+                '<div class="gf-ui"><div class="gf-phase"></div><div class="gf-time"></div><div class="gf-sub"></div>' +
+                '<div class="gf-plans"></div>' +
+                '<div class="gf-btns"><button class="gf-go">はじめる</button><button class="gf-pause" hidden>一時停止</button><button class="gf-stop">終わる</button></div></div>';
+            document.body.appendChild(el);
+            GD.focus = { el: el };
+            el.querySelector('.gf-plans').innerHTML = FOCUS_PLANS.map(function(p, i) { return '<button data-i="' + i + '">' + p[2] + '</button>'; }).join('');
+            el.querySelector('.gf-plans').addEventListener('click', function(e) {
+                var b = e.target.closest('button'); if (!b) return;
+                setSetting('focusPlan', +b.dataset.i); focusDraw();
+            });
+            el.querySelector('.gf-go').addEventListener('click', focusStart);
+            el.querySelector('.gf-pause').addEventListener('click', function() {
+                var f = GD.focus; if (!f.running) return;
+                studyTick();
+                f.paused = !f.paused;
+                if (f.end) { if (f.paused) f.left = f.end - Date.now(); else f.end = Date.now() + f.left; }
+                else { if (f.paused) f.upTo = Date.now() - f.start; else f.start = Date.now() - f.upTo; }
+                studyClock = Date.now();
+                focusDraw();
+            });
+            el.querySelector('.gf-stop').addEventListener('click', closeFocus);
+            // a tap on the picture shows or hides the controls
+            el.querySelector('.gf-shade').addEventListener('click', function() { el.classList.toggle('calm'); });
+        }
+        var f = GD.focus;
+        f.running = false; f.paused = false; f.phase = 'work'; f.worked = 0; f.world = w;
+        f.el.classList.add('active'); f.el.classList.remove('calm', 'break');
+        document.body.classList.add('gd-on');
+        var s = gdState(w);
+        var box = f.el.querySelector('.gf-scene'); box.innerHTML = '';
+        f.ctrl = E.mount(box, { stage: s.stage, season: s.season, light: s.light, event: s.event, weather: s.weather, fireworks: s.fireworks,
+            date: new Date(), quality: 'full', animate: true,
+            onCue: function(name, info) {
+                if (name === 'rare') rareRecord(w, info, true);
+                if (name === 'rainbow') skyRecord('rainbow');
+                if (window.MogiSound && getSetting('gdSound', true)) MogiSound.cue(name, name === 'thunder' || name === 'firework' ? info && info.delay : info && info.id);
+            } });
+        if (window.MogiSound) {
+            MogiSound.unlock();
+            if (getSetting('gdSound', true)) MogiSound.play({ world: w, season: s.season, light: s.light, stage: s.stage, event: s.event, weather: s.weather, fireworks: s.fireworks, focus: true });
+        }
+        focusDraw();
+        syncNavHistory();
+    }
+    function focusStart() {
+        var f = GD.focus, p = focusPlan();
+        f.running = true; f.paused = false; f.phase = 'work';
+        f.end = p[0] ? Date.now() + p[0] * 60000 : 0; f.start = Date.now();
+        studyClock = Date.now();
+        focusWake(true);
+        if (window.MogiSound && getSetting('gdSound', true)) MogiSound.cue('focus-start');
+        clearInterval(f.timer); f.timer = setInterval(focusTick, 500);
+        f.el.classList.add('calm');
+        focusDraw();
+    }
+    function focusTick() {
+        var f = GD.focus; if (!f || !f.running || f.paused) return;
+        var p = focusPlan();
+        if (f.end && Date.now() >= f.end) {
+            studyTick();
+            if (f.phase === 'work') {
+                f.worked += p[0];
+                f.phase = 'break'; f.end = Date.now() + p[1] * 60000;
+                if (window.MogiSound && getSetting('gdSound', true)) MogiSound.cue('focus-end');
+                showToast(p[0] + '分 集中しました。少し休みましょう');
+                f.el.classList.remove('calm');
+            } else {
+                f.phase = 'work'; f.end = Date.now() + p[0] * 60000;
+                studyClock = Date.now();
+                if (window.MogiSound && getSetting('gdSound', true)) MogiSound.cue('focus-start');
+                f.el.classList.add('calm');
+            }
+        }
+        focusDraw();
+    }
+    function focusDraw() {
+        var f = GD.focus; if (!f) return;
+        var p = focusPlan(), el = f.el, t;
+        if (!f.running) t = p[0] ? p[0] + ':00' : '0:00';
+        else {
+            var ms = f.end ? Math.max(0, f.paused ? f.left : f.end - Date.now()) : (f.paused ? f.upTo : Date.now() - f.start);
+            var sec = Math.round(ms / 1000);
+            t = Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+        }
+        el.querySelector('.gf-time').textContent = t;
+        el.querySelector('.gf-phase').textContent = !f.running ? gdWorld(f.world).title + '・集中モード' : f.paused ? '一時停止中' : f.phase === 'work' ? '集中' : '休憩';
+        el.querySelector('.gf-sub').textContent = !f.running ? '紙の教材で勉強するときにも。集中の時間は学習時間になります。' :
+            '今日の学習 ' + gdFmt(Math.floor((studyTotals().days[getTodayDateString()] || 0) / 60)) + (f.worked ? '　・この集中 ' + f.worked + '分' : '');
+        el.querySelector('.gf-plans').hidden = f.running;
+        el.querySelectorAll('.gf-plans button').forEach(function(b, i) { b.classList.toggle('active', i === (getSetting('focusPlan', 0) || 0)); });
+        el.querySelector('.gf-go').hidden = f.running;
+        var pb = el.querySelector('.gf-pause'); pb.hidden = !f.running; pb.textContent = f.paused ? '再開' : '一時停止';
+        el.classList.toggle('break', f.running && f.phase === 'break');
+    }
+    function focusCounting() { var f = GD.focus; return !!(f && focusOpen() && f.running && !f.paused && f.phase === 'work'); }
+    function focusWake(on) {
+        var f = GD.focus;
+        try {
+            if (on && navigator.wakeLock && !f.lock) navigator.wakeLock.request('screen').then(function(l) { f.lock = l; l.addEventListener('release', function() { f.lock = null; }); }).catch(function() {});
+            if (!on && f.lock) { f.lock.release(); f.lock = null; }
+        } catch (e) {}
+    }
+    document.addEventListener('visibilitychange', function() { if (!document.hidden && focusCounting()) focusWake(true); });
+    function closeFocus() {
+        var f = GD.focus; if (!f || !focusOpen()) return;
+        studyTick();
+        var p = focusPlan(), mins = f.worked;
+        if (f.running && f.phase === 'work') mins += Math.floor((f.end ? p[0] * 60000 - Math.max(0, (f.paused ? f.left : f.end - Date.now())) : (f.paused ? f.upTo : Date.now() - f.start)) / 60000);
+        clearInterval(f.timer); f.running = false; focusWake(false);
+        if (f.ctrl) { f.ctrl.destroy(); f.ctrl = null; }
+        f.el.querySelector('.gf-scene').innerHTML = '';
+        f.el.classList.remove('active');
+        if (!gardenOpen()) document.body.classList.remove('gd-on');
+        if (window.MogiSound) { if (gardenOpen()) gdSoundUpdate(); else MogiSound.stop(); }
+        if (mins > 0) showToast('おつかれさまでした。集中 ' + mins + '分');
+        syncNavHistory();
+        if (gardenOpen()) gdRenderView(); else if (onHomeNow()) showHomePlaceholder();
+    }
     // two fingers zoom (up to 4×) around the point between them, one finger moves it once zoomed, double-tap zooms in
     // or out; on a computer the wheel zooms and dragging moves
     function gdPinch(box, el, reset) {
-        var s = 1, tx = 0, ty = 0, MAX = 4, pinch = null, pan = null, lastTap = 0, drag = null;
+        var s = 1, tx = 0, ty = 0, MAX = 4, pinch = null, pan = null, lastTap = 0, drag = null, touch0 = null, tapTimer = null, mouse0 = null;
+        // a single short tap (not a pan, a pinch or the first half of a double-tap) touches the scene: feed the koi…
+        var sceneTap = function(x, y) { clearTimeout(tapTimer); tapTimer = setTimeout(function() { gdSceneTap(x, y); }, 280); };
         var apply = function(animate) {
             var w = box.clientWidth, h = box.clientHeight;
             s = Math.min(MAX, Math.max(1, s));
@@ -4576,10 +4767,12 @@
             } else if (e.touches.length === 1) {
                 var now = Date.now(), p = local(e.touches[0]);
                 if (now - lastTap < 300) {
+                    clearTimeout(tapTimer); touch0 = null;
                     if (s > 1) { s = 1; tx = 0; ty = 0; } else zoomAt(p.x, p.y, 2.5);
                     apply(true); lastTap = 0; e.preventDefault(); return;
                 }
                 lastTap = now;
+                touch0 = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: now };
                 if (s > 1) pan = { x: e.touches[0].clientX, y: e.touches[0].clientY, tx: tx, ty: ty };
             }
         }, { passive: false });
@@ -4594,15 +4787,23 @@
                 apply(false); e.preventDefault();
             }
         }, { passive: false });
-        box.addEventListener('touchend', function(e) { if (e.touches.length < 2) pinch = null; if (!e.touches.length) pan = null; apply(false); });
+        box.addEventListener('touchend', function(e) {
+            var c = e.changedTouches && e.changedTouches[0];
+            if (touch0 && c && !e.touches.length && Math.hypot(c.clientX - touch0.x, c.clientY - touch0.y) < 10 && Date.now() - touch0.t < 400) sceneTap(c.clientX, c.clientY);
+            if (e.touches.length < 2) pinch = null; if (!e.touches.length) { pan = null; touch0 = null; } apply(false);
+        });
         box.addEventListener('wheel', function(e) {
             e.preventDefault();
             var p = local(e); zoomAt(p.x, p.y, Math.min(MAX, Math.max(1, s * Math.exp(-e.deltaY / (e.ctrlKey ? 100 : 300))))); apply(false);
         }, { passive: false });
-        box.addEventListener('mousedown', function(e) { if (s > 1) { drag = { x: e.clientX, y: e.clientY, tx: tx, ty: ty }; e.preventDefault(); } });
+        box.addEventListener('mousedown', function(e) { mouse0 = { x: e.clientX, y: e.clientY }; if (s > 1) { drag = { x: e.clientX, y: e.clientY, tx: tx, ty: ty }; e.preventDefault(); } });
+        box.addEventListener('click', function(e) {
+            if (e.target.closest('button') || !mouse0 || (e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents)) return;
+            if (Math.hypot(e.clientX - mouse0.x, e.clientY - mouse0.y) < 5) sceneTap(e.clientX, e.clientY);
+        });
         window.addEventListener('mousemove', function(e) { if (drag) { tx = drag.tx + e.clientX - drag.x; ty = drag.ty + e.clientY - drag.y; apply(false); } });
         window.addEventListener('mouseup', function() { drag = null; });
-        box.addEventListener('dblclick', function(e) { var p = local(e); if (s > 1) { s = 1; tx = 0; ty = 0; } else zoomAt(p.x, p.y, 2.5); apply(true); });
+        box.addEventListener('dblclick', function(e) { clearTimeout(tapTimer); var p = local(e); if (s > 1) { s = 1; tx = 0; ty = 0; } else zoomAt(p.x, p.y, 2.5); apply(true); });
         reset.addEventListener('click', function() { s = 1; tx = 0; ty = 0; apply(true); });
         GD.zoomReset = function() { s = 1; tx = 0; ty = 0; apply(false); };
     }
@@ -14018,7 +14219,8 @@
         if (typeof galleryOpen === 'function' && galleryOpen()) d++;
         if (typeof diffOpen === 'function' && diffOpen()) d++;
         if (typeof gardenOpen === 'function' && gardenOpen()) d++;
-        if (typeof gdSkyOpen === 'function' && gdSkyOpen()) d++;          // the 画廊 sits on top of the results (or 設定): Back closes it first
+        if (typeof gdSkyOpen === 'function' && gdSkyOpen()) d++;
+        if (typeof focusOpen === 'function' && focusOpen()) d++;          // the 画廊 sits on top of the results (or 設定): Back closes it first
         if (typeof rpOpen === 'function' && rpOpen()) d += (rp && rp.state !== 'list') ? 2 : 1;
         if (typeof arOpen === 'function' && arOpen()) d++;
         if (typeof mockOpen === 'function' && mockOpen()) d += mockGridOpen() ? 2 : 1;
@@ -14042,6 +14244,7 @@
         }
     }
     function navBackOneLevel() {
+        if (focusOpen()) { closeFocus(); return; }
         if (gdSkyOpen()) { gdCloseSky(); return; }
         if (gardenOpen()) { closeGarden(); return; }
         if (galleryOpen()) { closeGallery(); return; }
@@ -15276,6 +15479,10 @@
             { id: 'gdwater', cat: gardenLive() ? 'garden' : 'off', icon: '💧', name: '水やり', value: gdBestRun, unit: '日', tiers: tiers([3, 7, 14, 30, 100], '日'), hint: '毎日15分以上、手を動かして学習した日が続いた数（最長）' },
             { id: 'gdseasons', cat: gardenLive() ? 'garden' : 'off', icon: '🍁', name: '四季の庭', value: Object.keys(gdSeasons).length, unit: '季', tiers: [{ n: 1, label: '1季' }, { n: 2, label: '2季' }, { n: 3, label: '3季' }, { n: 4, label: '四季（1年）' }, { n: 8, label: '四季を2巡（2年）' }], hint: '1日1時間以上学習した日がある季節の数。年ごとに数えるので、同じ季節も次の年にまた数えます（8季で四季を2巡）' },
             { id: 'gdrare', cat: gardenLive() ? 'garden' : 'off', icon: '🐇', name: '出会い', value: Object.keys(rareSeen()).length, unit: '種', tiers: [{ n: 1, label: '1種' }, { n: 3, label: '3種' }, { n: 6, label: '6種' }, { n: 10, label: '10種' }, { n: Math.max(12, rareList('garden').length + rareList('town').length), label: 'すべて' }], hint: '庭や町にときどき現れるめずらしい生き物に出会った数' },
+            { id: 'gdsky', cat: gardenLive() ? 'garden' : 'off', icon: '🌈', name: '空の記録', value: Object.keys(skySeen()).length, unit: 'つ', tiers: [{ n: 1, label: '1つ' }, { n: 3, label: '3つ' }, { n: 5, label: '5つ' }, { n: 7, label: '7つ' }, { n: SKY_SIGHTS.length, label: 'すべて' }], hint: '庭や町で見た空模様（雨・雷雨・雪・虹・花火・流れ星・流星群・台風・吹雪）の数' },
+            { id: 'gdtyphoon', cat: gardenLive() ? 'garden' : 'off', icon: '🌀', name: '嵐の日', secret: true, ok: !!skySeen().typhoon, hint: '庭や町で、めったにない台風に出会う' },
+            { id: 'gdblizzard', cat: gardenLive() ? 'garden' : 'off', icon: '❄️', name: '吹雪の日', secret: true, ok: !!skySeen().blizzard, hint: '庭や町で、めったにない吹雪に出会う' },
+            { id: 'gdmeteor', cat: gardenLive() ? 'garden' : 'off', icon: '🌠', name: '星に願いを', ok: !!skySeen().meteor, hint: '流星群の夜に、見上げた空で流れ星を見る' },
             // 誤答と復習
             { id: 'notezero', cat: 'review', icon: '🧹', name: '誤答ゼロ', value: nb.zero.length, unit: '回', tiers: tiers([1, 3, 10, 20, 50], '回'), hint: '誤答ノートの問題をすべて解き直して、ノートを空にした回数' },
             { id: 'retry', cat: 'review', icon: '🛠️', name: '解き直し名人', value: nb.recover.length, unit: '問', tiers: tiers([10, 30, 100, 200, 400], '問'), hint: '一度間違えた問題を、後で正解した数' },
