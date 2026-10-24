@@ -1027,44 +1027,28 @@
         .wq-timeup small { display: block; margin-top: 4px; padding-top: 4px; border-top: 2px solid #c0262d; font-size: 0.78rem; letter-spacing: 0.6em; text-indent: 0.6em; }
         @keyframes wqSlam { 0% { opacity: 0; transform: translate(-50%, -50%) rotate(-22deg) scale(3.2); filter: blur(6px); } 60% { opacity: 1; transform: translate(-50%, -50%) rotate(-8deg) scale(0.92); filter: blur(0); } 100% { opacity: 1; transform: translate(-50%, -50%) rotate(-9deg) scale(1); } }
         .wq-card.wq-shake { animation: wqTimeShake 0.4s 0.26s ease-out both; }
-        /* ---------- ゲームの背景: a festival evening behind the game modes ---------- */
+        /* ---------- ゲームの背景: a sumi-e wash behind the game modes ---------- */
         .gs { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
-        .gs-sky, .gs-sky i, .gs-stars { position: absolute; inset: 0; }
-        .gs-sky { background: linear-gradient(#a9d3ef, #dcecf4 55%, #f6efdd); }
-        .gs-sky .dusk { background: linear-gradient(#47508f, #9d6a9a 45%, #ec9a72 75%, #f7cf96); }
-        .gs-sky .night { background: linear-gradient(#070c24, #18204a 55%, #33305a); }
-        .gs-sky i { opacity: 0; transition: opacity 1.2s ease; }
-        .gs-stars { transition: opacity 1.2s ease; opacity: 0; }
-        .gs-stars span { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #fff; box-shadow: 0 0 4px #fff; animation: gsTwinkle 3s ease-in-out infinite alternate; }
-        @keyframes gsTwinkle { from { opacity: 0.25; } to { opacity: 1; } }
+        .gs-paper, .gs-dusk, .gs-night { position: absolute; inset: 0; }
+        .gs-paper { background: #f6f3ec; background-image: radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.6), transparent 60%), radial-gradient(ellipse at 75% 85%, rgba(110, 100, 80, 0.07), transparent 55%), repeating-linear-gradient(90deg, rgba(80, 70, 50, 0.018) 0 1px, transparent 1px 4px); }
+        .gs-dusk { background: linear-gradient(rgba(214, 150, 96, 0.22), rgba(214, 150, 96, 0.06) 50%, transparent 75%); opacity: 0; transition: opacity 1.4s ease; }
+        .gs-night { background: #3a4256; opacity: 0; transition: opacity 1.4s ease; mix-blend-mode: multiply; }
         .gs-land { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: auto; display: block; }
-        .gs-land .shade { fill: #070b22; transition: opacity 1.2s ease; }
-        .gs-land .sun { transition: transform 1.2s ease; }
-        .gs-land .ng { transition: opacity 1.2s ease; opacity: 0; }
-        .gs-land .day { transition: opacity 1.2s ease; }
-        .gs-land .rope { fill: none; stroke: #2a1d16; stroke-width: 0.8; }
-        .gs-lan .dim { fill: #7a2f25; } .gs-lan .cap { fill: #2a1d18; }
-        .gs-lan .lit, .gs-lan .glow, .gs-lan .ji { opacity: 0; transition: opacity 0.45s ease; }
-        .gs-lan.on .lit, .gs-lan.on .glow { opacity: 1; } .gs-lan.on .ji { opacity: 0.75; }
-        .gs-lan.flare .glow { animation: gsFlare 0.9s ease-out; }
-        @keyframes gsFlare { 0% { opacity: 1; transform: scale(2.2); } 100% { opacity: 1; transform: scale(1); } }
-        .gs-lan .glow { transform-box: fill-box; transform-origin: center; }
-        .gs-petal { position: absolute; width: 9px; height: 7px; border-radius: 70% 0 70% 0; background: #f6c1cf; opacity: 0.85; animation: gsPetal linear infinite; }
-        @keyframes gsPetal { 0% { transform: translate(0, 0) rotate(0); } 100% { transform: translate(-120vw, 40vh) rotate(720deg); } }
-        .gs-fw { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
-        .gs-rocket { position: absolute; width: 3px; height: 16px; margin-left: -1.5px; border-radius: 2px; background: linear-gradient(transparent, #ffe2a8); animation: gsRise 0.55s cubic-bezier(.2, .7, .4, 1) forwards; }
-        @keyframes gsRise { from { transform: translateY(var(--rise)); opacity: 1; } to { transform: translateY(0); opacity: 0.2; } }
-        .gs-spark { position: absolute; width: 4px; height: 4px; margin: -2px; border-radius: 50%; background: var(--c); box-shadow: 0 0 6px var(--c), 0 0 12px var(--c); animation: gsBoom 1.3s cubic-bezier(.1, .7, .3, 1) forwards; }
-        @keyframes gsBoom { 0% { transform: translate(0, 0) scale(1.3); opacity: 1; } 70% { opacity: 1; } 100% { transform: translate(var(--dx), calc(var(--dy) + 26px)) scale(0.4); opacity: 0; } }
-        .gs-flash { position: absolute; width: 90px; height: 90px; margin: -45px; border-radius: 50%; background: radial-gradient(var(--c), transparent 65%); opacity: 0; animation: gsFlash 0.6s ease-out; }
-        @keyframes gsFlash { 0% { opacity: 0.55; } 100% { opacity: 0; transform: scale(1.8); } }
-        /* what sits on the scene gets a frosted panel so it stays easy to read */
-        .flash-view.game { background: #0d1430; }
+        .gs-land .ink { fill: none; stroke: #2b2b2e; stroke-linecap: round; stroke-linejoin: round; }
+        .gs-land .sun { transition: transform 1.4s ease, opacity 1.4s ease; }
+        .gs-land .boat { transition: transform 1.4s linear; }
+        .gs-land .ng { opacity: 0; transition: opacity 1.4s ease; }
+        .gs-land .day { transition: opacity 1.4s ease; }
+        .gs-bloom { opacity: 0; transition: opacity 0.9s ease, transform 0.9s cubic-bezier(.2, .9, .3, 1.2); transform: scale(0.4); transform-box: fill-box; transform-origin: center; }
+        .gs-bloom.on { opacity: 1; transform: none; }
+        .gs-seal { position: absolute; right: 18px; bottom: calc(18px + env(safe-area-inset-bottom)); width: 30px; height: 30px; border-radius: 3px; background: #b8312f; color: #f4e9d8; font-family: var(--mincho); font-weight: 700; font-size: 12px; line-height: 1; display: grid; place-items: center; writing-mode: vertical-rl; letter-spacing: 1px; box-shadow: inset 0 0 0 1.5px #f4e9d8, inset 0 0 0 3px #b8312f; opacity: 0.9; transform: rotate(-3deg); }
+        /* what sits on the scene gets a paper panel so it stays easy to read */
+        .flash-view.game { background: #f6f3ec; }
         .flash-view.game > .flash-head, .flash-view.game > .flash-body { position: relative; z-index: 1; }
-        .flash-view.game .flash-head { align-self: stretch; padding: 4px 12px 4px 4px; border-radius: 14px; background: color-mix(in srgb, var(--bg-paper) 84%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
-        .flash-view.game .wq-card { flex: 0 1 auto; background: color-mix(in srgb, var(--surface) 90%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18); }
-        .flash-view.game .wq-result { flex: 0 1 auto; justify-content: flex-start; padding: 18px 14px; border: 1px solid var(--border-light); border-radius: 16px; background: color-mix(in srgb, var(--surface) 92%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18); }
-        @media (prefers-reduced-motion: reduce) { .gs-petal, .gs-fw { display: none; } .gs-stars span, .gs-lan.flare .glow { animation: none; } }
+        .flash-view.game .flash-head { align-self: stretch; padding: 4px 12px 4px 4px; border-radius: 10px; background: color-mix(in srgb, var(--bg-paper) 78%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+        .flash-view.game .wq-card { flex: 0 1 auto; background: color-mix(in srgb, var(--surface) 92%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); box-shadow: 0 6px 22px rgba(40, 30, 10, 0.16); }
+        .flash-view.game .wq-result { flex: 0 1 auto; justify-content: flex-start; padding: 18px 14px; border: 1px solid var(--border-light); border-radius: 16px; background: color-mix(in srgb, var(--surface) 94%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); box-shadow: 0 6px 22px rgba(40, 30, 10, 0.16); }
+        @media (prefers-reduced-motion: reduce) { .gs-bloom, .gs-dusk, .gs-night, .gs-land .ng, .gs-land .day, .gs-land .sun, .gs-land .boat { transition: none; } }
         @keyframes wqTimeShake { 0%, 100% { transform: none; } 15% { transform: translate(-7px, 4px); } 30% { transform: translate(6px, -4px); } 45% { transform: translate(-5px, 2px); } 60% { transform: translate(3px, -2px); } 80% { transform: translate(-1px, 1px); } }
         .wq-card.wq-over .wq-tile, .wq-card.wq-over .mem-card { pointer-events: none; opacity: 0.5; transition: opacity 0.3s; }
         @keyframes wqFloatUp { 0% { opacity: 0; transform: translate(-50%, -30%) scale(0.7); } 20% { opacity: 1; transform: translate(-50%, -60%) scale(1.1); } 100% { opacity: 0; transform: translate(-50%, -160%) scale(1); } }
@@ -2700,7 +2684,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             <div class="stat-card-title">演出</div>
             <div class="setting-row wrap"><span>起動画面の演出</span><span class="seg" id="set-opening-onoff"><button data-v="on">オン</button><button data-v="off">オフ</button></span><div class="stat-sub rsgoal-note">アプリを開いたとき、季節や行事に合わせた演出が出ます。</div></div>
             <div class="setting-row wrap"><span>効果音</span><span class="seg" id="set-omikuji-sound"><button data-v="on">オン</button><button data-v="off">オフ</button></span><div class="stat-sub rsgoal-note">おみくじ（箱を振る音・鈴）と、単語帳のマッチング・結果画面の鈴の音です。起動画面には音はありません。オンにすると鈴が一度鳴ります。聞こえないときは、スマホのメディアの音量を確認してください。</div></div>
-            <div class="setting-row wrap"><span>ゲームの背景</span><span class="seg" id="set-game-scene"><button data-v="on">オン</button><button data-v="off">オフ</button></span><div class="stat-sub rsgoal-note">四択・マッチング・神経衰弱・穴埋めの後ろに、お祭りの夕暮れの景色を出します。正解するたびに提灯がともり、ゲームが進むと日が暮れて、コンボやいい結果で花火が上がります。</div></div>
+            <div class="setting-row wrap"><span>ゲームの背景</span><span class="seg" id="set-game-scene"><button data-v="on">オン</button><button data-v="off">オフ</button></span><div class="stat-sub rsgoal-note">四択・マッチング・神経衰弱・穴埋めの後ろに、水墨画の山と舟の絵を出します。正解するたびに梅の花が咲き、ゲームが進むにつれて日が沈み、舟が進み、月が出ます。</div></div>
         </div>
         <div class="stat-card settings-group" id="set-g-you">
             <div class="stat-card-title">あなた</div>
@@ -11252,115 +11236,76 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         document.getElementById('flash-view').classList.add('active');
         sceneStart();
     }
-    // ---------- ゲームの背景: a festival evening behind the four games ----------
-    // Lanterns on the string light up as you get answers right, the sky goes from afternoon to night as the game
-    // goes on (in time attack, as the clock runs down), and combos and a good finish send up fireworks.
-    var GS_LANTERNS = 9;
+    // ---------- ゲームの背景: a sumi-e wash behind the four games ----------
+    // Ink-wash mountains over still water, a fisherman in his boat, a plum branch reaching in from the right and a red sun.
+    // As the game goes on (in time attack, as the clock runs down) the sun sinks behind the mountains, the boat drifts
+    // across the water and a pale moon comes up; each answer you get right puts another cluster of blossom on the branch.
+    var GS_BLOOMS = 9;
     var scene = { timer: 0, lit: -1, combo: 0, cycle: 0, finale: false };
     function sceneOn() { return getSetting('gameScene', true); }
     function sceneHtml() {
-        var calm = wqCalm(), lan = '';
-        for (var i = 0; i < GS_LANTERNS; i++) {
-            var x = 24 + i * (352 / (GS_LANTERNS - 1)), u = x / 400, y = 22 + 70 * u * (1 - u);
-            lan += '<g transform="translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ')"><g class="gs-lan" data-i="' + i + '">' +
-                (calm ? '' : '<animateTransform attributeName="transform" type="rotate" values="-5 0 0;5 0 0;-5 0 0" dur="' + (3 + (i % 3) * 0.6) + 's" begin="-' + (i * 0.7) + 's" repeatCount="indefinite"/>') +
-                '<circle class="glow" cx="0" cy="17" r="20" fill="url(#gsGlow)"/><line x1="0" y1="0" x2="0" y2="5" stroke="#2a1d16" stroke-width="0.8"/>' +
-                '<rect class="cap" x="-5" y="5" width="10" height="2.6" rx="1"/><ellipse class="dim" cx="0" cy="17" rx="8.5" ry="10.5"/><ellipse class="lit" cx="0" cy="17" rx="8.5" ry="10.5" fill="url(#gsLit)"/>' +
-                '<path d="M-8.5 17 Q0 15 8.5 17 M-8 12 Q0 10 8 12 M-8 22 Q0 20 8 22" fill="none" stroke="#5a1a10" stroke-width="0.4" opacity="0.5"/>' +
-                '<text class="ji" x="0" y="20" text-anchor="middle" font-size="8" font-weight="700" fill="#7a1d12">祭</text><rect class="cap" x="-5" y="26.6" width="10" height="2.6" rx="1"/></g></g>';
-        }
-        // a five-storey pagoda on the right-hand hill
-        var pagoda = function(x, base) {
-            var out = '', w = 30, y = base;
-            for (var k = 0; k < 5; k++) {
-                var hw = w / 2, bh = 7 - k * 0.6;
-                out += '<rect x="' + (x - hw * 0.62) + '" y="' + (y - bh) + '" width="' + (hw * 1.24) + '" height="' + bh + '" fill="#3b2f36"/>' +
-                    '<rect class="win" x="' + (x - 1.2) + '" y="' + (y - bh + 1.5) + '" width="2.4" height="' + (bh - 3) + '" fill="#ffd27a"/>' +
-                    '<path d="M' + (x - hw) + ' ' + (y - bh) + ' Q' + (x - hw * 0.5) + ' ' + (y - bh - 2.5) + ' ' + x + ' ' + (y - bh - 3) + ' Q' + (x + hw * 0.5) + ' ' + (y - bh - 2.5) + ' ' + (x + hw) + ' ' + (y - bh) + ' Q' + (x + hw * 0.9) + ' ' + (y - bh + 1.5) + ' ' + (x + hw * 0.7) + ' ' + (y - bh + 0.5) + ' L' + (x - hw * 0.7) + ' ' + (y - bh + 0.5) + ' Q' + (x - hw * 0.9) + ' ' + (y - bh + 1.5) + ' ' + (x - hw) + ' ' + (y - bh) + 'Z" fill="#241c22"/>';
-                y -= bh + 3; w -= 4;
+        var seed = 11, rnd = function() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+        // ink wash: a shape laid down twice, a soft bleed underneath and the body on top, both with ragged edges
+        var wash = function(d, dark, op) {
+            return '<path d="' + d + '" fill="' + dark + '" opacity="' + (op * 0.35).toFixed(2) + '" filter="url(#gsBleed)"/>' +
+                '<path d="' + d + '" fill="url(#gsGrey)" opacity="' + op + '" filter="url(#gsWash)"/>';
+        };
+        var stroke = function(d, w, op, cls) { return '<path class="' + (cls || 'ink') + '" d="' + d + '" stroke-width="' + w + '"' + (op != null ? ' opacity="' + op + '"' : '') + ' filter="url(#gsRough)"/>'; };
+        // the plum branch and its blossom
+        var branch = stroke('M404 72 C 372 78, 342 110, 312 142 C 290 166, 262 180, 222 188', 5.2) +
+            stroke('M334 118 C 330 136, 326 150, 318 170', 2.6) + stroke('M312 142 C 300 166, 290 190, 280 216', 2.2) +
+            stroke('M362 88 C 352 76, 346 66, 344 54', 2) + stroke('M262 180 C 256 194, 252 206, 246 214', 1.6) + stroke('M290 164 L 284 158 M250 186 L 238 196', 1.4) +
+            stroke('M404 72 C 372 78, 342 110, 312 142', 2, 0.35, 'ink');
+        var spots = [[392, 80], [366, 94], [346, 108], [330, 134], [322, 160], [300, 156], [282, 196], [262, 178], [236, 190]];
+        var blooms = '';
+        spots.forEach(function(c, i) {
+            var g = '';
+            for (var k = 0; k < 7; k++) {
+                var ang = rnd() * Math.PI * 2, d = rnd() * 11, r = 2.4 + rnd() * 2.6;
+                g += '<circle cx="' + (c[0] + Math.cos(ang) * d).toFixed(1) + '" cy="' + (c[1] + Math.sin(ang) * d * 0.9).toFixed(1) + '" r="' + r.toFixed(1) + '" fill="' + (rnd() < 0.25 ? '#8f1d22' : rnd() < 0.5 ? '#c3272b' : '#d7343a') + '" opacity="' + (0.8 + rnd() * 0.2).toFixed(2) + '"/>';
             }
-            return out + '<rect x="' + (x - 0.6) + '" y="' + (y - 12) + '" width="1.2" height="12" fill="#241c22"/><circle cx="' + x + '" cy="' + (y - 12) + '" r="1.3" fill="#241c22"/>';
-        };
-        // a cherry tree: dark trunk, a few branches and clusters of blossom
-        var sakura = function(x, top, size, seed) {
-            var r = function() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
-            var out = '<path d="M' + x + ' 230 C' + (x + 2) + ' ' + (top + size * 1.3) + ' ' + (x - 3) + ' ' + (top + size * 0.9) + ' ' + (x - 1) + ' ' + (top + size * 0.5) + ' M' + (x - 1) + ' ' + (top + size * 0.9) + ' L' + (x - size * 0.6) + ' ' + (top + size * 0.5) + ' M' + (x) + ' ' + (top + size * 0.75) + ' L' + (x + size * 0.55) + ' ' + (top + size * 0.35) + '" fill="none" stroke="#2c1f1a" stroke-width="' + (size * 0.11) + '" stroke-linecap="round"/>';
-            for (var k = 0; k < 14; k++) {
-                var ang = r() * Math.PI * 2, d = r() * size * 0.75;
-                out += '<circle cx="' + (x + Math.cos(ang) * d * 1.15).toFixed(1) + '" cy="' + (top + size * 0.55 + Math.sin(ang) * d * 0.8).toFixed(1) + '" r="' + (size * (0.22 + r() * 0.2)).toFixed(1) + '" fill="url(#gsBlossom)" opacity="' + (0.85 + r() * 0.15).toFixed(2) + '"/>';
-            }
-            return out;
-        };
-        // a stone lantern (灯籠) by the water
-        var toro = function(x, y) {
-            return '<g fill="#4a4d55"><rect x="' + (x - 3) + '" y="' + (y - 2) + '" width="6" height="2"/><rect x="' + (x - 1) + '" y="' + (y - 9) + '" width="2" height="7"/><rect x="' + (x - 3.5) + '" y="' + (y - 10) + '" width="7" height="1.4"/>' +
-                '<rect x="' + (x - 2.6) + '" y="' + (y - 15) + '" width="5.2" height="5" fill="#5a5d66"/><rect class="win" x="' + (x - 1.4) + '" y="' + (y - 14.2) + '" width="2.8" height="3.4" fill="#ffd27a"/>' +
-                '<path d="M' + (x - 5) + ' ' + (y - 15) + ' L' + x + ' ' + (y - 18.5) + ' L' + (x + 5) + ' ' + (y - 15) + 'Z"/></g>';
-        };
-        var stars = '';
-        for (var s = 0; s < 46; s++) stars += '<span style="left:' + (Math.random() * 100).toFixed(1) + '%;top:' + (Math.random() * 62).toFixed(1) + '%;animation-delay:-' + (Math.random() * 3).toFixed(2) + 's;transform:scale(' + (0.5 + Math.random()).toFixed(2) + ')"></span>';
-        var petals = '';
-        if (!calm) for (var q = 0; q < 7; q++) petals += '<i class="gs-petal" style="left:' + (100 + Math.random() * 30).toFixed(0) + '%;top:' + (20 + Math.random() * 55).toFixed(0) + '%;animation-duration:' + (14 + Math.random() * 12).toFixed(1) + 's;animation-delay:-' + (Math.random() * 20).toFixed(1) + 's"></i>';
-        var town = '';
-        for (var w = 0; w < 26; w++) town += '<rect x="' + (150 + w * 4.2 + Math.random() * 2).toFixed(1) + '" y="' + (166 + Math.random() * 3).toFixed(1) + '" width="1.1" height="1.1" fill="#ffd9a0" opacity="' + (0.5 + Math.random() * 0.5).toFixed(2) + '"/>';
-        var fuji = 'M30 172 C 90 158, 140 128, 176 78 Q 190 60 204 78 C 240 128, 290 158, 370 172 Z';
-        var torii = '<rect x="88" y="146" width="3.6" height="40" fill="url(#gsVerm)"/><rect x="113" y="146" width="3.6" height="40" fill="url(#gsVerm)"/>' +
-            '<rect x="85" y="156" width="34.6" height="2.4" fill="#b23a22"/><rect x="100.8" y="150" width="3" height="6" fill="#b23a22"/>' +
-            '<path d="M80 147 Q102 152 125 147 L126 151 Q102 156 79 151Z" fill="#2b2420"/><rect x="84" y="151" width="37" height="1.6" fill="#c8402e"/>';
-        return '<div class="gs-sky"><i class="dusk"></i><i class="night"></i></div><div class="gs-stars">' + stars + '</div>' +
-            '<svg class="gs-land" viewBox="0 0 400 230" preserveAspectRatio="xMidYMax meet">' +
-            '<defs><radialGradient id="gsGlow"><stop offset="0" stop-color="#ffb35c" stop-opacity="0.75"/><stop offset="1" stop-color="#ff8a3d" stop-opacity="0"/></radialGradient>' +
-            '<radialGradient id="gsLit" cx="0.45" cy="0.4" r="0.7"><stop offset="0" stop-color="#fff1c2"/><stop offset="0.45" stop-color="#ffb04a"/><stop offset="1" stop-color="#e2582a"/></radialGradient>' +
-            '<linearGradient id="gsFuji" x1="0" x2="1"><stop offset="0" stop-color="#8a9bbd"/><stop offset="0.45" stop-color="#5f7199"/><stop offset="1" stop-color="#46577d"/></linearGradient>' +
-            '<linearGradient id="gsSnow" x1="0" x2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d6e1ee"/></linearGradient>' +
-            '<linearGradient id="gsLake" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9d3e6"/><stop offset="1" stop-color="#6c8fae"/></linearGradient>' +
-            '<linearGradient id="gsHillL" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6d8a74"/><stop offset="1" stop-color="#3f5a46"/></linearGradient>' +
-            '<linearGradient id="gsShore" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#55704e"/><stop offset="1" stop-color="#2c3d2c"/></linearGradient>' +
-            '<linearGradient id="gsVerm" x1="0" x2="1"><stop offset="0" stop-color="#e0563a"/><stop offset="0.5" stop-color="#c8402e"/><stop offset="1" stop-color="#8f2a1c"/></linearGradient>' +
-            '<radialGradient id="gsBlossom" cx="0.4" cy="0.35" r="0.7"><stop offset="0" stop-color="#ffe9f0"/><stop offset="0.6" stop-color="#f7bccb"/><stop offset="1" stop-color="#e79ab0"/></radialGradient>' +
-            '<radialGradient id="gsSun"><stop offset="0" stop-color="#fff3c4"/><stop offset="0.5" stop-color="#ffd27a"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient>' +
-            '<radialGradient id="gsMoon"><stop offset="0" stop-color="#fffbe8"/><stop offset="0.55" stop-color="#fff6d0"/><stop offset="1" stop-color="#fff6d0" stop-opacity="0"/></radialGradient>' +
-            '<filter id="gsBlur" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="2.2"/></filter>' +
-            '<filter id="gsSoft" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="0.5"/></filter>' +
-            '<clipPath id="gsLakeClip"><rect x="0" y="172" width="400" height="40"/></clipPath></defs>' +
-            // sun, clouds and birds (day)
-            '<g class="sun"><circle cx="70" cy="104" r="22" fill="url(#gsSun)"/><circle cx="70" cy="104" r="9" fill="#fff0bf"/></g>' +
-            '<g class="day" filter="url(#gsBlur)" fill="#fff" opacity="0.75">' +
-            (calm ? '' : '<animateTransform attributeName="transform" type="translate" values="0 0;14 0;0 0" dur="60s" repeatCount="indefinite"/>') +
-            '<ellipse cx="250" cy="96" rx="34" ry="5"/><ellipse cx="238" cy="92" rx="18" ry="5"/><ellipse cx="320" cy="78" rx="26" ry="4"/><ellipse cx="128" cy="112" rx="40" ry="4"/><ellipse cx="60" cy="70" rx="22" ry="3.5"/></g>' +
-            '<g class="day" fill="none" stroke="#2b2b35" stroke-width="0.9" stroke-linecap="round"><path d="M300 60 q3 -3 6 0 M306 60 q3 -3 6 0"/><path d="M322 52 q2.5 -2.5 5 0 M327 52 q2.5 -2.5 5 0"/><path d="M290 70 q2 -2 4 0 M294 70 q2 -2 4 0"/></g>' +
-            // far haze, Fuji, snow, the ridges
-            '<path d="M0 172 L0 150 Q 60 134 120 152 Q 150 160 190 158 Q 300 150 400 140 V172Z" fill="#9db0c9" opacity="0.6"/>' +
-            '<path d="' + fuji + '" fill="url(#gsFuji)"/>' +
-            '<path d="M30 172 C 90 158, 140 128, 176 78 Q 184 68 190 66 L 190 172Z" fill="#fff" opacity="0.08"/>' +
-            '<path d="M190 66 L 175 130 M190 66 L 196 140 M190 66 L 212 118" stroke="#3b4a6a" stroke-width="0.7" opacity="0.45" fill="none"/>' +
-            '<path d="M168 92 C 174 84 182 70 190 65 C 198 70 206 84 212 92 L 208 96 L 203 91 L 199 99 L 194 93 L 189 101 L 184 94 L 179 100 L 174 94 L 171 98Z" fill="url(#gsSnow)"/>' +
-            '<path d="M190 65 C 198 70 206 84 212 92 L 208 96 L 203 91 L 199 99 L 194 93 L 190 100Z" fill="#c6d3e2" opacity="0.5"/>' +
-            // the hills either side, the pagoda, the town across the water
-            '<path d="M0 172 L0 150 Q 28 132 60 146 Q 100 160 150 164 L150 172Z" fill="url(#gsHillL)"/>' +
-            '<path d="M240 172 Q 280 150 322 146 Q 362 142 400 156 V172Z" fill="url(#gsHillL)"/>' +
-            pagoda(334, 150) +
-            '<path d="M150 172 L150 169 Q 200 166 250 169 L250 172Z" fill="#3f4a55"/>' +
-            // the lake, reflections, ripples
-            '<rect x="0" y="172" width="400" height="40" fill="url(#gsLake)"/>' +
-            '<g clip-path="url(#gsLakeClip)" opacity="0.32" filter="url(#gsSoft)" transform="translate(0 344) scale(1 -1)"><path d="' + fuji + '" fill="#3f4f73"/><path d="M168 92 C 174 84 182 70 190 65 C 198 70 206 84 212 92 L 208 96 L 199 99 L 189 101 L 179 100 L 171 98Z" fill="#fff"/>' + pagoda(334, 150) + '</g>' +
-            '<g clip-path="url(#gsLakeClip)" opacity="0.42" filter="url(#gsSoft)" transform="translate(0 372) scale(1 -1)">' + torii + '</g>' +
-            '<g stroke="#fff" stroke-width="0.6" opacity="0.35" fill="none"><path d="M40 182 h18 M70 190 h24 M200 184 h14 M240 196 h26 M300 180 h20 M330 192 h16 M130 200 h30 M20 204 h14"/></g>' +
-            torii +
-            // the near shore, lanterns, cherry trees
-            '<path d="M0 212 Q 100 206 200 210 T 400 209 V230 H0Z" fill="url(#gsShore)"/>' +
-            '<path d="M0 213 Q 100 207 200 211 T 400 210" fill="none" stroke="#c9bfa6" stroke-width="1.2" opacity="0.6"/>' +
-            toro(170, 226) + toro(236, 224) +
-            sakura(26, 128, 30, 7) + sakura(378, 134, 26, 3) +
-            // night falls over all of it; the lights come up on top
-            '<rect class="shade" x="0" y="0" width="400" height="230" opacity="0"/>' +
-            '<g class="ng"><circle cx="286" cy="100" r="22" fill="url(#gsMoon)"/><circle cx="286" cy="100" r="8.5" fill="#fff6d0"/><circle cx="283" cy="98" r="1.6" fill="#efe6c2"/><circle cx="289" cy="103" r="1.1" fill="#efe6c2"/>' +
-            '<path d="M278 172 Q286 190 294 212" stroke="#fff6d0" stroke-width="5" opacity="0.14" filter="url(#gsBlur)"/>' +
-            town + '<rect x="150" y="174" width="100" height="6" fill="#ffd9a0" opacity="0.12" filter="url(#gsBlur)"/>' +
-            '<rect x="327" y="98" width="14" height="54" fill="#ffd27a" opacity="0.14" filter="url(#gsBlur)"/>' +
-            '<circle cx="170" cy="213" r="7" fill="#ffd27a" opacity="0.28" filter="url(#gsBlur)"/><circle cx="236" cy="211" r="7" fill="#ffd27a" opacity="0.28" filter="url(#gsBlur)"/>' +
-            '<rect x="83" y="146" width="40" height="42" fill="#ff9a5c" opacity="0.14" filter="url(#gsBlur)"/></g>' +
-            '<path class="rope" d="M0 22 Q 200 92 400 22"/>' + lan + '</svg>' + petals + '<div class="gs-fw"></div>';
+            blooms += '<g class="gs-bloom" data-i="' + i + '" filter="url(#gsDab)">' + g + '</g>';
+        });
+        // the fisherman's boat, drawn at the origin and moved along the water
+        var boat = '<g class="boat"><g class="hull"><path d="M0 0 Q 46 13 92 0 Q 97 -8 94 -16 Q 92 -4 86 2 Q 46 10 2 2 Q -2 -2 0 0Z" fill="#3a3a3e" filter="url(#gsRough)"/>' +
+            '<path d="M58 -2 l0 -9 l10 0 l0 9Z" fill="#4a4a4e"/><path d="M60 -11 q5 -4 10 0" fill="#3a3a3e"/>' +
+            '<path d="M42 -2 L 40 -22 Q 44 -30 50 -30 Q 56 -30 58 -22 L 56 -2Z" fill="#2b2b2e" filter="url(#gsRough)"/><path d="M38 -31 L 50 -37 L 62 -31Z" fill="#2b2b2e"/>' +
+            '<path class="ink" d="M55 -20 L 102 -46" stroke-width="1.3"/><path class="ink" d="M102 -46 L 106 2" stroke-width="0.5" opacity="0.6"/>' +
+            '<path class="ink" d="M10 -1 L 10 -16 Q 12 -20 14 -16 L 14 -1" stroke-width="1.2"/></g>' +
+            '<g transform="scale(1 -1)" opacity="0.22" filter="url(#gsRipple)"><path d="M0 0 Q 46 13 92 0 Q 97 -8 94 -16 Q 92 -4 86 2 Q 46 10 2 2Z" fill="#3a3a3e"/><path d="M42 -2 L 40 -22 Q 50 -32 58 -22 L 56 -2Z" fill="#2b2b2e"/></g></g>';
+        var ridge = 'M-10 262 L 16 242 L 40 226 L 64 236 L 86 212 L 104 222 L 128 200 L 150 216 L 176 208 L 196 228 L 222 238 L 246 252 L 266 262 Z';
+        return '<div class="gs-paper"></div><div class="gs-dusk"></div><div class="gs-night"></div>' +
+            '<svg class="gs-land" viewBox="0 0 400 400" preserveAspectRatio="xMidYMax meet">' +
+            '<defs><filter id="gsWash" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="0.028" numOctaves="3" seed="5" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="9"/><feGaussianBlur stdDeviation="0.5"/></filter>' +
+            '<filter id="gsBleed" x="-15%" y="-15%" width="130%" height="130%"><feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="9" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="16"/><feGaussianBlur stdDeviation="3"/></filter>' +
+            '<filter id="gsRough" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="0.09" numOctaves="2" seed="2" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.8"/></filter>' +
+            '<filter id="gsDab" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="0.12" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="4"/></filter>' +
+            '<filter id="gsRipple" x="-10%" y="-20%" width="120%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="0.02 0.3" numOctaves="1" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="6"/><feGaussianBlur stdDeviation="1"/></filter>' +
+            '<filter id="gsMistF" x="-20%" y="-100%" width="140%" height="300%"><feGaussianBlur stdDeviation="7"/></filter>' +
+            '<filter id="gsSunF" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" seed="6" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="7"/></filter>' +
+            '<linearGradient id="gsGrey" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a5a5e"/><stop offset="0.55" stop-color="#9a9a9e"/><stop offset="1" stop-color="#d2d1cf"/></linearGradient>' +
+            '<linearGradient id="gsGreyD" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4a4e"/><stop offset="1" stop-color="#8c8c90"/></linearGradient></defs>' +
+            // the sun, which sets behind the ridge as the game goes on
+            '<g class="sun"><circle cx="84" cy="120" r="27" fill="#c62b2b" filter="url(#gsSunF)"/><circle cx="84" cy="120" r="27" fill="#d93a36" opacity="0.5" filter="url(#gsSunF)"/>' +
+            '<path d="M60 112 q24 -2 46 3 M62 126 q22 3 42 -1" stroke="#f6f3ec" stroke-width="2.2" opacity="0.45" fill="none" filter="url(#gsRough)"/></g>' +
+            // birds in the day
+            '<g class="day">' + stroke('M226 140 q4 -4 8 0 q4 -4 8 0 M246 132 q3 -3 6 0 q3 -3 6 0 M212 150 q3 -3 6 0 q3 -3 6 0', 1, 0.8) + '</g>' +
+            // the far ridge: a bleed, the wash, a darker core, and mist across its foot
+            wash(ridge, '#555', 0.85) +
+            '<path d="M30 250 L 60 240 L 86 220 L 104 230 L 128 210 L 150 224 L 176 216 L 196 234 L 220 244 L 240 256 L 30 256Z" fill="url(#gsGreyD)" opacity="0.5" filter="url(#gsWash)"/>' +
+            '<ellipse cx="140" cy="262" rx="170" ry="11" fill="#f6f3ec" opacity="0.85" filter="url(#gsMistF)"/>' +
+            // still water: a few thin washes
+            stroke('M30 300 q20 -2 40 0 M150 318 q24 -2 48 0 M20 340 q16 -2 32 0 M250 332 q20 -2 40 0', 1.2, 0.18) +
+            // the boat, moved along the water in sceneTick
+            '<g transform="translate(0 326) scale(1.25)">' + boat + '</g>' +
+            // the near hills in the two lower corners
+            wash('M-10 400 L -10 352 Q 20 338 50 352 Q 80 364 118 376 L 118 400Z', '#444', 0.9) +
+            wash('M284 400 L 284 380 Q 320 342 356 356 Q 384 366 410 350 L 410 400Z', '#444', 0.9) +
+            // the branch and its blossom
+            branch + blooms +
+            // night: a pale moon
+            '<g class="ng"><circle cx="200" cy="104" r="17" fill="#f6f3ec"/><circle cx="200" cy="104" r="17" fill="none" stroke="#6a6a70" stroke-width="1" opacity="0.6" filter="url(#gsRough)"/><circle cx="194" cy="100" r="3" fill="#dcd9d2" opacity="0.6"/><circle cx="205" cy="109" r="2" fill="#dcd9d2" opacity="0.6"/></g>' +
+            '</svg><div class="gs-seal" aria-hidden="true">模擬</div>';
     }
     function sceneStart() {
         var v = document.getElementById('flash-view');
@@ -11369,14 +11314,13 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         if (!sceneOn()) { v.classList.remove('game'); if (el) el.remove(); sceneStop(); return; }
         v.classList.add('game');
         if (!el) { el = document.createElement('div'); el.className = 'gs'; el.setAttribute('aria-hidden', 'true'); el.innerHTML = sceneHtml(); v.insertBefore(el, v.firstChild); }
-        el.querySelectorAll('.gs-fw > *').forEach(function(x) { x.remove(); });
         scene.lit = -1; scene.combo = 0; scene.cycle = 0; scene.finale = false;
         sceneTick();
         clearInterval(scene.timer);
         scene.timer = setInterval(sceneTick, 250);
     }
     function sceneStop() { clearInterval(scene.timer); scene.timer = 0; }
-    // where the game is: how far along (0–1), how dark the sky is (0–1), the current combo, and the time attack score
+    // where the game is: how far along (0–1), how late in the day (0–1), the current combo, and the time attack score
     function sceneRead() {
         var r = { prog: 0, t: 0.12, combo: 0, score: null };
         if (!wq) return r;
@@ -11401,77 +11345,31 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var v = document.getElementById('flash-view'), el = v && v.querySelector('.gs');
         if (!el || !v.classList.contains('active') || !v.classList.contains('game')) { sceneStop(); return; }
         var r = sceneRead();
-        if (scene.finale) { r.t = 1; r.prog = scene.finale.prog; r.score = null; r.combo = scene.combo; }
-        var t = Math.max(r.t, document.documentElement.classList.contains('dark') ? 0.55 : 0);
-        var dusk = Math.min(1, t * 2), night = Math.max(0, Math.min(1, (t - 0.5) * 2));
-        el.querySelector('.gs-sky .dusk').style.opacity = dusk;
-        el.querySelector('.gs-sky .night').style.opacity = night;
-        el.querySelector('.gs-stars').style.opacity = Math.max(0, night - 0.15);
-        el.querySelector('.gs-land .shade').setAttribute('opacity', (night * 0.5).toFixed(2));
-        el.querySelector('.gs-land .sun').style.transform = 'translateY(' + (t * 110).toFixed(1) + 'px)';
+        if (scene.finale) { r.t = 1; r.prog = scene.finale.prog; r.score = null; }
+        var t = Math.max(r.t, document.documentElement.classList.contains('dark') ? 0.6 : 0);
+        var dusk = Math.max(0, Math.min(1, (t - 0.3) * 2.5)), night = Math.max(0, Math.min(1, (t - 0.6) / 0.4));
+        el.querySelector('.gs-dusk').style.opacity = Math.max(0, dusk * (1 - night * 0.8));
+        el.querySelector('.gs-night').style.opacity = night * 0.5;
         el.querySelector('.gs-land .ng').style.opacity = night;
-        el.querySelectorAll('.gs-land .day').forEach(function(d) { d.style.opacity = Math.max(0, 1 - dusk * 1.1); });
-        // lanterns: a share of the game for the normal modes; in time attack they fill up again and again with your score
+        el.querySelectorAll('.gs-land .day').forEach(function(d) { d.style.opacity = Math.max(0, 1 - dusk); });
+        // the sun sinks behind the ridge (it is drawn behind it), the boat drifts from left to right
+        var sun = el.querySelector('.gs-land .sun'); sun.style.transform = 'translateY(' + (t * 150).toFixed(1) + 'px)'; sun.style.opacity = t > 0.9 ? 0 : 1;
+        el.querySelector('.gs-land .boat').style.transform = 'translateX(' + (20 + t * 140).toFixed(1) + 'px)';
+        // the blossom: a cluster for each share of the game; in time attack the branch fills again and again with your score
         var lit;
-        if (r.score != null) {
-            var cyc = Math.floor(r.score / GS_LANTERNS);
-            if (cyc > scene.cycle) { scene.cycle = cyc; sceneSalvo(3); }
-            lit = r.score % GS_LANTERNS;
-            if (lit === 0 && r.score > 0 && scene.lit === GS_LANTERNS - 1) lit = GS_LANTERNS;   // let the full string glow for a moment
-        } else lit = Math.round(r.prog * GS_LANTERNS);
+        if (r.score != null) lit = r.score % GS_BLOOMS || (r.score > 0 ? GS_BLOOMS : 0);
+        else lit = Math.round(r.prog * GS_BLOOMS);
         if (lit !== scene.lit) {
-            el.querySelectorAll('.gs-lan').forEach(function(g, i) {
-                var on = i < lit;
-                if (on && !g.classList.contains('on') && scene.lit >= 0) { g.classList.remove('flare'); void g.getBBox(); g.classList.add('flare'); }
-                g.classList.toggle('on', on);
-            });
-            if (lit === GS_LANTERNS && r.score != null) setTimeout(function() { scene.lit = GS_LANTERNS; }, 0);
+            el.querySelectorAll('.gs-bloom').forEach(function(g, i) { g.classList.toggle('on', i < lit); });
             scene.lit = lit;
         }
-        // combos: 3, 5, 8, then every 5
-        var c = r.combo || 0;
-        if (c > scene.combo && (c === 3 || c === 5 || c === 8 || (c >= 10 && c % 5 === 0))) sceneSalvo(c >= 8 ? 3 : c >= 5 ? 2 : 1);
-        scene.combo = c;
     }
-    // fireworks go up in the open sky below the game panel when there is room, otherwise high over it
-    function sceneFirework(delay) {
-        var v = document.getElementById('flash-view'), fw = v && v.querySelector('.gs-fw');
-        if (!fw || wqCalm()) return;
-        setTimeout(function() {
-            if (!fw.isConnected) return;
-            var vr = v.getBoundingClientRect(), H = vr.height, W = vr.width;
-            var panel = v.querySelector('.flash-body > .wq-card, .flash-body > .wq-result'), bottom = panel ? panel.getBoundingClientRect().bottom - vr.top : H * 0.5;
-            var acts = v.querySelector('.flash-body > .flash-actions'); if (acts) bottom = Math.max(bottom, acts.getBoundingClientRect().bottom - vr.top);
-            var land = v.querySelector('.gs-land'), landTop = land ? land.getBoundingClientRect().top - vr.top + 40 : H * 0.7;
-            var lo = bottom + 50, hi = landTop, y = hi - lo > 50 ? lo + Math.random() * (hi - lo) : H * (0.14 + Math.random() * 0.22);
-            var x = W * (0.15 + Math.random() * 0.7);
-            var pal = [['#ffd36b', '#fff2c7'], ['#ff6b6b', '#ffc2c2'], ['#7ee0a0', '#e0ffe9'], ['#7fb8ff', '#d9ebff'], ['#f59ad8', '#ffe0f4'], ['#ffa94d', '#fff']][Math.floor(Math.random() * 6)];
-            var rk = document.createElement('i'); rk.className = 'gs-rocket'; rk.style.left = x + 'px'; rk.style.top = y + 'px'; rk.style.setProperty('--rise', (H - y) + 'px');
-            fw.appendChild(rk);
-            setTimeout(function() {
-                rk.remove();
-                var fl = document.createElement('i'); fl.className = 'gs-flash'; fl.style.left = x + 'px'; fl.style.top = y + 'px'; fl.style.setProperty('--c', pal[0]); fw.appendChild(fl);
-                var n = 30, R = 46 + Math.random() * 30;
-                for (var i = 0; i < n; i++) {
-                    var a = i / n * Math.PI * 2 + Math.random() * 0.12, rr = R * (0.75 + Math.random() * 0.3);
-                    var sp = document.createElement('i'); sp.className = 'gs-spark';
-                    sp.style.left = x + 'px'; sp.style.top = y + 'px';
-                    sp.style.setProperty('--c', i % 3 ? pal[0] : pal[1]);
-                    sp.style.setProperty('--dx', (Math.cos(a) * rr).toFixed(1) + 'px'); sp.style.setProperty('--dy', (Math.sin(a) * rr).toFixed(1) + 'px');
-                    fw.appendChild(sp);
-                }
-                setTimeout(function() { fw.querySelectorAll('.gs-spark, .gs-flash').forEach(function(z, k) { if (k < n + 1) z.remove(); }); }, 1400);
-            }, 560);
-        }, delay || 0);
-    }
-    function sceneSalvo(n) { for (var i = 0; i < n; i++) sceneFirework(i * 380 + Math.random() * 120); }
-    // the end of a game: night falls, the lanterns show how you did, and a good result gets a show
+    // the end of a game: evening settles and the blossom shows how you did
     function sceneFinale(pct) {
         var v = document.getElementById('flash-view');
         if (!v || !v.classList.contains('game')) return;
         scene.finale = { prog: Math.max(0, Math.min(1, pct / 100)) };
         sceneTick();
-        if (pct >= 100) sceneSalvo(6); else if (pct >= 80) sceneSalvo(4); else if (pct >= 60) sceneSalvo(2);
     }
     // ---------- end screens and effects for the 単語帳 modes ----------
     function wqCalm() { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
