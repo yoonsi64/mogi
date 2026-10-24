@@ -13173,7 +13173,7 @@
     function arKanjiItemHtml(key, it, st) {
         var res = st.kanji[key] || {}, done = res.ok !== undefined;
         return '<div class="kj-item' + (res.ok === true ? ' ok' : res.ok === false ? ' ng' : '') + '" data-k="' + key + '">' +
-            '<div class="kj-q' + (!it.pre && !it.post && it.k.length > 3 ? ' long' : '') + '">' + escapeHtml(it.pre || '') + arKjBlank(it.k, done && (it.pre || it.post) ? it.a : '') + escapeHtml(it.post || '') + '</div>' +
+            '<div class="kj-q">' + escapeHtml(it.pre || '') + arKjBlank(it.k, done && (it.pre || it.post) ? it.a : '') + escapeHtml(it.post || '') + '</div>' +
             '<div class="kj-opts">' + arShuffled(it.opts, ar.id + key).map(function(o) {
                 var cls = done ? (o === it.a ? ' right' : o === res.v ? ' wrong' : '') : '';
                 return '<button class="kj-opt' + cls + '" data-v="' + escapeHtml(o) + '"' + (done ? ' disabled' : '') + '>' + escapeHtml(o) + '</button>';
@@ -13181,6 +13181,25 @@
             '<div class="kj-res">' + arKanjiResult(it, res) + '</div></div>';
     }
     // 漢字 items underline the kana to write (ショウカイ); 練習 items are a blank to fill: （　）, ＿＿＿＿ or （売り上げ→　）
+    // 読み方: one size for every word and every set of readings; a word or a reading that would not fit on one line
+    // is shrunk just enough (the four readings of a word always share one size)
+    function arKjFit(body) {
+        var items = body.querySelectorAll('.kj-yomi .kj-item');
+        if (!items.length) return;
+        var fit = function(els) {
+            els.forEach(function(e) { e.style.fontSize = ''; });
+            var r = 1;
+            els.forEach(function(e) { if (e.scrollWidth > e.clientWidth + 1) r = Math.min(r, (e.clientWidth - 2) / e.scrollWidth); });
+            if (r < 1) { var fs = parseFloat(getComputedStyle(els[0]).fontSize); els.forEach(function(e) { e.style.fontSize = Math.max(10, Math.floor(fs * r * 10) / 10) + 'px'; }); }
+        };
+        // the words: shrink each only as needed, but never below the size the longest word needs on its own
+        items.forEach(function(it) { fit([it.querySelector('.kj-q')]); fit(Array.prototype.slice.call(it.querySelectorAll('.kj-opt'))); });
+        if (!arKjFit.bound) {
+            arKjFit.bound = true;
+            var t = null;
+            window.addEventListener('resize', function() { clearTimeout(t); t = setTimeout(function() { var b = document.querySelector('#ar-view .ar-body'); if (b) arKjFit(b); }, 150); });
+        }
+    }
     function arKjBlank(k, filled) {
         var m = /^[（(]\s*([^）)]*?)\s*[）)]$/.exec(k);
         if (filled && (m || /^[＿_]+$/.test(k))) return '<span class="kj-gap filled">' + escapeHtml(filled) + '</span>';
@@ -13212,6 +13231,7 @@
             html += '</section>';
         });
         body.innerHTML = html;
+        arKjFit(body);
         var byKey = {};
         all.forEach(function(x) { byKey[x.key] = x.it; });
         body.querySelectorAll('.kj-item').forEach(function(box) {
