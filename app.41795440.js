@@ -10597,15 +10597,56 @@
     // The sentence being read is painted with the CSS Custom Highlight API where the browser has it: like a text
     // selection, it is drawn under the letters and the text itself is left untouched, so nothing gets clipped or
     // re-shaped. Older browsers wrap the sentence in <mark> as before.
-    var AR_HL = !!(window.CSS && CSS.highlights && window.Highlight);
+    var AR_HL = !!document.createRange;          // ranges + the tint layer behind the text (every current browser)
     var arTtsRanges = [];
     function arTtsClearMark() {
-        if (AR_HL) { CSS.highlights.delete('ar-tts'); arTtsRanges = []; }
+        if (AR_HL) { arTtsRanges = []; arHlClear(); }
         var book = document.querySelector('#ar-view .ar-book');
         if (!book) return;
         book.querySelectorAll('mark.ar-tts').forEach(function(m) { m.replaceWith(document.createTextNode(m.textContent)); });
         book.querySelectorAll('.ar-tts-el').forEach(function(e) { e.classList.remove('ar-tts-el'); });
         book.normalize();
+    }
+    // the tint boxes behind the sentence, placed from the ranges' rectangles (in the book's scrolling coordinates);
+    // redrawn whenever the layout shifts (text size, 縦/横, window size)
+    var arHlSig = '', arHlTimer = null;
+    function arHlClear() {
+        document.querySelectorAll('#ar-view .ar-hl-layer').forEach(function(l) { l.remove(); });
+        clearInterval(arHlTimer); arHlTimer = null; arHlSig = '';
+    }
+    function arHlDraw(book) {
+        var layer = book.querySelector(':scope > .ar-hl-layer');
+        if (!layer) { layer = document.createElement('div'); layer.className = 'ar-hl-layer'; layer.setAttribute('aria-hidden', 'true'); book.insertBefore(layer, book.firstChild); }
+        var br = book.getBoundingClientRect(), ox = br.left + book.clientLeft - book.scrollLeft, oy = br.top + book.clientTop - book.scrollTop, html = '';
+        var vert = book.classList.contains('ar-v'), fs = parseFloat(getComputedStyle(book).fontSize) || 16; var boxes = [];
+        arTtsRanges.forEach(function(rg) {
+            Array.prototype.forEach.call(rg.getClientRects(), function(rc) {
+                if (!rc.width || !rc.height) return;
+                // keep each box to the width of the characters themselves, with a little room, so it never reaches the next line
+                var x = rc.left - ox, y = rc.top - oy, w = rc.width, h = rc.height, pad = fs * 0.12;
+                if (vert) { var cx = x + w / 2; w = Math.min(w, fs * 1.2); x = cx - w / 2; y -= pad / 2; h += pad; }
+                else { var cy = y + h / 2; h = Math.min(h, fs * 1.35); y = cy - h / 2; x -= pad / 2; w += pad; }
+                boxes.push({ x: x, y: y, w: w, h: h });
+            });
+        });
+        // join the pieces of one line (each ruby word is its own piece) into one box, so there are no seams
+        var merged = [];
+        boxes.forEach(function(bx) {
+            var last = merged[merged.length - 1];
+            if (last && (vert ? Math.abs(last.x - bx.x) < 2 && bx.y - (last.y + last.h) < 3 && bx.y >= last.y
+                              : Math.abs(last.y - bx.y) < 2 && bx.x - (last.x + last.w) < 3 && bx.x >= last.x)) {
+                if (vert) last.h = Math.max(last.h, bx.y + bx.h - last.y); else last.w = Math.max(last.w, bx.x + bx.w - last.x);
+            } else merged.push(bx);
+        });
+        merged.forEach(function(bx) { html += '<i style="left:' + bx.x.toFixed(1) + 'px;top:' + bx.y.toFixed(1) + 'px;width:' + bx.w.toFixed(1) + 'px;height:' + bx.h.toFixed(1) + 'px"></i>'; });
+        layer.innerHTML = html;
+        arHlSig = [book.scrollWidth, book.scrollHeight, book.clientWidth, fs, book.className].join('|');
+        if (!arHlTimer) arHlTimer = setInterval(function() {
+            var bk = document.querySelector('#ar-view .ar-book');
+            if (!bk || !arTtsRanges.length) { arHlClear(); return; }
+            var sig = [bk.scrollWidth, bk.scrollHeight, bk.clientWidth, parseFloat(getComputedStyle(bk).fontSize) || 16, bk.className].join('|');
+            if (sig !== arHlSig) arHlDraw(bk);
+        }, 400);
     }
     // highlight the current sentence (if the text is on screen) and bring it into view
     function arTtsShow() {
@@ -10630,7 +10671,7 @@
                 range.surroundContents(m);
                 if (!first) first = m;
             });
-            if (AR_HL && arTtsRanges.length) { var hl = new Highlight(); arTtsRanges.forEach(function(rg) { hl.add(rg); }); CSS.highlights.set('ar-tts', hl); }
+            if (AR_HL && arTtsRanges.length) arHlDraw(book);
         }
         if (first && arTts.playing) arTtsScroll(book);
     }
