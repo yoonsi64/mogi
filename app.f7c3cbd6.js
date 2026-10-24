@@ -6972,7 +6972,10 @@
                 dots.forEach(function(d, k) { d.classList.toggle('on', k === i); });
                 v.querySelector('.gal-count').textContent = (i + 1) + ' / ' + GS_ART.length;
             };
-            track.addEventListener('scroll', function() { clearTimeout(track._t); track._t = setTimeout(mark, 40); }, { passive: true });
+            // the dots and the counter follow the swipe as it happens (once per frame), not after the scrolling has settled
+            var pend = false;
+            track.addEventListener('scroll', function() { if (pend) return; pend = true; requestAnimationFrame(function() { pend = false; mark(); }); }, { passive: true });
+            track.addEventListener('scrollend', mark);
             dots.forEach(function(d) { d.addEventListener('click', function() { track.scrollTo({ left: track.clientWidth * +d.dataset.i, behavior: 'smooth' }); }); });
             v._mark = mark;
         }
