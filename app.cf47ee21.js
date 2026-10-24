@@ -4375,7 +4375,7 @@
         bottomNav.style.display = 'flex';
         bottomNav.querySelectorAll('button').forEach(function(b) { b.classList.toggle('active', b.dataset.tab === tab); });
         renderSubnav(tab, sub);
-        window.scrollTo(0, 0);
+        if (!(tab === 'home' && homeReturn)) window.scrollTo(0, 0);       // coming back home: the old spot is restored instead
     }
 
     function renderSubnav(tab, sub) {
@@ -4651,7 +4651,7 @@
         READING_BOOKS.forEach(function(b) { html += readingBookCardHtml(b); });
         html += '</div>';
         quizContainer.innerHTML = html;
-        setTimeout(restoreHomeSpot, 0);
+        restoreHomeSpot();          // in the same frame as the new page, so it never shows at the top first
         bindMockSection(quizContainer);
         setTimeout(function() { checkNewBadges(); }, 350);
 
