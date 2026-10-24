@@ -4191,34 +4191,59 @@
     var GD_SEASON = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
     var GD_LIGHT = { morning: '朝', day: '昼', dusk: '夕暮れ', night: '夜' };
     var GD_WORLDS = { garden: { k: '庭', title: '学びの庭', seen: 'jlptGardenSeen' }, town: { k: '町', title: '学びの町', seen: 'jlptTownSeen' } };
-    function gdWorld() { return GD_WORLDS[worldActive()]; }
-    function gdEngine() { return worldActive() === 'town' ? window.MogiTown : (window.MogiGarden || null); }
+    function gdWorld(w) { return GD_WORLDS[w || worldActive()]; }
+    function gdEngineFor(w) { return w === 'town' ? (window.MogiTown || null) : (window.MogiGarden || null); }
+    function gdEngine() { return gdEngineFor(worldActive()); }
     function gdLabel(st) { return st ? st.name : ''; }
     function gdFmt(min) {
         min = Math.max(0, Math.round(min));
         var h = Math.floor(min / 60), m = min % 60;
         return h ? h + '時間' + (m ? m + '分' : '') : m + '分';
     }
-    function gdState() {
-        var E = gdEngine(), tot = studyTotals(), min = gardenMinutes(), now = new Date();
+    // 年中行事 shown in the painting: the same days the opening scenes use, and 十五夜 from the moon
+    var GD_EVENTS = { shogatsu: 'お正月', setsubun: '節分', hinamatsuri: 'ひな祭り', kodomo: 'こどもの日', tanabata: '七夕', obon: 'お盆', tsukimi: 'お月見' };
+    function gdMoonPhase(d) { var p = ((d.getTime() - Date.UTC(2000, 0, 6, 18, 14)) / 86400000 / 29.530588853) % 1; return p < 0 ? p + 1 : p; }
+    function gdTsukimi(y) {         // 十五夜: the first full moon from about 7 September
+        for (var i = 0; i < 40; i++) {
+            var d = new Date(y, 8, 7 + i, 21), p = gdMoonPhase(d), p2 = gdMoonPhase(new Date(y, 8, 8 + i, 21));
+            if (p <= 0.5 && p2 > 0.5) return Math.abs(p - 0.5) <= Math.abs(p2 - 0.5) ? new Date(y, 8, 7 + i) : new Date(y, 8, 8 + i);
+        }
+        return new Date(y, 8, 21);
+    }
+    function gdEventFor(now) {
+        var m = now.getMonth() + 1, d = now.getDate(), md = m * 100 + d;
+        if (md >= 1229 || md <= 107) return 'shogatsu';
+        if (md >= 201 && md <= 203) return 'setsubun';
+        if (md >= 220 && md <= 303) return 'hinamatsuri';
+        if (md >= 420 && md <= 505) return 'kodomo';
+        if (md >= 701 && md <= 707) return 'tanabata';
+        if (md >= 813 && md <= 816) return 'obon';
+        var t = gdTsukimi(now.getFullYear()), day = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        if (Math.abs(day - t) <= 2 * 86400000) return 'tsukimi';
+        return null;
+    }
+    function gdState(w) {
+        w = w || worldActive();
+        var E = gdEngineFor(w), tot = studyTotals(), min = Math.floor(worldSeconds(w) / 60), now = new Date();
         var monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7)), week = 0;
         Object.keys(tot.days).forEach(function(d) {
             var p = d.split('-'), t = new Date(+p[0], +p[1] - 1, +p[2]);
             if (t >= monday) week += tot.days[d];
         });
         var stage = E ? E.stageFor(min) : 0, stages = E ? E.STAGES : [];
-        return { min: min, week: Math.floor(week / 60), today: Math.floor((tot.days[getTodayDateString()] || 0) / 60),
-                 stage: stage, stages: stages, next: stages[stage + 1] || null,
+        return { w: w, min: min, week: Math.floor(week / 60), today: Math.floor((tot.days[getTodayDateString()] || 0) / 60),
+                 stage: stage, stages: stages, next: stages[stage + 1] || null, event: gdEventFor(now),
                  season: E ? E.seasonFor(now) : 'autumn', light: E ? E.lightFor(now) : 'day' };
     }
-    function gdInfoHtml(s, shown) {
+    // what is still to come stays hidden: the next stage shows only how long is left, not what it is
+    function gdInfoHtml(s, shown, dev) {
         var st = s.stages[shown] || {}, nx = s.next, cur = s.stages[s.stage] || { min: 0 };
         var pct = nx ? Math.max(2, Math.min(100, Math.round((s.min - cur.min) / (nx.min - cur.min) * 100))) : 100;
-        return '<div class="gd-row"><span class="gd-title">' + gdWorld().k + '</span><span class="gd-total">合計 <b>' + gdFmt(s.min) + '</b></span></div>' +
+        return '<div class="gd-row"><span class="gd-title">' + gdWorld(s.w).k + '</span><span class="gd-total">合計 <b>' + gdFmt(s.min) + '</b></span></div>' +
             '<div class="gd-desc">' + escapeHtml(st.desc || st.name || '') + '<span class="gd-dot">・</span>今週 ' + gdFmt(s.week) + '</div>' +
             '<div class="gd-bar"><i style="width:' + pct + '%"></i></div>' +
-            '<div class="gd-next">' + (nx ? '<span>次 ─ ' + escapeHtml(gdLabel(nx)) + '　あと' + gdFmt(nx.min - s.min) + '</span>'
-                                          : '<span>庭が完成しました ─ 四季めぐり</span>') +
+            '<div class="gd-next">' + (nx ? '<span>次 ─ ' + (dev ? escapeHtml(gdLabel(nx)) : '？？？') + '　あと' + gdFmt(nx.min - s.min) + '</span>'
+                                          : '<span>' + gdWorld(s.w).k + 'が完成しました ─ 四季めぐり</span>') +
             '<span class="gd-step">' + (s.stage + 1) + ' / ' + s.stages.length + '</span></div>';
     }
     function gardenSlotHtml() { return '<div id="home-garden-slot"></div>'; }
@@ -4239,18 +4264,18 @@
         if (GD.ctrl && GD.ctrlWorld !== worldActive()) { GD.ctrl.destroy(); GD.ctrl = null; GD.shown = null; }   // switched between 庭 and 町
         var s = gdState();
         GD.el.querySelector('.gd-info').innerHTML = gdInfoHtml(s, s.stage);
-        GD.el.querySelector('.gd-tag').textContent = GD_SEASON[s.season] + '・' + GD_LIGHT[s.light];
-        var o = { stage: s.stage, season: s.season, light: s.light, quality: 'card', animate: true };
+        GD.el.querySelector('.gd-tag').textContent = GD_SEASON[s.season] + '・' + GD_LIGHT[s.light] + (s.event ? '・' + GD_EVENTS[s.event] : '');
+        var o = { stage: s.stage, season: s.season, light: s.light, event: s.event, quality: 'card', animate: true };
         if (!GD.ctrl) {
             o.onReady = gdCheckStageUp;
             GD.ctrl = E.mount(GD.el.querySelector('.gd-scene'), o);
             GD.ctrlWorld = worldActive();
         } else {
-            if (GD.shown !== s.stage + s.season + s.light && !GD.revealing) GD.ctrl.update(o);
+            if (GD.shown !== s.stage + s.season + s.light + s.event && !GD.revealing) GD.ctrl.update(o);
             GD.ctrl.resume();
             gdCheckStageUp();
         }
-        if (!GD.revealing) GD.shown = s.stage + s.season + s.light;
+        if (!GD.revealing) GD.shown = s.stage + s.season + s.light + s.event;
     }
     // reached a new stage since the garden was last seen: play the reveal on the card
     function gdCheckStageUp() {
@@ -4261,7 +4286,7 @@
         GD.revealing = true;
         setTimeout(function() {
             GD.ctrl.playStageUp(seen, s.stage);
-            GD.shown = s.stage + s.season + s.light;
+            GD.shown = s.stage + s.season + s.light + s.event;
             setTimeout(function() { GD.revealing = false; }, 2800);
         }, 400);
         showToast(gdWorld().title + '：' + gdLabel(s.stages[s.stage]) + 'ができました');
@@ -4284,119 +4309,188 @@
     });
 
     function gardenOpen() { return !!(GD.view && GD.view.classList.contains('active')); }
-    function openGarden() {
-        var E = gdEngine();
-        if (!E) return;
+    // The full view. From the home card it shows your own world: only the stages you have reached can be looked at.
+    // From the 開発者メニュー (devMode) everything is open: either world, any stage, season, time of day and 行事.
+    function gdViewWorld() { return GD.devMode && GD.devWorld && gdEngineFor(GD.devWorld) ? GD.devWorld : worldActive(); }
+    function gdMountView() {
+        if (GD.vctrl) { GD.vctrl.destroy(); GD.vctrl = null; }
+        var box = GD.view.querySelector('.gd-scene-full'); box.innerHTML = '';
+        GD.zoomReset && GD.zoomReset();
+        var E = gdEngineFor(gdViewWorld());
+        if (E) GD.vctrl = E.mount(box, gdViewOpts(gdState(gdViewWorld())));
+        gdSoundUpdate();
+    }
+    function openGarden(devMode) {
+        devMode = devMode === true;
+        if (!(devMode ? (window.MogiGarden || window.MogiTown) : gdEngine())) return;
         if (!GD.view) {
             GD.view = document.createElement('div');
             GD.view.id = 'gd-view'; GD.view.className = 'gd-view';
             GD.view.innerHTML =
                 '<div class="gd-top"><button class="gd-close" aria-label="閉じる">✕</button><div class="gd-top-title"><span class="gd-top-name">学びの庭</span><small></small></div>' +
+                '<button class="gd-sound" aria-label="音"></button>' +
                 '<span class="seg gd-world" role="group" aria-label="育てる世界"><button data-w="garden">庭</button><button data-w="town">町</button></span></div>' +
                 '<div class="gd-main">' +
                 '<div class="gd-stagebox"><div class="gd-zoom"><div class="gd-zoom-inner"><div class="gd-scene gd-scene-full"></div></div>' +
-                '<button class="gd-zoom-reset" hidden>元の大きさ</button><div class="gd-hint">ピンチで拡大・ドラッグで移動</div></div></div>' +
-                '<div class="gd-side"><div class="gd-info"></div><div class="gd-back" hidden><button>いまの庭に戻る</button></div>' +
+                '<button class="gd-zoom-reset" hidden>元の大きさ</button><div class="gd-hint">ピンチで拡大・ドラッグで移動</div>' +
+                '<button class="gd-lookup" hidden>☾ 見上げる</button>' +
+                '<div class="gd-sky" aria-hidden="true"><div class="gd-sky-canvas"></div><button class="gd-sky-back">↓ 戻る</button></div></div></div>' +
+                '<div class="gd-side"><div class="gd-info"></div><div class="gd-back" hidden><button></button></div>' +
                 '<div class="gd-dev"></div><div class="gd-list-title"></div><div class="gd-list"></div></div>' +
                 '</div>';
             document.body.appendChild(GD.view);
             if (window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches) GD.view.querySelector('.gd-hint').textContent = 'ホイールで拡大・ドラッグで移動';
             GD.view.querySelector('.gd-close').addEventListener('click', closeGarden);
+            GD.view.querySelector('.gd-sound').addEventListener('click', function() {
+                setSetting('gdSound', !getSetting('gdSound', true));
+                if (window.MogiSound) MogiSound.unlock();
+                gdSoundUpdate();
+            });
             GD.view.querySelectorAll('.gd-world button').forEach(function(b) {
                 b.addEventListener('click', function() {
                     if (b.dataset.w === worldActive()) return;
                     setSetting('world', b.dataset.w);
-                    GD.preview = null; GD.dev = null;
-                    if (GD.vctrl) { GD.vctrl.destroy(); GD.vctrl = null; }
-                    GD.view.querySelector('.gd-scene-full').innerHTML = '';
-                    GD.zoomReset && GD.zoomReset();
-                    var E2 = gdEngine();
+                    GD.preview = null;
                     if (!localStorage.getItem(gdWorld().seen)) localStorage.setItem(gdWorld().seen, String(gdState().stage));
-                    GD.vctrl = E2.mount(GD.view.querySelector('.gd-scene-full'), gdViewOpts(gdState()));
-                    gdRenderView();
+                    gdMountView(); gdRenderView();
                     showToast('これからの学習時間で' + gdWorld().title.slice(2) + 'が育ちます');
                 });
             });
             GD.view.querySelector('.gd-back button').addEventListener('click', function() { gdShowStage(null); });
             GD.view.querySelector('.gd-list').addEventListener('click', function(e) {
-                var b = e.target.closest('.gd-st.done, .gd-st.now');
-                if (b) gdShowStage(+b.dataset.i);
+                var b = e.target.closest('.gd-st:not([disabled])');
+                if (!b) return;
+                if (GD.devMode) { GD.dev = GD.dev || {}; GD.dev.stage = +b.dataset.i; if (GD.vctrl) GD.vctrl.update(gdViewOpts(gdState(gdViewWorld()))); gdRenderView(); gdSoundUpdate(); }
+                else gdShowStage(+b.dataset.i);
             });
+            GD.view.querySelector('.gd-lookup').addEventListener('click', gdOpenSky);
+            GD.view.querySelector('.gd-sky-back').addEventListener('click', gdCloseSky);
             gdPinch(GD.view.querySelector('.gd-zoom'), GD.view.querySelector('.gd-zoom-inner'), GD.view.querySelector('.gd-zoom-reset'));
         }
-        GD.preview = null; GD.dev = null;
+        GD.preview = null; GD.dev = null; GD.devMode = devMode; GD.devWorld = devMode ? worldActive() : null;
+        if (devMode && !gdEngineFor(GD.devWorld)) GD.devWorld = window.MogiGarden ? 'garden' : 'town';
+        GD.view.classList.toggle('dev', devMode);
         GD.view.classList.add('active');
         document.body.classList.add('gd-on');
-        GD.zoomReset && GD.zoomReset();
+        if (window.MogiSound) MogiSound.unlock();         // opened by a tap: sound may start
         gdRenderView();
-        var s = gdState();
-        GD.vctrl = E.mount(GD.view.querySelector('.gd-scene-full'), gdViewOpts(s));
+        gdMountView();
         syncNavHistory();
     }
     function closeGarden() {
         if (!GD.view) return;
+        gdCloseSky(true);
         GD.view.classList.remove('active');
         document.body.classList.remove('gd-on');
         if (GD.vctrl) { GD.vctrl.destroy(); GD.vctrl = null; }
         GD.view.querySelector('.gd-scene-full').innerHTML = '';
+        if (window.MogiSound) MogiSound.stop();
+        GD.devMode = false;
         syncNavHistory();
     }
     function gdViewOpts(s) {
         var d = GD.dev || {};
         return { stage: d.stage != null ? d.stage : GD.preview != null ? GD.preview : s.stage,
-                 season: d.season || s.season, light: d.light || s.light, quality: 'full', animate: true };
+                 season: d.season || s.season, light: d.light || s.light,
+                 event: d.event !== undefined ? (d.event || null) : s.event,
+                 quality: 'full', animate: true,
+                 onCue: function(name) { if (window.MogiSound && gardenOpen() && !gdSkyOpen()) MogiSound.cue(name); } };
     }
     function gdShowStage(i) {
         var s = gdState();
         GD.preview = (i == null || i === s.stage) ? null : i;
         if (GD.vctrl) GD.vctrl.update(gdViewOpts(s));
         gdRenderView();
+        gdSoundUpdate();
+    }
+    // ---------- sound (ambience.js: window.MogiSound) ----------
+    function gdSoundUpdate() {
+        if (!GD.view) return;
+        var btn = GD.view.querySelector('.gd-sound'), on = getSetting('gdSound', true);
+        btn.hidden = !window.MogiSound;
+        btn.textContent = on ? '🔊' : '🔇';
+        btn.setAttribute('aria-label', on ? '音を消す' : '音を出す');
+        if (!window.MogiSound) return;
+        if (!on || !gardenOpen() || document.hidden) { MogiSound.stop(); return; }
+        var w = gdViewWorld(), o = gdViewOpts(gdState(w));
+        MogiSound.play({ world: w, season: o.season, light: o.light, stage: o.stage, event: o.event, sky: gdSkyOpen() });
+    }
+    document.addEventListener('visibilitychange', function() { if (gardenOpen()) gdSoundUpdate(); });
+    // ---------- 見上げる: the night sky over the garden or town (ambience.js: window.MogiSky) ----------
+    function gdSkyOpen() { return !!(GD.view && GD.view.classList.contains('sky')); }
+    function gdOpenSky() {
+        if (!window.MogiSky || gdSkyOpen()) return;
+        var w = gdViewWorld(), o = gdViewOpts(gdState(w));
+        GD.view.classList.add('sky');
+        GD.view.querySelector('.gd-sky').setAttribute('aria-hidden', 'false');
+        if (GD.vctrl) GD.vctrl.pause();
+        var box = GD.view.querySelector('.gd-sky-canvas'); box.innerHTML = '';
+        GD.sky = MogiSky.mount(box, { date: new Date(), light: o.light, season: o.season, world: w });
+        gdSoundUpdate();
+        syncNavHistory();
+    }
+    function gdCloseSky(quiet) {
+        if (!GD.view || !gdSkyOpen()) return;
+        GD.view.classList.remove('sky');
+        GD.view.querySelector('.gd-sky').setAttribute('aria-hidden', 'true');
+        setTimeout(function() { if (!gdSkyOpen() && GD.sky) { GD.sky.destroy(); GD.sky = null; GD.view.querySelector('.gd-sky-canvas').innerHTML = ''; } }, 700);
+        if (GD.vctrl) GD.vctrl.resume();
+        if (quiet !== true) { gdSoundUpdate(); syncNavHistory(); }
     }
     function gdRenderView() {
-        var s = gdState(), o = gdViewOpts(s), shown = o.stage;
-        GD.view.querySelector('.gd-top-title small').textContent = GD_SEASON[o.season] + '・' + GD_LIGHT[o.light];
-        GD.view.querySelector('.gd-top-name').textContent = gdWorld().title;
-        GD.view.querySelector('.gd-list-title').textContent = gdWorld().k + 'の歩み';
+        var w = gdViewWorld(), s = gdState(w), o = gdViewOpts(s), shown = o.stage, dev = !!GD.devMode, E = gdEngineFor(w);
+        GD.view.querySelector('.gd-top-title small').textContent = GD_SEASON[o.season] + '・' + GD_LIGHT[o.light] + (o.event ? '・' + GD_EVENTS[o.event] : '');
+        GD.view.querySelector('.gd-top-name').textContent = gdWorld(w).title;
+        GD.view.querySelector('.gd-list-title').textContent = gdWorld(w).k + 'の歩み';
+        GD.view.querySelector('.gd-back button').textContent = 'いまの' + gdWorld(w).k + 'に戻る';
+        GD.view.querySelector('.gd-lookup').hidden = !window.MogiSky;
         var ws = GD.view.querySelector('.gd-world');
-        ws.hidden = !window.MogiTown;
+        ws.hidden = dev || !window.MogiTown;
         ws.querySelectorAll('button').forEach(function(b) { b.classList.toggle('active', b.dataset.w === worldActive()); });
-        GD.view.querySelector('.gd-info').innerHTML = gdInfoHtml(s, shown) +
-            '<div class="gd-today">今日 ' + gdFmt(s.today) + '　問題・読解・模試・単語帳のゲームを開いて手を動かしている時間だけを数えます。' +
-            (window.MogiTown ? '育つのは選んでいる方だけです（上の「庭・町」で切り替え。もう一方はそのまま残ります）。' : '') + '</div>';
-        GD.view.querySelector('.gd-back').hidden = GD.preview == null;
+        GD.view.querySelector('.gd-info').innerHTML = gdInfoHtml(s, shown, dev) +
+            (dev ? '' : '<div class="gd-today">今日 ' + gdFmt(s.today) + '　問題・読解・模試・単語帳のゲームを開いて手を動かしている時間だけを数えます。' +
+            (window.MogiTown ? '育つのは選んでいる方だけです（上の「庭・町」で切り替え。もう一方はそのまま残ります）。' : '') + '</div>');
+        GD.view.querySelector('.gd-back').hidden = dev || GD.preview == null;
+        // only what has been reached is shown; the stages still to come are ？？？ with the time they need
         GD.view.querySelector('.gd-list').innerHTML = s.stages.map(function(st, i) {
             var cls = i < s.stage ? 'done' : i === s.stage ? 'now' : i === s.stage + 1 ? 'next' : 'locked';
-            return '<button class="gd-st ' + cls + (i === shown ? ' shown' : '') + '" data-i="' + i + '"' + (cls === 'next' || cls === 'locked' ? ' disabled' : '') + '>' +
-                '<span class="gd-st-n">' + (i + 1) + '</span><span class="gd-st-name">' + escapeHtml(st.name) + '</span>' +
+            var open = dev || cls === 'done' || cls === 'now';
+            return '<button class="gd-st ' + cls + (i === shown ? ' shown' : '') + '" data-i="' + i + '"' + (open ? '' : ' disabled') + '>' +
+                '<span class="gd-st-n">' + (i + 1) + '</span><span class="gd-st-name">' + (open ? escapeHtml(st.name) : '？？？') + '</span>' +
                 '<span class="gd-st-min">' + (st.min ? gdFmt(st.min) : '—') + '</span>' +
                 '<span class="gd-st-mark">' + (cls === 'done' ? '✓' : cls === 'now' ? 'いま' : cls === 'next' ? 'あと' + gdFmt(st.min - s.min) : '') + '</span></button>';
         }).join('');
-        var dev = GD.view.querySelector('.gd-dev');
-        if (!getSetting('devMenu', false)) { dev.innerHTML = ''; return; }
+        var devBox = GD.view.querySelector('.gd-dev');
+        if (!dev) { devBox.innerHTML = ''; return; }
         var sel = function(id, list, val) {
             return '<select data-k="' + id + '">' + list.map(function(x) { return '<option value="' + x[0] + '"' + (String(x[0]) === String(val) ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select>';
         };
-        dev.innerHTML = '<div class="gd-dev-title">開発者メニュー・見え方を試す</div>' +
+        var worlds = [['garden', '庭']]; if (window.MogiTown) worlds.push(['town', '町']);
+        devBox.innerHTML = '<div class="gd-dev-title">開発者メニュー・すべて解放（記録は変わりません）</div>' +
+            sel('world', worlds, w) +
             sel('stage', s.stages.map(function(st, i) { return [i, (i + 1) + ' ' + gdLabel(st)]; }), o.stage) +
             sel('season', Object.keys(GD_SEASON).map(function(k) { return [k, GD_SEASON[k]]; }), o.season) +
             sel('light', Object.keys(GD_LIGHT).map(function(k) { return [k, GD_LIGHT[k]]; }), o.light) +
-            '<button data-k="up">段階アップを見る</button><button data-k="reset">元に戻す</button>';
-        dev.querySelectorAll('select').forEach(function(x) {
+            sel('event', [['', '行事なし']].concat(Object.keys(GD_EVENTS).map(function(k) { return [k, GD_EVENTS[k]]; })), o.event || '') +
+            '<button data-k="up">段階アップを見る</button><button data-k="reset">いまに戻す</button>';
+        devBox.querySelectorAll('select').forEach(function(x) {
             x.addEventListener('change', function() {
+                if (x.dataset.k === 'world') { GD.devWorld = x.value; GD.dev = null; gdRenderView(); gdMountView(); return; }
                 GD.dev = GD.dev || {};
                 GD.dev[x.dataset.k] = x.dataset.k === 'stage' ? +x.value : x.value;
-                if (GD.vctrl) GD.vctrl.update(gdViewOpts(gdState()));
-                gdRenderView();
+                if (GD.vctrl) GD.vctrl.update(gdViewOpts(gdState(gdViewWorld())));
+                gdRenderView(); gdSoundUpdate();
             });
         });
-        dev.querySelector('[data-k="up"]').addEventListener('click', function() {
-            var to = gdViewOpts(gdState()).stage || 1;
+        devBox.querySelector('[data-k="up"]').addEventListener('click', function() {
+            var to = gdViewOpts(gdState(gdViewWorld())).stage || 1;
             if (GD.vctrl) GD.vctrl.playStageUp(to - 1, to);
+            if (window.MogiSound && getSetting('gdSound', true)) MogiSound.cue('reveal');
         });
-        dev.querySelector('[data-k="reset"]').addEventListener('click', function() {
-            GD.dev = null; GD.preview = null;
-            if (GD.vctrl) GD.vctrl.update(gdViewOpts(gdState()));
-            gdRenderView();
+        devBox.querySelector('[data-k="reset"]').addEventListener('click', function() {
+            GD.dev = null;
+            if (GD.vctrl) GD.vctrl.update(gdViewOpts(gdState(gdViewWorld())));
+            gdRenderView(); gdSoundUpdate();
         });
     }
     // two fingers zoom (up to 4×) around the point between them, one finger moves it once zoomed, double-tap zooms in
@@ -5276,6 +5370,7 @@
         });
         document.getElementById('dev-gallery').addEventListener('click', function() { openGallery(0); });
         document.getElementById('dev-diff').addEventListener('click', function() { openDiffView(); });
+        document.getElementById('dev-world').addEventListener('click', function() { if (window.MogiGarden || window.MogiTown) openGarden(true); else showToast('庭の絵を読み込み中です'); });
         document.getElementById('dev-hide').addEventListener('click', function() {
             setSetting('devMenu', false);
             document.getElementById('dev-card').style.display = 'none';
@@ -13815,7 +13910,8 @@
         if (typeof flashOpen === 'function' && flashOpen()) d++;
         if (typeof galleryOpen === 'function' && galleryOpen()) d++;
         if (typeof diffOpen === 'function' && diffOpen()) d++;
-        if (typeof gardenOpen === 'function' && gardenOpen()) d++;          // the 画廊 sits on top of the results (or 設定): Back closes it first
+        if (typeof gardenOpen === 'function' && gardenOpen()) d++;
+        if (typeof gdSkyOpen === 'function' && gdSkyOpen()) d++;          // the 画廊 sits on top of the results (or 設定): Back closes it first
         if (typeof rpOpen === 'function' && rpOpen()) d += (rp && rp.state !== 'list') ? 2 : 1;
         if (typeof arOpen === 'function' && arOpen()) d++;
         if (typeof mockOpen === 'function' && mockOpen()) d += mockGridOpen() ? 2 : 1;
@@ -13839,6 +13935,7 @@
         }
     }
     function navBackOneLevel() {
+        if (gdSkyOpen()) { gdCloseSky(); return; }
         if (gardenOpen()) { closeGarden(); return; }
         if (galleryOpen()) { closeGallery(); return; }
         if (diffOpen()) { closeDiffView(); return; }

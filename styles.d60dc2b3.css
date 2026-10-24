@@ -631,6 +631,19 @@
         .gd-top { display: flex; align-items: center; gap: 12px; padding: calc(8px + env(safe-area-inset-top)) 12px 8px; flex-shrink: 0; }
         .gd-close { width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, 0.1); color: #fff; font-size: 1rem; }
         .gd-world { margin-left: auto; }
+        .gd-world[hidden], .gd-sound[hidden], .gd-lookup[hidden] { display: none !important; }
+        .gd-sound { margin-left: auto; width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, 0.1); font-size: 1.05rem; }
+        .gd-sound + .gd-world { margin-left: 6px; }
+        .gd-view.dev .gd-sound { margin-left: auto; }
+        .gd-lookup { position: absolute; left: 10px; bottom: 10px; z-index: 4; border: 0; border-radius: 999px; padding: 7px 14px; font-size: 0.8rem; background: rgba(12, 16, 34, 0.62); color: #f3ead7; font-family: var(--mincho); font-weight: 700; letter-spacing: 0.1em; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+        .gd-zoom.zoomed .gd-lookup { display: none; }
+        .gd-zoom-inner { transition: transform 0.25s ease; }
+        .gd-sky { position: absolute; inset: 0; z-index: 6; background: #05070f; transform: translateY(-100%); transition: transform 0.7s cubic-bezier(.3, .7, .2, 1); visibility: hidden; }
+        .gd-view.sky .gd-sky { transform: none; visibility: visible; }
+        .gd-view.sky .gd-zoom-inner { transform: translateY(40%) !important; transition: transform 0.7s cubic-bezier(.3, .7, .2, 1); }
+        .gd-sky-canvas { position: absolute; inset: 0; }
+        .gd-sky-back { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 2; border: 0; border-radius: 999px; padding: 7px 16px; font-size: 0.8rem; background: rgba(255, 255, 255, 0.14); color: #f3ead7; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+        .gd-st.locked .gd-st-name, .gd-st.next .gd-st-name { letter-spacing: 0.2em; }
         .gd-world button { background: rgba(255, 255, 255, 0.08); color: #efe7d8; border-color: rgba(255, 255, 255, 0.2); font-family: var(--mincho); font-weight: 700; min-width: 44px; }
         .gd-world button.active { background: #e48a52; border-color: #e48a52; color: #fff; }
         .gd-top-title { font-family: var(--mincho); font-weight: 700; font-size: 1.1rem; letter-spacing: 0.15em; }
