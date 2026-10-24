@@ -9800,6 +9800,7 @@
         // 회화 (CD-02): fill the blanks while listening (answers from the book)
         kaiwa: {
             audio: 'audio/dk-1-kaiwa.mp3',      // CD-02
+            segs: [[0.07, 3.00], [3.34, 8.20], [8.54, 14.15], [14.36, 21.09], [21.42, 26.87], [27.13, 35.53], [35.67, 44.52], [44.65, 51.54], [51.78, 60.23], [60.67, 70.68], [70.63, 71.93], [72.56, 81.58], [81.73, 86.56], [86.94, 91.41]],      // where each line is in the recording (seconds)
             answers: ['国技', '思い浮かべる', '分がある', '戦略', '煮込んだ', '条件', '活躍して', '腕を上げて', 'ふさわしい', '品格'],
             lines: [
                 ['A', '日本の[1]って、何か知ってる？'],
@@ -9944,6 +9945,7 @@
         ],
         kaiwa: {
             audio: 'audio/dk-2-kaiwa.mp3',      // CD-04
+            segs: [[0.09, 8.91], [9.15, 12.52], [12.87, 21.17], [21.62, 28.31], [28.81, 31.87], [32.06, 39.68], [40.04, 48.87], [49.49, 53.41], [53.39, 65.24], [65.16, 67.20], [67.37, 83.65], [83.73, 89.09], [89.37, 94.63]],
             answers: ['コミュニティ', 'やりとり', 'つながり', '流出した', 'だまし取られ', '警告', 'ハッキング', '欠点', '検索する', '気がおけない'],
             lines: [
                 ['A', '高校の{r|同級生|どう/きゅう/せい}の、{r|小田|お/だ}さんって覚えてる？　彼女、去年結婚して、今はアメリカに住んでいるらしいよ。'],
@@ -10860,6 +10862,35 @@
             rb.addEventListener('click', function() { var r = RATES[(RATES.indexOf(au.playbackRate) + 1) % RATES.length]; au.playbackRate = r; setSetting('kwRate', r); rb.textContent = (r === 1 ? '1.0' : r) + '×'; });
             au.addEventListener('play', function() { try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) {} });
             au.addEventListener('contextmenu', function(e) { e.preventDefault(); });          // no 「音声を保存」 from a long press / right click
+            // the line being spoken is marked (and kept in view) while the recording plays
+            var markNow = function() {
+                if (!kw.segs) return;
+                var t = au.currentTime, n = -1;
+                for (var k = 0; k < kw.segs.length; k++) if (t >= kw.segs[k][0] && t < kw.segs[k][1] + 0.4) { n = k; break; }
+                body.querySelectorAll('.kw-line').forEach(function(el, k) { el.classList.toggle('kw-now', k === n && !au.paused); });
+                var cur = n > -1 && !au.paused && body.querySelectorAll('.kw-line')[n];
+                if (cur && cur !== markNow.last) {
+                    markNow.last = cur;
+                    var r = cur.getBoundingClientRect(), br = body.getBoundingClientRect(), bank = body.querySelector('.kw-bank');
+                    var bottom = br.bottom - (bank ? bank.offsetHeight : 0);
+                    if (r.top < br.top + 60 || r.bottom > bottom - 10) body.scrollBy({ top: r.top - br.top - 90, behavior: 'smooth' });
+                }
+            };
+            au.addEventListener('timeupdate', markNow);
+            au.addEventListener('pause', markNow);
+            au.addEventListener('seeked', function() { markNow.last = null; markNow(); });
+            // one line: play just its stretch of the recording, then stop
+            player.playLine = function(li) {
+                var sg = kw.segs[li], stopAt = sg[1];
+                cancelAnimationFrame(player.raf);
+                au.currentTime = sg[0];
+                var watch = function() {
+                    if (au.paused) return;
+                    if (au.currentTime >= stopAt) { au.pause(); return; }
+                    player.raf = requestAnimationFrame(watch);
+                };
+                var p = au.play(); if (p && p.then) p.then(function() { player.raf = requestAnimationFrame(watch); }, function() {}); else player.raf = requestAnimationFrame(watch);
+            };
             au.addEventListener('error', function() { player.classList.add('kw-noaudio'); player.querySelector('.kw-player-k').textContent = '音声を読み込めませんでした'; });
         }
         var draw = function() {
@@ -10876,7 +10907,7 @@
             ans.forEach(function(a, i) { if (ok(i + 1)) used[a] = true; });
             var bank = arShuffled(ans, ar.id + 'kaiwa').map(function(a) { return '<button class="kw-chip"' + (used[a] ? ' disabled' : '') + ' data-v="' + escapeHtml(a) + '">' + escapeHtml(a) + '</button>'; }).join('');
             body.innerHTML = '<div class="kj-score"><span>正解 <b>' + right + '</b> / ' + ans.length + '</span><span><button class="ar-link" id="kw-show">答えを見る</button>　<button class="ar-link" id="kw-reset">やり直す</button></span></div>' +
-                '<div class="ar-intro">' + (player ? '本文に関連した会話です。音声を聞きながら（　）をタップして、下の語群から入る言葉を選びましょう。🔊は一行ずつの読み上げです。答えは本の正答です。'
+                '<div class="ar-intro">' + (player ? '本文に関連した会話です。音声を聞きながら（　）をタップして、下の語群から入る言葉を選びましょう。' + (kw.segs ? '🔊でその行だけをもう一度聞けます。' : '🔊は一行ずつの読み上げです。') + '答えは本の正答です。'
                     : '本文に関連した会話です。（　）をタップして、下の語群から入る言葉を選びましょう（本ではCDを聞きながら書き取ります。🔊で読み上げを聞けます）。答えは本の正答です。') + '</div>' +
                 '<div class="kw-dialog">' + lines + '</div>' +
                 '<div class="kw-bank">' + (act ? '<div class="kw-bank-k">' + '①②③④⑤⑥⑦⑧⑨⑩'.charAt(act - 1) + ' に入る言葉</div>' : '<div class="kw-bank-k done">全部できました</div>') + '<div class="kw-chips">' + bank + '</div></div>';
@@ -10895,7 +10926,7 @@
                 });
             });
             body.querySelectorAll('.kw-say').forEach(function(b) {
-                b.addEventListener('click', function() { if (player) player.querySelector('audio').pause(); var l = kw.lines[b.dataset.l][1]; speakText(escapeHtml(arPlainLine(l.replace(/\[(\d+)\]/g, function(m, n) { return ans[n - 1]; })))); });
+                b.addEventListener('click', function() { if (player && kw.segs) { player.playLine(+b.dataset.l); return; } if (player) player.querySelector('audio').pause(); var l = kw.lines[b.dataset.l][1]; speakText(escapeHtml(arPlainLine(l.replace(/\[(\d+)\]/g, function(m, n) { return ans[n - 1]; })))); });
             });
             document.getElementById('kw-show').addEventListener('click', function() { ans.forEach(function(a, i) { st.kaiwa[i + 1] = a; }); saveAdv(); act = null; draw(); });
             document.getElementById('kw-reset').addEventListener('click', function() { st.kaiwa = {}; saveAdv(); act = 1; draw(); body.scrollTop = 0; });
