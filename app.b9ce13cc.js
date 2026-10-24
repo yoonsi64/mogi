@@ -6809,6 +6809,7 @@
         { src: 'art/mishima.jpg', paper: '#ece4d2', pos: '55% 50%', title: '甲州三嶌越', ruby: [['甲州', 'こうしゅう'], ['三嶌越', 'みしまごえ']], en: 'Mishima Pass in Kai Province', series: '富嶽三十六景', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1830–32年頃' },
         { src: 'art/sekiya.jpg', paper: '#ece4d2', pos: '45% 50%', title: '隅田川関屋の里', ruby: [['隅田川', 'すみだがわ'], ['関屋', 'せきや'], 'の', ['里', 'さと']], en: 'Sekiya Village on the Sumida River', series: '富嶽三十六景', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1830–32年頃' },
         { src: 'art/wave.jpg', paper: '#ece4d2', pos: '40% 50%', title: '神奈川沖浪裏', ruby: [['神奈川', 'かながわ'], ['沖', 'おき'], ['浪裏', 'なみうら']], en: 'Under the Wave off Kanagawa (The Great Wave)', series: '富嶽三十六景', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1830–32年頃' },
+        { src: 'art/haboku.jpg', paper: '#d9cfb3', pos: '50% 55%', title: '破墨山水図', ruby: [['破墨', 'はぼく'], ['山水図', 'さんすいず']], en: 'Splashed-ink Landscape (Haboku sansui)', series: '水墨画・国宝', artist: '雪舟等楊', artistEn: 'Sesshū Tōyō', year: '1495年（明応4年）' },
         { src: 'art/ume.jpg', paper: '#ece4d2', pos: '50% 60%', title: '蒲田の梅園', ruby: [['蒲田', 'かまた'], 'の', ['梅園', 'うめぞの']], en: 'The Plum Garden at Kamata', series: '東都名所', artist: '歌川広重', artistEn: 'Utagawa Hiroshige', year: '1830年代' },
     ];
     // ---------- 難易度 (開発者メニュー): every question rated 1–5, with the reason ----------
@@ -6952,8 +6953,8 @@
             v.innerHTML = '<div class="gal-head"><button class="flash-close gal-close" aria-label="閉じる">✕</button><span class="gal-title">画廊</span><span class="gal-count"></span></div>' +
                 '<div class="gal-track">' + GS_ART.map(function(a, i) {
                     var rb = function(parts) { return parts.map(function(x) { return typeof x === 'string' ? escapeHtml(x) : '<ruby>' + escapeHtml(x[0]) + '<rt>' + escapeHtml(x[1]) + '</rt></ruby>'; }).join(''); };
-                    var seriesRb = { '富嶽三十六景': [['富嶽', 'ふがく'], ['三十六景', 'さんじゅうろっけい']], '京都名所之内': [['京都', 'きょうと'], ['名所', 'めいしょ'], ['之内', 'のうち']], '東都名所': [['東都', 'とうと'], ['名所', 'めいしょ']] }[a.series] || [a.series];
-                    var artistRb = { '葛飾北斎': [['葛飾', 'かつしか'], ['北斎', 'ほくさい']], '歌川広重': [['歌川', 'うたがわ'], ['広重', 'ひろしげ']] }[a.artist] || [a.artist];
+                    var seriesRb = { '富嶽三十六景': [['富嶽', 'ふがく'], ['三十六景', 'さんじゅうろっけい']], '京都名所之内': [['京都', 'きょうと'], ['名所', 'めいしょ'], ['之内', 'のうち']], '東都名所': [['東都', 'とうと'], ['名所', 'めいしょ']], '水墨画・国宝': [['水墨画', 'すいぼくが'], '・', ['国宝', 'こくほう']] }[a.series] || [a.series];
+                    var artistRb = { '葛飾北斎': [['葛飾', 'かつしか'], ['北斎', 'ほくさい']], '歌川広重': [['歌川', 'うたがわ'], ['広重', 'ひろしげ']], '雪舟等楊': [['雪舟', 'せっしゅう'], ['等楊', 'とうよう']] }[a.artist] || [a.artist];
                     return '<figure class="gal-item" data-i="' + i + '"><div class="gal-pic"><img src="' + a.src + '" alt="' + escapeHtml(a.title) + '" loading="lazy" decoding="async"></div>' +
                         '<figcaption class="gal-cap"><div class="gal-series">' + rb(seriesRb) + '</div><div class="gal-name">' + rb(a.ruby) + '</div><div class="gal-en">' + escapeHtml(a.en) + '</div>' +
                         '<div class="gal-by">' + rb(artistRb) + '（' + escapeHtml(a.artistEn) + '）・' + escapeHtml(a.year) + '</div>' +
