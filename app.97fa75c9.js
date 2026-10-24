@@ -11087,7 +11087,7 @@
                 'パパヤ、マンゴー<b>というような</b>{r|果物|くだもの}は、{r|熱帯|ねっ/たい}{r|地方|ち/ほう}に行けばたくさんあります。',
                 '{r|幸|こう}、{r|不幸|ふ/こう}<b>というような</b>ものは、{r|人間|にん/げん}の{r|心|こころ}によるのだ。'
             ] },
-            { p: '～から（原因）', src: 'この二つの国は、何かの{r|利益|り/えき}{r|問題|もん/だい}<b>から</b>、{r|戦争|せん/そう}を{r|始|はじ}めました。', s: [
+            { p: '～から（原因）', src: 'この二つの国は、何かの{r|利益|り/えき}{r|問題|もん/だい}<b>から</b>、{r|戦争|せん/そう}を{r|始|はじ}めました。', notes: { 2: '本のままの文ですが、不自然です。① 「失敗」は「に」をとる（入試<em>に</em>失敗する）ので、「入試<em>への</em>失敗」とは言いません。「入試<em>の</em>失敗」がふつうです。② この「から」は原因（〜が原因で）を表すので、「失敗が原因で立ち直った」という意味になってしまいます。「立ち直る」は失敗から回復することで、失敗の結果ではありません。また、立ち直るのは人で、「人生」は立ち直りません。自然な文：「大学入試<em>の</em>失敗から、彼の人生は大きく<em>変わりました</em>。」' }, s: [
                 '何年間もお{r|便|たよ}りが{r|切|き}れたこと<b>から</b>、{r|彼|かれ}はもう{r|死|し}んだにちがいない。',
                 'あの日のはげしいけんか<b>から</b>、二人は{r|永遠|えい/えん}に{r|別|わか}れてしまいました。',
                 '{r|大学|だい/がく}{r|入試|にゅうし}への{r|失敗|しっ/ぱい}<b>から</b>、{r|彼|かれ}の{r|人生|じん/せい}は大きく{r|立|た}ち{r|直|なお}りました。'
@@ -13088,7 +13088,11 @@
                 (b.ko ? '<span class="ab-ko" lang="ko">' + escapeHtml(b.ko) + '</span>' : '') + '</div>' +
                 (b.src ? '<button class="ab-say ab-src" data-t="' + escapeHtml(arPlainLine(b.src)) + '">' + arMarkup(b.src) + '<small>本文より</small></button>' : '') +
                 (b.ex ? '<p class="ab-ex"' + (b.exJa ? '' : ' lang="ko"') + '>' + escapeHtml(b.ex) + '</p>' : '') +
-                '<ul class="ab-list">' + b.s.map(function(t) { return '<li><button class="ab-say" data-t="' + escapeHtml(arPlainLine(t)) + '">' + arMarkup(t) + '</button></li>'; }).join('') + '</ul></section>';
+                '<ul class="ab-list">' + b.s.map(function(t, j) {
+                    var nt = b.notes && b.notes[j];
+                    return '<li><button class="ab-say" data-t="' + escapeHtml(arPlainLine(t)) + '">' + arMarkup(t) + '</button>' +
+                        (nt ? '<div class="ab-note"><b>注</b>' + nt + '</div>' : '') + '</li>';
+                }).join('') + '</ul></section>';
         }).join('');
         body.scrollTop = 0;
         body.querySelectorAll('.ab-say').forEach(function(b) { b.addEventListener('click', function() { speakText(escapeHtml(b.dataset.t)); }); });

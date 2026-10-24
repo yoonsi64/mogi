@@ -524,6 +524,11 @@
         .ab-ex { font-size: 0.82rem; line-height: 1.65; margin: 6px 0 8px; padding: 6px 8px; border-radius: 6px; background: var(--bg-paper); }
         .ab-list { margin: 0; padding: 0; list-style: none; }
         .ab-list li { border-top: 1px dashed var(--border-light); }
+        .ab-note { margin: 0 2px 8px; padding: 8px 10px; border-radius: 6px; background: #fff6e5; color: #6b4a12; font-size: 0.8rem; line-height: 1.7; }
+        .ab-note b { display: inline-block; margin-right: 6px; padding: 0 6px; border-radius: 4px; background: #e9a23b; color: #fff; font-size: 0.7rem; }
+        .ab-note em { font-style: normal; font-weight: bold; }
+        @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ab-note { background: #3a2e18; color: #f0d9a8; } }
+        :root[data-theme="dark"] .ab-note { background: #3a2e18; color: #f0d9a8; }
         .ab-say.ab-src { margin: 6px 0 4px; padding: 8px 10px; border-left: 3px solid var(--ar-q-color, #6a63b8); background: var(--bg-paper); border-radius: 0 6px 6px 0; }
         .ab-say.ab-src b { text-decoration: underline; text-underline-offset: 4px; }
         .ab-say.ab-src small { display: block; font-family: var(--gothic); font-size: 0.68rem; color: var(--text-sub); line-height: 1.4; }
