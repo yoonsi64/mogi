@@ -6533,6 +6533,16 @@
             '</div>';
         if (r.again) body.querySelector('.wq-again').addEventListener('click', r.again);
         body.querySelector('.wq-back').addEventListener('click', closeFlashcards);
+        // the print behind the results: tap it (anywhere off the panels) for its title, artist and year
+        var art = wq && wq.art, artIdx = art ? GS_ART.indexOf(art) : -1;
+        if (artIdx > -1 && document.getElementById('flash-view').classList.contains('game')) {
+            var res = body.querySelector('.wq-result'), hint = document.createElement('button');
+            hint.className = 'wq-arthint'; hint.innerHTML = '<span>' + escapeHtml(art.title) + '</span> 絵をタップで作品について';
+            res.appendChild(hint); res.classList.add('art-tap');
+            var openArt = function() { openGallery(artIdx); };
+            hint.addEventListener('click', openArt);
+            res.addEventListener('click', function(ev) { if (ev.target === res) openArt(); });
+        }
         body.querySelectorAll('.wq-miss').forEach(function(b) {
             b.addEventListener('click', function() { var e = wordList.find(function(w) { return String(w.id) === b.dataset.id; }); if (e) speakText(escapeHtml(e.reading || e.word)); });
         });
