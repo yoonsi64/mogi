@@ -1011,6 +1011,13 @@
         .wq-float { position: fixed; transform: translate(-50%, -50%); font-weight: 800; font-size: 1.05rem; color: var(--correct-color); text-shadow: 0 1px 0 var(--bg-paper), 0 0 6px var(--bg-paper); animation: wqFloatUp 1.05s ease-out forwards; white-space: nowrap; }
         .wq-float.hot { color: #b8312f; font-size: 1.2rem; }
         .wq-float.gold { color: #c08a00; font-size: 1.35rem; }
+        /* time attack */
+        #wq-clock { display: inline-block; }
+        #wq-clock.low { color: #b8312f; animation: wqLow 0.5s ease-in-out infinite alternate; }
+        @keyframes wqLow { to { transform: scale(1.2); } }
+        .wq-hud .ta-score b { color: var(--active-blue); font-size: 1rem; }
+        .wq-clear.timeup { font-size: 1.7rem; letter-spacing: 0.08em; white-space: nowrap; z-index: 3; }
+        .wq-card.wq-over .wq-tile, .wq-card.wq-over .mem-card { pointer-events: none; opacity: 0.5; transition: opacity 0.3s; }
         @keyframes wqFloatUp { 0% { opacity: 0; transform: translate(-50%, -30%) scale(0.7); } 20% { opacity: 1; transform: translate(-50%, -60%) scale(1.1); } 100% { opacity: 0; transform: translate(-50%, -160%) scale(1); } }
         .wq-clear { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%) rotate(-8deg); padding: 6px 18px; border: 4px solid #b8312f; border-radius: 10px; color: #b8312f; font-size: 2rem; font-weight: 900; letter-spacing: 0.15em; background: color-mix(in srgb, var(--surface) 85%, transparent); animation: wqStamp 0.4s cubic-bezier(.2, .9, .3, 1.3) both; pointer-events: none; }
         @keyframes wqStamp { from { opacity: 0; transform: translate(-50%, -50%) rotate(-8deg) scale(2.2); } to { opacity: 1; transform: translate(-50%, -50%) rotate(-8deg) scale(1); } }
@@ -1043,7 +1050,7 @@
         .wq-missed > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
         .wq-miss { padding: 6px 10px; border-radius: 10px; border: 1px solid var(--border-light); background: var(--bg-paper); color: var(--text-main); font-family: var(--reading-font); font-size: 1rem; }
         .wq-res-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-        @media (prefers-reduced-motion: reduce) { .wq-tile.enter, .wq-tile.pop, .wq-grade, .wq-best, .wq-chip, .wq-stamp, .wq-clear { animation: none; } .wq-ring-fg { transition: none; } }
+        @media (prefers-reduced-motion: reduce) { .wq-tile.enter, .wq-tile.pop, .wq-grade, .wq-best, .wq-chip, .wq-stamp, .wq-clear, #wq-clock.low { animation: none; } .wq-ring-fg { transition: none; } }
         .wq-note { font-size: 0.78rem; color: var(--text-sub); text-align: center; }
         .flash-starts .flash-start { flex: 1; min-width: 0; margin: 0; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 14px; }
         .flash-start.write { background: var(--surface); color: var(--active-blue); box-shadow: inset 0 0 0 2px var(--active-blue); }
@@ -11378,9 +11385,44 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
     }
     // マッチング: rounds of 5 pairs; tap a word, then its meaning
     // マッチング settings (remembered): what the right side shows, pairs per round, and how many rounds (0 = all)
+    // ---------- time attack (マッチング・神経衰弱) ----------
+    // words keep coming from a reshuffled pool; nothing repeats inside one round
+    function wqTake(st, pool, n) {
+        n = Math.min(n, pool.length);
+        if (st.queue.length < n) {
+            var last = st.lastTaken || [];
+            var rest = shuffleInPlace(pool.filter(function(e) { return st.queue.indexOf(e) < 0; }));
+            // the words just played go to the back of the new pass
+            rest.sort(function(a, b) { return (last.indexOf(a) > -1) - (last.indexOf(b) > -1); });
+            st.queue = st.queue.concat(rest);
+        }
+        return (st.lastTaken = st.queue.splice(0, n));
+    }
+    function taClock(ms) { return wqClock(Math.ceil(Math.max(0, ms) / 1000) * 1000); }
+    function wqMissedEntries(ids) { return ids.map(function(mid) { return wordList.find(function(w) { return String(w.id) === String(mid); }); }).filter(Boolean); }
+    function wqTimeShift(sec) {
+        var c = document.getElementById('wq-clock');
+        if (c) wqFloat(c, (sec > 0 ? '+' : '−') + Math.abs(sec) + '秒', sec > 0 ? '' : 'hot');
+    }
+    // time's up: stop the clock, stamp the board, then show the result
+    function wqTimeUp(after) {
+        if (!wq || wq.over) return;
+        wq.over = true; wq.lock = true; clearInterval(wq.timer);
+        var c = document.getElementById('wq-clock'); if (c) { c.textContent = '0:00'; c.classList.add('low'); }
+        var card = document.querySelector('#flash-view .wq-card');
+        if (card) { card.classList.add('wq-over'); var st = document.createElement('div'); st.className = 'wq-clear timeup'; st.textContent = 'タイムアップ'; card.appendChild(st); }
+        wqChime();
+        if (navigator.vibrate && getSetting('vibrate', true)) { try { navigator.vibrate([40, 40, 40]); } catch (err) {} }
+        var snap = wq;
+        setTimeout(function() { if (wq === snap) after(snap); }, 1500);
+    }
+    function taBestLine(best, score) {
+        return best.isNew ? '🏆 自己ベスト更新！（前回まで ' + best.old + '組）' : best.first ? 'この設定の初記録：' + score + '組' : 'この設定の自己ベスト：' + best.old + '組';
+    }
     function matchOpts() {
         var o = getSetting('matchOpts', null) || {};
-        return { side: o.side === 'reading' ? 'reading' : 'meaning', pairs: [3, 4, 5, 6, 8].indexOf(o.pairs) > -1 ? o.pairs : 5, rounds: [1, 3, 5, 0].indexOf(o.rounds) > -1 ? o.rounds : 3 };
+        return { mode: o.mode === 'ta' ? 'ta' : 'normal', side: o.side === 'reading' ? 'reading' : 'meaning', pairs: [3, 4, 5, 6, 8].indexOf(o.pairs) > -1 ? o.pairs : 5,
+            rounds: [1, 3, 5, 0].indexOf(o.rounds) > -1 ? o.rounds : 3, time: [30, 60, 90].indexOf(o.time) > -1 ? o.time : 60 };
     }
     function matchPool(side) {
         return side === 'reading'
@@ -11399,18 +11441,23 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         };
         var draw = function() {
             var pool = matchPool(o.side).length, per = o.pairs, can = Math.floor(pool / per) + (pool % per >= 3 ? 1 : 0);
-            var n = o.rounds ? Math.min(o.rounds, can) : can;
+            var n = o.rounds ? Math.min(o.rounds, can) : can, ta = o.mode === 'ta';
+            var taBest = (getSetting('wqBests', null) || {})['matchta:' + o.side + ':' + o.pairs + ':' + o.time];
             body.innerHTML = '<div class="wq-card mset">' +
+                seg('mode', { label: 'モード', items: [['normal', '通常'], ['ta', 'タイムアタック']] }) +
                 seg('side', { label: '組み合わせ', items: [['meaning', '言葉 ↔ 意味'], ['reading', '言葉 ↔ 読み']] }) +
                 seg('pairs', { label: '1回の組数', items: [[3, '3'], [4, '4'], [5, '5'], [6, '6'], [8, '8']] }) +
-                seg('rounds', { label: '回数', items: [[1, '1回'], [3, '3回'], [5, '5回'], [0, 'すべて']] }) +
-                '<div class="wq-note">' + (pool < 3 ? '使える単語が足りません（' + pool + '語）' : '使える単語 ' + pool + '語 → ' + n + '回・' + Math.min(pool, n * per) + '組') +
+                (ta ? seg('time', { label: '制限時間', items: [[30, '30秒'], [60, '60秒'], [90, '90秒']] })
+                    : seg('rounds', { label: '回数', items: [[1, '1回'], [3, '3回'], [5, '5回'], [0, 'すべて']] })) +
+                '<div class="wq-note">' + (pool < 3 ? '使える単語が足りません（' + pool + '語）' :
+                    ta ? '使える単語 ' + pool + '語<br>' + o.time + '秒でできるだけ多く組み合わせます<br>まちがえると −3秒、1回そろえると +5秒' + (taBest != null ? '<br>この設定の自己ベスト：' + taBest + '組' : '') :
+                    '使える単語 ' + pool + '語 → ' + n + '回・' + Math.min(pool, n * per) + '組') +
                 (o.side === 'reading' ? '<br>漢字のある単語を、読み（ひらがな）と組み合わせます' : '') + '</div>' +
                 '</div><div class="flash-actions"><button class="flash-know" id="mset-go"' + (pool < 3 ? ' disabled' : '') + '>始める</button></div>';
             body.querySelectorAll('.mset-seg button').forEach(function(b) {
                 b.addEventListener('click', function() {
                     var key = b.parentNode.dataset.key, v = b.dataset.v;
-                    o[key] = key === 'side' ? v : parseInt(v, 10);
+                    o[key] = key === 'side' || key === 'mode' ? v : parseInt(v, 10);
                     setSetting('matchOpts', o);
                     draw();
                 });
@@ -11422,6 +11469,13 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
     function runWordMatch(o) {
         var pool = shuffleInPlace(matchPool(o.side).slice());
         if (pool.length < 3) return;
+        if (o.mode === 'ta') {
+            wq = { kind: 'match', opts: o, ta: true, pool: pool, queue: [], rounds: [], round: 0, miss: 0, score: 0, cleared: 0, start: Date.now(), deadline: Date.now() + o.time * 1000, combo: 0, bestCombo: 0, missedIds: [] };
+            wq.rounds.push(wqTake(wq, pool, o.pairs));
+            wqOpen('マッチング');
+            newMatchRound();
+            return;
+        }
         var rounds = [];
         for (var i = 0; i < pool.length && (!o.rounds || rounds.length < o.rounds); i += o.pairs) {
             var r = pool.slice(i, i + o.pairs);
@@ -11432,6 +11486,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         newMatchRound();
     }
     function newMatchRound() {
+        if (!wq || wq.over) return;
         var words = wq.rounds[wq.round];
         wq.left = shuffleInPlace(words.slice()); wq.right = shuffleInPlace(words.slice()); wq.done = {}; wq.sel = null; wq.just = null; wq.enter = true;
         renderWordMatch();
@@ -11441,13 +11496,27 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var tid = wq.timer = setInterval(function() {
             var c = document.getElementById('wq-clock');
             if (!wq || wq.kind !== 'match' || wq.timer !== tid) { clearInterval(tid); return; }
+            if (wq.ta) {
+                var left = wq.deadline - Date.now();
+                if (c) { c.textContent = taClock(left); c.classList.toggle('low', left <= 10000); }
+                if (left <= 0) wqTimeUp(matchTaResult);
+                return;
+            }
             if (!c) return;
             c.textContent = wqClock(Date.now() - wq.start);
-        }, 500);
+        }, wq.ta ? 200 : 500);
+    }
+    function matchTaResult(st) {
+        var o = st.opts, best = wqBest('matchta:' + o.side + ':' + o.pairs + ':' + o.time, st.score, false);
+        wqResult({ title: 'マッチング タイムアタック', pct: st.score + st.miss ? st.score / (st.score + st.miss) * 100 : 0, big: st.score, bigLabel: '組',
+            best: taBestLine(best, st.score),
+            chips: [['組', st.score], ['まちがい', st.miss], ['最高コンボ', st.bestCombo], ['クリア', st.cleared + '回']],
+            missed: wqMissedEntries(st.missedIds), note: o.time + '秒のタイムアタック',
+            again: function() { runWordMatch(o); } });
     }
     function renderWordMatch() {
         var body = document.querySelector('#flash-view .flash-body');
-        document.querySelector('#flash-view .flash-progress').textContent = (wq.round + 1) + ' / ' + wq.rounds.length;
+        document.querySelector('#flash-view .flash-progress').textContent = wq.ta ? 'ラウンド ' + (wq.round + 1) : (wq.round + 1) + ' / ' + wq.rounds.length;
         var tile = function(e, side) {
             var sel = wq.sel && wq.sel.side === side && wq.sel.id === e.id;
             var k = (side === 'L' ? wq.left : wq.right).indexOf(e);
@@ -11459,15 +11528,19 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         body.innerHTML = '<div class="wq-card"><div class="wq-dir">' + (reading ? '言葉と読みを組み合わせてください' : '言葉と意味を組み合わせてください') + '</div><div class="wq-match' + (wq.left.length > 5 ? ' compact' : '') + (reading ? ' reading' : '') + '">' +
             '<div class="wq-col">' + wq.left.map(function(e) { return tile(e, 'L'); }).join('') + '</div>' +
             '<div class="wq-col">' + wq.right.map(function(e) { return tile(e, 'R'); }).join('') + '</div>' +
-            '</div><div class="wq-hud"><span>まちがい <b>' + wq.miss + '</b></span><span>コンボ <b>' + wq.combo + '</b></span><span>⏱ <b id="wq-clock">' + wqClock(Date.now() - wq.start) + '</b></span></div></div>';
+            '</div><div class="wq-hud">' + (wq.ta ? '<span class="ta-score">スコア <b>' + wq.score + '</b></span>' : '') + '<span>まちがい <b>' + wq.miss + '</b></span><span>コンボ <b>' + wq.combo + '</b></span>' +
+            (wq.ta ? (function() { var left = wq.deadline - Date.now(); return '<span>⏳ <b id="wq-clock"' + (left <= 10000 ? ' class="low"' : '') + '>' + taClock(left) + '</b></span>'; })()
+                : '<span>⏱ <b id="wq-clock">' + wqClock(Date.now() - wq.start) + '</b></span>') + '</div></div>';
         body.querySelectorAll('.wq-tile').forEach(function(b) {
             b.addEventListener('click', function() {
+                if (!wq || wq.kind !== 'match' || wq.over) return;
                 var side = b.dataset.side, id = b.dataset.id;
                 if (!wq.sel || wq.sel.side === side) { wq.sel = (wq.sel && wq.sel.side === side && wq.sel.id === id) ? null : { side: side, id: id }; renderWordMatch(); return; }
                 if (String(wq.sel.id) === String(id)) {
                     var firstTile = body.querySelector('.wq-tile[data-side="' + wq.sel.side + '"][data-id="' + wq.sel.id + '"]');
                     wq.done[id] = true; wq.sel = null; wq.just = id;
                     wq.combo++; wq.bestCombo = Math.max(wq.bestCombo, wq.combo);
+                    if (wq.ta) wq.score++;
                     var sparkC = wq.combo >= 5 ? ['#d4a017', '#f6c94c', '#fff3c4'] : wq.combo >= 3 ? ['#b8312f', '#e07a5f', '#f6c94c'] : ['#2e9e5b', '#7fd39b', '#ffffff'];
                     wqBurst(b, sparkC, wq.combo >= 3 ? 16 : 10); wqBurst(firstTile, sparkC, wq.combo >= 3 ? 16 : 10);
                     if (wq.combo >= 2) wqFloat(b, 'コンボ ×' + wq.combo, wq.combo >= 5 ? 'gold' : wq.combo >= 3 ? 'hot' : '');
@@ -11475,12 +11548,13 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
                     if (hit) speakText(escapeHtml(hit.reading || hit.word));         // say the word once it's matched
                     if (navigator.vibrate && getSetting('vibrate', true)) { try { navigator.vibrate(12); } catch (err) {} }
                     if (Object.keys(wq.done).length === wq.left.length) {
-                        var last = wq.round + 1 >= wq.rounds.length;
+                        var last = !wq.ta && wq.round + 1 >= wq.rounds.length;
+                        if (wq.ta) { wq.cleared++; wq.deadline += 5000; wq.rounds.push(wqTake(wq, wq.pool, wq.opts.pairs)); }
                         setTimeout(function() {
                             var card = document.querySelector('#flash-view .wq-card');
-                            if (card && !last) { var st = document.createElement('div'); st.className = 'wq-clear'; st.textContent = 'クリア'; card.appendChild(st); wqChime(); }
+                            if (card && !last && wq && !wq.over) { var st = document.createElement('div'); st.className = 'wq-clear'; st.textContent = 'クリア'; card.appendChild(st); wqChime(); if (wq.ta) wqTimeShift(5); }
                         }, 260);
-                        if (!last) { wq.round++; setTimeout(function() { if (wq && wq.kind === 'match') newMatchRound(); }, 1000); }
+                        if (!last) { wq.round++; setTimeout(function() { if (wq && wq.kind === 'match') newMatchRound(); }, wq.ta ? 750 : 1000); }
                         else {
                             clearInterval(wq.timer);
                             var ms = Date.now() - wq.start, n = wq.rounds.reduce(function(a, r) { return a + r.length; }, 0);
@@ -11498,12 +11572,13 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
                     renderWordMatch();
                 } else {
                     wq.miss++; wq.combo = 0;
+                    if (wq.ta) { wq.deadline -= 3000; wqTimeShift(-3); if (wq.deadline <= Date.now()) setTimeout(function() { wqTimeUp(matchTaResult); }, 0); }
                     [id, wq.sel.id].forEach(function(mid) { if (wq.missedIds.indexOf(String(mid)) < 0 && wq.left.some(function(x) { return String(x.id) === String(mid); })) wq.missedIds.push(String(mid)); });
                     var other = body.querySelector('.wq-tile[data-side="' + wq.sel.side + '"][data-id="' + wq.sel.id + '"]');
                     wq.sel = null;
                     [b, other].forEach(function(t) { if (t) { t.classList.remove('sel'); t.classList.add('bad'); } });
                     if (navigator.vibrate && getSetting('vibrate', true)) { try { navigator.vibrate([20, 30, 20]); } catch (err) {} }
-                    setTimeout(renderWordMatch, 380);
+                    setTimeout(function() { if (wq && wq.kind === 'match' && !wq.over) renderWordMatch(); }, 380);
                 }
             });
         });
@@ -11513,7 +11588,8 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
     // Settings (remembered): what the partner card shows, how many pairs, and a 3-second look at the start.
     function memOpts() {
         var o = getSetting('memOpts', null) || {};
-        return { side: o.side === 'reading' ? 'reading' : 'meaning', pairs: [4, 6, 8, 10].indexOf(o.pairs) > -1 ? o.pairs : 6, peek: o.peek === 3 ? 3 : 0 };
+        return { mode: o.mode === 'ta' ? 'ta' : 'normal', side: o.side === 'reading' ? 'reading' : 'meaning', pairs: [4, 6, 8, 10].indexOf(o.pairs) > -1 ? o.pairs : 6, peek: o.peek === 3 ? 3 : 0,
+            time: [60, 90, 120].indexOf(o.time) > -1 ? o.time : 90 };
     }
     function startWordMemory() {
         wqOpen('神経衰弱');
@@ -11527,18 +11603,23 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         };
         var draw = function() {
             var pool = matchPool(o.side).length, ok = pool >= o.pairs;
-            var bk = 'mem:' + o.side + ':' + o.pairs + ':' + o.peek, best = (getSetting('wqBests', null) || {})[bk];
+            var ta = o.mode === 'ta', all = getSetting('wqBests', null) || {};
+            var best = ta ? all['memta:' + o.side + ':' + o.pairs + ':' + o.peek + ':' + o.time] : all['mem:' + o.side + ':' + o.pairs + ':' + o.peek];
             body.innerHTML = '<div class="wq-card mset">' +
+                seg('mode', 'モード', [['normal', '通常'], ['ta', 'タイムアタック']]) +
                 seg('side', '組み合わせ', [['meaning', '言葉 ↔ 意味'], ['reading', '言葉 ↔ 読み']]) +
-                seg('pairs', 'ペアの数', [[4, '4組'], [6, '6組'], [8, '8組'], [10, '10組']]) +
+                seg('pairs', ta ? '1面のペア' : 'ペアの数', [[4, '4組'], [6, '6組'], [8, '8組'], [10, '10組']]) +
                 seg('peek', '最初に見る', [[0, 'なし'], [3, '3秒']]) +
-                '<div class="wq-note">' + (ok ? '使える単語 ' + pool + '語 → ' + o.pairs * 2 + '枚のカード' : '使える単語が足りません（' + pool + '語・' + o.pairs + '組には' + o.pairs + '語必要）') +
-                (best != null ? '<br>この設定の自己ベスト：' + best + '手' : '') + '<br>2枚ずつめくって、言葉と' + (o.side === 'reading' ? '読み' : '意味') + 'のペアを見つけます</div>' +
+                (ta ? seg('time', '制限時間', [[60, '60秒'], [90, '90秒'], [120, '120秒']]) : '') +
+                '<div class="wq-note">' + (ok ? '使える単語 ' + pool + '語 → ' + o.pairs * 2 + '枚のカード' + (ta ? '・' + o.time + '秒' : '') : '使える単語が足りません（' + pool + '語・' + o.pairs + '組には' + o.pairs + '語必要）') +
+                (best != null ? '<br>この設定の自己ベスト：' + best + (ta ? '組' : '手') : '') +
+                (ta ? '<br>時間内にできるだけ多くのペアを見つけます。全部そろえると次の面へ（+10秒）' + (o.peek ? '<br>最初に見ている間は時計が止まります' : '')
+                    : '<br>2枚ずつめくって、言葉と' + (o.side === 'reading' ? '読み' : '意味') + 'のペアを見つけます') + '</div>' +
                 '</div><div class="flash-actions"><button class="flash-know" id="mset-go"' + (ok ? '' : ' disabled') + '>始める</button></div>';
             body.querySelectorAll('.mset-seg button').forEach(function(b) {
                 b.addEventListener('click', function() {
                     var key = b.parentNode.dataset.key, v = b.dataset.v;
-                    o[key] = key === 'side' ? v : parseInt(v, 10);
+                    o[key] = key === 'side' || key === 'mode' ? v : parseInt(v, 10);
                     setSetting('memOpts', o);
                     draw();
                 });
@@ -11548,15 +11629,32 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         draw();
     }
     function runWordMemory(o) {
-        var words = shuffleInPlace(matchPool(o.side).slice()).slice(0, o.pairs);
-        if (words.length < o.pairs) return;
+        var pool = shuffleInPlace(matchPool(o.side).slice());
+        if (pool.length < o.pairs) return;
+        wq = { kind: 'memory', opts: o, ta: o.mode === 'ta', pool: pool, queue: [], board: 0, total: 0, cleared: 0, moves: 0, miss: 0, combo: 0, bestCombo: 0, start: 0, lock: true, missedIds: [], deadline: 0, paused: false, pausedAt: 0 };
+        wqOpen('神経衰弱');
+        memDeal();
+    }
+    function memLeft() { return wq.deadline ? wq.deadline - (wq.paused ? wq.pausedAt : Date.now()) : wq.opts.time * 1000; }
+    function memTaResult(st) {
+        var o = st.opts, best = wqBest('memta:' + o.side + ':' + o.pairs + ':' + o.peek + ':' + o.time, st.total, false);
+        wqResult({ title: '神経衰弱 タイムアタック', pct: st.moves ? st.total / st.moves * 100 : 0, big: st.total, bigLabel: '組',
+            best: taBestLine(best, st.total),
+            chips: [['ペア', st.total], ['手数', st.moves], ['最高コンボ', st.bestCombo], ['クリア', st.cleared + '面']],
+            missed: wqMissedEntries(st.missedIds), note: o.time + '秒のタイムアタック',
+            again: function() { runWordMemory(o); } });
+    }
+    // lay out one board (time attack deals a new one each time a board is cleared)
+    function memDeal() {
+        if (!wq || wq.kind !== 'memory' || wq.over) return;
+        var o = wq.opts;
+        var words = wq.ta ? wqTake(wq, wq.pool, o.pairs) : wq.pool.slice(0, o.pairs);
         var cards = [];
         words.forEach(function(e) { cards.push({ e: e, side: 'L' }); cards.push({ e: e, side: 'R' }); });
         shuffleInPlace(cards);
-        wq = { kind: 'memory', opts: o, cards: cards, open: [], found: 0, moves: 0, miss: 0, combo: 0, bestCombo: 0, start: 0, lock: true, missedIds: [] };
-        wqOpen('神経衰弱');
+        wq.cards = cards; wq.open = []; wq.found = 0; wq.lock = true;
         var body = document.querySelector('#flash-view .flash-body');
-        document.querySelector('#flash-view .flash-progress').textContent = '';
+        document.querySelector('#flash-view .flash-progress').textContent = wq.ta ? '第' + (wq.board + 1) + '面' : '';
         var face = function(c) {
             if (c.side === 'L') return '<span class="mem-w">' + escapeHtml(c.e.word) + '</span>';
             return o.side === 'reading' ? '<span class="mem-r">' + escapeHtml(toHiragana(c.e.reading)) + '</span>' : '<span class="mem-m">' + escapeHtml(wqClip(wqMeaning(c.e), 40)) + '</span>';
@@ -11565,15 +11663,33 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         body.innerHTML = '<div class="wq-card mem-wrap"><div class="mem-grid rows-' + rows + '">' + cards.map(function(c, i) {
                 return '<button class="mem-card' + (c.side === 'L' ? ' word' : '') + '" data-i="' + i + '" style="animation-delay:' + (i * 30) + 'ms" aria-label="カード"><span class="mem-inner"><span class="mem-back" aria-hidden="true"></span><span class="mem-front">' + face(c) + '</span></span></button>';
             }).join('') + '</div>' +
-            '<div class="wq-hud"><span>手数 <b id="mem-moves">0</b></span><span>ペア <b id="mem-found">0</b>/' + words.length + '</span><span>コンボ <b id="mem-combo">0</b></span><span>⏱ <b id="wq-clock">0:00</b></span></div>' +
+            '<div class="wq-hud"><span>手数 <b id="mem-moves">' + wq.moves + '</b></span>' +
+                (wq.ta ? '<span class="ta-score">ペア <b id="mem-found">' + wq.total + '</b></span>' : '<span>ペア <b id="mem-found">0</b>/' + words.length + '</span>') +
+                '<span>コンボ <b id="mem-combo">' + wq.combo + '</b></span>' +
+                (wq.ta ? '<span>⏳ <b id="wq-clock"' + (memLeft() <= 10000 ? ' class="low"' : '') + '>' + taClock(memLeft()) + '</b></span>' : '<span>⏱ <b id="wq-clock">0:00</b></span>') + '</div>' +
             (o.peek ? '<div class="wq-note" id="mem-peek">よく見て覚えてください…</div>' : '') + '</div>';
         var els = body.querySelectorAll('.mem-card');
         var go = function() {
-            wq.lock = false; wq.start = Date.now();
+            if (!wq || wq.kind !== 'memory' || wq.over) return;
+            wq.lock = false;
+            if (wq.ta) {
+                var now = Date.now();
+                if (!wq.deadline) { wq.deadline = now + o.time * 1000; wq.start = now; }
+                else if (wq.paused) wq.deadline += now - wq.pausedAt;          // the clock stood still between boards and while peeking
+                wq.paused = false;
+            } else wq.start = Date.now();
+            if (wq.timer) return;
             var tid = wq.timer = setInterval(function() {
                 if (!wq || wq.kind !== 'memory' || wq.timer !== tid) { clearInterval(tid); return; }
-                var c = document.getElementById('wq-clock'); if (c) c.textContent = wqClock(Date.now() - wq.start);
-            }, 500);
+                var c = document.getElementById('wq-clock');
+                if (wq.ta) {
+                    var left = memLeft();
+                    if (c) { c.textContent = taClock(left); c.classList.toggle('low', left <= 10000); }
+                    if (left <= 0 && !wq.paused) wqTimeUp(memTaResult);
+                    return;
+                }
+                if (c) c.textContent = wqClock(Date.now() - wq.start);
+            }, wq.ta ? 200 : 500);
         };
         if (o.peek) {
             setTimeout(function() { els.forEach(function(el) { el.classList.add('up'); }); }, 500);
@@ -11586,7 +11702,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         } else setTimeout(go, 300);
         els.forEach(function(el) {
             el.addEventListener('click', function() {
-                if (!wq || wq.kind !== 'memory' || wq.lock) return;
+                if (!wq || wq.kind !== 'memory' || wq.lock || wq.over) return;
                 var i = +el.dataset.i, c = wq.cards[i];
                 if (c.done || wq.open.indexOf(i) > -1) return;
                 el.classList.add('up');
@@ -11597,8 +11713,8 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
                 var a = wq.open[0], b2 = wq.open[1], ca = wq.cards[a], cb = wq.cards[b2], ea = els[a], eb = els[b2];
                 wq.open = [];
                 if (ca.e.id === cb.e.id && ca.side !== cb.side) {
-                    ca.done = cb.done = true; wq.found++; wq.combo++; wq.bestCombo = Math.max(wq.bestCombo, wq.combo);
-                    document.getElementById('mem-found').textContent = wq.found;
+                    ca.done = cb.done = true; wq.found++; wq.total++; wq.combo++; wq.bestCombo = Math.max(wq.bestCombo, wq.combo);
+                    document.getElementById('mem-found').textContent = wq.ta ? wq.total : wq.found;
                     document.getElementById('mem-combo').textContent = wq.combo;
                     var colors = wq.combo >= 4 ? ['#d4a017', '#f6c94c', '#fff3c4'] : wq.combo >= 2 ? ['#b8312f', '#e07a5f', '#f6c94c'] : ['#2e9e5b', '#7fd39b', '#ffffff'];
                     setTimeout(function() {
@@ -11608,7 +11724,18 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
                     }, 320);
                     speakText(escapeHtml(ca.e.reading || ca.e.word));
                     if (navigator.vibrate && getSetting('vibrate', true)) { try { navigator.vibrate(12); } catch (err) {} }
-                    if (wq.found === wq.cards.length / 2) {
+                    if (wq.found === wq.cards.length / 2 && wq.ta) {
+                        // board cleared: stop the clock, +10 seconds, deal the next board
+                        wq.lock = true; wq.paused = true; wq.pausedAt = Date.now(); wq.deadline += 10000; wq.cleared++; wq.board++;
+                        var snapB = wq;
+                        setTimeout(function() {
+                            if (wq !== snapB || wq.over) return;
+                            var card = document.querySelector('#flash-view .wq-card');
+                            if (card) { var stp = document.createElement('div'); stp.className = 'wq-clear'; stp.textContent = 'クリア'; card.appendChild(stp); }
+                            wqChime(); wqTimeShift(10);
+                        }, 420);
+                        setTimeout(function() { if (wq === snapB) memDeal(); }, 1400);
+                    } else if (wq.found === wq.cards.length / 2) {
                         clearInterval(wq.timer);
                         var ms = Date.now() - wq.start, pairs = wq.found, moves = wq.moves, again = wq.opts;
                         var missE = wq.missedIds.map(function(mid) { return wordList.find(function(w) { return String(w.id) === String(mid); }); }).filter(Boolean);
@@ -11630,7 +11757,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
                     setTimeout(function() { ea.classList.add('bad'); eb.classList.add('bad'); }, 380);
                     setTimeout(function() {
                         ea.classList.remove('up', 'bad'); eb.classList.remove('up', 'bad');
-                        if (wq) wq.lock = false;
+                        if (wq && !wq.over) wq.lock = false;
                     }, 1050);
                 }
             });
