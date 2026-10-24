@@ -4159,6 +4159,7 @@
     var GD_SEASON = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
     var GD_LIGHT = { morning: '朝', day: '昼', dusk: '夕暮れ', night: '夜' };
     function gdEngine() { return window.MogiGarden || null; }
+    function gdLabel(st) { return st ? st.name : ''; }
     function gdFmt(min) {
         min = Math.max(0, Math.round(min));
         var h = Math.floor(min / 60), m = min % 60;
@@ -4182,7 +4183,7 @@
         return '<div class="gd-row"><span class="gd-title">庭</span><span class="gd-total">合計 <b>' + gdFmt(s.min) + '</b></span></div>' +
             '<div class="gd-desc">' + escapeHtml(st.desc || st.name || '') + '<span class="gd-dot">・</span>今週 ' + gdFmt(s.week) + '</div>' +
             '<div class="gd-bar"><i style="width:' + pct + '%"></i></div>' +
-            '<div class="gd-next">' + (nx ? '<span>次 ─ ' + escapeHtml(nx.name) + '　あと' + gdFmt(nx.min - s.min) + '</span>'
+            '<div class="gd-next">' + (nx ? '<span>次 ─ ' + escapeHtml(gdLabel(nx)) + '　あと' + gdFmt(nx.min - s.min) + '</span>'
                                           : '<span>庭が完成しました ─ 四季めぐり</span>') +
             '<span class="gd-step">' + (s.stage + 1) + ' / ' + s.stages.length + '</span></div>';
     }
@@ -4226,14 +4227,14 @@
             GD.shown = s.stage + s.season + s.light;
             setTimeout(function() { GD.revealing = false; }, 2800);
         }, 400);
-        showToast('学びの庭に「' + s.stages[s.stage].name + '」ができました');
+        showToast('学びの庭：' + gdLabel(s.stages[s.stage]) + 'ができました');
     }
     // while studying: a quiet note when the garden grows (the reveal waits for the home screen)
     function gardenNoteGrowth(beforeMin, afterMin) {
         var E = gdEngine();
         if (!E) return;
         var a = E.stageFor(beforeMin), b = E.stageFor(afterMin);
-        if (b > a) showToast('🌱 学びの庭に「' + E.STAGES[b].name + '」ができました');
+        if (b > a) showToast('🌱 学びの庭：' + gdLabel(E.STAGES[b]) + 'ができました');
     }
     // the animation rests whenever the card is not on screen (another page, a reading or quiz on top, the full view)
     setInterval(function() {
@@ -4317,7 +4318,7 @@
             return '<select data-k="' + id + '">' + list.map(function(x) { return '<option value="' + x[0] + '"' + (String(x[0]) === String(val) ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select>';
         };
         dev.innerHTML = '<div class="gd-dev-title">開発者メニュー・見え方を試す</div>' +
-            sel('stage', s.stages.map(function(st, i) { return [i, (i + 1) + ' ' + st.name]; }), o.stage) +
+            sel('stage', s.stages.map(function(st, i) { return [i, (i + 1) + ' ' + gdLabel(st)]; }), o.stage) +
             sel('season', Object.keys(GD_SEASON).map(function(k) { return [k, GD_SEASON[k]]; }), o.season) +
             sel('light', Object.keys(GD_LIGHT).map(function(k) { return [k, GD_LIGHT[k]]; }), o.light) +
             '<button data-k="up">段階アップを見る</button><button data-k="reset">元に戻す</button>';
