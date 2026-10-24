@@ -1068,12 +1068,18 @@
         .wq-after b { font-family: var(--reading-font); font-size: 1.1rem; }
         .wq-match { display: grid; grid-template-columns: 2fr 3fr; gap: 8px; align-content: start; }
         .wq-col { display: flex; flex-direction: column; gap: 8px; }
-        .wq-tile { height: 76px; overflow: hidden; display: flex; align-items: center; justify-content: flex-start; padding: 6px 10px; border: 1px solid var(--border-light); border-radius: 12px; background: var(--bg-paper); color: var(--text-main); font: inherit; font-size: 0.85rem; line-height: 1.4; text-align: left; }
-        .wq-tile.word { font-family: var(--reading-font); font-size: 1.05rem; font-weight: bold; text-align: center; justify-content: center; }
+        /* マッチング: the tiles are paper 札 with a thin inner rule, like karuta; the chosen one is inked in 藍, a match is sealed in 朱 */
+        .wq-match { --wq-ink: #2d4f7f; --wq-shu: #b8312f; --wq-rule: color-mix(in srgb, var(--text-main) 16%, transparent); --wq-card: color-mix(in srgb, var(--surface) 92%, #f3ecdc); }
+        html.dark .wq-match { --wq-ink: #9db8e6; --wq-shu: #e2766d; --wq-rule: color-mix(in srgb, var(--text-main) 22%, transparent); --wq-card: var(--surface); }
+        .wq-tile { position: relative; height: 76px; overflow: hidden; display: flex; align-items: center; justify-content: flex-start; padding: 8px 14px; border: 1px solid color-mix(in srgb, var(--text-main) 22%, transparent); border-radius: 5px; background: var(--wq-card); color: var(--text-main); font: inherit; font-size: 0.84rem; line-height: 1.5; text-align: left;
+            box-shadow: inset 0 0 0 3px var(--wq-card), inset 0 0 0 4px var(--wq-rule), 0 1px 0 rgba(30, 20, 5, 0.05), 0 3px 10px rgba(30, 20, 5, 0.10); transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, color 0.18s ease; -webkit-tap-highlight-color: transparent; }
+        .wq-tile.word { font-family: var(--mincho, var(--reading-font)); font-size: 1.14rem; font-weight: 700; letter-spacing: 0.04em; text-align: center; justify-content: center; }
         .wq-tile span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; word-break: break-word; }
-        .wq-tile.sel { border-color: var(--active-blue); background: color-mix(in srgb, var(--active-blue) 16%, var(--bg-paper)); color: var(--active-blue); font-weight: bold; box-shadow: inset 0 0 0 2px var(--active-blue), 0 0 0 3px color-mix(in srgb, var(--active-blue) 35%, transparent), 0 4px 14px rgba(0, 0, 0, 0.18); transform: scale(1.04); z-index: 1; }
-        .wq-tile.done { border-color: var(--correct-color); background: color-mix(in srgb, var(--correct-color) 14%, var(--bg-paper)); opacity: 0; visibility: hidden; pointer-events: none; }
-        .wq-tile.bad { animation: wqShake 0.35s; border-color: var(--incorrect-color, #c0392b); }
+        .wq-tile.sel { color: var(--wq-ink); background: color-mix(in srgb, var(--wq-ink) 9%, var(--wq-card)); border-color: var(--wq-ink); transform: translateY(-2px); z-index: 1;
+            box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--wq-ink) 9%, var(--wq-card)), inset 0 0 0 4.5px var(--wq-ink), 0 6px 16px rgba(30, 20, 5, 0.16); }
+        .wq-tile.done { opacity: 0; visibility: hidden; pointer-events: none; }
+        .wq-tile.bad { animation: wqNudge 0.32s ease; border-color: var(--wq-shu); color: var(--wq-shu); box-shadow: inset 0 0 0 3px var(--wq-card), inset 0 0 0 4px color-mix(in srgb, var(--wq-shu) 55%, transparent), 0 3px 10px rgba(30, 20, 5, 0.10); }
+        @keyframes wqNudge { 0%, 100% { transform: translateX(0); } 30% { transform: translateX(-3px); } 65% { transform: translateX(2px); } }
         @keyframes wqShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         .wq-match.compact .wq-tile { height: 58px; }
         .wq-match.compact .wq-tile span { -webkit-line-clamp: 2; }
@@ -1141,11 +1147,23 @@
         .wq-hud { display: flex; justify-content: center; gap: 18px; font-size: 0.8rem; color: var(--text-sub); }
         .wq-hud b { color: var(--text-main); font-variant-numeric: tabular-nums; }
         .wq-card { position: relative; }
-        .wq-tile.enter { animation: wqIn 0.35s cubic-bezier(.2, .9, .3, 1.2) both; }
-        @keyframes wqIn { from { opacity: 0; transform: translateY(10px) scale(0.92); } to { opacity: 1; transform: none; } }
-        .wq-tile.pop { animation: wqPop 0.45s cubic-bezier(.2, .9, .3, 1.4); }
+        .wq-tile.enter { animation: wqIn 0.4s cubic-bezier(.2, .8, .3, 1) both; }
+        @keyframes wqIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        .wq-tile.pop { animation: none; }
         @keyframes wqPop { 0% { transform: scale(1); } 35% { transform: scale(1.12); box-shadow: 0 0 0 6px color-mix(in srgb, var(--correct-color) 30%, transparent); } 100% { transform: scale(1); } }
-        .wq-tile.done.pop { visibility: visible; animation: wqVanish 0.55s cubic-bezier(.2, .8, .3, 1) forwards; }
+        /* a match: the pair is inked and sealed with a small 朱 合, holds a beat, then folds away like a card turned down */
+        .wq-tile.done.pop { visibility: visible; opacity: 1; color: var(--wq-ink); border-color: var(--wq-ink); background: color-mix(in srgb, var(--wq-ink) 7%, var(--wq-card));
+            box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--wq-ink) 7%, var(--wq-card)), inset 0 0 0 4.5px var(--wq-ink), 0 3px 10px rgba(30, 20, 5, 0.10);
+            transform-origin: 50% 100%; animation: wqFold 0.62s 0.34s cubic-bezier(.5, 0, .75, 0) forwards; }
+        .wq-tile.done.pop[data-side="R"] { animation-delay: 0.42s; }
+        .wq-tile.done.pop::after { content: '合'; position: absolute; top: 5px; right: 6px; width: 20px; height: 20px; border: 1.5px solid var(--wq-shu); border-radius: 50%; color: var(--wq-shu); font-family: var(--mincho, serif); font-size: 11px; font-weight: 700; line-height: 17px; text-align: center; letter-spacing: 0;
+            transform: rotate(-12deg); animation: wqSeal 0.26s cubic-bezier(.2, .9, .3, 1.2) both; }
+        @keyframes wqSeal { from { opacity: 0; transform: rotate(-12deg) scale(1.6); } to { opacity: 0.92; transform: rotate(-12deg) scale(1); } }
+        @keyframes wqFold { 0% { transform: perspective(500px) rotateX(0); opacity: 1; } 100% { transform: perspective(500px) rotateX(78deg) translateY(4px); opacity: 0; visibility: hidden; } }
+        .wq-tie { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+        .wq-tie path { fill: none; stroke: var(--wq-ink, #2d4f7f); stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: var(--len); stroke-dashoffset: var(--len); animation: wqTieDraw 0.3s ease-out forwards, wqTieFade 0.35s 0.62s ease forwards; }
+        @keyframes wqTieDraw { to { stroke-dashoffset: 0; } }
+        @keyframes wqTieFade { to { opacity: 0; } }
         @keyframes wqVanish { 0% { opacity: 1; transform: scale(1); } 30% { opacity: 1; transform: scale(1.1); box-shadow: 0 0 0 6px color-mix(in srgb, var(--correct-color) 30%, transparent); } 100% { opacity: 0; transform: scale(0.7); visibility: hidden; } }
         .wq-fx { position: fixed; inset: 0; pointer-events: none; z-index: 5; overflow: hidden; }
         .wq-spark { position: fixed; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; animation: wqSpark 0.7s ease-out forwards; }
@@ -1179,7 +1197,7 @@
         .flash-view.game .wq-card:not(.mset) .wq-dir, .flash-view.game .wq-card:not(.mset) .wq-hud { align-self: center; width: fit-content; padding: 6px 14px; }
         .flash-view.game .wq-card:not(.mset) .wq-after { border-top: none; }
         .flash-view.game .cloze-hint { border: none; }
-        .flash-view.game .wq-tile, .flash-view.game .wq-opt, .flash-view.game .cloze-bank { box-shadow: 0 2px 8px rgba(30, 20, 5, 0.16); }
+        .flash-view.game .wq-opt, .flash-view.game .cloze-bank { box-shadow: 0 2px 8px rgba(30, 20, 5, 0.16); }
         .flash-view.game { background: var(--gs-paper, #f6f3ec); }
         .flash-view.game > .flash-head, .flash-view.game > .flash-body { position: relative; z-index: 1; }
         .flash-view.game .flash-head { align-self: stretch; padding: 4px 12px 4px 4px; border-radius: 10px; background: color-mix(in srgb, var(--bg-paper) 70%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
@@ -1239,7 +1257,7 @@
         .wq-missed > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
         .wq-miss { padding: 6px 10px; border-radius: 10px; border: 1px solid var(--border-light); background: var(--bg-paper); color: var(--text-main); font-family: var(--reading-font); font-size: 1rem; }
         .wq-res-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-        @media (prefers-reduced-motion: reduce) { .wq-tile.enter, .wq-tile.pop, .wq-tile.done.pop, .wq-grade, .wq-best, .wq-chip, .wq-stamp, .wq-clear, #wq-clock.low, #wq-clock.bump, .wq-timeup, .wq-card.wq-shake { animation: none; } .wq-ring-fg { transition: none; } }
+        @media (prefers-reduced-motion: reduce) { .wq-tie, .wq-tile.done.pop::after { display: none; } .wq-tile.enter, .wq-tile.pop, .wq-tile.done.pop, .wq-grade, .wq-best, .wq-chip, .wq-stamp, .wq-clear, #wq-clock.low, #wq-clock.bump, .wq-timeup, .wq-card.wq-shake { animation: none; } .wq-ring-fg { transition: none; } }
         .wq-note { font-size: 0.78rem; color: var(--text-sub); text-align: center; }
         .flash-starts .flash-start { flex: 1; min-width: 0; margin: 0; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 14px; }
         .flash-start.write { background: var(--surface); color: var(--active-blue); box-shadow: inset 0 0 0 2px var(--active-blue); }

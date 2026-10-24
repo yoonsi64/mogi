@@ -7024,6 +7024,23 @@
             setTimeout(function(x) { x.remove(); }.bind(null, sp), 750);
         }
     }
+    // マッチング: a thin ink line draws itself from one card of the pair to the other, then fades
+    function wqTie(a, b) {
+        if (!a || !b || wqCalm()) return;
+        var L = a.dataset.side === 'L' ? a : b, R = L === a ? b : a;
+        var r1 = L.getBoundingClientRect(), r2 = R.getBoundingClientRect();
+        var x1 = r1.right - 6, y1 = r1.top + r1.height / 2, x2 = r2.left + 6, y2 = r2.top + r2.height / 2, mx = (x1 + x2) / 2;
+        var NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg'), path = document.createElementNS(NS, 'path');
+        svg.setAttribute('class', 'wq-tie'); svg.setAttribute('aria-hidden', 'true');
+        path.setAttribute('d', 'M' + x1 + ' ' + y1 + ' C' + mx + ' ' + y1 + ' ' + mx + ' ' + y2 + ' ' + x2 + ' ' + y2);
+        svg.appendChild(path);
+        var card = document.querySelector('#flash-view .wq-match');
+        if (card) { var cs = getComputedStyle(card); svg.style.setProperty('--wq-ink', cs.getPropertyValue('--wq-ink')); }
+        wqLayer().appendChild(svg);
+        var len = Math.ceil(path.getTotalLength ? path.getTotalLength() : Math.hypot(x2 - x1, y2 - y1)) + 2;
+        path.style.setProperty('--len', len);
+        setTimeout(function() { svg.remove(); }, 1100);
+    }
     // a word that floats up from an element (コンボ, +1 …)
     function wqFloat(el, text, cls) {
         if (!el) return;
@@ -7395,7 +7412,7 @@
                     wq.combo++; wq.bestCombo = Math.max(wq.bestCombo, wq.combo);
                     if (wq.ta) wq.score++;
                     var sparkC = wq.combo >= 5 ? ['#d4a017', '#f6c94c', '#fff3c4'] : wq.combo >= 3 ? ['#b8312f', '#e07a5f', '#f6c94c'] : ['#2e9e5b', '#7fd39b', '#ffffff'];
-                    wqBurst(b, sparkC, wq.combo >= 3 ? 16 : 10); wqBurst(firstTile, sparkC, wq.combo >= 3 ? 16 : 10);
+                    wqTie(firstTile, b);
                     if (wq.combo >= 2) wqFloat(b, 'コンボ ×' + wq.combo, wq.combo >= 5 ? 'gold' : wq.combo >= 3 ? 'hot' : '');
                     var hit = wq.left.find(function(x) { return String(x.id) === String(id); });
                     if (hit) speakText(escapeHtml(hit.reading || hit.word));         // say the word once it's matched
