@@ -10263,7 +10263,13 @@
         while ((n = walker.nextNode())) { nodes.push({ n: n, s: text.length }); text += n.data; }
         return { nodes: nodes, text: text };
     }
+    // The sentence being read is painted with the CSS Custom Highlight API where the browser has it: like a text
+    // selection, it is drawn under the letters and the text itself is left untouched, so nothing gets clipped or
+    // re-shaped. Older browsers wrap the sentence in <mark> as before.
+    var AR_HL = !!(window.CSS && CSS.highlights && window.Highlight);
+    var arTtsRanges = [];
     function arTtsClearMark() {
+        if (AR_HL) { CSS.highlights.delete('ar-tts'); arTtsRanges = []; }
         var book = document.querySelector('#ar-view .ar-book');
         if (!book) return;
         book.querySelectorAll('mark.ar-tts').forEach(function(m) { m.replaceWith(document.createTextNode(m.textContent)); });
@@ -10288,17 +10294,19 @@
                 if (a >= b) return;
                 var range = document.createRange();
                 range.setStart(x.n, a - x.s); range.setEnd(x.n, b - x.s);
+                if (AR_HL) { arTtsRanges.push(range); if (!first) first = range; return; }
                 var m = document.createElement('mark'); m.className = 'ar-tts';
                 range.surroundContents(m);
                 if (!first) first = m;
             });
+            if (AR_HL && arTtsRanges.length) { var hl = new Highlight(); arTtsRanges.forEach(function(rg) { hl.add(rg); }); CSS.highlights.set('ar-tts', hl); }
         }
         if (first && arTts.playing) arTtsScroll(book);
     }
     // Keep the sentence being read on screen plus one more line after it (縦: the next column to the left; 横: the next line down).
     // If the sentence is too long to fit, its beginning stays in view.
     function arTtsScroll(book) {
-        var body = book.closest('.ar-body'), parts = book.querySelectorAll('mark.ar-tts, .ar-tts-el');
+        var body = book.closest('.ar-body'), parts = Array.prototype.slice.call(book.querySelectorAll('mark.ar-tts, .ar-tts-el')).concat(arTtsRanges);
         if (!parts.length) return;
         var u = { l: Infinity, r: -Infinity, t: Infinity, b: -Infinity };
         parts.forEach(function(el) {
