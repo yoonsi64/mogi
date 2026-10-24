@@ -647,8 +647,10 @@
            join without darker seams where they meet */
         mark.ar-tts, .ar-tts-el { background-color: #e1ebfd; color: inherit; border-radius: 0; box-shadow: none; }
         html.dark mark.ar-tts, html.dark .ar-tts-el { background-color: #243149; }
-        ::highlight(ar-tts) { background-color: #e1ebfd; color: inherit; }
-        html.dark ::highlight(ar-tts) { background-color: #243149; }
+        /* the sentence being read: a see-through tint plus darker ink, so even where a browser paints the tint on top of
+           the letters (Safari does, in 縦書き), every stroke and the furigana beside it stay visible */
+        ::highlight(ar-tts) { background-color: rgba(64, 112, 214, 0.15); color: #173a73; }
+        html.dark ::highlight(ar-tts) { background-color: rgba(130, 165, 255, 0.2); color: #dce7ff; }
         #ar-view .ar-book rt { position: relative; z-index: 1; }   /* furigana stay on top of the highlight */
         .ar-pagebar { position: sticky; top: -14px; z-index: 2; display: flex; align-items: center; gap: 6px; margin: -14px calc(-1 * var(--rp-side)) 10px; padding: 8px var(--rp-side); background: var(--bg-paper); border-bottom: 1px solid var(--border-light); overflow-x: auto; scrollbar-width: none; }
         .ar-pagebar::-webkit-scrollbar { display: none; }
