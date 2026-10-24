@@ -11236,9 +11236,9 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
     // One of three public-domain works, picked at random each time a game opens, sitting below the game panels:
     // Hokusai's 凱風快晴, a 破墨 (splashed-ink) landscape, and Hiroshige's plum garden.
     var GS_ART = [
-        { src: 'art/fuji.jpg', paper: '#fefefe' },
-        { src: 'art/haboku.jpg', paper: '#c6b491' },
-        { src: 'art/ume.jpg', paper: '#f7fefd' }
+        { src: 'art/fuji.jpg', paper: '#fefefe', pos: '72% 100%', size: 'auto 60%' },        // the mountain itself, low on the screen where the cards don't cover it
+        { src: 'art/haboku.jpg', paper: '#c6b491', pos: '45% 50%' },
+        { src: 'art/ume.jpg', paper: '#f7fefd', pos: '50% 60%' }
     ];
     function sceneOn() { return getSetting('gameScene', true); }
     function sceneStart() {
@@ -11250,7 +11250,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         if (!el) { el = document.createElement('div'); el.className = 'gs'; el.setAttribute('aria-hidden', 'true'); el.innerHTML = '<div class="gs-art"></div>'; v.insertBefore(el, v.firstChild); }
         if (!wq || !wq.art) {            // a new game: pick a print (the result screen keeps the one the game had)
             var pick = GS_ART[Math.floor(Math.random() * GS_ART.length)];
-            el.querySelector('.gs-art').style.backgroundImage = 'url("' + pick.src + '")';
+            var art = el.querySelector('.gs-art'); art.style.backgroundImage = 'url("' + pick.src + '")'; art.style.backgroundPosition = pick.pos; art.style.backgroundSize = pick.size || 'cover';
             v.style.setProperty('--gs-paper', pick.paper);
             if (wq) wq.art = pick;
         }
