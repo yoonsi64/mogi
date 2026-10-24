@@ -935,11 +935,11 @@
         .wq-card { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 18px 16px; border: 1px solid var(--border-light); border-radius: 16px; background: var(--surface); overflow-y: auto; position: relative; }
         .wq-dir { font-size: 0.75rem; font-weight: bold; color: var(--text-sub); }
         .wq-prompt { text-align: center; padding: 10px 4px 6px; }
-        .wq-prompt.word { font-family: var(--reading-font); font-size: 2.3rem; font-weight: bold; line-height: 1.5; }
-        .wq-prompt.meaning { font-size: 1.05rem; line-height: 1.7; }
+        .wq-prompt.word { font-family: var(--reading-font); font-size: 1.8rem; font-weight: bold; line-height: 1.5; }
+        .wq-prompt.meaning { font-size: 1.2rem; line-height: 1.7; }
         .wq-opts { display: flex; flex-direction: column; gap: 8px; }
-        .wq-opt { text-align: left; padding: 12px 14px; border: 1px solid var(--border-light); border-radius: 12px; background: var(--bg-paper); color: var(--text-main); font: inherit; font-size: 0.95rem; line-height: 1.5; }
-        .wq-opt.word { font-family: var(--reading-font); font-size: 1.15rem; font-weight: bold; }
+        .wq-opt { text-align: left; padding: 12px 14px; border: 1px solid var(--border-light); border-radius: 12px; background: var(--bg-paper); color: var(--text-main); font: inherit; font-size: 1.05rem; line-height: 1.5; }
+        .wq-opt.word { font-family: var(--reading-font); font-weight: bold; }
         .wq-opt.correct { border-color: var(--correct-color); background: color-mix(in srgb, var(--correct-color) 14%, var(--bg-paper)); }
         .wq-opt.wrong { border-color: var(--incorrect-color, #c0392b); background: color-mix(in srgb, var(--incorrect-color, #c0392b) 12%, var(--bg-paper)); }
         .wq-opt:disabled { color: var(--text-main); opacity: 1; }

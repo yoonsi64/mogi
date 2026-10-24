@@ -2,7 +2,7 @@
 // The page itself (index.html) is always asked for fresh, so updates show right away; the big script and style
 // files carry a fingerprint in their names and never change once published, so they are kept on the device and
 // served from there, and only re-downloaded when a new version has a new name.
-var ASSETS = ["app.5101d311.js", "gistsync.0d0b2fab.js", "omikuji.1bfee276.js", "opening.ba01fa98.js", "styles.1c3d603e.css"];
+var ASSETS = ["app.ee953c69.js", "gistsync.0d0b2fab.js", "omikuji.1bfee276.js", "opening.ba01fa98.js", "styles.f279c258.css"];
 var CACHE = 'mogi-' + ASSETS.join('|').length + '-' + ASSETS.map(function(a) { return a.split('.')[1]; }).join('');
 var FINGERPRINTED = /\.[0-9a-f]{8}\.(js|css)$/;
 self.addEventListener('install', function(e) {

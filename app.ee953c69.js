@@ -6626,7 +6626,7 @@
         document.querySelector('#flash-view .flash-progress').textContent = (wq.pos + 1) + ' / ' + wq.items.length;
         var it = wq.items[wq.pos], e = it.e, done = wq.answered > -1;
         var opts = it.opts.map(function(o, i) {
-            var cls = 'wq-opt' + (it.toWord ? ' word' : '');
+            var cls = 'wq-opt' + (it.toWord || it.ask === 'reading' ? ' word' : '');
             if (done && o.id === e.id) cls += ' correct';
             else if (done && i === wq.answered) cls += ' wrong';
             return '<button class="' + cls + '" data-i="' + i + '"' + (done ? ' disabled' : '') + '>' + CIRCLED[i] + ' ' + escapeHtml(it.ask === 'meaning' ? wqClip(wqMeaning(o), 70) : mcText(o, it.ask)) + '</button>';
