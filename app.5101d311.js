@@ -6482,16 +6482,8 @@
         setTimeout(function() { f.remove(); }, 1100);
     }
     // falling paper: confetti, or 桜 petals for a perfect score
-    // what falls on the results screen: the pieces of the opening scene for today (or the chosen opening), so petals in
-    // spring, leaves in autumn, snow in winter; seasons whose opening has nothing falling use the plain season's pieces
-    function wqSeasonPieces() {
-        try {
-            var setting = getSetting('openingSeason', 'auto'), kind = setting === 'auto' || setting === 'off' ? seasonForToday() : setting;
-            var imgs = wvSeasonHtml(kind, true);
-            if (!imgs.length) { var m = new Date().getMonth() + 1; imgs = wvSeasonHtml(m >= 3 && m <= 5 ? 'sakura' : m >= 6 && m <= 8 ? 'aoba' : m >= 9 && m <= 11 ? 'momiji' : 'snow', true); }
-            return imgs;
-        } catch (e) { return []; }
-    }
+    // what falls on the results screen: cherry petals, the same ones as the spring opening
+    function wqSeasonPieces() { try { return wvSeasonHtml('sakura', true); } catch (e) { return []; } }
     function wqConfetti(many) {
         if (wqCalm()) return;
         var l = wqLayer(), imgs = wqSeasonPieces(), n = many ? 48 : 30;
