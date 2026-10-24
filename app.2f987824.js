@@ -5369,7 +5369,7 @@
     function collectText(block) {
         var walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, {
             acceptNode: function(n) {
-                return n.parentElement && n.parentElement.closest('rt, rp, .option-prefix, .blank-number, .ar-title, .ar-author, .ar-h-title, .ar-h-author, .ar-pgbadge') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+                return n.parentElement && n.parentElement.closest('rt, rp, .option-prefix, .blank-number, .kw-blank i, .ar-title, .ar-author, .ar-h-title, .ar-h-author, .ar-pgbadge') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
             }
         });
         var parts = [], text = '', n;
