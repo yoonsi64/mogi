@@ -13005,7 +13005,7 @@
                 '<span class="badge-sub">' + escapeHtml(lv ? b.tiers[lv - 1].label : (next && b.unit && !b.noRemain ? 'あと' + (next.n - b.value) + b.unit : next.label)) + '</span>';
         } else if (b.progress) sub = '<span class="badge-sub">' + escapeHtml(b.progress) + '</span>';
         return '<div class="badge' + (lv ? ' earned' : '') + (b.tiers ? ' tiered' : '') + '" role="button" tabindex="0" data-bid="' + escapeHtml(b.id) + '"' +
-            (lv && b.tiers ? ' style="--tier:' + badgeColor(b, lv) + '"' : '') + '><span class="badge-icon">' + b.icon + '</span><span class="badge-name">' + escapeHtml(b.name) + '</span>' + sub + '</div>';
+            (lv && b.tiers ? ' style="--tier:' + badgeColor(b, lv) + '"' : '') + '><span class="badge-icon">' + b.icon + (b.tiers && lv === b.tiers.length ? '<i class="badge-star" aria-label="最高位">★</i>' : '') + '</span><span class="badge-name">' + escapeHtml(b.name) + '</span>' + sub + '</div>';
     }
     function badgeDetailText(b) {
         var log = loadJSON('jlptBadgeLog', {}), lv = badgeLevel(b);
