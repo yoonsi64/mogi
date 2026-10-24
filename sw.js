@@ -2,15 +2,16 @@
 // The page itself (index.html) is always asked for fresh, so updates show right away; the big script and style
 // files carry a fingerprint in their names and never change once published, so they are kept on the device and
 // served from there, and only re-downloaded when a new version has a new name.
-var ASSETS = ["app.d001c51c.js", "gistsync.0d0b2fab.js", "omikuji.a7ff0fcb.js", "opening.ba01fa98.js", "styles.b3b77d31.css"];
+var ASSETS = ["app.33d1b0e8.js", "gistsync.0d0b2fab.js", "omikuji.a7ff0fcb.js", "opening.ba01fa98.js", "styles.b3b77d31.css"];
 var CACHE = 'mogi-' + ASSETS.join('|').length + '-' + ASSETS.map(function(a) { return a.split('.')[1]; }).join('');
 var FINGERPRINTED = /\.[0-9a-f]{8}\.(js|css)$/;
+var ART = 'mogi-art-1';           // the prints: kept across app updates
 self.addEventListener('install', function(e) {
     e.waitUntil(caches.open(CACHE).then(function(c) { return c.addAll(ASSETS.map(function(a) { return './' + a; })).catch(function() {}); }).then(function() { return self.skipWaiting(); }));
 });
 self.addEventListener('activate', function(e) {
     e.waitUntil(caches.keys().then(function(keys) {
-        return Promise.all(keys.filter(function(k) { return k !== CACHE; }).map(function(k) { return caches.delete(k); }));
+        return Promise.all(keys.filter(function(k) { return k !== CACHE && k !== ART; }).map(function(k) { return caches.delete(k); }));
     }).then(function() { return self.clients.claim(); }));
 });
 self.addEventListener('fetch', function(e) {
@@ -25,7 +26,18 @@ self.addEventListener('fetch', function(e) {
         }));
         return;
     }
-    // the page, the prints and the icons: the newest from the site, the saved copy when there is no internet
+    if (/\/art\/[^/]+\.(webp|jpg)$/.test(new URL(req.url).pathname)) {
+        // a print: show the saved copy immediately; check the site in the background so a replaced print shows next time
+        e.respondWith(caches.open(ART).then(function(c) {
+            return c.match(req).then(function(hit) {
+                var net = fetch(req, { cache: 'no-cache' }).then(function(res) { if (res && res.status === 200) c.put(req, res.clone()); return res; });
+                if (hit) { e.waitUntil(net.catch(function() {})); return hit; }
+                return net;
+            });
+        }));
+        return;
+    }
+    // the page and the icons: the newest from the site, the saved copy when there is no internet
     e.respondWith(
         fetch(req, { cache: 'no-cache' }).then(function(res) {
             if (res && res.status === 200) { var copy = res.clone(); caches.open(CACHE).then(function(c) { return c.put(req, copy); }).catch(function() {}); }
