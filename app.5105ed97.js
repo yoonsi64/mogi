@@ -10124,10 +10124,23 @@
         var zoomed = function(f) { return 'calc(' + f + ' * var(--ar-zoom, 1))'; };
         return '<div class="ar-book ar-v" style="--ar-len:' + (maxLen + 0.6) + 'em; --ar-fs:' + zoomed(fit) + '; --ar-fs:' + zoomed(fit.replace('100vh', '100dvh')) + '; font-size: var(--ar-fs)">' + r.pages.map(function(pg, pi) {
             return '<section class="ar-page" data-p="' + pg.p + '">' +
-                (pi === 0 ? '<div class="ar-title">' + escapeHtml(r.title) + '</div><div class="ar-author">' + r.authorHtml + '</div>' : '') +
-                pg.lines.map(function(line, i) { var n = i + 1; return '<div class="ar-line"' + (n % 5 === 0 ? ' data-n="' + n + '"' : '') + '>' + arMarkup(line) + '</div>'; }).join('') +
+                (pi === 0 ? '<div class="ar-title">' + arTateLatin(escapeHtml(r.title)) + '</div><div class="ar-author">' + r.authorHtml + '</div>' : '') +
+                pg.lines.map(function(line, i) { var n = i + 1; return '<div class="ar-line"' + (n % 5 === 0 ? ' data-n="' + n + '"' : '') + '>' + arTateLatin(arMarkup(line)) + '</div>'; }).join('') +
                 '</section>';
         }).join('') + '</div>';
+    }
+    // 縦書き: Latin in the text, set the way Japanese books do. Numbers of one or two digits sit side by side in one
+    // square (縦中横); acronyms (SNS, ID) and longer numbers (1500, 2011) stand upright, one character under another;
+    // ordinary words with lower case (Facebook, Web) stay turned on their side. Only the text between tags is touched.
+    function arTateLatin(html) {
+        return html.split(/(<[^>]+>)/).map(function(part, i) {
+            if (i % 2 || !/[0-9A-Za-zＡ-Ｚ]/.test(part)) return part;
+            return part.replace(/[A-Za-z][A-Za-z.'’&-]*|[0-9]+(?:[.,][0-9]+)*/g, function(w) {
+                if (/^[0-9]{1,2}$/.test(w)) return '<span class="ar-tcy">' + w + '</span>';
+                if (/^[0-9]{3,4}$/.test(w) || /^[A-Z]{1,5}$/.test(w)) return '<span class="ar-up">' + w + '</span>';
+                return w;
+            });
+        }).join('');
     }
     function arParagraphsHtml(r) {
         var paras = [], cur = null;

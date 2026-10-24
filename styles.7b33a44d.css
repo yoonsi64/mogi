@@ -1271,6 +1271,8 @@
         .reading-box p.no-indent, .reading-box .notice p { text-indent: 0; }
         .reading-box .notice p.indent { text-indent: 1em; }
         .reading-boxblank { display: inline-block; width: 6em; height: 1.3em; border: 1px solid currentColor; vertical-align: middle; margin: 0 2px; }
+        .ar-book.ar-v .ar-tcy { text-combine-upright: all; -webkit-text-combine: horizontal; }
+        .ar-book.ar-v .ar-up { text-orientation: upright; }
         .bousen { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; }
         .reading-box.vertical .bousen { text-underline-position: right; }
         .reading-box rt { font-size: 0.55em; color: var(--text-sub); }
