@@ -629,7 +629,7 @@
         .ar-zoom-pill small { font-weight: normal; opacity: 0.8; margin-left: 8px; }
         .ar-book { font-family: var(--reading-font); color: var(--text-main); }
         /* the app's * { font-family } rule would put each line back in the UI font */
-        .ar-book *, .ar-card-q *, .kj-q *, .ar-bio-name *, .ar-ex * { font-family: inherit; }
+        .ar-book *, .ar-card-q *, .kj-q *, .ar-bio-name *, .ar-ex *, .kw-text *, .ab-say *, .aw-say *, .ar-pre *, .gal-cap * { font-family: inherit; }
         .ar-book.ar-v { writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl; text-orientation: mixed; overflow-x: auto; overflow-y: hidden; line-height: 2.05;
             width: 100%; max-width: 100%; margin: 0; padding: 2.3em 0.4em 1.7em; -webkit-overflow-scrolling: touch;
             /* soften the column cut off at each edge while scrolling */

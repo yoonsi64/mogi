@@ -10867,6 +10867,8 @@
                 if (!kw.segs) return;
                 var t = au.currentTime, n = -1;
                 for (var k = 0; k < kw.segs.length; k++) if (t >= kw.segs[k][0] && t < kw.segs[k][1] + 0.4) { n = k; break; }
+                // a tapped line is marked at once, before the jump in the recording has finished
+                if (player.want != null) { if (n === player.want) player.want = null; else { n = player.want; if (au.paused && !player.starting) n = -1; } }
                 body.querySelectorAll('.kw-line').forEach(function(el, k) { el.classList.toggle('kw-now', k === n && !au.paused); });
                 var cur = n > -1 && !au.paused && body.querySelectorAll('.kw-line')[n];
                 if (cur && cur !== markNow.last) {
@@ -10876,20 +10878,25 @@
                     if (r.top < br.top + 60 || r.bottom > bottom - 10) body.scrollBy({ top: r.top - br.top - 90, behavior: 'smooth' });
                 }
             };
-            au.addEventListener('timeupdate', markNow);
-            au.addEventListener('pause', markNow);
+            // follow the recording every frame while it plays (timeupdate alone only comes 4 times a second)
+            var follow = function() { markNow(); if (!au.paused) player.followRaf = requestAnimationFrame(follow); };
+            au.addEventListener('play', function() { cancelAnimationFrame(player.followRaf); player.followRaf = requestAnimationFrame(follow); });
+            au.addEventListener('pause', function() { player.starting = false; markNow(); });
             au.addEventListener('seeked', function() { markNow.last = null; markNow(); });
             // one line: play just its stretch of the recording, then stop
             player.playLine = function(li) {
                 var sg = kw.segs[li], stopAt = sg[1];
                 cancelAnimationFrame(player.raf);
+                player.want = li; player.starting = true;
+                body.querySelectorAll('.kw-line').forEach(function(el, k) { el.classList.toggle('kw-now', k === li); });
+                markNow.last = body.querySelectorAll('.kw-line')[li];
                 au.currentTime = sg[0];
                 var watch = function() {
                     if (au.paused) return;
                     if (au.currentTime >= stopAt) { au.pause(); return; }
                     player.raf = requestAnimationFrame(watch);
                 };
-                var p = au.play(); if (p && p.then) p.then(function() { player.raf = requestAnimationFrame(watch); }, function() {}); else player.raf = requestAnimationFrame(watch);
+                var p = au.play(); if (p && p.then) p.then(function() { player.starting = false; player.raf = requestAnimationFrame(watch); }, function() { player.starting = false; player.want = null; markNow(); }); else player.raf = requestAnimationFrame(watch);
             };
             au.addEventListener('error', function() { player.classList.add('kw-noaudio'); player.querySelector('.kw-player-k').textContent = '音声を読み込めませんでした'; });
         }
