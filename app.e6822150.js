@@ -10869,6 +10869,14 @@
         var kw = r.kaiwa, ans = kw.answers, act = null;
         var ok = function(n) { return st.kaiwa[n] === ans[n - 1]; };
         var firstOpen = function() { for (var n = 1; n <= ans.length; n++) if (!ok(n)) return n; return null; };
+        // the blanks in each line, and the first one still open from a given line on (while the recording plays,
+        // the blank to fill follows the line being spoken rather than the number order)
+        var lineBlanks = kw.lines.map(function(l) { var out = [], m, re = /\[(\d+)\]/g; while ((m = re.exec(l[1]))) out.push(+m[1]); return out; });
+        var openFrom = function(li) {
+            for (var k = li; k < lineBlanks.length; k++) for (var j = 0; j < lineBlanks[k].length; j++) if (!ok(lineBlanks[k][j])) return lineBlanks[k][j];
+            return firstOpen();
+        };
+        var playingLine = -1;
         act = firstOpen();
         var player = null;
         if (kw.audio) {
@@ -10888,6 +10896,12 @@
                 // a tapped line is marked at once, before the jump in the recording has finished
                 if (player.want != null) { if (n === player.want) player.want = null; else { n = player.want; if (au.paused && !player.starting) n = -1; } }
                 body.querySelectorAll('.kw-line').forEach(function(el, k) { el.classList.toggle('kw-now', k === n && !au.paused); });
+                if (n > -1 && !au.paused && n !== playingLine) {
+                    playingLine = n;
+                    var openHere = lineBlanks[n].filter(function(b) { return !ok(b); })[0];
+                    if (openHere && openHere !== act) { act = openHere; var keep = body.scrollTop; draw(); body.scrollTop = keep; markNow.last = body.querySelectorAll('.kw-line')[n]; body.querySelectorAll('.kw-line')[n].classList.add('kw-now'); }
+                }
+                if (au.paused) playingLine = -1;
                 var cur = n > -1 && !au.paused && body.querySelectorAll('.kw-line')[n];
                 if (cur && cur !== markNow.last) {
                     markNow.last = cur;
@@ -10946,7 +10960,7 @@
                     st.kaiwa[act] = c.dataset.v; saveAdv();
                     var good = ok(act);
                     vibrateFor(good);
-                    if (good) act = firstOpen();
+                    if (good) act = player && !player.querySelector('audio').paused && playingLine > -1 ? openFrom(playingLine) : firstOpen();
                     var keep = body.scrollTop; draw(); body.scrollTop = keep;
                 });
             });
