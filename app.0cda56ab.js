@@ -14278,6 +14278,9 @@
     // Encouraging words from Japanese writers and others, each checked against its source.
     // gloss = modern Japanese for classical texts.
     var EXAM_QUOTES = [
+        { text: '成長を欲するものはまず根を確かにおろさなくてはならぬ。上に伸びることをのみ欲するな。まず下に食い入ることに努めよ。',
+          gloss: '上に伸びることばかり望まず、まず根を深く張れ。見えないところで基礎を固めることが、成長の第一歩だ。',
+          who: '和辻哲郎', src: '「木の根」（『偶像再興』）' },
         { text: '小さいことを重ねることが、とんでもないところに行くただひとつの道',
           who: 'イチロー', src: '2004年、メジャーリーグのシーズン最多安打記録を破ったあとの記者会見' },
         { text: '初心忘るべからず',
