@@ -136,10 +136,10 @@ var STAGE_DEFS = [
   [0, '空き地', '雑草の茂る空き地。ここから庭づくりが始まります', [0.9, 0.05, 3.2]],
   [15, '整地', '土をならし、砂利敷きの縁取りを描きました', [-2.7, 0, 1.45]],
   [30, '砂紋と石', '白砂に砂紋を引き、石をひとつ据えました', [-2.3, 0.35, 1.6]],
-  [60, 'もみじの苗', 'もみじの苗を植えました', [-4.95, 0.5, 4.3]],
+  [60, 'もみじの苗', 'もみじの苗を植えました', [-4.95, 0.55, 4.3]],
   [120, '飛び石', '飛び石の小道ができました', [0.45, 0, 1.6]],
   [180, '苔', '庭に苔が広がりはじめました', [-1.2, 0, 3.0]],
-  [300, 'つつじと松の苗', 'つつじと若い松を植えました', [5.0, 0.5, 1.4]],
+  [300, 'つつじと松の苗', 'つつじと若い松を植えました', [5.6, 0.5, 1.3]],
   [420, '池', '池を掘り、水を引きました', [2.4, 0, 4.6]],
   [600, '錦鯉と石灯籠', '錦鯉を放ち、石灯籠を据えました', [-1.15, 0.9, 4.3]],
   [900, '睡蓮と菖蒲', '睡蓮が浮かび、菖蒲が水辺を彩ります', [3.2, 0, 4.5]],
@@ -149,10 +149,12 @@ var STAGE_DEFS = [
   [3000, '茶室', '苔むした茶室が建ちました', [-1.95, 1.7, 8.8]],
   [4500, '鹿おどし', '鹿おどしの音が庭に響きます', [0.75, 0.45, 3.25]],
   [6000, '築山と滝', '築山を盛り、滝を落としました', [5.3, 0.9, 7.9]],
+  [7500, '藤棚', '池のほとりに藤棚を組みました', [1.15, 1.75, 6.6]],
   [9000, '枯山水', '白砂に石組みを据え、枯山水を整えました', [-3.5, 0.5, 1.2]],
   [12000, '苔庭と大もみじ', '苔が庭を覆い、もみじが大きく育ちました', [-4.6, 3.2, 4.3]],
   [15000, '五重塔', '遠くの山に五重塔が見えます', 'pagoda'],
   [18000, '山門', '竹垣に山門を構えました', [2.65, 1.6, 10.45]],
+  [21000, '桜並木', '垣根沿いに桜並木が育ちました', [4.1, 2.9, 10.95]],
   [24000, '八つ橋', '菖蒲の沢に八つ橋を渡しました', [2.7, 0, 2.3]],
   [30000, '枝垂れ桜', '枝垂れ桜が咲き、庭が完成しました', [6.1, 3.9, 9.7]]
 ];
@@ -173,7 +175,10 @@ var LAY = {
   gate: { xa: 1.95, xb: 3.35 },
   tsukubai: { x: -2.2, z: 6.35 },
   shishi: { x: 0.75, z: 3.25, m: -1 },
-  cherry: { x: 6.1, z: 9.7 }
+  cherry: { x: 6.1, z: 9.7 },
+  ycherry: { x: -4.95, z: 8.7 },
+  wis: { x0: 0.35, x1: 1.95, z0: 6.05, z1: 7.15, h: 2.05 },
+  namiki: [[-6.0, 10.95, 4.0], [-4.2, 11.0, 4.3], [4.1, 10.95, 4.2], [7.7, 11.0, 3.9]]
 };
 var TH = { X0: -3.3, X1: -0.4, ZE: 7.65, ZW: 8.1, ZB: 10.05, FH: 0.5, WT: 2.35, EY: 2.42, RY: 3.9, ov: 0.62 };
 function sdE(x, z, e) { var dx = (x - e[0]) / e[2], dz = (z - e[1]) / e[3]; return (Math.sqrt(dx * dx + dz * dz) - 1) * Math.min(e[2], e[3]); }
@@ -201,12 +206,14 @@ var PATH_GATE = [[1.25, 7.95, 0.25, 0.2], [1.75, 8.6, 0.24, 0.2], [2.25, 9.25, 0
 var AZALEAS = [[-3.25, 5.4, 0.6, 0.5], [-1.85, 5.2, 0.42, 0.36], [0.95, 8.2, 0.48, 0.4], [6.25, 4.35, 0.58, 0.48], [3.95, 1.25, 0.42, 0.36], [-2.55, 3.95, 0.4, 0.34], [-0.15, 9.0, 0.45, 0.38]];
 
 /* stage -> feature switches and growth amounts (trees mature continuously) */
-function features(s) {
-  var f = { s: s };
+var OLD_EQ = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 15.5, 16, 17, 18, 19, 19.5, 20, 21];
+function features(st) {
+  var s = OLD_EQ[Math.max(0, Math.min(OLD_EQ.length - 1, st))], si = Math.floor(s);
+  var f = { s: si, stage: st };
   f.weeds = s === 0; f.leveled = s >= 1; f.gravelOutline = s === 1; f.gravel = s >= 2; f.rock1 = s >= 2;
   f.maple = s < 3 ? 0 : s >= 17 ? 1 + (s - 17) * 0.03 : lerp(0.17, 0.8, Math.pow((s - 3) / 13, 0.9));
   f.path = s >= 4; f.mossOn = s >= 5;
-  f.moss = s < 5 ? 2 : [0.64, 0.6, 0.56, 0.53, 0.5, 0.47, 0.45, 0.43, 0.41, 0.39, 0.37, 0.35, 0.29, 0.28, 0.27, 0.26, 0.25][s - 5];
+  f.moss = s < 5 ? 2 : [0.64, 0.6, 0.56, 0.53, 0.5, 0.47, 0.45, 0.43, 0.41, 0.39, 0.37, 0.35, 0.29, 0.28, 0.27, 0.26, 0.25][si - 5] - (s - si) * 0.02;
   f.rockMoss = clamp((s - 2) / 16) * 0.85;
   f.azaleas = s >= 6 ? Math.min(1, lerp(0.55, 1, (s - 6) / 8)) : 0;
   f.pine = s < 6 ? 0 : s >= 17 ? 0.9 + (s - 17) * 0.015 : lerp(0.2, 0.84, (s - 6) / 11);
@@ -215,6 +222,11 @@ function features(s) {
   f.shishi = s >= 14; f.hill = s >= 15; f.kare = s >= 16; f.mature = s >= 17; f.maple2 = 0;
   f.pagoda = s >= 18; f.gate = s >= 19; f.marsh = s >= 20; f.yatsu = s >= 20; f.cherry = s >= 21 ? 1 : 0;
   f.lilyN = s < 9 ? 0 : Math.min(1, 0.5 + (s - 9) * 0.06);
+  // new in 1.1: wisteria trellis (16), young cherry from the start, cherry avenue along the fence (21)
+  f.weeds = si === 0 && st === 0; f.gravelOutline = st === 1;
+  f.wisteria = st >= 16 ? Math.min(1, 0.62 + (st - 16) * 0.06) : 0;
+  f.ycherry = st >= 1 ? Math.min(1.05, lerp(0.14, 1, Math.pow((st - 1) / 18, 0.85))) : 0;
+  f.namiki = st >= 21;
   return f;
 }
 function gravelInfo(Fx) { return Fx.kare ? { cx: -3.15, cz: 1.45, rx: 3.75, rz: 2.0 } : { cx: -2.9, cz: 1.45, rx: 3.3, rz: 1.82 }; }
@@ -234,7 +246,7 @@ var SEASONS = {
     moss: [[30, 50, 20], [52, 82, 30], [82, 116, 40], [124, 150, 58], [170, 184, 92]],
     shrub: [[14, 30, 18], [26, 50, 26], [44, 76, 34], [72, 108, 46], [110, 142, 62], [160, 178, 92]],
     azBloom: { p: 0.62, pal: [[150, 30, 80], [206, 64, 120], [236, 118, 160], [250, 182, 206]] },
-    ridge: [[118, 150, 92], [150, 176, 108], [196, 206, 150], [226, 178, 196], [236, 206, 216], [96, 124, 76]],
+    ridge: [[110, 140, 90], [150, 174, 110], [232, 210, 218], [242, 226, 232], [224, 198, 208], [98, 124, 80]],
     edge: 'spring', ginkgo: [[44, 66, 20], [82, 112, 34], [132, 160, 56], [176, 196, 92], [210, 222, 140]],
     cherry: 'bloom', iris: 'leaf', lily: 'pad', snow: 0, fallen: 'petal', fx: 'petal', pond: [92, 98, 64], sky: [206, 214, 222]
   },
@@ -289,10 +301,10 @@ var LIGHTS = {
     grade: null, bloom: 0.22, vig: [196, 182, 170], mist: 0.3
   },
   dusk: {
-    sun: norm([0.86, 0.26, 0.3]), sunc: [1.0, 0.6, 0.34], amb: [0.42, 0.38, 0.5], ls: [0.9, -0.4],
-    skyTop: [118, 104, 140], skyHor: [250, 170, 104], haze: [226, 160, 128], sunX: 0.86, sunY: 0.24, sunGlow: 'rgba(255,170,90,0.9)',
-    shadow: [70, 52, 92], shadowA: 0.46, hazeK: 1.1, lit: true, wash: ['rgba(255,150,70,0.46)', 'rgba(255,120,70,0.14)'],
-    grade: [[252, 210, 178], [228, 182, 160], [168, 138, 146]], bloom: 0.34, vig: [130, 104, 130], mist: 0.35
+    sun: norm([0.86, 0.26, 0.3]), sunc: [1.0, 0.62, 0.36], amb: [0.46, 0.43, 0.56], ls: [0.9, -0.4],
+    skyTop: [96, 92, 140], skyHor: [252, 168, 98], haze: [204, 146, 150], sunX: 0.86, sunY: 0.24, sunGlow: 'rgba(255,170,90,0.9)',
+    shadow: [64, 50, 100], shadowA: 0.44, hazeK: 1.0, lit: true, wash: ['rgba(255,150,70,0.40)', 'rgba(255,120,70,0.10)'],
+    grade: [[255, 226, 198], [186, 168, 206], [222, 186, 160]], gradeMid: 0.42, bloom: 0.34, vig: [130, 104, 130], mist: 0.35
   },
   night: {
     sun: norm([-0.46, 0.62, 0.5]), sunc: [0.46, 0.56, 0.82], amb: [0.2, 0.26, 0.44], ls: [-0.6, -0.8],
@@ -317,6 +329,9 @@ function leafAdd(path, x, y, s, a, kind, flat) {
     path.closePath();
   } else if (kind === 'needle') { var dx = Math.cos(a) * s * 1.6, dy = Math.sin(a) * s * 1.6; path.moveTo(x - dx, y - dy); path.lineTo(x + dx, y + dy); }
   else if (kind === 'oval') { path.moveTo(x + s, y); path.ellipse(x, y, s, s * 0.62, a, 0, TAU); }
+  else if (kind === 'flower') { // five petals around a centre: a sakura blossom
+    for (var f = 0; f < 5; f++) { var fa = a + f * TAU / 5, fx = x + Math.cos(fa) * s * 0.5, fy = y + Math.sin(fa) * s * 0.5 * flat; path.moveTo(fx + s * 0.44, fy); path.ellipse(fx, fy, s * 0.44, s * 0.4 * flat, fa, 0, TAU); }
+  }
   else { path.moveTo(x + s, y); path.arc(x, y, s, 0, TAU); }
 }
 var MOMIJI = (function () {
@@ -412,9 +427,9 @@ function drawBranches(ctx, segs, bark, wmul, snowK) {
 }
 
 /* ================= Japanese maple: layered sprays ================= */
-function genMaple(seed, bx, bz, g, by, hsc) {
+function genMaple(seed, bx, bz, g, by, hsc, maxl) {
   by = by || 0;
-  var rng = mulberry32(seed), chains = [], MAXL = 5;
+  var rng = mulberry32(seed), chains = [], MAXL = maxl || 5;
   function grow(p, d, len, rad, lvl, parent) {
     var cur = p, ns = 3, segs = [];
     for (var k = 0; k < ns; k++) {
@@ -476,7 +491,7 @@ function genMaple(seed, bx, bz, g, by, hsc) {
   var R = 0.1; sprays.forEach(function (s) { R = Math.max(R, Math.hypot(s.p[0] - cx, s.p[1] - cy, s.p[2] - cz)); });
   return { segs: segs, sprays: sprays, twigs: twigs, center: [cx, cy, cz], R: R, base: [bx, by, bz], H: Ht, seed: seed, g: gg };
 }
-function paintSprays(ctx, t, filt) {
+function paintSprays(ctx, t, filt, opt) {
   var list = [], i;
   for (i = 0; i < t.sprays.length; i++) { var s = t.sprays[i], p = Pa(s.p); if (filt(p)) list.push({ s: s, p: p }); }
   list.sort(function (a, b) { return b.p.d - a.p.d; });
@@ -485,9 +500,10 @@ function paintSprays(ctx, t, filt) {
     for (i = 0; i < list.length; i++) { var q = list[i], rr = q.s.r * q.p.k; ctx.beginPath(); ctx.ellipse(q.p.x, q.p.y, rr * 0.95, rr * 0.42, 0, 0, TAU); ctx.fill(); }
     return;
   }
-  var pal = SEA.maple, alt = SEA.mapleAlt, altK = SEA.altAmt, rng = mulberry32(t.seed + 5), C = t.center, R = t.R;
-  var NB = 10, dq = Math.sqrt(DQ), big = t.H > 2.5;
-  var tint = LIT.foliageTint || null;
+  opt = opt || {};
+  var pal = opt.pal || SEA.maple, alt = opt.pal ? opt.alt : SEA.mapleAlt, altK = opt.pal ? (opt.altK || 0) : SEA.altAmt, rng = mulberry32(t.seed + 5), C = t.center, R = t.R;
+  var NB = 10, dq = Math.sqrt(DQ), big = t.H > 2.5, blossom = opt.kind === 'blossom', dens = opt.density || 1, haze = opt.haze || 0;
+  var tint = LIT.foliageTint || null, acc = opt.accent ? [new Path2D(), new Path2D()] : null;
   for (i = 0; i < list.length; i++) {
     var sp = list[i].s, p = list[i].p, rs = sp.r * p.k;
     // light: crown-scale normal + spray top
@@ -497,12 +513,13 @@ function paintSprays(ctx, t, filt) {
     lit *= 0.55 + 0.45 * clamp(depth * 1.2);
     var hr = clamp((sp.p[1] - (C[1] - R * 0.8)) / (R * 1.6)); lit *= 0.75 + 0.35 * hr;
     var tone = altK * clamp(sp.tone * 0.8 + (NZ.n3(sp.p[0] * 0.7, sp.p[1] * 0.7, sp.p[2] * 0.7) - 0.45) * 1.6, -1, 1);
-    var flat = 0.42;
+    var flat = blossom ? 0.55 : 0.42;
     // underside shadow: a few dark dabs hugging the lower rim of the spray
-    var leafK = (rs * KS > 9 * dq) ? 'momiji' : 'maple';
+    var ds = (opt.dab ? opt.dab * p.k / dq : blossom ? Math.max(0.5, 0.07 * p.k) / dq : Math.max(0.55, 0.085 * p.k) / dq * (big ? 1 : 0.9));
+    var leafK = blossom ? (ds * KS > 6 ? 'flower' : 'circle') : opt.kind === 'leaf' ? 'oval' : (ds * KS > 6.5) ? 'momiji' : 'maple';
+    if (blossom) lit = clamp(lit * 0.78 + 0.2);
     var paths = []; for (var b = 0; b < NB; b++) paths.push(new Path2D());
-    var ds = Math.max(0.55, 0.085 * p.k) / dq * (big ? 1 : 0.9);
-    var cnt = Math.min(150 * DQ, Math.max(6, rs * rs * 0.6 * DQ));
+    var cnt = Math.min((opt.cap || 150) * DQ * dens, Math.max(5, rs * rs * 0.6 * DQ * dens * (opt.dab ? 0.0049 / (opt.dab * opt.dab) : 1)));
     for (var k = 0; k < cnt; k++) {
       var a = rng() * TAU, rr = Math.sqrt(rng()), ox = Math.cos(a) * rr, oy = Math.sin(a) * rr;
       if (rr > 0.75 && rng() < (rr - 0.75) * 2.4) continue; // lacy edge
@@ -513,31 +530,58 @@ function paintSprays(ctx, t, filt) {
       var under = oy > 0.35 && rng() < 0.55;
       if (under) local = local * 0.45 - 0.05;
       local = clamp(local);
+      if (acc && rng() < opt.accent.p) { leafAdd(acc[local > 0.5 ? 1 : 0], sx, sy, ds * 0.8, rng() * TAU, 'oval', 0.78); continue; }
       leafAdd(paths[Math.min(NB - 1, Math.round(local * (NB - 1)))], sx, sy, ds * (0.7 + rng() * 0.6), -Math.PI / 2 + (rng() - 0.5) * 2.2 + ox * 0.6, leafK, 0.78);
     }
     for (b = 0; b < NB; b++) {
       var f = b / (NB - 1), col = ramp(pal, f * 0.92 + 0.04);
       if (alt && tone > 0) col = mixc(col, ramp(alt, f * 0.92 + 0.04), tone); else if (alt && tone < 0 && SEA === SEASONS.autumn) col = mixc(col, scl(ramp(pal, f * 0.8), 0.92), -tone * 0.4);
+      if (haze) col = mixc(col, LIT.haze, haze);
       ctx.fillStyle = rgb(tc(col, tint)); ctx.fill(paths[b]);
     }
+    if (acc) for (b = 0; b < 2; b++) { var ac = ramp(opt.accent.pal, b ? 0.8 : 0.3); if (haze) ac = mixc(ac, LIT.haze, haze); ctx.fillStyle = rgb(tc(ac, tint)); ctx.fill(acc[b]); }
   }
 }
 function drawMaple(ctx, t) {
   var cd = Pa(t.center).d;
   var bark = [[40, 32, 30], [80, 68, 62], [122, 108, 96]];
-  if (!SEA.maple) { // winter: bare structure, twigs and snow
-    drawBranches(ctx, t.segs, bark, 1, SEA.snow ? 1 : 0);
-    if (!sil()) {
-      ctx.strokeStyle = rgb(tc([70, 58, 54], LIT.foliageTint)); ctx.lineCap = 'round';
-      ctx.lineWidth = Math.max(0.25, 0.012 * Pa(t.center).k); ctx.beginPath();
-      t.twigs.forEach(function (tw) { var a = Pa(tw[0]), m = Pa(tw[1]), e = Pa(tw[2]); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo(m.x, m.y, e.x, e.y); });
-      ctx.stroke(); ctx.lineCap = 'butt';
-    } else { ctx.strokeStyle = '#000'; ctx.lineWidth = 0.3; ctx.beginPath(); t.twigs.forEach(function (tw) { var a = Pa(tw[0]), e = Pa(tw[2]); ctx.moveTo(a.x, a.y); ctx.lineTo(e.x, e.y); }); ctx.stroke(); }
-    return;
-  }
-  paintSprays(ctx, t, function (p) { return p.d > cd + 0.25; });
+  if (!SEA.maple) { drawBareTree(ctx, t, bark); return; } // winter: bare structure, twigs and snow
+  var mo = { cap: 118 };
+  paintSprays(ctx, t, function (p) { return p.d > cd + 0.25; }, mo);
   drawBranches(ctx, t.segs, bark);
-  paintSprays(ctx, t, function (p) { return p.d <= cd + 0.25; });
+  paintSprays(ctx, t, function (p) { return p.d <= cd + 0.25; }, mo);
+}
+function drawBareTree(ctx, t, bark) {
+  drawBranches(ctx, t.segs, bark, 1, SEA.snow ? 1 : 0);
+  if (!sil()) {
+    ctx.strokeStyle = rgb(tc(mixc(bark[1], [70, 58, 54], 0.5), LIT.foliageTint)); ctx.lineCap = 'round';
+    ctx.lineWidth = Math.max(0.25, 0.012 * Pa(t.center).k); ctx.beginPath();
+    t.twigs.forEach(function (tw) { var a = Pa(tw[0]), m = Pa(tw[1]), e = Pa(tw[2]); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo(m.x, m.y, e.x, e.y); });
+    ctx.stroke(); ctx.lineCap = 'butt';
+  } else { ctx.strokeStyle = '#000'; ctx.lineWidth = 0.3; ctx.beginPath(); t.twigs.forEach(function (tw) { var a = Pa(tw[0]), e = Pa(tw[2]); ctx.moveTo(a.x, a.y); ctx.lineTo(e.x, e.y); }); ctx.stroke(); }
+}
+/* ================= someiyoshino cherry: the maple's spreading structure, painted as blossom clouds ================= */
+var SAKURA = {
+  bloom: [[128, 100, 116], [160, 130, 146], [190, 160, 174], [214, 188, 199], [231, 210, 218], [241, 225, 231], [248, 237, 240], [253, 247, 248]],
+  bloomAlt: [[146, 98, 120], [180, 126, 148], [206, 154, 174], [224, 180, 196], [237, 202, 214], [245, 220, 228], [250, 234, 239], [253, 245, 247]],
+  leaf: [[12, 28, 16], [22, 46, 22], [36, 68, 30], [56, 94, 40], [84, 122, 52], [120, 150, 70], [160, 178, 98], [196, 206, 136]],
+  autumn: [[80, 22, 16], [124, 36, 22], [166, 58, 28], [200, 86, 36], [220, 118, 48], [234, 152, 66], [242, 186, 98], [248, 212, 142]],
+  autumnAlt: [[70, 40, 14], [118, 70, 22], [164, 104, 30], [200, 140, 44], [222, 172, 66], [236, 196, 100], [244, 214, 136], [250, 228, 170]],
+  bark: [[30, 26, 28], [62, 54, 56], [96, 86, 86]]
+};
+function genSakura(seed, x, z, g, by, hsc, maxl) { var t = genMaple(seed, x, z, g, by, hsc || 1.12, maxl); t.sakura = true; t.sprays.forEach(function (s) { s.r *= maxl === 4 ? 1.4 : 1.2; }); return t; }
+function sakuraMode() { return SEA === SEASONS.spring ? 'bloom' : SEA === SEASONS.summer ? 'leaf' : SEA === SEASONS.autumn ? 'autumn' : 'bare'; }
+function drawSakura(ctx, t, o) {
+  o = o || {};
+  var mode = sakuraMode(), cd = Pa(t.center).d;
+  if (mode === 'bare') { drawBareTree(ctx, t, SAKURA.bark); return; }
+  var far = !!o.far, dab = far ? 0.125 : o.dab || null, cap = far ? 50 : o.cap || 110;
+  var opt = mode === 'bloom' ? { pal: SAKURA.bloom, alt: SAKURA.bloomAlt, altK: o.pink ? 0.85 : 0.45, kind: 'blossom', density: (o.density || 1) * 0.85, haze: o.haze, dab: dab, cap: cap }
+    : mode === 'leaf' ? { pal: SAKURA.leaf, kind: 'leaf', density: (o.density || 1) * 0.8, haze: o.haze, dab: dab || 0.08, cap: cap }
+      : { pal: SAKURA.autumn, alt: SAKURA.autumnAlt, altK: 0.6, kind: 'leaf', density: (o.density || 1) * 0.6, haze: o.haze, dab: dab || 0.08, cap: cap };
+  paintSprays(ctx, t, function (p) { return p.d > cd + 0.25; }, opt);
+  drawBranches(ctx, t.segs, SAKURA.bark);
+  paintSprays(ctx, t, function (p) { return p.d <= cd + 0.25; }, opt);
 }
 function mapleAO(ctx, t) { var p = Pa(t.base), r = t.segs[0].r0 * p.k * 3.2 + 2; ctx.beginPath(); ctx.ellipse(p.x, p.y, r * 1.6, r * 0.55, 0, 0, TAU); ctx.fill(); }
 
@@ -696,7 +740,7 @@ function drawCherry(ctx, t) {
   function strands(filter) {
     var NB = 8, paths = [], i, b; for (b = 0; b < NB; b++) paths.push(new Path2D());
     var lines = new Path2D();
-    var pal = mode === 'bloom' ? [[150, 92, 112], [196, 128, 150], [224, 160, 180], [240, 190, 206], [248, 214, 226], [252, 232, 238], [255, 244, 246], [255, 250, 250]]
+    var pal = mode === 'bloom' ? [[146, 104, 120], [186, 138, 156], [214, 170, 186], [232, 196, 208], [244, 218, 226], [250, 234, 238], [253, 244, 246], [255, 250, 250]]
       : mode === 'leaf' ? [[14, 34, 18], [24, 52, 24], [40, 74, 32], [60, 98, 40], [86, 124, 52], [118, 150, 70], [150, 174, 96], [184, 198, 128]]
         : mode === 'autumn' ? [[86, 22, 16], [130, 36, 22], [170, 56, 28], [204, 84, 36], [222, 116, 48], [236, 150, 66], [244, 184, 96], [250, 210, 140]] : null;
     for (i = 0; i < st.length; i++) {
@@ -724,7 +768,7 @@ function drawCherry(ctx, t) {
     if (mode === 'bare') return;
     var cl = [], r3 = mulberry32(t.seed + 4);
     t.segs.slice(3).forEach(function (s) { for (var k = 0; k < 2; k++) cl.push({ x: lerp(s.a[0], s.b[0], r3()) + (r3() - 0.5) * 0.3, y: lerp(s.a[1], s.b[1], r3()) + 0.12, z: lerp(s.a[2], s.b[2], r3()) + (r3() - 0.5) * 0.3, r: 0.3 + r3() * 0.15, tone: 0 }); });
-    var pal = mode === 'bloom' ? [[160, 100, 120], [204, 140, 160], [232, 176, 192], [246, 206, 218], [254, 232, 238], [255, 246, 248]] : mode === 'leaf' ? [[16, 36, 20], [30, 60, 28], [52, 88, 38], [84, 120, 52], [124, 152, 74], [164, 182, 108]] : [[110, 30, 20], [160, 52, 28], [200, 84, 36], [228, 126, 56], [244, 170, 90], [250, 206, 140]];
+    var pal = mode === 'bloom' ? [[156, 112, 128], [198, 152, 168], [226, 186, 200], [242, 212, 222], [252, 234, 240], [255, 247, 249]] : mode === 'leaf' ? [[16, 36, 20], [30, 60, 28], [52, 88, 38], [84, 120, 52], [124, 152, 74], [164, 182, 108]] : [[110, 30, 20], [160, 52, 28], [200, 84, 36], [228, 126, 56], [244, 170, 90], [250, 206, 140]];
     paintFoliage(ctx, cl, { pal: pal, center: t.center, R: t.R, kind: 'oval', dab: 0.05, density: mode === 'autumn' ? 0.6 : 1.3, max: 160, seed: t.seed + 8, sparse: mode === 'autumn', tint: tint, mass: 0.5 }, filter);
   }
   strands(function (p) { return p.d > cd + 0.3; });
@@ -1229,10 +1273,15 @@ function drawWaterfall(ctx) {
   if (sil()) return;
   var f = LAY.fall, rng = mulberry32(61), xc = f.x, ztop = f.ztop, zbot = f.zbot, ytop = f.ytop, wd = f.wd, i;
   var lt = lightTint(0.7), night = LIT === LIGHTS.night, ice = SEA.snow, dq = Math.sqrt(DQ);
-  function at(u, v) { // u -0.5..0.5 across, v 0 (lip) .. 1 (pool)
-    var spread = lerp(1, 1.18, v) + 0.05 * Math.sin(v * 7 + u * 3), x = xc + u * wd * spread, y = lerp(ytop, WL, Math.pow(v, 1.1)) + (v < 0.04 ? 0.03 * (1 - Math.abs(u) * 2) : 0);
-    return P(x, y, lerp(ztop, zbot, v) - 0.03);
+  function at(u, v) { // u -0.5..0.5 across, v 0 (lip) .. 1 (pool); the water rolls forward over a rounded lip
+    var spread = lerp(1, 1.18, v) + 0.05 * Math.sin(v * 7 + u * 3), x = xc + u * wd * spread;
+    var lipC = 0.035 * (1 - 4 * u * u), y = lerp(ytop + lipC, WL, Math.pow(v, 1.1)) + 0.06 * Math.sin(Math.min(1, v / 0.1) * Math.PI / 2) * (1 - v);
+    var bulge = 0.16 * Math.sin(Math.min(1, v / 0.22) * Math.PI / 2) * (1 - v * 0.7);
+    return P(x, y, lerp(ztop, zbot, v) - 0.03 - bulge - 0.05 * (1 - 4 * u * u) * (1 - v));
   }
+  // the lip: a broad worn stone the water slides over
+  var lipStone = makeRock(171, xc, ztop + 0.04, wd * 0.82, 0.13, 0.26, { by: ytop - 0.1, flat: 0.35, amp: 0.18, alb: [112, 108, 102], moss: 0.5, nu: 26, nv: 10, outline: 0.06 });
+  drawRock(ctx, lipStone);
   // the wet rock face behind the fall, darker than the rock around it, with an uneven edge
   var back = [], N = 14, k;
   for (k = 0; k <= N; k++) { var v = k / N; back.push(at(-0.5 - 0.1 - 0.08 * NZ.n2(v * 4, 1.3), v)); }
@@ -1262,9 +1311,12 @@ function drawWaterfall(ctx) {
     ctx.fillStyle = rgb(mulc([232, 242, 252], lt), 0.9);
     for (i = 0; i < 16; i++) { var p = at(rng() - 0.5, 0), L = (0.06 + rng() * 0.3) * p.k; ctx.beginPath(); ctx.moveTo(p.x - 0.7, p.y); ctx.lineTo(p.x + 0.7, p.y); ctx.lineTo(p.x, p.y + L); ctx.closePath(); ctx.fill(); }
   }
-  // the glassy lip
+  // the glassy, curved lip and a little spray thrown off it
   ctx.strokeStyle = rgb(mulc([255, 255, 255], lt), 0.85); ctx.lineWidth = 0.8 / dq * 1.2; ctx.beginPath();
-  for (k = 0; k <= 10; k++) { var q = at(k / 10 - 0.5, 0.005); if (k) ctx.lineTo(q.x, q.y); else ctx.moveTo(q.x, q.y); } ctx.stroke();
+  for (k = 0; k <= 12; k++) { var q = at(k / 12 - 0.5, 0.02); if (k) ctx.lineTo(q.x, q.y); else ctx.moveTo(q.x, q.y); } ctx.stroke();
+  ctx.strokeStyle = rgb(mulc([255, 255, 255], lt), 0.4); ctx.lineWidth = 1.6 / dq; ctx.beginPath();
+  for (k = 0; k <= 12; k++) { var q2 = at(k / 12 - 0.5, 0.07); if (k) ctx.lineTo(q2.x, q2.y); else ctx.moveTo(q2.x, q2.y); } ctx.stroke();
+  for (i = 0; i < 40 * DQ; i++) { var su = (rng() - 0.5) * 1.15, sv = 0.04 + rng() * 0.14, sp = at(su, sv), sr = (0.4 + rng() * 0.7) / dq; ctx.fillStyle = rgb(mulc([255, 255, 255], lt), 0.25 + rng() * 0.4); ctx.beginPath(); ctx.arc(sp.x + (su > 0 ? 1 : -1) * rng() * 1.5, sp.y, sr, 0, TAU); ctx.fill(); }
   // white water where it lands
   var fo = P(xc, WL, zbot - 0.04), mg = ctx.createRadialGradient(fo.x, fo.y - 1, 0, fo.x, fo.y - 1, 0.75 * fo.k);
   mg.addColorStop(0, rgb(mulc([255, 255, 255], lt), ice ? 0.35 : 0.6)); mg.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = mg; ctx.fillRect(fo.x - 0.8 * fo.k, fo.y - 0.8 * fo.k, 1.6 * fo.k, 1.6 * fo.k);
@@ -1433,6 +1485,81 @@ function paintBackdrop(ctx) {
   });
 }
 
+/* ================= fuji-dana: wisteria trellis by the pond ================= */
+var WIS_RACEME = [[58, 36, 96], [80, 54, 128], [104, 78, 158], [132, 106, 184], [160, 138, 206], [186, 168, 224], [210, 196, 236], [232, 224, 244]];
+function drawWisteria(ctx) {
+  var w = LAY.wis, x0 = w.x0, x1 = w.x1, z0 = w.z0, z1 = w.z1, h = w.h, S = sil(), g = F.wisteria, rng = mulberry32(711), i, j;
+  var wood = [104, 88, 70], season = seasonName(), zc = (z0 + z1) / 2, lt = lightTint(1), tint = LIT.foliageTint || null;
+  var posts = [[x0, z1], [x1, z1], [x0, z0], [x1, z0]];
+  function post(p) { prism(ctx, p[0], p[1], -0.15, h + 0.02, 0.055, 0.05, 8, 0.2, wood, { tex: 0.35, snow: 0 }); }
+  // racemes: hanging flower clusters (late spring)
+  var rac = [];
+  if (season === 'spring') {
+    var n = Math.round(70 * g);
+    for (i = 0; i < n; i++) {
+      var rx = lerp(x0 - 0.12, x1 + 0.12, rng()), rz = lerp(z0 - 0.08, z1 + 0.08, Math.pow(rng(), 0.8)), L = (0.28 + rng() * 0.34) * (0.7 + 0.3 * g);
+      rac.push({ x: rx, z: rz, L: L, sw: (rng() - 0.5) * 0.06, seed: (rng() * 1e6) | 0, d: P(rx, h - 0.2, rz).d });
+    }
+  }
+  function racemes(front) {
+    if (!rac.length) return;
+    var NB = WIS_RACEME.length, paths = [], b; for (b = 0; b < NB; b++) paths.push(new Path2D());
+    var dq = Math.sqrt(DQ);
+    for (var q = 0; q < rac.length; q++) {
+      var r = rac[q]; if ((r.z < zc) !== front) continue;
+      var rr = mulberry32(r.seed), m = Math.round(16 * Math.min(1.6, dq));
+      if (S) { var a = P(r.x, h - 0.02, r.z), e = P(r.x + r.sw, h - r.L, r.z); ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse((a.x + e.x) / 2, (a.y + e.y) / 2, Math.max(0.3, 0.05 * a.k), Math.abs(e.y - a.y) / 2 + 0.5, 0, 0, TAU); ctx.fill(); continue; }
+      var side = 0.12 * (r.x - (x0 + x1) / 2) * LS[0];
+      for (j = 0; j < m; j++) {
+        var t = j / (m - 1), yy = h - 0.03 - r.L * t, xx = r.x + r.sw * t * t, pp = P(xx, yy, r.z), rad = 0.042 * (1 - 0.72 * t) * pp.k;
+        for (var k = 0; k < 2; k++) {
+          var ox = (rr() - 0.5) * rad * 1.3, l = clamp(0.25 + t * 0.6 + (ox > 0 === LS[0] > 0 ? 0.12 : -0.08) + side + (rr() - 0.5) * 0.25);
+          var bb = Math.min(NB - 1, Math.round(l * (NB - 1))), sz = Math.max(0.35 / dq, rad * (0.45 + rr() * 0.3));
+          paths[bb].moveTo(pp.x + ox + sz, pp.y); paths[bb].ellipse(pp.x + ox, pp.y + (rr() - 0.5) * rad * 0.4, sz, sz * 0.8, 0, 0, TAU);
+        }
+      }
+    }
+    if (!S) for (b = 0; b < NB; b++) { ctx.fillStyle = rgb(tc(mulc(WIS_RACEME[b], lt), tint)); ctx.fill(paths[b]); }
+  }
+  // back posts, back racemes
+  post(posts[0]); post(posts[1]);
+  racemes(false);
+  // beams along x, then cross-bars along z on top
+  [z1, z0].forEach(function (zz) { quad3(ctx, [[x0 - 0.22, h, zz], [x1 + 0.22, h, zz], [x1 + 0.22, h + 0.09, zz], [x0 - 0.22, h + 0.09, zz]], S ? [0, 0, 0] : shade(wood, [0, 0.2, -1]), 0.4); });
+  if (!S) {
+    ctx.lineCap = 'round';
+    for (i = 0; i <= 9; i++) {
+      var xx2 = lerp(x0 - 0.15, x1 + 0.15, i / 9), a2 = P(xx2, h + 0.11, z1 + 0.18), b2 = P(xx2, h + 0.11, z0 - 0.18);
+      ctx.strokeStyle = rgb(shade([140, 120, 92], [0, 1, 0])); ctx.lineWidth = Math.max(0.5, 0.035 * a2.k); ctx.beginPath(); ctx.moveTo(a2.x, a2.y); ctx.lineTo(b2.x, b2.y); ctx.stroke();
+      if (SEA.snow) { ctx.strokeStyle = rgb(mulc(SNOW, lt)); ctx.lineWidth = Math.max(0.5, 0.03 * a2.k); ctx.beginPath(); ctx.moveTo(a2.x, a2.y - 0.6); ctx.lineTo(b2.x, b2.y - 0.6); ctx.stroke(); }
+    }
+    ctx.lineCap = 'butt';
+  }
+  // the old vine: up the front-left post and along the top
+  var vine = [[x0 - 0.05, 0, z0 - 0.06], [x0 + 0.05, 0.5, z0 - 0.08], [x0 - 0.04, 1.1, z0 - 0.05], [x0 + 0.06, 1.65, z0 - 0.07], [x0 + 0.12, h + 0.14, z0 + 0.1], [x0 + 0.65, h + 0.16, z0 + 0.35], [x1 - 0.35, h + 0.15, z0 + 0.55], [x1 + 0.05, h + 0.14, z1 - 0.1]];
+  var vs = []; for (i = 0; i < vine.length - 1; i++) vs.push({ a: vine[i], b: vine[i + 1], r0: lerp(0.06, 0.02, i / 7), r1: lerp(0.06, 0.02, (i + 1) / 7) });
+  if (season === 'winter') { // bare tendrils over the bars
+    for (i = 0; i < 8; i++) { var sx = lerp(x0, x1, rng()), sz = lerp(z0, z1, rng()); vs.push({ a: [sx, h + 0.15, sz], b: [sx + (rng() - 0.5) * 0.6, h + 0.14, sz + (rng() - 0.5) * 0.5], r0: 0.016, r1: 0.008 }); }
+  }
+  drawBranches(ctx, vs, [[52, 40, 34], [92, 74, 60], [130, 108, 88]], 1, SEA.snow ? 0.7 : 0);
+  // leaf canopy on top
+  if (season !== 'winter') {
+    var cl = [], cr = mulberry32(712), nc = Math.round(26 * g);
+    for (i = 0; i < nc; i++) cl.push({ x: lerp(x0 - 0.2, x1 + 0.2, cr()), y: h + 0.14 + cr() * 0.12, z: lerp(z0 - 0.15, z1 + 0.15, cr()), r: 0.24 + cr() * 0.12, tone: cr() * 2 - 1 });
+    var pal = season === 'spring' ? [[40, 66, 22], [70, 100, 34], [112, 140, 54], [156, 176, 84], [196, 208, 126], [222, 230, 164]]
+      : season === 'summer' ? [[10, 26, 14], [20, 44, 20], [36, 70, 30], [62, 100, 42], [98, 132, 60], [140, 164, 86]]
+        : [[70, 58, 20], [116, 96, 30], [162, 136, 44], [200, 172, 66], [226, 204, 104], [240, 224, 150]];
+    paintFoliage(ctx, cl, { pal: pal, center: [(x0 + x1) / 2, h, zc], R: 1.0, kind: 'oval', dab: 0.045, density: season === 'summer' ? 1.3 : season === 'spring' ? 0.75 : 0.6, max: 140, seed: 713, sparse: season !== 'summer', tint: tint, flat: 0.55, litBase: 0.5 });
+    if (season === 'summer' && !S) { // short leafy fringes where the flowers were
+      var fr = mulberry32(714); ctx.fillStyle = rgb(tc(mulc([46, 86, 34], lt), tint));
+      for (i = 0; i < 40 * g; i++) { var fx = lerp(x0 - 0.1, x1 + 0.1, fr()), fz = lerp(z0 - 0.05, z1 + 0.05, fr()), fp = P(fx, h - 0.02, fz); if (fz > zc) continue; ctx.beginPath(); ctx.ellipse(fp.x, fp.y + 0.08 * fp.k, 0.025 * fp.k, 0.1 * fp.k, 0, 0, TAU); ctx.fill(); }
+    }
+  }
+  // front posts, front racemes
+  post(posts[2]); post(posts[3]);
+  racemes(true);
+}
+
 /* ---- 05_ground.js ---- */
 /* ================= ground pass (per pixel, scalar maths, time-sliced by rows) ================= */
 var DAY_TINT = (function () { var l = LIGHTS.day, d = l.sun[1] * 0.95; return [l.amb[0] + l.sunc[0] * d, l.amb[1] + l.sunc[1] * d, l.amb[2] + l.sunc[2] * d]; })();
@@ -1588,7 +1715,7 @@ function groundRows(D, M, PW, y0, y1, S) {
 /* ================= scene assembly ================= */
 var EDGE_PALS = {
   autumn: [[[12, 24, 18], [22, 40, 26], [36, 60, 36], [56, 82, 46], [84, 108, 58], [124, 138, 74]], [[10, 18, 14], [18, 30, 22], [28, 44, 30], [42, 60, 40], [62, 80, 50], [92, 104, 64]], [[90, 14, 14], [150, 30, 22], [200, 60, 30], [236, 110, 50], [236, 140, 76]], [[60, 44, 14], [110, 82, 24], [160, 120, 36], [196, 156, 60]], [[40, 30, 14], [80, 56, 22], [130, 90, 34], [176, 130, 56], [210, 170, 90]], [[30, 40, 20], [56, 70, 32], [90, 100, 44], [130, 130, 64]]],
-  spring: [[[16, 30, 16], [30, 54, 24], [52, 84, 32], [84, 118, 46], [126, 154, 70], [170, 190, 108]], [[10, 18, 14], [18, 30, 22], [28, 44, 30], [42, 60, 40], [62, 80, 50], [92, 104, 64]], [[150, 96, 116], [196, 140, 160], [228, 180, 196], [246, 214, 224], [252, 236, 240]], [[60, 90, 30], [96, 130, 44], [140, 170, 70], [190, 206, 120]], [[200, 200, 196], [228, 226, 222], [246, 244, 240], [255, 252, 250]], [[30, 48, 22], [56, 84, 34], [92, 124, 50], [140, 166, 84]]],
+  spring: [[[16, 30, 16], [30, 54, 24], [52, 84, 32], [84, 118, 46], [126, 154, 70], [170, 190, 108]], [[10, 18, 14], [18, 30, 22], [28, 44, 30], [42, 60, 40], [62, 80, 50], [92, 104, 64]], [[150, 120, 132], [192, 162, 174], [222, 196, 206], [240, 222, 228], [250, 240, 243]], [[60, 90, 30], [96, 130, 44], [140, 170, 70], [190, 206, 120]], [[200, 200, 196], [228, 226, 222], [246, 244, 240], [255, 252, 250]], [[30, 48, 22], [56, 84, 34], [92, 124, 50], [140, 166, 84]]],
   summer: [[[8, 22, 14], [16, 38, 20], [30, 60, 28], [52, 88, 38], [86, 120, 52], [130, 156, 76]], [[10, 18, 14], [18, 30, 22], [28, 44, 30], [42, 60, 40], [62, 80, 50], [92, 104, 64]], [[14, 34, 18], [26, 56, 26], [46, 84, 36], [76, 116, 50], [116, 148, 70]], [[20, 40, 16], [40, 70, 26], [70, 104, 40], [110, 140, 60]], [[18, 30, 14], [36, 58, 22], [64, 90, 34], [104, 126, 54], [148, 160, 84]], [[24, 44, 20], [46, 74, 30], [80, 108, 44], [124, 146, 70]]],
   winter: [[[12, 22, 18], [20, 36, 26], [32, 52, 36], [50, 72, 46], [76, 96, 62], [110, 124, 90]], [[10, 18, 14], [18, 30, 22], [28, 44, 30], [42, 60, 40], [62, 80, 50], [92, 104, 64]], [[60, 50, 46], [86, 72, 64], [112, 96, 86], [140, 124, 112]], [[64, 56, 50], [92, 80, 70], [120, 108, 96], [150, 140, 128]], [[70, 60, 52], [100, 88, 76], [130, 118, 104], [160, 150, 136]], [[24, 38, 26], [40, 56, 38], [60, 78, 54], [88, 104, 78]]]
 };
@@ -1613,12 +1740,21 @@ function nearPondEdge(x, z) {
 }
 function buildScene() {
   var up = [], flat = [], surf = [];
-  function put(x, z, o) { o.x = x; o.z = z; if (o.key === undefined) o.key = P(x, 0, z).d; up.push(o); }
+  function put(x, z, o) { o.x = x; o.z = z; if (o.key === undefined) o.key = P(x, 0, z).d; if (z > LAY.fenceZ + 0.2) o.noShadow = true; up.push(o); }
   var s = F.s, er = mulberry32(500), sname = seasonName(), EP = EDGE_PALS[sname];
   var HZ = LIT.haze;
   function hz(pal) { return pal ? pal.map(function (c) { return mixc(c, HZ, 0.14); }) : null; }
   // beyond the terrace
-  [[730, -3.6, 11.45, 3.4, 0], [731, 4.4, 11.5, 3.8, 1], [732, -8.0, 11.3, 4.2, 2]].forEach(function (a) { var t = makeTallTree(a[0], a[1], a[2], a[3], a[3] * 0.36, hz(edgeTreePal(a[4])), 'small'); put(a[1], a[2], { draw: function (c) { drawTallTree(c, t); }, noRefl: true }); });
+  [[730, -3.6, 11.45, 3.4, 0], [731, 4.4, 11.5, 3.8, 1], [732, -8.0, 11.3, 4.2, 2]].forEach(function (a) {
+    if (sname === 'spring') { // someiyoshino in full bloom beyond the fence (the avenue takes their place once it grows)
+      if (F.namiki && a[4] < 2) return;
+      var sk = genSakura(a[0], a[1], a[2], a[3] / 4.4, 0, 1.25, 4); put(a[1], a[2], { draw: function (c) { drawSakura(c, sk, { density: 1.15, haze: 0.16, far: true }); }, noRefl: true }); return;
+    }
+    var t = makeTallTree(a[0], a[1], a[2], a[3], a[3] * 0.36, hz(edgeTreePal(a[4])), 'small'); put(a[1], a[2], { draw: function (c) { drawTallTree(c, t); }, noRefl: true });
+  });
+  if (F.namiki) LAY.namiki.forEach(function (a, ii) { // the cherry avenue along the fence
+    var nt = genSakura(760 + ii, a[0], a[1], a[2] / 4.6, 0, 1.2, 4); put(a[0], a[1], { draw: function (c) { drawSakura(c, nt, { density: 1.2, haze: 0.06, far: true, pink: true }); }, noRefl: true });
+  });
   var EP2 = [0, 0, 0, 1, 1, 5, 5, 2, 3];
   for (var i = 0; i < 19; i++) {
     var x = -8.6 + i * 0.95 + (er() - 0.5) * 0.7, z = 11.0 + er() * 0.6, kind = EP2[(er() * EP2.length) | 0], R = 0.55 + er() * 0.55, Hh = 0.7 + er() * 0.8;
@@ -1660,6 +1796,9 @@ function buildScene() {
     var wr = mulberry32(44);
     for (i = 0; i < 26; i++) { (function (wx, wz, seed) { put(wx, wz, { draw: function (c) { grassTuft(c, wx, wz, 0.32, mulberry32(seed), tuftPal); grassTuft(c, wx + 0.08, wz + 0.05, 0.22, mulberry32(seed + 1), tuftPal); } }); })(-5 + wr() * 11, 0 + wr() * 9.5, wr() * 1e6 | 0); }
   }
+  // young cherry, planted early, maturing with the garden
+  if (F.ycherry > 0) { var yc = genSakura(91, LAY.ycherry.x, LAY.ycherry.z, F.ycherry * 0.82, 0, 1.15, 4); put(LAY.ycherry.x, LAY.ycherry.z, { draw: function (c) { drawSakura(c, yc, { density: 0.85, dab: 0.08, cap: 80, pink: true }); }, ao: function (c) { mapleAO(c, yc); } }); }
+  if (F.wisteria) { var wz = LAY.wis; put((wz.x0 + wz.x1) / 2, (wz.z0 + wz.z1) / 2, { draw: drawWisteria, ao: function (c) { [[wz.x0, wz.z0], [wz.x1, wz.z0], [wz.x0, wz.z1], [wz.x1, wz.z1]].forEach(function (q) { var p = P(q[0], 0, q[1]); c.beginPath(); c.ellipse(p.x, p.y, 0.12 * p.k, 0.05 * p.k, 0, 0, TAU); c.fill(); }); } }); }
   // maple
   if (F.maple > 0) { var mt = genMaple(9, LAY.maple.x, LAY.maple.z, F.maple); put(LAY.maple.x, LAY.maple.z, { draw: function (c) { drawMaple(c, mt); }, ao: function (c) { mapleAO(c, mt); } }); }
   if (F.maple2 > 0) { var mt2 = genMaple(47, LAY.maple2.x, LAY.maple2.z, F.maple2); put(LAY.maple2.x, LAY.maple2.z, { draw: function (c) { drawMaple(c, mt2); }, ao: function (c) { mapleAO(c, mt2); } }); }
@@ -1736,14 +1875,14 @@ function buildScene() {
   if (F.cherry) { var cy0 = hillH(LAY.cherry.x, LAY.cherry.z), ch = genCherry(77, LAY.cherry.x, LAY.cherry.z, Math.max(0, cy0 - 0.1)); put(LAY.cherry.x, LAY.cherry.z, { draw: function (c) { drawCherry(c, ch); }, ao: function (c) { var p = P(LAY.cherry.x, cy0, LAY.cherry.z); c.beginPath(); c.ellipse(p.x, p.y, 0.5 * p.k, 0.2 * p.k, 0, 0, TAU); c.fill(); } }); }
   // floating leaves / petals on water
   if (F.pond) {
-    var fr = mulberry32(808), nf = SEA.fallen === 'leaf' ? Math.round(24 * clamp(F.maple)) : SEA.fallen === 'petal' ? (F.cherry ? 70 : 14) : 0;
+    var fr = mulberry32(808), nf = SEA.fallen === 'leaf' ? Math.round(24 * clamp(F.maple)) : SEA.fallen === 'petal' ? 46 + (F.namiki ? 24 : 0) + (F.cherry ? 40 : 0) : 0;
     surf.push(function (c) {
       for (var k = 0; k < nf; k++) {
         var x = 0.4 + fr() * 6, z = 2.6 + fr() * 5; if (pondSDF(x, z) > -0.1) continue;
         var p = P(x, WL, z);
         if (sil()) { c.fillStyle = '#000'; c.beginPath(); c.arc(p.x, p.y, 0.06 * p.k, 0, TAU); c.fill(); continue; }
         if (SEA.fallen === 'leaf') leafShape(c, p.x, p.y, 0.07 * p.k, fr() * TAU, 0.5, rgb(mulc(ramp([[150, 30, 20], [214, 80, 34], [236, 150, 60]], fr()), lightTint(1))));
-        else petalShape(c, p.x, p.y, 0.025 * p.k, fr() * TAU, rgb(mulc(mixc([246, 200, 214], [255, 240, 244], fr()), lightTint(1)), 0.95));
+        else { var pa = fr() * TAU; c.save(); c.translate(p.x, p.y); c.scale(1, 0.5); petalShape(c, 0, 0, 0.03 * p.k, pa, rgb(mulc(mixc([238, 204, 214], [253, 244, 246], fr()), lightTint(1)), 0.95)); c.restore(); }
       }
     });
   }
@@ -1763,14 +1902,27 @@ function drawFallen(ctx) {
       var p = P(x, 0.01, z); leafShape(ctx, p.x, p.y, sz * p.k, rot, 0.5, col);
     }
   } else if (mode === 'petal') {
-    var lt2 = lightTint(1), pts = [];
-    if (F.cherry) for (i = 0; i < 260; i++) { var a2 = rng() * TAU, d2 = Math.sqrt(rng()) * 2.8; pts.push([LAY.cherry.x + Math.cos(a2) * d2 - 0.4, LAY.cherry.z + Math.sin(a2) * d2 * 0.7 - 0.6, 0]); }
+    var lt2 = lightTint(1), pts = [], dq = Math.sqrt(DQ);
+    function under(cx, cz, R, n, sq) { for (var k = 0; k < n; k++) { var a2 = rng() * TAU, d2 = Math.pow(rng(), 0.7) * R; pts.push([cx + Math.cos(a2) * d2, cz + Math.sin(a2) * d2 * (sq || 0.75), 0]); } }
+    for (i = 0; i < 150 * dq; i++) pts.push([-6.5 + rng() * 14, -0.8 + rng() * 11.4, 0]);           // blown in from everywhere
+    for (i = 0; i < 90 * dq; i++) pts.push([-7 + rng() * 15, 9.2 + rng() * 1.2, 0]);                   // drifted against the fence
+    if (F.ycherry > 0.3) under(LAY.ycherry.x + 0.3, LAY.ycherry.z - 0.4, 2.2 * F.ycherry, Math.round(160 * F.ycherry * dq));
+    if (F.namiki) LAY.namiki.forEach(function (a) { under(a[0], 10.0, 2.0, Math.round(60 * dq), 0.3); });
+    if (F.cherry) under(LAY.cherry.x - 0.4, LAY.cherry.z - 0.8, 2.8, Math.round(220 * dq), 0.7);
     if (F.azaleas > 0.7) AZALEAS.forEach(function (az) { for (var k = 0; k < 10; k++) pts.push([az[0] + (rng() - 0.5) * 1.6, az[1] + (rng() - 0.5) * 0.9, 1]); });
+    var NBp = 4, bp = [], k3; for (k3 = 0; k3 < NBp + 1; k3++) bp.push(new Path2D());
     pts.forEach(function (q) {
-      if (F.pond && pondSDF(q[0], q[1]) < 0.05) return; if (F.hill && hillH(q[0], q[1]) > 0.05) return;
-      var p = P(q[0], 0.01, q[1]), c = q[2] ? mixc([210, 70, 120], [240, 140, 170], rng()) : mixc([240, 196, 210], [255, 244, 246], rng());
-      petalShape(ctx, p.x, p.y, 0.03 * p.k, rng() * TAU, rgb(mulc(c, lt2), 0.95));
+      if (q[1] > EDGE - 0.2) return;
+      if (F.pond && pondSDF(q[0], q[1]) < 0.05) return; if (F.hill && hillH(q[0], q[1]) > 0.05 && rng() < 0.5) return;
+      var ge = Math.hypot((q[0] - G.cx) / G.rx, (q[1] - G.cz) / G.rz); if (F.gravel && ge < 1 && rng() < 0.6) return;
+      if (F.teahouse && q[0] > TH.X0 - 0.2 && q[0] < TH.X1 + 0.2 && q[1] > TH.ZE - 0.1) return;
+      var p = P(q[0], 0.01, q[1]), sz = (0.022 + rng() * 0.014) * p.k, a = rng() * TAU, ix = q[2] ? NBp : (rng() * NBp) | 0, path = bp[ix];
+      sz = Math.max(sz, 0.3 / dq);
+      path.moveTo(p.x + Math.cos(a) * sz, p.y + Math.sin(a) * sz * 0.5); path.ellipse(p.x, p.y, sz, sz * 0.55, a, 0, TAU);
     });
+    if (sil()) return;
+    for (k3 = 0; k3 < NBp; k3++) { ctx.fillStyle = rgb(mulc(mixc([232, 196, 208], [254, 246, 248], k3 / (NBp - 1)), lt2), 0.92); ctx.fill(bp[k3]); }
+    ctx.fillStyle = rgb(mulc([226, 110, 150], lt2), 0.9); ctx.fill(bp[NBp]);
   }
 }
 
@@ -1893,7 +2045,7 @@ async function renderStatic(job) {
   var obj = tmpCanvas(bw, bh), ox = obj.getContext('2d'); lsT(ox, KS);
   var oprof = job.prof ? [] : null;
   for (i = 0; i < scene.up.length; i++) { var to = now(); scene.up[i].draw(ox); if (oprof) { ox.getImageData(0, 0, 1, 1); oprof.push([(now() - to), +scene.up[i].x.toFixed(2), +scene.up[i].z.toFixed(2)]); } tk = tick(); if (tk) await tk; }
-  if (oprof) { PH.sum = Math.round(oprof.reduce(function (s, a) { return s + a[0]; }, 0)); PH.n = oprof.length; oprof.sort(function (a, b) { return b[0] - a[0]; }); PH.top = oprof.slice(0, 6); }
+  if (oprof) { PH.sum = Math.round(oprof.reduce(function (s, a) { return s + a[0]; }, 0)); PH.n = oprof.length; oprof.sort(function (a, b) { return b[0] - a[0]; }); PH.top = oprof.slice(0, 12); }
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(obj, 0, 0); ctx.restore();
   mark('objects');
   await tick(true);
@@ -1940,7 +2092,7 @@ function post(ctx, bw, bh, glows, reflGlows, mc) {
   ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = L === LIGHTS.night ? 0.25 : 0.45; ctx.fillRect(0, 0, bw, bh); ctx.globalAlpha = 1;
   if (L.grade) {
     ctx.globalCompositeOperation = 'multiply'; var dg = ctx.createLinearGradient(0, 0, 0, bh);
-    dg.addColorStop(0, rgb(L.grade[0])); dg.addColorStop(0.45, rgb(L.grade[1])); dg.addColorStop(1, rgb(L.grade[2])); ctx.fillStyle = dg; ctx.fillRect(0, 0, bw, bh);
+    dg.addColorStop(0, rgb(L.grade[0])); dg.addColorStop(L.gradeMid ? st(L.gradeMid * 300) : 0.45, rgb(L.grade[1])); dg.addColorStop(1, rgb(L.grade[2])); ctx.fillStyle = dg; ctx.fillRect(0, 0, bw, bh);
   }
   if (L.lit) {
     ctx.globalCompositeOperation = 'lighter';
@@ -2084,7 +2236,8 @@ function animGeo(o) {
     }
   }
   // falling things source boxes (logical screen)
-  g.fallers = o.season === 'autumn' ? 'leaf' : o.season === 'spring' ? 'petal' : o.season === 'winter' ? 'snow' : null;
+  g.fallers = o.season === 'autumn' ? 'leaf' : o.season === 'winter' ? 'snow' : null;
+  g.petalSrc = petalSources(g);
   g.srcs = [];
   if (F.maple > 0.3 && SEA.maple) { var m = P(LAY.maple.x + 0.4, 2.0 * Math.min(1.4, F.maple * 1.6), LAY.maple.z); g.srcs.push({ x: m.x, y: m.y, r: 1.6 * m.k * Math.min(1.3, F.maple), kind: 'leaf' }); }
   if (F.cherry && SEA.cherry === 'bloom') { var cpt = P(LAY.cherry.x, 2.6, LAY.cherry.z); g.srcs.push({ x: cpt.x, y: cpt.y, r: 1.8 * cpt.k, kind: 'petal' }); }
@@ -2296,9 +2449,143 @@ function drawBird(ctx, g, b, t) {
   ctx.lineCap = 'butt'; ctx.lineJoin = 'miter';
 }
 
+/* ================= spring: fluttering sakura petals =================
+   A fixed pool of petals. Each tumbles (its width follows cos of a flip phase, so it shows its face and its edge),
+   turns, sways and drifts on a breeze. Every so often a soft gust sweeps a swirl of petals across; petals that come
+   down on open water float there for a while. */
+var PETAL_PATH = null;
+function petalPath() {
+  if (PETAL_PATH) return PETAL_PATH;
+  var p = new Path2D(); // unit petal along +x: rounded base, notched tip
+  p.moveTo(-0.5, 0);
+  p.bezierCurveTo(-0.45, -0.3, 0.1, -0.36, 0.46, -0.16);
+  p.lineTo(0.36, 0); p.lineTo(0.46, 0.16);
+  p.bezierCurveTo(0.1, 0.36, -0.45, 0.3, -0.5, 0);
+  p.closePath(); PETAL_PATH = p; return p;
+}
+function petalSources(g) {
+  var src = [];
+  function add(x, y, z, r, w) { var p = P(x, y, z); src.push({ x: p.x, y: p.y, r: r * p.k, w: w }); }
+  if (g.season !== 'spring') return src;
+  [[-3.6, 11.45, 3.4], [4.4, 11.5, 3.8], [-8.0, 11.3, 4.2]].forEach(function (a) { add(a[0], a[2] * 0.8, a[1], 1.8, 1); });
+  if (F.ycherry > 0.3) add(LAY.ycherry.x, 3.6 * F.ycherry * 0.82, LAY.ycherry.z, 1.6 * F.ycherry, 1.2);
+  if (F.namiki) LAY.namiki.forEach(function (a) { add(a[0], a[2] * 0.85, a[1], 1.8, 1.2); });
+  if (F.cherry) add(LAY.cherry.x, 3.4, LAY.cherry.z, 1.7, 2.5);
+  var tot = 0; src.forEach(function (s) { tot += s.w; s.cw = tot; }); src.tot = tot;
+  return src;
+}
+function makePetals(g, rng) {
+  var N = 70 + Math.min(20, g.petalSrc.length * 3), pool = [];
+  for (var i = 0; i < N + 30; i++) pool.push({ on: false });
+  var S = { pool: pool, base: N, floats: [], gust: null, nextGust: 4 + rng() * 4, t: 0 };
+  for (i = 0; i < N; i++) spawnPetal(S, pool[i], g, rng, true);
+  for (i = 0; i < 400 && S.floats.length < 7 && g.water; i++) { var fx = rng() * g.W, fy = g.horizonY + rng() * (g.H - g.horizonY); if (waterAt(g, fx, fy)) S.floats.push({ x: fx, y: fy, rot: rng() * TAU, vx: (rng() - 0.3) * 0.8, ph: rng() * TAU, life: rng() * 8, L: 18 + rng() * 14, sz: 1 + rng() * 0.5, tone: rng() }); }
+  return S;
+}
+function spawnPetal(S, p, g, rng, anywhere) {
+  p.on = true; p.gust = null; p.life = 0;
+  p.d = Math.pow(rng(), 1.6);                       // depth: 0 far .. 1 near the eye
+  p.sz = 1.6 + p.d * 3.6; p.vy0 = 4.5 + p.d * 9; p.wk = 0.55 + p.d * 0.8;
+  p.fl = rng() * TAU; p.fs = (2.2 + rng() * 3.8) * (rng() < 0.5 ? -1 : 1); p.rot = rng() * TAU; p.rs = (rng() - 0.5) * 2.4; p.ph = rng() * TAU;
+  p.tone = rng();
+  var src = g.petalSrc;
+  if (!anywhere && src.length && p.d < 0.45 && rng() < 0.75) {
+    var r = rng() * src.tot, s = src[0]; for (var k = 0; k < src.length; k++) if (r <= src[k].cw) { s = src[k]; break; }
+    p.x = s.x + (rng() - 0.5) * s.r * 2; p.y = s.y + (rng() - 0.5) * s.r * 0.8;
+  } else if (anywhere) { p.x = rng() * g.W; p.y = rng() * g.H * 0.95; }
+  else { var wind = S.wind || 6; if (rng() < 0.55) { p.x = rng() * (g.W + 40) - 20; p.y = -6 - rng() * 10; } else { p.x = wind > 0 ? -8 : g.W + 8; p.y = rng() * g.H * 0.6; } }
+  p.floor = p.d > 0.55 ? g.H + 12 : Math.max(p.y + 20, g.horizonY + 8 + rng() * (g.H - g.horizonY - 8));
+}
+function waterAt(g, x, y) {
+  var w = g.water; if (!w) return false;
+  var i = Math.floor(x / g.W * w.w), j = Math.floor(y / g.H * w.h);
+  return i >= 0 && j >= 0 && i < w.w && j < w.h && w.a[j * w.w + i] > 0;
+}
+function stepPetals(S, g, dt, t, rng) {
+  // breeze plus the current gust
+  var wind = 5 + 3 * Math.sin(t * 0.21) + 2 * Math.sin(t * 0.53 + 1), G = S.gust, gs = 0;
+  if (!G && t > S.nextGust) {
+    var dir = rng() < 0.75 ? 1 : -1;
+    G = S.gust = { t0: t, dur: 4.2 + rng() * 1.5, dir: dir, y0: g.H * (0.3 + rng() * 0.4), cx0: dir > 0 ? -30 : g.W + 30 };
+    var n = 0;
+    for (var i = 0; i < S.pool.length && n < 34; i++) {
+      var q = S.pool[i]; if (q.on && i < S.base) continue;
+      spawnPetal(S, q, g, rng, false);
+      q.d = 0.3 + rng() * 0.6; q.sz = 1.6 + q.d * 3.6; q.wk = 0.55 + q.d * 0.8; q.vy0 = 4.5 + q.d * 9; q.floor = g.H + 12;
+      q.gust = { th: rng() * TAU, R: 3 + rng() * 15, om: (2.2 + rng() * 2.4) * dir, dy: (rng() - 0.5) * 14, lag: rng() * 0.22 };
+      q.x = G.cx0 - dir * rng() * 30 + Math.cos(q.gust.th) * q.gust.R; q.y = G.y0 + q.gust.dy + Math.sin(q.gust.th) * q.gust.R * 0.45; q.life = 0.4;
+      n++;
+    }
+  }
+  if (G) {
+    var u = (t - G.t0) / G.dur;
+    if (u >= 1) { S.gust = null; S.nextGust = t + 8 + rng() * 9; }
+    else gs = Math.pow(Math.sin(Math.PI * u), 2) * 26 * G.dir;
+  }
+  wind += gs; S.wind = wind;
+  for (i = 0; i < S.pool.length; i++) {
+    var p = S.pool[i]; if (!p.on) continue;
+    p.life += dt; p.fl += p.fs * dt; p.rot += p.rs * dt;
+    var cf = Math.cos(p.fl);
+    if (p.gust && G) {
+      var gu = clamp((t - G.t0) / G.dur - p.gust.lag), e = gu * gu * (3 - 2 * gu);
+      p.gust.th += p.gust.om * dt; p.gust.R += dt * 2.5;
+      var cx = lerp(G.cx0, G.cx0 + G.dir * (g.W + 60), e), cy = G.y0 + p.gust.dy - Math.sin(e * Math.PI) * 22;
+      var tx = cx + Math.cos(p.gust.th) * p.gust.R, ty = cy + Math.sin(p.gust.th) * p.gust.R * 0.45;
+      p.x += (tx - p.x) * Math.min(1, dt * 6); p.y += (ty - p.y) * Math.min(1, dt * 6);
+      if (gu >= 1) p.gust = null;
+    } else {
+      if (p.gust) p.gust = null;
+      p.x += (wind * p.wk + Math.sin(p.life * 1.3 + p.ph) * 6 * (0.5 + p.d * 0.5)) * dt;
+      p.y += (p.vy0 * (0.5 + 0.5 * Math.abs(cf)) + Math.sin(p.life * 2.1 + p.ph) * 2.2) * dt;
+    }
+    if (p.y >= p.floor && !p.gust) {
+      if (S.floats.length < 16 && waterAt(g, p.x, p.y) && p.d < 0.7) S.floats.push({ x: p.x, y: p.y, rot: p.rot, vx: (rng() - 0.3) * 0.8, ph: rng() * TAU, life: 0, L: 16 + rng() * 14, sz: Math.min(p.sz, 1.6), tone: p.tone });
+      if (i < S.base) spawnPetal(S, p, g, rng, false); else p.on = false;
+    } else if (!p.gust && (p.x > g.W + 40 || p.x < -45 || p.y > g.H + 14)) { if (i < S.base) spawnPetal(S, p, g, rng, false); else p.on = false; }
+  }
+  for (i = S.floats.length - 1; i >= 0; i--) {
+    var f = S.floats[i]; f.life += dt; f.x += (f.vx + Math.sin(f.life * 0.4 + f.ph) * 0.3) * dt; f.rot += Math.sin(f.life * 0.3 + f.ph) * 0.1 * dt;
+    if (f.life > f.L) S.floats.splice(i, 1);
+  }
+}
+function petalStyles(g) {
+  if (g._ps) return g._ps;
+  var t = g.tint.map(function (v) { return clamp(v, 0.3, 1.15); }), out = [];
+  [[253, 238, 243], [246, 220, 230], [230, 180, 200], [218, 160, 184]].forEach(function (c) { out.push(rgb(mulc(c, t))); });
+  g._ps = out; return out;
+}
+function drawPetals(ctx, S, g, sc) {
+  var path = petalPath(), st = petalStyles(g), last = null;
+  for (var i = 0; i < S.pool.length; i++) {
+    var p = S.pool[i]; if (!p.on) continue;
+    var cf = Math.cos(p.fl), w = Math.max(0.14, Math.abs(cf)), s = p.sz * sc, cr = Math.cos(p.rot), sr = Math.sin(p.rot);
+    var a = p.life < 0.4 ? p.life / 0.4 : 1, near = p.floor - p.y; if (near < 8) a *= Math.max(0, near / 8);
+    if (a <= 0.02) continue;
+    var style = st[(cf >= 0 ? 0 : 2) + (p.tone > 0.5 ? 1 : 0)];
+    if (style !== last) { ctx.fillStyle = style; last = style; }
+    ctx.globalAlpha = a * (0.82 + 0.18 * p.d);
+    ctx.setTransform(s * cr, s * sr, -s * w * sr, s * w * cr, p.x * sc, p.y * sc);
+    ctx.fill(path);
+  }
+  ctx.globalAlpha = 1; ctx.setTransform(sc, 0, 0, sc, 0, 0);
+}
+function drawFloatPetals(ctx, S, g, sc) {
+  if (!S.floats.length) return;
+  var path = petalPath(), st = petalStyles(g);
+  for (var i = 0; i < S.floats.length; i++) {
+    var f = S.floats[i], a = Math.min(1, f.life / 0.6) * Math.min(1, (f.L - f.life) / 3), s = f.sz * sc * 1.1, cr = Math.cos(f.rot), sr = Math.sin(f.rot), w = 0.45;
+    ctx.globalAlpha = a * 0.95; ctx.fillStyle = st[f.tone > 0.5 ? 1 : 0];
+    // lying on the surface: squashed vertically by the view angle
+    ctx.setTransform(s * cr, s * sr * 0.5, -s * w * sr, s * w * cr * 0.5, f.x * sc, f.y * sc);
+    ctx.fill(path);
+  }
+  ctx.globalAlpha = 1; ctx.setTransform(sc, 0, 0, sc, 0, 0);
+}
+
 /* ---- 09_runtime.js ---- */
 /* ================= public API & controller ================= */
-var VERSION = '1.0.0';
+var VERSION = '1.1.0';
 var SEASON_KEYS = ['spring', 'summer', 'autumn', 'winter'], LIGHT_KEYS = ['morning', 'day', 'dusk', 'night'];
 function withScene(o, fn) {
   var st = saveState();
@@ -2502,7 +2789,15 @@ function mount(el, opts) {
   }
   function makeGeo(res) {
     var sp = res.spec;
-    return withScene({ W: sp.W, H: sp.H, KS: sp.KS, stage: sp.stage, season: sp.season, light: sp.light }, function () { var g = animGeo(sp); g.glows = res.glows || []; return g; });
+    return withScene({ W: sp.W, H: sp.H, KS: sp.KS, stage: sp.stage, season: sp.season, light: sp.light }, function () { var g = animGeo(sp); g.glows = res.glows || []; g.water = waterGrid(res.mask, g); return g; });
+  }
+  function waterGrid(mask, g) {
+    if (!mask || g.season !== 'spring') return null;
+    try {
+      var w = 100, h = Math.round(100 * g.H / g.W), c = mkCanvas(w, h), x = c.getContext('2d'); x.drawImage(mask, 0, 0, w, h);
+      var d = x.getImageData(0, 0, w, h).data, a = new Uint8Array(w * h); for (var i = 0; i < w * h; i++) a[i] = d[i * 4 + 3] > 160 ? 1 : 0;
+      return { w: w, h: h, a: a };
+    } catch (e) { return null; }
   }
   /* show a painting; fade = crossfade from what is shown now */
   function present(res, fade) {
@@ -2529,13 +2824,14 @@ function mount(el, opts) {
   }
   function ovW() { return Math.round(Math.min(cur ? cur.spec.bw : 800, size.cssW * Math.min(size.dpr, 2))); }
   function ovH() { return Math.round(ovW() * (cur ? cur.spec.H / cur.spec.W : 0.75)); }
-  var wl = null, ol = null, fallers = [], frng = mulberry32(99), bird = null, clock = 0, lastTs = 0, raf = 0;
+  var wl = null, ol = null, fallers = [], petals = null, frng = mulberry32(99), bird = null, clock = 0, lastTs = 0, raf = 0;
   function setupFx() {
     sizeCanvas(fv, ovW(), ovH());
     var g = cur.geo;
     if (cur.mask) { wl = wl || mkCanvas(2, 2); sizeCanvas(wl, cur.mask.width, cur.mask.height); } else wl = null;
     if (cur.occ || g.anchors.length) { ol = ol || mkCanvas(2, 2); sizeCanvas(ol, cur.occ ? cur.occ.width : Math.round(cur.spec.bw / 2), cur.occ ? cur.occ.height : Math.round(cur.spec.bh / 2)); } else ol = null;
     fallers = g.fallers ? initFallers(g, frng) : [];
+    petals = g.season === 'spring' ? makePetals(g, frng) : null;
     if (!bird || bird.season !== cur.spec.season) bird = { next: clock + 5 + frng() * 8, season: cur.spec.season };
   }
   /* ---- one overlay frame ---- */
@@ -2552,7 +2848,7 @@ function mount(el, opts) {
       if (wl && motion) {
         var wx = wl.getContext('2d'), ws = wl.width / g.W;
         wx.setTransform(1, 0, 0, 1, 0, 0); wx.globalCompositeOperation = 'source-over'; wx.clearRect(0, 0, wl.width, wl.height);
-        wx.setTransform(ws, 0, 0, ws, 0, 0); drawWaterLayer(wx, g, t);
+        wx.setTransform(ws, 0, 0, ws, 0, 0); drawWaterLayer(wx, g, t); if (petals) drawFloatPetals(wx, petals, g, ws);
         wx.setTransform(1, 0, 0, 1, 0, 0); wx.globalCompositeOperation = 'destination-in'; wx.drawImage(cur.mask, 0, 0); wx.globalCompositeOperation = 'source-over';
         ctx.drawImage(wl, 0, 0, fv.width, fv.height);
       }
@@ -2570,6 +2866,7 @@ function mount(el, opts) {
         drawFlicker(ctx, g, t);
         drawFlies(ctx, g, t);
         drawFallers(ctx, fallers, g);
+        if (petals) drawPetals(ctx, petals, g, sc);
         if (g.birds && bird && bird.cur) drawBird(ctx, g, bird.cur, t);
       }
       if (reveal) drawReveal(ctx, g);
@@ -2580,6 +2877,7 @@ function mount(el, opts) {
     if (!cur) return;
     var g = cur.geo;
     if (fallers.length) stepFallers(fallers, g, dt, frng);
+    if (petals) stepPetals(petals, g, dt, clock, frng);
     if (g.birds && bird) {
       if (bird.cur && clock > bird.cur.t0 + bird.cur.dur) bird.cur = null;
       if (!bird.cur && clock > bird.next) {
@@ -2606,13 +2904,13 @@ function mount(el, opts) {
   }
   /* ---- the reveal for a new stage ---- */
   var revealWait = null;
-  function startReveal(oldImg, focus) {
+  function startReveal(oldImg, focus, shown) {
     var g = cur.geo, rw = ovW(), rh = ovH();
     sizeCanvas(tv, rw, rh); tv.style.transition = 'none'; tv.style.opacity = '1';
     var fx = focus[0] * g.W, fy = focus[1] * g.H, sp = [], r = mulberry32(7 + cur.spec.stage);
     var kind = cur.spec.season === 'spring' ? 'petal' : cur.spec.season === 'autumn' ? 'leaf' : cur.spec.season === 'winter' ? 'snow' : 'mote';
     for (var i = 0; i < 46; i++) { var a = r() * TAU, v = 10 + r() * 34; sp.push({ x: fx + Math.cos(a) * 3, y: fy + Math.sin(a) * 2, vx: Math.cos(a) * v, vy: Math.sin(a) * v * 0.7 - 12 - r() * 10, s: 0.7 + r() * 1.3, ph: r() * TAU, d: 0.15 + r() * 0.5, petal: i % 3 === 0 ? kind : null, rot: r() * TAU, col: kind === 'leaf' ? ramp([[180, 40, 24], [226, 100, 40], [236, 170, 70]], r()) : [250, 214, 226] }); }
-    reveal = { old: oldImg, t: 0, dur: 2.5, fx: fx, fy: fy, sp: sp };
+    reveal = { old: oldImg, t: shown ? 0.36 : 0, dur: 2.5, fx: fx, fy: fy, sp: sp };
     paintRevealOld();
     loopCheck();
     if (!running()) finishReveal();
@@ -2728,7 +3026,7 @@ function mount(el, opts) {
           return;
         }
         var g = cur.geo, f = withScene({ W: g.W, H: g.H, KS: 1, stage: to, season: o.season, light: o.light }, function () { return focusFor(to, g.W, g.H); });
-        startReveal(oldImg, f);
+        startReveal(oldImg, f, !!keepOld);
       });
     }).catch(function (e) { if (e !== CANCEL && window.console) console.error(e); });
     function refreshNoFade() {
@@ -2791,9 +3089,9 @@ function mount(el, opts) {
       try { if (io) io.disconnect(); if (ro) ro.disconnect(); if (rmq) { if (rmq.removeEventListener) rmq.removeEventListener('change', onRM); else if (rmq.removeListener) rmq.removeListener(onRM); } } catch (e) { /* ignore */ }
       [cv, tv, fv].forEach(function (c) { if (c.parentNode) c.parentNode.removeChild(c); c.width = c.height = 0; });
       if (wl) wl.width = wl.height = 0; if (ol) ol.width = ol.height = 0;
-      cur = null; reveal = null; fallers = [];
+      cur = null; reveal = null; fallers = []; petals = null;
     },
-    get _dbg() { return { fv: fv, cv: cv, tv: tv, cur: cur, wl: wl, ol: ol, frame: function () { clock += 1 / 30; tickFx(1 / 30); drawFrame(false); } }; },
+    get _dbg() { return { fv: fv, cv: cv, tv: tv, cur: cur, wl: wl, ol: ol, petals: petals, clock: clock, frame: function () { clock += 1 / 30; tickFx(1 / 30); drawFrame(false); } }; },
     get stats() { return { source: stats.source, ms: stats.ms, history: stats.history.slice(), running: running() }; }
   };
   if (size) lastReq = refresh(false);
