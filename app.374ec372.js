@@ -5490,6 +5490,7 @@
         document.getElementById('word-sheet-cancel').hidden = !!st.editId;
         document.getElementById('word-sheet-autosave').hidden = !st.editId;
         document.getElementById('word-sheet-context').innerHTML = st.context ? '例文：' + highlightIn(st.context, word) : '';
+        wsReadingRender();
         ['word-grow-left', 'word-trim-left', 'word-trim-right', 'word-grow-right'].forEach(function(id) {
             document.getElementById(id).style.display = st.text ? '' : 'none';
         });
@@ -5526,6 +5527,14 @@
         wsFitToScreen(document.getElementById('word-sheet'));
         wordSheetState = state;
         var word = state.text ? state.text.slice(state.start, state.end) : state.word;
+        var br = !state.text && parseBracketFurigana(word);
+        if (br) { state.furiSrc = br.source; state.readingOrig = br.reading; word = br.word; }
+        state.plainOrig = word; state.readingEdited = false;
+        var ent0 = state.editId ? wordList.find(function(e) { return e.id === state.editId; }) : null;
+        var rdBox = document.getElementById('word-sheet-reading');
+        rdBox.value = br ? toHiragana(br.reading) : (ent0 && ent0.reading) || localReading(word) || '';
+        if (!br && ent0 && ent0.reading) state.readingOrig = ent0.reading;
+        rdBox.hidden = true; document.getElementById('ws-reading-edit').hidden = false;
         document.getElementById('word-sheet-word').value = word;
         var existing = state.editId ? wordList.find(function(e) { return e.id === state.editId; }) : findWordEntry(word);
         var meaningEl = document.getElementById('word-sheet-meaning');
@@ -5539,6 +5548,7 @@
         document.getElementById('word-sheet-def').value = existing && existing.writeDef ? existing.writeDef : '';
         renderWordSheet();
         state.origInput = document.getElementById('word-sheet-word').value;
+        state.origReading = document.getElementById('word-sheet-reading').value;
         state.origMeaning = meaningEl.value;
         state.origDef = document.getElementById('word-sheet-def').value;
         definitionPopup.classList.remove('active');
@@ -5667,11 +5677,36 @@
         return e.furigana ? bracketFuriganaHtml(e.furigana) : furiganaHtml(e.word, e.reading);
     }
     // What the word sheet will save. Furigana written in [ ] in the word box is yours and replaces the automatic one.
+    // The word box holds the plain word; the reading is set apart (読みを直す). Typing [ ] in the word box still works.
     function sheetWordAndReading() {
         var raw = document.getElementById('word-sheet-word').value.trim();
         var spec = parseBracketFurigana(raw);
         if (spec) return { word: spec.word, reading: spec.reading, furigana: spec.source };
+        var st = wordSheetState || {}, rdBox = document.getElementById('word-sheet-reading'), rd = toHiragana((rdBox.value || '').replace(/[\s　]/g, ''));
+        if (rd && hasKanji(raw) && (st.readingEdited || raw === st.plainOrig)) {
+            if (!st.readingEdited && st.furiSrc && raw === st.plainOrig) return { word: raw, reading: st.readingOrig, furigana: st.furiSrc };   // as it was
+            var src = wsBracketFrom(raw, rd);
+            if (src) { var back = parseBracketFurigana(src); if (back) return { word: back.word, reading: back.reading, furigana: back.source }; }
+        }
         return { word: raw, reading: null, furigana: '' };
+    }
+    // a reading typed as kana → the [ ] form, placed over the kanji (実社会 + じっしゃかい → 実[じっ]社[しゃ]会[かい])
+    function wsBracketFrom(word, rd) {
+        var html = furiganaHtml(word, rd);
+        if (html.indexOf('<ruby>') === -1) return word + '[' + rd + ']';
+        return html.replace(/<ruby>(.*?)<\/ruby>/g, function(m, inner) { return inner.replace(/(.*?)<rt>(.*?)<\/rt>/g, '$1[$2]'); })
+            .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+    }
+    // the reading line: the reading as it will show (furigana), or 自動 while it hasn't been looked up yet
+    function wsReadingRender() {
+        var st = wordSheetState; if (!st) return;
+        var box = document.getElementById('word-sheet-reading'), show = document.getElementById('ws-reading-show'), row = document.getElementById('ws-reading');
+        var raw = document.getElementById('word-sheet-word').value.trim(), hasBr = !!parseBracketFurigana(raw);
+        row.hidden = hasBr || !hasKanji(raw);
+        if (row.hidden) return;
+        if (!st.readingEdited && raw !== st.plainOrig) box.value = localReading(raw) || '';
+        var rd = box.value.trim();
+        show.innerHTML = rd ? '<span class="ws-reading-k">読み</span>' + furiganaHtml(raw, rd) : '<span class="ws-reading-k">読み</span><span class="ws-reading-auto">自動で調べます</span>';
     }
     // ---------- Export the 単語帳 as text: term;meaning;reading ----------
     // Reading in bracket form, e.g. 痴[ち]人[じん]の 愛[あい]. A space goes before a kanji group that follows
@@ -6052,6 +6087,7 @@
         var st = wordSheetState;
         if (!st) return false;
         return document.getElementById('word-sheet-word').value !== st.origInput ||
+            document.getElementById('word-sheet-reading').value !== (st.origReading || '') ||
             document.getElementById('word-sheet-meaning').value !== st.origMeaning ||
             document.getElementById('word-sheet-def').value !== (st.origDef || '');
     }
@@ -6258,6 +6294,13 @@
         if (wordSheetState) { wordSheetState.text = null; renderWordSheet(); }
     });
     document.getElementById('word-sheet-meaning').addEventListener('input', function(e) { e.target.dataset.edited = '1'; });
+    document.getElementById('ws-reading-edit').addEventListener('click', function() {
+        var box = document.getElementById('word-sheet-reading');
+        box.hidden = false; this.hidden = true; box.focus(); box.select();
+    });
+    document.getElementById('word-sheet-reading').addEventListener('input', function() {
+        if (wordSheetState) { wordSheetState.readingEdited = true; wsReadingRender(); }
+    });
     // 意味から入れる: start the write-practice definition from the meaning (without its 辞書形 line)
     document.getElementById('word-sheet-def-copy').addEventListener('click', function() {
         var lines = document.getElementById('word-sheet-meaning').value.split('\n').map(function(l) { return l.trim(); }).filter(Boolean);

@@ -919,6 +919,15 @@
         }
         .word-sheet { z-index: 1500; gap: 10px; }
         .word-sheet-row { display: flex; gap: 4px; align-items: center; }
+        .ws-reading { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 2px 2px 0; font-size: 0.85rem; color: var(--text-sub); }
+        .ws-reading[hidden] { display: none; }
+        .ws-reading-show { font-family: var(--reading-font); font-size: 1rem; color: var(--text-main); }
+        .ws-reading-show ruby { ruby-position: over; }
+        .ws-reading-show rt { font-size: 0.6em; color: var(--active-blue); }
+        .ws-reading-k { font-family: system-ui, sans-serif; font-size: 0.72rem; color: var(--text-sub); margin-right: 6px; }
+        .ws-reading-auto { font-size: 0.78rem; color: var(--text-sub); }
+        .ws-reading-edit { margin-left: auto; padding: 2px 4px; border: none; background: none; color: var(--active-blue); font: inherit; font-size: 0.78rem; text-decoration: underline; cursor: pointer; }
+        .ws-reading-input { flex: 1 1 100%; padding: 8px 10px; border: 1px solid var(--active-blue); border-radius: 8px; background: var(--surface); color: var(--text-main); font-family: var(--reading-font); font-size: 1rem; }
         .word-sheet-input { flex: 1; min-width: 0; font-size: 1.3rem; font-weight: bold; padding: 8px; border: 1px solid var(--border-dark); text-align: center; }
         .word-adjust { flex-shrink: 0; padding: 8px 6px; border: 1px solid var(--border-light); background: #fff; font-size: 0.75rem; font-weight: bold; color: var(--text-sub); }
         .word-sheet-meaning { width: 100%; font-size: max(16px, 0.95rem);   /* 16px+: phones don't zoom in when you tap it */ padding: 8px; border: 1px solid var(--border-light); resize: vertical; }
