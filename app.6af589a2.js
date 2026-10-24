@@ -4201,7 +4201,7 @@
         return h ? h + '時間' + (m ? m + '分' : '') : m + '分';
     }
     // 年中行事 shown in the painting: the same days the opening scenes use, and 十五夜 from the moon
-    var GD_WEATHER = { clear: '晴れ', cloudy: 'くもり', rain: '雨', storm: '雷雨', snow: '雪' };
+    var GD_WEATHER = { clear: '晴れ', cloudy: 'くもり', rain: '雨', storm: '雷雨', snow: '雪', typhoon: '台風', blizzard: '吹雪' };
     function gdWeatherAt(w, d) { var E = gdEngineFor(w) || window.MogiGarden; try { return E && E.weatherAt ? E.weatherAt(d) : null; } catch (e) { return null; } }
     function gdFireworksAt(w, d) { var E = gdEngineFor(w) || window.MogiGarden; try { return !!(E && E.fireworksAt && E.fireworksAt(d)); } catch (e) { return false; } }
     var GD_EVENTS = { shogatsu: 'お正月', setsubun: '節分', hinamatsuri: 'ひな祭り', kodomo: 'こどもの日', tanabata: '七夕', obon: 'お盆', tsukimi: 'お月見' };
