@@ -6439,6 +6439,7 @@
         v._mark();
     }
     function closeGallery() { var v = document.getElementById('gallery-view'); if (v) v.classList.remove('active'); }
+    function galleryOpen() { var v = document.getElementById('gallery-view'); return !!(v && v.classList.contains('active')); }
     function sceneOn() { return getSetting('gameScene', true); }
     function sceneStart() {
         var v = document.getElementById('flash-view');
@@ -10712,6 +10713,7 @@
         if (navOverlayOpen()) d++;
         if (typeof dictPanelOpen === 'function' && dictPanelOpen()) d++;
         if (typeof flashOpen === 'function' && flashOpen()) d++;
+        if (typeof galleryOpen === 'function' && galleryOpen()) d++;          // the 画廊 sits on top of the results (or 設定): Back closes it first
         if (typeof rpOpen === 'function' && rpOpen()) d += (rp && rp.state !== 'list') ? 2 : 1;
         if (typeof arOpen === 'function' && arOpen()) d++;
         if (typeof mockOpen === 'function' && mockOpen()) d += mockGridOpen() ? 2 : 1;
@@ -10735,6 +10737,7 @@
         }
     }
     function navBackOneLevel() {
+        if (galleryOpen()) { closeGallery(); return; }
         if (dictPanelOpen()) { closeDictionaryPanel(); return; }
         if (flashOpen()) { closeFlashcards(); return; }
         if (rpOpen()) { rpBackOneLevel(); return; }
