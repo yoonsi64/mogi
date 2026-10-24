@@ -10372,6 +10372,7 @@
     // ----- 第1課 雨傘（川端康成） -----
     READINGS['hufs-1'] = {
         id: 'hufs-1', book: 'hufs-chukyu-dokkai', no: 1, chapter: '雨傘',
+        ttsKana: { '傘の柄': 'かさのえ', '眼を': 'めを', '後毛': 'おくれげ', '上半身': 'じょうはんしん' },
         title: '雨傘',
         author: '川端康成',
         authorHtml: '<ruby>川<rt>かわ</rt>端<rt>ばた</rt></ruby>　<ruby>康<rt>やす</rt>成<rt>なり</rt></ruby>',
@@ -10380,7 +10381,7 @@
             { p: 1, lines: [
                 '　{r|濡|ぬ}れはしないが、なんとはなしに{r|肌|はだ}の{r|湿|しめ}る、{r|霧|きり}のような{r|春雨|はる/さめ}だっ',
                 'た。{r|表|おもて}に{r|駆|か}け出した少女は、少年の{r|傘|かさ}を見てはじめて、',
-                '　「あら。雨なのね?」',
+                '　「あら。雨なのね？」',
                 '　少年は雨のためよりも、少女が{r|坐|すわ}っている{r|店先|みせ/さき}を通る{r|恥|は}ずかしさ',
                 'を{r|隠|かく}すために、{r|開|ひら}いた{r|雨傘|あま/がさ}だった。',
                 '　しかし、少年は{r|黙|だま}って少女の体に{r|傘|かさ}をさしかけてやった。少女は',
@@ -10399,10 +10400,10 @@
                 '　{r|一生|いっしょう}この写真を見る{r|度|たび}に、{r|彼女|かの/じょ}の{r|体温|たい/おん}を思いだすだろう。'
             ] },
             { p: 2, lines: [
-                '　「もう{r|一枚|いち/まい}いかがでしょう。お二人でお{r|並|なら}びになったところを、上',
+                '　「もう{r|一枚|いち/まい}いかがでしょう。お二人でお{r|並|なら}びになったところを、{r|上|じょう}',
                 '{r|半身|はん/しん}を大きく。」',
                 '　少年はただうなずいて、',
-                '　「{r|髪|かみ}は?」と、少女に{r|小声|こ/ごえ}で言った。少女はひょいと少年を見上げて',
+                '　「{r|髪|かみ}は？」と、少女に{r|小声|こ/ごえ}で言った。少女はひょいと少年を見上げて',
                 '{r|頬|ほお}を{r|染|そ}めると、明るい{r|喜|よろこ}びに{r|眼|め}を{r|輝|かがや}かせて、子供のように、{r|素直|す/なお}に、',
                 'ばたばたと{r|化粧室|けしょうしつ}へ走って行った。',
                 '　少女は{r|店先|みせ/さき}を通る少年を見ると、{r|髪|かみ}を直す{r|暇|ひま}もなく飛び出して来',
@@ -10733,6 +10734,7 @@
     // ----- 第4課 木の根（和辻哲郎） -----
     READINGS['hufs-4'] = {
         id: 'hufs-4', book: 'hufs-chukyu-dokkai', no: 4, chapter: '木の根',
+        ttsKana: { '生い育': 'おいそだ', '膚': 'はだ' },
         title: '木の根',
         author: '和辻哲郎',
         notes: {
@@ -12354,6 +12356,12 @@
     var AR_RATES = [0.6, 0.8, 1, 1.2, 1.5];
     function arRate() { var r = Number(getSetting('arTtsRate', 1)); return AR_RATES.indexOf(r) > -1 ? r : 1; }
     function arRateLabel(r) { return (r === 1 ? '1.0' : String(r)) + '×'; }
+    // the reading's own fixes for words the speech voice gets wrong (柄 read as がら instead of え, …): spoken in kana
+    function arTtsKana(t) {
+        var m = ar && ar.r && ar.r.ttsKana;
+        if (m) Object.keys(m).sort(function(a, b) { return b.length - a.length; }).forEach(function(k) { t = t.split(k).join(m[k]); });
+        return t;
+    }
     function arSentenceList() {
         var r = ar.r, out = [{ text: r.title, el: '.ar-title, .ar-h-title' }, { text: r.author, el: '.ar-author, .ar-h-author' }];
         var book = document.querySelector('#ar-view .ar-book'), text = arPlainText(book).text;
@@ -12540,7 +12548,7 @@
             if (arTts.idx >= arTts.list.length) { if ((arTts.heard || 0) >= arTts.list.length * 0.8) advState(arTts.id).heardAll = true; arTts.heard = 0; arTts.playing = false; arTts.idx = 0; arTts.fromK = 0; advState(arTts.id).ttsIdx = 0; advState(arTts.id).ttsFrom = 0; saveAdv(); arTtsShow(); arRefreshTools(); return; }
             arTtsShow();
             var sent = arTts.list[arTts.idx], from = arTtsFromPos(arTts.list, sent);
-            var u = new SpeechSynthesisUtterance(from > sent.s ? arTts.list.text.slice(from, sent.e).replace(/[\s　]/g, '') || sent.text : sent.text);
+            var u = new SpeechSynthesisUtterance(arTtsKana(from > sent.s ? arTts.list.text.slice(from, sent.e).replace(/[\s　]/g, '') || sent.text : sent.text));
             u.lang = 'ja-JP';
             u.rate = arRate();
             applyVoice(u);
