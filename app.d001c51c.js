@@ -6790,9 +6790,6 @@
         v.style.setProperty('--wg', 'url("data:image/svg+xml,' + encodeURIComponent(w[7].replace(/__F__/g, fg).replace(/__B__/g, bg)) + '")');
         v.style.setProperty('--wg-size', w[5] + 'px ' + w[6] + 'px');
         v.style.setProperty('--wg-bg', bg);
-        var cap = v.querySelector('.wg-cap');
-        if (!cap) { cap = document.createElement('div'); cap.className = 'wg-cap'; v.appendChild(cap); }
-        cap.innerHTML = '<b><ruby>' + escapeHtml(w[1]) + '<rt>' + escapeHtml(w[2]) + '</rt></ruby></b>' + escapeHtml(w[3]);
     }
     // ---------- ゲームの背景: a print behind the four games ----------
     // One of six public-domain woodblock prints, picked at random each time a game opens, filling the screen behind the cards.
