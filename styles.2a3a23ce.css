@@ -527,7 +527,7 @@
         .kw-player-k { flex: 0 0 auto; font-size: 0.72rem; font-weight: bold; color: #7a3a63; }
         html.dark .kw-player-k { color: #d68bb9; }
         .kw-player audio { flex: 1; min-width: 0; height: 36px; }
-        .kw-rate { flex: 0 0 auto; padding: 4px 8px; border: 1px solid var(--border-light); border-radius: 6px; background: var(--surface); color: var(--text-main); font-size: 0.78rem; font-weight: bold; font-variant-numeric: tabular-nums; }
+        .kw-rate { flex: 0 0 auto; width: 3.9em; text-align: center; padding: 4px 0; border: 1px solid var(--border-light); border-radius: 6px; background: var(--surface); color: var(--text-main); font-size: 0.78rem; font-weight: bold; font-variant-numeric: tabular-nums; }
         .kw-player.kw-noaudio audio, .kw-player.kw-noaudio .kw-rate { display: none; }
         .kw-line { border-radius: 8px; transition: background-color 0.2s; }
         .kw-line.kw-now { background: color-mix(in srgb, var(--active-blue) 10%, transparent); }
