@@ -12518,8 +12518,9 @@
                 if (!rc.width || !rc.height) return;
                 // keep each box to the width of the characters themselves, with a little room, so it never reaches the next line
                 var x = rc.left - ox, y = rc.top - oy, w = rc.width, h = rc.height, pad = fs * 0.12;
-                if (vert) { var cx = x + w / 2; w = Math.min(w, fs * 1.2); x = cx - w / 2; y -= pad / 2; h += pad; }
-                else { var cy = y + h / 2; h = Math.min(h, fs * 1.35); y = cy - h / 2; x -= pad / 2; w += pad; }
+                // every box gets the same thickness across the line, so a lone number or a narrow letter is as wide as the kanji around it
+                if (vert) { var cx = x + w / 2; w = fs * 1.2; x = cx - w / 2; y -= pad / 2; h += pad; }
+                else { var cy = y + h / 2; h = fs * 1.35; y = cy - h / 2; x -= pad / 2; w += pad; }
                 boxes.push({ x: x, y: y, w: w, h: h });
             });
         });
@@ -12531,6 +12532,12 @@
                               : Math.abs(last.y - bx.y) < 2 && bx.x - (last.x + last.w) < 3 && bx.x >= last.x)) {
                 if (vert) last.h = Math.max(last.h, bx.y + bx.h - last.y); else last.w = Math.max(last.w, bx.x + bx.w - last.x);
             } else merged.push(bx);
+        });
+        // and at least one character long, so a highlighted 「1」 is a full square like the characters, not a sliver
+        merged.forEach(function(bx) {
+            var min = fs + fs * 0.12;
+            if (vert && bx.h < min) { bx.y -= (min - bx.h) / 2; bx.h = min; }
+            if (!vert && bx.w < min) { bx.x -= (min - bx.w) / 2; bx.w = min; }
         });
         merged.forEach(function(bx) { html += '<i style="left:' + bx.x.toFixed(1) + 'px;top:' + bx.y.toFixed(1) + 'px;width:' + bx.w.toFixed(1) + 'px;height:' + bx.h.toFixed(1) + 'px"></i>'; });
         layer.innerHTML = html;
