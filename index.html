@@ -942,7 +942,7 @@
         .wq-tile.word { font-family: var(--reading-font); font-size: 1.05rem; font-weight: bold; text-align: center; justify-content: center; }
         .wq-tile span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; word-break: break-word; }
         .wq-tile.sel { border-color: var(--active-blue); box-shadow: inset 0 0 0 2px var(--active-blue); }
-        .wq-tile.done { border-color: var(--correct-color); background: color-mix(in srgb, var(--correct-color) 14%, var(--bg-paper)); opacity: 0.55; }
+        .wq-tile.done { border-color: var(--correct-color); background: color-mix(in srgb, var(--correct-color) 14%, var(--bg-paper)); opacity: 0; visibility: hidden; pointer-events: none; }
         .wq-tile.bad { animation: wqShake 0.35s; border-color: var(--incorrect-color, #c0392b); }
         @keyframes wqShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         .wq-match.compact .wq-tile { height: 58px; }
@@ -992,8 +992,9 @@
         .mem-m { font-size: 0.68rem; line-height: 1.35; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 6; overflow: hidden; word-break: break-word; }
         .mem-card.word .mem-front { background: var(--surface); border-color: var(--active-blue); }
         .mem-card.done .mem-front { border-color: var(--correct-color); background: color-mix(in srgb, var(--correct-color) 12%, var(--bg-paper)); }
-        .mem-card.done { opacity: 0.75; transition: opacity 0.4s 0.4s; }
+        .mem-card.done { opacity: 0; visibility: hidden; transform: scale(0.7); pointer-events: none; transition: opacity 0.45s 0.5s, transform 0.45s 0.5s, visibility 0s 1s; }
         .mem-card.pop .mem-inner { animation: memPop 0.45s cubic-bezier(.2, .9, .3, 1.4); }
+        .mem-card.done.pop { transform: scale(0.7); }
         @keyframes memPop { 0% { transform: rotateY(180deg) scale(1); } 40% { transform: rotateY(180deg) scale(1.12); } 100% { transform: rotateY(180deg) scale(1); } }
         .mem-card.bad .mem-front { border-color: var(--incorrect-color); animation: wqShake 0.35s; }
         @media (prefers-reduced-motion: reduce) { .mem-inner { transition: none; } .mem-card, .mem-card.pop .mem-inner { animation: none; } }
@@ -1004,7 +1005,8 @@
         @keyframes wqIn { from { opacity: 0; transform: translateY(10px) scale(0.92); } to { opacity: 1; transform: none; } }
         .wq-tile.pop { animation: wqPop 0.45s cubic-bezier(.2, .9, .3, 1.4); }
         @keyframes wqPop { 0% { transform: scale(1); } 35% { transform: scale(1.12); box-shadow: 0 0 0 6px color-mix(in srgb, var(--correct-color) 30%, transparent); } 100% { transform: scale(1); } }
-        .wq-tile.done { transition: opacity 0.4s; }
+        .wq-tile.done.pop { visibility: visible; animation: wqVanish 0.55s cubic-bezier(.2, .8, .3, 1) forwards; }
+        @keyframes wqVanish { 0% { opacity: 1; transform: scale(1); } 30% { opacity: 1; transform: scale(1.1); box-shadow: 0 0 0 6px color-mix(in srgb, var(--correct-color) 30%, transparent); } 100% { opacity: 0; transform: scale(0.7); visibility: hidden; } }
         .wq-fx { position: fixed; inset: 0; pointer-events: none; z-index: 5; overflow: hidden; }
         .wq-spark { position: fixed; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; animation: wqSpark 0.7s ease-out forwards; }
         @keyframes wqSpark { to { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; } }
@@ -1079,7 +1081,7 @@
         .wq-missed > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
         .wq-miss { padding: 6px 10px; border-radius: 10px; border: 1px solid var(--border-light); background: var(--bg-paper); color: var(--text-main); font-family: var(--reading-font); font-size: 1rem; }
         .wq-res-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-        @media (prefers-reduced-motion: reduce) { .wq-tile.enter, .wq-tile.pop, .wq-grade, .wq-best, .wq-chip, .wq-stamp, .wq-clear, #wq-clock.low, .wq-timeup, .wq-timeup-veil, .wq-card.wq-shake { animation: none; } .wq-ring-fg { transition: none; } }
+        @media (prefers-reduced-motion: reduce) { .wq-tile.enter, .wq-tile.pop, .wq-tile.done.pop, .wq-grade, .wq-best, .wq-chip, .wq-stamp, .wq-clear, #wq-clock.low, .wq-timeup, .wq-timeup-veil, .wq-card.wq-shake { animation: none; } .wq-ring-fg { transition: none; } }
         .wq-note { font-size: 0.78rem; color: var(--text-sub); text-align: center; }
         .flash-starts .flash-start { flex: 1; min-width: 0; margin: 0; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 14px; }
         .flash-start.write { background: var(--surface); color: var(--active-blue); box-shadow: inset 0 0 0 2px var(--active-blue); }
@@ -11600,10 +11602,11 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         var tile = function(e, side) {
             var sel = wq.sel && wq.sel.side === side && wq.sel.id === e.id;
             var k = (side === 'L' ? wq.left : wq.right).indexOf(e);
-            return '<button class="wq-tile' + (side === 'L' ? ' word' : '') + (wq.done[e.id] ? ' done' : '') + (String(wq.just) === String(e.id) ? ' pop' : '') + (sel ? ' sel' : '') + (wq.enter ? ' enter' : '') + '"' +
+            return '<button class="wq-tile' + (side === 'L' ? ' word' : '') + (wq.done[e.id] ? ' done' : '') + (String(justNow) === String(e.id) ? ' pop' : '') + (sel ? ' sel' : '') + (wq.enter ? ' enter' : '') + '"' +
                 (wq.enter ? ' style="animation-delay:' + (k * 45 + (side === 'R' ? 20 : 0)) + 'ms"' : '') + ' data-side="' + side + '" data-id="' + e.id + '"' + (wq.done[e.id] ? ' disabled' : '') + '>' +
                 '<span>' + escapeHtml(side === 'L' ? e.word : wq.opts && wq.opts.side === 'reading' ? toHiragana(e.reading) : wqClip(wqMeaning(e), 46)) + '</span></button>';
         };
+        var justNow = wq.just; wq.just = null;
         var reading = wq.opts && wq.opts.side === 'reading';
         body.innerHTML = '<div class="wq-card"><div class="wq-dir">' + (reading ? '言葉と読みを組み合わせてください' : '言葉と意味を組み合わせてください') + '</div><div class="wq-match' + (wq.left.length > 5 ? ' compact' : '') + (reading ? ' reading' : '') + '">' +
             '<div class="wq-col">' + wq.left.map(function(e) { return tile(e, 'L'); }).join('') + '</div>' +
