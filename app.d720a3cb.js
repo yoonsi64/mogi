@@ -10825,6 +10825,12 @@
     function arIntroHtml(r) { return '<div class="ar-pre"><span class="ar-pre-k">読む前に</span><p lang="ko">' + escapeHtml(r.intro) + '</p></div>'; }
     function arPlainLine(t) { return String(t).replace(/\{r\|([^|{}]+)\|[^{}]+\}/g, '$1').replace(/<[^>]+>/g, '').replace(/\[(\d+)\]/g, '（　）'); }
     // 単語: the book's word list with its Korean meanings. Tap a word to hear it; ＋ puts it in the 単語帳.
+    // furigana under the kanji, centered on them and free to run past their edges (ruby would spread the kanji apart)
+    function awUnderHtml(html) {
+        return html.replace(/<ruby>([\s\S]*?)<\/ruby>/g, function(m, inner) {
+            return inner.replace(/([^<]+)<rt>([^<]*)<\/rt>/g, '<span class="aw-fg">$1<i>$2</i></span>');
+        });
+    }
     function renderArWords(body, r) {
         var passage = r.pages.map(function(pg) { return pg.lines.map(arPlainLine).join(''); }).join('');
         var total = 0;
@@ -10833,7 +10839,7 @@
             html += '<section class="ar-sec"><h3 class="ar-sec-title">' + escapeHtml(sec.sec) + '</h3><div class="aw-list">' + sec.list.map(function(w, i) {
                 total++;
                 var inList = !!findWordEntry(w[0]);
-                return '<div class="aw-row"><button class="aw-say" data-s="' + si + '" data-i="' + i + '"><b>' + escapeHtml(w[0]) + '</b>' + (w[1] && w[1] !== w[0] ? '<small>' + escapeHtml(w[1]) + '</small>' : '') + '</button>' +
+                return '<div class="aw-row"><button class="aw-say" data-s="' + si + '" data-i="' + i + '"><b class="aw-w">' + (w[1] && w[1] !== w[0] ? awUnderHtml(furiganaHtml(w[0], w[1])) : escapeHtml(w[0])) + '</b></button>' +
                     '<span class="aw-ko" lang="ko">' + escapeHtml(w[2]) + '</span>' +
                     '<button class="aw-add' + (inList ? ' in' : '') + '" data-s="' + si + '" data-i="' + i + '" aria-label="' + escapeHtml(w[0]) + 'を単語帳に追加">' + (inList ? '✓' : '＋') + '</button></div>';
             }).join('') + '</div></section>';
