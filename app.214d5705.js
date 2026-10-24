@@ -4242,7 +4242,7 @@
         return '<div class="gd-row"><span class="gd-title">' + gdWorld(s.w).k + '</span><span class="gd-total">合計 <b>' + gdFmt(s.min) + '</b></span></div>' +
             '<div class="gd-desc">' + escapeHtml(st.desc || st.name || '') + '<span class="gd-dot">・</span>今週 ' + gdFmt(s.week) + '</div>' +
             '<div class="gd-bar"><i style="width:' + pct + '%"></i></div>' +
-            '<div class="gd-next">' + (nx ? '<span>次 ─ ' + (dev ? escapeHtml(gdLabel(nx)) : '？？？') + '　あと' + gdFmt(nx.min - s.min) + '</span>'
+            '<div class="gd-next">' + (nx ? '<span>' + (dev ? '次 ─ ' + escapeHtml(gdLabel(nx)) + '　あと' : '次の変化まで あと') + gdFmt(nx.min - s.min) + '</span>'
                                           : '<span>' + gdWorld(s.w).k + 'が完成しました ─ 四季めぐり</span>') +
             '<span class="gd-step">' + (s.stage + 1) + ' / ' + s.stages.length + '</span></div>';
     }
