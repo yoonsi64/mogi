@@ -10128,8 +10128,11 @@
         var r = READINGS[id], st = advState(id);
         var qs = arOpenQuestions(r), answered = qs.filter(function(k) { return (st.ans[k] || '').trim(); }).length;
         var kj = arKanjiItems(r), ok = kj.filter(function(x) { return st.kanji[x.key] && st.kanji[x.key].ok; }).length;
-        return { read: !!st.done.t1, answered: answered, qTotal: qs.length, kanjiOk: ok, kanjiTotal: kj.length,
-                 pct: Math.round(((st.done.t1 ? 1 : 0) + (qs.length ? answered / qs.length : 0) + (kj.length ? ok / kj.length : 0)) / 3 * 100) };
+        var kwAns = r.kaiwa ? r.kaiwa.answers : [], kwOk = kwAns.filter(function(a, i) { return st.kaiwa[i + 1] === a; }).length;
+        var parts = [st.done.t1 ? 1 : 0, qs.length ? answered / qs.length : 0, kj.length ? ok / kj.length : 0];
+        if (kwAns.length) parts.push(kwOk / kwAns.length);
+        return { read: !!st.done.t1, answered: answered, qTotal: qs.length, kanjiOk: ok, kanjiTotal: kj.length, kaiwaOk: kwOk, kaiwaTotal: kwAns.length,
+                 pct: Math.round(parts.reduce(function(a, b) { return a + b; }, 0) / parts.length * 100) };
     }
 
     // ---------- Home: 上級読解 book cards ----------
@@ -10155,7 +10158,8 @@
                         '<span class="ar-item-main">' + label + '<b>' + escapeHtml(it.title) + '</b><small>' + escapeHtml(it.author) + '</small>' +
                         '<span class="ar-chips"><span class="ar-chip' + (p.read ? ' done' : '') + '" data-t="text" title="本文を開く">' + (p.read ? '通読 ✓' : '未読') + '</span>' +
                         '<span class="ar-chip' + (p.answered === p.qTotal ? ' done' : '') + '" data-t="q" title="' + lb.q + 'を開く">' + lb.q + ' ' + p.answered + '/' + p.qTotal + '</span>' +
-                        '<span class="ar-chip' + (p.kanjiOk === p.kanjiTotal ? ' done' : '') + '" data-t="kanji" title="' + lb.kanji + 'を開く">' + lb.kanji + ' ' + p.kanjiOk + '/' + p.kanjiTotal + '</span></span></span>' +
+                        '<span class="ar-chip' + (p.kanjiOk === p.kanjiTotal ? ' done' : '') + '" data-t="kanji" title="' + lb.kanji + 'を開く">' + lb.kanji + ' ' + p.kanjiOk + '/' + p.kanjiTotal + '</span>' +
+                        (p.kaiwaTotal ? '<span class="ar-chip' + (p.kaiwaOk === p.kaiwaTotal ? ' done' : '') + '" data-t="kaiwa" title="会話を開く">会話 ' + p.kaiwaOk + '/' + p.kaiwaTotal + '</span>' : '') + '</span></span>' +
                         '<span class="ar-item-go" aria-hidden="true">›</span></button>';
                 });
             });
@@ -11097,6 +11101,15 @@
                 };
                 var p = au.play(); if (p && p.then) p.then(function() { player.starting = false; player.raf = requestAnimationFrame(watch); }, function() { player.starting = false; player.want = null; markNow(); }); else player.raf = requestAnimationFrame(watch);
             };
+            // 聞き通す: most of the recording actually played (seeking ahead doesn't count)
+            var heardT = null, heardSum = 0;
+            au.addEventListener('timeupdate', function() {
+                var t = au.currentTime, d = heardT === null ? 0 : t - heardT;
+                heardT = t;
+                if (d > 0 && d < 1.6) heardSum += d;
+                if (!st.kaiwaHeard && au.duration && heardSum >= au.duration * 0.85) { st.kaiwaHeard = true; saveAdv(); }
+            });
+            au.addEventListener('seeking', function() { heardT = null; });
             au.addEventListener('error', function() { player.classList.add('kw-noaudio'); player.querySelector('.kw-player-k').textContent = '音声を読み込めませんでした'; });
         }
         var draw = function() {
@@ -11127,6 +11140,7 @@
                     st.kaiwa[act] = c.dataset.v; saveAdv();
                     var good = ok(act);
                     vibrateFor(good);
+                    if (good && !st.kaiwaPeek && !firstOpen()) st.kaiwaClear = true;     // every blank right without 答えを見る (kept for the badge)
                     if (good) act = player && !player.querySelector('audio').paused && playingLine > -1 ? openFrom(playingLine) : firstOpen();
                     var keep = body.scrollTop; draw(); body.scrollTop = keep;
                 });
@@ -11134,8 +11148,8 @@
             body.querySelectorAll('.kw-say').forEach(function(b) {
                 b.addEventListener('click', function() { if (player && kw.segs) { player.playLine(+b.dataset.l); return; } if (player) player.querySelector('audio').pause(); var l = kw.lines[b.dataset.l][1]; speakText(escapeHtml(arPlainLine(l.replace(/\[(\d+)\]/g, function(m, n) { return ans[n - 1]; })))); });
             });
-            document.getElementById('kw-show').addEventListener('click', function() { ans.forEach(function(a, i) { st.kaiwa[i + 1] = a; }); saveAdv(); act = null; draw(); });
-            document.getElementById('kw-reset').addEventListener('click', function() { st.kaiwa = {}; saveAdv(); act = 1; draw(); body.scrollTop = 0; });
+            document.getElementById('kw-show').addEventListener('click', function() { ans.forEach(function(a, i) { st.kaiwa[i + 1] = a; }); st.kaiwaPeek = true; saveAdv(); act = null; draw(); });
+            document.getElementById('kw-reset').addEventListener('click', function() { st.kaiwa = {}; st.kaiwaPeek = false; saveAdv(); act = 1; draw(); body.scrollTop = 0; });
         };
         draw();
         body.scrollTop = 0;
@@ -12751,7 +12765,7 @@
             Object.keys(lg).forEach(function(k) { if (/^(pace|fastread|measure)(#|$)/.test(k)) delete lg[k]; });
             localStorage.setItem('jlptBadgeLog', JSON.stringify(lg)); } catch (e) {}
     })();
-    var BADGE_CATS = [['habit', '習慣'], ['skill', '実力'], ['review', '誤答と復習'], ['speed', '読む速さ'], ['words', '単語'], ['adv', '上級読解'], ['mock', '模擬試験'], ['book', '教材'], ['collect', 'コレクション']];
+    var BADGE_CATS = [['habit', '習慣'], ['skill', '実力'], ['review', '誤答と復習'], ['speed', '読む速さ'], ['words', '単語'], ['adv', '読解'], ['mock', '模擬試験'], ['book', '教材'], ['collect', 'コレクション']];
     var TIER_NAMES = ['銅', '銀', '金', '朱'];
     var TIER_COLORS = ['#b0703a', '#8a95a1', '#c4960f', '#c0392b'];
     // two levels: 銀・金, three: 銅・銀・金, four: 銅・銀・金・朱
@@ -12911,10 +12925,13 @@
             { id: 'wordlist', cat: 'words', icon: '📒', name: '単語帳', value: wordList.length, unit: '語', tiers: tiers([10, 50, 100, 200], '語'), hint: '単語帳にためた語の数' },
             { id: 'cards', cat: 'words', icon: '🃏', name: 'カード', value: learnedCards, unit: '語', tiers: tiers([10, 30, 100], '語'), hint: 'カードで覚えた語の数（次の復習まで1週間以上あいた語）' },
             // 上級読解
-            { id: 'advread', cat: 'adv', icon: '📖', name: '通読', ok: advP.some(function(pr) { return pr.read; }), hint: '上級読解の文章を通読する（手引き1にチェック）' },
-            { id: 'advq', cat: 'adv', icon: '✍️', name: '問いに向き合う', ok: advP.some(function(pr) { return pr.qTotal && pr.answered === pr.qTotal; }), hint: '上級読解の1編で、すべての問いに自分の答えを書く' },
-            { id: 'advkanji', cat: 'adv', icon: '🈴', name: '漢字と語彙', ok: advP.some(function(pr) { return pr.kanjiTotal && pr.kanjiOk === pr.kanjiTotal; }), hint: '上級読解の1編で、「漢字と語彙」をすべて正解する' },
-            { id: 'advlisten', cat: 'adv', icon: '🎧', name: '聞き通す', ok: advIds.some(function(id) { return advState(id).heardAll; }), hint: '上級読解の文章の読み上げを、最後まで聞く' }
+            { id: 'advread', cat: 'adv', icon: '📖', name: '通読', ok: advP.some(function(pr) { return pr.read; }), hint: '読解の文章を通読する（「通読」にチェック）' },
+            { id: 'advq', cat: 'adv', icon: '✍️', name: '問いに向き合う', ok: advP.some(function(pr) { return pr.qTotal && pr.answered === pr.qTotal; }), hint: '読解の1編（1課）で、すべての問いに答える' },
+            { id: 'advkanji', cat: 'adv', icon: '🈴', name: '漢字と語彙', ok: advP.some(function(pr) { return pr.kanjiTotal && pr.kanjiOk === pr.kanjiTotal; }), hint: '読解の1編（1課）で、「漢字と語彙」「練習」をすべて正解する' },
+            { id: 'advlisten', cat: 'adv', icon: '🎧', name: '聞き通す', ok: advIds.some(function(id) { return advState(id).heardAll; }), hint: '読解の文章の読み上げを、最後まで聞く' },
+            { id: 'kwheard', cat: 'adv', icon: '📻', name: '会話を聞く', ok: advIds.some(function(id) { return advState(id).kaiwaHeard; }), hint: '「会話」の音声を、最後まで通して聞く' },
+            { id: 'kwclear', cat: 'adv', icon: '👂', name: '聞き取り', value: advIds.filter(function(id) { return advState(id).kaiwaClear; }).length, unit: '課', tiers: tiers([1, 3, 6], '課'), hint: '「会話」の（　）を、「答えを見る」を使わずに全部正解する（課の数）' },
+            { id: 'advall', cat: 'adv', icon: '🏮', name: '一課修了', value: advP.filter(function(pr) { return pr.pct === 100; }).length, unit: '編', tiers: tiers([1, 3, 6], '編'), hint: '1編（1課）の本文・問い・練習・会話をすべて終える（進み具合100%）' }
         ];
         // 模擬試験 (from the finished sittings in jlptMockHistory)
         if (mockLibs().length) {
@@ -12950,6 +12967,15 @@
             }
             if (units) badges.push({ id: 'book:' + lib.id, cat: 'book', icon: '🎓', name: lib.short || lib.title, ok: done === units, progress: done + ' / ' + units,
                 hint: '「' + lib.title + '」の' + (lib.units ? '各項目' : '各週') + 'の問題をすべて解く' });
+        });
+        // 読解の本も1冊ずつ: 追加済みの課・編をすべて終える
+        READING_BOOKS.forEach(function(b) {
+            var ids = [];
+            b.toc.forEach(function(sec) { sec.chapters.forEach(function(ch) { ch.items.forEach(function(it) { if (it.id && READINGS[it.id]) ids.push(it.id); }); }); });
+            if (!ids.length) return;
+            var done = ids.filter(function(id) { return arProgress(id).pct === 100; }).length;
+            badges.push({ id: 'rbook:' + b.id, cat: 'book', icon: '📕', name: b.short || b.title, ok: done === ids.length, progress: done + ' / ' + ids.length,
+                hint: '「' + b.title + '」の追加済みの' + (b.unit || '編') + 'を、すべて100%にする' });
         });
         // コレクション: the opening screens
         badges = badges.concat([
