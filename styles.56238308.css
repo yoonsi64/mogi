@@ -495,6 +495,28 @@
         .nickname-input { width: 9.5em; max-width: 55%; padding: 7px 10px; font-size: 16px; border: 1px solid var(--border-light); border-radius: var(--radius-sm, 8px); background: var(--surface); color: var(--text-main); text-align: right; }
         .app-credit { text-align: center; padding: 4px 0 14px; font-size: 0.75rem; line-height: 1.8; color: var(--text-sub); -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
         .dev-card { border-style: dashed; }
+        .dev-btn { padding: 8px 16px; border: 1px solid var(--border-light); border-radius: 8px; background: var(--surface); color: var(--text-main); font: inherit; font-weight: bold; }
+        /* 画廊: the prints one to a page, swiped sideways */
+        .gallery-view { position: fixed; inset: 0; z-index: 3850; background: #171513; color: #f1ebe0; display: none; flex-direction: column; }
+        .gallery-view.active { display: flex; }
+        .gal-head { display: flex; align-items: center; gap: 10px; padding: 12px 16px 6px; }
+        .gal-head .flash-close { background: #2a2623; border-color: #3d3833; color: #f1ebe0; }
+        .gal-title { font-weight: bold; letter-spacing: 0.2em; font-family: var(--mincho); }
+        .gal-count { margin-left: auto; font-size: 0.8rem; color: #a9a097; font-variant-numeric: tabular-nums; }
+        .gal-track { flex: 1; display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .gal-track::-webkit-scrollbar { display: none; }
+        .gal-item { flex: 0 0 100%; width: 100%; scroll-snap-align: start; scroll-snap-stop: always; margin: 0; display: flex; flex-direction: column; min-height: 0; }
+        .gal-pic { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 8px 14px; }
+        .gal-pic img { max-width: 100%; max-height: 100%; object-fit: contain; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6); border: 1px solid #3d3833; }
+        .gal-cap { padding: 14px 22px calc(10px + env(safe-area-inset-bottom)); text-align: center; }
+        .gal-series { font-size: 0.78rem; color: #a9a097; letter-spacing: 0.15em; }
+        .gal-name { font-family: var(--mincho); font-size: 1.35rem; font-weight: 700; margin: 2px 0; }
+        .gal-en { font-size: 0.85rem; color: #d6cec2; font-style: italic; }
+        .gal-by { margin-top: 8px; font-size: 0.85rem; }
+        .gal-pd { margin-top: 4px; font-size: 0.7rem; color: #8d857c; letter-spacing: 0.1em; }
+        .gal-dots { display: flex; justify-content: center; gap: 8px; padding: 0 0 calc(14px + env(safe-area-inset-bottom)); }
+        .gal-dots i { width: 7px; height: 7px; border-radius: 50%; background: #4a443f; cursor: pointer; }
+        .gal-dots i.on { background: #e8c070; }
         .dev-hide { margin-top: 10px; background: none; border: none; padding: 0; color: var(--text-sub); font-size: 0.78rem; text-decoration: underline; cursor: pointer; }
         .passage-tag { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; font-size: 0.8rem; font-weight: bold; color: var(--active-blue); margin: 0 0 8px; }
         .passage-tag-sub { font-weight: normal; color: var(--text-sub); font-size: 0.75rem; }

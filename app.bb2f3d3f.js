@@ -4634,6 +4634,7 @@
             showToast(was ? '開発者メニューは表示されています' : '開発者メニューを表示しました');
             card.scrollIntoView({ behavior: 'smooth', block: 'center' });
         });
+        document.getElementById('dev-gallery').addEventListener('click', function() { openGallery(0); });
         document.getElementById('dev-hide').addEventListener('click', function() {
             setSetting('devMenu', false);
             document.getElementById('dev-card').style.display = 'none';
@@ -6391,14 +6392,44 @@
     }
     // ---------- ゲームの背景: a print behind the four games ----------
     // One of six public-domain woodblock prints, picked at random each time a game opens, filling the screen behind the cards.
-    var GS_ART = [          // Hokusai's 富嶽三十六景, and Hiroshige's 嵐山満花 from 京都名所; pos keeps the heart of each print in view on a phone
-        { src: 'art/katakura.jpg', paper: '#ece4d2', pos: '46% 50%' },      // 駿州片倉茶園ノ不二
-        { src: 'art/noboto.jpg', paper: '#ece4d2', pos: '46% 50%' },        // 登戸浦
-        { src: 'art/tamagawa.jpg', paper: '#ece4d2', pos: '60% 50%' },      // 武州玉川
-        { src: 'art/gotenyama.jpg', paper: '#ece4d2', pos: '45% 50%' },     // 東海道品川御殿山ノ不二
-        { src: 'art/shimomeguro.jpg', paper: '#ece4d2', pos: '56% 50%' },   // 下目黒
-        { src: 'art/arashiyama.jpg', paper: '#ece4d2', pos: '48% 50%' }     // 京都名所之内 あらし山満花
+    var GS_ART = [          // public-domain woodblock prints; pos keeps the heart of each print in view when it is cropped to a phone
+        { src: 'art/katakura.jpg', paper: '#ece4d2', pos: '46% 50%', title: '駿州片倉茶園ノ不二', en: 'Fuji from the Tea Plantation of Katakura in Suruga Province', series: '富嶽三十六景', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1830–32年頃' },
+        { src: 'art/noboto.jpg', paper: '#ece4d2', pos: '46% 50%', title: '登戸浦', en: 'Noboto Bay', series: '富嶽三十六景', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1830–32年頃' },
+        { src: 'art/tamagawa.jpg', paper: '#ece4d2', pos: '60% 50%', title: '武州玉川', en: 'The Tama River in Musashi Province', series: '富嶽三十六景', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1830–32年頃' },
+        { src: 'art/gotenyama.jpg', paper: '#ece4d2', pos: '45% 50%', title: '東海道品川御殿山ノ不二', en: 'Fuji from Gotenyama at Shinagawa on the Tōkaidō', series: '富嶽三十六景', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1830–32年頃' },
+        { src: 'art/shimomeguro.jpg', paper: '#ece4d2', pos: '56% 50%', title: '下目黒', en: 'Shimo-Meguro', series: '富嶽三十六景', artist: '葛飾北斎', artistEn: 'Katsushika Hokusai', year: '1830–32年頃' },
+        { src: 'art/arashiyama.jpg', paper: '#ece4d2', pos: '48% 50%', title: '嵐山満花', en: 'Arashiyama in Full Bloom', series: '京都名所之内', artist: '歌川広重', artistEn: 'Utagawa Hiroshige', year: '1834年頃' }
     ];
+    // ---------- 画廊: the prints, one by one, with their titles (開発者メニュー) ----------
+    function openGallery(start) {
+        var v = document.getElementById('gallery-view');
+        if (!v) {
+            v = document.createElement('div'); v.id = 'gallery-view'; v.className = 'gallery-view'; v.setAttribute('role', 'dialog'); v.setAttribute('aria-label', '画廊');
+            v.innerHTML = '<div class="gal-head"><button class="flash-close gal-close" aria-label="閉じる">✕</button><span class="gal-title">画廊</span><span class="gal-count"></span></div>' +
+                '<div class="gal-track">' + GS_ART.map(function(a, i) {
+                    return '<figure class="gal-item" data-i="' + i + '"><div class="gal-pic"><img src="' + a.src + '" alt="' + escapeHtml(a.title) + '" loading="lazy" decoding="async"></div>' +
+                        '<figcaption class="gal-cap"><div class="gal-series">' + escapeHtml(a.series) + '</div><div class="gal-name">' + escapeHtml(a.title) + '</div><div class="gal-en">' + escapeHtml(a.en) + '</div>' +
+                        '<div class="gal-by">' + escapeHtml(a.artist) + '（' + escapeHtml(a.artistEn) + '）・' + escapeHtml(a.year) + '</div>' +
+                        '<div class="gal-pd">パブリックドメイン</div></figcaption></figure>';
+                }).join('') + '</div><div class="gal-dots">' + GS_ART.map(function(a, i) { return '<i data-i="' + i + '"></i>'; }).join('') + '</div>';
+            document.body.appendChild(v);
+            v.querySelector('.gal-close').addEventListener('click', closeGallery);
+            var track = v.querySelector('.gal-track'), dots = v.querySelectorAll('.gal-dots i');
+            var mark = function() {
+                var i = Math.round(track.scrollLeft / track.clientWidth);
+                dots.forEach(function(d, k) { d.classList.toggle('on', k === i); });
+                v.querySelector('.gal-count').textContent = (i + 1) + ' / ' + GS_ART.length;
+            };
+            track.addEventListener('scroll', function() { clearTimeout(track._t); track._t = setTimeout(mark, 60); });
+            dots.forEach(function(d) { d.addEventListener('click', function() { track.scrollTo({ left: track.clientWidth * +d.dataset.i, behavior: 'smooth' }); }); });
+            v._mark = mark;
+        }
+        v.classList.add('active');
+        var tr = v.querySelector('.gal-track');
+        tr.scrollLeft = tr.clientWidth * (start || 0);
+        v._mark();
+    }
+    function closeGallery() { var v = document.getElementById('gallery-view'); if (v) v.classList.remove('active'); }
     function sceneOn() { return getSetting('gameScene', true); }
     function sceneStart() {
         var v = document.getElementById('flash-view');
