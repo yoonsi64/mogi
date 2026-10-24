@@ -10853,12 +10853,13 @@
         var player = null;
         if (kw.audio) {
             player = document.createElement('div'); player.className = 'kw-player';
-            player.innerHTML = '<span class="kw-player-k">音声</span><audio controls preload="metadata" src="' + kw.audio + '"></audio>' +
+            player.innerHTML = '<span class="kw-player-k">音声</span><audio controls controlslist="nodownload noplaybackrate noremoteplayback" disablepictureinpicture disableremoteplayback preload="metadata" src="' + kw.audio + '"></audio>' +
                 '<button class="kw-rate" aria-label="再生の速さ">1.0×</button>';
-            var au = player.querySelector('audio'), rb = player.querySelector('.kw-rate'), RATES = [1, 0.85, 0.7, 1.15];
+            var au = player.querySelector('audio'), rb = player.querySelector('.kw-rate'), RATES = [1, 1.15, 1.3, 1.5, 0.7, 0.85];
             au.playbackRate = Number(getSetting('kwRate', 1)) || 1; rb.textContent = (au.playbackRate === 1 ? '1.0' : au.playbackRate) + '×';
             rb.addEventListener('click', function() { var r = RATES[(RATES.indexOf(au.playbackRate) + 1) % RATES.length]; au.playbackRate = r; setSetting('kwRate', r); rb.textContent = (r === 1 ? '1.0' : r) + '×'; });
             au.addEventListener('play', function() { try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) {} });
+            au.addEventListener('contextmenu', function(e) { e.preventDefault(); });          // no 「音声を保存」 from a long press / right click
             au.addEventListener('error', function() { player.classList.add('kw-noaudio'); player.querySelector('.kw-player-k').textContent = '音声を読み込めませんでした'; });
         }
         var draw = function() {
