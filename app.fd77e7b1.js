@@ -3064,6 +3064,233 @@
             options: ['小学生を対象とした体験教室であり、費用は無料である。', '体験コースは曜日と時間帯によって違い、参加のためには、前もって申込書を作成する必要がある。', '詳細については電話で問い合わせすることができ、参加人数が5人以下の場合は、教室が開かない。', '入場の前には持ち物検査が行われ、身分証を提示しなければならない。'], correct: 1 })
     );
 
+
+    // ===== JLPT Final Test N1 (다락원) 3회 — 言語知識（文字・語彙・文法）・読解 =====
+    // ids 24001–24070 = the test's question numbers. week 7–9 = section (1회 weeks 1–3, 2회 weeks 4–6), day = 問題.
+    // The answers are my own picks (the answer key was not provided); the 文法 meanings and 組み立て notes are added.
+    var FT3_D = Object.assign({}, FT2_D, { 13: '右のページは、新宿区立図書館の利用案内である。下の問いに対する答えとして最もよいものを、1・2・3・4から一つ選びなさい。' });
+    var ft3Q = function(n, w, d, mondai, o) { o.id = 24000 + n; o.lib = FT; o.week = w + 6; o.day = d; o.label = o.label || '問' + n; o.direction = FT3_D[mondai]; return o; };
+    quizData.push(
+        // 問題1 漢字読み
+        ft3Q(1, 1, 1, 1, { type: 'Kanji Reading', sentence: '大学入試のために、<u>猛烈</u>に勉強した。', options: ['もれつ', 'きょれつ', 'もうれつ', 'きょうれつ'], correct: 2 }),
+        ft3Q(2, 1, 1, 1, { type: 'Kanji Reading', sentence: '雨が降って、乾いた畑を<u>潤して</u>くれた。', options: ['いやして', 'うるおして', 'ぬらして', 'たがやして'], correct: 1 }),
+        ft3Q(3, 1, 1, 1, { type: 'Kanji Reading', sentence: '彼は魚の<u>繁殖</u>を研究している。', options: ['はんちょく', 'はんしょく', 'ばんちょく', 'ばんしょく'], correct: 1 }),
+        ft3Q(4, 1, 1, 1, { type: 'Kanji Reading', sentence: 'どんな場合であっても、自分が本来<u>担う</u>べき役割を見失ってしまってはいけない。', options: ['になう', 'まかなう', 'ねらう', 'かばう'], correct: 0 }),
+        ft3Q(5, 1, 1, 1, { type: 'Kanji Reading', sentence: 'ウイルスの<u>感染</u>を防ぐため、外出を控えるようにしている。', options: ['かんおん', 'かんせん', 'かんえん', 'かんしん'], correct: 1 }),
+        ft3Q(6, 1, 1, 1, { type: 'Kanji Reading', sentence: '彼は自分の過ちを<u>潔く</u>認めた。', options: ['いさぎよく', 'きよく', 'こころよく', 'いさましく'], correct: 0 }),
+        // 問題2 文脈規定
+        ft3Q(7, 1, 2, 2, { type: 'Context', sentence: '我が社では社員の [    ] を向上させるため、色々な取り組みを行っている。', options: ['ニーズ', 'センス', 'ノルマ', 'モチベーション'], correct: 3 }),
+        ft3Q(8, 1, 2, 2, { type: 'Context', sentence: '彼は大金に目が [    ]、犯罪を犯してしまった。', options: ['くらんで', 'くらくて', 'さえぎって', 'あいて'], correct: 0 }),
+        ft3Q(9, 1, 2, 2, { type: 'Context', sentence: 'いくら弱小チームとの試合だとしても、油断するのは [    ] だ。', options: ['偏見', '禁物', '当然', '妥当'], correct: 1 }),
+        ft3Q(10, 1, 2, 2, { type: 'Context', sentence: '趣味で撮っている写真が賞を取った上に、海外の有名な雑誌に [    ] されて、驚いた。', options: ['記載', '明記', '拡散', '掲載'], correct: 3 }),
+        ft3Q(11, 1, 2, 2, { type: 'Context', sentence: '戦争によって町が崩壊し、たくさんの [    ] 命を奪われた。', options: ['こころよい', 'あさましい', 'おびただしい', 'とうとい'], correct: 3 }),
+        ft3Q(12, 1, 2, 2, { type: 'Context', sentence: '貧しい環境にいる人々の映像を見て、自分は恵まれていると [    ] 思う。', options: ['くよくよ', 'かねがね', 'つくづく', 'ちょくちょく'], correct: 2 }),
+        ft3Q(13, 1, 2, 2, { type: 'Context', sentence: '国内でエネルギーの自給が可能になったため、[    ] ことなく緊急事態を回避することができた。', options: ['つかさどる', 'そなわる', 'とどこおる', 'せまる'], correct: 2 }),
+        // 問題3 言い換え類義
+        ft3Q(14, 1, 3, 3, { type: 'Paraphrases', sentence: 'その会社は海外市場からの撤退を<u>ほのめかした</u>。', options: ['あきらめた', 'におわせた', 'かくした', 'あきらかにした'], correct: 1 }),
+        ft3Q(15, 1, 3, 3, { type: 'Paraphrases', sentence: '台風が近づいているこんな時に海釣りなんて<u>物好きだ</u>ね。', options: ['変わっている', '釣りが好きだ', '特別だ', 'いいことだ'], correct: 0 }),
+        ft3Q(16, 1, 3, 3, { type: 'Paraphrases', sentence: '両者の実力差は<u>歴然としていた</u>が、それでも実戦では、練習試合とはまったく別種の緊張感があった。', options: ['あきらかにした', 'すがすがしかった', 'まぎらわしかった', 'はっきりしていた'], correct: 3 }),
+        ft3Q(17, 1, 3, 3, { type: 'Paraphrases', sentence: '心臓発作を押さえることができる薬の承認は、患者にとっては<u>朗報</u>に違いない。', options: ['心配事', '気がかり', '手がかり', 'うれしい知らせ'], correct: 3 }),
+        ft3Q(18, 1, 3, 3, { type: 'Paraphrases', sentence: 'この国は治安がよくないので、夜間の外出は<u>極力</u>避けるようにしている。', options: ['明確に', 'できるだけ', 'じっくりと', 'しかたなく'], correct: 1 }),
+        ft3Q(19, 1, 3, 3, { type: 'Paraphrases', sentence: '会社の経営状態は厳しいが、職務を<u>まっとうする</u>ために全力を尽くそうと思う。', options: ['負担する', '実行する', '担当する', '完了する'], correct: 3 }),
+        // 問題4 用法
+        ft3Q(20, 1, 4, 4, { type: 'Usage', sentence: '<u>先駆ける</u>', options: ['この会社は他社に先駆けて、「奨学金返済制度」を導入した。', '重要な会議に先駆けて、1週間かけて資料を用意した。', 'オリンピックの開会式に先駆けて、選手を代表して挨拶をさせていただきます。', 'サービスとは相手が必要とすることを先駆けて、準備することです。'], correct: 0 }),
+        ft3Q(21, 1, 4, 4, { type: 'Usage', sentence: '<u>映える</u>', options: ['海外旅行に行って、写真をたくさん映えていい思い出になった。', '地味な服には派手な色のスカーフが映える。', '彼女はいつも映えることばかり言うので、周りの人はいつも驚かされる。', '彼女は鏡に映えた姿を見て、自分の美しさにうっとりしている。'], correct: 1 }),
+        ft3Q(22, 1, 4, 4, { type: 'Usage', sentence: '<u>忖度</u>', options: ['急がないと列車の時間に間に合わないから、早く忖度して出かけよう。', 'アンケートによって消費者の意見を忖度したが、意外な結果が出て驚いた。', '工場を建てるにはこの土地について忖度する必要がある。', '今度の案件について忖度なしで率直な意見を聞かせて欲しい。'], correct: 3 }),
+        ft3Q(23, 1, 4, 4, { type: 'Usage', sentence: '<u>かろうじて</u>', options: ['信用していた部下の犯行を知って、あまりの衝撃にかろうじて気を失いかけた。', '崖から下を眺めていると、かろうじて飛び降りたいという衝動に駆られる。', '去年定年退職した彼は年金だけでかろうじて生計を立てている。', '対処が遅れていたら、かろうじてまた犠牲者が出るところだった。'], correct: 2 }),
+        ft3Q(24, 1, 4, 4, { type: 'Usage', sentence: '<u>互角</u>', options: ['小さな工場でも技術さえ優れていれば、世界的な企業と互角に戦うことができる。', '新しく建てられたビルは互角の珍しい形をしている。', '企画担当者にはどんな時でも互角に考えられる能力が求められる。', '強豪チームとの試合で頑張って戦った結果、互角の差で負けてしまった。'], correct: 0 }),
+        ft3Q(25, 1, 4, 4, { type: 'Usage', sentence: '<u>リーク</u>', options: ['部下からの報告書にミスが見つかり、リークしてあげた。', '著名な芸術家に関する不祥事が、関係者からリークされた。', '顧客が入力した情報は直ちにリークされ、盗み見できないシステムになっている。', '製造会社は新製品発表会を開き、製品の性能を大々的にリークした。'], correct: 1 }),
+        // 問題5 文法形式の判断
+        ft3Q(26, 2, 1, 5, { type: 'Grammar', sentence: '首相の記者会見を [    ]、会場は緊張が高まっている。', options: ['あたって', '控えて', 'あって', 'あいまって'], correct: 1, meaning: '～を控えて：～が近くに迫っている時に' }),
+        ft3Q(27, 2, 1, 5, { type: 'Grammar', sentence: '若者が都会へ行き、ますます過疎化している地方の産業をなんとかして活性化できない [    ] と考えている。', options: ['ものの', 'ものだ', 'ものか', 'ものを'], correct: 2, meaning: '～ないものか：なんとかして～したい（強い願望）' }),
+        ft3Q(28, 2, 1, 5, { type: 'Grammar', sentence: '当初の予想を [    ]、新製品は順調に売り上げを伸ばしている。', options: ['含めて', '除いて', 'よそに', 'もとに'], correct: 2, meaning: '～をよそに：～に関係なく、～を気にしないで' }),
+        ft3Q(29, 2, 1, 5, { type: 'Grammar', sentence: '地震の研究が進んでいると言われる現代 [    ]、地震発生を予知することは難しいとされている。', options: ['においてさえ', 'においてこそ', 'に対してさえ', 'に対してこそ'], correct: 0, meaning: '～においてさえ：～でも（極端な例を挙げて、他はなおさらだと示す）' }),
+        ft3Q(30, 2, 1, 5, { type: 'Grammar', sentence: '急成長を遂げたあの会社は不景気により、工場の稼働停止 [    ] らしい。', options: ['を余儀なくされた', 'の至り', 'にかたくない', 'にたえない'], correct: 0, meaning: '～を余儀なくされる：仕方なく～しなければならなくなる' }),
+        ft3Q(31, 2, 1, 5, { type: 'Grammar', sentence: 'あの科学者の論文はその独創性 [    ] 当初は理解できる人がほとんどいなかった。', options: ['としても', 'からには', 'といえば', 'ゆえに'], correct: 3, meaning: '～ゆえに：～が原因で、～ので（硬い言い方）' }),
+        ft3Q(32, 2, 1, 5, { type: 'Grammar', sentence: '彼は素直に [    ] 反抗してしまい、退学処分になってしまった。', options: ['謝るべく', '謝るべきところを', '謝るべきところに', '謝るまじき'], correct: 1, meaning: '～べきところを：本当は～するべきなのに（そうしないで）' }),
+        ft3Q(33, 2, 1, 5, { type: 'Grammar', sentence: '今年90歳を迎える元村長にこの村に初めて高層ビルが建った時のことを聞いてみたら、鮮明に覚えて [    ]、その記憶力に驚いた。', options: ['差し上げ', 'まいり', 'おいでになり', '申し上げ'], correct: 2, meaning: '～ておいでになる：「～ている」の尊敬語' }),
+        ft3Q(34, 2, 1, 5, { type: 'Grammar', sentence: '昨夜の豪雨が嘘のように今日は快晴で気温も上がった。[    ] 台風は過ぎ去ったようだ。', options: ['仮に', '必ずしも', 'くれぐれも', 'どうやら'], correct: 3, meaning: 'どうやら～ようだ：はっきりとは言えないが、どうも～らしい' }),
+        ft3Q(35, 2, 1, 5, { type: 'Grammar', sentence: '私が言っていることを今はお説教ぐらいにしか受け取っていないということは承知しているが、いつか役に [    ]。', options: ['立たないとも限らない', '立つまでだ', '立ってやまない', '立たないではすまない'], correct: 0, meaning: '～ないとも限らない：～する可能性もある' }),
+        // 問題6 文の組み立て
+        ft3Q(36, 2, 2, 6, { type: 'Composition', sentence: 'システムトラブルが起こった原因は [  ] [  ] [★] [  ] ことを咎められた。', fragments: ['上司への', 'ともかく', 'しなかった', '報告すら'], correctOrder: [1, 0, 3, 2], starIndex: 2,
+            rationale: '「原因はともかく上司への報告すらしなかったことを咎められた」となる。「～はともかく」は「～は別として」、「～すら」は「～さえ」という意味。' }),
+        ft3Q(37, 2, 2, 6, { type: 'Composition', sentence: '業績向上を図りたいと言っている新社長に対し、労働組合は労働条件 [  ] [  ] [★] [  ] ことだと対立している。', fragments: ['の', 'なくして', '改善', 'あり得ない'], correctOrder: [0, 2, 1, 3], starIndex: 2,
+            rationale: '「労働条件の改善なくしてあり得ないことだ」となる。「～なくして」は「～がなければ」という意味。' }),
+        ft3Q(38, 2, 2, 6, { type: 'Composition', sentence: '最近の農家は [  ] [  ] [★] [  ]、最高の物を作るということを追求している。', fragments: ['こだわりを', '譲れない', '何かしらの', '持っていて'], correctOrder: [2, 1, 0, 3], starIndex: 2,
+            rationale: '「何かしらの譲れないこだわりを持っていて、最高の物を作る」となる。「何かしら」は「何か」という意味。' }),
+        ft3Q(39, 2, 2, 6, { type: 'Composition', sentence: '海外の会社への就職を希望しているが、海外移住 [  ] [  ] [★] [  ] ので、慎重に考えるべきである。', fragments: ['ともなると', '国によっては', '後悔する', 'ことにもなりかねない'], correctOrder: [0, 1, 2, 3], starIndex: 2,
+            rationale: '「海外移住ともなると国によっては後悔することにもなりかねない」となる。「～ともなると」は「～という段階・立場になると」、「～かねない」は「～するおそれがある」という意味。' }),
+        ft3Q(40, 2, 2, 6, { type: 'Composition', sentence: 'この町には昔ながらの手造りの酒蔵があるらしい。大の酒好きで特に [  ] [  ] [★] [  ] 帰ることはできない。', fragments: ['私としては', '日本酒に興味のある', 'それを味わわずに', 'それを知ったからには'], correctOrder: [1, 0, 3, 2], starIndex: 2,
+            rationale: '「特に日本酒に興味のある私としてはそれを知ったからにはそれを味わわずに帰ることはできない」となる。「～からには」は「～のだから当然」という意味。' }),
+        // 問題7 文章の文法
+        ft3Q(41, 2, 3, 7, { type: 'Text Grammar', label: '問41〜45', blankBase: 40,
+            notes: { '二義的': '二次的' },
+            sentence: `アメリカでテレビを見ていると、テレビに登場する人物が、視聴者にじかに語りかけることがじつに多い。統計をとって比べてみたわけではないから正確なことはいえないが、いずれにせよ、じかに語りかけられているという印象を強く受ける。ニュース番組 [[1]]、コマーシャルがそうであり、インタビュー番組がそうである。また、同じニュース番組にしても、日本においてよりもはるかにじかに語りかけられているような気がする。アメリカのニュース・キャスターは誰もが確信をもって語りかけてくるというわけだが、むろん、彼らもまた視聴者をじかに見ているわけではない。まさにテレビ・カメラを見ているにすぎないわけだが、それがどうして [[2]] 異なった印象を与えるのか。
+テレビにおいてはアメリカが先輩だからなどということではあるまい。カメラに慣れているとは思えない人間でさえも確信をもって視聴者に、ということはつまりカメラのレンズに向かって語りかけてくるからである。とすれば、アメリカ人はもともとカメラのレンズに強いとでも考えるほかはない。
+それではカメラのレンズに強いということはどういうことか。おそらく不特定多数の人間に対して強いということであろう。一般公衆に対して強いということになる。
+そう考えて次の事実に思い当たった。[[3]]、日本人は語りかける相手によって語りかける言葉を変える必要があるという事実に。したがって、語りかける相手がどのような存在であるか確認してからでなければ、積極的に語りかけることができないのである。たとえば、日本人はカメラのレンズに向かってじかに「あなたは」と語りかけることはできないだろう。「あなたは」という語りかけは目上の者に対しては失礼にあたるからである。カメラのレンズを直視することにいささかのためらいを覚えるのも、また同じ理由にもとづいている。[[4]] もまた日本語の支配下にあるのである。
+むろん、アメリカ人も語りかける相手によって言葉を [[5]]。だが、それは<u data-note="二義的"><ruby>二義的<rt>にぎてき</rt></ruby></u>なことにすぎない。自身の確信していることは、誰に対してであれ同じように、すなわち同じ言葉を用いて主張することができるのである。あえていえば、語りかける相手との関係が語りかけそのものをさえ規定してしまうのである。
+（三浦雅士『イメージの前線』）`,
+            blanks: [
+                { options: ['をよそに', 'はもとより', 'にひきかえ', 'といい'], correct: 1 },
+                { options: ['これ見よがしに', 'こともなげに', 'これほどまでにも', 'こともあろうに'], correct: 2 },
+                { options: ['すなわち', 'しかしながら', 'もしくは', 'とはいえ'], correct: 0 },
+                { options: ['言葉', '上下関係', '礼儀', '視線'], correct: 3 },
+                { options: ['変えないものでもない', '変えないわけではない', '変えるにあたらない', '変えるきらいがある'], correct: 1 }
+            ] })
+    );
+    // 問題8–13 読解
+    var FT3_P9_1 = `<p>日本人は一般的には、神社仏閣、<u data-note="能"><ruby>能<rt>のう</rt></ruby></u>や茶道など、古きよき日本の伝統が好きで、それを誇りに思っているのだが、その一方で、実生活では伝統などはお構いなしである。</p>
+<p>まず、屈指の横文字カタカナ氾濫社会であることを見、若者の言葉を聞けば、<span class="bousen-num">①</span><span class="bousen">国語における伝統の軽視</span>は一目瞭然である。古典としての言語の純粋性に対する感度が、フランスなどに比べてきわめて低い。実際、現在の日本語は横文字カタカナを抜きには成り立たなくなっている。年々大袈裟になるクリスマスのイルミネーションが終わると、正月には、依然として大勢の人が神社仏閣に初詣に行く。クリスマスまではまだよいとして、最近は、ハロウィーンも定着しつつあるようだ。</p>
+<p>その一方で、立春から大寒までの二十四節気にそった日本の伝統行事は、テレビのニュースの<u data-note="枕詞"><ruby>枕詞<rt>まくらことば</rt></ruby></u>である。</p>
+<p>また、食べ物に強いこだわりをもつ日本人は、旬にこだわるが、今は養殖、輸入、ハウス栽培などで、ほとんど一年中手に入る。イチゴもスイカも一年中あるといってもよい。二十四時間営業のコンビニが<u data-note="繁茂"><ruby>繁茂<rt>はんも</rt></ruby></u>するように、消費者が望むことなら、利便性の向上のためになら何でもやる。アメリカに勝るとも劣らない商業マインドである。こうした高度消費者中心資本主義が、日本の一面としてすでに社会に根を下ろしている。</p>
+<p>さらに、最近ではボジョレー・ヌーボーに始まり、イタリア産<u data-note="ポルチーニ">ポルチーニ</u>やトリュフなどといった外国産のもので旬を感じて楽しむといった<span class="bousen-num">②</span><span class="bousen">本末転倒なこと</span>を<u data-note="国民挙げて"><ruby>国民<rt>こくみん</rt></ruby><ruby>挙<rt>あ</rt></ruby>げて</u>行なっている。</p>
+<p class="reading-source">（小笠原泰『なんとなく、日本人』による）</p>`;
+    var FT3_N9_1 = { '能': '日本の伝統芸能', '枕詞': 'ある特定の言葉にかかる修飾的な言葉', '繁茂': '繁盛・繁栄すること', 'ポルチーニ': 'キノコの一種', '国民挙げて': '国民すべて' };
+    var FT3_P9_2 = `<p>暴力と言論とは、ふつう、まったく対立的なものと考えられている。<span class="bousen-num">①</span><span class="bousen">一般論</span>としては、たしかにその通りであろう。文明の進歩の重要な一面は、暴力を言論におきかえていく点にある。しかし、そのようなおきかえが可能であるということは、両者の働きに共通性があるということを意味している。だから、私たちは、一方において、人を攻撃したり傷つけたり支配したりする「暴力的」な側面を言論のなかにみいだすことができると同時に、他方においては、暴力を一種の言論として（あるいはむしろコミュニケーションとして）とらえることもできる。</p>
+<p>たとえば、主君をいさめるための<u data-note="切腹"><ruby>切腹<rt>せっぷく</rt></ruby></u>、身の潔白を訴えるための自殺、あるいは何かに抗議するための自殺と言ったケースを考えてみると、これらはすべてわが身に暴力を加えることによって何かをアピールしているわけであるから、このような場合の暴力は明らかに一種のコミュニケーション、非言語的コミュニケーションである。</p>
+<p><span class="bousen-num">②</span><span class="bousen">このこと</span>は、自分に対する暴力だけでなく他者に対する暴力についてもいえる。子どものけんかなどをみていると、たいてい口げんかからはじまって、いい負かされた方が先に手を出す、反論の言葉を失って暴力に訴えるのである。これを暴力によるコミュニケーションの破壊とみるのは簡単であるが、この子にしてみれば、むしろ暴力によって反論し、コミュニケーションを継続しているのかもしれない。</p>
+<p class="reading-source">（井上俊『風俗の社会学』）</p>`;
+    var FT3_N9_2 = { '切腹': '刃物などで自らの腹部を切り裂いて死ぬ自殺の一方法' };
+    var FT3_P9_3 = `<p>学校で習う<span class="bousen-num">①</span><span class="bousen">歴史</span>や教科書に書かれている歴史は、政治の流れや権力の移り代わりを中心に語られることが多い。そこに登場する人物も、歴史の表舞台で活躍した英雄や政治家、宗教家や文化人といった有名人ばかりである。歴史は、あたかもそのような人たちによってつくられたかのように錯覚してしまいがちである。</p>
+<p>しかし<span class="bousen-num">②</span><span class="bousen">実際はそうではない</span>。歴史とは、一部の権力者たちによる物語などではなく、無数の人々によって<u data-note="紡ぐ"><ruby>紡<rt>つむ</rt></ruby></u>がれてきた豊かで多様な時間の集合体なのだ。そう考えてみると歴史を考えるヒントというのは、あらゆるところにひそんでいるといえる。いま生きている社会や自分自身の暮らしを見つめなおすこともまた、歴史を考えるための大きなヒントなのである。</p>
+<p>私は歴史を勉強するようになって、いつのころからか、そんなことを考えるようになり、政治の歴史や権力者の歴史とは<u data-note="対義語"><ruby>対義語<rt>たいぎご</rt></ruby></u>にある歴史を描いてみたい、と思うようになった。だが、実際のところ、その作業はとても難しい。歴史を知るための古文書や記録はその多くが、当時の権力者たちがみずからの正当性を主張するために残したものだからである。</p>
+<p>しかし、「たまたま」「はからずも」残った史料、というものもある。（中略）</p>
+<p>私はいつのころからか、そうした断片的な資料から、歴史の表舞台にあらわれない過去の人々の思いを探るという手法に、のめり込んでしまった。そして、そうした細やかな史料にこだわればこだわるほど、その当時の社会の本質を垣間見ることができるのではないか、と思うようになっていった。「<span class="bousen-num">③</span><span class="bousen">歴史は細部に宿る</span>」という思いを強くしたのである。</p>
+<p class="reading-source">（三上喜孝『天皇はなぜ紙幣に描かれないのか』）</p>`;
+    var FT3_N9_3 = { '紡ぐ': '複数のものをつなげて作り上げる', '対義語': '意味が反対となる語や、意味が対照的になっている語' };
+    var FT3_P10 = `<p>山の畑の工作を始めた頃、私は村の人々の使うある言葉のなかにおもしろい使い分けのあることに気付いた。それは「稼ぎ」と「仕事」の使い分けだった。</p>
+<p>「稼ぎに行ってくる」村人がそう言うとき、それは賃労働に出かける、あるいはお金のために労働することを意味していた。日本の山村は農村よりはるか昔から商品経済の社会になっている。食料を十分に自給することができず、自給自足的な生活を不可能にしてきた山村の社会では、昔から交換が生活のなかに浸透していたのである。その結果貨幣を求めて賃労働に従事することは、農村より早い段階から村人の生活の一形態になっていた。</p>
+<p>しかし<span class="bousen-num">①</span><span class="bousen">「稼ぎ」</span>は決して人間的な仕事を意味してはいなかった。それは村人にとってあくまでお金のためにする仕事であり、もししないですむのならその方がいい仕事なのである。</p>
+<p>ところが村人に<span class="bousen-num">②</span><span class="bousen">「仕事」</span>と表現されているものはそうではない。それは人間的な営みである。そしてその多くは直接自然と関係している。山の木を育てる仕事、山の作業道を修理する仕事、畑の作物を育てる仕事、自分の手で家や橋を修理する仕事、そして寄合に行ったり、祭りの準備に行く仕事、即ち山村に暮らす以上おこなわなければ自然や村や暮らしが壊れてしまうような諸々の行為を、村人は「仕事」と表現していた。</p>
+<p>もちろんこの「仕事」は収入に寄与する場合もしない場合もある。理想的にいえば、村人は<span class="bousen-num">③</span><span class="reading-boxblank"></span>を望んでいる、しかし現実にはそうはいかない。賃労働に出て貨幣を得なければ山村の生活はなりたたないのである。そこから生まれたたくみな使い分け、それが「稼ぎ」と「仕事」であった。</p>
+<p>私は山村を訪れて、しばしば村人のこの使い分けに感心させられた。ある表現をとるなら、村人は使用価値をつくりだす、あるいはそのことが直接みえる労働を「仕事」と表現し、貨幣を得る労働を「稼ぎ」と表現していたのである。だから村の子供たちが都会に出て、すでに何十年も会社勤めをしているときでも、村人は「子供は東京に稼ぎに出ている」と表現した。サラリーマンになることは村人にはどうしても「仕事」とは映らなかったのである。同じようにたとえば山の下枝を伐りに行くときでも、そこに自分の主体性が発揮できるとき、労働を自分の手で工夫できるときには村人は「仕事」に行くと表現した。誰に命令されるわけでもなく、労働の結果がいつの日かお金になるかどうかもわからない。しかし下枝を伐り、木を育て、自然と人間の交流を培っていく行為がそこにはある。</p>
+<p>ところが全く同じ労働をするときでも、たとえば<u data-note="営林署"><ruby>営林署<rt>えいりんしょ</rt></ruby></u>の下請仕事のようなかたちで下枝を伐りに行くときには、それは、<span class="bousen-num">④</span><span class="bousen">村人にとっては「仕事」ではなく「稼ぎ」だった</span>。</p>
+<p class="reading-source">（内山節『自然と人間の哲学』）</p>`;
+    var FT3_N10 = { '営林署': '国・公有林の管理・経営にあたった役所' };
+    var FT3_P11 = `<p class="ab-label">A</p>
+<p>デジタルデトックスとは、一定期間スマートフォンやパソコンなどのデジタルデバイスとの距離を置くことでストレスを軽減し、現実世界でのコミュニケーションや、自然とのつながりにフォーカスする取り組みである。これは、デジタルを完全に手放して生きようというものではなく、より健全にデジタルデバイスやインターネットと付き合っていくために行うものである。電車に乗っている時などのふとした瞬間にスマホを見ないだけでも新たな気付きがあったり、様々なポジティブな効果を体験することが出来る。研究によると人は自然とつながることで、本来持っている生命力を活性化することが出来、ストレスホルモンの数値が良い数値を示すという。</p>
+<p class="ab-label">B</p>
+<p>そもそもデトックスで大事なことは、文字通り体内の毒物がある場合に、排出しなければならないということである。だが、人間の体には「デジタル」という毒物は<u data-note="堆積"><ruby>堆積<rt>たいせき</rt></ruby></u>しないので、この考え方は当てはまらない。デジタルデトックスとは、むしろ集中的なダイエットに近い。しばらくの間、痩せることを目指して何も食べないで、高カロリーの食事の習慣をなくせたらと思っているかもしれないが、実際には元の習慣に戻るまでの罪悪感を和らげるだけである。デジタルデトックスではほとんどの通知をオフにすることはできるが、その分スマホを見る回数が増え、スマホなしの生活ができるわけではない。「昔はみんなスマホなしの生活をしてたよ！」と言う人もいるかもしれないが、はたして昔のように紙の地図だけを頼りに旅をすることで十分だと思えるだろうか。</p>`;
+    var FT3_N11 = { '堆積': 'いく重にも高く積み重なること' };
+    var FT3_P12 = `<p>かつて大人たちは、子供たちがゲームやテレビアニメに熱中しているのを見ると、「現実とヴァーチャル世界の区別のつかない人間になってしまう」と心配した。そして、時に子供たちが信じがたい、残忍な犯罪を起こすと、「ゲームやアニメの世界で簡単に人が死んでいくのを見てきたから現実世界でもゲーム感覚で人を殺すようになった」とマスコミは書きたてた。しかし、当時そういった、いかにも短絡的で、ステレオタイプな論調を耳にするたびに、「いくらゲームやアニメ漬けの生活をしていたとしても、実際に現実とヴァーチャルの区別がつかなくなり、シューティングゲームで敵を殺すように、簡単に人間を殺してしまうなんてことは、まずあり得ない」と、多くの人は思っていたはずだ。</p>
+<p><span class="bousen-num">①</span><span class="bousen">そういった論調</span>は実際、言っている側も、子供たちの<u data-note="射幸心"><ruby>射幸心<rt>しゃこうしん</rt></ruby></u>を煽ろうとするアニメやゲーム業界に対する批判といった色合いが強く、本当のところ、どこまで信じていたのかも怪しい気がする。</p>
+<p>それほどに、かつて「現実世界」というものは確固たるものと信じられていた。しかし、どうやらそうではないらしいことが、しだいに明らかになりつつある。</p>
+<p>日本人は、戦後一貫して、アニメ、ゲーム、キャラクターに囲まれる生活をしてきた。そして、キャラクターとの間にはもはや抜き差しならないほどの強い精神的な絆を結んでいる。その中で、<span class="bousen-num">②</span><span class="bousen">「キャラ化」</span>の感覚は常に、ぼくらと寄り添い、<u data-note="身体化する"><ruby>身体化<rt>しんたいか</rt></ruby></u>し続けているのだ。キャラクターだけでなく、高度情報化の包囲網もぼくらから<span class="bousen-num">③</span><span class="bousen">「現実世界」を奪いつつある</span>。</p>
+<p>一九九十年代以降のインターネット、携帯電話の急速な普及は、高度情報化社会を一気に生活レベルにまで浸透させた。今では、多くのビジネスマンは日々パソコンの前で生活し、他の多くの人たちも携帯電話から目が離せない生活を送っている。実際、電車に乗ると、半数以上の人が携帯電話の画面を覗き込み、メールかゲームに興じている。これは、もはや当たり前になってしまった日常風景なのだが、少し引いてみると、ある種異様な光景でもある。彼らは、本当に「現実世界」を生きているのだろうか。</p>
+<p>また、こういった情報化社会の中でぼくらは現実世界のほとんどに「情報」あるいは「データ」として接触するようになった。現実世界は何者かによって<u data-note="恣意的に"><ruby>恣意的<rt>しいてき</rt></ruby></u>に編集され、集約され、それをぼくらも恣意的に選択する。言うまでもなく、ぼくらの現実認識は情報によってしかなされなくなってしまったのだ。ぼくらが「現実だ」と思いこんでいるものの多くも、実際のところ本当にそうかどうかは怪しくなっているのである。</p>
+<p class="reading-source">（相原博之『キャラ化するニッポン』）</p>`;
+    var FT3_N12 = { '射幸心': '努力や苦労をすることなく、利益や成功だけを願う気持ち', '身体化する': '体の一部になっている。当たり前になっている', '恣意的に': '思うままに。勝手に' };
+    var FT3_P13 = `<div class="notice notice-guide">
+<p class="notice-title">新宿区立図書館のご利用案内</p>
+<p class="notice-h">○ 利用登録</p>
+<p class="notice-body">・貸出を希望する場合は利用登録をし、利用者カードの交付を受けてください。</p>
+<p class="notice-body">・登録できるのは、次のいずれかの方です。</p>
+<p class="notice-body">（1）現住所が東京都内の方<br>　健康保険証・運転免許証・在留カードなど公の住所を証明するもの<br>　（※小学生以下の場合は不要です。）</p>
+<p class="notice-body">（2）東京都外の方で新宿区内に在勤・在学している方<br>　上記証明書及び在勤・在学（社員証・学生証）の証明書</p>
+<p class="notice-h">○ 貸出手続き</p>
+<p class="notice-body">・お借りになる資料と利用カードを貸出カウンターまでお持ちください。</p>
+<p class="notice-body">・各新宿区立図書館で所蔵している資料は、どの区立図書館でも借りて受け取ることができますが、借りる時には他館から取り寄せるため、カウンターまたはインターネットによる「予約手続き」が必要となります。</p>
+<p class="notice-h">○ 貸出冊数・期間</p>
+<p class="notice-body">・貸出資料：図書・紙芝居・雑誌</p>
+<p class="notice-body">・貸出点数：あわせて10冊</p>
+<p class="notice-body">・貸出期間：2週間</p>
+<p class="notice-body">※貸出の延長をするには本や紙芝居は、予約が入っていなければ、延長できます。<br>（但し、雑誌は延長不可）<br>貸出期間を延長する場合は、各図書館の窓口及びインターネットでお手続きください。</p>
+<p class="notice-h">○ 返却手続き</p>
+<p class="notice-body">・新宿区立図書館（区役所内分室を除く）なら、どこでも返却できます。</p>
+<p class="notice-body">・開館時は、各図書館のカウンターへお持ちください。</p>
+<p class="notice-body">・閉館時のみ、各図書館の「ブックポスト」に返却できます。</p>
+</div>`;
+    quizData.push(
+        // 問題8 内容理解（短文）
+        ft3Q(46, 3, 1, 8, { type: 'Comprehension', size: 'short',
+            passage: `<p>意志力とは、常に身の回りにあるあらゆる誘惑に流されず、「衝動的な自己をコントロールして物事を成し遂げる力」のことである。学業で成功するかどうかも、優れたリーダーシップを発揮できるかどうかも、意志力が決め手だ。しかし、意志力のチャレンジが失敗しそうになると、私たちは怠け者だからなどと自分の性格のせいにしがちだ。しかし、大抵の場合は、慢性的にストレス状態にあるなど、心と体が自己コントロールに適さない状態にあるだけだ。その場合は前面に出てくるのは衝動的な自己となる。意志力のチャレンジで成功するためには、それらの状態を整える必要があるのだ。</p>`,
+            sentence: '筆者が最も言いたいことは何か。',
+            options: ['意志力とは社会で成功するためになくてはならない力である。', '人の性格によって意志力のチャレンジが失敗することもある。', '心と体の状態を整えれば、意志力のチャレンジに成功することができる。', '衝動的な自己がコントロールできない時はストレスが発散できるようなことをした方がいい。'], correct: 2 }),
+        ft3Q(47, 3, 1, 8, { type: 'Comprehension', size: 'short', notes: { '雑然': 'いろいろなものが入り乱れて、まとまりのないさま', '並置': '並列に並べること' },
+            passage: `<p>知識人として生きていくためには何をすればよいか。まず日頃からできることとして、日刊紙を読むことがある。たった今の世界がどのようになっているか、世界の見取り図を自らの頭の中に作る。新聞はいわば日々更新される世界図である。最近は「インターネットを見れば十分」と言った理由から新聞は見ないという人もいる。確かに知りたいことの主題がわかっている時、インターネットはその先を提供してくれる。しかし、世の中に無数のことが日々発生している中で「何が問題か」を知るには、およそ無関係と思われる記事が<u data-note="雑然"><ruby>雑然<rt>ざつぜん</rt></ruby></u>と<u data-note="並置"><ruby>並置<rt>へいち</rt></ruby></u>されている紙の新聞の紙面が要る。インターネットには深さはあるが広さがない。</p>`,
+            sentence: '筆者が最も言いたいことは何か。',
+            options: ['知識人になるには、日頃から世界情勢をよく知っていなければならない。', '新聞は全ての情報が一斉に入ってくるため、多様な分野の情報を自然と知ることができる。', 'インターネットでは自分が興味のある情報だけを得ることが多い。', '自分が知りたいことについて情報を得るには新聞よりインターネットの方がいい。'], correct: 1 }),
+        ft3Q(48, 3, 1, 8, { type: 'Comprehension', size: 'short',
+            passage: `<p>今人間が行っている仕事の多くが、飛躍的な発展を遂げている人工知能に取って代わられるだろうといわれている。この点について注目すべきは、学校や企業における「従来の優等生」が持つ資質や能力は、<span class="nobr">AI</span>が最も得意とする領域であるということだ。つまり人間は今後、その上流、すなわち解決すべき問題や目的を見つけることにシフトしていくべきなのである。近年よく耳にするようになった「地頭がいい」という言葉は、「知識を詰め込んだのではなく、柔軟な発想ができて新しい分野にも短期間で対応できる力を持っている」ということを指している。言い換えれば、先に触れた「従来の優等生」とは正反対の能力であるといえる。</p>`,
+            sentence: '筆者が最も言いたいことは何か。',
+            options: ['人工知能の発展に伴い、もっと知識の豊富な人材が必要となる。', 'どんなに人工知能が発達しても、人間の方が優れているので心配する必要がない。', '今までとは違って、これからは探究心や応用力が高い人材が必要となる。', 'これから先企業が必要とする人材は多様な分野で頭角を現す人材である。'], correct: 2 }),
+        ft3Q(49, 3, 1, 8, { type: 'Comprehension', size: 'short',
+            passage: `<p>夢、と言う言葉のとらえかたはいろいろあると思うけれど、ポジティブにとらえられていることが多い。ポジティブというのはつまり、「叶う」と言う意味だ。夢を持ち続けていれば、それは必ず叶う、とよく言われている。</p>
+<p>けれど私は、どうも夢と言う言葉にあまりいい印象を抱いていない。夢とは、叶わないもののことを言うのだと、どこかで思っている。なりふりかまわず努力して手に入れる物を、夢とは呼ばないだろう、と思うのだ。こうなったらいいなと願って、何もせずにその願いが叶った、と言う経験がないせいではないか。</p>
+<p class="reading-source">（角田光代『希望と言う名のアナログ日記』）</p>`,
+            sentence: '筆者の考える夢とは何か。',
+            options: ['夢とはポジティブな意味を持つものである。', '夢とはいつか必ず叶うものである。', '夢とは努力して叶えるものである。', '夢とは努力せずに叶うものである。'], correct: 3 }),
+        // 問題9 内容理解（中文）
+        ft3Q(50, 3, 2, 9, { type: 'Comprehension', size: 'mid', group: 'ft3-9-1', qnum: 1, notes: FT3_N9_1, passage: FT3_P9_1,
+            sentence: '<span class="bousen-num">①</span><span class="bousen">国語における伝統の軽視</span>とはどういう意味か。',
+            options: ['最近の若者は国語より英語の教育にもっと力を入れている。', '最近の若者は日本の伝統的な文化に関心がない。', '最近の若者は外来語を使用することが多くなった。', '最近の若者は日本の古典を嫌う傾向がある。'], correct: 2 }),
+        ft3Q(51, 3, 2, 9, { type: 'Comprehension', size: 'mid', group: 'ft3-9-1', qnum: 2, notes: FT3_N9_1, passage: FT3_P9_1,
+            sentence: '<span class="bousen-num">②</span><span class="bousen">本末転倒なこと</span>として合っているものはどれか。',
+            options: ['日本の若者は日本の伝統を見下ろしていて、カタカナ語はよく使っている。', '日本人はお正月の行事より外国から入った文化をもっと楽しんでいる。', '日本の伝統の旬にこだわっているにもかかわらず、一年中旬のものが食べられるようにしている。', '日本の伝統である旬を外国産のもので楽しんでいる。'], correct: 3 }),
+        ft3Q(52, 3, 2, 9, { type: 'Comprehension', size: 'mid', group: 'ft3-9-1', qnum: 3, notes: FT3_N9_1, passage: FT3_P9_1,
+            sentence: '筆者が最も言いたいことは何か。',
+            options: ['日本では伝統も海外の文化も大切にしている。', '海外の文化を抵抗なく受け入れる日本人の考え方は理解しにくい。', '海外の文化がどんどん入ってくるため、だんだん伝統文化が失われつつある。', '日本人にとって伝統文化はなくてはならないものである。'], correct: 2 }),
+        ft3Q(53, 3, 2, 9, { type: 'Comprehension', size: 'mid', group: 'ft3-9-2', qnum: 1, notes: FT3_N9_2, passage: FT3_P9_2,
+            sentence: 'ここで言う<span class="bousen-num">①</span><span class="bousen">一般論</span>とは何か。',
+            options: ['暴力とはよくないものである。', '暴力と言論は全く違うものである。', '暴力と言論は似ているものである。', '暴力とは一種のコミュニケーションである。'], correct: 1 }),
+        ft3Q(54, 3, 2, 9, { type: 'Comprehension', size: 'mid', group: 'ft3-9-2', qnum: 2, notes: FT3_N9_2, passage: FT3_P9_2,
+            sentence: '<span class="bousen-num">②</span><span class="bousen">このこと</span>とは何か。',
+            options: ['暴力を加えることもコミュニケーションの一種だということ', '暴力にはいろいろな役割があるということ', '非言語コミュニケーションは暴力だけだということ', '暴力を正当化すること'], correct: 0 }),
+        ft3Q(55, 3, 2, 9, { type: 'Comprehension', size: 'mid', group: 'ft3-9-2', qnum: 3, notes: FT3_N9_2, passage: FT3_P9_2,
+            sentence: '筆者がこの文章で言っていることは何か。',
+            options: ['暴力をその行為だけで判断するのはよくない。', '自分に対する暴力だけでなく、他人に対する暴力も許してはならない。', '暴力と言論は共通性を持っている。', 'コミュニケーションとしての暴力は許すべきである。'], correct: 2 }),
+        ft3Q(56, 3, 2, 9, { type: 'Comprehension', size: 'mid', group: 'ft3-9-3', qnum: 1, notes: FT3_N9_3, passage: FT3_P9_3,
+            sentence: 'ここで言う<span class="bousen-num">①</span><span class="bousen">歴史</span>に合っていないものはどれか。',
+            options: ['その時代の英雄や権力者によって書かれた歴史', 'あらゆるところにひそんでいるヒントによって書かれた歴史', '権力者たちが自分を正当化するために書いた歴史', '有名人によってつくられたかのように錯覚してしまう歴史'], correct: 1 }),
+        ft3Q(57, 3, 2, 9, { type: 'Comprehension', size: 'mid', group: 'ft3-9-3', qnum: 2, notes: FT3_N9_3, passage: FT3_P9_3,
+            sentence: '<span class="bousen-num">②</span><span class="bousen">実際はそうではない</span>とあるが、これはどういうことか。',
+            options: ['歴史はその時代を生きていた全ての人々によってつくられたものである。', '歴史とは今を生きている私たちがつくっていくものである。', '学校などで習った歴史は全て間違った歴史である。', '私たちが知っている歴史は権力者によって書き換えられたものである。'], correct: 0 }),
+        ft3Q(58, 3, 2, 9, { type: 'Comprehension', size: 'mid', group: 'ft3-9-3', qnum: 3, notes: FT3_N9_3, passage: FT3_P9_3,
+            sentence: '<span class="bousen-num">③</span><span class="bousen">歴史は細部に宿る</span>とはどんな意味か。',
+            options: ['細かいこだわりによってもっと歴史をよく知ることができる。', '私たちが知っている歴史が本当なのか確かめるべきである。', '歴史は時間をかけて地道に研究していくものである。', 'あまり細かいことは気にせずにもっと探究していくべきである。'], correct: 0 }),
+        // 問題10 内容理解（長文）
+        ft3Q(59, 3, 3, 10, { type: 'Comprehension', size: 'long', group: 'ft3-10', qnum: 1, notes: FT3_N10, passage: FT3_P10,
+            sentence: '村人の考える<span class="bousen-num">①</span><span class="bousen">稼ぎ</span>として合っていないものはどれか。',
+            options: ['お金を稼ぐためにする仕事', 'あまりしたくない仕事', 'お金になる仕事', '自然と関係のある仕事'], correct: 3 }),
+        ft3Q(60, 3, 3, 10, { type: 'Comprehension', size: 'long', group: 'ft3-10', qnum: 2, notes: FT3_N10, passage: FT3_P10,
+            sentence: '村人の考える<span class="bousen-num">②</span><span class="bousen">仕事</span>とは、どんなものか。',
+            options: ['誰かに強いられてする仕事', '日々の生活のためにする仕事', 'お金にならなくても、楽しい仕事', '満足はできないが、しなければならない仕事'], correct: 1 }),
+        ft3Q(61, 3, 3, 10, { type: 'Comprehension', size: 'long', group: 'ft3-10', qnum: 3, notes: FT3_N10, passage: FT3_P10,
+            sentence: '<span class="bousen-num">③</span><span class="reading-boxblank"></span>に入る文章を選びなさい。',
+            options: ['「仕事」をして、その結果、生活もうまくいくこと', '「稼ぎ」に出て、多くの収入を得ること', '働かないで豊かに暮らすこと', '都会に出て、便利な暮らしをすること'], correct: 0 }),
+        ft3Q(62, 3, 3, 10, { type: 'Comprehension', size: 'long', group: 'ft3-10', qnum: 4, notes: FT3_N10, passage: FT3_P10,
+            sentence: '<span class="bousen-num">④</span><span class="bousen">村人にとっては「仕事」ではなく「稼ぎ」だった</span>のはどうしてか。',
+            options: ['自然と交流できる仕事ではなかったから', '使用価値がある仕事ではなかったから', 'お金が稼げる仕事だったから', '自分が主体性を持って仕事をするのではないから'], correct: 3 }),
+        // 問題11 統合理解
+        ft3Q(63, 3, 4, 11, { type: 'Comprehension', size: 'mid', group: 'ft3-11', qnum: 1, notes: FT3_N11, passage: FT3_P11,
+            sentence: 'AとBに共通して述べている内容はどれか。',
+            options: ['デジタルは人にストレスを与えるものなので、できるだけ使わない方がいい。', 'すでにデジタルと共存している私たちにとってそれを完全に手放すことはできない。', '今のような現状ではデジタルデトックスは不可能である。', 'デジタルデトックスを通して、人間の生活をより豊かにすることができる。'], correct: 1 }),
+        ft3Q(64, 3, 4, 11, { type: 'Comprehension', size: 'mid', group: 'ft3-11', qnum: 2, notes: FT3_N11, passage: FT3_P11,
+            sentence: 'AとBの内容から分かることとして正しいものはどれか。',
+            options: ['Aは人間のストレスはデジタルから来ているため、ストレス解消のためにも現実世界とのコミュニケーションを大切にするべきであると述べている。', 'Aは日常生活の中で少しの間だけでもスマホを使わないことによって、様々な肯定的な効果を得ることができると述べている。', 'Bは本来デジタルとは排出しなければならない毒ではないし、デジタルを使う習慣も直せるものではないから、直そうと努力する必要がないと述べている。', 'Bではダイエットのようにデジタルデトックスをしているうちにだんだんデジタルを意識しなくなり、昔の習慣に戻るまで罪悪感も減らすことができると述べている。'], correct: 1 }),
+        // 問題12 主張理解（長文）
+        ft3Q(65, 3, 5, 12, { type: 'Comprehension', size: 'long', group: 'ft3-12', qnum: 1, notes: FT3_N12, passage: FT3_P12,
+            sentence: '<span class="bousen-num">①</span><span class="bousen">そういった論調</span>として合っているのはどれか。',
+            options: ['アニメやゲーム業界が子供たちの射幸心を煽っているということ', '現実の世界とゲームが区別がつかなくなっているということ', 'ゲームの影響で犯罪が増えているということ', 'アニメやゲーム業界をいたずらに批判しているということ'], correct: 1 }),
+        ft3Q(66, 3, 5, 12, { type: 'Comprehension', size: 'long', group: 'ft3-12', qnum: 2, notes: FT3_N12, passage: FT3_P12,
+            sentence: '<span class="bousen-num">②</span><span class="bousen">キャラ化</span>の意味として正しいものはどれか。',
+            options: ['自分の好きなキャラクターの行動や服装を真似ること', 'アニメやキャラクターが好きすぎてそれ以外のことに興味を持たないこと', '現実よりもアニメやキャラクターにリアリティを感じてしまうこと', 'アニメやキャラクターが自分の理想の姿であると思ってしまうこと'], correct: 2 }),
+        ft3Q(67, 3, 5, 12, { type: 'Comprehension', size: 'long', group: 'ft3-12', qnum: 3, notes: FT3_N12, passage: FT3_P12,
+            sentence: '<span class="bousen-num">③</span><span class="bousen">「現実世界」を奪いつつある</span>のはどんな理由からなのか。',
+            options: ['携帯電話の普及により、業務時間が増え、プライベートな時間が減ったから', '高度情報化社会になり、日常の多くの時間を仮想世界で過ごすようになったから', 'ゲームをする時間が増え、それ以外の活動をしなくなったから', '現実から逃避し、仮想世界で楽しみを感じる人が増えたから'], correct: 1 }),
+        ft3Q(68, 3, 5, 12, { type: 'Comprehension', size: 'long', group: 'ft3-12', qnum: 4, notes: FT3_N12, passage: FT3_P12,
+            sentence: '筆者の最も言いたいことは何か。',
+            options: ['今の社会では現実を情報としてしか捉えられず、しかも意図的に選別されたデータに依存する傾向にある。', '情報を通して現実と接触している今の社会では対人関係の構築が難しくなっている。', '情報が氾濫している社会では、現実社会を変容する恐れがあるので注意する必要がある。', '仮想社会ではなく、もっと現実社会で生きることに努めなくてはいけない。'], correct: 0 }),
+        // 問題13 情報検索
+        ft3Q(69, 3, 6, 13, { type: 'Comprehension', size: 'mid', group: 'ft3-13', qnum: 1, passage: FT3_P13,
+            sentence: '次の人の中で図書館を利用できる人は誰か。',
+            options: ['東京都外に住んでいて東京都内の会社に勤めている人', '東京都外に住んでいて新宿区内の大学に通っている人', '東京都内に住んでいて住所を証明するものを持っていない外国人', '東京都外に住んでいる小学生'], correct: 1 }),
+        ft3Q(70, 3, 6, 13, { type: 'Comprehension', size: 'mid', group: 'ft3-13', qnum: 2, passage: FT3_P13,
+            sentence: '本文の内容と合っているのは、次のどれか。',
+            options: ['新宿区の他の図書館にある資料も予約なしに借りることができる。', '借りた雑誌はインターネットで手続きすれば2週間延長して借りることができる。', '借りた紙芝居は予約が入っていなければ、貸出期間内に延長ができる。', '本と雑誌はいつでも各図書館入口の『ブックポスト』に返せばいい。'], correct: 2 })
+    );
+
     // ===== Added meanings for the vocab questions (文字・語彙) that had none =====
     // Keys are the words exactly as they appear in the questions (conjugated forms note their 辞書形).
     (function(add) { Object.keys(add).forEach(function(k) { if (!wordDefinitions[k]) wordDefinitions[k] = add[k]; }); })({
@@ -3466,7 +3693,7 @@
             publisher: '다락원',
             authors: '노지영・이영아・박성길',
             practiceTest: true, mockMinutes: 110,
-            mockSets: [{ key: '1', title: 'JLPT FINAL TEST 1회', weeks: [1, 3] }, { key: '2', title: 'JLPT FINAL TEST 2회', weeks: [4, 6] }],
+            mockSets: [{ key: '1', title: 'JLPT FINAL TEST 1회', weeks: [1, 3] }, { key: '2', title: 'JLPT FINAL TEST 2회', weeks: [4, 6] }, { key: '3', title: 'JLPT FINAL TEST 3회', weeks: [7, 9] }],
             isbn: '978-89-277-1255-8',
             cover: 'data:image/jpeg;base64,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',
             badge: 'N1',
@@ -3488,6 +3715,15 @@
                     { short: '問題5' }, { short: '問題6' }, { short: '問題7' }
                 ] },
                 { path: ['2회', '言語知識（文字・語彙・文法）・読解'], title: '読解', short: '2회 読解', sub: '内容理解・統合理解・主張理解・情報検索', parts: [
+                    { short: '問題8' }, { short: '問題9' }, { short: '問題10' }, { short: '問題11' }, { short: '問題12' }, { short: '問題13' }
+                ] },
+                { path: ['3회', '言語知識（文字・語彙・文法）・読解'], title: '文字・語彙', short: '3회 文字・語彙', sub: '漢字読み・文脈規定・言い換え類義・用法', parts: [
+                    { short: '問題1' }, { short: '問題2' }, { short: '問題3' }, { short: '問題4' }
+                ] },
+                { path: ['3회', '言語知識（文字・語彙・文法）・読解'], title: '文法', short: '3회 文法', sub: '文法形式の判断・文の組み立て・文章の文法', parts: [
+                    { short: '問題5' }, { short: '問題6' }, { short: '問題7' }
+                ] },
+                { path: ['3회', '言語知識（文字・語彙・文法）・読解'], title: '読解', short: '3회 読解', sub: '内容理解・統合理解・主張理解・情報検索', parts: [
                     { short: '問題8' }, { short: '問題9' }, { short: '問題10' }, { short: '問題11' }, { short: '問題12' }, { short: '問題13' }
                 ] }
             ]
