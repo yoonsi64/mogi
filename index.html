@@ -2682,7 +2682,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
             <div class="stat-card-title">演出</div>
             <div class="setting-row wrap"><span>起動画面の演出</span><span class="seg" id="set-opening-onoff"><button data-v="on">オン</button><button data-v="off">オフ</button></span><div class="stat-sub rsgoal-note">アプリを開いたとき、季節や行事に合わせた演出が出ます。</div></div>
             <div class="setting-row wrap"><span>効果音</span><span class="seg" id="set-omikuji-sound"><button data-v="on">オン</button><button data-v="off">オフ</button></span><div class="stat-sub rsgoal-note">おみくじ（箱を振る音・鈴）と、単語帳のマッチング・結果画面の鈴の音です。起動画面には音はありません。オンにすると鈴が一度鳴ります。聞こえないときは、スマホのメディアの音量を確認してください。</div></div>
-            <div class="setting-row wrap"><span>ゲームの背景</span><span class="seg" id="set-game-scene"><button data-v="on">オン</button><button data-v="off">オフ</button></span><div class="stat-sub rsgoal-note">四択・マッチング・神経衰弱・穴埋めの画面の下に、北斎の「凱風快晴」・破墨山水図・広重の梅園のいずれかを出します（パブリックドメインの作品。開くたびに変わります）。</div></div>
+            <div class="setting-row wrap"><span>ゲームの背景</span><span class="seg" id="set-game-scene"><button data-v="on">オン</button><button data-v="off">オフ</button></span><div class="stat-sub rsgoal-note">四択・マッチング・神経衰弱・穴埋めの後ろに、北斎の富嶽三十六景（片倉茶園・登戸浦・武州玉川・御殿山・下目黒）と広重の「あらし山満花」のいずれかを出します（パブリックドメインの作品。開くたびに変わります）。</div></div>
         </div>
         <div class="stat-card settings-group" id="set-g-you">
             <div class="stat-card-title">あなた</div>
@@ -7534,6 +7534,7 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
     }
 
     // ===================== おみくじ (daily fortune) =====================
+    // ===================== おみくじ (daily fortune) =====================
     // One draw a day, unlocked by reaching the daily goal. The result is saved the moment the box is shaken, so the
     // same slip comes back for the rest of the day. Stored in localStorage 'jlptOmikuji' (included in backups):
     //   { salt, days: { 'YYYY-MM-DD': { r: rank, n: stick number, w: word index, s: season, tied, at } } }
@@ -11235,12 +11236,14 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         sceneStart();
     }
     // ---------- ゲームの背景: a print behind the four games ----------
-    // One of three public-domain works, picked at random each time a game opens, sitting below the game panels:
-    // Hokusai's 凱風快晴, a 破墨 (splashed-ink) landscape, and Hiroshige's plum garden.
-    var GS_ART = [
-        { src: 'art/fuji.jpg', paper: '#fefefe', pos: '72% 100%', size: 'auto 60%' },        // the mountain itself, low on the screen where the cards don't cover it
-        { src: 'art/haboku.jpg', paper: '#c6b491', pos: '45% 50%' },
-        { src: 'art/ume.jpg', paper: '#f7fefd', pos: '50% 60%' }
+    // One of six public-domain woodblock prints, picked at random each time a game opens, filling the screen behind the cards.
+    var GS_ART = [          // Hokusai's 富嶽三十六景, and Hiroshige's 嵐山満花 from 京都名所; pos keeps the heart of each print in view on a phone
+        { src: 'art/katakura.jpg', paper: '#0c1438', pos: '46% 50%' },      // 駿州片倉茶園ノ不二
+        { src: 'art/noboto.jpg', paper: '#010120', pos: '46% 50%' },        // 登戸浦
+        { src: 'art/tamagawa.jpg', paper: '#0a175f', pos: '60% 50%' },      // 武州玉川
+        { src: 'art/gotenyama.jpg', paper: '#020951', pos: '45% 50%' },     // 東海道品川御殿山ノ不二
+        { src: 'art/shimomeguro.jpg', paper: '#060829', pos: '56% 50%' },   // 下目黒
+        { src: 'art/arashiyama.jpg', paper: '#f0e4dd', pos: '48% 50%' }     // 京都名所之内 あらし山満花
     ];
     function sceneOn() { return getSetting('gameScene', true); }
     function sceneStart() {
