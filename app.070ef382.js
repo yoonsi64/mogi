@@ -4119,6 +4119,7 @@
         var day = getTodayDateString();
         studyTime[day] = (studyTime[day] || 0) + sec;
         try { localStorage.setItem(STUDY_KEY, JSON.stringify(studyTime)); } catch (e) {}
+        worldAdd(sec);
         gardenNoteGrowth(before, gardenMinutes());
     }
     setInterval(studyTick, 10000);
@@ -4137,7 +4138,36 @@
         } catch (e) {}
         return { total: total, days: days };
     }
-    function gardenMinutes() { return Math.floor(studyTotals().total / 60); }
+    // 庭 and 町: only the chosen one grows. Each device keeps how much of its study time went to each
+    // (jlptWorldTime_<device> = { garden: s, town: s }); a world's size is all devices added together.
+    var WORLD_KEY = 'jlptWorldTime_' + studyDevice;
+    var worldTime = loadJSON(WORLD_KEY, null);
+    function worldSeed() {           // the first time: everything studied so far on this device grew the garden
+        if (worldTime) return;
+        var t = 0; Object.keys(studyTime).forEach(function(d) { t += +studyTime[d] || 0; });
+        worldTime = { garden: t, town: 0 };
+        try { localStorage.setItem(WORLD_KEY, JSON.stringify(worldTime)); } catch (e) {}
+    }
+    function worldActive() { return getSetting('world', 'garden') === 'town' && window.MogiTown ? 'town' : 'garden'; }
+    function worldAdd(sec) {
+        worldSeed();
+        var w = worldActive();
+        worldTime[w] = (worldTime[w] || 0) + sec;
+        try { localStorage.setItem(WORLD_KEY, JSON.stringify(worldTime)); } catch (e) {}
+    }
+    function worldSeconds(w) {
+        worldSeed();
+        var t = 0;
+        try {
+            Object.keys(localStorage).forEach(function(k) {
+                if (k.indexOf('jlptWorldTime_') !== 0) return;
+                var m = k === WORLD_KEY ? worldTime : JSON.parse(localStorage.getItem(k) || '{}') || {};
+                t += +m[w] || 0;
+            });
+        } catch (e) {}
+        return t;
+    }
+    function gardenMinutes() { return Math.floor(worldSeconds(worldActive()) / 60); }
     // The timer starts with the garden: the first time this device has the painter (garden.js), anything this
     // device recorded before then is cleared, so every device starts the garden from zero.
     function gardenLive() {
@@ -4147,6 +4177,8 @@
                 localStorage.setItem('mogiGardenStarted', String(Date.now()));
                 studyTime = {};
                 localStorage.setItem(STUDY_KEY, '{}');
+                worldTime = { garden: 0, town: 0 };
+                localStorage.setItem(WORLD_KEY, JSON.stringify(worldTime));
             }
         } catch (e) {}
         return true;
@@ -4158,7 +4190,9 @@
     var GD = { el: null, ctrl: null, view: null, vctrl: null, preview: null, dev: null };
     var GD_SEASON = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
     var GD_LIGHT = { morning: '朝', day: '昼', dusk: '夕暮れ', night: '夜' };
-    function gdEngine() { return window.MogiGarden || null; }
+    var GD_WORLDS = { garden: { k: '庭', title: '学びの庭', seen: 'jlptGardenSeen' }, town: { k: '町', title: '学びの町', seen: 'jlptTownSeen' } };
+    function gdWorld() { return GD_WORLDS[worldActive()]; }
+    function gdEngine() { return worldActive() === 'town' ? window.MogiTown : (window.MogiGarden || null); }
     function gdLabel(st) { return st ? st.name : ''; }
     function gdFmt(min) {
         min = Math.max(0, Math.round(min));
@@ -4166,7 +4200,7 @@
         return h ? h + '時間' + (m ? m + '分' : '') : m + '分';
     }
     function gdState() {
-        var E = gdEngine(), tot = studyTotals(), min = Math.floor(tot.total / 60), now = new Date();
+        var E = gdEngine(), tot = studyTotals(), min = gardenMinutes(), now = new Date();
         var monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7)), week = 0;
         Object.keys(tot.days).forEach(function(d) {
             var p = d.split('-'), t = new Date(+p[0], +p[1] - 1, +p[2]);
@@ -4180,7 +4214,7 @@
     function gdInfoHtml(s, shown) {
         var st = s.stages[shown] || {}, nx = s.next, cur = s.stages[s.stage] || { min: 0 };
         var pct = nx ? Math.max(2, Math.min(100, Math.round((s.min - cur.min) / (nx.min - cur.min) * 100))) : 100;
-        return '<div class="gd-row"><span class="gd-title">庭</span><span class="gd-total">合計 <b>' + gdFmt(s.min) + '</b></span></div>' +
+        return '<div class="gd-row"><span class="gd-title">' + gdWorld().k + '</span><span class="gd-total">合計 <b>' + gdFmt(s.min) + '</b></span></div>' +
             '<div class="gd-desc">' + escapeHtml(st.desc || st.name || '') + '<span class="gd-dot">・</span>今週 ' + gdFmt(s.week) + '</div>' +
             '<div class="gd-bar"><i style="width:' + pct + '%"></i></div>' +
             '<div class="gd-next">' + (nx ? '<span>次 ─ ' + escapeHtml(gdLabel(nx)) + '　あと' + gdFmt(nx.min - s.min) + '</span>'
@@ -4195,12 +4229,14 @@
         if (!GD.el) {
             GD.el = document.createElement('div');
             GD.el.className = 'gd-card'; GD.el.id = 'gd-card';
-            GD.el.setAttribute('role', 'button'); GD.el.tabIndex = 0; GD.el.setAttribute('aria-label', '学びの庭を開く');
+            GD.el.setAttribute('role', 'button'); GD.el.tabIndex = 0;
             GD.el.innerHTML = '<div class="gd-scene"><span class="gd-tag"></span></div><div class="gd-info"></div>';
             GD.el.addEventListener('click', openGarden);
             GD.el.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openGarden(); } });
         }
         slot.replaceWith(GD.el);
+        GD.el.setAttribute('aria-label', gdWorld().title + 'を開く');
+        if (GD.ctrl && GD.ctrlWorld !== worldActive()) { GD.ctrl.destroy(); GD.ctrl = null; GD.shown = null; }   // switched between 庭 and 町
         var s = gdState();
         GD.el.querySelector('.gd-info').innerHTML = gdInfoHtml(s, s.stage);
         GD.el.querySelector('.gd-tag').textContent = GD_SEASON[s.season] + '・' + GD_LIGHT[s.light];
@@ -4208,6 +4244,7 @@
         if (!GD.ctrl) {
             o.onReady = gdCheckStageUp;
             GD.ctrl = E.mount(GD.el.querySelector('.gd-scene'), o);
+            GD.ctrlWorld = worldActive();
         } else {
             if (GD.shown !== s.stage + s.season + s.light && !GD.revealing) GD.ctrl.update(o);
             GD.ctrl.resume();
@@ -4217,24 +4254,24 @@
     }
     // reached a new stage since the garden was last seen: play the reveal on the card
     function gdCheckStageUp() {
-        var s = gdState(), seen = parseInt(localStorage.getItem('jlptGardenSeen'), 10);
-        if (isNaN(seen) || seen > s.stage) { localStorage.setItem('jlptGardenSeen', String(s.stage)); return; }
+        var s = gdState(), sk = gdWorld().seen, seen = parseInt(localStorage.getItem(sk), 10);
+        if (isNaN(seen) || seen > s.stage) { localStorage.setItem(sk, String(s.stage)); return; }
         if (s.stage <= seen || !GD.ctrl || !GD.el || !GD.el.isConnected) return;
-        localStorage.setItem('jlptGardenSeen', String(s.stage));
+        localStorage.setItem(sk, String(s.stage));
         GD.revealing = true;
         setTimeout(function() {
             GD.ctrl.playStageUp(seen, s.stage);
             GD.shown = s.stage + s.season + s.light;
             setTimeout(function() { GD.revealing = false; }, 2800);
         }, 400);
-        showToast('学びの庭：' + gdLabel(s.stages[s.stage]) + 'ができました');
+        showToast(gdWorld().title + '：' + gdLabel(s.stages[s.stage]) + 'ができました');
     }
     // while studying: a quiet note when the garden grows (the reveal waits for the home screen)
     function gardenNoteGrowth(beforeMin, afterMin) {
         var E = gdEngine();
         if (!E) return;
         var a = E.stageFor(beforeMin), b = E.stageFor(afterMin);
-        if (b > a) showToast('🌱 学びの庭：' + gdLabel(E.STAGES[b]) + 'ができました');
+        if (b > a) showToast('🌱 ' + gdWorld().title + '：' + gdLabel(E.STAGES[b]) + 'ができました');
     }
     // the animation rests whenever the card is not on screen (another page, a reading or quiz on top, the full view)
     setInterval(function() {
@@ -4254,16 +4291,32 @@
             GD.view = document.createElement('div');
             GD.view.id = 'gd-view'; GD.view.className = 'gd-view';
             GD.view.innerHTML =
-                '<div class="gd-top"><button class="gd-close" aria-label="閉じる">✕</button><div class="gd-top-title">学びの庭<small></small></div></div>' +
+                '<div class="gd-top"><button class="gd-close" aria-label="閉じる">✕</button><div class="gd-top-title"><span class="gd-top-name">学びの庭</span><small></small></div>' +
+                '<span class="seg gd-world" role="group" aria-label="育てる世界"><button data-w="garden">庭</button><button data-w="town">町</button></span></div>' +
                 '<div class="gd-main">' +
                 '<div class="gd-stagebox"><div class="gd-zoom"><div class="gd-zoom-inner"><div class="gd-scene gd-scene-full"></div></div>' +
                 '<button class="gd-zoom-reset" hidden>元の大きさ</button><div class="gd-hint">ピンチで拡大・ドラッグで移動</div></div></div>' +
                 '<div class="gd-side"><div class="gd-info"></div><div class="gd-back" hidden><button>いまの庭に戻る</button></div>' +
-                '<div class="gd-dev"></div><div class="gd-list-title">庭の歩み</div><div class="gd-list"></div></div>' +
+                '<div class="gd-dev"></div><div class="gd-list-title"></div><div class="gd-list"></div></div>' +
                 '</div>';
             document.body.appendChild(GD.view);
             if (window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches) GD.view.querySelector('.gd-hint').textContent = 'ホイールで拡大・ドラッグで移動';
             GD.view.querySelector('.gd-close').addEventListener('click', closeGarden);
+            GD.view.querySelectorAll('.gd-world button').forEach(function(b) {
+                b.addEventListener('click', function() {
+                    if (b.dataset.w === worldActive()) return;
+                    setSetting('world', b.dataset.w);
+                    GD.preview = null; GD.dev = null;
+                    if (GD.vctrl) { GD.vctrl.destroy(); GD.vctrl = null; }
+                    GD.view.querySelector('.gd-scene-full').innerHTML = '';
+                    GD.zoomReset && GD.zoomReset();
+                    var E2 = gdEngine();
+                    if (!localStorage.getItem(gdWorld().seen)) localStorage.setItem(gdWorld().seen, String(gdState().stage));
+                    GD.vctrl = E2.mount(GD.view.querySelector('.gd-scene-full'), gdViewOpts(gdState()));
+                    gdRenderView();
+                    showToast('これからの学習時間で' + gdWorld().title.slice(2) + 'が育ちます');
+                });
+            });
             GD.view.querySelector('.gd-back button').addEventListener('click', function() { gdShowStage(null); });
             GD.view.querySelector('.gd-list').addEventListener('click', function(e) {
                 var b = e.target.closest('.gd-st.done, .gd-st.now');
@@ -4302,8 +4355,14 @@
     function gdRenderView() {
         var s = gdState(), o = gdViewOpts(s), shown = o.stage;
         GD.view.querySelector('.gd-top-title small').textContent = GD_SEASON[o.season] + '・' + GD_LIGHT[o.light];
+        GD.view.querySelector('.gd-top-name').textContent = gdWorld().title;
+        GD.view.querySelector('.gd-list-title').textContent = gdWorld().k + 'の歩み';
+        var ws = GD.view.querySelector('.gd-world');
+        ws.hidden = !window.MogiTown;
+        ws.querySelectorAll('button').forEach(function(b) { b.classList.toggle('active', b.dataset.w === worldActive()); });
         GD.view.querySelector('.gd-info').innerHTML = gdInfoHtml(s, shown) +
-            '<div class="gd-today">今日 ' + gdFmt(s.today) + '　問題・読解・模試・単語帳のゲームを開いて手を動かしている時間だけを数えます。</div>';
+            '<div class="gd-today">今日 ' + gdFmt(s.today) + '　問題・読解・模試・単語帳のゲームを開いて手を動かしている時間だけを数えます。' +
+            (window.MogiTown ? '育つのは選んでいる方だけです（上の「庭・町」で切り替え。もう一方はそのまま残ります）。' : '') + '</div>';
         GD.view.querySelector('.gd-back').hidden = GD.preview == null;
         GD.view.querySelector('.gd-list').innerHTML = s.stages.map(function(st, i) {
             var cls = i < s.stage ? 'done' : i === s.stage ? 'now' : i === s.stage + 1 ? 'next' : 'locked';

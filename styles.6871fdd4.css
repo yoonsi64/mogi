@@ -630,6 +630,9 @@
         body.gd-on #app, body.gd-on #flash-view { visibility: hidden; }
         .gd-top { display: flex; align-items: center; gap: 12px; padding: calc(8px + env(safe-area-inset-top)) 12px 8px; flex-shrink: 0; }
         .gd-close { width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, 0.1); color: #fff; font-size: 1rem; }
+        .gd-world { margin-left: auto; }
+        .gd-world button { background: rgba(255, 255, 255, 0.08); color: #efe7d8; border-color: rgba(255, 255, 255, 0.2); font-family: var(--mincho); font-weight: 700; min-width: 44px; }
+        .gd-world button.active { background: #e48a52; border-color: #e48a52; color: #fff; }
         .gd-top-title { font-family: var(--mincho); font-weight: 700; font-size: 1.1rem; letter-spacing: 0.15em; }
         .gd-top-title small { margin-left: 10px; font-family: var(--gothic); font-weight: normal; letter-spacing: 0; opacity: 0.65; font-size: 0.75rem; }
         .gd-main { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
