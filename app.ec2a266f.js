@@ -4350,7 +4350,27 @@
     var pendingTitle = '';
     var reviewReturnScroll = null;   // {sub, y}: scroll position of a 復習 list to return to
 
+    // Home keeps its place: whatever you open from the home screen (a book's day, a reading, 模擬試験, 読む速さ),
+    // coming back puts the same item in the same spot on screen
+    var homeReturn = null;
+    function onHomeNow() { return navActiveTab() === 'home' && !document.body.classList.contains('in-quiz'); }
+    function rememberHomeSpot(sel) {
+        if (!onHomeNow()) return;
+        var el = sel ? document.querySelector(sel) : null;
+        homeReturn = { y: window.scrollY, sel: sel, top: el && el.offsetParent ? el.getBoundingClientRect().top : null };
+    }
+    function restoreHomeSpot() {
+        if (!homeReturn) return;
+        var h = homeReturn; homeReturn = null;
+        var go = function() {
+            var el = h.sel ? document.querySelector(h.sel) : null;
+            if (el && el.offsetParent && h.top !== null) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - h.top);
+            else window.scrollTo(0, h.y);
+        };
+        go(); requestAnimationFrame(go);          // again once the page has laid out
+    }
     function setNav(tab, sub) {
+        if (tab !== 'home') homeReturn = null;
         document.body.classList.remove('in-quiz');
         bottomNav.style.display = 'flex';
         bottomNav.querySelectorAll('button').forEach(function(b) { b.classList.toggle('active', b.dataset.tab === tab); });
@@ -4495,6 +4515,7 @@
     }
 
     function startDay(w, d, lib) {
+        rememberHomeSpot(d === 'unit' || w === 'all' ? '.lib-card[data-lib="' + (lib || DEFAULT_LIB) + '"]' : '.day-cell[data-lib="' + (lib || DEFAULT_LIB) + '"][data-week="' + w + '"][data-day="' + d + '"]');
         isBookmarkMode = false; isMistakeMode = false;
         selectedLib = lib || DEFAULT_LIB;
         selectedWeek = String(w);
@@ -4630,6 +4651,7 @@
         READING_BOOKS.forEach(function(b) { html += readingBookCardHtml(b); });
         html += '</div>';
         quizContainer.innerHTML = html;
+        setTimeout(restoreHomeSpot, 0);
         bindMockSection(quizContainer);
         setTimeout(function() { checkNewBadges(); }, 350);
 
@@ -11100,6 +11122,7 @@
         document.body.appendChild(v);
     }
     function openReading(id, tab) {
+        rememberHomeSpot('.ar-item[data-id="' + id + '"]');
         buildArView();
         var st = advState(id);
         ar = { id: id, r: READINGS[id], tab: tab || st.tab || 'text' };
@@ -12166,6 +12189,7 @@
         document.body.appendChild(v);
     }
     function openReadingPractice() {
+        rememberHomeSpot('#rp-home');
         buildRpView();
         if (!rpFiltered().length && rpPassages().length) setSetting('rpFilter', {size:'all', lib:'all'});
         rp = { state: 'list' };
@@ -12792,6 +12816,7 @@
     }
     // mode: 'resume' | 'new' | 'result'
     function openMock(libId, mode) {
+        rememberHomeSpot('[data-mock="' + libId + '"], .mock-card[data-lib="' + libId + '"]');
         buildMockView();
         var s = mockStore[libId];
         if (mode === 'new' || !s) {
