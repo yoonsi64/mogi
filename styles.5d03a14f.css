@@ -647,9 +647,10 @@
         .gd-rare-box .gd-list-title { margin-top: 22px; }
         .gd-focus-btn { display: block; width: 100%; margin-top: 14px; padding: 12px; border-radius: 10px; border: 1px solid rgba(233, 185, 143, 0.5); background: rgba(228, 138, 82, 0.14); color: #f5ecdb; font-family: var(--mincho); font-weight: 700; font-size: 1rem; letter-spacing: 0.1em; }
         .gd-focus-btn[hidden] { display: none; }
-        .gd-focus { position: fixed; inset: 0; z-index: 3900; background: #0d0c0a; display: none; overflow: hidden; color: #f6eedf; }
+        .gd-focus { position: fixed; inset: 0; z-index: 3900; background: #0d0c0a; display: none; overflow: hidden; color: #f6eedf; container-type: size; }
+        .gd-focus.rot { inset: auto; left: 0; top: 0; width: 100vh; height: 100vw; transform-origin: top left; transform: translateX(100vw) rotate(90deg); }
         .gd-focus.active { display: block; }
-        .gf-scene { position: absolute; left: 50%; top: 50%; width: max(100vw, 133.34vh); height: max(75vw, 100vh); transform: translate(-50%, -50%); }
+        .gf-scene { position: absolute; left: 50%; top: 50%; width: max(100cqw, 133.34cqh); height: max(75cqw, 100cqh); transform: translate(-50%, -50%); }
         .gf-shade { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.35), rgba(0,0,0,0) 30%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.5)); transition: opacity 0.6s; }
         .gd-focus.calm .gf-shade { opacity: 0.35; }
         .gf-ui { position: absolute; left: 0; right: 0; bottom: 0; padding: 20px 20px calc(24px + env(safe-area-inset-bottom)); text-align: center; transition: opacity 0.6s; pointer-events: none; }
@@ -657,7 +658,7 @@
         .gd-focus.calm .gf-ui { opacity: 0.6; }
         .gd-focus.calm .gf-plans, .gd-focus.calm .gf-sub { opacity: 0; pointer-events: none; }
         .gf-phase { font-family: var(--mincho); letter-spacing: 0.3em; font-size: 0.95rem; opacity: 0.9; text-shadow: 0 1px 6px rgba(0,0,0,0.6); }
-        .gf-time { font-family: var(--mincho); font-weight: 600; font-size: clamp(3.4rem, 16vw, 6rem); line-height: 1.05; letter-spacing: 0.04em; text-shadow: 0 2px 14px rgba(0,0,0,0.55); font-variant-numeric: tabular-nums; }
+        .gf-time { font-family: var(--mincho); font-weight: 600; font-size: clamp(3.2rem, 14cqh, 6rem); line-height: 1.05; letter-spacing: 0.04em; text-shadow: 0 2px 14px rgba(0,0,0,0.55); font-variant-numeric: tabular-nums; }
         .gd-focus.break .gf-time { color: #cfe6c2; }
         .gf-sub { font-size: 0.78rem; opacity: 0.85; margin: 4px 0 12px; text-shadow: 0 1px 6px rgba(0,0,0,0.6); transition: opacity 0.6s; }
         .gf-plans { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-bottom: 14px; transition: opacity 0.6s; }

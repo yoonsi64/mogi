@@ -4651,6 +4651,7 @@
         var f = GD.focus;
         f.running = false; f.paused = false; f.phase = 'work'; f.worked = 0; f.world = w;
         f.el.classList.add('active'); f.el.classList.remove('calm', 'break');
+        focusLandscape(true);
         document.body.classList.add('gd-on');
         var s = gdState(w);
         var box = f.el.querySelector('.gf-scene'); box.innerHTML = '';
@@ -4727,8 +4728,32 @@
         } catch (e) {}
     }
     document.addEventListener('visibilitychange', function() { if (!document.hidden && focusCounting()) focusWake(true); });
+    document.addEventListener('fullscreenchange', function() { if (!document.fullscreenElement && GD.focus && GD.focus.locked && focusOpen()) { GD.focus.locked = false; GD.focus.el.classList.toggle('rot', window.innerHeight > window.innerWidth); } });
+    // 集中モード is shown sideways: full screen and turned to landscape where the phone allows it (Android); where it
+    // does not (iPhone), the picture is laid out sideways in portrait, so turning the phone shows it the right way up
+    function focusLandscape(on) {
+        var f = GD.focus, el = f.el;
+        var fit = function() { el.classList.toggle('rot', focusOpen() && !f.locked && window.innerHeight > window.innerWidth); };
+        if (on) {
+            f.locked = false;
+            try {
+                // the whole page goes full screen (not the overlay itself, which the browser would refuse to rotate)
+                var root = document.documentElement, fs = root.requestFullscreen ? root.requestFullscreen({ navigationUI: 'hide' }) : null;
+                Promise.resolve(fs).then(function() {
+                    return screen.orientation && screen.orientation.lock ? screen.orientation.lock('landscape') : Promise.reject();
+                }).then(function() { f.locked = true; fit(); }).catch(function() { fit(); });
+            } catch (e) {}
+            fit();
+            if (!f.fitBound) { f.fitBound = true; window.addEventListener('resize', fit); }
+        } else {
+            try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
+            try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen(); } catch (e) {}
+            f.locked = false; el.classList.remove('rot');
+        }
+    }
     function closeFocus() {
         var f = GD.focus; if (!f || !focusOpen()) return;
+        focusLandscape(false);
         studyTick();
         var p = focusPlan(), mins = f.worked;
         if (f.running && f.phase === 'work') mins += Math.floor((f.end ? p[0] * 60000 - Math.max(0, (f.paused ? f.left : f.end - Date.now())) : (f.paused ? f.upTo : Date.now() - f.start)) / 60000);
