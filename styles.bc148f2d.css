@@ -3072,3 +3072,15 @@ html.dark .home-pill.go small { color: rgba(13,17,23,.75); }
 .home-pill { white-space: nowrap; overflow: hidden; flex: none; }
 .home-pill small { flex: 1 1 auto; min-width: 0; text-align: left; }
 .home-pill.go { flex: 1 1 0; }
+
+/* today card, balanced: ring and text centred on one another; the week as seven even columns across the text; stats left, exam chip right */
+.home .home-today { align-items: center; gap: 14px; padding: 12px 14px; }
+.home .home-today .ring-svg { flex: none; }
+.home .home-today-text { display: flex; flex-direction: column; gap: 5px; line-height: 1.35; }
+.home .home-today-text .week-bars { width: 100%; max-width: 240px; margin: 0; }
+.home .home-today-meta { display: flex; align-items: center; gap: 4px 12px; flex-wrap: nowrap; }
+.home .home-today-meta .home-exam-chip { margin-left: auto; font-size: 0.7rem; padding: 1px 8px; }
+@media (max-width: 360px) { .home .home-today-meta { flex-wrap: wrap; } .home .home-today-meta .home-exam-chip { margin-left: 0; } }
+.home .home-pills { margin-top: 0; }
+.home .home-today-meta > span { white-space: nowrap; }
+.home .home-today-goal { font-size: 0.86rem; }

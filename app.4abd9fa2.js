@@ -5492,7 +5492,7 @@
             (examN !== null ? examCardHtml() : '') +
             '<div class="home-today">' + ringSvg(goalPct, 66, todayRec.answered + '問', '目標 ' + dailyGoal) +
             '<div class="home-today-text">' +
-            (todayRec.answered >= dailyGoal ? '<b>今日の目標を達成しました ✓</b>' : 'あと <b>' + Math.max(0, dailyGoal - todayRec.answered) + '問</b> で今日の目標達成') +
+            '<div class="home-today-goal">' + (todayRec.answered >= dailyGoal ? '<b>今日の目標を達成しました ✓</b>' : 'あと <b>' + Math.max(0, dailyGoal - todayRec.answered) + '問</b> で今日の目標達成') + '</div>' +
             weekBarsSvg() +
             '<div class="home-today-meta"><span>連続 <b>' + streaks.current + '日</b></span><span>正答率 <b>' + (todayRec.answered ? Math.round(todayRec.correct / todayRec.answered * 100) + '%' : '—') + '</b></span>' + examChip + '</div>' +
             '</div>' +
@@ -15599,12 +15599,14 @@
             vals.push({ v: v, today: k === todayK, label: '月火水木金土日'[i] });
             maxV = Math.max(maxV, v);
         }
-        var W = 154, H = 40, bw = 14, gap = (W - bw * 7) / 6;
-        var svg = '<svg class="week-bars" viewBox="0 0 ' + W + ' ' + (H + 13) + '" role="img" aria-label="今週の解答数">';
+        // each day is a column: a faint track the full height, filled from the bottom by that day's answers
+        var W = 210, H = 24, bw = 18, gap = (W - bw * 7) / 6;
+        var svg = '<svg class="week-bars" viewBox="0 0 ' + W + ' ' + (H + 13) + '" preserveAspectRatio="xMinYMid meet" role="img" aria-label="今週の解答数">';
         vals.forEach(function(d, i) {
-            var h = d.v ? Math.max(3, Math.round(d.v / maxV * H)) : 2;
+            var h = d.v ? Math.max(3, Math.round(d.v / maxV * H)) : 0;
             var x = i * (bw + gap);
-            svg += '<rect x="' + x + '" y="' + (H - h) + '" width="' + bw + '" height="' + h + '" rx="3" fill="' + (d.v ? 'var(--active-blue)' : 'var(--track)') + '" opacity="' + (d.today || !d.v ? 1 : 0.55) + '"><title>' + d.label + '：' + d.v + '問</title></rect>' +
+            svg += '<rect x="' + x + '" y="0" width="' + bw + '" height="' + H + '" rx="4" fill="var(--track)" opacity="' + (d.today ? 0.9 : 0.55) + '"/>' +
+                (h ? '<rect x="' + x + '" y="' + (H - h) + '" width="' + bw + '" height="' + h + '" rx="4" fill="var(--active-blue)" opacity="' + (d.today ? 1 : 0.6) + '"><title>' + d.label + ' ' + d.v + '問</title></rect>' : '') +
                 '<text x="' + (x + bw / 2) + '" y="' + (H + 11) + '" text-anchor="middle" font-size="9" fill="currentColor" opacity="' + (d.today ? 1 : 0.55) + '" font-weight="' + (d.today ? 'bold' : 'normal') + '">' + d.label + '</text>';
         });
         return svg + '</svg>';
