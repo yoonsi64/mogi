@@ -7744,7 +7744,7 @@
     var Q_DIFF = /*DIFF*/{"1":[2,"Common word, but distractors test the ふみ vs ふむ stem and rendaku on きり; learners may wrongly voice it as ぎり."],"2":[1,"緩い is a basic adjective, and the context of loosening a screw rules out もろい, かたい and きつい at once."],"3":[1,"姿勢 is high-frequency vocabulary; the distractors only add voicing or long-vowel misspellings that are easy to reject."],"4":[1,"慎重 is common N2 vocabulary; the ちん/じゅう distractors come from misreading 慎 or 重 but are easily dismissed."],"5":[3,"懐 is usually read ふところ or in なつかしい, so the verb reading なつく must be known; the other options are real verbs."],"6":[1,"既に is a basic adverb read すでに; the other adverbs share no kanji link and are clearly wrong."],"7":[3,"Only 思惑 collocates with 外れる for expectations not met; 魂胆 and 下心 also mean hidden intentions and can tempt."],"8":[2,"てっきり is the standard adverb for a wrong assumption with と思っていた; the other mimetic adverbs do not fit that pattern."],"9":[3,"Both 突き進む and 突っ走る describe charging forward, but 突っ走る suggests recklessness; choosing needs a feel for the nuance toward a goal."],"10":[2,"抗議 fits residents protesting construction; 反論 is a brief lure, but it means a verbal rebuttal to an argument."],"11":[3,"体力が衰える is the fixed collocation; にぶる is tempting, but it goes with 勘 or 腕 rather than physical stamina."],"12":[3,"Among four 壮 compounds, only 壮大 describes a grand plan; 豪壮 and 広壮 describe buildings and are rare look-alikes."],"13":[2,"ローテーションを組む is a set phrase for shift rotation; the other katakana words do not take 組む in this sense."],"14":[2,"濁る (にごる) is standard; くもって is a small trap through the related idea of cloudiness, but it applies to sky or glass."],"15":[1,"怪しい is common vocabulary, and the distractors are unrelated adjectives with no reading link to the kanji."],"16":[2,"納得 uses the irregular reading なっ for 納 with gemination; the のう-based distractors trap learners who apply the usual on-reading, and なっどく wrongly voices とく."],"17":[3,"厳か (おごそか) is easily confused with おろそか, which is nearly identical in sound; the solemn-wedding context helps."],"18":[2,"解除 is common, but learners must choose かい over げ and voiced じょ; the げ reading of 解 is a plausible trap."],"19":[2,"設ける is a common N2 verb for setting up dates; the distractors are real verbs but unrelated to the kanji 設."],"20":[2,"プロセス clearly fits 'a necessary step toward adulthood'; タイミング may briefly tempt, but the other words are off."],"21":[3,"話し込む means getting absorbed in talk, the needed compound; 話し通す and 話しかける are real compounds that can mislead."],"22":[3,"還元 means giving profits back to society; 返還 also means return but is used for returning territory or borrowed items, a close trap."],"23":[2,"養う for supporting siblings financially is standard; 稼ぐ tempts briefly but takes money, not people, as its object."],"24":[3,"あっけない (abruptly anticlimactic) must be distinguished from なにげない; the inference from never looking back is required."],"25":[3,"手薄 means thinly defended; 軽薄 shares 薄 but describes a frivolous person, a kanji-shape trap."],"26":[3,"心配りができる means being considerate; 気心 and 心当たり are look-alike compounds with very different meanings."],"27":[1,"慌てる is common vocabulary, and the distractors are invented forms that are easy to reject."],"28":[2,"道端 uses kun-readings with rendaku (みちばた); the on-reading どうたん lures learners who guess from the kanji."],"29":[2,"破裂 (はれつ) is standard; はかい (破壊) is a near-meaning lure but corresponds to different kanji."],"30":[2,"柔軟 reads じゅうなん; the ゆう and ねん variants test the reading of 軟, which is moderately common."],"31":[3,"名残 is an irregular reading (なごり) that cannot be derived from the kanji; のこり lures through 残."],"32":[2,"淡い (あわい) is standard for pale colors; しぶい and やわい are adjectives with related meanings but wrong readings."],"33":[3,"発覚 means a hidden problem coming to light; 暴露 and 開示 also mean revealing but need an agent doing the exposing."],"34":[3,"見逃す is for missing a show; 見過ごす is a close near-synonym that means overlooking a problem, a real trap."],"35":[2,"ほほえましい fits a heartwarming scene, and the other adjectives such as おっかない clash clearly with the context."],"36":[3,"目途が立つ is a set phrase, and 目途 has the irregular reading めど; 展望 is a plausible-sounding distractor."],"37":[3,"ねだる (to coax someone into buying) is needed; おもねる and へりくだる are rarer verbs that can confuse."],"38":[3,"高度な文明 is the collocation; 高尚な (refined) also sounds praising and can tempt learners who think 'high culture'."],"39":[2,"ドライ for an unsentimental person is a common loanword use; ロマンチック is clearly the opposite."],"40":[3,"厳重 reads げんじゅう, not げんちょう; the 重 reading じゅう vs ちょう is a real trap, since 慎重 is ちょう."],"41":[2,"勝る (まさる) in これに勝る喜びはない is a fixed phrase; かつる is an invented reading of 勝."],"42":[2,"愚か (おろか) must be told apart from おろそか and おごそか, which differ by one mora."],"43":[2,"催促 (さいそく) is standard; とくそく (督促) is a real word with a related meaning, a slight trap."],"44":[2,"枠 (わく) is a single-kanji kun-reading; ふち and みぞ are real words for edges or grooves but are clearly wrong."],"45":[2,"煩わしい is known N1 vocabulary; うるわしい and いまわしい share the ending but have unrelated meanings."],"46":[1,"消費者のニーズ is an extremely common collocation, and the other loanwords clearly do not fit."],"47":[1,"薬を処方する is a basic collocation; the other 処 compounds are unrelated to prescribing medicine."],"48":[2,"雄大 describes a magnificent landscape; 盛大 is a brief lure, but it describes events and celebrations."],"49":[3,"由緒ある is a set phrase for a long-established shop; 因縁 is a plausible-looking but wrong kanji compound."],"50":[2,"変化に乏しい is a standard collocation; はかない and たわいない are common traps with the ない ending."],"51":[3,"言い張る (to insist) fits a suspect's denial; 言い聞かせる and 言い付ける are real compounds that can mislead."],"52":[3,"すする (to slurp noodles) is a specific verb; the splashing-soup context is needed to rule out other verbs."],"53":[2,"控える (ひかえる) for cutting back on alcohol; おさえる (抑える) is close in meaning and briefly tempting."],"54":[2,"快く (こころよく) vs ここちよく (心地よく) differ by one mora and both sound positive; context confirms willingness."],"55":[1,"織物 is a straightforward kun-reading; しきもの (敷物) is the only lure and is a different word."],"56":[1,"検討 (けんとう) is everyday business vocabulary; the distractors only add voicing."],"57":[3,"有無 uses the special reading う for 有, so ゆうむ is a strong trap for learners applying the usual on-reading."],"58":[1,"田舎 (いなか) is a well-known irregular reading taught early; the distractors are easily dismissed."],"59":[2,"アクセスがいい is a common phrase for convenient transport; ロード and リーチ are unrelated."],"60":[2,"打ち解ける (to open up to someone) fits meeting strangers; the other 打ち compounds have clearly different meanings."],"61":[2,"海外に赴任する is a standard business collocation; 任命 is a brief lure but takes a different case pattern."],"62":[2,"目覚ましい活躍 is a fixed collocation; 甚だしい is negative and 儚い is unrelated."],"63":[2,"温和な性格 contrasts with being very angry; 円滑 and 濃厚 cannot describe a personality."],"64":[2,"手入れがしやすい fits hair maintenance; 手間 is a brief lure but takes かかる, not する."],"65":[1,"仲間の声援 is clear from 背中を押され; the other nouns do not fit cheering during a race."],"66":[3,"ことごとく means 'every single one'; 次々と and 容赦なく fit the rejection scenario and are plausible lures."],"67":[3,"気兼ね means hesitancy out of consideration (遠慮); 考えすぎる and 悩む are plausible guesses for an unfamiliar word."],"68":[2,"あやふや is a well-known synonym of 曖昧; 無難 might briefly tempt, but the others are clearly off."],"69":[2,"せわしい means busy; わずらわしい is a mild lure, since moving can also be troublesome."],"70":[2,"過ち means mistake (失敗); 危険 fits 恐れず in context and can briefly tempt."],"71":[2,"憤慨 means indignation, matching 激怒; 困惑 is a mild lure but the kanji 憤 signals anger."],"72":[3,"気さく applies only to people's manner; option 1 (a friendly company) is tempting because it seems to describe the atmosphere."],"73":[4,"ほつれる (threads fraying) competes with ほどける (knots coming undone) and ほぐれる (tension easing), close near-synonyms in options 1 and 3."],"74":[3,"見込む means anticipating a future increase; option 3 (predicting exam questions) is tempting since it also involves forecasting."],"75":[2,"とっさに means a reflexive split-second action; the other options call for すぐに or さっさと, which are fairly clearly different."],"76":[4,"手回し means advance arrangements (手回しがいい), a rare sense; distractors exploit the literal 'pass by hand' or 'prepare' images."],"77":[2,"雑談 means small talk; the misuses (review, scandal, joke) are fairly clearly wrong."],"78":[2,"いくぶん means 'somewhat' (やや); the other options are all strong intensifiers and are easy to eliminate."],"79":[2,"復旧 means restoration to the original state; 再起動 tempts in an IT context but means rebooting."],"80":[2,"おびえる means being frightened; こごえる is a context lure from 'cold rain' that needs care."],"81":[2,"窮屈 means tight-fitting; 不快 is a loose lure, but きつい is the direct match for clothing."],"82":[3,"ぞんざい means careless or sloppy (いい加減); 気まぐれ is plausible to a learner unsure of the word."],"83":[2,"麓 means the foot of a mountain; 中腹 (mid-slope) is the only lure and is clearly different."],"84":[3,"使い果たす means exhausting a resource completely; option 3 needs 使い切る, a close near-synonym that makes it tempting."],"85":[3,"Fog making the view hazy is the textbook use of かすむ; the steamed-up glasses option is a trap, since glasses 曇る rather than かすむ, and sunrise clears haze rather than causing it."],"86":[2,"円満な家庭 is a set collocation; the misuses call for 円滑 or 満足, and they fairly clearly fail."],"87":[2,"格差 for income disparity is common; the other options need 差別, 違い or 差 and are easy to reject."],"88":[2,"延々と means endlessly continuing; the misuses describe manner or appearance and are clearly wrong."],"89":[3,"補足 (supplementing with explanation) must be told apart from 補強, 補給 and 補充, look-alike compounds that share 補."],"90":[2,"手分けして means splitting up a task among several people; the distractors do not involve multiple people."],"91":[3,"いかにも means 'exactly what you'd expect' (まさに); なおさら and わざわざ also fit the sentence grammatically."],"92":[2,"すこやか means healthy; おおらか is a mild lure for a child's growth, but the meaning differs."],"93":[1,"弁解 is a direct equivalent of 言い訳; the other options are unrelated."],"94":[4,"おだてる (to flatter) has to be paraphrased indirectly as 得意にさせる; 馬鹿にする and 誘惑する are plausible guesses."],"95":[2,"見苦しい means unsightly (みっともない); the other adjectives are clearly different."],"96":[2,"緩和 for easing pain is a common collocation; the misuses with snow and the economy are clear."],"97":[3,"いきさつ refers to the circumstances behind an event; option 4 (a procedure from order to delivery) is tempting as a 'process'."],"98":[3,"めくる is for flipping pages; 袖をまくる and 絆創膏をはがす are close action verbs that make options 2 and 4 tempting."],"99":[4,"いたずらに means 'in vain'; option 1 is tempting because いたずら also means mischief, and a learner may read it that way."],"100":[3,"突き止める means pinpointing a cause; option 1 (finding an animal) is tempting, since it also involves discovery."],"101":[3,"大ざっぱに見積もる (a rough estimate) is the correct use; option 4 (casual clothes) is tempting because ざっぱ suggests looseness."],"102":[3,"いっそ (rather, might as well) ≈ むしろ is not obvious; the other adverbs are less close but require knowing いっそ."],"103":[4,"つれない is a rare synonym of そっけない; ぎこちない is tempting because it also describes awkward behavior."],"104":[3,"うやむや means left vague (あいまい); いい加減な is a close lure that also fits a sloppy conclusion."],"105":[3,"領土 corresponds most closely to 国土; 地域 and 一帯 also denote areas and are plausible."],"106":[3,"きしむ means to creak; 壊れている and 腐っている fit a floor needing repair and are context lures."],"107":[1,"誇張 matches オーバー directly; the other katakana words are clearly off."],"108":[2,"経営に行き詰まる is a standard collocation; option 4 (a clogged pipe) needs 詰まる and is a mild trap."],"109":[2,"かろうじて means 'barely managing'; the misuses with failing or intent are fairly clearly wrong."],"110":[3,"うろたえる means getting flustered; option 3 is tempting because of confusion with うろうろする (to wander about)."],"111":[4,"拍子に marks an accidental result of a sudden action; option 1 (帰宅した拍子に) is close, since it needs とたんに."],"112":[2,"精巧 describes finely crafted objects; the misuses require 詳細 or 入念 and are clearly wrong."],"113":[2,"ねばる (to persevere) is clear in option 1; the others misuse it for continuing effects."],"114":[3,"再三 means repeatedly (たびたび); ふたたび is tempting because it shares the kanji 再."],"115":[2,"ありふれた means commonplace (平凡); 質素 is a mild lure but means plain or frugal."],"116":[2,"すみやか means prompt (迅速); 着々と is a mild lure but means steadily."],"117":[2,"思い返す means looking back (回顧); the other options are forward-looking guesses."],"118":[3,"うっとうしい ≈ 煩わしい; 腹立たしい is tempting because nuisance calls are also infuriating."],"119":[3,"糸口 means a clue or lead (ヒント); サポート and メリット fit the sentence grammatically."],"120":[3,"投げ出す means abandoning something midway; options 2 and 4 (stopping a game or menu item) look tempting."],"121":[3,"禁物 means 'something to be avoided' (無理は禁物); option 1 is tempting because it seems to mean 禁止."],"122":[3,"忠実に再現 is the correct use; option 4 (忠実に願う) is tempting as 'earnestly', but it needs 切に."],"123":[2,"にぎわう for crowded places is clear; the misuses, such as cheering a person up, are fairly obvious."],"124":[2,"動向 for a typhoon's movement is standard; the misuses call for 行動 or 予定 and are clear."],"125":[1,"漏れる for leaking tea is basic usage; the others need 染みる, 潤う or 溶ける and are obvious."],"126":[3,"～てでも means 'even at the cost of'; 休まないまでも and 休まなくても are similar-looking concessive forms."],"127":[4,"AであれBであれ means 'whether A or B, no exceptions'; なり/なり is a close lure but suggests choosing one."],"128":[3,"せいぜい pairs with といったところだ (at most about); までのことだ is a close-looking N1 lure."],"129":[1,"The sentences clearly contrast, so しかしながら is needed; the other connectors are causal or additive."],"130":[4,"伺っていました also sounds natural for 'I heard'; only respect toward the 社長 as the speaker makes おっしゃって correct."],"131":[2,"きらいがある for an undesirable tendency is a standard N1 pattern, and the other options don't fit 考えすぎる."],"132":[2,"Only 責めることなく支えてくれた fits thanking supporters; the others contain mismatched N1 patterns."],"133":[4,"～ないものだろうか expresses a wish; the positive なくなるものだろうか (doubting it will disappear) is a strong lure."],"134":[3,"書面をもって (by means of writing) is the formal pattern; をもとに is a plausible lure meaning 'based on'."],"135":[3,"Requires the ～ずにはおかない construction; 及ぼさない is a lure for learners who know only the ないではおかない form."],"136":[3,"Needs the ～たら～たで pattern (even if it happens, new problems arise) plus the contrastive が; several orders read naturally at first."],"137":[2,"AくらいならB fixes the order 食べないでやせるくらいなら; few other orders work grammatically."],"138":[3,"Requires knowing that とあって links cause and that とみえる comes at the end; reversing the two clauses looks plausible."],"139":[3,"～にかまけて must follow 仕事や付き合い; one must see that や connects the two nouns before に."],"140":[2,"AはおろかBすら is a well-known pattern: the bigger goal (getting the game) goes before はおろか and the smaller one (even a voucher) before すら."],"141":[2,"すなわち rephrases 西洋史 as European history; ないしは is a brief lure for listing alternatives."],"142":[2,"お召しになる is the honorific of 着る; the other honorific verbs mean coming, receiving and eating."],"143":[4,"見るにたえる is normally used in the negative, so the positive form is unusual; 見るまでもない is a plausible lure."],"144":[3,"20キロからある stresses an impressive weight; だけある is a close lure meaning 'as expected of'."],"145":[2,"Aもさることながら Bも is signaled by the following にも; the other patterns don't fit."],"146":[3,"Sentence-final ものを expresses regret; ものの and ものか look similar and need knowing their positions."],"147":[3,"～たまでだ (just did what was natural) needs the past form; する is a lure since までだ also takes the dictionary form."],"148":[3,"ともなると marks a special time when something happens; ならでは and と相まって are plausible N1 lures."],"149":[3,"泣くに泣けない means unable to cry despite misery; 泣きに泣いた is a close-looking repetition pattern."],"150":[3,"Needs 禁じ得ない (can't help feeling) plus と同時に; 失望しないまでも looks grammatical but contradicts 嫌悪."],"151":[3,"Requires ～がてら after 暇つぶし, then 見返す modifying the following noun; several orders look plausible."],"152":[2,"～かたわら connects starring in a drama with founding a troupe; 主役を務める is an obvious unit."],"153":[3,"Long clauses must be ordered chronologically with 生まれながらにして before 備えていた; it is a tracking task more than a grammar task."],"154":[2,"掃除したら全身ほこりまみれ is straightforward once ～まみれ is known."],"155":[3,"Combines 今回ほど～ことはない with AあってのB; the star slot falls on 仕事 at the end, which can confuse."],"156":[2,"～ようとも (no matter what) is signaled by どんなに; the other options are clearly mismatched patterns."],"157":[3,"ではあるまいし (it's not as if I were...) fits the retort; ともなれば and ときたら are plausible N1 lures."],"158":[1,"もしくは (or) linking two submission methods is basic; the other options are clearly wrong."],"159":[2,"とでも言わんばかりに is a set phrase signaled by とでも; the other patterns don't fit."],"160":[3,"心配には当たらない (no need to worry) fits; 心配を禁じ得ない is an N1 lure with the opposite meaning."],"161":[4,"Needs 帰れるものなら (if only I could); 帰ろうものなら is a real N1 pattern with a different meaning and a strong lure."],"162":[2,"この土地ならでは is a well-known phrase; ずくめ and の極み are clearly mismatched."],"163":[3,"何のお構いもせず is a fixed host's phrase; お世話もせず sounds plausible to learners who don't know the set expression."],"164":[3,"法律に則って (in accordance with the law) is needed; を境に and を兼ねて are mismatched but look formal."],"165":[3,"ものともせず (undeterred by) fits overcoming obstacles; はばからず is a close lure meaning 'without hesitation'."],"166":[4,"Requires the uncommon Aとは言わないまでもB pattern; splitting まで from とは言わない makes the order hard to see."],"167":[2,"AなくしてはB is a known pattern, and 的確なご指導 naturally follows 教授の."],"168":[2,"を契機に is a simple fixed unit followed by 一人暮らしを始めた; few other orders are possible."],"169":[2,"AにとどまらずB clearly orders 国内 then 海外からも; there is little ambiguity."],"170":[3,"Aならいざ知らずB must be recognized, with 君のように joining the following clause; it is a moderately tricky contrast."],"171":[3,"ちなみに adds a related question; おまけに is tempting because the customer is listing merits."],"172":[3,"想像にかたくない (easy to imagine) is the fixed phrase; 想像にたえない is a close-looking lure."],"173":[3,"Four いかん forms differ only in their endings; only いかんによらず gives 'regardless of'."],"174":[3,"名に恥じない (worthy of the name) is needed; にひきかえ and にもまして are mismatched but look grammatical."],"175":[3,"～べくして～ (destined to happen) requires the dictionary form 出会う; the pattern itself is the barrier."],"176":[3,"のをいいことに (taking advantage of) fits students misbehaving; 入るか入るまいか is a plausible-looking lure."],"177":[2,"ぬきにして fits the casual 'leave aside work talk' context; おろか needs は and ものともせず means defying hardship, so distractors fall away quickly."],"178":[3,"なり～なり is tempting, but it urges choosing between options; the advice applies either way, so the concessive にせよ～にせよ is needed."],"179":[3,"Needs the emphatic resolve pattern てなるものか; 負けようがない and 負けるものではない look plausible but express impossibility or general truth instead of determination."],"180":[3,"Requires knowing 賜る as the humble 'receive' for a superior's speech; 差し上げたい and お受けしたい tempt learners unsure of keigo direction."],"181":[3,"Must link 見て取れる as a modifier of 悲惨さ and place ときたら before the evaluative 目も当てられないほど; only one order is natural, though ときたら is less common."],"182":[2,"The AならまだしもB contrast makes the order obvious: 名前や職業 first, 家庭環境まで聞かれた last."],"183":[2,"名人ですら followed by 時には失敗をする and ということ is a straightforward chain with little ambiguity."],"184":[2,"落とし穴とでもいうべきもの is a fixed sequence; once とでも+いうべき is recognized, there is only one order."],"185":[2,"AたるものB is recognizable, and 国民のこと must precede を第一に, leaving one obvious arrangement."],"186":[2,"とはいうものの fits the concession about salary; からには and だけあって imply the opposite logic and are easy to reject."],"187":[2,"お気に召す is the standard honorific for liking a gift; お気になさって means 'worry about' and is the only brief temptation."],"188":[2,"学生なりに is a common N2 pattern; ならでは may tempt briefly but expresses uniqueness, not 'in its own way'."],"189":[2,"よそに for ignoring opposition is standard; めぐって could tempt briefly but means 'concerning', which fits poorly here."],"190":[2,"遅かれ早かれ is a fixed idiom; the only trap is not knowing かれ attaches to the stem, making 遅く/早く briefly tempting."],"191":[3,"Hinges on the connection rule that かたがた takes a bare noun; 報告し and 報告の look grammatical to learners who know only the meaning."],"192":[3,"Requires the literary 想像だにしない; other options are N1 forms but clash with the past-tense amazement, so knowledge of だに is the key."],"193":[3,"由来する vs 起因する is a near-synonym trap; 起因する marks causes of problems, while a name's origin needs 由来する."],"194":[3,"か否か vs や否や is a classic look-alike trap; や否や means 'as soon as' and would confuse learners who only recall the shape."],"195":[2,"に越したことはない matches 'it's best to, but...'; the other options make no sense with the following が clause."],"196":[3,"Must recognize 政治家ともあろう人が and then attach 言ってはいけない to 差別的な発言; ともあろう is a less frequent N1 pattern."],"197":[2,"歌手になるという夢を実現するべく is a natural sequence; という clearly links the dream content, leaving little ambiguity."],"198":[3,"Requires the pattern Aをおいてほかにいない and the subject clause 大事な顧客を任せられるのは; learners may misplace 森山さんを before 任せられる."],"199":[3,"Must chain ところで with a negative result, then ものの as a concessive connector before 失敗から学べる; ものの placement is not obvious at first."],"200":[1,"言うまでもなく is fully predictable after 言う, and 裸で街を歩くこと is a simple noun phrase."],"201":[3,"Most blanks follow from context, but あえて vs いっそ and 一歩踏み出したと言えるだろう vs 踏み出そうとするのだろう need a careful read of tone and tense."],"202":[3,"Standard N1 patterns (いかんで, とはいえ, ～ようとせず) against close distractors like にかかわらず and とあって; the connector これとは正反対に is clear from the contrast."],"203":[4,"N1 grammar distractors (にかたくない, きらいがある) sit beside the right にいたりました, and blank 5 hinges on the double negative ～などというわけにはいかない."],"204":[3,"A newspaper editorial with clear signposts; the harder picks are 悪化しかねない and 考慮したためだろう over まで(のこと)だ, which need the writer's stance."],"205":[2,"Casual essay; most distractors are grammatically odd in context. The trickiest is the tense in 見始めるのです vs 見始めてきたのです."],"206":[3,"Option 1 tempts because the text mentions 何でも話していい場, but the answer must combine 他者と共に考える with deciding oneself."],"207":[1,"The notice states guests can stay and use the baths normally, so the single 'inconvenience during repairs' option is clear."],"208":[2,"Short text plainly says thought determines action; option 1 directly contradicts it and option 4 is a simple paraphrase."],"209":[3,"Option 4 tempts by mentioning energy growth, but the text ties energy to the distance between inferiority and the goal, not the amount of each feeling."],"210":[2,"The final line says dining runs counter to efficiency; distractors invert the logic by calling simple meals inefficient."],"211":[3,"The correct paraphrase 二つの自己のはざまで悩む is indirect, while option 1 sounds right but adds 差を埋めようとする, which is not stated."],"212":[2,"The author's rhetorical question clearly urges dropping the 外国人 mindset; the other options add unsupported causation or contradict the text."],"213":[2,"Requires noticing the sender corrects the invoice and asks for the old one to be discarded; option 2 wrongly assigns the correction to the recipient."],"214":[3,"Option 3 tempts with media adaptation, but the author says readers bring visual media experience to novels; requires abstract paraphrase."],"215":[4,"Option 3 is defensible at first glance since early ordering is urged, but that refers to pre-holiday delays; only 'no shipping during the break' is strictly stated."],"216":[1,"The answer restates the passage's direct explanation that slow growth exposes young sauropods to predators."],"217":[2,"Option 1 tempts by echoing 素人でも, but it overclaims that amateurs ask better questions; option 3 paraphrases the text directly."],"218":[3,"Option 1 tempts because it states the author's revised view; the この見立て reference points back to the initial causal-logic hypothesis."],"219":[2,"The reason is the hometown norm that swimming is like walking; option 2 overgeneralizes the father's personal act into a local custom."],"220":[3,"Requires applying definitions to new examples; option 3 tempts, but both electric cars and greening are mitigation, not adaptation."],"221":[4,"Option 2 is close since the email reports a delay, but the closing request for a reply shows the purpose is proposing the substitute M-P20."],"222":[3,"Option 1 reverses cause and effect about brain regions, and option 3's paraphrase of automatic versus voluntary breathing must be matched carefully."],"223":[3,"Several traps: the change came from the president's schedule, not the secretary's office, and the conference-room restriction is on the 10th, not the meeting day."],"224":[2,"The passage centers on 心のとらえ方, so option 4's 'change your viewpoint' is clear; others add prescriptions the author does not make."],"225":[3,"Option 2 tempts because the text stresses extrinsic motivation, but it also calls intrinsic motivation desirable, so 'not needed' is wrong."],"226":[2,"The text links 省人化 to more varied tasks per person; option 1 paraphrases this directly, and others are unsupported."],"227":[2,"The growth-versus-maturity contrast is stated explicitly as specialization versus multi-skilling with fewer staff; option 3 matches it closely."],"228":[3,"Option 3 contradicts the claim that staff cannot be replaced, and options 1 and 2 misapply 多能工化 to the leader; the conclusion is restated in option 4."],"229":[2,"The passage says 思考の幅をぐっと広げる; option 2 misuses 自由自在, which the text applies to reasoning, not emotions."],"230":[3,"書き手 could suggest the work's author (option 1), but context shows it means the critic writing the review; this requires tracking the referent."],"231":[3,"Option 2 is a true detail but not the main point; the conclusion about avoiding one-sided claims supports multi-angle analysis in option 3."],"232":[2,"The text notes progress but calls the history shallow; option 2 tempts by misreading the 推進 law as one to eradicate poverty."],"233":[3,"Option 2 is true in the passage but not the stated reason; the answer requires linking 自分に返ってくる to the aging-society logic."],"234":[2,"The apron and compass example directly supports option 3; option 4 overinterprets forgotten items as an intentional signal."],"235":[2,"The context of 田舎を訪問 and 過疎化 clearly points to declining rural population; option 1 tempts only by echoing the first sentence."],"236":[3,"Option 1 tempts since the policy failed, but それ refers to the depopulation that continued despite policy; this requires careful referent tracking."],"237":[3,"Option 3's 'rural areas absorbed by cities' is close, but the text describes people flowing out to cities; requires grasping the dropper metaphor."],"238":[3,"This negative 'cannot be known' question forces checking each option; option 3 requires inferring that 20-somethings were below 35.62% from さらに低い."],"239":[2,"The text describes distributing party platforms and holding mock elections; option 3 summarizes it, while others invent credit or national proposals."],"240":[3,"Option 3 tempts by twisting 対話 into planning with children; the answer requires synthesizing the experiential-learning and self-relevance points."],"241":[3,"Option 3 tempts because the text says AI surpassed humans 予想を超えて早かった, but it calls the outcome 必然的な成り行き; the answer requires linking the opening sentence to rising media attention."],"242":[2,"The answer nearly restates 自分で倫理観をもつ必要がなくなる; option 2 about asking AI for instructions briefly tempts as a loose paraphrase of AIに判断してもらう."],"243":[3,"The learner must decode the abstract phrase 人間を人間たらしめる根拠である「思考」が侵食される as losing proof of being human, while option 4 echoes the passage's 驚異的な進歩."],"244":[3,"The answer depends on reading 切り札 (with the gloss) as tourism appeal; option 3 misreads 大小をかまわず 2000, and option 2 inverts the claim about public money."],"245":[4,"Resolving そんな美術 needs tracing back through several sentences to 直接的な役にも立たない; option 3 (批判の対象) and option 4 (個人的なもの) are also mentioned nearby and tempt."],"246":[3,"The answer paraphrases 祖霊の願望に伴走する as 思いに寄り添う; option 2 about regional revitalization sounds like the author's stance but misses his rejection of being treated as socially useful."],"247":[3,"The text defines the culture as treating failure as 恥・減点の対象 (a minus); option 3 is tempting because concealment appears, but only as a consequence, not the culture itself."],"248":[2,"The answer paraphrases うまくいくことの方がまれ for new ventures; option 1 overgeneralizes the 隠しきれない失敗 point and is quickly ruled out."],"249":[2,"The main idea of not hiding failure and learning from it is stated repeatedly; option 4 about fatal damage picks up a detail but is clearly secondary."],"250":[2,"The passage explicitly ties 手応え to 苦労の末に間に合わせた work; option 4 describes the opposite (professional) work and is easily eliminated."],"251":[3,"Learners must turn the knife metaphor (切れ味の鋭い刃物でさっと仕上げた) into efficient, high-quality work; option 4 literalizes the tool metaphor and tempts."],"252":[3,"Decoding 切るまえに既にある requires linking it to 仕事がないときにも毎日刃を研ぐ, i.e. preparation beforehand; the other options are not grounded in the text."],"253":[1,"そんなこと points directly to the immediately preceding 意味の通る文章を簡単に書く; the distractors are obviously unrelated fragments."],"254":[2,"The reason is stated just before: no one can explain how humans write, so it can't be programmed; option 3 is a vague but weak lure."],"255":[1,"The text spells out 誰にでも作家のような文章が書ける; the distractors about wanting to be writers or AI writing for a hundred million people are clearly wrong."],"256":[2,"The answer paraphrases 使い手の能力ではなく言語そのものに問題 plus the 向き不向き point; options 1 and 3 invert the user-versus-language distinction."],"257":[3,"彼ら refers back to those voicing 日本語限界説; option 4 tempts because the passage later says such people have never properly used Japanese, a description, not the referent."],"258":[2,"The final sentence makes the main idea explicit (users should practice and not blame the language); option 3 tempts only through the vivid 馬鹿 quote."],"259":[2,"The function is spelled out as keeping the image from blurring; option 2 lifts a phrase describing the problem, not the solution."],"260":[2,"The answer is near-verbatim (眼が大きく、やや平らな形状); option 2 tempts because sideways-facing eyes are mentioned, but as a separate issue."],"261":[2,"The concluding paragraph states the moral directly; options 3 and 4 reuse passage phrases but are a detail and a premise rather than the point."],"262":[2,"The answer closely paraphrases the stated definition of 恥; option 3 mixes in 行動, which the passage assigns to guilt, but the gap is noticeable."],"263":[3,"Requires applying the definition (negative evaluation of one's own act plus its effect on others) to new scenarios; only option 1 involves both elements."],"264":[4,"Option 4 reverses the causal direction (wanting repair leads to considering impact), and option 1 overstates 関わりがより一層深くなる; spotting these fine distortions takes care."],"265":[2,"The passage frames the phrase as expressing 意思決定に関わる心情; options 2 to 4 are narrower sub-points from the following sentences."],"266":[2,"The underlined phrase is directly preceded by やり直しがきかない; options 1 and 2 describe Americans and are easy to eliminate."],"267":[2,"The answer nearly restates the final sentence about two cultures' values; option 1 tempts by contrasting individual and collective responsibility."],"268":[4,"The negated phrase 視点が欠ける must be mapped to not treating the mistake as a fresh starting point; option 3 tempts by reversing the advice to abandon prior plans."],"269":[3,"The author says to focus on the current board and leave reflection for later; option 1 tempts with a compromise that keeps the original plan, which the text rejects."],"270":[3,"Long options each recycle passage phrases; the correct one synthesizes the opening thesis, while option 3 misattributes the cause of the first mistake."],"271":[3,"The metaphor must be read from the child's viewpoint as words threatening the self; option 3 tempts because they are parental instructions, but not meant to suppress rebellion."],"272":[3,"The author's view emerges only at the end (嫌われることのできる親が子ども孝行); option 4 echoes 好ましいようにも思える, which the author concedes and then undercuts."],"273":[2,"The cause is stated explicitly (couldn't tell her own feelings from her parents'); the other options add unstated details."],"274":[4,"Across a 1,000-character passage the learner must equate 乗り越えるべき壁 with 障害; option 1 overstates by having parents try to be disliked, a tempting misreading of the last line."],"275":[3,"Comparing two texts, the shared theme is the language and exam barrier; option 3 tempts because only B discusses the staffing shortage."],"276":[3,"Option 3 overstates A (A still wants Japanese learned over time), so the answer requires noticing the degree of each writer's stance."],"10001":[3,"Option 3 sounds like a natural conclusion but the passage only diagnoses difficulty without prescribing; option 1 inverts the 美名 irony of individualism."],"10002":[3,"The answer requires catching the 両輪 point that beauty-sensitivity drives both science and art; option 4 tempts with a plausible but unstated enriching-the-heart rationale."],"10003":[2,"The final paragraph states the open versus closed contrast directly; option 3 tempts mildly but overgeneralizes to all residents."],"10004":[3,"Miyao's old-fashioned literary style adds load, and option 1 tempts by fixating on the taro example; the point is that modern ingredients and taste can't reproduce the old flavor."],"10005":[4,"An 873-character passage with partially true distractors: option 3 shifts the subject to organizations tightening control, while the author says people themselves seek 支配."],"10006":[2,"The contrast between the brain's map for the body surface versus none for organs is explicit; the distractors add claims about training or importance not in the text."],"10007":[1,"The short anecdote clearly shows children jumping over the tile strip; option 2 contradicts 飛び越えた and is easily eliminated."],"10008":[3,"Option 2 tempts by literalizing 白いものは白く、磨くべきものは磨き as chores; the answer requires seeing that neat dress plus the outing itself was the entertainment."],"10009":[3,"Option 3 tempts because the text says health isn't life's goal, but the main claim is medicine as stable-supply infrastructure; option 1 inverts the analogy."],"10010":[3,"The literary, introspective passage requires grasping the abstract closing idea of the self as a moment of something larger; the distractors attach feelings the author never states."],"10011":[3,"Must generalize the author's 挨拶 interpretation into relationship-building; option 3 tempts by echoing 遺伝子に刷り込まれ, but the author only says 考えたい, not a scientific finding."],"10012":[2,"The closing つまり sentence states the point almost verbatim; options 3 and 4 add ideas such as group discussion that the passage never proposes."],"10013":[3,"Option 4 restates the mountain metaphor literally and is tempting; the point is the life lesson signaled by まして、人生は山登りではない."],"10014":[2,"Readers must map the shining star to successful people; option 1 borrows 燃え尽きる but misses the stress on the hidden hardship of the envied person."],"10015":[4,"Terada's dated style (忘れられ勝ち, 門衛, 失職) is dense, and option 3 is a true detail; the conclusion is that the gatekeeper's job won't disappear."],"10016":[2,"居なくなった implies the wife has died, not that she is often away as option 1 suggests; the talking hotel images clearly point to memories."],"10017":[3,"The extended treasure-box and spring metaphor must be decoded; option 1 takes the box literally, while the key is the comfort described in the final paragraph."],"10018":[3,"Options 2 and 4 misattribute actions (women advocating, women publishing magazines) that the passage assigns to male intellectuals and to publishers; the answer combines two stated causes."],"10019":[3,"Option 2 tempts because the passage highlights the paradox, but that is Gill's framing; the author's point extends free choice to all adornment."],"10020":[3,"Option 1 echoes 必ずしも素晴らしい意味には使われていない; the real point is the final contrast between mere liberation and 自由の活用."],"10021":[3,"Option 3 is a true supporting detail and option 1 states the view being criticized; the answer requires seeing the circular-reasoning critique as the thesis."],"10022":[2,"そのこと refers back to the body being connected to all of nature; option 1 is the opposite illusion and is easily ruled out."],"10023":[2,"The referent is the previous sentence about using information in life-threatening rescues; option 1's いつでも overgeneralizes and is the only real trap."],"10024":[2,"それ points back to the REM sorting of what to keep and what to forget; the distractors misstate it as memorizing everything or as thinking hard."],"10025":[4,"Option 4 nearly copies 願望を実現できる可能性を感じとっている but shifts it to trying to sense; option 3 is also stated, so the wording must be read closely."],"10026":[4,"Murakami's それ must be abstracted from touching the Acropolis to a desire for physical, firsthand sensation; option 2, the urge to keep traveling, is the result, not the motive."],"10027":[3,"The 図式 is the disciple finding joy in being controlled; options 1 and 3 reflect the earlier general claim about lovers controlling others and are plausible."],"10028":[3,"Option 3 is tempting since 可動的 appears in the text, but the contrast with housing is affordability, signaled by ハコよりも安価に."],"10029":[2,"The omitted subject of 区別する must be traced to 裁判官 at the passage start; option 2 tempts because the disputants are mentioned in the same sentence."],"10030":[2,"The first sentence says young people must know about violations and remedies; the distractors bring in poverty or life planning that the passage barely touches."],"10031":[2,"The command form continues the 非難が殺到 sentence, so the viewers said it; option 1 tempts only if readers assume narrator commentary."],"10032":[2,"同様に危険なのが自己憐憫 directly sets up the effect; option 2 is the earlier, parallel danger and tempts only briefly."],"10033":[4,"Abstract argument: 持ち越される means the etymology question just moves to Tamil words; options 3 and 4 plausibly reframe it as a question about Japanese origins."],"10034":[3,"The hamburger metaphor means soft, easy text that does not build reading strength; option 3 repeats a true but separate complaint from the first paragraph."],"10035":[3,"違います negates 管理者が責められても仕方がない; option 2 tempts because victims are mentioned in that same clause."],"10036":[3,"The 縦穴 metaphor means deep pursuit of one niche interest; option 3, exchanging information, is also mentioned in the passage and is a close trap."],"10037":[3,"モード差 is the logical versus listing style itself; option 1 is the author's proposed cause and option 3 is its effect on interpreters, both plausible."],"10038":[4,"Must grasp that the sleeping right-holder is the lender who fails to press for repayment; ネコババ and the debtor dominate the sentence, making options 1 and 2 tempting."],"10039":[4,"Hiragana-heavy Umesao prose; option 4 echoes ながい進化の歴史, and option 2 echoes 環境に適応, but the point is the absence of purpose (目的論的 denial)."],"10040":[1,"The answer restates 体温を保つために almost verbatim from the preceding sentence; the other options are clearly from the earlier paragraph."],"10041":[2,"The reason is the preceding claim that girls' preferences shape the nation's culture; option 3 tempts by echoing 成熟社会にふさわしい."],"10042":[3,"Option 3 paraphrases seeing obstacles ahead as 予測力 that hinders research; option 2 tempts but the text says they avoid the research, not that they fail."],"10043":[3,"Option 4's 加えて contradicts 交代; the answer requires linking mechanized, motionless work to reduced muscle fatigue."],"10044":[1,"The final sentence states outright that cell walls let plants grow large; the other options garble cause and effect in obvious ways."],"10045":[2,"Option 1 combines the graceful upper body, sturdy lower body and crude manners; options 3 and 4 are partial details but miss the 二重人格 contrast."],"10046":[2,"Applying 見立て and pretend roles, playing mother with a doll is the clear case; counting or plain description lack imagery and are easily rejected."],"10047":[3,"Must apply the non-discrimination principle to nationality as a personal attribute; options 1 and 3 are merit-based selection, which does not violate the principles."],"10048":[4,"Requires abstracting 嘘 as speaking of something not actually present; option 4 tempts because the passage cites fiction, but copying names is not speech about absent things."],"10049":[3,"外化 means putting one's own thinking onto paper; option 1 is tempting as an external tool, but computing by machine replaces thinking rather than externalizing it."],"10050":[2,"The letter announces an office relocation; option 3 新事務所開設 is tempting, but 移転 means moving the existing office, not opening a new one, so 引っ越し fits."],"10051":[2,"The notice centers on 車両全面通行止; option 2 (大型建材搬入) is the cause, not the topic, and option 3 wrongly says road construction."],"10052":[1,"A standard invitation email asking for attendance; distractors about a joint party or a reminder to reply are clearly unsupported by the text."],"10053":[1,"The email plainly states 価格を改定させていただく; option 3 only gives the reason, and the others contradict the text."],"10054":[2,"Requires noticing that only the 型番 was wrong and 金額に変更はございません, which rules out option 2; the old invoice is to be discarded, not returned."],"10055":[1,"The notice is clearly about 廃止 of a bus line; 路線変更 is a mild distractor, and refunds are only a sub-detail."],"10056":[3,"Scanning task combining several constraints: weekday class rules out a, Sunday kendo at 18:00 rules out d, and c and e exclude 商品管理."],"10057":[3,"Fare per person on the 27th is 2.9万; the trap is 62,160, adding JR fares that the included free pass actually covers."],"10058":[2,"Must match details: application by email by the deadline, then interview notice after 書類選考; option 4 wrongly says 郵送 and 必着."],"10059":[1,"Registration is free and required, deadline 12月1日; distractors contradict obvious facts like 無料 or the deadline."],"20001":[1,"利益 (りえき) is a basic N3-level word; りじゅん (利潤) is a related-word distractor but easy to dismiss."],"20002":[3,"逃れる (のがれる) versus まぬがれる (免れる), which share a similar meaning and could tempt learners who confuse the two kanji."],"20003":[2,"考慮 (こうりょ) requires knowing the short vowel and 慮=りょ; distractors こうりょう and こうろ play on vowel length."],"20004":[3,"遮る (さえぎる) is N1 kanji; さまたげる (妨げる) and へだてる (隔てる) are near-synonyms that fit the meaning of blocking."],"20005":[2,"根拠 (こんきょ) is common N2 vocabulary; the distractors only vary the voicing and kana of 拠."],"20006":[2,"肝心 is read かんじん with voiced じん; かんしん (関心/感心) is a tempting homophone-like distractor."],"20007":[3,"Choosing まみれ (covered in dust) among the suffixes ぐるみ, がらみ, ずくめ requires knowing the specific collocation ほこりまみれ."],"20008":[2,"会話が弾む is a fixed collocation; 跳ねる shares the bouncing image but does not combine with 会話."],"20009":[3,"実情 fits 地域の実情に合った; 実況 and 実権 are similar-looking 実 compounds that require knowing exact meanings."],"20010":[4,"逸材 (outstanding talent) versus 玄人, 大家, 巨匠, all expressing expertise; only 逸材 suits 十年に一人の for a young athlete."],"20011":[2,"書類に不備 is a set collocation in administrative Japanese; 不当 might tempt briefly, but 不穏 and 不順 clearly do not fit."],"20012":[3,"修復 is the term for restoring artworks; 回復, 復旧, and 復興 all mean restoration but apply to health, infrastructure, or regions."],"20013":[2,"強み (strength, advantage) fits describing an asset; 重み and 深み are -み nouns that do not suit the context."],"20014":[2,"画期的 (epoch-making) maps to 今までになく新しい; 最近ではめずらしい might tempt briefly but lacks the innovation meaning."],"20015":[3,"もくろむ (to scheme, plan) is an N1 word usually written in kana; knowing it is essential since 開始して could seem plausible."],"20016":[2,"手がかり (clue) maps to ヒント; サポート and チャンス are loosely plausible but clearly wrong once the word is known."],"20017":[4,"にわかには means 'immediately'; 簡単には and 完全には are tempting near-paraphrases in the negative context 信じられない."],"20018":[3,"重宝する means useful and handy; learners may misread 宝 as value and pick 値上がり or 評価が高まっている."],"20019":[2,"シビア is a common katakana loanword from 'severe'; 注意深い is a slight distractor but 厳しい is straightforward."],"20020":[3,"連携 means cooperative coordination between parties; option 3 tempts as it confuses 連携 with 連動 for prices moving together."],"20021":[4,"不服を唱える is the correct collocation; the distractors mimic 苦情, うっぷん, ひんしゅく, close in meaning but with different collocations."],"20022":[2,"夢がかなう is a well-known collocation; option 1 (苦労が報われる) tempts briefly, but the rest are clearly unnatural."],"20023":[2,"目覚ましい means remarkable progress; distractors exploit the literal 'waking up' meaning and are easy to rule out once the word is known."],"20024":[2,"ほどける applies to untying knots and strings; distractors with ねじ, ボタン, and 氷 call for 緩む, 外れる, and 溶ける."],"20025":[3,"赴任 means relocating to a new post; option 1 (出張) and option 4 (就任) are near-synonyms that test the precise meaning."],"20026":[3,"とあって marks a special circumstance causing a crowd; にあって and として are similar-looking N1 forms that could tempt."],"20027":[3,"聞くにつけ expresses recurring emotion each time; なり and にしてみると are N1 patterns but grammatically mismatched here."],"20028":[4,"The listing pattern ～に～にと is uncommon; や and か seem natural for enumeration, making と hard to choose without knowing it."],"20029":[3,"Requires recognizing causative-passive させられた before あげく to express being forced; させた sounds plausible but changes the agent."],"20030":[3,"ではないか expresses surprise at discovering a fact; のではないか (conjecture) is a close distractor that needs a nuanced distinction."],"20031":[3,"Combines honorific direction and grammar: humble お出しする for the speaker's action, and 以上 (since) rather than うえ."],"20032":[3,"Needs でしかない (nothing but) plus ことに気付く; option 1 でないことにしか has similar pieces but wrong logic."],"20033":[4,"Must distinguish ばかばかしく思える (seems silly) from ばかばかしい思いをする, and くらい from もので; four close variants."],"20034":[3,"The humble request form 待っていただくわけにはいきませんか fits the writer asking the editor; other options misassign who waits."],"20035":[4,"Colloquial ～かっていうと, そうじゃない (rhetorical denial) is subtle; the negative variants in options 3 and 4 confuse the logic."],"20036":[3,"Requires the set phrase ということのないように; the pieces combine mostly in one order once the pattern is known."],"20037":[4,"Ordering にしてまでとなると needs knowing both ～てまで and ～となると chained; と and となる can easily be misordered."],"20038":[3,"たとえ～がなくても pairs with 自分には責任; the two 自分 phrases look interchangeable, but only one order reads logically."],"20039":[2,"今でこそ～だが is a recognizable N1 contrast pattern; the sentence-initial slot makes the order fairly clear."],"20040":[3,"Needs ～のかと思いきや followed by the reversal そうでもない; と placement is the main point of confusion."],"20041":[4,"Paired blanks (たしかに／ことは間違いない, ぼく／みんな) must both fit, and 見させてしまう requires telling causative from passive in 見られてしまう."],"20046":[3,"Short passage; must link 目で食器も食べている to deepening interest; options 1 and 4 use 愛着 rather than 関心, a subtle distinction."],"20047":[4,"Abstract argument; the author says weak people lie to protect dignity, and apology is merely a ritual; option 1 inverts the claim about honesty."],"20048":[4,"Dense sentence logic; must infer that stress experiences in a broader social context are needed; option 1's 社会問題 is a distractor."],"20049":[3,"Must see the laughter came from describing cherry blossoms in scientific terms (正五角形); option 3 tempts given the later remark on imperfect shapes."],"20050":[3,"The passage defines 理想化 as ignoring imperfections; option 2 describes abstraction instead, a close conceptual distractor."],"20051":[4,"Expected result is discovering the law of flower shape; option 4 is tempting but the genetic basis is already assumed, not the goal."],"20052":[3,"世間一般の価値基準 refers back to 資産的な価値, inferred from resale; option 1 or 4 can tempt readers without that link."],"20053":[3,"Option 1 matches 生き方 and 行動範囲; option 2 over-focuses on structure, and option 3 contradicts the advice to spend less than budget."],"20054":[3,"Main idea: choose by one's own lifestyle even if it differs from general standards; option 1 inverts the role of general standards."],"20055":[4,"Options 2 and 3 differ only in 現代の人々 versus 人間; the passage frames it as universal human fate, a fine distinction."],"20056":[4,"Must link 茫漠 and 激動 to an inability of existing frameworks to keep up; option 4 about information environment is a close trap."],"20057":[4,"The author says freedom from constraints is impossible, eliminating options 2 and 3; option 4 matches loosening and recognizing limits."],"20058":[4,"Abstract essay with 大風呂敷 metaphor; must equate the illusion with believing one can grasp the whole world, versus option 3 on learning."],"20059":[4,"これ refers back to craftsmen knowing their own capacity; options 2 to 4 are plausible work attitudes not stated in the text."],"20060":[3,"The metaphor describes tilling given soil and nurturing seedlings; options 1 and 3 slightly distort the focus to selecting seeds or improving soil."],"20061":[4,"教養 is the crop grown within one's temperament, contrasted with 物識り's knowledge; option 4 is a tempting trap reflecting the common definition."],"20062":[4,"Requires labeling each author's stance abstractly; option 2 tempts because B does point to social background, but A is a warning about impact, not a problem statement aimed at solutions."],"20063":[3,"Option 3 tempts because B literally says removing TV alone won't solve it, but its A half misstates A; must check both halves against two passages."],"20064":[3,"Must link かたちにならないもの in paragraph three to the later 作法 claim several paragraphs on; 自然 and 感謝 appear nearby as lures."],"20065":[2,"The passage directly lists thought about nature, farming, and what a village is; distractors add ideas like protecting or restoring nature that are absent."],"20066":[2,"The text states plainly that eating means taking in other lives and thanking them; options 1 and 3 shift gratitude to labor or farmers."],"20067":[3,"Option 4 is tempting since it echoes the critique of text-centered modern thought, but the author never says deep thought is inherently formless."],"20068":[3,"Must apply several rules at once: autumn in the city, unpublished, one entry per category, and 制作年は問わない, which clears last year's festival photo and watercolor."],"20069":[1,"The notice explicitly says results go on the homepage January 15 and that phone or counter inquiries are refused, eliminating every other option."],"21001":[2,"The 人 reading じん vs にん is the only trap; 人脈 is a common N2-level word, though にんみゃく may tempt briefly."],"21002":[1,"賢い is basic vocabulary; するどい fits the context of 的確 but is clearly a different word."],"21003":[2,"顕著 is a standard N1 word; the trap is voicing and ちょ vs しょ, and げんちょ may mislead learners who associate 顕 with げん."],"21004":[3,"多岐 is less common, and learners must avoid voicing it as たぎ or reading 岐 as じ/し by analogy."],"21005":[3,"廃れる is a native-reading verb for an on'yomi-heavy kanji; くずれる and つぶれる are plausible guesses from meaning."],"21006":[2,"相場 is familiar from finance contexts; the あい/そう and ば/じょう choice tempts only learners who guess from components."],"21007":[2,"生活の基盤を築く is a set collocation; 根拠 and 根源 share the foundation sense but don't pair with 築く or 生活."],"21008":[2,"すんなり contrasts with 難航 for smooth resolution; other mimetics clearly mean enraptured, fluffy, or secretly."],"21009":[1,"見かける for catching sight of someone is common; the other compounds clearly mean postpone, overlook, or fail to recognize."],"21010":[3,"不安を一掃する is the needed collocation; 追放 and 削除 both mean removal, so knowing which takes abstract feelings decides it."],"21011":[2,"味が染みる is a common cooking phrase; 溶けて may tempt since simmered vegetables soften, but it doesn't take 味 as subject."],"21012":[2,"愛着 for attachment to a long-used object is fairly standard; 心情 and 好感 are near but don't fit 捨てられない."],"21013":[1,"経営のノウハウ is a familiar loanword collocation; ベテラン and データベース are obviously off."],"21014":[3,"かねがね is a formal, less familiar adverb meaning for a long time; ぜひ is tempting given the wish to meet."],"21015":[2,"故意に is standard legal or news vocabulary; うっかり is its antonym, so the contrast helps."],"21016":[1,"おわびする is common humble language for apologizing; the distractors are clearly different acts."],"21017":[3,"意気込み means eagerness or drive; 自信 tempts because strong words suggest confidence, but the nuance is motivation (意欲)."],"21018":[2,"おびえる means to be frightened; 焦る and 悩む are emotional states that may briefly tempt."],"21019":[2,"安堵 maps to ほっとする; すっとする (feeling refreshed) is the closest mimetic lure."],"21020":[3,"Option 4 tempts since the park becomes quiet at night, but 閑静 describes a place's settled quiet character, not a temporary change."],"21021":[2,"たやすい means easy to do and modifies actions, as in たやすく解決; the misuses swap in 簡単 or 気楽 senses."],"21022":[2,"察する means sensing feelings or circumstances; option 2's prediction sense may briefly tempt, but the empathy usage is clear."],"21023":[3,"内訳 means an itemized breakdown of a sum; 栄養の内訳 sounds plausible, but the word applies to costs or totals, not balance."],"21024":[2,"食い違う for conflicting testimonies is the standard usage; the physical-mismatch misuses with keys and sandals are fairly obvious."],"21025":[3,"過密 applies to schedules or population density; option 4's densely blooming flowers is a plausible-looking misuse of density."],"21026":[3,"～をよそに (ignoring, unconcerned with) is core N1 grammar; 除いて is tempting for learners reading it as setting aside the crowd."],"21027":[3,"Needs the pattern masu-stem + もしないで; 読もう and 読んで look possible to learners unfamiliar with the emphatic construction."],"21028":[3,"Requires knowing もっとも as a conjunction adding a caveat; あるいは and 要するに could seem to connect clauses loosely."],"21029":[4,"Hinges on the uncommon honorific ～ておいでになる for ～ている; the humble forms まいる and 申し上げる tempt but wrongly target the elder."],"21030":[2,"～に越したことはない is a well-known N2/N1 pattern, and the following が, それよりも contrast points straight to it."],"21031":[4,"Fine distinction among 次第 variants: only 次第では gives the depending-on-outcome possibility sense; plain 次第 and 次第に are close lures."],"21032":[3,"Requires passive 知られる plus ～ては困る; 知らなくては looks grammatical but reverses who knows the information."],"21033":[3,"～ばいいというものではない is the needed rebuttal pattern; でしかない tempts but contradicts the author's point that time alone is insufficient."],"21034":[3,"Requires なる with 明らかに (the structure becomes clear) and the objective written ものと思われる; する options fail on transitivity."],"21035":[3,"Needs the humble announcement ～させてもらおうかと思って; 辞めさせたら sounds causative and 辞めてしまったのか misplaces tense."],"21036":[3,"Must chain the cause clause into ～ことに由来する; the main trap is placing 由来する last versus after 状態になることに."],"21037":[3,"仕事に夢中になりすぎる must modify 私に, and 本当に大切なものは何なのか must precede 気づかせてくれる; few orders are grammatical once this is seen."],"21038":[3,"Must build 疑いがあるなどと報じられたことに対し before 事実とは全く異なり; the long noun-modifying chain makes several orders seem possible."],"21039":[4,"Hinges on the less familiar ～てのことだ (it was done because) plus hearsay という; learners rarely know して+の+ことだ as a unit."],"21040":[3,"Requires ～だけで…ほど…ない; placing ほど right after つける is the key, though だけで vs ほど order may confuse."],"21041":[3,"Needs the essay's turn: ところがである signals the cat breaking the manual, and 認識させられる出来事だった vs 認識させられたことがある is a subtle aspect choice."],"21046":[2,"A short passage that states 待つ is important outright; option 1 about free exchange may briefly tempt."],"21047":[2,"A short notice; option 3 tempts with the 24-hour detail, but the key news is online booking after in-person registration."],"21048":[2,"The passage explicitly rejects option 2's approach and calls for co-creating shared values; abstract wording but a direct match."],"21049":[2,"A short passage whose point, that the ordinary viewpoint is needed to judge the special, is stated directly; distractors reverse or overstate it."],"21050":[3,"Must summarize several rhetorical questions as one puzzle about the idea of taming a feared predator; option 4 misreads the hunting point."],"21051":[2,"The text says 群れの中での順位が低く directly; 群れから追い出された is the only real lure."],"21052":[2,"The passage explicitly says they approached humans to scavenge leftovers; options 3 and 4 restate the theory the author rejects."],"21053":[3,"Must abstract three examples into seeking attractive points in adults; option 4 lures with one example that is contrary to the main idea."],"21054":[2,"The text equates unattractive adults with having no future; option 2 about confidence is close but less faithful."],"21055":[4,"Options 2 and 4 both use ベテランの子ども; 2 adds guiding children, which overstates the author's call to simply show how a veteran child acts."],"21056":[2,"The before-and-after contrast of avoiding reporters and now pursuing media strategies is explicit; distractors invent trust or reversed roles."],"21057":[3,"Must infer from the press relying on press releases that it relays scientists' info as is; option 4's lack of understanding is a plausible lure."],"21058":[3,"Main point is that journalism must decide content independently; option 2 is tempting but makes scientists the subject who should change."],"21059":[3,"Must map うるおいややすらぎ to calming people; option 1 echoes the opening line about trees rarely being noticed."],"21060":[2,"The referent of それ synthesizes local vegetation, history, and daily life; options 3 and 4 each grab only a single element."],"21061":[3,"Option 4 tempts by stressing shared spaces, but the author wants both private and shared parts beautiful, i.e., harmony with the whole."],"21062":[3,"The concluding line ties 愛でる to a good town; options 3 and 4 reuse passage elements (care, seasonal change) in distorted causal claims."],"21063":[3,"Must pick the specific benefit each text stresses; option 1 tempts with B's 人間性, but its A half about mutual acceptance is off."],"21064":[2,"A stresses listening while B urges speaking first; option 1 tempts only if B's point about the other person opening up is misread."],"21065":[3,"Must link そうした人 to the craftsmen's 経験則によって裏付けられた確かな情報; option 4 (watching their work) and option 1 (confirming one's own method) are plausible surface readings."],"21066":[3,"Requires synthesizing two paragraphs on pencil drawings showing revision history and the drafter's personality; option 4 is tempting because it echoes 感情が入っている but wrongly adds 読み取りにくい."],"21067":[3,"Answer paraphrases リスクの所在が見えにくくなった; option 3 about 経験則 is tempting since the text says old rules of thumb struggle, but it never says they are unnecessary."],"21068":[4,"Main-idea question over an abstract essay; option 1 (avoid risk through 経験則) and option 3 (preserve tradition) are close, while the conclusion 手の行き場を考えるべき points to re-recognizing hand work's value."],"21069":[2,"Requires checking the table for 貸出可 and noticing the 5-day wait for 紹介状 rules out options 2 and 4; Nagashima is the only lending member library."],"21070":[2,"Straightforward scan of the notices: 本学図書館内での閲覧に限ります matches option 4, and the other options contradict explicit figures (5 items, full shipping cost, own library site)."],"22001":[2,"莫大 is a standard N1 reading; the only trap is voicing (ばくたい) or the alternate 莫 reading まく, which learners rarely confuse."],"22002":[2,"携わる is a common N1/N2 verb; distractors さわる, いたわる, いつわる are similar-sounding but clearly different words."],"22003":[1,"励む (はげむ) is basic N2 vocabulary; 挑む and 臨む distractors fit the context semantically but not the kanji."],"22004":[1,"改革 かいかく is a common N3-level word; voiced distractors are easily rejected."],"22005":[2,"過疎化 かそか is a familiar news word; the trap is confusing 疎 with 速/族 (かそく, かぞく)."],"22006":[2,"相場 そうば is a jukujikun-style mixed reading; あいば may tempt briefly, but the word is common in N2 contexts."],"22007":[3,"Four -やか adjectives look alike; おだやか is tempting, but only ゆるやか collocates with gradual economic recovery."],"22008":[3,"Requires knowing 控える in the sense of having an upcoming event (受験を控える); the other -える verbs are clearly mismatched."],"22009":[1,"Basic loanword: a PC that フリーズする needs repair; ウイルス cannot take しちゃって as a verb here."],"22010":[2,"動植物の絶滅 is a fixed collocation; 滅亡 is the tempting near-synonym but applies to nations or civilizations."],"22011":[2,"すんなり (smoothly, without trouble) fits 迷わず着いた; the other mimetic words describe mood, weight loss, or softness."],"22012":[1,"電話でお問い合わせください is a stock business phrase; the other honorific forms do not fit the meaning."],"22013":[2,"～のことだから expects a trait explaining success; only 賢い gives a positive reason, so the distractors are easily rejected."],"22014":[2,"コメント maps to 意見; 評論 is the only mild trap since it implies formal criticism rather than casual feedback."],"22015":[1,"過程 = プロセス is a direct loanword equivalence; the other katakana options are unrelated."],"22016":[2,"おのおの means each person (各自); 互いに and グループごとに may briefly tempt learners unsure of the word."],"22017":[1,"わざと = 故意に is a well-known pair; the other adverbs are unrelated in meaning."],"22018":[2,"完全に忘れる = すっかり忘れる; うっかり is the tempting distractor because it also co-occurs with forgetting but means carelessly."],"22019":[2,"突如として = いきなり; ひそかに and どうりで are clearly different, so only a learner unfamiliar with 突如 would hesitate."],"22020":[3,"Must know 滑らか applies to texture (口当たり) rather than smooth operation or easy use, where スムーズに or 簡単に are natural; options 3 and 4 look plausible."],"22021":[3,"よそよそしい means cold and distant; option 3 is a tempting misreading as polite, and option 1 confuses it with とげとげしい."],"22022":[3,"滞りなく is the idiomatic usage; option 2 (ダイヤが滞る) and option 4 (在庫が滞る) sound plausible since 滞る means stagnate, requiring collocation knowledge."],"22023":[4,"察する means intuit someone's feelings; option 2 (先輩が察してくれる) is very tempting, as the error lies in the object 未熟なところ, which needs 補う instead."],"22024":[4,"若干 is used for quantities, not actions or degree of injury; options 2–4 all sound natural to learners who equate it with 少し, so the distinction is subtle."],"22025":[2,"怠る means neglect a duty; 水やりを怠る is the textbook usage, and the other sentences misuse it in obvious ways."],"22026":[2,"Context of an eruption demands obligation; the three distractors all mean 'need not' or 'may', so ねばならない stands out."],"22027":[2,"Requires the pattern ます-stem + もしないで; learners who know the construction pick 読み immediately."],"22028":[3,"といったところだ for rough estimates is a core N1 pattern; というわけ may tempt but does not express approximation."],"22029":[3,"Requires choosing the correct humble request お聞かせ願えますか; option 2 wrongly uses humble 申し上げる for the listener's action, a common keigo trap."],"22030":[3,"Needs the formal causal ゆえに; べく and ごとく are N1 patterns that may tempt, but neither fits a reason clause."],"22031":[3,"Must choose the present-tense negative inference 間に合わなさそう; option 2 (なかった past) is tempting but tense makes it wrong for a future-oriented message."],"22032":[2,"～ようがない for impossibility follows from 連絡が取れなくて; the other options are ungrammatical (伝わない, 伝えば) or wrong in meaning."],"22033":[3,"Distinguishing ます-stem + 次第 (as soon as) from 次第に (gradually) and 次第では (depending on) requires precise knowledge of the forms."],"22034":[3,"～たところで (even if, it is useless) fits 時間の無駄; ～ただけに may tempt learners, but it implies a fitting result."],"22035":[3,"健康あっての is a set N1 pattern; ならではの is the tempting distractor since both attach to nouns and sound positive."],"22036":[2,"べく must follow かける, and 様々な must precede 取り組みが, so only one order is grammatical."],"22037":[2,"The fixed pattern AもさることながらBも forces the order; the rest falls into place from が and で."],"22038":[3,"Several fragments chain plausibly; the solver must see 経済的に苦しんでいる modifying 人々 with 増えつつあり ending the first clause."],"22039":[3,"Must place 記者会見でさえ right after する and build 自分には責任がないと言わんばかりの; と言わんばかり is an advanced pattern, but the order is fairly constrained."],"22040":[3,"を契機に must attach to 遠隔医療, then 通信インフラが整備され precedes 医療費増加問題の; the logic of cause before outcome takes some care."],"22041":[2,"Light, conversational blog text; ～わけにもいかず and ～からでしょうか are the only real grammar points and the other options clash with the context."],"22046":[3,"Option 1 is tempting as a general ideal coach, but the author explicitly defines the ideal as giving 新しい価値観 plus helping do the obvious properly."],"22047":[2,"The notice explicitly says 時間の多少のズレが生じる; the other options contradict the 9 a.m.–1 p.m. schedule or invent motives."],"22048":[2,"The passage states 行政主導から民間主導への転換; option 4 is mildly tempting but misreads 海外でも知られる著名人 as foreign celebrities."],"22049":[2,"Main point is the public opening after 54 years; option 3 is a trap that changes 緩やかに to 急に."],"22050":[2,"The garbage-raiding and intimidation reports directly follow the underline; the other options are unsupported by the text."],"22051":[2,"The research results on high-density brain cells explain the claim; option 4 is a supporting detail but not the stated reason."],"22052":[3,"Must infer that 霊長類 implies high intelligence and learning ability; option 1 (play) is tempting because play is also discussed as a product of intelligence."],"22053":[3,"Must apply 'like produces like' to a new example; カツ丼 to 勝つ is a pun-based charm that fits, while omikuji and fortune-tellers are generic luck."],"22054":[3,"Requires resolving そうではない as denying that the nation lacks new 構想力; options 1 and 2 restate what the author criticizes."],"22055":[3,"The author's skepticism is expressed through irony (戸惑い, 何かのまじないか); option 1 is tempting because the author nominally congratulates the locals."],"22056":[3,"Esoteric passage on 密教; the answer paraphrases 小宇宙を識ることは宇宙を知ること, while options 2 and 3 garble the three-realm description."],"22057":[4,"Abstract definition question; options 1 and 3 restate partial descriptions (天と地の間を満たす, 目に見えない), and the text even says 気 is in matter too, making option 3 a close trap."],"22058":[4,"Option 2 is tempting as it echoes the author's speculation, but 3 is the safer inference from the claim that the surface body alone misses human essence; this distinction is subtle."],"22059":[3,"Must infer the doctor's consideration from だからこそ: summer outings were impossible, so a New Year outing was arranged; option 1 wrongly claims recovery."],"22060":[5,"Option 2 (fear of a shouting aunt) matches 怖くてならなかった, so the keyed answer 見苦しかった is counterintuitive; only いつも in option 2 disqualifies it, a fine distinction most readers miss."],"22061":[3,"こんな状態 refers to the frightening 鬼払い outbursts; the vague answer 異変がおきている must be chosen over options contradicted by the text."],"22062":[3,"Must combine the ruined Red-and-White show with the aunt's changed behavior; option 2 (heartache over illness) is plausible but misses the narrator's resentment."],"22063":[2,"Both passages define the method as using influential people; option 1 appears only in B and option 2 only in A, so they are easy to eliminate."],"22064":[3,"Requires matching each benefit to the correct passage; option 1 swaps the details between A and B, a typical attribution trap."],"22065":[2,"The sentence after the underline names 派遣切りや雇い止め; the other options draw on later, unrelated parts of the editorial."],"22066":[2,"The text states 解雇を避ける狙い directly after the underline; option 2 misuses the detail about non-insured workers."],"22067":[2,"The text lists 助成金 among the measures companies should use; the other options are not mentioned as company duties."],"22068":[3,"Long editorial; option 1 (review the employment system) is plausible, but the closing paragraphs stress 企業の社会的責任 to protect non-regular workers."],"22069":[2,"The notice explicitly lists the 反対する場合 rule (data and counterexamples); option 4's 参考文献で徹底的に批判 sounds similar but misstates the method."],"22070":[2,"Option 2 restates the bullet about 修士論文の一部; option 3 is the trap, since the notice says おおよそ準拠, not 必ず守る."],"23001":[3,"由緒 uses the irregular reading ゆい for 由, so learners who default to ゆう pick ゆうしょ; the long-vowel variants add confusion."],"23002":[3,"暴 must be read ばく rather than the more familiar ぼう, so ぼうろ is a natural wrong guess for 暴露."],"23003":[2,"Knowing 悲願 is ひがん is common; the only trap is the voiced/unvoiced contrast with ひかん."],"23004":[3,"寛ぐ is a less common kanji spelling of the everyday verb くつろぐ; the other options are unrelated verbs, which makes it easier once recognized."],"23005":[2,"とぼしい is standard vocabulary; まずしい tempts because it is close in meaning, but it is written 貧しい."],"23006":[2,"覆う is common N2 vocabulary, and the other verb readings have no link to 覆."],"23007":[3,"It depends on the fixed collocation 猛威を振るう; 流行 and 脅威 fit the topic of flu but do not combine with を振るう."],"23008":[3,"著しい成長 is the collocation; 甚だしい is a close near-synonym that tempts but is used for negative degree."],"23009":[3,"ノルマがきつい (an imposed quota) is the natural phrase; タスク is a plausible near-synonym that tempts learners."],"23010":[1,"In context, こっそり (secretly) is obvious from 親にばれないように; the other adverbs plainly do not fit."],"23011":[5,"真相を究明 and 真相を解明 are both natural collocations; choosing 究明 hinges on the fine nuance of thorough investigation, so 解明 is defensible."],"23012":[3,"寂しさを紛らわす is the set expression; ごまかす tempts because it also means masking something, but it does not take a feeling as its object."],"23013":[3,"ひいては (and by extension) is the answer; しいては is a deliberate trap based on a common misspelling."],"23014":[2,"くたくた for exhaustion is well known; the other mimetic words have no link to tiredness."],"23015":[2,"しんとなる for sudden silence; かっと and むっと relate to anger, which suits the scolding scene but not 静まり返る."],"23016":[2,"着々と corresponds to 順調に; 充実に is ungrammatical and the others are clearly off."],"23017":[4,"いきさつ means circumstances or a sequence of events; なりゆき is a close near-synonym that tempts, and the line between it and 過程 is subtle."],"23018":[2,"案の定 means 予想通り; 予定通り tempts briefly because it looks similar on the surface."],"23019":[3,"つぶさに is a less frequent literary adverb; learners must know it means 詳細に and not merely はっきりと."],"23020":[4,"Option 2's 侮蔑してはいけない sounds nearly grammatical, since 軽蔑 is a close relative; you must know 侮蔑 mainly appears as 侮蔑的な言葉."],"23021":[2,"鮮やかな色 is the standard use; the distractors misuse it for personality, stories and freshness, which are fairly easy to reject."],"23022":[2,"打ち込む for devotion to work is familiar; option 3 tempts because it echoes 打ち上げる, used for fireworks."],"23023":[2,"質素な暮らし is a textbook collocation, and the distractors (poor children, simple questions) are fairly clearly misused."],"23024":[1,"充実した生活 is very common; every distractor uses the ungrammatical 充実に/充実な form."],"23025":[3,"目安 must be told apart from 目標, 頼り and 手本, and all four sentences look reasonable at a glance."],"23026":[2,"Requires the humble 伺う for asking; お聞きになる is the honorific form and is wrong for the speaker's own action."],"23027":[2,"余儀なくされる is a well-known N1 pattern for being forced to act, and it clearly fits the forced pay cut."],"23028":[3,"とあって gives the special circumstance that explains the rush of orders; あっての and とはいえ are plausible-looking N1 patterns."],"23029":[4,"Telling the colloquial nuance of させてもらいたいぐらい from the other conversational endings requires a feel for spoken register and degree expressions."],"23030":[3,"The colloquial といったらありゃしない (extremely) is needed; きらいがある tempts but marks a bad tendency, not the speaker's strong feeling."],"23031":[3,"見るに見かねて (unable to stand by) fits the act of giving up a seat; うってかわって tempts as a contrast connector."],"23032":[3,"Requires the literary pattern 想像するだに (even imagining it); のあまり fits emotionally but does not attach to 想像 here."],"23033":[2,"にて as a formal で is common in announcements; とて and たりとて are clearly out of place."],"23034":[3,"ガイドラインに即して (in line with) is needed; にして and にいたって are plausible-looking formal patterns."],"23035":[3,"にかこつけて (using something as a pretext) fits the suspicion of improper hospitality; を踏まえて is grammatical but has the wrong meaning."],"23036":[2,"今年初めて減少に転じる見込みだ follows naturally, and the final slot before という clearly needs 見込みだ."],"23037":[3,"The four phrases must form a chain of custom, then new year, then purpose clause; placing 初詣にいくべく just before 神社 depends on knowing べく."],"23038":[2,"AはおろかBさえ is a well-known frame, so 声を出すことは then おろか then 目をそむけること falls into place."],"23039":[2,"Once you see 大手には及ばない, にしても and then それなりに整っている follow, and few other orders make sense."],"23040":[4,"ならではの could also go before 職人の手によって作り上げられた, so more than one order looks grammatical before you notice that 食材や must pair with 品々."],"23041":[2,"Clear expository logic; 語った途端に and それに対して are signposted by 消えてしまう and the contrast between pictures and speech."],"23046":[2,"Short passage with a clear conclusion; option 3 tempts only if you miss that the author says かなりの部分, not すべて."],"23047":[3,"The main point comes after しかしながら; option 1 restates a reason given earlier, which makes it a plausible distractor."],"23048":[3,"Option 4 gives the literal definition from the passage and tempts, but the question asks about the added negative connotation (option 2)."],"23049":[2,"The passage glosses 投資 as 日々の一つ一つの行動 in the very next sentence."],"23050":[3,"Home circumstances are listed later as a reason for absence, not for the increase, so readers must separate the two lists."],"23051":[4,"The answer hinges on the tiny phrase いじめを除く友人関係: bullying is excluded from the statistics, which is easy to miss."],"23052":[4,"全員担任制 is given only as one example of the effort; picking the broader 一人一人に目を配れる over option 1 needs careful inference."],"23053":[3,"The reason for the concern is spread across later paragraphs about reading between the lines and communication; options 1 and 4 are plausible but unsupported."],"23054":[4,"The old idea of 国語 is never stated outright: the new 論理国語 overturns a subject that, through literature, built 思考力や表現力. 想像力 (option 4) is only one of the things the author later credits to 文学, so it is a near-miss rather than the concept itself."],"23055":[3,"Option 2 matches the 法令やガイドライン sentence, which describes practical logic and is contrasted with literature."],"23056":[2,"The answer paraphrases the opening sentence about 補助金, and the distractors misattribute details."],"23057":[3,"Options 1 and 2 swap the US and EU targets as traps; the key oddly picks a Japanese policy, which can confuse careful readers."],"23058":[3,"Cost tempts as mentioned because of the 6600億円 figure, but that is subsidy money, not battery cost."],"23059":[2,"こうした問題 points back to the first paragraph's difficulty getting information, and option 4 paraphrases it closely."],"23060":[2,"The touch-based hazard maps and workshops are described directly; the distractors invent details not in the text."],"23061":[4,"The 課題 is given right after the underline: a survey found nearly half of visually impaired people did not know the hazard map, i.e. 防災・避難意識 is still low. Option 3 tempts, but the text says some municipalities have not prepared individual plans, not that the plans are hard to make."],"23062":[2,"The conclusion is stated in the final paragraph; option 1 is a supporting detail, not the main claim."],"23063":[3,"B mentions the computer only in passing; option 1 applies to A alone and option 3 is a question B raises, not a claim."],"23064":[3,"You must contrast A's focus on usage environments with B's focus on interaction; option 2 mixes in a detail from A."],"23065":[3,"The passage is abstract and philosophical, but the answer is lifted from the phrase 曖昧で非能率的なもの right after ①."],"23066":[4,"Linking ディジタル的世界 to 時は金なり and time efficiency spans paragraphs; option 3's digital-watch detail is a tempting literal pick."],"23067":[3,"夢を奪う must be linked to 想像力 from the previous sentences; option 2 tempts with the later mention of play being taken away."],"23068":[4,"Option 3 echoes the explicit このまま放置していい法はない, but the overarching claim is about recovering analog, imaginative and many-sided thinking."],"23069":[3,"You must cross-check weekdays, the fire-extinguisher course and prior registration; option 2 is close but names the wrong course and adds an unsupported step."],"23070":[2,"Option 1 tempts with 小学生, but the notice says participants from elementary-school age up; option 2 restates the schedule and registration rules."],"24001":[1,"猛烈 is read もうれつ with a regular on-reading; the other options are obvious misreadings."],"24002":[2,"潤す is read うるおす; ぬらす tempts because its meaning is close."],"24003":[2,"繁殖 is read はんしょく; the only traps are the 殖/直 confusion and voicing."],"24004":[2,"担う is read になう, which is common N2 vocabulary; まかなう is a near-sounding trap."],"24005":[1,"感染 (かんせん) is everyday vocabulary, especially in a virus context."],"24006":[2,"潔く is read いさぎよく; きよく tempts by analogy with 清く."],"24007":[1,"社員のモチベーションを向上させる is a very common phrase, and the other loanwords clearly do not fit."],"24008":[2,"It depends on the idiom 目がくらむ (blinded by money); the distractors do not form idioms with 目が in this sense."],"24009":[2,"油断は禁物 is a fixed expression; 当然 is grammatical but contradicts いくら～としても."],"24010":[2,"Needs 掲載 for publication in a magazine; 記載 tempts as a near-synonym for writing something down."],"24011":[3,"とうとい命 is the collocation; おびただしい tempts because it suggests a large number, but たくさんの already says that."],"24012":[2,"つくづく思う is a set collocation; かねがね (for a long time) tempts briefly but does not suit this sudden realization."],"24013":[3,"Requires the N1 verb 滞る in the set phrase 滞ることなく; distractors つかさどる and そなわる are also N1 verbs, so it needs real vocabulary knowledge."],"24014":[3,"ほのめかす means to hint, matching におわせる; あきらかにした tempts learners who know it relates to revealing intentions but miss the indirectness."],"24015":[2,"物好き is a known N2/N1 word meaning eccentric; 釣りが好きだ is a literal-reading trap but the context makes 変わっている clear."],"24016":[2,"歴然 is fairly common; the main trap is あきらかにした, a transitive verb that does not fit the stative meaning, while はっきりしていた fits cleanly."],"24017":[1,"朗報 is a common news word, and the distractors 心配事, 気がかり and 手がかり are clearly unrelated to good news."],"24018":[2,"極力 meaning as much as possible is standard; the distractors 明確に, じっくりと and しかたなく do not fit 避ける in this context."],"24019":[4,"全うする implies carrying a duty through to the end, so 完了する is correct, but 実行する is a very close near-synonym that many learners pick."],"24020":[3,"Options 2 and 3 misuse 先駆けて where 先立って fits, a close collocational confusion; only option 1 has 'ahead of other companies'."],"24021":[3,"Requires telling 映える (look striking) apart from 映る/撮る; option 4 (鏡に映えた) is a tempting mix-up with 映った."],"24022":[4,"忖度 is a less common word; option 2 (guessing consumer opinion) is tempting because 忖度 means inferring others' wishes, but a survey states opinions directly."],"24023":[3,"Distractors 1 and 4 call for 危うく or あやうく〜ところだった, a classic confusion with かろうじて (barely managing); you need the nuance to see it."],"24024":[2,"互角に戦う is a set collocation; the other options misuse it for shapes, thinking ability and margins of defeat, and are easy to rule out."],"24025":[2,"リーク is a familiar loanword for leaking information; option 4 (publicly announcing) and option 3 (stored instantly) are fairly easy to reject."],"24026":[3,"〜を控えて means 'with X approaching'; あたって is tempting but needs に (にあたって), and あいまって needs と."],"24027":[3,"Needs the wish pattern 〜ないものかと考える; ものだ and ものを look grammatical at a glance but do not express a wish before と考える."],"24028":[3,"をよそに means 'contrary to/ignoring', and pairing it with 予想 is unusual; もとに can look plausible to learners who only skim the meaning."],"24029":[3,"Requires choosing においてさえ (even in) over こそ and the に対して forms; the concessive 'even in the modern era' logic decides it."],"24030":[2,"を余儀なくされた fits 工場の稼働停止 directly; the distractors の至り, にかたくない and にたえない attach to unrelated nouns and are easy to reject."],"24031":[2,"ゆえに (because of) is the only causal option; としても, からには and といえば clearly break the logic of the sentence."],"24032":[4,"べきところを versus べきところに is a fine particle distinction; the sentence contrasts what should have happened with what did, which calls for を."],"24033":[3,"Learners must spot that ておいでになる is the honorific of ている for the elderly subject; the other three options are humble forms or 差し上げる."],"24034":[1,"どうやら〜ようだ is a basic co-occurrence pattern, and 仮に, 必ずしも and くれぐれも clearly do not match ようだ."],"24035":[3,"〜ないとも限らない (it may well happen) fits the speaker's hedged hope; 立つまでだ and 立ってやまない look plausible but clash in meaning."],"24036":[2,"The order 原因はともかく上司への報告すらしなかった follows easily from はともかく attaching to 原因 and すら needing a verb after it."],"24037":[2,"労働条件の改善なくしてあり得ない is fixed by の+noun and the なくして〜ない pattern, leaving few other workable orders."],"24038":[3,"Both 何かしらの譲れないこだわり and 譲れない何かしらのこだわり sound possible, so placing the starred 譲れない needs a feel for natural modifier order."],"24039":[2,"ともなると must follow 海外移住, and ことにもなりかねない must precede ので, which leaves essentially one order."],"24040":[3,"Four long chunks; the reader must see that 日本酒に興味のある modifies 私としては and that からには comes before the result clause 味わわずに."],"24041":[4,"視線 must be inferred from the argument about looking into the lens, and 変えないわけではない vs 変えないものでもない is a very fine nuance."],"24046":[2,"Short passage whose conclusion is stated outright in the last sentence (整える必要がある); option 2 contradicts the text."],"24047":[3,"Option 3 is true to the passage but secondary; picking the main point means seeing that the newspaper's breadth (広さ) is the core claim."],"24048":[3,"Option 4 (talent standing out in many fields) is tempting, but the passage stresses flexible, problem-finding ability, which matches option 3."],"24049":[4,"The answer is counterintuitive: the author says things gained through hard work are not dreams, so option 3 (the usual view) is a strong trap."],"24050":[2,"横文字カタカナ氾濫 maps directly to heavy use of loanwords; the other options add claims the passage never makes."],"24051":[3,"Option 3 describes a related contradiction from the earlier paragraph; the underline itself refers to enjoying seasonality through foreign products."],"24052":[4,"The author never says tradition is disappearing (crowds still go to 初詣). The thrust is the contradiction: Japanese prize tradition yet take up foreign customs without resistance, even sensing the season through imported food, which the author calls 本末転倒, i.e. hard to make sense of."],"24053":[2,"The underline directly follows 暴力と言論とは対立的なもの, so 'completely different' is easy to find; option 1 is a common-sense trap."],"24054":[2,"このこと refers back to violence as communication in the previous paragraph, and the distractors are clearly broader or unsupported."],"24055":[3,"Option 1 (don't judge violence by the act alone) sounds plausible, but the thesis stated early is that violence and speech share a common nature."],"24056":[3,"A NOT-question that means sorting textbook history from the author's alternative view; option 2 uses the 'hints everywhere' line from the opposing paragraph."],"24057":[3,"Option 2 (we who live now make history) borrows the passage's later point about daily life; the direct paraphrase is 無数の人々によって紡がれた."],"24058":[3,"Requires interpreting the aphorism 歴史は細部に宿る through fragmentary records; option 3 (patient, steady study) is a plausible-sounding distractor."],"24059":[2,"The passage ties 稼ぎ to money and work one would rather avoid, while nature is linked to 仕事, so the odd one out is fairly clear."],"24060":[4,"The answer 'work for daily life' is a loose paraphrase of keeping nature, village and life from collapsing; option 3 (fun even without pay) is tempting."],"24061":[3,"The blank needs inference that the ideal is living well through 仕事 alone; option 2 contradicts the negative view of 稼ぎ, but the reasoning is abstract."],"24062":[3,"Since it is the same labor, nature contact and use value are unchanged, so the deciding factor is the lack of 主体性 under subcontracting; options 1 and 2 tempt."],"24063":[3,"Option 4 matches only text A, so the common ground must be narrowed to not fully giving up digital devices, which both texts imply in different ways."],"24064":[3,"The long options each change details; option 2 closely paraphrases A's ふとした瞬間, while 3 and 4 misstate B's diet analogy."],"24065":[4,"Option 1 repeats 射幸心 from the same sentence, and option 3 echoes the media claim; the referent is the broader worry about confusing reality and games."],"24066":[4,"キャラ化 is never defined explicitly; you must infer from the 'real world being lost' framing that it means feeling characters as more real."],"24067":[3,"The reason comes from the next paragraphs on information society; options 3 and 4 focus narrowly on games or escapism and are plausible."],"24068":[3,"The conclusion about reality known only through arbitrarily edited information matches option 1; option 4 is a moralizing trap the author never states."],"24069":[2,"Simple eligibility lookup: non-residents need to work or study in Shinjuku, so option 1 (Tokyo company) is the only mild trap."],"24070":[2,"Information retrieval: magazines cannot be extended and the book post is for closed hours only, so the paper-theater extension rule is easy to confirm."]}/*END*/;
     var DIFF_COLORS = ['#3c9a5f', '#6aa84f', '#c4960f', '#d46a2c', '#b8312f'];
     var DIFF_NAMES = ['やさしい', 'ややかんたん', 'N1標準', 'むずかしい', 'とてもむずかしい'];
-    var P_DIFF = /*PDIFF*/{"ar:hufs-1":[3, "Kawabata's palm-of-the-hand story: short and mostly simple words, but literary and implicit (なんとはなしに, 辱しめる, 後毛を掻き上げる, なにごころないしぐさ); the feelings are never stated, so the meaning must be inferred."],"ar:hufs-2":[2, "A gentle です/ます memoir with dialogue; familiar theme, though plant names (あかざ, えのころぐさ, ひめじょおん) and classical references (枕草子, 牛車, 万葉集) add some new vocabulary."],"ar:hufs-3":[3, "Expository である prose packed with Sino-Japanese religious vocabulary (参詣, 祈願, 成就, 賽銭, 神格, 畏怖, 畏敬, 漠然) and survey figures; the structure is clear, but the kanji load is heavy."],"ar:hufs-4":[5, "Watsuji's prewar philosophical essay: archaic forms (ならぬ, 欲するな, 打たれぬわけにはゆかなかった, 漂うて, 感ずる), rare kanji (強靭, 亭々たる巨幹, 地殻, 鼓吹, 滋養分) and an abstract extended metaphor about roots and learning."],"ar:hufs-6":[3, "Mushanokoji's short play: all dialogue in casual male speech (〜かい, 〜だい, 〜たまえ, 〜とも, 聞こえやしない, 〜たって), idioms (腰をぬかす, 蚊がとまったほどにも思わない, いくじのない) and dated words (白痴, つんぼ, 気違い), but a simple, funny plot with a clear twist."],"ar:hufs-7":[5, "Miki Kiyoshi's prewar philosophical essay: dense written style with archaic forms and kanji (或る, 乃至, 即ち, 何故, 何処, 如く, 飜って, 一再ならず, 動即静, 漂泊), long abstract sentences, and an argument built on fine distinctions (遠さ・近さ, 過程, 観想, 気粉れと真の自由)."],"ar:hufs-5":[2, "Ogawa Mimei's children's tale in a simple であります style and mostly kana; a few older expressions (かたきどうし, 老いぼれる, 案じる, 少佐, うとうと) but an easy-to-follow plot."],"p10052":[2,"Formal email inviting a client to a New Year party; ceremonial keigo (寿ぎ, ご厚情, ご参会, 謝意を表したく) but a simple structure with date, place and RSVP."],"p10007":[2,"Short, humorous childhood memoir about a 'hell' strip of tiles; concrete scene and simple narration, with only a few expressions like もっぱらの定説 and 決死の覚悟."],"p23047":[3,"Short essay on Japanese indirectness and ambiguity; one long multi-clause sentence of reasons, with N1 vocabulary like 慎み, 断定的, 真意を汲み取る, 長けている."],"off-11":[3,"Two-text comparison on toddlers and TV: a pediatric statement with terms like 弊害, 警鐘, 象徴機能 and a parent-sympathetic rebuttal; clear positions but requires comparing viewpoints."],"p202":[2,"Self-help essay on learning from failure with a clear contrast structure (cautious vs reckless people); words like 究明 and 致命的 appear, but the argument is explicit and easy to track."],"p10047":[2,"Textbook-style explanation of two principles of equal opportunity (全員参加, 非差別); clearly signposted structure with examples and repetitive, accessible vocabulary."],"p21047":[1,"Brief city notice about online booking for a sports ground; plain informational style with dates, registration steps and office hours, nothing to infer."],"p219":[2,"Personal essay narrative about the author's son and swimming; casual colloquial tone (ガンガン, 親父) with one long digressive sentence and 自明の理, but concrete and familiar."],"w6d1-3":[2,"Web news article on child poverty in Japan with concrete school examples (エプロン, 三角巾); policy vocabulary (児童手当, 生涯賃金) but clear journalistic structure."],"p10012":[2,"Business how-to on removing a disruptive team member; practical advice in direct style, with a few business terms like 異動を打診 and 正面切って."],"w6d5-3":[2,"Habu's plain, conversational essay on recovering from mistakes using shogi; short polite sentences, familiar vocabulary (挽回, 打開), and an explicitly stated main idea."],"w6d3-2":[2,"Essay on Japan's failure culture and learning from mistakes; repetitive, clearly stated argument with moderate vocabulary (隠蔽, 示唆, 講じる)."],"ft2-9-1":[2,"Light web article on crow intelligence and urban behavior; concrete examples and friendly tone, a few words like 威嚇, 霊長類, 賜物, and species names like ハシブトガラス."],"p24041":[4,"Miura Masashi's cultural essay linking American TV address to Japanese honorific constraints; implicit, stepwise logic, cloze blanks requiring inference, and abstract claims like 語りかけそのものをさえ規定してしまう."],"p10017":[3,"Ogawa's lyrical essay comparing short stories to hidden treasure boxes and novels to seas; vocabulary is plain but the extended metaphor must be followed throughout."],"p10022":[2,"Very short passage claiming the self is connected to nature; abstract idea (個体意識, 錯覚) but stated plainly in few sentences."],"w6d1-2":[3,"Advice on writing criticism by imagining opposing feelings; an extremely long sentence chaining hypothetical inner quotations, plus 是とする and 合点がいく, demands careful parsing."],"p10044":[2,"Popular-science comparison of plant and animal cells using milk-carton vs. plastic-bag analogy; short sentences, concrete imagery, only 細胞壁 and 原形質膜 are technical."],"p206":[2,"Short essay urging people to decide their own lives; plain, direct sentences with modest vocabulary (委ねる, 余地), a single clear point stated outright."],"p20041":[3,"Newspaper column criticizing CM timing on TV; conversational style with katakana emphasis (モンダイ, ハヤリ), words like せこい, さもしい, 感興をそぐ, and cloze blanks needing discourse inference."],"p10057":[2,"Travel package flyer with a price-by-date table and itinerary; dense, fragmented layout requires careful scanning of dates and conditions, though vocabulary is everyday."],"p10018":[3,"Academic explanation of why Meiji-20s women writers emerged; historical names and terms like 啓蒙的, 覚醒, 開明的, 自認, 土壌, but an explicit cause-and-effect structure."],"ft2-12":[3,"Newspaper editorial on protecting non-regular workers during COVID; clear argument but heavy labor-policy vocabulary like 雇い止め, 雇用調整助成金, 資金繰り, 調整弁, 就職氷河期."],"p21046":[2,"Short essay on teachers needing to stay silent and wait; familiar classroom topic with one clear point, a few idioms such as 芽をつみとる and 先取りする."],"p10011":[3,"Essay interpreting the newborn 'angel smile' as a greeting; clear structure, but N1 words 生得的, 顕在化, 痙攣, and the idiom 言い得て妙 appear."],"p204":[3,"Newspaper editorial on convenience-store franchise contracts and antitrust law; specialized terms (独占禁止法, 加盟店, ドミナント戦略, 公取) but short, logically ordered news-style sentences."],"p10042":[3,"Short anecdote-based argument on Terada Torahiko's paradox 学者は馬鹿でなければならない; the path metaphor is clear, but the long final sentence requires careful parsing."],"p10055":[1,"Bus company notice of route abolition with routes, last service date and refund details; information-search format with basic notice vocabulary like 払い戻し and 系統."],"ft2-9-3":[5,"Esoteric-Buddhism passage on micro/macrocosm and 気; dense specialized terms like 密教, 三密, 霊体, 霊界, 幽界, 現象界, 波動, with abstract metaphysical claims hard to parse."],"p217":[2,"Essay by Saito Takashi contrasting answers and questions; plain conversational style with clear contrast (しかし質問は事情が違う) and few difficult words beyond いたしかたない."],"ft2-13":[2,"Course report-assignment instructions for a phonetics seminar; list format with academic terms like 準拠, 先行研究, 反例, but straightforward and requires only locating details."],"p10028":[3,"Ueno's ironic commentary on interior-decor consumerism; idioms like 衣食足って and the recurring ハコ metaphor for housing require inference about class and cost."],"p10029":[2,"Very short, plain explanation of a judge's task; straightforward logic contrasting 主観的な意見 and 客観的な事実 with common vocabulary."],"p208":[3,"Very short aphoristic text by Honda Soichiro; compact reasoning about motive, thought and action, with a 利器/兇器 blade metaphor and old-fashioned kanji like 兇器 and 生れない."],"ft1-9-2":[3,"Mainichi editorial on literature shrinking in high-school Japanese under new curricula; policy terms like 学習指導要領, 論理国語, 呼び水, plus abstract defense of literature."],"off-10":[5,"Dense philosophical essay on learning, using 大風呂敷 and farmer/soil metaphors for 気質 and 教養; heavy figurative reasoning, implicit logic and long passage with abstract claims."],"p10005":[3,"Fairly long (867字) social commentary on the revival of leadership theory; organizational vocabulary (上意下達, 権限委譲, 裁量, がんじがらめ) but a clear step-by-step argument."],"p10053":[2,"Business email announcing a price increase; apologetic formal phrasing (ご賢察の上, 不本意ながら, 所存) is formulaic, and the message itself is short and clear."],"p10003":[3,"Takamura's essay comparing Tokyo and Osaka waterfront access; concrete anecdote, but literary phrasing (大同小異, 嘘か真か, いわく) and place-specific vocabulary like 岸壁, 埠頭."],"p210":[3,"Anthropological passage on the social function of meals; academic vocabulary (付与, 調度, 考案, 逆行) and a dense single long sentence, though the claim itself is clear."],"p212":[1,"Short, plainly worded opinion about Japanese attitudes toward foreigners, with a concrete quote and statistics; everyday vocabulary and an explicit concluding question."],"p203":[4,"Abstract argument about modern freedom and value pluralism; long nested sentences with inserted qualifiers (少なくとも建前上は, まだまだ不十分ではあったとしても) and philosophical terms like 相互承認 and 拠り所."],"ft3-13":[1,"Library usage guide listing registration, lending limits, and return rules; info-search bullet format with practical vocabulary like 貸出, 延長, 返却 and no argument to follow."],"p22047":[2,"Short apartment notice about installing security cameras; formulaic letter keigo such as 拝啓, ご清祥, 何卒 and 存じます, but simple content and list format."],"p20047":[4,"Brief but abstract argument on lying, reason and power between 強者 and 弱者; dense logic reversing a proverb and the claim that apology is a mere 儀式 require inference."],"p10045":[2,"Mukoda Kuniko's humorous travel anecdote about a greedy swan; short narrative sentences, though literary touches like もかくやというほど and 二重人格 irony add slight difficulty."],"p213":[2,"Business apology email about an invoice error; reading requires recognizing keigo set phrases (ご査収, 破棄, お詫びかたがた) but the content is short and concrete."],"off-9-2":[3,"Essay on choosing a home by usefulness over asset value; familiar topic and clear structure, with N1 vocabulary such as 終の住処, 羽目になる, 見当をつけ."],"p218":[3,"Cultural-criticism passage on the concept きもかわ; abstract logical framing (因果関係, 見立て) and the dense phrase 互いに牽引し依存しあって成立 make the conclusion require careful reading."],"off2-9-3":[4,"Opinion column on science journalism becoming scientists' PR; idioms like 沽券にかかわる, うさんくさい, 肝に銘じる and an implicit critical stance across fragmented paragraphs."],"ft1-13":[1,"Simple municipal notice about a fire-safety class with schedule, fees, and application steps; info-search format, short sentences, and everyday vocabulary like 消火器, 避難, 事前申し込み."],"w6d4-2":[3,"Passage summarizing Fukuzawa's rebuttal of the 日本語限界説; layered reported speech, older expressions (輩, 取るにも足らぬ馬鹿を云う者) and tracking whose view is whose."],"p10056":[1,"Part-time job ad with shifts, wages and conditions in table form; terse abbreviations (社保完, 若干名) but purely factual scanning task."],"ft3-12":[3,"Essay on キャラ化 and the eroding sense of reality; long and somewhat abstract, with words like 射幸心, 抜き差しならない, 恣意的, 包囲網, though the argument is clearly paced."],"w6d2-3":[4,"Essay on AI surpassing human ethics; abstract philosophical argument with long nested sentences and hard expressions (人間を人間たらしめる, 存在論的な不安, 侵食)."],"p10016":[2,"Shiroyama's short memoir of no longer relaxing at a Hakone hotel; plain vocabulary and short lines, but the wife's death is only implied via personification."],"p10027":[3,"Psychiatrist's essay on love involving control; abstract topic with vocabulary like 宿命, 無理強い, 罵声, and a pottery-apprentice analogy to follow."],"off2-9-2":[3,"Essay on children watching adults, with conversational but layered reasoning; expressions like わが身をつくろって, 気概, and the metaphor ベテランの子ども need careful reading."],"off-13":[2,"Art contest call for entries with categories, rules, prizes and dates; info-search format with conditions like 未発表 and 制作年は問わない to cross-check, vocabulary mostly plain."],"p10013":[2,"Very short essay using mountain climbing as a metaphor for life; simple sentences, though 思いをはせる and the classical negation おもしろくあるまい need attention."],"p10059":[1,"Online shopping prize campaign page with entry form and dates; simple web-form vocabulary, with only 発送をもって発表にかえさせて頂きます as a set expression."],"p10030":[2,"Short labor-rights commentary contrasting generations; clear structure, with terms like 救済手段 and the coined phrase 知らざるを得ない世代."],"p10034":[3,"Short opinion piece on school textbooks built on an extended food metaphor (アゴ, ハンバーガー); 総ルビ, 素読, 暗誦 and the paradox 満足できるわからなさ need some cultural inference."],"p10010":[4,"Kawakami's essay on bathhouse bodies and selfhood; one very long run-on sentence, idiosyncratic style, and abstract conclusion about 「このわたし」 as 一瞬間 make it hard to parse."],"ar:ronri-1-1":[4,"Kokubun Koichiro's 2,200-character philosophical essay on reading as desire, invoking Plato's Meno paradox, Deleuze, and Eros between ポロス and ペニアー; abstract concepts and quoted classical argumentation."],"p222":[2,"Translated popular-science text on voluntary control of breathing; clear expository sentences with some vocabulary (つかさどる, 部位) and an explicitly stated main point."],"p10058":[1,"Short NPO staff recruitment ad with listed conditions; abbreviations like 昇１賞２, 社保完, 秘密厳守 are the only hurdles in a plain information format."],"p24048":[2,"Short passage on AI replacing 従来の優等生 skills and the meaning of 地頭がいい; familiar topic, explicit つまり/言い換えれば signposting, and light vocabulary."],"w6d3-1":[4,"Art director's idiosyncratic essay on art-based regional revitalization; elliptical, ironic remarks (そんなものでしかないことが美術の誇り), unusual phrases (金太郎飴, 祖霊の願望に伴走, 感幸) and implicit stance."],"p209":[2,"Short business-advice passage on inferiority complex as an energy source; simple repeated keywords (劣等感, 優越感) and a straightforward comparative construction ~ば~ほど."],"p21049":[3,"Very short but paradoxical essay claiming to be both 変な人 and 普通の人; the metaphor 定規を何度も持ち替える and 死守する require interpreting the author's implicit logic."],"p10031":[2,"Concrete anecdote about viewer complaints over an announcer's parka in Vienna; easy narrative, some clothing words (三つ揃い, ヤッケ, いで立ち), with mild irony."],"w6d4-1":[2,"Essay on why AI cannot yet write texts; clear explanatory style with idioms like お手上げ and the coined 一億総作家時代, but a concrete, easy-to-follow argument."],"p10004":[4,"Miyao's essay on おふくろの味 in long, old-fashioned sentences with ironic tone; expressions like しろもの, 似て非なるもの, 甚だ流動的かつ身勝手, ないものねだり."],"p10008":[2,"Nostalgic essay on Showa-40s department store outings; concrete everyday detail, largely hiragana prose, with a few words like よそゆき, めかしこんで, つつましく."],"p10037":[3,"Interpreter's essay linking test formats to logical thinking; colloquial モロに, スルスル mix with 愚見, 嵩張った and a speculative conclusion on 文字依存度 requiring careful reading."],"p10049":[3,"Longer study-skills essay on 内化 and 外化 using abacus and shogi examples; concrete illustrations and clear structure, but length and psychology terms demand sustained attention."],"p211":[2,"Psychology explainer defining 理想自己 and 現実自己 with clear definitions and step-by-step contrast between childhood and adolescence; terms are explained in the text itself."],"ft2-10":[3,"First-person fiction excerpt about a mentally ill aunt's frightening 鬼払い at New Year; narrative with implied illness and expressions like どすの利いた声, まくし立てる, ガキ大将で鳴らす."],"p10043":[2,"Clear expository text on 悪玉疲労 and 善玉疲労 and the shift to mental fatigue; familiar topic, logical sequence, only a few N1 words like 所以 and ひいては."],"p20048":[4,"One-paragraph argument on adolescent stress tolerance with long nested sentences (社会的文脈のなかでいかにして自己を実現させるか) and からにほかならない causal logic; highly compressed academic style."],"p10051":[1,"Short municipal notice of a road closure for construction; straightforward dates, places and contact info with standard polite phrases like 当該 and 賜り."],"p21041":[2,"Light humorous essay by Kitamura about a cat ignoring a pet-care manual; concrete anecdote, short sentences, though colloquial touches like これ見よがしに and dash-marked ellipsis need care."],"p10048":[4,"Philosophical essay claiming language's function is lying; abstract 文学的真実, paradox that truth is told through lies, and wordplay 語る＝騙る require interpretive reading."],"ft3-11":[2,"Two short opinion pieces on digital detox; familiar topic and katakana-heavy vocabulary, though B's diet analogy and rhetorical はたして〜だろうか are loosely argued."],"ft1-11":[3,"Two VR passages: A is plain tech-trend reporting, while B is a philosophical treatment with 対話性, 整合性, 相互作用 and あたかも〜かのように; the abstraction is moderate and clearly explained."],"ft3-9-1":[3,"Cultural critique of Japanese attitudes toward tradition; wry tone with idioms like 一目瞭然, 勝るとも劣らない, 本末転倒, 枕詞, and a loosely ordered list of examples to connect."],"ft3-9-3":[3,"Historian's reflection on history beyond rulers; moderately abstract ideas such as 時間の集合体 and 歴史は細部に宿る, with literary verbs like 紡がれ and 垣間見る, but a clear progression."],"ft3-9-2":[3,"Sociology essay arguing violence can be nonverbal communication; abstract but well-signposted thesis, with harder items like いさめる, 身の潔白, 切腹 and a counterintuitive final reinterpretation."],"w6d1-1":[2,"Business-leadership passage made of short one-line paragraphs on staffing changes; terms like 省人化 and 多能工化 appear, but the cause-and-effect chain is explicit."],"p10024":[2,"Toyama's short explanation of REM sleep sorting memories; concrete warehouse metaphor, simple sentences, and few hard words beyond 自然忘却 and にほかならない."],"off2-9-1":[2,"Popular-science essay arguing wolves approached humans rather than being tamed; clear question-then-answer structure, concrete vocabulary, only a few words like 推察 and 食べ残しをあさる."],"off-12":[4,"Long philosophical essay arguing village people express thought through 作法 rather than text; abstract 思想の表現形式, multi-step reasoning, and critique of modern thought as 君臨する."],"p23049":[3,"Self-help essay on turning inferiority complex into growth, citing Adler's 投資 metaphor; abstract but clear, with phrases like 忌み嫌う, 過言ではない, 裏を返せば."],"p223":[1,"Internal email rescheduling a monthly meeting; short, concrete scheduling details and standard workplace phrases (代理を立てる), with only date/room details to track."],"p10021":[3,"Behavior-analysis passage showing that 'weak will' is circular reasoning (循環論); everyday examples, but the final logical step about relabeling behavior needs careful reading."],"p10054":[2,"Formal apology letter correcting a model number on an invoice; seasonal greeting and keigo (略儀ながら書中にて) are set phrases, with simple concrete content."],"p24046":[2,"Short self-help passage defining willpower; familiar topic with clear contrastive structure, a few N1-ish words like 慢性的 and 衝動的, and an easy main point."],"ft1-10":[3,"Newspaper editorial on disaster support for the visually impaired; concrete examples but dense with N1 vocabulary such as 浮き彫り, 周知, 温度差, 福祉避難所, plus many organization names over 900 characters."],"p10041":[3,"Explains natural vs. sexual selection then extends it to culture; terms like 性選択, コミュニケーション志向 vs コントロール志向 and the analogical leap need some abstraction."],"p207":[1,"Short ryokan notice about renovation work with dates and times; formulaic polite phrases (ご理解、ご協力) and concrete information, minimal inference needed."],"ft1-9-3":[2,"Short NHK news item on battery-factory subsidies; formulaic news phrasing (方針を固めました, 盛り込む方針) and some economic terms like 基幹部品 and 製造基盤, but a concrete, linear structure."],"p10033":[3,"Ikezawa's short essay on why basic words lack etymologies; abstract linguistic point (民間語源説, 基本語彙, タミル語) and a terse, implicit concluding line."],"p10036":[3,"Short essay on hobbyist communities with long flowing sentences (散在して, ひかえめに自慢); the closing metaphor 小さな縦穴を深く掘り続けている must be interpreted."],"p10015":[4,"Terada Torahiko's prewar essay casting the nose as a gatekeeper's hut; dated style (忘れられ勝ち, どうかすると), rare words 胡散臭い, 感官, and sustained metaphor."],"w6d3-3":[3,"Mori Hiroshi essay redefining 手応え through a sharp-blade metaphor; counterintuitive claim that good work feels effortless, requiring the reader to follow the extended metaphor."],"p10039":[3,"Umesao on evolution as result, not purpose; hiragana-heavy style (おもわれる, かんがえかた) and the abstract 目的論的 point, though argument is restated plainly with the brain example."],"p10002":[3,"Essay on undervaluing art education contrasting the USSR and New York with Japan; mostly clear, but N1 words 迂遠, 執拗, and the 両輪 metaphor carry the conclusion."],"p10023":[2,"Short, report-like passage on isolation of 災害弱者 under privacy law; factual tone, a statistic, and terms like 個人情報保護法の施行 and 部局."],"p22048":[3,"NHK news report on revising the Cool Japan strategy; dense bureaucratic vocabulary like 関係省庁, 行政主導, 民間主導, 知的財産戦略本部 in long reported sentences."],"off2-11":[2,"Two short practical texts on small talk, listening and openness; everyday topic, plain advice style and familiar proverb 話し上手は聞き上手, little to infer."],"p23041":[2,"Clear desu/masu explanation of why writing arose from oral tradition; logical step-by-step structure, some vocabulary like 支障, 不慮の死, 伝承, 媒体."],"p216":[2,"Popular-science passage on body size, lifespan and species survival using sauropods; mild terms (代謝, 捕食者, 天敵) and a counterintuitive but explicitly explained point."],"ar:dk-1":[1,"Intermediate reader text explaining sumo in polite です/ます style; concrete facts and simple structure, with only a few idioms like 分がある, 精を出す, 成績いかんでは."],"w6d5-1":[3,"Developmental-psychology text distinguishing shame from guilt; abstract definitions, a long sentence with a parenthetical aside, and words like 隠蔽行為 and 道徳違反."],"p21048":[4,"Very short but dense abstract paragraph on intercultural dialogue, packed with Sino-Japanese terms like 樹立, 方略, 相対化 and 相互的な働きかけ, with no concrete examples."],"ft1-9-1":[3,"Yomiuri editorial on record school non-attendance; statistics plus policy vocabulary like 教育機会確保法, 受け皿, 全員担任制, 風通しのいい, with a balanced two-sided argument."],"p22041":[2,"Casual blog-style essay about a hot summer, pet cats and cooking pork; everyday topic but colloquial ellipsis and words like しのぐ, たらふく, がっつり, 煮豚."],"off2-13":[2,"University library guide to using other universities' collections; info-search format with a table and conditions, requiring attention to details like 紹介状, 複写, 借用 and fees."],"w6d2-2":[2,"Newspaper editorial on youth voter turnout and civic education; topic vocabulary (主権者教育, 学習指導要領, 模擬選挙) but short paragraphs and an explicit thesis."],"p10014":[2,"Kitano's short, colloquial reflection comparing fame to a burning star; brief lines, everyday words, casual endings like たまったもんじゃない; the metaphor is easy to grasp."],"p10032":[2,"Psychology-advice essay on blaming others and self-pity; clear explanatory style, with moderately hard words 自己憐憫, 自尊心, and the 心のアンテナ metaphor."],"p201":[3,"Reflective essay on solitude with abstract framing (二面性, 内面的な成熟) and very long list-like sentences of comma-chained clauses; vocabulary like 読み耽る and 出しゃばる adds N1 load."],"w6d4-3":[2,"Popular-science column on why pigeons bob their heads, ending with a life lesson; concrete topic and clear mechanism description, few hard words (網膜, 滑稽)."],"w7d1-1":[3,"Long (1063字) psychology essay on 友だち親子; concrete examples and dialogue keep it accessible, but 不全感, the ハサミ metaphor, and the ironic 子ども孝行 conclusion require inference."],"p225":[4,"Educational-psychology textbook prose on intrinsic vs extrinsic motivation; dense technical terms (内発的動機づけ, 認知的動機づけ), stiff academic style and the archaic ～たところの construction."],"p10040":[2,"Short, concrete explanation of swimming's physical benefits (buoyancy, joint load, calorie burn); plain expository sentences and common vocabulary with little to infer."],"ft3-10":[3,"Long essay by Uchiyama Takashi on villagers' 稼ぎ vs 仕事 distinction; the concept is concrete but requires following 使用価値 and 主体性 ideas, rural vocabulary like 寄合 and 営林署, and over 1,100 characters."],"p22046":[2,"Short sports memoir on what an ideal coach is; familiar comparison to business bosses and clear conclusion, with mild fragmented sentences like 当たり前を当たり前にやる."],"p10046":[3,"Developmental psychology passage defining 象徴機能 and 見立て play; concrete examples help, but terms like 認知機能, 心的イメージ, 人格の土台 add abstraction."],"p10019":[3,"Shibusawa on Gill's paradox that humans differ from animals by being able to undress; mildly formal phrasing like 人間たる所以, but the argument is restated clearly."],"p24047":[2,"Brief argument for reading print newspapers over the internet; clear metaphor (世界の見取り図) and a neat 深さ/広さ contrast, with only a few harder phrases like 雑然と並置."],"p224":[2,"Short work-philosophy passage contrasting two attitudes to work; words like 生活の糧 and 労役 plus a list of kanji compounds (触発機会, 財成機会), but simple structure."],"ft1-12":[4,"Nakamura Yujiro's abstract critique of digitalized life contrasting 一義的/多義的 and analog/analogy; hard words like 趨勢, 赴くところ, plus formal rhetoric such as いわんや〜していい法はない."],"p220":[2,"Expository definitions of climate mitigation and adaptation policies; technical vocabulary (緩和策, 適応策, 温室効果ガス) but textbook-clear parallel definitions."],"p10020":[2,"Short essay questioning freedom as mere idleness; plain vocabulary, rhetorical questions, and simple examples like 自由時間; only 支配からの解放 is abstract."],"off-9-1":[3,"Scientist contrasts aesthetic 風流 with scientific 抽象化 and 理想化 via the cherry blossom pentagon; abstract concepts are defined with clear examples."],"off2-12":[3,"Long architect's essay contrasting hand-drawn plans with CAD; mostly concrete examples but ends in an abstract claim about 頭から生み出されたものが暴走 and terms like 経験則, まさぐる."],"p10009":[2,"Short argument that medicine is infrastructure for happiness; plain logic built on a familiar water-and-electricity analogy, only mild vocabulary like 異論を唱える and 恩恵."],"p10001":[3,"Short but abstract argument that information is an invisible controlling power; terms like 家父長制度, 美名, 見えざる手, and 主体性 carry the point."],"p22049":[2,"Short news item on Egypt's Bent Pyramid reopening; concrete descriptive content with factual figures, some specialized nouns like 回廊, 石棺, 安置."],"p10026":[2,"Murakami's conversational essay on a novel character's travel motive; long but easy sentences, familiar places, and the main point stated at the end."],"w6d2-1":[3,"Yoro Takeshi essay on urban concentration and rural depopulation; casual tone but implicit logic (一種の必然, スポイト現象) and an elliptical conclusion (すでにおわかりであろう) require inference."],"p214":[3,"Literary-criticism passage arguing that new media enrich novel reading; abstract metaphors (富, 開かれた世界) and a long sentence with an inserted participial clause require careful parsing."],"p10050":[2,"Formal business letter announcing an office move; set phrases (早春の候, ご清栄, 所存, 賜物) are formulaic keigo, while the actual content is simple and concrete."],"p23046":[2,"Short essay by Ohno predicting katakana words will replace kanji compounds but not hiragana basics; clear argument, a few terms like 構成要素, 基礎語, 育まれる."],"p23048":[2,"Short explanation of the word エスニック and its negative nuance; familiar topic, simple contrast structure, words like 漠然, 語感, 劣等."],"p221":[2,"Business email about an out-of-stock product and proposed substitute; formal keigo (お引き立てにあずかり, ご一報) and concrete details that need straightforward scanning."],"p215":[1,"Publisher holiday-closure notice with dates and shipping info; standard business-notice phrasing (誠に勝手ながら, いかんでは) and simple informational content."],"w6d5-2":[3,"Cross-cultural essay on Japanese vs. American decision-making; abstract generalizations with N1 words like 躊躇, 如実, and the idiom 石にかじりついても, but a clear contrast structure."],"p10025":[3,"Sociological passage on why youth turn to volunteer activity; long nested sentences with 衝き動かされて, 馬車馬のように, 享受, ボランタリー, and the paradox 不況の中の豊かさ."],"p10038":[4,"Maruyama Masao on the statute of limitations; legal vocabulary (時効, 債権者, 法理, 時効を中断), ネコババをきめこむ, and one very long nested sentence with an implicit broader meaning."],"ft2-11":[2,"Two short web texts defining influencer marketing; clear expository style, though heavy katakana jargon such as ターゲティング, 効果測定, フォロワー and some marketing terms."],"p10006":[4,"Yoro's essay on why the brain lacks maps of internal organs; anatomical terms (領野, 小彎, 噴門, 幽門) and an extended border-and-headquarters metaphor demand careful reading."],"p10035":[3,"Brief argument on safety policy contrasting 危険の管理 and 危険の排除; abstract terms like 想定外ないし未知 and a conditional long sentence, but logic is clear once read carefully."],"off-9-3":[4,"Abstract essay on how era and environment shape cognition; metaphors like 認識の鋳型 and くり貫いている, words like 茫漠, 漫然, 宿命, and a sustained conceptual argument."],"p20046":[2,"Short passage on the variety of Japanese tableware; plain argument, with the figurative 目で食器も食べている as the main point to grasp."],"ar:dk-2":[2,"Intermediate reader on SNS pros and cons in polite style; familiar topic and clear layout, but idioms such as 気がおけない, 口車にのせられて, 詐称, 漏えい add some N2+ difficulty."],"w7d1-2":[3,"Paired opinion pieces on foreign nurses' Japanese requirements; social-policy vocabulary (参入障壁, 即戦力, 意思の疎通) and hedged stances like 言わざるを得ない must be compared."],"off2-10":[2,"Long but gentle desu/masu essay on street and garden trees in town planning; familiar topic and repetitive structure, with a few words like 植生, 無味乾燥, 愛でる."],"ft2-9-2":[4,"Mainichi front-page column linking Frazer's 類感呪術 to Sapporo's Olympic bid; allusive, ironic argument with words like 縁起かつぎ, 招致, and an implied critique of lacking vision."],"p205":[2,"Chatty, colloquial essay about being pampered by one's mother and marriage, with concrete household examples; spoken style and familiar vocabulary, only mild humor to infer."],"p24049":[2,"Kakuta Mitsuyo's casual personal essay on the word 夢; plain vocabulary and short sentences, though the closing self-explanation and なりふりかまわず need some attention."],"ar:dk-3":[3,"An e-commerce explainer with business vocabulary (主導権を握る, 事前決済, 販売促進, 動向) and idioms like 割を食う and 目を養う; the argument is clear but denser than earlier lessons."],"ar:dk-4":[2,"Familiar topic in plain です/ます style with concrete examples; idioms such as 眉をひそめる, 後ろ指をさされる and the pattern きらいがある add some N2+ difficulty."],"ar:dk-5":[2,"Concrete reportage on anime tourism with clear examples; many proper nouns (境港市, 鷲宮神社, 箱根町) and words like 誘致, 初詣客, 大々的に, あの手この手で are the main hurdles."],"ar:dk-6":[3,"An argumentative piece on employment with economic vocabulary (崩壊, 削減, 非正規, 雇用) and N1 patterns と相まって, を余儀なくされる, にもまして; idioms like 心血を注ぐ and 板につく."],"ar:dk-7":[3,"A social-issues article dense with kanji compounds (多文化共生, 非婚化・晩婚化, 保健福祉家族部, 地方自治体) and statistics; the argument is clear but the vocabulary load is high."]}/*PEND*/;     // reading passages (and the 読解 books), keyed by group / 'p' + id / 'ar:' + reading id
+    var P_DIFF = /*PDIFF*/{"ar:hufs-1":[3, "Kawabata's palm-of-the-hand story: short and mostly simple words, but literary and implicit (なんとはなしに, 辱しめる, 後毛を掻き上げる, なにごころないしぐさ); the feelings are never stated, so the meaning must be inferred."],"ar:hufs-2":[2, "A gentle です/ます memoir with dialogue; familiar theme, though plant names (あかざ, えのころぐさ, ひめじょおん) and classical references (枕草子, 牛車, 万葉集) add some new vocabulary."],"ar:hufs-3":[3, "Expository である prose packed with Sino-Japanese religious vocabulary (参詣, 祈願, 成就, 賽銭, 神格, 畏怖, 畏敬, 漠然) and survey figures; the structure is clear, but the kanji load is heavy."],"ar:hufs-4":[5, "Watsuji's prewar philosophical essay: archaic forms (ならぬ, 欲するな, 打たれぬわけにはゆかなかった, 漂うて, 感ずる), rare kanji (強靭, 亭々たる巨幹, 地殻, 鼓吹, 滋養分) and an abstract extended metaphor about roots and learning."],"ar:hufs-6":[3, "Mushanokoji's short play: all dialogue in casual male speech (〜かい, 〜だい, 〜たまえ, 〜とも, 聞こえやしない, 〜たって), idioms (腰をぬかす, 蚊がとまったほどにも思わない, いくじのない) and dated words (白痴, つんぼ, 気違い), but a simple, funny plot with a clear twist."],"ar:hufs-7":[5, "Miki Kiyoshi's prewar philosophical essay: dense written style with archaic forms and kanji (或る, 乃至, 即ち, 何故, 何処, 如く, 飜って, 一再ならず, 動即静, 漂泊), long abstract sentences, and an argument built on fine distinctions (遠さ・近さ, 過程, 観想, 気粉れと真の自由)."],"ar:hufs-5":[2, "Ogawa Mimei's children's tale in a simple であります style and mostly kana; a few older expressions (かたきどうし, 老いぼれる, 案じる, 少佐, うとうと) but an easy-to-follow plot."],"p10052":[2,"Formal email inviting a client to a New Year party; ceremonial keigo (寿ぎ, ご厚情, ご参会, 謝意を表したく) but a simple structure with date, place and RSVP."],"p10007":[2,"Short, humorous childhood memoir about a 'hell' strip of tiles; concrete scene and simple narration, with only a few expressions like もっぱらの定説 and 決死の覚悟."],"p23047":[3,"Short essay on Japanese indirectness and ambiguity; one long multi-clause sentence of reasons, with N1 vocabulary like 慎み, 断定的, 真意を汲み取る, 長けている."],"off-11":[3,"Two-text comparison on toddlers and TV: a pediatric statement with terms like 弊害, 警鐘, 象徴機能 and a parent-sympathetic rebuttal; clear positions but requires comparing viewpoints."],"p202":[2,"Self-help essay on learning from failure with a clear contrast structure (cautious vs reckless people); words like 究明 and 致命的 appear, but the argument is explicit and easy to track."],"p10047":[2,"Textbook-style explanation of two principles of equal opportunity (全員参加, 非差別); clearly signposted structure with examples and repetitive, accessible vocabulary."],"p21047":[1,"Brief city notice about online booking for a sports ground; plain informational style with dates, registration steps and office hours, nothing to infer."],"p219":[2,"Personal essay narrative about the author's son and swimming; casual colloquial tone (ガンガン, 親父) with one long digressive sentence and 自明の理, but concrete and familiar."],"w6d1-3":[2,"Web news article on child poverty in Japan with concrete school examples (エプロン, 三角巾); policy vocabulary (児童手当, 生涯賃金) but clear journalistic structure."],"p10012":[2,"Business how-to on removing a disruptive team member; practical advice in direct style, with a few business terms like 異動を打診 and 正面切って."],"w6d5-3":[2,"Habu's plain, conversational essay on recovering from mistakes using shogi; short polite sentences, familiar vocabulary (挽回, 打開), and an explicitly stated main idea."],"w6d3-2":[2,"Essay on Japan's failure culture and learning from mistakes; repetitive, clearly stated argument with moderate vocabulary (隠蔽, 示唆, 講じる)."],"ft2-9-1":[2,"Light web article on crow intelligence and urban behavior; concrete examples and friendly tone, a few words like 威嚇, 霊長類, 賜物, and species names like ハシブトガラス."],"p24041":[4,"Miura Masashi's cultural essay linking American TV address to Japanese honorific constraints; implicit, stepwise logic, cloze blanks requiring inference, and abstract claims like 語りかけそのものをさえ規定してしまう."],"p10017":[3,"Ogawa's lyrical essay comparing short stories to hidden treasure boxes and novels to seas; vocabulary is plain but the extended metaphor must be followed throughout."],"p10022":[2,"Very short passage claiming the self is connected to nature; abstract idea (個体意識, 錯覚) but stated plainly in few sentences."],"w6d1-2":[3,"Advice on writing criticism by imagining opposing feelings; an extremely long sentence chaining hypothetical inner quotations, plus 是とする and 合点がいく, demands careful parsing."],"p10044":[2,"Popular-science comparison of plant and animal cells using milk-carton vs. plastic-bag analogy; short sentences, concrete imagery, only 細胞壁 and 原形質膜 are technical."],"p206":[2,"Short essay urging people to decide their own lives; plain, direct sentences with modest vocabulary (委ねる, 余地), a single clear point stated outright."],"p20041":[3,"Newspaper column criticizing CM timing on TV; conversational style with katakana emphasis (モンダイ, ハヤリ), words like せこい, さもしい, 感興をそぐ, and cloze blanks needing discourse inference."],"p10057":[2,"Travel package flyer with a price-by-date table and itinerary; dense, fragmented layout requires careful scanning of dates and conditions, though vocabulary is everyday."],"p10018":[3,"Academic explanation of why Meiji-20s women writers emerged; historical names and terms like 啓蒙的, 覚醒, 開明的, 自認, 土壌, but an explicit cause-and-effect structure."],"ft2-12":[3,"Newspaper editorial on protecting non-regular workers during COVID; clear argument but heavy labor-policy vocabulary like 雇い止め, 雇用調整助成金, 資金繰り, 調整弁, 就職氷河期."],"p21046":[2,"Short essay on teachers needing to stay silent and wait; familiar classroom topic with one clear point, a few idioms such as 芽をつみとる and 先取りする."],"p10011":[3,"Essay interpreting the newborn 'angel smile' as a greeting; clear structure, but N1 words 生得的, 顕在化, 痙攣, and the idiom 言い得て妙 appear."],"p204":[3,"Newspaper editorial on convenience-store franchise contracts and antitrust law; specialized terms (独占禁止法, 加盟店, ドミナント戦略, 公取) but short, logically ordered news-style sentences."],"p10042":[3,"Short anecdote-based argument on Terada Torahiko's paradox 学者は馬鹿でなければならない; the path metaphor is clear, but the long final sentence requires careful parsing."],"p10055":[1,"Bus company notice of route abolition with routes, last service date and refund details; information-search format with basic notice vocabulary like 払い戻し and 系統."],"ft2-9-3":[5,"Esoteric-Buddhism passage on micro/macrocosm and 気; dense specialized terms like 密教, 三密, 霊体, 霊界, 幽界, 現象界, 波動, with abstract metaphysical claims hard to parse."],"p217":[2,"Essay by Saito Takashi contrasting answers and questions; plain conversational style with clear contrast (しかし質問は事情が違う) and few difficult words beyond いたしかたない."],"ft2-13":[2,"Course report-assignment instructions for a phonetics seminar; list format with academic terms like 準拠, 先行研究, 反例, but straightforward and requires only locating details."],"p10028":[3,"Ueno's ironic commentary on interior-decor consumerism; idioms like 衣食足って and the recurring ハコ metaphor for housing require inference about class and cost."],"p10029":[2,"Very short, plain explanation of a judge's task; straightforward logic contrasting 主観的な意見 and 客観的な事実 with common vocabulary."],"p208":[3,"Very short aphoristic text by Honda Soichiro; compact reasoning about motive, thought and action, with a 利器/兇器 blade metaphor and old-fashioned kanji like 兇器 and 生れない."],"ft1-9-2":[3,"Mainichi editorial on literature shrinking in high-school Japanese under new curricula; policy terms like 学習指導要領, 論理国語, 呼び水, plus abstract defense of literature."],"off-10":[5,"Dense philosophical essay on learning, using 大風呂敷 and farmer/soil metaphors for 気質 and 教養; heavy figurative reasoning, implicit logic and long passage with abstract claims."],"p10005":[3,"Fairly long (867字) social commentary on the revival of leadership theory; organizational vocabulary (上意下達, 権限委譲, 裁量, がんじがらめ) but a clear step-by-step argument."],"p10053":[2,"Business email announcing a price increase; apologetic formal phrasing (ご賢察の上, 不本意ながら, 所存) is formulaic, and the message itself is short and clear."],"p10003":[3,"Takamura's essay comparing Tokyo and Osaka waterfront access; concrete anecdote, but literary phrasing (大同小異, 嘘か真か, いわく) and place-specific vocabulary like 岸壁, 埠頭."],"p210":[3,"Anthropological passage on the social function of meals; academic vocabulary (付与, 調度, 考案, 逆行) and a dense single long sentence, though the claim itself is clear."],"p212":[1,"Short, plainly worded opinion about Japanese attitudes toward foreigners, with a concrete quote and statistics; everyday vocabulary and an explicit concluding question."],"p203":[4,"Abstract argument about modern freedom and value pluralism; long nested sentences with inserted qualifiers (少なくとも建前上は, まだまだ不十分ではあったとしても) and philosophical terms like 相互承認 and 拠り所."],"ft3-13":[1,"Library usage guide listing registration, lending limits, and return rules; info-search bullet format with practical vocabulary like 貸出, 延長, 返却 and no argument to follow."],"p22047":[2,"Short apartment notice about installing security cameras; formulaic letter keigo such as 拝啓, ご清祥, 何卒 and 存じます, but simple content and list format."],"p20047":[4,"Brief but abstract argument on lying, reason and power between 強者 and 弱者; dense logic reversing a proverb and the claim that apology is a mere 儀式 require inference."],"p10045":[2,"Mukoda Kuniko's humorous travel anecdote about a greedy swan; short narrative sentences, though literary touches like もかくやというほど and 二重人格 irony add slight difficulty."],"p213":[2,"Business apology email about an invoice error; reading requires recognizing keigo set phrases (ご査収, 破棄, お詫びかたがた) but the content is short and concrete."],"off-9-2":[3,"Essay on choosing a home by usefulness over asset value; familiar topic and clear structure, with N1 vocabulary such as 終の住処, 羽目になる, 見当をつけ."],"p218":[3,"Cultural-criticism passage on the concept きもかわ; abstract logical framing (因果関係, 見立て) and the dense phrase 互いに牽引し依存しあって成立 make the conclusion require careful reading."],"off2-9-3":[4,"Opinion column on science journalism becoming scientists' PR; idioms like 沽券にかかわる, うさんくさい, 肝に銘じる and an implicit critical stance across fragmented paragraphs."],"ft1-13":[1,"Simple municipal notice about a fire-safety class with schedule, fees, and application steps; info-search format, short sentences, and everyday vocabulary like 消火器, 避難, 事前申し込み."],"w6d4-2":[3,"Passage summarizing Fukuzawa's rebuttal of the 日本語限界説; layered reported speech, older expressions (輩, 取るにも足らぬ馬鹿を云う者) and tracking whose view is whose."],"p10056":[1,"Part-time job ad with shifts, wages and conditions in table form; terse abbreviations (社保完, 若干名) but purely factual scanning task."],"ft3-12":[3,"Essay on キャラ化 and the eroding sense of reality; long and somewhat abstract, with words like 射幸心, 抜き差しならない, 恣意的, 包囲網, though the argument is clearly paced."],"w6d2-3":[4,"Essay on AI surpassing human ethics; abstract philosophical argument with long nested sentences and hard expressions (人間を人間たらしめる, 存在論的な不安, 侵食)."],"p10016":[2,"Shiroyama's short memoir of no longer relaxing at a Hakone hotel; plain vocabulary and short lines, but the wife's death is only implied via personification."],"p10027":[3,"Psychiatrist's essay on love involving control; abstract topic with vocabulary like 宿命, 無理強い, 罵声, and a pottery-apprentice analogy to follow."],"off2-9-2":[3,"Essay on children watching adults, with conversational but layered reasoning; expressions like わが身をつくろって, 気概, and the metaphor ベテランの子ども need careful reading."],"off-13":[2,"Art contest call for entries with categories, rules, prizes and dates; info-search format with conditions like 未発表 and 制作年は問わない to cross-check, vocabulary mostly plain."],"p10013":[2,"Very short essay using mountain climbing as a metaphor for life; simple sentences, though 思いをはせる and the classical negation おもしろくあるまい need attention."],"p10059":[1,"Online shopping prize campaign page with entry form and dates; simple web-form vocabulary, with only 発送をもって発表にかえさせて頂きます as a set expression."],"p10030":[2,"Short labor-rights commentary contrasting generations; clear structure, with terms like 救済手段 and the coined phrase 知らざるを得ない世代."],"p10034":[3,"Short opinion piece on school textbooks built on an extended food metaphor (アゴ, ハンバーガー); 総ルビ, 素読, 暗誦 and the paradox 満足できるわからなさ need some cultural inference."],"p10010":[4,"Kawakami's essay on bathhouse bodies and selfhood; one very long run-on sentence, idiosyncratic style, and abstract conclusion about 「このわたし」 as 一瞬間 make it hard to parse."],"ar:ronri-1-1":[4,"Kokubun Koichiro's 2,200-character philosophical essay on reading as desire, invoking Plato's Meno paradox, Deleuze, and Eros between ポロス and ペニアー; abstract concepts and quoted classical argumentation."],"p222":[2,"Translated popular-science text on voluntary control of breathing; clear expository sentences with some vocabulary (つかさどる, 部位) and an explicitly stated main point."],"p10058":[1,"Short NPO staff recruitment ad with listed conditions; abbreviations like 昇１賞２, 社保完, 秘密厳守 are the only hurdles in a plain information format."],"p24048":[2,"Short passage on AI replacing 従来の優等生 skills and the meaning of 地頭がいい; familiar topic, explicit つまり/言い換えれば signposting, and light vocabulary."],"w6d3-1":[4,"Art director's idiosyncratic essay on art-based regional revitalization; elliptical, ironic remarks (そんなものでしかないことが美術の誇り), unusual phrases (金太郎飴, 祖霊の願望に伴走, 感幸) and implicit stance."],"p209":[2,"Short business-advice passage on inferiority complex as an energy source; simple repeated keywords (劣等感, 優越感) and a straightforward comparative construction ~ば~ほど."],"p21049":[3,"Very short but paradoxical essay claiming to be both 変な人 and 普通の人; the metaphor 定規を何度も持ち替える and 死守する require interpreting the author's implicit logic."],"p10031":[2,"Concrete anecdote about viewer complaints over an announcer's parka in Vienna; easy narrative, some clothing words (三つ揃い, ヤッケ, いで立ち), with mild irony."],"w6d4-1":[2,"Essay on why AI cannot yet write texts; clear explanatory style with idioms like お手上げ and the coined 一億総作家時代, but a concrete, easy-to-follow argument."],"p10004":[4,"Miyao's essay on おふくろの味 in long, old-fashioned sentences with ironic tone; expressions like しろもの, 似て非なるもの, 甚だ流動的かつ身勝手, ないものねだり."],"p10008":[2,"Nostalgic essay on Showa-40s department store outings; concrete everyday detail, largely hiragana prose, with a few words like よそゆき, めかしこんで, つつましく."],"p10037":[3,"Interpreter's essay linking test formats to logical thinking; colloquial モロに, スルスル mix with 愚見, 嵩張った and a speculative conclusion on 文字依存度 requiring careful reading."],"p10049":[3,"Longer study-skills essay on 内化 and 外化 using abacus and shogi examples; concrete illustrations and clear structure, but length and psychology terms demand sustained attention."],"p211":[2,"Psychology explainer defining 理想自己 and 現実自己 with clear definitions and step-by-step contrast between childhood and adolescence; terms are explained in the text itself."],"ft2-10":[3,"First-person fiction excerpt about a mentally ill aunt's frightening 鬼払い at New Year; narrative with implied illness and expressions like どすの利いた声, まくし立てる, ガキ大将で鳴らす."],"p10043":[2,"Clear expository text on 悪玉疲労 and 善玉疲労 and the shift to mental fatigue; familiar topic, logical sequence, only a few N1 words like 所以 and ひいては."],"p20048":[4,"One-paragraph argument on adolescent stress tolerance with long nested sentences (社会的文脈のなかでいかにして自己を実現させるか) and からにほかならない causal logic; highly compressed academic style."],"p10051":[1,"Short municipal notice of a road closure for construction; straightforward dates, places and contact info with standard polite phrases like 当該 and 賜り."],"p21041":[2,"Light humorous essay by Kitamura about a cat ignoring a pet-care manual; concrete anecdote, short sentences, though colloquial touches like これ見よがしに and dash-marked ellipsis need care."],"p10048":[4,"Philosophical essay claiming language's function is lying; abstract 文学的真実, paradox that truth is told through lies, and wordplay 語る＝騙る require interpretive reading."],"ft3-11":[2,"Two short opinion pieces on digital detox; familiar topic and katakana-heavy vocabulary, though B's diet analogy and rhetorical はたして〜だろうか are loosely argued."],"ft1-11":[3,"Two VR passages: A is plain tech-trend reporting, while B is a philosophical treatment with 対話性, 整合性, 相互作用 and あたかも〜かのように; the abstraction is moderate and clearly explained."],"ft3-9-1":[3,"Cultural critique of Japanese attitudes toward tradition; wry tone with idioms like 一目瞭然, 勝るとも劣らない, 本末転倒, 枕詞, and a loosely ordered list of examples to connect."],"ft3-9-3":[3,"Historian's reflection on history beyond rulers; moderately abstract ideas such as 時間の集合体 and 歴史は細部に宿る, with literary verbs like 紡がれ and 垣間見る, but a clear progression."],"ft3-9-2":[3,"Sociology essay arguing violence can be nonverbal communication; abstract but well-signposted thesis, with harder items like いさめる, 身の潔白, 切腹 and a counterintuitive final reinterpretation."],"w6d1-1":[2,"Business-leadership passage made of short one-line paragraphs on staffing changes; terms like 省人化 and 多能工化 appear, but the cause-and-effect chain is explicit."],"p10024":[2,"Toyama's short explanation of REM sleep sorting memories; concrete warehouse metaphor, simple sentences, and few hard words beyond 自然忘却 and にほかならない."],"off2-9-1":[2,"Popular-science essay arguing wolves approached humans rather than being tamed; clear question-then-answer structure, concrete vocabulary, only a few words like 推察 and 食べ残しをあさる."],"off-12":[4,"Long philosophical essay arguing village people express thought through 作法 rather than text; abstract 思想の表現形式, multi-step reasoning, and critique of modern thought as 君臨する."],"p23049":[3,"Self-help essay on turning inferiority complex into growth, citing Adler's 投資 metaphor; abstract but clear, with phrases like 忌み嫌う, 過言ではない, 裏を返せば."],"p223":[1,"Internal email rescheduling a monthly meeting; short, concrete scheduling details and standard workplace phrases (代理を立てる), with only date/room details to track."],"p10021":[3,"Behavior-analysis passage showing that 'weak will' is circular reasoning (循環論); everyday examples, but the final logical step about relabeling behavior needs careful reading."],"p10054":[2,"Formal apology letter correcting a model number on an invoice; seasonal greeting and keigo (略儀ながら書中にて) are set phrases, with simple concrete content."],"p24046":[2,"Short self-help passage defining willpower; familiar topic with clear contrastive structure, a few N1-ish words like 慢性的 and 衝動的, and an easy main point."],"ft1-10":[3,"Newspaper editorial on disaster support for the visually impaired; concrete examples but dense with N1 vocabulary such as 浮き彫り, 周知, 温度差, 福祉避難所, plus many organization names over 900 characters."],"p10041":[3,"Explains natural vs. sexual selection then extends it to culture; terms like 性選択, コミュニケーション志向 vs コントロール志向 and the analogical leap need some abstraction."],"p207":[1,"Short ryokan notice about renovation work with dates and times; formulaic polite phrases (ご理解、ご協力) and concrete information, minimal inference needed."],"ft1-9-3":[2,"Short NHK news item on battery-factory subsidies; formulaic news phrasing (方針を固めました, 盛り込む方針) and some economic terms like 基幹部品 and 製造基盤, but a concrete, linear structure."],"p10033":[3,"Ikezawa's short essay on why basic words lack etymologies; abstract linguistic point (民間語源説, 基本語彙, タミル語) and a terse, implicit concluding line."],"p10036":[3,"Short essay on hobbyist communities with long flowing sentences (散在して, ひかえめに自慢); the closing metaphor 小さな縦穴を深く掘り続けている must be interpreted."],"p10015":[4,"Terada Torahiko's prewar essay casting the nose as a gatekeeper's hut; dated style (忘れられ勝ち, どうかすると), rare words 胡散臭い, 感官, and sustained metaphor."],"w6d3-3":[3,"Mori Hiroshi essay redefining 手応え through a sharp-blade metaphor; counterintuitive claim that good work feels effortless, requiring the reader to follow the extended metaphor."],"p10039":[3,"Umesao on evolution as result, not purpose; hiragana-heavy style (おもわれる, かんがえかた) and the abstract 目的論的 point, though argument is restated plainly with the brain example."],"p10002":[3,"Essay on undervaluing art education contrasting the USSR and New York with Japan; mostly clear, but N1 words 迂遠, 執拗, and the 両輪 metaphor carry the conclusion."],"p10023":[2,"Short, report-like passage on isolation of 災害弱者 under privacy law; factual tone, a statistic, and terms like 個人情報保護法の施行 and 部局."],"p22048":[3,"NHK news report on revising the Cool Japan strategy; dense bureaucratic vocabulary like 関係省庁, 行政主導, 民間主導, 知的財産戦略本部 in long reported sentences."],"off2-11":[2,"Two short practical texts on small talk, listening and openness; everyday topic, plain advice style and familiar proverb 話し上手は聞き上手, little to infer."],"p23041":[2,"Clear desu/masu explanation of why writing arose from oral tradition; logical step-by-step structure, some vocabulary like 支障, 不慮の死, 伝承, 媒体."],"p216":[2,"Popular-science passage on body size, lifespan and species survival using sauropods; mild terms (代謝, 捕食者, 天敵) and a counterintuitive but explicitly explained point."],"ar:dk-1":[1,"Intermediate reader text explaining sumo in polite です/ます style; concrete facts and simple structure, with only a few idioms like 分がある, 精を出す, 成績いかんでは."],"w6d5-1":[3,"Developmental-psychology text distinguishing shame from guilt; abstract definitions, a long sentence with a parenthetical aside, and words like 隠蔽行為 and 道徳違反."],"p21048":[4,"Very short but dense abstract paragraph on intercultural dialogue, packed with Sino-Japanese terms like 樹立, 方略, 相対化 and 相互的な働きかけ, with no concrete examples."],"ft1-9-1":[3,"Yomiuri editorial on record school non-attendance; statistics plus policy vocabulary like 教育機会確保法, 受け皿, 全員担任制, 風通しのいい, with a balanced two-sided argument."],"p22041":[2,"Casual blog-style essay about a hot summer, pet cats and cooking pork; everyday topic but colloquial ellipsis and words like しのぐ, たらふく, がっつり, 煮豚."],"off2-13":[2,"University library guide to using other universities' collections; info-search format with a table and conditions, requiring attention to details like 紹介状, 複写, 借用 and fees."],"w6d2-2":[2,"Newspaper editorial on youth voter turnout and civic education; topic vocabulary (主権者教育, 学習指導要領, 模擬選挙) but short paragraphs and an explicit thesis."],"p10014":[2,"Kitano's short, colloquial reflection comparing fame to a burning star; brief lines, everyday words, casual endings like たまったもんじゃない; the metaphor is easy to grasp."],"p10032":[2,"Psychology-advice essay on blaming others and self-pity; clear explanatory style, with moderately hard words 自己憐憫, 自尊心, and the 心のアンテナ metaphor."],"p201":[3,"Reflective essay on solitude with abstract framing (二面性, 内面的な成熟) and very long list-like sentences of comma-chained clauses; vocabulary like 読み耽る and 出しゃばる adds N1 load."],"w6d4-3":[2,"Popular-science column on why pigeons bob their heads, ending with a life lesson; concrete topic and clear mechanism description, few hard words (網膜, 滑稽)."],"w7d1-1":[3,"Long (1063字) psychology essay on 友だち親子; concrete examples and dialogue keep it accessible, but 不全感, the ハサミ metaphor, and the ironic 子ども孝行 conclusion require inference."],"p225":[4,"Educational-psychology textbook prose on intrinsic vs extrinsic motivation; dense technical terms (内発的動機づけ, 認知的動機づけ), stiff academic style and the archaic ～たところの construction."],"p10040":[2,"Short, concrete explanation of swimming's physical benefits (buoyancy, joint load, calorie burn); plain expository sentences and common vocabulary with little to infer."],"ft3-10":[3,"Long essay by Uchiyama Takashi on villagers' 稼ぎ vs 仕事 distinction; the concept is concrete but requires following 使用価値 and 主体性 ideas, rural vocabulary like 寄合 and 営林署, and over 1,100 characters."],"p22046":[2,"Short sports memoir on what an ideal coach is; familiar comparison to business bosses and clear conclusion, with mild fragmented sentences like 当たり前を当たり前にやる."],"p10046":[3,"Developmental psychology passage defining 象徴機能 and 見立て play; concrete examples help, but terms like 認知機能, 心的イメージ, 人格の土台 add abstraction."],"p10019":[3,"Shibusawa on Gill's paradox that humans differ from animals by being able to undress; mildly formal phrasing like 人間たる所以, but the argument is restated clearly."],"p24047":[2,"Brief argument for reading print newspapers over the internet; clear metaphor (世界の見取り図) and a neat 深さ/広さ contrast, with only a few harder phrases like 雑然と並置."],"p224":[2,"Short work-philosophy passage contrasting two attitudes to work; words like 生活の糧 and 労役 plus a list of kanji compounds (触発機会, 財成機会), but simple structure."],"ft1-12":[4,"Nakamura Yujiro's abstract critique of digitalized life contrasting 一義的/多義的 and analog/analogy; hard words like 趨勢, 赴くところ, plus formal rhetoric such as いわんや〜していい法はない."],"p220":[2,"Expository definitions of climate mitigation and adaptation policies; technical vocabulary (緩和策, 適応策, 温室効果ガス) but textbook-clear parallel definitions."],"p10020":[2,"Short essay questioning freedom as mere idleness; plain vocabulary, rhetorical questions, and simple examples like 自由時間; only 支配からの解放 is abstract."],"off-9-1":[3,"Scientist contrasts aesthetic 風流 with scientific 抽象化 and 理想化 via the cherry blossom pentagon; abstract concepts are defined with clear examples."],"off2-12":[3,"Long architect's essay contrasting hand-drawn plans with CAD; mostly concrete examples but ends in an abstract claim about 頭から生み出されたものが暴走 and terms like 経験則, まさぐる."],"p10009":[2,"Short argument that medicine is infrastructure for happiness; plain logic built on a familiar water-and-electricity analogy, only mild vocabulary like 異論を唱える and 恩恵."],"p10001":[3,"Short but abstract argument that information is an invisible controlling power; terms like 家父長制度, 美名, 見えざる手, and 主体性 carry the point."],"p22049":[2,"Short news item on Egypt's Bent Pyramid reopening; concrete descriptive content with factual figures, some specialized nouns like 回廊, 石棺, 安置."],"p10026":[2,"Murakami's conversational essay on a novel character's travel motive; long but easy sentences, familiar places, and the main point stated at the end."],"w6d2-1":[3,"Yoro Takeshi essay on urban concentration and rural depopulation; casual tone but implicit logic (一種の必然, スポイト現象) and an elliptical conclusion (すでにおわかりであろう) require inference."],"p214":[3,"Literary-criticism passage arguing that new media enrich novel reading; abstract metaphors (富, 開かれた世界) and a long sentence with an inserted participial clause require careful parsing."],"p10050":[2,"Formal business letter announcing an office move; set phrases (早春の候, ご清栄, 所存, 賜物) are formulaic keigo, while the actual content is simple and concrete."],"p23046":[2,"Short essay by Ohno predicting katakana words will replace kanji compounds but not hiragana basics; clear argument, a few terms like 構成要素, 基礎語, 育まれる."],"p23048":[2,"Short explanation of the word エスニック and its negative nuance; familiar topic, simple contrast structure, words like 漠然, 語感, 劣等."],"p221":[2,"Business email about an out-of-stock product and proposed substitute; formal keigo (お引き立てにあずかり, ご一報) and concrete details that need straightforward scanning."],"p215":[1,"Publisher holiday-closure notice with dates and shipping info; standard business-notice phrasing (誠に勝手ながら, いかんでは) and simple informational content."],"w6d5-2":[3,"Cross-cultural essay on Japanese vs. American decision-making; abstract generalizations with N1 words like 躊躇, 如実, and the idiom 石にかじりついても, but a clear contrast structure."],"p10025":[3,"Sociological passage on why youth turn to volunteer activity; long nested sentences with 衝き動かされて, 馬車馬のように, 享受, ボランタリー, and the paradox 不況の中の豊かさ."],"p10038":[4,"Maruyama Masao on the statute of limitations; legal vocabulary (時効, 債権者, 法理, 時効を中断), ネコババをきめこむ, and one very long nested sentence with an implicit broader meaning."],"ft2-11":[2,"Two short web texts defining influencer marketing; clear expository style, though heavy katakana jargon such as ターゲティング, 効果測定, フォロワー and some marketing terms."],"p10006":[4,"Yoro's essay on why the brain lacks maps of internal organs; anatomical terms (領野, 小彎, 噴門, 幽門) and an extended border-and-headquarters metaphor demand careful reading."],"p10035":[3,"Brief argument on safety policy contrasting 危険の管理 and 危険の排除; abstract terms like 想定外ないし未知 and a conditional long sentence, but logic is clear once read carefully."],"off-9-3":[4,"Abstract essay on how era and environment shape cognition; metaphors like 認識の鋳型 and くり貫いている, words like 茫漠, 漫然, 宿命, and a sustained conceptual argument."],"p20046":[2,"Short passage on the variety of Japanese tableware; plain argument, with the figurative 目で食器も食べている as the main point to grasp."],"ar:dk-2":[2,"Intermediate reader on SNS pros and cons in polite style; familiar topic and clear layout, but idioms such as 気がおけない, 口車にのせられて, 詐称, 漏えい add some N2+ difficulty."],"w7d1-2":[3,"Paired opinion pieces on foreign nurses' Japanese requirements; social-policy vocabulary (参入障壁, 即戦力, 意思の疎通) and hedged stances like 言わざるを得ない must be compared."],"off2-10":[2,"Long but gentle desu/masu essay on street and garden trees in town planning; familiar topic and repetitive structure, with a few words like 植生, 無味乾燥, 愛でる."],"ft2-9-2":[4,"Mainichi front-page column linking Frazer's 類感呪術 to Sapporo's Olympic bid; allusive, ironic argument with words like 縁起かつぎ, 招致, and an implied critique of lacking vision."],"p205":[2,"Chatty, colloquial essay about being pampered by one's mother and marriage, with concrete household examples; spoken style and familiar vocabulary, only mild humor to infer."],"p24049":[2,"Kakuta Mitsuyo's casual personal essay on the word 夢; plain vocabulary and short sentences, though the closing self-explanation and なりふりかまわず need some attention."],"ar:dk-3":[3,"An e-commerce explainer with business vocabulary (主導権を握る, 事前決済, 販売促進, 動向) and idioms like 割を食う and 目を養う; the argument is clear but denser than earlier lessons."],"ar:dk-4":[2,"Familiar topic in plain です/ます style with concrete examples; idioms such as 眉をひそめる, 後ろ指をさされる and the pattern きらいがある add some N2+ difficulty."],"ar:dk-5":[2,"Concrete reportage on anime tourism with clear examples; many proper nouns (境港市, 鷲宮神社, 箱根町) and words like 誘致, 初詣客, 大々的に, あの手この手で are the main hurdles."],"ar:dk-6":[3,"An argumentative piece on employment with economic vocabulary (崩壊, 削減, 非正規, 雇用) and N1 patterns と相まって, を余儀なくされる, にもまして; idioms like 心血を注ぐ and 板につく."],"ar:dk-7":[3,"A social-issues article dense with kanji compounds (多文化共生, 非婚化・晩婚化, 保健福祉家族部, 地方自治体) and statistics; the argument is clear but the vocabulary load is high."],"ar:dk-8":[2,"A social-issues article in plain です/ます style with a clear structure (Japan vs. America vs. Korea); idioms like 手を焼く, 棚に上げる, 口を挟む and words like 理不尽, 過干渉 are the main hurdles."],"ar:dk-9":[2,"A short biography in plain です/ます style told in time order; footnoted names (和歌, 森鴎外) and idioms like 火の車, 話題をさらう, 手を尽くす are the main hurdles."],"ar:dk-10":[3,"Explains the origins of two proverbs through anecdotes; classical vocabulary (押しも押されもせぬ, 塞翁, 徴兵を免れる) and the two-layer story structure make it denser."],"ar:dk-11":[2,"An explanatory piece on a familiar social issue with clear structure; legal and crime vocabulary (規制法, 配偶者, 内縁, 加害者) and expressions like 端を発する, 泣きを見る, しかるべき are the main hurdles."],"ar:dk-12":[3,"A news-style account of the 2011 disaster dense with kanji compounds (観測史上, 放射性物質, 輪番停電, 救援物資) and figures; the narrative is clear but the vocabulary load is high."],"ar:dk-13":[3,"An explanatory piece on development aid with institutional vocabulary (独立行政法人, 機構, 維持管理, 被援助国) and statistics; the structure is clear but the kanji load is high."],"ar:dk-14":[3,"A science-explainer on climate phenomena dense with technical terms (赤道, 冷夏・寒冬, 二酸化炭素, 舗装) and a concessive argument (とはいうものの, ないことには)."],"ar:dk-15":[3,"An explanatory piece on the lay-judge system with legal vocabulary (刑事裁判, 被告, 有罪・無罪, 冤罪) and survey figures; formal patterns (べく, といえども, かねない) add to the load."],"ar:hufs-8":[2,"A folk tale retold for children: plain です/ます narration and lively dialogue, but many onomatopoeia (ぞろぞろ, がたがた, ぶらぶら, つるり) and old-fashioned speech (わし, じゃ, 参ります, お気にめす)."],"ar:hufs-9":[2,"Two letters between father and son in plain です/ます style: everyday vocabulary and a clear story, with onomatopoeia (ついと, すってん, すうっ) and a few literary forms (悲観せぬ, 得られぬ)."],"ar:hufs-10":[3,"Hoshi Shinichi short story: mostly dialogue, but the twist depends on reading between the lines, and the narration uses formal and literary words (功成り名とげた, 未練がましい, 押し問答, 崇高, 交錯)."]}/*PEND*/;     // reading passages (and the 読解 books), keyed by group / 'p' + id / 'ar:' + reading id
     var df = { lv: 0, lib: 'all', type: 'all', mode: 'q' };
     // every reading text once: quiz passages (a group's questions share one) and the 読解 books' readings
     function diffPassages() {
@@ -10926,14 +10926,14 @@
             { id: 'dk-5', no: 5, title: 'アニメと町おこし', author: '～や否や・～を皮切りとして・～とあれば・～といったらない' },
             { id: 'dk-6', no: 6, title: 'フリーター', author: '～と相まって・～を余儀なくされる・～にもまして・～はさておき' },
             { id: 'dk-7', no: 7, title: '国際結婚', author: '～をめぐる・～とはいえ・～どころか・～次第で' },
-            { no: 8, title: 'モンスターペアレント', author: '～がたい・～ずにはいられない・～といい～といい・～てほしいものだ' },
-            { no: 9, title: '樋口一葉', author: '～ようにも～ない・～たら最後・～ことか・～ことなく' },
-            { no: 10, title: 'ことわざ', author: '～まい・～ようが～まいが・～ことに(は)・～きり' },
-            { no: 11, title: 'ストーカー', author: '～あまり(に)・～極まる・～であれ～であれ・～たところで' },
-            { no: 12, title: '東日本大震災', author: '～に至る・～ですら・～てからというもの(は)・～なり' },
-            { no: 13, title: '国際協力', author: '～に応じて・～っぱなし・～にとどまらず・～以上' },
-            { no: 14, title: '異常気象', author: '～かのように・～とはいうものの・～ないことには・～ずにはすまない' },
-            { no: 15, title: '裁判員制度', author: '～べく・～といえども・～かたわら・～かねない' }
+            { id: 'dk-8', no: 8, title: 'モンスターペアレント', author: '～がたい・～ずにはいられない・～といい～といい・～てほしいものだ' },
+            { id: 'dk-9', no: 9, title: '樋口一葉', author: '～ようにも～ない・～たら最後・～ことか・～ことなく' },
+            { id: 'dk-10', no: 10, title: 'ことわざ', author: '～まい・～ようが～まいが・～ことに(は)・～きり' },
+            { id: 'dk-11', no: 11, title: 'ストーカー', author: '～あまり(に)・～極まる・～であれ～であれ・～たところで' },
+            { id: 'dk-12', no: 12, title: '東日本大震災', author: '～に至る・～ですら・～てからというもの(は)・～なり' },
+            { id: 'dk-13', no: 13, title: '国際協力', author: '～に応じて・～っぱなし・～にとどまらず・～以上' },
+            { id: 'dk-14', no: 14, title: '異常気象', author: '～かのように・～とはいうものの・～ないことには・～ずにはすまない' },
+            { id: 'dk-15', no: 15, title: '裁判員制度', author: '～べく・～といえども・～かたわら・～かねない' }
         ] }] }]
     });
     // ===== 중급일본어독해「中級日本語読解」(한국외국어대학교 출판부) =====
@@ -10960,9 +10960,9 @@
             { id: 'hufs-5', no: 5, title: '野ばら', author: 'p.23' },
             { id: 'hufs-6', no: 6, title: 'だるま', author: 'p.29' },
             { id: 'hufs-7', no: 7, title: '旅について', author: 'p.41' },
-            { no: 8, title: '昔話 ―こぶとり―', author: 'p.51' },
-            { no: 9, title: '父と子の手紙', author: 'p.61' },
-            { no: 10, title: '友情の杯', author: 'p.67' },
+            { id: 'hufs-8', no: 8, title: '昔話 ―こぶとり―', author: 'p.51' },
+            { id: 'hufs-9', no: 9, title: '父と子の手紙', author: 'p.61' },
+            { id: 'hufs-10', no: 10, title: '友情の杯', author: 'p.67' },
             { no: 11, title: '日本文化の根底にあるもの', author: 'p.77' },
             { no: 12, title: '詩三編', author: 'p.85' },
             { no: 13, title: '旅の俳人', author: 'p.95' },
@@ -12287,6 +12287,672 @@
         ],
         bio: { years: '1897〜1945', text: '哲学者。評論家。1897~1945。兵庫県生れ。京都大学卒。『パスカルにおける人間の研究』『唯物史観と現代の意識』『歴史哲学』『人間学的文学論』『人生論ノート』など。', source: '本の「作者」欄より' }
     };
+    READINGS['hufs-8'] = {
+        id: 'hufs-8', book: 'hufs-chukyu-dokkai', no: 8, chapter: '昔話 ―こぶとり―',
+        ttsKana: { '山おく': 'やまおく', '上きげん': 'じょうきげん', '預り物': 'あずかりもの', '気の毒': 'きのどく', '一番どり': 'いちばんどり' },
+        title: '昔話 ―こぶとり―',
+        author: '日本の昔話',
+        authorHtml: '日本の昔話',
+        tabs: [['text', '本文'], ['kanji', '読み方'], ['bunkei', '文型']],
+        pages: [
+            { p: 51, lines: [
+                '★{r|山|やま}おくには{r|鬼|おに}が{r|住|す}むと、{r|昔|むかし}の人は{r|信|しん}じていました。{r|昔話|むかし/ばなし}の中でも、人',
+                'まねは、たいてい{r|失敗|しっ/ぱい}して、笑いものになるか、ひどいめに会います。この',
+                'お話の、{r|隣|となり}のおじいさんは、悪い人でなく、ただ、{r|踊|おど}りがへただったばかり',
+                'に、鬼からよけいにこぶをもらうので、{r|気|き}の{r|毒|どく}に思われます。',
+                '『{n1|{r|宇治拾遺物語|う/じ/しゅう/い/もの/がたり}}』の話ですが、世界的に広い{r|分布|ぶん/ぷ}をもっていて、ドイツやアイルランド',
+                'に{r|類似|るい/じ}の話があります。',
+                '　　　　　　　　　　　　　　１',
+                '　{□|昔}あるところに、{r|右|みぎ}のほおに大きなこぶのある、おじいさんがい',
+                '{□_}ました。',
+                '　『この、じゃまなこぶが取れたら、どんなに、せいせいするだろ',
+                'う。』',
+                '　おじいさんは、こぶのことを、毎日考えていました。',
+                '　ある日、おじいさんは、山へたきぎを取りにいきました。山の{r|奥|おく}',
+                'へはいって、せっせと、たきぎを切っているとぽつりと雨が{r|降|ふ}りだ',
+                'しました。',
+                '　『これは、たいへんだ。{r|大雨|おお/あめ}にならないうちに、帰らなけれ',
+                'ば……。』',
+                '　おおいそぎで山を{r|降|お}りてくるうち、だんだん雨が強くなりました。',
+                'おじいさんは、あわてて、どこかに、{r|小屋|こ/や}でもないかと{r|見回|み/まわ}しまし',
+                'たが、家など{r|一軒|いっ/けん}もありません。{r|困|こま}っていると、すぐそばに、大き'
+            ] },
+            { p: 52, lines: [
+                'な木がはえていて、{r|根|ね}もとの方が、ほら{r|穴|あな}になっているのが目につ',
+                'きました。おじいさんは、そこへ{r|駆|か}け{r|込|こ}んで、{r|雨宿|あま/やど}りをしました。',
+                '　けれども、あらしはやむどころか、風も雨も、ますます、強くなり',
+                'ました。頭の上で、いなずまが光り、{r|雷|かみなり}が、ごろごろと{r|鳴|な}りだしま',
+                'した。これでは、家に帰れそうにもありません。{r|日|ひ}ごろから、山に',
+                'は{r|慣|な}れているおじいさんでしたが、{r|恐|おそ}ろしくて、そのうえ、{r|寂|さび}しく',
+                'てたまりません。からだを{r|縮|ちぢ}めたまま、木のほら穴で、じっとして',
+                'いました。',
+                '　{r|夜中|よ/なか}ごろになって、やっと風は{r|静|しず}まり、雨も{r|小降|こ/ぶ}りになりました。',
+                'まもなく、雨がやんだと思うと、どこか遠くの方から、かすかな{r|物|もの}',
+                '{r|音|おと}が聞こえてきました。耳をすますと、おおぜいの人の声や{r|足音|あし/おと}が、',
+                '{r|近|ちか}づいてくるようです。',
+                '　『ありがたい。やっとだれかに会えそうだ。』',
+                '　ひとりぼっちで、{r|心細|こころ/ぼそ}くなっていたおじいさんは、ほら穴から顔',
+                'を出して、ひょいと、向こうをながめました。とたんに、{r|息|いき}が止ま',
+                'りそうになりました。',
+                '　人間だとばかり思っていたのに、ぞろぞろやってくるのは、火の',
+                'ような目を光らせた、{r|赤|あか}や{r|青|あお}や{r|黒|くろ}の恐ろしそうな鬼たちでした。お',
+                'じいさんは、あわてて、ほら穴へもぐりこみ、がたがたふるえだし',
+                'ました。',
+                '　『こんな{r|夜|よ}ふけに、いったいなにしに来たのだろう。』鬼たちは、',
+                'おじいさんの{r|隠|かく}れているほら穴の前で、足を止めました。からだの',
+                '大きい、{r|大将|たい/しょう}らしい鬼が、どっかと{r|腰|こし}をおろすと、おおぜいの鬼た',
+                'ちは、ずらりと{r|両側|りょう/がわ}に{r|並|なら}びました。',
+                '　『いったい、なにが始まるのだろう。』',
+                '　おじいさんが、そっと見ていますと、鬼たちは、{r|酒盛|さか/も}りの{r|用意|よう/い}を',
+                '始めました。'
+            ] },
+            { p: 53, lines: [
+                '　だんだんお{r|酒|さけ}に{r|酔|よ}ってくると、笑ったり、{r|騒|さわ}いだり、すっかりに',
+                'ぎやかになりました。そのうちに、「歌え、歌え。」「踊れ、踊れ。」',
+                'と、いいだしました。ひとりの鬼が飛び出してきて、踊り始めまし',
+                'た。ほかの鬼が歌いました。おおぜいの{r|者|もの}は、手をたたいたり、笑',
+                'ったり、{r|大騒|おお/さわ}ぎになりました。歌も踊りも、たいそうじょうずでし',
+                'た。中にはへたな踊りで、みんなから{r|冷|ひ}やかされる鬼もいました。',
+                '　「あっはっは、おもしろい、おもしろい。まったく楽しい{r|晩|ばん}だ。さ',
+                'あ、みんな、もっと飲め。ところでだれか、{r|珍|めずら}しい踊りを、知って',
+                'いる者はいないか。」',
+                '　鬼の大将が、どなりました。これを聞くと、生まれつき、踊りの',
+                '好きなおじいさんは、もう、じっとしていられなくなりました。',
+                '　『一つ、わしの踊りを見せてやるかな。しかし、待てよ。いままで',
+                '{r|無事|ぶ/じ}でいたものを、うっかり飛び出して、ひと口にぱくりと食べら',
+                'れては、たまらないぞ。』',
+                '　考え{r|直|なお}して、おじいさんは、{r|首|くび}を{r|引|ひ}っ{r|込|こ}めました。けれども、鬼',
+                'たちが、楽しそうに{r|拍子|ひょう/し}をとりだすと、心が{r|浮|う}きたってきました。',
+                'もう、がまんできません。',
+                '　『ええい、やっちまえ。踊ってやるぞ。それで食われるなら、あき',
+                'らめるまでだ。』',
+                '　おじいさんは、ずきんを、すっぽりと{r|鼻|はな}までかぶり、おのを腰に',
+                'さすと、',
+                '　「やあら、えっさっさっ、こりゃさっさ。」',
+                'と、いいながら、鬼たちの前に飛び出していきました。',
+                '　「なんだ、なんだ、{r|変|へん}なやつが、飛び出してきたぞ。」',
+                '　「おい、人間のじいさんじゃないか。」',
+                '　鬼たちは{r|驚|おどろ}いて立ち上がりました。おじいさんは、ひやっとしま',
+                'したが、ええい、かまうもんかと、知らぬふりで踊り{r|続|つづ}けました。'
+            ] },
+            { p: 54, lines: [
+                '　「やあら、えっさっさ。」',
+                '　{r|手拍子|て/びょう/し}、{r|足拍子|あし/びょう/し}、おもしろく、おかしく、飛んだりはねたり、く',
+                'るくる回ったりして、いっしょうけんめいに踊って見せますと、い',
+                'ままで、変な顔をしていた鬼たちが、だんだん、拍子をとり始めま',
+                'した。',
+                '　「よう、うまいぞ、じいさん。」',
+                '　「そこだ、しっかり、こりゃさっさ。」',
+                '　鬼たちは、すっかり{r|夢中|む/ちゅう}になりました。おじいさんの大きなこぶ',
+                'も、踊るたびに、あっちへぶらぶら、こっちへぶらぶらして、踊り',
+                'が、いっそうおもしろく見えました。',
+                '　踊りがすむと、鬼の大将は、ますますごきげんになって、',
+                '　「やあ、ごくろう、ごくろう。こんなおもしろい踊りは、まだ見た',
+                'ことがなかった。あしたの晩も、ここへ来て、また踊って見せてく',
+                'れ。」',
+                '　といいました。おじいさんは、いい{r|気持|き/も}ちになりました。',
+                '　「はい、はい。わたしの踊りが、お{r|気|き}にめしましたかい。そりゃも',
+                'う、あしたの晩も、きっときます。」',
+                '　「きっと、来るか。」',
+                '　「ええ、来ますとも。来ますとも。」',
+                '　「いや、あしたの晩になると、{r|眠|ねむ}くなって、来るのが、いやになる',
+                'んじゃないか。」',
+                '　すると、そばの{r|青鬼|あお/おに}が口をだしました。',
+                '　「それじゃ、こうしたら、どうでしょう。じいさんのいちばん{r|大事|だい/じ}',
+                'なものを、{r|取|と}り{r|上|あ}げておくんです。そうすれば、いやでも、それを',
+                'もらいに、あすの晩、来るでしょうからね。」',
+                '　「うん。それはいい考えだ。なにを取り上げておくかな。」',
+                '　鬼の大将は、おじいさんを、じろじろながめました。'
+            ] },
+            { p: 55, lines: [
+                '　「あの、腰にさしている、おのはどうだろう。」',
+                '　「いや、ずきんの方がいいぞ。」',
+                '　鬼たちが、てんでにいいだしました。',
+                '　「待て、待て。そんなものは、すぐにまた{r|買|か}えるだろう。それよ',
+                'り、じいさんのいちばん大事なものといえば、そうだ、あの大きな',
+                'こぶらしいぞ。さあ、じいさん。そのこぶを{r|置|お}いていけ。」',
+                '　鬼の大将にいわれて、おじいさんは、びっくりしました。このじ',
+                'ゃまっけなこぶが、大事なものだなんて、おかしくてたまりません。',
+                '心の中では、しめたと思いましたが、わざと{r|悲|かな}しそうな声でいいま',
+                'した。',
+                '　「このこぶを置いていけと、おっしゃるんですか。それだけは、ど',
+                'うか{r|許|ゆる}してください。これは、わたしの大事な{r|宝|たから}でございます。歌',
+                'も踊りも、みんな、このこぶの中に、しまってあるのでございま',
+                'す。」',
+                '　これを聞くと、鬼の大将は、{r|得意|とく/い}そうにいいました。',
+                '　「これみろ。やっぱり、こぶが、いちばん大事なものなんだ。{r|預|あず}か',
+                'っておくぞ。」',
+                '　いきなり、おじいさんのこぶをつかんで、ぐっと引きました。こ',
+                'ぶはつるりと取れて、{r|痛|いた}くもかゆくもありませんでした。鬼の大将',
+                'は、こぶをふところにしまって、',
+                '　「いいか、あすの晩も、きっと来るのだぞ。」',
+                '　といいました。ちょうど、その時、{r|夜|よ}が{r|明|あ}けて、コケコッコウと、',
+                'ふもとの{r|村|むら}の方から、{r|一番|いち/ばん}どりの鳴くのが聞こえてきました。',
+                '　「こりゃたいへん、夜が明けたぞ。」',
+                '　鬼たちは、あわてて{r|消|き}えてしまいました。',
+                '　「こりゃどうも、うれしいことになったものだ。こんなにさっぱり',
+                'したのは、生まれてはじめてだ。」'
+            ] },
+            { p: 56, lines: [
+                '　おじいさんは、つるりと、ほおをなでました。うれしくてたまり',
+                'ません。いそいで山を降りると、おばあさんの待っている家まで、',
+                'ひと息に駆けていきました。',
+                '　「おばあさんや、見ておくれ、じゃまっけなこぶが取れたんだよ。',
+                'こんなにきれいになって、つるつるだよ。」',
+                '　「おやまあ、それはありがたい。いったいだれに取ってもらった',
+                'の。」',
+                '　おばあさんは、目を{r|丸|まる}くして、おじいさんの顔をじろじろみなが',
+                'ら、{r|不思議|ふ/し/ぎ}がりました。',
+                '　「それはな、おばあさん。驚くなよ。{r|山奥|やま/おく}で鬼がもぎ取ってくれた',
+                'んだよ。」',
+                '　おじいさんは、うれしそうに、{r|軽|かる}くなったほおをなでながら、く',
+                'わしくわけを話しました。',
+                '　「よくもまあ、鬼につかまって、とって食べられなかったものだね',
+                'え。」',
+                '　おばあさんはびっくりしたり、{r|喜|よろこ}んだりしました。',
+                '　　　　　　　　　　　　　　２',
+                '　さて、このおじいさんの隣の家にも、やっぱりこぶのある、おじ',
+                'いさんがいました。隣のおじいさんのこぶは、{r|左|ひだり}のほおに、ぶらさ',
+                'がっていました。次の日、おじいさんどうしは、{r|裏|うら}の道で{r|出会|で/あ}いま',
+                'した。隣のおじいさんは、不思議そうにいいました。',
+                '　「おやおや、おじいさん、じゃまっけなこぶが取れて、顔がさっぱ',
+                'りしましたな。うらやましいことじゃ。だれか、じょうずなお{r|医者|い/しゃ}',
+                'が、取ってくれたんですか。いったい、どこのお医者です。わしに',
+                'も教えてくださいよ。」'
+            ] },
+            { p: 57, lines: [
+                '　「いやいや、これは、お医者ではない。じつは、きのうの晩、山奥',
+                'に出てきた鬼が、取ってくれたのですよ。」',
+                '　おじいさんは、得意そうに、ほおをなでました。',
+                '　「鬼がとってくれたって……。それは、どういうわけなんです。」',
+                '　隣のおじいさんは、驚いてわけをたずねました。',
+                '　そこで、おじいさんは、ゆうべのことを、すっかり話して聞かせ',
+                'ました。',
+                '　「これは、いいことを聞いた。それではわしも、これから鬼の{r|所|ところ}へ',
+                '行って、このじゃまものを取ってもらいましょう。」',
+                '　おじいさんから、道を教えてもらうと、隣のおじいさんは、歌や',
+                '踊りがへたなのも忘れて、喜び{r|勇|いさ}んで、山へ{r|登|のぼ}っていきました。',
+                '　「なるほど、ここだな。」',
+                '　隣のおじいさんは、ほら穴に隠れて、夜になるのを、いまかいま',
+                'かと待ちました。',
+                '　やがて、夜中になると、たくさんの鬼が、ぞろぞろやってきまし',
+                'た。鬼たちは、おじいさんから聞いたとおり、ほら穴の前で、酒盛',
+                'りを始めました。',
+                '　「おかしいな。きのうの、おもしろいじいさんは、まだ来ないか。」',
+                '　鬼の大将は、あたりをぎょろぎょろと見回しました。',
+                '　「はい、呼んでみましょう。じいさん、じいさん、早く出てこい。」',
+                '　青鬼が口に手を{r|当|あ}てて、{r|大声|おお/ごえ}で{r|呼|よ}びました。',
+                '　「大将がお待ちかねだぞ。早く出てきて、踊ってみせろ。」',
+                '　{r|赤鬼|あか/おに}も首を回して呼びたてました。',
+                '　「は、はい。いま{r|参|まい}ります。ただいま踊ります。」',
+                '　隣のおじいさんは、ずきんを鼻までかぶって、おのを腰にさして、',
+                'ほら穴からはい出ました。こわくて、ひざが、がくがくしています。',
+                '　「おお、ゆうべのじいさんだ。待っていたぞ。早く踊りを見せてく'
+            ] },
+            { p: 58, lines: [
+                'れ。」',
+                '　鬼の大将は、{r|上|じょう}きげんで、{r|催促|さい/そく}しました。隣のおじいさんは、こ',
+                'わいのをがまんして、まん中へ出ていくと、おかしなかっこうで、',
+                'いいかげんな踊りを始めました。おじいさんは、踊りがへたでした。',
+                'それでも、教えられたとおり、',
+                '　「やあら、えっさっさ、こりゃさっさ。」',
+                '　と、いっしょうけんめいに踊りましたが、鬼たちは、{r|感心|かん/しん}しませ',
+                'ん。しまいには、',
+                '　「なんだ、じいさん。きょうは、へただな。」',
+                '　「だめだ、だめだ。ゆうべの{r|調子|ちょう/し}は、どうしたんだ。」',
+                '　鬼たちが、{r|口々|くち/ぐち}にはやしました。鬼の大将は、もう、がまんでき',
+                'ません。すっくと立ちあがると、おじいさんをにらんで、',
+                '　「やめろ。やめて、さっさと帰れ。そんなへたな踊りが見られる',
+                'か。そら、ゆうべの{r|預|あずか}り{r|物|もの}を返してやるぞ。」',
+                '　といって、鬼の大将は、ふところからこぶを取り出すと、ぽんと',
+                '{r|勢|いきお}いよく、おじいさんの右ほおへ、{r|押|お}しつけました。隣のおじいさ',
+                'んは、あっと驚きましたが、もうまにあいません。右と左と、{r|両方|りょう/ほう}',
+                'のほっぺたに一つずつ、大きなこぶをぶらさげて、オンオン{r|泣|な}きな',
+                'がら、山を降りていきました。'
+            ] }
+        ],
+        notes: {
+            1: { word: '宇治拾遺物語', text: '中世に編纂された世俗説話集。全部で一九七の説話を集めているが、編者がどんな方法で編輯したか不明で内容の分類もされていない。法師や賢人の失敗談や雀の報恩の話、鬼にこぶを取られた翁の話など多様で、読み手をひきつけるおもしろみがある。' }
+        },
+        kanjiIntro: '本の「漢字の読み方」です。読みを選びましょう。読みは本のとおりです。ほかの選択肢は Claude が作りました。',
+        kanji: [{ title: '次の言葉の読み方を選ぼう。', yomi: true, items: [
+            { k: '昔話', a: 'むかしばなし', opts: ['せきわ', 'むかしばなし', 'むかしはなし', 'じゃくわ'] },
+            { k: '気の毒', a: 'きのどく', opts: ['きのどく', 'けのどく', 'きのとく', 'きのぶす'] },
+            { k: '類似', a: 'るいじ', opts: ['るいし', 'るいじ', 'るいに', 'りゅうじ'] },
+            { k: '大雨', a: 'おおあめ', opts: ['たいう', 'おおさめ', 'おおあめ', 'だいう'] },
+            { k: '小屋', a: 'こや', opts: ['しょうや', 'こや', 'おや', 'しょうおく'] },
+            { k: '見回す', a: 'みまわす', opts: ['みかえす', 'けんかいす', 'みまわす', 'みめぐす'] },
+            { k: '雨宿り', a: 'あまやどり', opts: ['あめやどり', 'あまやどり', 'うしゅくり', 'あまどまり'] },
+            { k: '雷', a: 'かみなり', opts: ['いかずち', 'らい', 'かみなり', 'いなずま'] },
+            { k: '縮める', a: 'ちぢめる', opts: ['ちじめる', 'ちぢめる', 'しゅくめる', 'つめる'] },
+            { k: '静まる', a: 'しずまる', opts: ['しずまる', 'せいまる', 'じずまる', 'しまる'] },
+            { k: '小降り', a: 'こぶり', opts: ['こふり', 'こぶり', 'しょうぶり', 'おぶり'] },
+            { k: '物音', a: 'ものおと', opts: ['ぶつおん', 'もののね', 'ものおと', 'ものごと'] },
+            { k: '心細い', a: 'こころぼそい', opts: ['こころほそい', 'しんさいい', 'こころぼそい', 'こころぼしい'] },
+            { k: '隠れる', a: 'かくれる', opts: ['かくれる', 'いんれる', 'かげれる', 'がくれる'] },
+            { k: '大将', a: 'たいしょう', opts: ['だいしょう', 'たいしょう', 'おおしょう', 'たいそう'] },
+            { k: '酒盛り', a: 'さかもり', opts: ['さけもり', 'しゅもり', 'さかもり', 'さかぼり'] },
+            { k: '大騒ぎ', a: 'おおさわぎ', opts: ['だいさわぎ', 'おおざわぎ', 'たいそうぎ', 'おおさわぎ'] },
+            { k: '冷やかす', a: 'ひやかす', opts: ['ひやかす', 'さやかす', 'つめやかす', 'れいやかす'] },
+            { k: '拍子', a: 'ひょうし', opts: ['はくし', 'ひょうし', 'びょうし', 'ひょうじ'] },
+            { k: '夢中', a: 'むちゅう', opts: ['ゆめなか', 'むじゅう', 'むちゅう', 'ぼうちゅう'] },
+            { k: '青鬼', a: 'あおおに', opts: ['せいき', 'あおおに', 'あおき', 'あおにん'] },
+            { k: '得意', a: 'とくい', opts: ['とくい', 'どくい', 'えい', 'とっい'] },
+            { k: '不思議', a: 'ふしぎ', opts: ['ふしき', 'ぶしぎ', 'ふしぎ', 'ふじぎ'] },
+            { k: '山奥', a: 'やまおく', opts: ['さんおう', 'やまおく', 'やまのおく', 'さんおく'] },
+            { k: '催促', a: 'さいそく', opts: ['さいそく', 'さいぞく', 'せいそく', 'さいしょく'] },
+            { k: '上きげん', a: 'じょうきげん', opts: ['うえきげん', 'かみきげん', 'じょうきげん', 'しょうきげん'] },
+            { k: '預り物', a: 'あずかりもの', opts: ['よりもの', 'あずけもの', 'あずかりぶつ', 'あずかりもの'] }
+        ] }],
+        bunkeiIntro: '本の「文型」です。本文の文と、例文をタップすると読み上げます。',
+        bunkei: [
+            { p: '～そうにもない', src: 'これでは、家に帰れ<b>そうにもありません</b>。', s: [
+                'この仕事は{r|今日中|きょう/じゅう}に終わり<b>そうにもありません</b>。',
+                '雨がやみ<b>そうにもありません</b>。',
+                '{r|疲|つか}れているので{r|今晩|こん/ばん}は{r|勉強|べん/きょう}でき<b>そうにもありません</b>。',
+                'この服は小さ{r|過|す}ぎるので私には{r|着|き}られ<b>そうにもありません</b>。'
+            ] },
+            { p: '～どころか', src: 'あらしはやむ<b>どころか</b>、風も雨もますます強くなりました。', s: [
+                '{r|漢字|かん/じ}<b>どころか</b>ひらがなも{r|読|よ}めない。',
+                '{r|天気|てん/き}がよくなる<b>どころか</b>、ひどい{r|風雨|ふう/う}になった。',
+                '寒い<b>どころか</b>、走ってきたので{r|汗|あせ}ばむほどです。',
+                '{r|病気|びょう/き}<b>どころか</b>、ぴんぴんしている。'
+            ] },
+            { p: '表現', ex: '本の最後に挙げられている表現です。', exJa: true, s: [
+                '目につく', '耳をすます', '{r|腰|こし}をおろす', '{r|首|くび}を{r|引|ひ}っ{r|込|こ}める', '{r|夢中|む/ちゅう}になる',
+                'ごきげんになる', 'お{r|気|き}にめす', '口を出す', '目を{r|丸|まる}くする'
+            ] }
+        ]
+    };
+    READINGS['hufs-9'] = {
+        id: 'hufs-9', book: 'hufs-chukyu-dokkai', no: 9, chapter: '父と子の手紙',
+        ttsKana: { '朝飯もそこそこ': 'あさめしもそこそこ' },
+        title: '父と子の手紙',
+        author: '永井隆・永井誠一',
+        authorHtml: '<ruby>永<rt>なが</rt>井<rt>い</rt></ruby>　<ruby>隆<rt>たかし</rt></ruby>・<ruby>永<rt>なが</rt>井<rt>い</rt></ruby>　<ruby>誠<rt>せい</rt>一<rt>いち</rt></ruby>',
+        tabs: [['text', '本文'], ['kanji', '読み方'], ['bunkei', '文型']],
+        pages: [
+            { p: 61, lines: [
+                '<b>おとうさん</b>',
+                '　{r|出雲|いずも}は{r|昨夜|さくや}にわかに寒くなりましたが、ラジオで聞くと{r|長崎|ながさき}のほ',
+                'うも寒くなったそうですね。ガラスばりの小さい家ですから、おと',
+                'うさんのからだにひびきはしなかったかしらと、気にしています。',
+                '　雪が{r|降|ふ}っていますよ。おとうさんの{r|故郷|こきょう}はこんな美しい雪の国だ',
+                'ったのですね。ひとばんのうちに五十センチも{r|積|つ}もったのです。五',
+                '十センチ……すごいでしょう。けさ、おばさんが「雪よ、雪よ。{r|長崎|ながさき}',
+                'のお客さん、スキーをしに来たお客さん。{r|大雪|おおゆき}が{r|積|つ}もってるよ。」と',
+                '{r|起|お}こしてくださったので、いつもねぼうのぼくもぱっととび{r|起|お}きて、',
+                'えんがわへ出てみました。',
+                '　まっ白でした。白チョークでえがいても、こんなに白くはえがけ',
+                'ないほどまっ白でした。白い村になっていました。おとうさんの故',
+                '郷は、やわらかく、白く、なんだか{r|甘|あま}い味でももっていそうな雪の',
+                '村でした。',
+                '　{r|朝飯|あさめし}もそこそこに、スキーぐつをはきスキーをつけて、門からす',
+                'べり出ました。いや、出ようとしたのです。―が、出ませんでし',
+                'た。ついとすべったとたんに、足だけ前へ出て、頭が重く後へ残っ',
+                'て、あっとさけぶのと、しりもちをつくのと、それから、{r|見送|みおく}って'
+            ] },
+            { p: 62, lines: [
+                'いたおばさんたちがどっと{r|笑|わら}うのといっしょでした。',
+                '　やっとのことで立ち上がってふりかえってみると、ぼくのすべっ',
+                'たあとが雪の上に二本、たった一メートルほど続いていて、そこに',
+                '大きなしりもちの{r|型|かた}がありました。それは雪が大きな口をあけてぼ',
+                'くを{r|笑|わら}っているようでした。これくらいのことで{r|悲観|ひかん}せぬぞと、こ',
+                'んどは顔を前に{r|突|つ}き出してついとすべり出しました。するとうまく',
+                'ゆきました。門のとこまで来たので、おばさんに「どんなもんだい。」',
+                'と言おうとしたら、またもすってんところんで、どっと{r|笑|わら}われてし',
+                'まいました。ズボンについた雪をはらい落としていると、目の前の',
+                '道を、小学生が{r|竹|たけ}スキーをつけて、すうっ、すうっと{r|通|とお}り{r|過|す}ぎまし',
+                'た。{r|出雲|いずも}の{r|少年|しょうねん}はみなじょうずですね。おとうさんも{r|少年|しょうねん}のころス',
+                'キーをやりましたか。おとうさんも三十年も前には、この{r|少年|しょうねん}たち',
+                'のように、ここでスキーをしていたことでしょう。',
+                '　ぼくは立ち上がってはころび、すべろうとしてはたおれ、門から',
+                '出て五十メートルも来ないうちに、そこらじゅうをしりもちの{r|穴|あな}だ',
+                'らけにしてしまいました。スキーなんてやさしいものだと思ってい',
+                'たのに、どうしてどうしてなかなかむずかしいものでした。……な',
+                'んでもそばから見ているのと、自分でやってみるのとでは大ちがい',
+                'だと知りました。スキーはやってみなければそのむずかしいことも',
+                'わかりませんが、またその楽しみもわかりません。',
+                '　{r|一度|いちど}はひやっとしました。すべっていたら、すっぽり雪の中へ{r|腰|こし}',
+                'まではまりこんだのです。雪が{r|平|たい}らに{r|積|つ}もっていたのでわからなか',
+                'ったけれども、そこは小さなみぞだったのです。みぞだったからけ',
+                'がもしませんでしたが、あぶないものだなあと思いました。おとう',
+                'さんがいつもぼくに言う「ケヤ、ケヤ。」がそのときぴんと思い出され',
+                'ました。ぼくが何かしくじるのはケヤレスだからです。',
+                '　そんなふうでしたが、それでも{r|午前中|ごぜんちゅう}には五メートルくらいはす'
+            ] },
+            { p: 63, lines: [
+                'べれるようになりました。スキー場まで行くつもりでしたが、{r|途中|とちゅう}',
+                'でころんでばかりいて、おなかもすくし、昼になったので家へ帰り',
+                'ました。帰りも、すべっている時間より、ころんでいた時間のほう',
+                'が長かったようです。',
+                '　いま、お昼におもちをいただきました。この手紙を持って{r|郵便局|ゆうびんきょく}',
+                'まで出しにスキーでゆく{r|決心|けっしん}をしました。',
+                '',
+                '　　一月五日',
+                '{>|誠　一}',
+                '　　{r|父上様|ちちうえさま}',
+                '',
+                '<b>{r|誠一|せいいち}さん</b>',
+                '　スキー{r|第一歩|だいいっぽ}の手紙を受けて、この{r|返事|へんじ}を書きます。',
+                '　「やってみなけりゃわからない。」ということを知っただけで、スキ',
+                'ーに行ったのが{r|一生|いっしょう}の役にたちました。',
+                '　{r|机|つくえ}の上の{r|学問|がくもん}、本を読んだだけの{r|知識|ちしき}、{r|映画|えいが}で見た{r|経験|けいけん} ― それ',
+                'は、それだけでは{r|実際|じっさい}には役にたたない。おとうさんは大学で学生',
+                'さんに、いつも、',
+                '　「からだにも{r|覚|おぼ}えさせなさい。」',
+                '　と言っていました。{r|知識|ちしき}は{r|脳|のう}にだけ持たせておいてはだめです。',
+                'からだにも{r|覚|おぼ}えこんだのを、{r|体験|たいけん}という。{r|体験|たいけん}こそは、何年たって',
+                'も忘れない{r|知識|ちしき}となります。',
+                '　{r|読書|どくしょ}による勉強は{r|手軽|てがる}で、おまけに{r|失敗|しっぱい}が少ないから、身につか',
+                'ぬのでしょう。少しはけがをするくらいでないと{r|真|しん}の{r|知識|ちしき}は{r|得|え}られ',
+                'ません。',
+                '',
+                '　　一月八日',
+                '{>|父}',
+                '　　{r|誠一|せいいち}さん'
+            ] }
+        ],
+        kanjiIntro: '本の「漢字の読み方」です。読みを選びましょう。読みは本のとおりです。ほかの選択肢は Claude が作りました。',
+        kanji: [{ title: '次の言葉の読み方を選ぼう。', yomi: true, items: [
+            { k: '昨夜', a: 'さくや', opts: ['さくや', 'さくよ', 'ゆうや', 'さくばん'] },
+            { k: '故郷', a: 'こきょう', opts: ['こごう', 'こきょう', 'こけい', 'ふるきょう'] },
+            { k: '積る', a: 'つもる', opts: ['たまる', 'せきる', 'つもる', 'つまる'] },
+            { k: '大雪', a: 'おおゆき', opts: ['たいせつ', 'おおゆき', 'だいせつ', 'おおせつ'] },
+            { k: '見送る', a: 'みおくる', opts: ['みおくる', 'けんそうる', 'みかえる', 'みそうる'] },
+            { k: '笑う', a: 'わらう', opts: ['えむう', 'しょうう', 'わらう', 'えらう'] },
+            { k: '朝飯', a: 'あさめし', opts: ['ちょうはん', 'あさはん', 'あさごはん', 'あさめし'] },
+            { k: '悲観', a: 'ひかん', opts: ['ひかん', 'ひがん', 'ひけん', 'かなかん'] },
+            { k: '突き出す', a: 'つきだす', opts: ['とつきだす', 'つきでる', 'つきだす', 'つきたす'] },
+            { k: '通り過ぎる', a: 'とおりすぎる', opts: ['かよりすぎる', 'とおりすぎる', 'つうりすぎる', 'とおりすごる'] },
+            { k: '穴', a: 'あな', opts: ['けつ', 'あな', 'ほら', 'あざ'] },
+            { k: '一度', a: 'いちど', opts: ['ひとたび', 'いちど', 'いっど', 'いちたく'] },
+            { k: '平ら', a: 'たいら', opts: ['ひらら', 'へいら', 'たいら', 'だいら'] },
+            { k: '途中', a: 'とちゅう', opts: ['どちゅう', 'とじゅう', 'みちなか', 'とちゅう'] },
+            { k: '手紙', a: 'てがみ', opts: ['しゅし', 'てかみ', 'てがみ', 'てし'] },
+            { k: '郵便局', a: 'ゆうびんきょく', opts: ['ゆうびんきょく', 'ゆうべんきょく', 'ゆびんきょく', 'ゆうびんこく'] },
+            { k: '決心', a: 'けっしん', opts: ['けつしん', 'けっしん', 'きめしん', 'けっじん'] },
+            { k: '返事', a: 'へんじ', opts: ['へんごと', 'かえじ', 'へんし', 'へんじ'] },
+            { k: '一生', a: 'いっしょう', opts: ['いっしょう', 'いちせい', 'いっせい', 'ひとしょう'] },
+            { k: '学問', a: 'がくもん', opts: ['がくぶん', 'がくもん', 'がっもん', 'まなもん'] },
+            { k: '知識', a: 'ちしき', opts: ['ちしき', 'ちしょく', 'ちじき', 'しりしき'] },
+            { k: '経験', a: 'けいけん', opts: ['きょうけん', 'けいげん', 'けいけん', 'へけん'] },
+            { k: '実際', a: 'じっさい', opts: ['じつさい', 'じっさい', 'みさい', 'じっせい'] },
+            { k: '体験', a: 'たいけん', opts: ['たいけん', 'からだけん', 'たいげん', 'ていけん'] },
+            { k: '読書', a: 'どくしょ', opts: ['よみしょ', 'とくしょ', 'どくしょ', 'どっしょ'] },
+            { k: '手軽', a: 'てがる', opts: ['てかる', 'しゅけい', 'てがる', 'てけい'] },
+            { k: '失敗', a: 'しっぱい', opts: ['しつはい', 'しっぱい', 'しっばい', 'しっぺい'] }
+        ] }],
+        bunkeiIntro: '本の「文型」です。本文の文と、例文をタップすると読み上げます。',
+        bunkei: [
+            { p: '～そうだ（伝聞）', src: 'ラジオで聞くと長崎のほうも寒くなった<b>そうですね</b>。', s: [
+                '{r|田中|た/なか}さんは{r|毎朝|まい/あさ}テニスをする<b>そうです</b>。',
+                '{r|彼|かれ}はとてもまじめだ<b>そうです</b>。',
+                'あの人はドイツ{r|語|ご}が{r|上手|じょう/ず}だ<b>そうですね</b>。',
+                '{r|彼女|かの/じょ}は{r|教師|きょう/し}だ<b>そうです</b>。',
+                '彼はこの{r|頃|ごろ}、{r|健康|けん/こう}のためにダバコをやめた<b>そうです</b>。'
+            ] },
+            { p: '～ばかり・～てばかりいる', src: 'スキー場まで行くつもりでしたが、途中でころんで<b>ばかりいて</b>、おなかもすくし、昼になったので家へ帰りました。', s: [
+                '{r|山本|やま/もと}さんは{r|毎日|まい/にち}本<b>ばかり</b>{r|読|よ}んでいる。',
+                '何もしないで{r|遊|あそ}んで<b>ばかりいた</b>。',
+                '毎日雨<b>ばかり</b>{r|降|ふ}っている。',
+                '{r|母|はは}の{r|病気|びょう/き}を{r|案|あん}じて{r|泣|な}いて<b>ばかりいる</b>。',
+                '{r|勉強|べん/きょう}もしないでテレビ<b>ばかり</b>みている。'
+            ] },
+            { p: 'どうしてどうして', src: 'スキーなんてやさしいものだと思っていたのに、<b>どうしてどうして</b>なかなかむずかしいものでした。', s: [
+                '<b>どうしてどうして</b>そんなことはありません。',
+                '<b>どうしてどうして</b>{r|立派|りっ/ぱ}なものです。',
+                '<b>どうしてどうして</b>{r|実|じつ}にうまいです。',
+                '<b>どうしてどうして</b>{r|楽|たの}しいことですよ。',
+                '<b>どうしてどうして</b>お{r|上手|じょう/ず}です。'
+            ] },
+            { p: '～だけ', src: '机の上の学問、本を読んだ<b>だけ</b>の知識、映画で見た経験 ― それは、それだけでは実際には役にたたない。', s: [
+                '{r|三四回|さん/し/かい}、手紙をもらった<b>だけ</b>です。',
+                'ちょっと見た<b>だけ</b>では{r|分|わ}からない。',
+                '{r|月|つき}に{r|二三回|に/さん/かい}、{r|練習|れん/しゅう}した<b>だけ</b>では{r|足|た}りない。',
+                '{r|電話|でん/わ}をした<b>だけ</b>では{r|安心|あん/しん}できない。'
+            ] }
+        ]
+    };
+    READINGS['hufs-10'] = {
+        id: 'hufs-10', book: 'hufs-chukyu-dokkai', no: 10, chapter: '友情の杯',
+        ttsKana: { '室の': 'しつの', '室を': 'しつを', '社を': 'しゃを', '功成り名とげた': 'こうなりなとげた' },
+        title: '友情の杯',
+        author: '星新一',
+        authorHtml: '<ruby>星<rt>ほし</rt></ruby>　<ruby>新<rt>しん</rt>一<rt>いち</rt></ruby>',
+        tabs: [['text', '本文'], ['kanji', '読み方'], ['bunkei', '文型'], ['bio', '作者']],
+        pages: [
+            { p: 67, lines: [
+                '　ある{r|病院|びょういん}の{r|一室|いっしつ}。ひとりの{r|老人|ろうじん}がベッドに{r|横|よこ}たわっていた。{r|立派|りっぱ}',
+                'な{r|個室|こしつ}であり、{r|看護婦|かんごふ}はずっとつきっきりだった。',
+                '　これでわかるように、{r|老人|ろうじん}はかなりの{r|財産家|ざいさんか}であった。もっとく',
+                'わしくいえば、{r|彼|かれ}は大きな{r|薬品|やくひん}会社の{r|会長|かいちょう}であった。これまで{r|順調|じゅんちょう}',
+                'で{r|満足|まんぞく}すべき人生を送ってきており、{r|功成|こうな}り{r|名|な}とげた{r|状態|じょうたい}といって',
+                'いい。そのためか、{r|彼|かれ}は{r|死期|しき}の近いことを自分でも知ってはいたが、',
+                'べつに{r|未練|みれん}がましいことも口にせず、{r|落|お}ち着いていた。',
+                '　{r|老人|ろうじん}は{r|横|よこ}になったまま声を出した。',
+                '　「なあ……」',
+                '　「はい。なんでしょうか」',
+                '　そばの{r|椅子|いす}にかけていた{r|若|わか}い{r|看護婦|かんごふ}は、すぐに答えて立ちあがっ',
+                'た。{r|老人|ろうじん}は{r|低|ひく}い声でいった。',
+                '　「ひとつ、わたしの{r|最後|さいご}のたのみを聞いてはくれまいか」',
+                '　「もちろん、なんでもいたしますわ。だけど、{r|最後|さいご}だなんておっしゃ',
+                'ってはいけませんわ」',
+                '　「{r|元気|げんき}づけてくれる気持ちはありがたいが、もうそう長くないこと',
+                'は、わたしもよく知っているよ」',
+                '　「でも……」',
+                '　といいかけたが、{r|看護婦|かんごふ}はあとどう答えていいかわからず、{r|言葉|ことば}'
+            ] },
+            { p: 68, lines: [
+                'をにごした。',
+                '　「{r|困|こま}らせてしまったようだな。そんなつもりではなかったのだが。し',
+                'かし、{r|正直|しょうじき}なところ、わたしは{r|充分|じゅうぶん}に人生を楽しみ、けっこう{r|長生|ながい}',
+                'きをした。もはや、{r|思い残|おもいのこ}すこともないのだよ。ただひとつのこと',
+                'を{r|除|のぞ}いて……」',
+                '　「なんなのでしょうか」',
+                '　{r|彼女|かのじょ}は{r|好奇心|こうきしん}もあって聞いた。',
+                '　「べつにむずかしいことはない。それを{r|手伝|てつだ}ってもらいたいのだ」',
+                '　「あたしにできることでしたら」',
+                '　「{r|入院|にゅういん}する時に持ってきた{r|品|しな}のなかに、{r|洋酒|ようしゅ}の古いびんがあったはず',
+                'だ。さがしてもらいたい」',
+                '　{r|看護婦|かんごふ}は室のすみのほうへ行き、手に持って{r|戻|もど}ってきた。',
+                '　「これでございますか。ずいぶん古く、ラベルもすっかり{r|変色|へんしょく}してし',
+                'まって……」',
+                '　「そう、それだ。ひとくちでいいから、それを飲ませてもらいたいの',
+                'だ」',
+                '　{r|老人|ろうじん}は目を{r|細|ほそ}め、{r|高価|こうか}な{r|秘宝|ひほう}に{r|接|せっ}するような{r|表情|ひょうじょう}で、びんを見つ',
+                'めた。しかし、{r|看護婦|かんごふ}は少し{r|当惑|とうわく}した。',
+                '　「だけど、お酒はおからだによくありませんわ」',
+                '　「飲まなかったからといって、ずっと生きられるというわけでもある',
+                'まい。生きているうちに、それを飲みたいのだ。いや、飲まねばな',
+                'らぬのだ。それが{r|最後|さいご}の{r|望|のぞ}みだ……」',
+                '　{r|押し問答|おしもんどう}が{r|重|かさ}ねられた。{r|老人|ろうじん}のあまりの{r|熱心|ねっしん}さに{r|彼女|かのじょ}は{r|応答|おうとう}に{r|困|こま}',
+                'り、室を出ていった。{r|担当医|たんとうい}に{r|相談|そうだん}に行ったのだろう。やがて、{r|戻|もど}',
+                'ってきていった。',
+                '　「{r|一杯|いっぱい}ぐらいでしたら……」',
+                '　{r|一杯|いっぱい}ぐらいなら{r|病状|びょうじょう}も{r|悪化|あっか}しないというのか、こうなったら{r|好|す}き'
+            ] },
+            { p: 69, lines: [
+                'なようにさせたらいいというのか、いずれの{r|理由|りゆう}からかはわからな',
+                'かった。',
+                '　「ああ、それでいい。ありがとう」',
+                '　{r|老人|ろうじん}はうれしそうだった。{r|洋酒|ようしゅ}の{r|栓|せん}があけられ、小さなグラスに',
+                'つがれた。それをさし出しながら、{r|彼女|かのじょ}はいった。',
+                '　「なにかいわれがありそうですのね」',
+                '　「その話は、飲みながらしよう。しかし、その前に{r|残|のこ}りの酒を{r|捨|す}て、',
+                'びんのなかを{r|洗|あら}ってくれ」',
+                '　{r|看護婦|かんごふ}はふしぎがりながらも、それに{r|従|したが}った。{r|彼女|かのじょ}はきれいにな',
+                'ったびんを{r|示|しめ}しながら聞いた。',
+                '　「なんだか、ほかの人には{r|一滴|いってき}も飲まれたくない、といった{r|感|かん}じです',
+                'ね」',
+                '　「そうなのだ。これは、わたしの{r|結婚|けっこん}を{r|祝|いわ}って、友人からおくられた',
+                '酒なのだ」',
+                '　「ロマンチックなお話なのでしょうか」',
+                '　「そういえるかどうか」',
+                '　{r|老人|ろうじん}は{r|回想|かいそう}するような{r|表情|ひょうじょう}になって「ずっと{r|昔|むかし}のことなのだが、入',
+                '社して{r|以来|いらい}、わたしには一人のライバルがあった。{r|才能|さいのう}の点でも、',
+                'わたしと{r|優劣|ゆうれつ}がつけがたい男だった。あるいは、わたしよりすぐれ',
+                'ていたかもしれない。{r|若|わか}さのためもあり、おたがいに{r|意識|いしき}し、こと',
+                'ごとに{r|競|きそ}いあったものだ。仕事に{r|関|かん}してだけでなく、会社の{r|創立者|そうりつしゃ}',
+                'の{r|娘|むすめ}との{r|交際|こうさい}も、{r|火花|ひばな}を{r|散|ち}らさんばかりに{r|争|あらそ}ったものだ……」',
+                '　{r|老人|ろうじん}は酒を{r|半分|はんぶん}ほど飲み、また話した。',
+                '　「……{r|創立者|そうりつしゃ}は{r|彼|かれ}のほうを買っていたようだが、{r|娘|むすめ}はわたしのほうに',
+                '{r|好意|こうい}を{r|寄|よ}せてくれた。それがきめてになったのだろう、わたしが勝',
+                '利者となった」',
+                '　「忘れられない{r|思い出|おもいで}でしょうね。でも、そのお友だちのかたは、さ'
+            ] },
+            { p: 70, lines: [
+                'ぞがっかりなさったことでしょう」',
+                '　「もちろん、そうだ。{r|彼|かれ}は気が{r|抜|ぬ}けたような、思いつめたような{r|様子|ようす}',
+                'で、しばらくは目つきもおかしいほどだった」',
+                '　ありふれた{r|恋物語|こいものがたり}だったが、{r|看護婦|かんごふ}はその先を聞きたがった。',
+                '　「そのかたは、それからどうなさったのでしょうか」',
+                '　「社をやめるのではないかと、わたしは思った。他の会社に{r|移|うつ}って',
+                'も、いくらでも{r|活躍|かつやく}できる{r|実力|じつりょく}の{r|持ち主|もちぬし}だったのだから。わたしだ',
+                'ったら、そうしただろう。だが、{r|彼|かれ}はやめなかった。それどころか、',
+                'ある日わたしの家を{r|訪|おとず}れ、{r|婚約|こんやく}の{r|成立|せいりつ}を{r|祝|いわ}って、この酒を{r|置|お}いてい',
+                'った。すべてを水に{r|流|なが}そうといった{r|態度|たいど}だったな」',
+                '　「{r|和解|わかい}できてよかったですわね」',
+                '　「いや、ただの{r|和解|わかい}以上だ。それからは、{r|彼|かれ}は人が変ったようになっ',
+                'た。{r|創立者|そうりつしゃ}の{r|娘|むすめ}との{r|結婚|けっこん}でわたしのほうが{r|昇進|しょうしん}が早くなったわけだ',
+                'が、{r|彼|かれ}はいつも{r|従順|じゅうじゅん}にわたしを立て、じつによく{r|努力|どりょく}してくれた。',
+                '会社が{r|発展|はってん}をつづけ、これまでになったのも、{r|彼|かれ}によるところが非',
+                '常に大きい」',
+                '　{r|老人|ろうじん}はグラスをちょっとあげ、{r|感謝|かんしゃ}の{r|乾杯|かんぱい}をするように、{r|残|のこ}りの',
+                '酒を少し飲んだ。',
+                '　「本当にいいお話ですわ。男のかたの{r|友情|ゆうじょう}って、さっぱりとしてい',
+                'て、強くて……」',
+                '　「そういえるかどうかが問題なのだよ。{r|彼|かれ}の{r|性格|せいかく}が、あまりにも{r|急|きゅう}に',
+                '変りすぎたとは思わないかね。また、その酒をわたしがすぐには飲',
+                'まず、いままで取っておいた。なぜだろうかと{r|不審|ふしん}には思わないか',
+                'ね」',
+                '　{r|老人|ろうじん}に{r|注意|ちゅうい}され、{r|看護婦|かんごふ}は少し考えた。そして、{r|病院|びょういん}につとめて',
+                'いるせいか、やがてあることに気づいた。{r|彼女|かのじょ}は思わずそれを口に',
+                'した。'
+            ] },
+            { p: 71, lines: [
+                '　「{r|毒|どく}……」',
+                '　しかし、その時には、すでに{r|老人|ろうじん}は{r|残|のこ}りの酒を飲みほしてしまっ',
+                'ていた。',
+                '　「そう。ということも考えられるわけだよ。{r|薬品|やくひん}会社という{r|商売柄|しょうばいがら}、',
+                'その気になれば、{r|効果的|こうかてき}な{r|毒薬|どくやく}について{r|調|しら}べることも、それを{r|入手|にゅうしゅ}',
+                'することも、{r|普通|ふつう}の人よりはずっと{r|簡単|かんたん}にできたのだからな」',
+                '　{r|看護婦|かんごふ}は{r|眉|まゆ}をひそめ、少しふるえた。',
+                '　「こわいお話ですのね……」',
+                '　「しかし、わたしのほうもその気になれば、モルモットに{r|与|あた}えてみる',
+                'こともできた。また、{r|試薬|しやく}をそろえて、ゆっくり{r|分析|ぶんせき}して{r|調|しら}べるこ',
+                'ともできる」',
+                '　「それで、{r|毒|どく}はどうしたの」',
+                '　{r|当然|とうぜん}だれでも聞きたいところだった。だが、{r|老人|ろうじん}は{r|即答|そくとう}せず、話',
+                'をずらした。',
+                '　「この{r|場合|ばあい}、{r|毒|どく}を入れた{r|当人|とうにん}は、どんな気持ちになるだろうか」',
+                '　「そうですわね、あなたが死ななかったのですから、{r|計画|けいかく}が{r|発覚|はっかく}した',
+                'ことに気がつく。あわてて{r|逃|に}げるかしら。でも、すぐに{r|手配|てはい}されて',
+                'しまう。{r|覚悟|かくご}をきめるか、どんな目にあわされるかと、びくびくし',
+                'つづけ……」',
+                '　{r|彼女|かのじょ}は考え考えしながら、ここまで言った。{r|老人|ろうじん}はその先を、も',
+                'どかしそうにひきついだ。',
+                '　「そんなところだろう。{r|殺人|さつじん}{r|計画|けいかく}の{r|証拠|しょうこ}を、{r|相手|あいて}に{r|渡|わた}してしまった{r|形|かたち}',
+                'なのだ。なにしろ、わたしに大変な{r|弱味|よわみ}をにぎられたことになる。',
+                'わたしから{r|逃|に}げることはできず、{r|一生|いっしょう}のあいだ、わたしのために必',
+                '死に{r|働|はたら}くことになる」',
+                '　「{r|殺人|さつじん}{r|計画|けいかく}もいけないけど、かわいそうになってきますわ。どんな人',
+                '生なんでしょう。こんな{r|残酷|ざんこく}なことってないんじゃないかしら。本'
+            ] },
+            { p: 72, lines: [
+                '当にそれをおやりになったの。そうなんでしょうね。{r|事業|じぎょう}で{r|成功|せいこう}な',
+                'さるには、それぐらいのことは…」',
+                '　{r|看護婦|かんごふ}は{r|非難|ひなん}するような{r|鋭|するど}い目つきになった。しかし、{r|老人|ろうじん}は{r|首|くび}',
+                'をふった。',
+                '　「そうきめつけられては{r|困|こま}る。わたしは{r|分析|ぶんせき}をしたとは言っていな',
+                'い。じつは、{r|調|しら}べてみなかったのだ。また、このことに{r|関|かん}する{r|会話|かいわ}',
+                'を{r|彼|かれ}としたことはなかった。その{r|彼|かれ}も{r|数年前|すうねんまえ}に死んでしまった。つ',
+                'まり、きょうまで{r|毒|どく}の{r|有無|うむ}について、わたしは知らなかったのだ」',
+                '　「{r|調|しら}べてごらんになる気には…」',
+                '　「それは大変な{r|賭|か}けだよ。{r|彼|かれ}が{r|真|しん}の{r|友情|ゆうじょう}の{r|持ち主|もちぬし}なのか、わたしへの',
+                '{r|憎悪|ぞうお}に{r|燃|も}えた人間なのか。すぐに{r|決定|けってい}が出てしまう。わたしにはや',
+                'ってみる{r|勇気|ゆうき}がなかった。{r|前者|ぜんしゃ}の{r|場合|ばあい}には、わたしは{r|彼|かれ}の{r|崇高|すうこう}な人',
+                '格の前に{r|恥|は}じつづけねばならず、とてもいっしょに仕事をやって行',
+                'くことはできない。{r|後者|こうしゃ}の{r|場合|ばあい}には、わたしは{r|悪魔|あくま}のような{r|心境|しんきょう}に',
+                'なり、{r|復讐|ふくしゅう}のために{r|限|かぎ}りなくこきつかっただろう。あなただったら、',
+                'どうする」',
+                '　「さあ…」',
+                '　「やはり{r|迷|まよ}うだろう。わたしもそうだった。{r|迷|まよ}いつづけでわからない',
+                'まま、いや、わからないからこそ、{r|親|した}しい友として{r|一生|いっしょう}つきあって',
+                'こられたのではないだろうか。ある時は{r|彼|かれ}を{r|尊敬|そんけい}し、ある時は{r|彼|かれ}を',
+                'あざ笑いたくなり、その{r|交錯|こうさく}のなかで{r|別|わか}れることなくつきあいつづ',
+                'けてきた。{r|他人|たにん}にはわたしたちが{r|無二|むに}の{r|仲間|なかま}に見えたことだろう。',
+                'しかし、{r|友情|ゆうじょう}のなかにも、こんなものがあるというわけだよ。ある',
+                'いは、{r|友情|ゆうじょう}とは{r|本来|ほんらい}こんなものなのかもしれない」',
+                '　「でも、わからずじまいというのも……」',
+                '　わからずじまいではない。{r|友情|ゆうじょう}のきずなともいうべきその酒を、',
+                'いま、わたしが口にした。まもなく答えがわかるだろう……'
+            ] },
+            { p: 73, lines: [
+                '　{r|老人|ろうじん}は{r|舌|した}の先でグラスの{r|内側|うちがわ}をなめていた。{r|彼女|かのじょ}はどう{r|扱|あつか}ったも',
+                'のかすぐにはわからず、だまって立ちつづけていた。',
+                '　そのうち{r|老人|ろうじん}は{r|苦|くる}しそうな{r|様子|ようす}になった。{r|看護婦|かんごふ}の{r|連絡|れんらく}で、{r|担当|たんとう}',
+                'の{r|医師|いし}がかけつけてきて{r|老人|ろうじん}に聞いた。',
+                '　「どうなのです、ご{r|気分|きぶん}は……」',
+                '　「いや、もうなにも聞かないでくれ」',
+                '　いつもは{r|医師|いし}に{r|協力的|きょうりょくてき}な{r|老人|ろうじん}だったが、いまは答えることをかた',
+                'くなにこばんだ。{r|病気|びょうき}の{r|発作|ほっさ}なのだろうか。酒のアルコール分がや',
+                'はりいけなかったのか。なぞの{r|解答|かいとう}を知ったことのショックなのか。',
+                'それとも酒に{r|含|ふく}まれていた{r|成分|せいぶん}のためなのか。それを{r|他人|たにん}に知られ',
+                'たくないようなふうでもあった。{r|友情|ゆうじょう}の答えは、自分の心に{r|秘|ひ}めて',
+                'あの世に{r|持ち去|もちさ}ろうとするかのように……。',
+                '　{r|医者|いしゃ}はどう{r|手当|てあ}てしていいのかわからず、ためらってから{r|注射|ちゅうしゃ}を',
+                'うった。しかし、そのききめもなく、{r|老人|ろうじん}の{r|息|いき}づかいは弱くなって',
+                'いった。',
+                '　{r|看護婦|かんごふ}は顔を近づけ、{r|老人|ろうじん}の{r|表情|ひょうじょう}からなにかを読みとろうとした。',
+                'だが、それはあまりにも{r|複雑|ふくざつ}で、まだ{r|若|わか}い{r|彼女|かのじょ}の手にあまるものだ',
+                'った。'
+            ] }
+        ],
+        kanjiIntro: '本の「漢字の読み方」です。読みを選びましょう。読みは本のとおりです。ほかの選択肢は Claude が作りました。',
+        kanji: [{ title: '次の言葉の読み方を選ぼう。', yomi: true, items: [
+            { k: '横たわる', a: 'よこたわる', opts: ['よこたわる', 'おうたわる', 'よこだわる', 'よこさわる'] },
+            { k: '秘宝', a: 'ひほう', opts: ['ひほう', 'ひぼう', 'ひたから', 'ひっぽう'] },
+            { k: '当惑', a: 'とうわく', opts: ['とうまど', 'とうわく', 'あてわく', 'どうわく'] },
+            { k: '押し問答', a: 'おしもんどう', opts: ['おしもんとう', 'おうしもんどう', 'おしもんどう', 'おしとうもん'] },
+            { k: '悪化', a: 'あっか', opts: ['あくか', 'あっか', 'わるか', 'あっけ'] },
+            { k: '優劣', a: 'ゆうれつ', opts: ['ゆうおつ', 'ゆうれつ', 'ゆれつ', 'やされつ'] },
+            { k: '恋物語', a: 'こいものがたり', opts: ['れんものがたり', 'こいものかたり', 'こいものがたり', 'れんぶつご'] },
+            { k: '持ち主', a: 'もちぬし', opts: ['もちしゅ', 'もちぬし', 'じぬし', 'もちおも'] },
+            { k: '商売柄', a: 'しょうばいがら', opts: ['しょうばいへい', 'しょうばいがら', 'しょうばいから', 'あきないがら'] },
+            { k: '即答', a: 'そくとう', opts: ['そくとう', 'そくどう', 'しょくとう', 'すぐとう'] },
+            { k: '弱味', a: 'よわみ', opts: ['じゃくみ', 'よわあじ', 'よわみ', 'よわび'] },
+            { k: '鋭い', a: 'するどい', opts: ['えいい', 'するどい', 'するとい', 'きびしい'] },
+            { k: '憎悪', a: 'ぞうお', opts: ['ぞうあく', 'そうお', 'ぞうお', 'にくお'] },
+            { k: '崇高', a: 'すうこう', opts: ['そうこう', 'すうこう', 'すこう', 'しゅうこう'] },
+            { k: '交錯', a: 'こうさく', opts: ['こうさく', 'こうさ', 'こうじゃく', 'こうそく'] },
+            { k: '内側', a: 'うちがわ', opts: ['ないそく', 'うちかわ', 'うちがわ', 'ないがわ'] },
+            { k: '発作', a: 'ほっさ', opts: ['はっさく', 'ほっさく', 'はっさ', 'ほっさ'] },
+            { k: '手当て', a: 'てあて', opts: ['しゅとうて', 'てあて', 'てさて', 'てまて'] }
+        ] }],
+        bunkeiIntro: '本の「文型」です。本文の文と、例文をタップすると読み上げます。',
+        bunkei: [
+            { p: '～がましい', src: 'べつに未練<b>がましい</b>ことも口にせず、落ち着いていた。', s: [
+                '{r|言|い}いわけ<b>がましい</b>ことばかり言っている。',
+                '{r|差|さ}し{r|出|で}<b>がましい</b>{r|口|くち}をきく。',
+                '{r|弁解|べん/かい}<b>がましい</b>ところはちっともなかった。',
+                '{r|未練|み/れん}<b>がましい</b>ことを言う。'
+            ] },
+            { p: '～そうだ（様態）', src: '「なにかいわれがあり<b>そう</b>ですのね」', s: [
+                '{r|老人|ろう/じん}はその{r|先|さき}をもどかし<b>そう</b>にひきついだ。',
+                '{r|今|いま}にも{r|降|ふ}ってき<b>そう</b>な{r|空模様|そら/も/よう}ですよ。',
+                '{r|高|たか}い本だったけれど、おもしろ<b>そう</b>な{r|題|だい}だったので、つい{r|買|か}ってしまった。',
+                '{r|永井|なが/い}さんはこのごろ{r|暇|ひま}<b>そう</b>だから、テニスに{r|誘|さそ}ったら、{r|喜|よろこ}んでやって来ると思うよ。'
+            ] },
+            { p: '～がる', src: '{r|看護婦|かん/ご/ふ}は、ふしぎ<b>がり</b>ながらも、それに{r|従|したが}った。', s: [
+                'うれし<b>がら</b>せてやろう。',
+                'あの人は{r|変|か}わっていますよ。これを見てみんながおもしろ<b>がって</b>いるのに、{r|少|すこ}しもおもしろ<b>がり</b>ませんから。',
+                '{r|彼|かれ}は{r|照|て}れくさ<b>がり</b>もせず{r|彼女|かの/じょ}にむかって{r|振|ふ}りまいた。',
+                'あの人は、ほんとうは{r|気|き}がよわいんです。{r|強|つよ}<b>がって</b>いるだけです。'
+            ] }
+        ],
+        bio: { years: '1926〜1997', text: '小説家。大正15年(1926年)9月6日～。東京本郷生れ。東大農学部　農芸化学科卒。同大学院前期修了。「おーい・でてこーい」「きまぐれ指数」「人造美人」「セキストラ」など。', source: '本の「作者」欄より' }
+    };
     READINGS['dk-1'] = {
         id: 'dk-1', book: 'darakwon-dokkai-chukyu', no: 1, chapter: '日本の国技',
         title: '日本の国技',
@@ -13281,6 +13947,1143 @@
             ]
         }
     };
+    READINGS['dk-8'] = {
+        id: 'dk-8', book: 'darakwon-dokkai-chukyu', no: 8, chapter: 'モンスターペアレント',
+        title: 'モンスターペアレント',
+        author: '몬스터 페어런트',
+        authorHtml: '몬스터 페어런트',
+        intro: '\'몬스터 페어런트\'란 어떤 부모를 말하는 것일까요? 그런 부모들이 요구하는 것에는 어떤 것이 있을까요? 또 몬스터 페어런트가 왜 늘고 있는지 그 이유를 생각해 봅시다.',
+        tabs: [['text', '本文'], ['q', '問題'], ['words', '単語'], ['bunkei', '文型'], ['kanji', '練習'], ['kaiwa', '会話']],
+        exNote: '本の模範解答です。',
+        pages: [
+            { p: 80, lines: [
+                '　{r|皆|みな}さんは、「モンスターペアレント」という言葉を{r|耳|みみ}にしたことがありますか。',
+                'モンスターペアレントとは、学校などに対して、{r|自己中心的|じ/こ/ちゅう/しん/てき}で{r|理不尽|り/ふ/じん}な{r|要求|よう/きゅう}を',
+                'する親を{r|指|さ}す言葉です。90年代{r|後半|こう/はん}から日本でもこのような親が増え始め、{r|教育|きょう/いく}',
+                '{r|現場|げん/ば}では手を{r|焼|や}いています。2008年にはモンスターペアレントをテーマにした',
+                'テレビドラマも{r|制作|せい/さく}され、{r|話題|わ/だい}となりました。',
+                '　モンスターペアレントの要求は、どれも{r|常識|じょう/しき}を超えたものばかりです。例え',
+                'ば、自分の子供がリレーの選手に選ばれないのは{r|不公平|ふ/こう/へい}だとクレームを{r|付|つ}けた',
+                'り、子供が{r|遅刻|ち/こく}しがちなことを{r|教師|きょう/し}のせいにして、{r|担任|たん/にん}が家まで迎えに来るべ',
+                'きだ、などと信じがたい要求をしたりします。このような親が増えている理由',
+                'は、教師を{r|尊敬|そん/けい}する気持ちが{r|薄|うす}くなっている上に、「言ったもん{r|勝|が}ち」という',
+                '{r|風潮|ふう/ちょう}も{r|強|つよ}まっているためだそうです。モンスターペアレントは、「同じ{r|値段|ね/だん}を払',
+                'えば、同じ{r|商品|しょう/ひん}が手に{r|入|はい}る」という{r|消費者意識|しょう/ひ/しゃ/い/しき}で教育をサービスだと考えている',
+                'ため、自分の子供が学校で他の子供より「{r|損|そん}」な{r|待遇|たい/ぐう}を{r|受|う}けることに{r|我慢|が/まん}ができ',
+                'ないのです。近年では、モンスターペアレントの子供が、モンスターチルドレン',
+                'やモンスター大学生となって、{r|新|あら}たな問題を起こしています。自分の{r|責任|せき/にん}は',
+                '{r|棚|たな}に{r|上|あ}げ、{r|権利|けん/り}や要求だけを{r|主張|しゅ/ちょう}する親を見て育った子供たちが、同じような',
+                '{r|振|ふ}る{r|舞|ま}いをするのでしょう。',
+                '　一方、アメリカでは、{r|子離|こ/ばな}れできていない{r|過保護|か/ほ/ご}・{r|過干渉|か/かん/しょう}の親を指す言葉',
+                'として、「ヘリコプターペアレント」という言葉があります。まるでヘリコプター',
+                'に乗って{r|上空|じょう/くう}から子供を{r|見守|み/まも}り、何かあるとすぐに子供を{r|救出|きゅう/しゅつ}しようとする',
+                'ような様子から、この名前が付きました。日本のモンスターペアレントは、',
+                '{r|幼稚園|よう/ち/えん}や小学校などの{r|初等|しょ/とう}教育の{r|場|ば}に多く見られますが、ヘリコプターペアレ'
+            ] },
+            { p: 81, lines: [
+                'ントは子供が大学生になっても、{r|我|わ}が{r|子|こ}の{r|行動|こう/どう}に{r|口|くち}を{r|挟|はさ}まずにはいられず、',
+                '{r|就職|しゅう/しょく}試験にまで{r|付|つ}き{r|添|そ}うそうです。近年では、韓国でも{r|少子化|しょう/し/か}の{r|影響|えい/きょう}で過保護・',
+                '過干渉な親が増えているようです。親が子供の入学試験に付き添ったり、大',
+                '学の教師に子供の{r|成績|せい/せき}を上げるよう要求したりするなど、ヘリコプターペアレ',
+                'ント化する{r|傾向|けい/こう}があります。',
+                '　モンスターペアレントといい、ヘリコプターペアレントといい、子供の{r|幸|しあわ}せ',
+                'を願っての行動ではあるものの、それが{r|周|まわ}りの人に無理を{r|強|し}いていることに気',
+                'づいてほしいものです。'
+            ] }
+        ],
+        qTitle: '読解問題',
+        tebiki: [
+            { t: 'モンスターペアレントとは、どのような親ですか。', ex: '学校などに対して、自己中心的で理不尽な要求をする親。', quote: '自己中心的で理不尽な', page: 80 },
+            { t: 'どうしてモンスターペアレントが増加していますか。', ex: '教師を尊敬する気持ちが薄くなっている上に、「言ったもん勝ち」という風潮も強まっているため。', quote: '言ったもん勝ち', page: 80 },
+            { t: '「ヘリコプターペアレント」の名前の由来は何ですか。', ex: 'まるでヘリコプターに乗って上空から子供を見守り、何かあるとすぐに子供を救出しようとするような様子から付いた。', quote: '上空から子供を見守り', page: 80 },
+            { t: 'モンスターペアレントとヘリコプターペアレントの違いは何ですか。', ex: 'モンスターペアレントは、幼稚園や小学校などの初等教育の場に多く見られるが、ヘリコプターペアレントは子供が大学生になっても、我が子の行動に口を挟まずにはいられず、就職試験にまで付き添うこと。', quote: '初等教育の場に多く見られますが', page: 80 },
+            { t: '韓国の親はどのような傾向がありますか。', ex: '子供の入学試験に付き添ったり、大学の教師に子供の成績を上げるよう要求したりするなど、ヘリコプターペアレント化する傾向がある。', quote: '成績を上げるよう要求', page: 81 }
+        ],
+        ronriTitle: '短文を作りなさい（次の言葉を使って）',
+        ronri: [
+            { t: '그는 언제나 자기중심적인 행동을 취해서 팀의 분위기를 어지럽히는 경향이 있습니다.', note: '自己中心的な・雰囲気・傾向', ex: '彼は、いつも自己中心的な行動を取って、チームの雰囲気を乱す傾向があります。' },
+            { t: '요즘은 아이의 응석을 받아주기만 해서 예절교육에 애먹는 부모가 많습니다.', note: '甘やかす・しつけ・手を焼く', ex: '最近は、子供を甘やかすばかりでしつけに手を焼く親が多いです。' },
+            { t: '그녀는 불공평한 대우를 받아서 회사를 고소했다.', note: '不公平な・待遇を受ける・告訴する', ex: '彼女は不公平な待遇を受けて、会社を告訴した。' },
+            { t: '소비자의 클레임에 대응하는 것은 힘든 일이다.', note: '消費者・クレーム・大変な', ex: '消費者のクレームに対応するのは、大変なこと（仕事）です。' }
+        ],
+        kanjiIntro: '（　）に入るものを選びましょう。答えは本の正答です。ほかの選択肢は Claude が作りました。',
+        kanji: [
+            { title: '文型：（　）に入る言葉を選んで、文を完成させなさい。', wide: true, items: [
+                { pre: 'モンスターペアレント', k: '（　　　）', post: '、ヘリコプターペアレントといい、周りの人に無理を強いていることに気づいていない親が多い。', a: 'といい', opts: ['がたい', 'にはいられない', 'といい', 'ほしいものだ'] },
+                { pre: '他の人に迷惑をかけているということに気づいて', k: '（　　　）', post: '。', a: 'ほしいものだ', opts: ['がたい', 'にはいられない', 'といい', 'ほしいものだ'] },
+                { pre: 'モンスターペアレントは教師に信じ', k: '（　　　）', post: '要求をする。', a: 'がたい', opts: ['がたい', 'にはいられない', 'といい', 'ほしいものだ'] },
+                { pre: 'ヘリコプターペアレントは、我が子の行動に口を挟まず', k: '（　　　）', post: '。', a: 'にはいられない', opts: ['がたい', 'にはいられない', 'といい', 'ほしいものだ'] }
+            ] },
+            { title: '文型：～がたい・～ずにはいられない・～といい～といい・～てほしいものだ を使って、文を完成させなさい。', wide: true, items: [
+                { pre: 'その話を聞いてあまりにも驚いたので、帰ってから母に', k: '（話す→　　）', post: '。', a: '話さずにはいられなかった', opts: ['話さずにはいられなかった', '話しがたかった', '話してほしいものだった', '話すといい'] },
+                { pre: '外国でそんなひどい事件にあうなんて、', k: '（耐える→　　）', post: 'ことだ。', a: '耐えがたい', opts: ['耐えがたい', '耐えずにはいられない', '耐えてほしい', '耐えるといい'] },
+                { pre: '子供たちが安心して生活できる町を', k: '（作る→　　）', post: 'と思う。', a: '作ってほしいものだ', opts: ['作ってほしいものだ', '作りがたい', '作らずにはいられない', '作るといい'] },
+                { pre: '彼の', k: '（話し方→　　）', post: '態度といい、私達を馬鹿にしているとしか思えない。', a: '話し方といい', opts: ['話し方といい', '話し方がたく', '話し方どころか', '話し方次第で'] }
+            ] },
+            { title: '言葉の使い方：口を挟む・がち・制作する・棚に上げる・強いる・付き添う から選んで、適当な形にしなさい。', wide: true, items: [
+                { pre: '教育をテーマにした映画が来年', k: '＿＿＿＿', post: 'そうです。', a: '制作される', opts: ['制作される', '強いられる', '付き添われる', '棚に上げられる'] },
+                { pre: '課長は、他人の問題に何でも', k: '＿＿＿＿', post: 'たがるので面倒です。', a: '口を挟み', opts: ['口を挟み', '付き添い', '強い', '制作し'] },
+                { pre: '母が入院している間、私も病院に', k: '＿＿＿＿', post: 'いました。', a: '付き添って', opts: ['付き添って', '口を挟んで', '強いて', '棚に上げて'] },
+                { pre: '疲れている時は、誰でも思わぬミスをし', k: '＿＿＿＿', post: 'です。', a: 'がち', opts: ['がち', '強い', '付き添い', '口を挟み'] },
+                { pre: '課長は自分のミスを', k: '＿＿＿＿', post: 'て、部下をしかりました。', a: '棚に上げ', opts: ['棚に上げ', '口を挟ん', '付き添っ', '制作し'] }
+            ] }
+        ],
+        words: [
+            { sec: '本文', list: [
+                ['モンスター', '', '몬스터, 괴물'], ['ペアレント', '', '페어런트, 부모'], ['耳にする', 'みみにする', '듣다'],
+                ['自己中心的な', 'じこちゅうしんてきな', '자기중심적인'], ['理不尽な', 'りふじんな', '도리에 맞지 않는, 불합리한'], ['手を焼く', 'てをやく', '애먹다, 속썩이다'],
+                ['制作する', 'せいさくする', '제작하다'], ['常識', 'じょうしき', '상식'], ['不公平', 'ふこうへい', '불공평함'],
+                ['クレームを付ける', 'クレームをつける', '클레임을 걸다, 트집잡다'], ['～がちだ', '', '자주 ~하다'], ['尊敬する', 'そんけいする', '존경하다'],
+                ['言ったもん勝ち', 'いったもんがち', '말한 사람이 이김'], ['風潮', 'ふうちょう', '풍조'], ['強まる', 'つよまる', '강해지다, 높아지다'],
+                ['損', 'そん', '손해'], ['待遇を受ける', 'たいぐうをうける', '대우를 받다'], ['我慢', 'がまん', '참음, 인내'],
+                ['新たな', 'あらたな', '새로운'], ['棚に上げる', 'たなにあげる', '문제삼지 않다, 제쳐놓다'], ['権利', 'けんり', '권리'],
+                ['主張する', 'しゅちょうする', '주장하다'], ['振る舞い', 'ふるまい', '행동'], ['子離れ', 'こばなれ', '자식을 자립시킴'],
+                ['過保護', 'かほご', '과보호'], ['過干渉', 'かかんしょう', '지나친 간섭'], ['上空', 'じょうくう', '상공'],
+                ['見守る', 'みまもる', '지켜보다, 주시하다'], ['救出する', 'きゅうしゅつする', '구출하다'], ['初等教育', 'しょとうきょういく', '초등교육'],
+                ['我が子', 'わがこ', '자기 자식'], ['口を挟む', 'くちをはさむ', '말참견을 하다'], ['付き添う', 'つきそう', '곁에 따르다, 따라가다'],
+                ['傾向', 'けいこう', '경향'], ['強いる', 'しいる', '강요하다']
+            ] },
+            { sec: '文型', list: [
+                ['けがをさせる', '', '상처를 입히다'], ['資料', 'しりょう', '자료'], ['文句を言う', 'もんくをいう', '불평을 말하다'],
+                ['イライラする', '', '초조하다'], ['煙草を吸う', 'たばこをすう', '담배를 피우다'], ['～ものだ', '', '~하기 마련이다'],
+                ['語彙', 'ごい', '어휘'], ['豊富さ', 'ほうふさ', '풍부함'], ['構成', 'こうせい', '구성'],
+                ['暮らし', 'くらし', '생활'], ['被災地', 'ひさいち', '재해지역'], ['復興する', 'ふっこうする', '부흥하다, 복구되다']
+            ] }
+        ],
+        bunkei: [
+            { p: '～がたい', ko: '~하기 어렵다', ex: '\'~하는 것은 어렵다, 불가능하다\'라고 할 때 사용한다. 「信じる・許す・想像する・理解する・受け入れる」 등의 동사와 함께 쓰일 때가 많다. 능력적으로 어렵다고 할 때에는 사용할 수 없다.', s: [
+                '{r|教師|きょう/し}が子供にそんなことを言うなんて、{r|理解|り/かい}し<b>がたい</b>。',
+                'どんな理由があったとしても、子供にけがをさせるのは、{r|許|ゆる}し<b>がたい</b>{r|行為|こう/い}です。',
+                '明日までに{r|資料|し/りょう}を{r|準備|じゅん/び}してほしいという彼の{r|要求|よう/きゅう}は、{r|受|う}け{r|入|い}れ<b>がたい</b>ものだった。'] },
+            { p: '～ずにはいられない', ko: '~하지 않을 수는 없다', ex: '\'~하지 않고서는 있을 수 없다\'라고 할 때 사용한다. \'~하고 싶다\'라는 기분을 억누를 수 없을 때, 또는 신체적으로 아무리 해도 참을 수 없는 경우에 쓴다.', s: [
+                'あまりにもひどい{r|対応|たい/おう}をされて、{r|文句|もん/く}を言わ<b>ずにはいられなかった</b>。',
+                '{r|石井|いし/い}さんは、イライラすると{r|煙草|たばこ}を吸わ<b>ずにはいられない</b>ようだ。',
+                'どんな親でも、{r|我|わ}が{r|子|こ}の{r|幸|しあわ}せを願わ<b>ずにはいられない</b>ものだ。'] },
+            { p: '～といい～といい', ko: '~이며 ~이며, ~도 ~도', ex: '어떤 일에 대해 몇 가지 예를 들어 \'~도 ~도 (어떤 점에서 봐도) …다\'라고 할 때 사용한다.', s: [
+                '顔が丸いところ<b>といい</b>口が大きいところ<b>といい</b>、{r|娘|むすめ}は私にそっくりです。',
+                '{r|語彙|ご/い}の{r|豊富|ほう/ふ}さ<b>といい</b>{r|文章|ぶん/しょう}の{r|構成|こう/せい}<b>といい</b>、この学生の作文はすばらしい。',
+                '週末に{r|出勤|しゅっ/きん}しなければならないこと<b>といい</b>、{r|残業|ざん/ぎょう}が多いこと<b>といい</b>、この会社はあまり良い{r|条件|じょう/けん}ではない。'] },
+            { p: '～てほしいものだ', ko: '~했으면 한다', ex: '\'~했으면 좋겠다\'라는 다른 사람에 대한 강한 바람을 나타내는 표현이다. 「何とかして」와 함께 자주 쓰인다.', s: [
+                '娘には、早く{r|結婚|けっ/こん}して{r|安定|あん/てい}した{r|暮|く}らしをし<b>てほしいものです</b>。',
+                '弟には、何とかして{r|希望|き/ぼう}の大学に{r|合格|ごう/かく}し<b>てほしいものです</b>。',
+                '{r|被災地|ひ/さい/ち}が早く{r|復興|ふっ/こう}し<b>てほしいものだ</b>と日本{r|中|じゅう}が願っている。'] }
+        ],
+        kaiwa: {
+            audio: 'audio/dk-8-kaiwa.mp3',
+            segs: [[0.00, 13.90], [14.02, 24.34], [24.78, 30.36], [30.78, 32.49], [32.94, 40.02], [40.74, 46.26], [46.58, 49.72], [50.27, 56.52], [56.79, 67.02], [67.12, 75.80], [76.39, 80.93]],
+            answers: ['理不尽な', '権利', '主張する', '風潮', '我が子', '棚に上げて', '少子化', '損', '過保護', '子離れ'],
+            lines: [
+                ['A', '昨日、{r|息子|むす/こ}の学校のPTA{r|総会|そう/かい}に行って来たんですけど、最近の親ってすごいですね。先生方に[1]{r|要求|よう/きゅう}をバンバン出しちゃって、びっくりしましたよ。'],
+                ['B', 'へえ、そうだったんですか。最近はどこでも自分の[2]だけを[3]人が増えていますからね。先生方も大変でしょうね。'],
+                ['A', 'そうですね。何でもとりあえずは言ってみるっていう[4]がありますよね。'],
+                ['B', '言ったもん{r|勝|が}ちですね。'],
+                ['A', 'ええ、それで[5]や{r|家庭|か/てい}の問題は[6]、何でも学校や人のせいにしちゃうとかも。'],
+                ['B', '[7]の{r|影響|えい/きょう}で、親の{r|愛情|あい/じょう}が一人の子に{r|集中|しゅう/ちゅう}しているせいでしょうかね。'],
+                ['A', '{r|確|たし}かに一人っ子は{r|甘|あま}やかされますからね。'],
+                ['B', '自分の子供が他の子より[8]をしたら困るっていう考えがあるのかもしれないですね。'],
+                ['A', 'でも、あんまり[9]になったら、将来子供が困ると思うんですよね。自分のことを何も考えたり決めたりできない大人になったら、かわいそうですよ。'],
+                ['B', 'ええ、いつまでも{r|自立|じ/りつ}できなくなりそうですね。親の方も[10]できないでしょうし。'],
+                ['A', '親は気づかぬうちにそれを{r|望|のぞ}んでいるのかもしれませんけどね。']
+            ]
+        }
+    };
+    READINGS['dk-9'] = {
+        id: 'dk-9', book: 'darakwon-dokkai-chukyu', no: 9, chapter: '樋口一葉',
+        title: '樋口一葉',
+        author: '히구치 이치요',
+        authorHtml: '히구치 이치요',
+        intro: '일본의 5천 엔 지폐의 \'얼굴\'은 메이지(明治)시대의 여류작가 히구치 이치요입니다. 고작 24세의 나이로 죽은 그녀는 그 짧은 인생 동안 수많은 명작을 세상에 남겼습니다. 히구치 이치요의 생애에 대해서 읽어 봅시다.',
+        tabs: [['text', '本文'], ['q', '問題'], ['words', '単語'], ['bunkei', '文型'], ['kanji', '練習'], ['kaiwa', '会話']],
+        exNote: '本の模範解答です。',
+        notes: {
+            1: { word: '和歌', text: '31音を定型とする日本の短歌。' },
+            2: { word: 'お銭', text: 'お金のこと。お足とも表記する。' },
+            3: { word: '森鴎外', text: '（1862〜1922）小説家。代表作は『舞姫』『雁』『高瀬舟』など。' },
+            4: { word: '幸田露伴', text: '（1867〜1947）小説家。代表作は『風流仏』『五重塔』『運命』など。' }
+        },
+        pages: [
+            { p: 90, lines: [
+                '　2004年に日本の{r|紙幣|し/へい}のデザインが{r|一新|いっ/しん}されました。中でも{r|話題|わ/だい}をさらったの',
+                'が、新しく五千円{r|札|さつ}の「顔」となった{r|樋口一葉|ひ/ぐち/いち/よう}でした。日本銀行が{r|発行|はっ/こう}する紙幣',
+                'に女性の{r|肖像|しょう/ぞう}が{r|採用|さい/よう}されたのは、これが初めてです。女性文化人の{r|代表|だい/ひょう}として',
+                '採用された彼女ですが、日本人でも、「樋口一葉の顔がいまいち{r|思|おも}い{r|浮|う}かばない」',
+                'という人は多かったようです。これには、彼女が24歳という{r|若|わか}さでこの{r|世|よ}を{r|去|さ}っ',
+                'た、{r|短命|たん/めい}の{r|女流作家|じょ/りゅう/さっ/か}であるということも{r|関係|かん/けい}しているのでしょう。',
+                '　樋口一葉は1872年、{r|東京|とう/きょう}で{r|生|う}まれました。{r|幼|おさな}い{r|頃|ころ}から{r|読書|どく/しょ}が好きな{r|少女|しょう/じょ}で、',
+                '学校での{r|成績|せい/せき}も{r|優秀|ゆう/しゅう}だったそうです。早くから{r|古典|こ/てん}文学や{n1|{r|和歌|わ/か}}を{r|学|まな}んだことが、',
+                'のちの{r|創作|そう/さく}にも{r|活|い}かされています。',
+                '　一葉が17歳の時に父が{r|亡|な}くなると、生活が{r|苦|くる}しくなり、{r|家計|か/けい}は{r|火|ひ}の{r|車|くるま}になり',
+                'ました。{r|当時|とう/じ}、女性ができる仕事は少なく、お金を{r|稼|かせ}ごうにも稼げません。そ',
+                'んな時、彼女が思いついたのが、{r|小説|しょう/せつ}を書くことでした。',
+                '　「一葉」というペンネームは、一枚の{r|葉|は}に乗って{r|中国|ちゅう/ごく}の{r|長江|ちょう/こう}を{r|渡|わた}るダルマの絵',
+                'にヒントを{r|得|え}たことが由来だといわれています。「足」がないダルマと、{r|貧乏|びん/ぼう}で',
+                '「{n2|お{r|銭|あし}}」がない自分をかけたのです。また、うまくいかない自分の{r|人生|じん/せい}を、{r|頼|たよ}',
+                'りなく{r|漂|ただよ}う葉の{r|船|ふね}にたとえたという{r|説|せつ}もあります。お金がなくて{r|苦労|く/ろう}した一葉',
+                'が、今では紙幣のシンボルとなっているというのも、なんとも{r|不思議|ふ/し/ぎ}な話です。',
+                '　彼女の代表{r|作|さく}である『たけくらべ』は、当時の東京に{r|生|い}きる子供たちの社会を',
+                '{r|背景|はい/けい}に、{r|思春期|し/しゅん/き}の少女と{r|少年|しょう/ねん}の{r|淡|あわ}い{r|恋|こい}を{r|描|えが}いた{r|作品|さく/ひん}です。一葉はこの作品で',
+                '{n3|{r|森鴎外|もり/おう/がい}}や{n4|{r|幸田露伴|こう/だ/ろ/はん}}といった有名な作家からも高い{r|評価|ひょう/か}を得ました。他にも、',
+                '『うつせみ』『にごりえ』などの作品を世に出しますが、若くして{r|結核|けっ/かく}にかかって',
+                'しまいます。当時、結核は、かかったら{r|最後|さい/ご}、どんなに{r|手|て}を{r|尽|つ}くしても治らな'
+            ] },
+            { p: 91, lines: [
+                'い「{r|死|し}の{r|病|やまい}」と{r|恐|おそ}れられていました。そして、一葉は24年の短い{r|生涯|しょう/がい}を{r|閉|と}じたの',
+                'でした。',
+                '　一葉が作家として{r|活動|かつ/どう}した{r|期間|き/かん}はわずか１年ほどでした。もっと{r|長生|なが/い}きして',
+                'いたら、どれほど多くの{r|名作|めい/さく}が{r|生|う}み{r|出|だ}されていたことかと、{r|悔|く}やむ人も{r|大勢|おお/ぜい}い',
+                'ます。しかし、彼女が残した作品は今でも愛され続けています。苦しい生活の',
+                '中でも{r|意志|い/し}を{r|曲|ま}げることなく、{r|文筆|ぶん/ぴつ}活動に{r|打|う}ち{r|込|こ}んだ彼女の{r|才能|さい/のう}と{r|情熱|じょう/ねつ}が、人々',
+                'の心を{r|動|うご}かしているのでしょう。'
+            ] }
+        ],
+        qTitle: '読解問題',
+        tebiki: [
+            { t: '日本の紙幣が新しくなった時、樋口一葉が話題をさらったのはなぜですか。', ex: '日本銀行が発行する紙幣に女性の肖像が採用されたのは、樋口一葉が初めてだったから。', quote: '女性の肖像が採用された', page: 90 },
+            { t: '一葉が作家として活動し始めたきっかけは何ですか。', ex: '父が亡くなり、生活が苦しくなったこと。（家計が火の車になったこと）', quote: '家計は火の車', page: 90 },
+            { t: '一葉というペンネームはどのように付けられましたか。', ex: '一枚の葉に乗って中国の長江を渡るダルマの絵にヒントを得て、「足」がないダルマと、貧乏で「お銭」がない自分をかけた。（うまくいかない自分の人生を、頼りなく漂う葉の船にたとえた）', quote: 'ダルマの絵', page: 90 },
+            { t: '結核が「死の病」と呼ばれていたのはなぜですか。', ex: 'かかったら最後、どんなに手を尽くしても治らないと恐れられていたから。', quote: 'かかったら最後', page: 90 },
+            { t: '樋口一葉の作品が今でも愛され続けている理由は何ですか。', ex: '苦しい生活の中でも意志を曲げることなく、文筆活動に打ち込んだ彼女の才能と情熱が、人々の心を動かしているから。', quote: '意志を曲げることなく', page: 91 }
+        ],
+        ronriTitle: '短文を作りなさい（次の言葉を使って）',
+        ronri: [
+            { t: '새로운 스마트폰이 발표되자마자 사람들의 화제를 휩쓸었습니다.', note: '～や否や・さらう', ex: '新しいスマートフォンが発表されるや否や、人々の話題をさらいました。' },
+            { t: '해외에서 일한 경험을 살려, 앞으로는 국제협력에 대응해 갈 생각입니다.', note: '活かす・国際協力・取り組む', ex: '海外で働いた経験を活かし、今後は国際協力に取り組んでいくつもりです。' },
+            { t: '회의에서 선배가 제안한 새로운 상품의 플랜이 채용되었습니다.', note: '提案する・商品・採用する', ex: '会議で先輩が提案した新しい商品のプランが採用されました。' },
+            { t: '사춘기의 어린이 마음은 작은 일에도 상처받기 쉬운 법입니다.', note: '思春期・傷つく', ex: '思春期の子供の心は、小さなことでも傷つきやすいものです。' }
+        ],
+        kanjiIntro: '（　）に入るものを選びましょう。答えは本の正答です。ほかの選択肢は Claude が作りました。',
+        kanji: [
+            { title: '文型：（　）に入る言葉を選んで、文を完成させなさい。', wide: true, items: [
+                { pre: '仕事をしよう', k: '（　　　）', post: 'できなかったため、小説を書くことにしました。', a: 'にも', opts: ['にも', '最後', 'ことか', 'ことなく'] },
+                { pre: '苦しい生活の中でも諦める', k: '（　　　）', post: '、多くの作品を書き続けました。', a: 'ことなく', opts: ['にも', '最後', 'ことか', 'ことなく'] },
+                { pre: '当時は結核にかかったら', k: '（　　　）', post: '、治すことはできないと言われていました。', a: '最後', opts: ['にも', '最後', 'ことか', 'ことなく'] },
+                { pre: '一葉が長生きしていたら、どれほど多くの名作が生み出されていた', k: '（　　　）', post: 'と思います。', a: 'ことか', opts: ['にも', '最後', 'ことか', 'ことなく'] }
+            ] },
+            { title: '文型：～ようにも・～たら最後・～ことか・～ことなく を使って、文を完成させなさい。', wide: true, items: [
+                { pre: '道路に座り込む高校生を見て、最近の若者はなんと', k: '（だらしない→　　）', post: 'と、父が怒っていた。', a: 'だらしないことか', opts: ['だらしないことか', 'だらしなかったら最後', 'だらしないことなく', 'だらしなくしようにも'] },
+                { pre: '部長にこのミスが', k: '（見つかる→　　）', post: '、厳しい説教が待っているだろう。', a: '見つかったら最後', opts: ['見つかったら最後', '見つかることか', '見つかることなく', '見つけようにも'] },
+                { pre: '人生に迷い、立ち止まっている時も、時間は', k: '（止まる→　　）', post: '流れ続けている。', a: '止まることなく', opts: ['止まることなく', '止まったら最後', '止まることか', '止まろうにも'] },
+                { pre: '資金がなければ、ビジネスを', k: '（始める→　　）', post: '始められない。', a: '始めようにも', opts: ['始めようにも', '始めたら最後', '始めることなく', '始めることか'] }
+            ] },
+            { title: '言葉の使い方：いまいち・火の車・短命・由来・淡い・わずか から選んで、適当な形にしなさい。', wide: true, items: [
+                { pre: 'もしかしたら合格するのではないかと、', k: '＿＿＿＿', post: '期待を抱いている。', a: '淡い', opts: ['淡い', 'わずかな', 'いまいち', '短命な'] },
+                { pre: '長く続くと思われたブームですが、結果的には', k: '＿＿＿＿', post: 'に終わりました。', a: '短命', opts: ['短命', '火の車', '由来', '淡い'] },
+                { pre: 'いつもおしゃれな彼女だが、今日の服は', k: '＿＿＿＿', post: '似合っていないようだ。', a: 'いまいち', opts: ['いまいち', 'わずか', '淡く', '短命に'] },
+                { pre: '給料は上がらないのに物価は上がる一方で、我が家の家計は年中', k: '＿＿＿＿', post: 'だ。', a: '火の車', opts: ['火の車', '短命', 'いまいち', '由来'] },
+                { pre: '私の名前の', k: '＿＿＿＿', post: 'は、歴史上の有名な人物です。', a: '由来', opts: ['由来', '火の車', '短命', 'わずか'] }
+            ] }
+        ],
+        words: [
+            { sec: '本文', list: [
+                ['紙幣', 'しへい', '지폐'], ['一新する', 'いっしんする', '일신하다, 아주 새로워지다'], ['話題をさらう', 'わだいをさらう', '화제를 휩쓸다'],
+                ['肖像', 'しょうぞう', '초상'], ['いまいち', '', '조금 부족한 모양'], ['思い浮かぶ', 'おもいうかぶ', '떠오르다, 생각나다'],
+                ['この世を去る', 'このよをさる', '이 세상을 뜨다'], ['短命', 'たんめい', '단명'], ['女流作家', 'じょりゅうさっか', '여류작가'],
+                ['優秀', 'ゆうしゅう', '우수함'], ['早くから', 'はやくから', '일찍이, 오래 전부터'], ['古典文学', 'こてんぶんがく', '고전문학'],
+                ['創作', 'そうさく', '창작'], ['活かす', 'いかす', '살리다'], ['亡くなる', 'なくなる', '죽다'],
+                ['家計', 'かけい', '가계, 살림살이'], ['火の車', 'ひのくるま', '살림이 매우 쪼들림'], ['稼ぐ', 'かせぐ', '수입을 얻다, 벌다'],
+                ['ヒントを得る', 'ヒントをえる', '힌트를 얻다'], ['由来', 'ゆらい', '유래'], ['お銭', 'おあし', '돈, 금전'],
+                ['かける', '', '두 가지 뜻을 가지게 하다'], ['漂う', 'ただよう', '떠다니다, 떠돌다'], ['たとえる', '', '예를 들다, 비유하다'],
+                ['背景', 'はいけい', '배경'], ['思春期', 'ししゅんき', '사춘기'], ['淡い', 'あわい', '아련하다, 희미하다'],
+                ['世に出す', 'よにだす', '세상에 내놓다'], ['若くして', 'わかくして', '젊은 나이에, 젊은데도'], ['結核', 'けっかく', '결핵'],
+                ['手を尽くす', 'てをつくす', '온갖 수단을 쓰다'], ['死の病', 'しのやまい', '죽음의 병'], ['恐れる', 'おそれる', '겁내다, 두려워하다'],
+                ['生涯を閉じる', 'しょうがいをとじる', '생애를 마치다'], ['わずか', '', '고작, 불과'], ['長生きする', 'ながいきする', '오래 살다'],
+                ['悔やむ', 'くやむ', '애석해하다'], ['意志を曲げる', 'いしをまげる', '의지를 굽히다'], ['文筆活動', 'ぶんぴつかつどう', '문필활동'],
+                ['打ち込む', 'うちこむ', '전념하다, 몰두하다'], ['才能', 'さいのう', '재능'], ['動かす', 'うごかす', '움직이다']
+            ] },
+            { sec: '文型', list: [
+                ['わな', '', '덫, 올가미'], ['足を挟まれる', 'あしをはさまれる', '발이 끼다'], ['様子', 'ようす', '상황, 형편'],
+                ['逃す', 'のがす', '놓치다'], ['巡る', 'めぐる', '돌다, 회전하다'], ['言いふらす', 'いいふらす', '소문을 내다, 선전하다'],
+                ['事故にあう', 'じこにあう', '사고를 당하다'], ['演奏', 'えんそう', '연주'], ['忠告する', 'ちゅうこくする', '충고하다'],
+                ['成果', 'せいか', '성과'], ['緊張する', 'きんちょうする', '긴장하다'], ['迷う', 'まよう', '망설이다']
+            ] }
+        ],
+        bunkei: [
+            { p: '～ようにも～ない', ko: '~하려 해도(할래야) ~할 수 없다', ex: '\'~하려고 해도 뭔가 이유가 있어서 그것이 불가능하다\'는 의미를 나타낸다.', s: [
+                '時間がなくて、{r|説明|せつ/めい}し<b>ようにも</b>でき<b>なかった</b>んです。',
+                '{r|風邪|か/ぜ}をひいてしまっては、遊びに行こ<b>うにも</b>行け<b>ない</b>でしょう。',
+                'わなに足を{r|挟|はさ}まれてしまったウサギは、{r|逃|に}げ<b>ようにも</b>逃げられ<b>ない</b>{r|様子|よう/す}だった。'] },
+            { p: '～たら最後', ko: '일단 ~했다 하면', ex: '\'만약 ~와 같은 일이 일어난다면 절망적인 결과가 된다\'는 것을 나타낸다.', s: [
+                '兄にお金を{r|貸|か}し<b>たら{r|最後|さい/ご}</b>、{r|絶対|ぜっ/たい}に{r|返|かえ}ってこない。',
+                'この{r|機会|き/かい}を{r|逃|のが}し<b>たら最後</b>、二度とこんなチャンスは{r|巡|めぐ}ってこないだろう。',
+                'うわさ{r|好|ず}きの彼女に知られ<b>たら最後</b>、みんなに言いふらされてしまうよ。'] },
+            { p: '～ことか', ko: '(얼마나) ~했던가', ex: '마음속으로 강하게 느낀 일이나 감격한 일을 말할 때 쓰는 표현이다. 「どれほど・どんなに・なんと」 등의 말과 함께 쓰일 때가 많다.', s: [
+                '{r|事故|じ/こ}にあった母が{r|無事|ぶ/じ}だと聞いて、どれほど安心した<b>ことか</b>。',
+                'かわいがっていたペットの{r|猫|ねこ}が死んだ時、私がどんなに{r|悲|かな}しかった<b>ことか</b>。',
+                '今回の{r|試験|し/けん}は難しいから早くから{r|準備|じゅん/び}しておいた方がいいと、何度あなたに{r|忠告|ちゅう/こく}した<b>ことか</b>。'] },
+            { p: '～ことなく', ko: '~하지 않고, ~하는 일 없이', ex: '\'평소에는 ~하지만 이 경우에는 ~하지 않고\'라는 의미로 문어체적 표현이다. 「~ないで」「~ず(に)」와 거의 같은 의미로 쓰인다.', s: [
+                '{r|舞台|ぶ/たい}に立つと{r|緊張|きん/ちょう}したが、{r|失敗|しっ/ぱい}する<b>ことなく</b>無事に{r|演奏|えん/そう}を終えることができた。',
+                '今度の大会で{r|優勝|ゆう/しょう}できたのは、雨の日も風の日も休む<b>ことなく</b>{r|練習|れん/しゅう}を続けた{r|成果|せい/か}だ。',
+                'たくさん{r|並|なら}んだ{r|箱|はこ}の中から、彼女は{r|迷|まよ}う<b>ことなく</b>一番大きなものを{r|選|えら}んだ。'] }
+        ],
+        kaiwa: {
+            audio: 'audio/dk-9-kaiwa.mp3',
+            segs: [[0.13, 10.39], [10.99, 12.76], [13.22, 21.45], [22.65, 33.90], [34.26, 40.44], [40.73, 56.95], [57.43, 60.01], [60.52, 68.08], [68.63, 75.09], [75.78, 83.05], [83.58, 89.55]],
+            answers: ['肖像', '思い浮かばない', '淡い', 'かけて', '生涯', '亡くなった', '手を尽くしても', '才能', '悔やまれる', '思春期'],
+            lines: [
+                ['A', '日本のお{r|札|さつ}の[1]って、千円札が{r|野口英世|の/ぐち/ひで/よ}、一万円札が{r|福沢諭吉|ふく/ざわ/ゆ/きち}…、あれ？　五千円札は誰だっけ？'],
+                ['B', '{r|樋口一葉|ひ/ぐち/いち/よう}でしょ。'],
+                ['A', 'あぁ、そうだ。でも、顔や{r|作品|さく/ひん}がパッと[2]んだよね。'],
+                ['B', '私は彼女の作品、好きよ。『たけくらべ』っていう{r|少女|しょう/じょ}の[3]{r|恋|こい}の話。{r|主人公|しゅ/じん/こう}と{r|同年代|どう/ねん/だい}の頃に読んだから、すごく{r|共感|きょう/かん}できたの。'],
+                ['A', 'へえ。{r|確|たし}か、樋口一葉ってすごく{r|貧乏|びん/ぼう}だったんだよね？'],
+                ['B', 'そうそう。「一葉」というペンネームも、足がないダルマと、お{r|銭|あし}、つまりお金がない自分を[4]つけたらしいもの。でも、短い[5]の中でたくさんの{r|名作|めい/さく}を残した、すばらしい{r|作家|さっ/か}よ。'],
+                ['A', '彼女は何で[6]の？'],
+                ['B', '{r|結核|けっ/かく}よ。昔は、どんなに[7]{r|治|なお}らない病気だといわれていたんだって。'],
+                ['A', '[8]のある人が若くして病気で{r|亡|な}くなるなんて、とても[9]ことだね。'],
+                ['B', 'でも、彼女の作品は今でも多くの人に愛されているのよ。あなたも読んでみたら？'],
+                ['A', 'じゃあ、僕も[10]の気持ちを思い出して、『たけくらべ』でも読んでみようかな。']
+            ]
+        }
+    };
+    READINGS['dk-10'] = {
+        id: 'dk-10', book: 'darakwon-dokkai-chukyu', no: 10, chapter: 'ことわざ',
+        title: 'ことわざ',
+        author: '속담',
+        authorHtml: '속담',
+        intro: '일본어에는 옛날부터 전해내려온 속담이 아주 많습니다. 「弘法も筆の誤り」「塞翁が馬」 등 속담이 생겨난 배경에는 각각의 유래나 이야기가 있습니다. 단순히 외우는 것이 아니라 어떤 내막에서 생겨났는지 그 이야기를 안다면 속담에 대한 이해가 한층 깊어질 것입니다.',
+        tabs: [['text', '本文'], ['q', '問題'], ['words', '単語'], ['bunkei', '文型'], ['kanji', '練習'], ['kaiwa', '会話']],
+        exNote: '本の模範解答です。',
+        notes: {
+            1: { word: '平安時代', text: '794年から1192年まで、政権の中心が平安京にあった時代。' },
+            2: { word: '大内裏応天門', text: '平安京で天皇が住んでいた宮殿の外にあった門。' },
+            3: { word: '河童', text: '日本の妖怪・伝説上の動物。水泳が上手。' },
+            4: { word: '塞', text: '昔、本城外の要所に設けた小さな城。' }
+        },
+        pages: [
+            { p: 100, lines: [
+                '　「{r|弘法|こう/ぼう}も{r|筆|ふで}の{r|誤|あやま}り」―弘法とは、弘法{r|大師|だい/し}と呼ばれた{n1|{r|平安|へい/あん}時代}の{r|僧|そう}、{r|空海|くう/かい}の',
+                'ことです。空海は「{r|三筆|さん/ぴつ}」の一人に{r|挙|あ}げられるほどの{r|押|お}しも{r|押|お}されもせぬ{r|書|しょ}の{r|名|めい}',
+                '{r|人|じん}でしたが、{r|天皇|てん/のう}の命令で{n2|{r|大内裏応天門|だい/だい/り/おう/てん/もん}}の文字を書いた時、「応」の字の点を書',
+                'き忘れてしまいました。このことから、この人なら失敗するまいと思われるほ',
+                'どの人であっても、思いがけず{r|得意|とく/い}分野で失敗することもある、という意味の',
+                'ことわざが{r|生|う}まれました。「{r|猿|さる}も木から落ちる」や「{n3|{r|河童|かっ/ぱ}}の{r|川流|かわ/なが}れ」も同じ意味で',
+                'すが、特に自分より{r|目上|め/うえ}の人の失敗をいう場合には「弘法も筆の誤り」を使いま',
+                'す。また、同じく空海に{r|由来|ゆ/らい}するもので、「{r|弘法筆|こう/ぼう/ふで}を{r|選|えら}ばず」ということわざも',
+                'あります。これは、空海ほどの名人であれば、筆が良いものであろうとあるま',
+                'いと上手な字を書ける、ということから、その人の{r|技術|ぎ/じゅつ}が{r|優|すぐ}れていれば道具に',
+                '{r|左右|さ/ゆう}されないという意味です。',
+                '　「{r|塞翁|さい/おう}が{r|馬|うま}」―「塞翁が馬」とは、「{r|塞翁|さい/おう}（{n4|{r|塞|とりで}}に住むおじいさん）の{r|馬|うま}」という意味',
+                'です。ある日、塞翁の馬が逃げてしまい、人々がなぐさめに行くと、{r|翁|おう}は「こ',
+                'れが良いことになるかもしれない」と言いました。その言葉{r|通|どお}り、逃げた馬は',
+                'しばらく{r|経|た}ってからもう{r|一頭|いっ/とう}の{r|素晴|す/ば}らしい馬を{r|連|つ}れて帰って来ました。人々は',
+                '喜びましたが、{r|不思議|ふ/し/ぎ}なことに、翁が今度は「これが悪いことになるかもしれな',
+                'い」と言うのです。すると{r|後日|ご/じつ}、塞翁の{r|息子|むす/こ}が{r|落馬|らく/ば}して足を{r|痛|いた}めてしまいました',
+                'が、これを見た翁は「これがまた良いことになるかもしれない」と言います。次',
+                'の年に{r|戦争|せん/そう}が起こり、{r|健康|けん/こう}な{r|若者|わか/もの}はみな{r|兵士|へい/し}として戦争に行ったきり戻って来',
+                'ませんでしたが、翁の息子は足を痛めていたことが{r|幸|さいわ}いし、{r|徴兵|ちょう/へい}を{r|免|まぬが}れて{r|生|い}き',
+                '{r|延|の}びたのです。よって、「塞翁が馬」とは、{r|幸福|こう/ふく}や{r|不幸|ふ/こう}は予想ができないという',
+                'ことを表します。「{r|人間万事|にん/げん/ばん/じ}塞翁が馬」とも言いますが、この「人間」は人ではな'
+            ] },
+            { p: 101, lines: [
+                'く{r|世間|せ/けん}を{r|指|さ}しており、「人間万事」とはつまり「この世の中のあらゆること」とい',
+                'う意味です。',
+                '　どんなに優れた人であっても、人は時には失敗するものです。しかし、失敗',
+                'したとしても、それが結果として成功につながらないとも限りません。人生は',
+                '難しいものですが、「{r|笑|わら}う{r|門|かど}には{r|福来|ふく/き}たる」、つまり「いつも{r|笑顔|え/がお}でいる人たちに',
+                'は幸福がやって来る」と信じて、{r|常|つね}に笑顔を心がけ、{r|前向|まえ/む}きに生きていくことが',
+                '大切です。'
+            ] }
+        ],
+        qTitle: '読解問題',
+        tebiki: [
+            { t: '空海とはどんな人物ですか。', ex: '弘法大師と呼ばれた平安時代の僧。「三筆」の一人に挙げられるほどの押しも押されもせぬ書の名人。', quote: '押しも押されもせぬ', page: 100 },
+            { t: '「弘法も筆の誤り」ということわざが生まれた由来は何ですか。', ex: '書の名人である弘法大師（空海）が、天皇の命令で大内裏応天門の文字を書いた時、「応」の字の点を書き忘れてしまったことから。', quote: '「応」の字の点を書', page: 100 },
+            { t: '「弘法筆を選ばず」は、どのような意味のことわざですか。', ex: 'その人の技術が優れていれば道具に左右されないという意味。', quote: '技術が優れていれば道具に', page: 100 },
+            { t: '塞翁の息子のけがが結果的に「良いこと」になったのは、なぜですか。', ex: '戦争が起こった時、健康な若者はみな兵士として戦争に行ったきり戻って来なかったが（戦死してしまったが）、塞翁の息子は足を痛めていたため、徴兵を免れて生き延びたから。', quote: '徴兵を免れて', page: 100 },
+            { t: '「笑う門には福来たる」は、どのような意味のことわざですか。', ex: 'いつも笑顔でいる人たちには幸福がやって来るという意味。', quote: '笑顔でいる人たちに', page: 101 }
+        ],
+        ronriTitle: '短文を作りなさい（次の言葉を使って）',
+        ronri: [
+            { t: '일본에서 일어난 지진 피해의 크기에 사람들은 상심하고 있습니다.', note: '地震・被害・心を痛める', ex: '日本で起きた地震の被害の大きさに人々は心を痛めています。' },
+            { t: '백화점의 양복매장에서 뜻밖에도 초등학교 담임 선생님과 재회했습니다.', note: '思いがけず・担任', ex: 'デパートの洋服売り場で、思いがけず小学校の担任の先生と再会しました。' },
+            { t: '진정한 예술가란 주위의 비평에 좌우되지 않는 법입니다.', note: '芸術家・批評・左右する', ex: '本当の（真の）芸術家とは、周囲の批評に左右されないものです。' },
+            { t: '그는 낙마하여 팔을 골절했기 때문에 징병을 면했습니다.', note: '落馬する・骨折する・徴兵', ex: '彼は落馬して腕を骨折したため、徴兵を免れました。' }
+        ],
+        kanjiIntro: '（　）に入るものを選びましょう。答えは本の正答です。ほかの選択肢は Claude が作りました。',
+        kanji: [
+            { title: '文型：（　）に入る言葉を選んで、文を完成させなさい。', wide: true, items: [
+                { pre: '成功し', k: '（　　　）', post: 'しまいと、前向きに生きていくことが大切です。', a: 'ようと', opts: ['まい', 'ようと', 'ことに', 'きり'] },
+                { pre: '逃げた馬が戻って来たというのに、不思議な', k: '（　　　）', post: '、翁は喜びませんでした。', a: 'ことに', opts: ['まい', 'ようと', 'ことに', 'きり'] },
+                { pre: '絶対に失敗する', k: '（　　　）', post: 'と思われるほどの名人でも、たまに失敗することはあります。', a: 'まい', opts: ['まい', 'ようと', 'ことに', 'きり'] },
+                { pre: '翁の息子以外の若者は、みな戦争に行った', k: '（　　　）', post: '、生きて戻って来ることはありませんでした。', a: 'きり', opts: ['まい', 'ようと', 'ことに', 'きり'] }
+            ] },
+            { title: '文型：～まい・～ようと～まいと・～ことに・～きり を使って、文を完成させなさい。', wide: true, items: [
+                { pre: '今日は暖かいから雪など', k: '（降る→　　）', post: 'と思っていたのに、今、窓の外では大雪が降っている。', a: '降るまい', opts: ['降るまい', '降ろうと降るまいと', '降ったきり', '降ることに'] },
+                { pre: '彼は先輩にお金を', k: '（借りる→　　）', post: '、結局一円も返さずに国に帰ってしまった。', a: '借りたきり', opts: ['借りたきり', '借りるまい', '借りることに', '借りようと借りまいと'] },
+                { pre: '明日はせっかくのクリスマスですが、', k: '（空しい→　　）', post: '、何も予定はありません。', a: '空しいことに', opts: ['空しいことに', '空しいきり', '空しいまい', '空しかろうと'] },
+                { pre: '親からもらったお金を', k: '（使う→　　）', post: '、私の勝手でしょう。', a: '使おうと使うまいと', opts: ['使おうと使うまいと', '使ったきり', '使うまい', '使うことに'] }
+            ] },
+            { title: '言葉の使い方：なぐさめる・左右する・免れる・優れる・生き延びる・心がける から選んで、適当な形にしなさい。', wide: true, items: [
+                { pre: '彼はこの問題に対する責任を', k: '＿＿＿＿', post: 'ようと、言い訳を並べたてました。', a: '免れ', opts: ['免れ', '生き延び', 'なぐさめ', '心がけ'] },
+                { pre: 'この賞は、課外活動や学業で', k: '＿＿＿＿', post: '成績を収めた学生に贈られるものです。', a: '優れた', opts: ['優れた', '心がけた', '免れた', '左右した'] },
+                { pre: 'スポーツの試合では、天候が勝敗を', k: '＿＿＿＿', post: 'ことがあります。', a: '左右する', opts: ['左右する', '免れる', 'なぐさめる', '優れる'] },
+                { pre: '節電のため、こまめに部屋の電気を消すことを', k: '＿＿＿＿', post: 'います。', a: '心がけて', opts: ['心がけて', '左右して', '免れて', '生き延びて'] },
+                { pre: '母が亡くなってひどく落ち込んでいた時、この音楽に心を', k: '＿＿＿＿', post: 'ました。', a: 'なぐさめられ', opts: ['なぐさめられ', '左右され', '心がけられ', '優れ'] }
+            ] }
+        ],
+        words: [
+            { sec: '本文', list: [
+                ['誤り', 'あやまり', '실수, 잘못, 틀림'], ['僧', 'そう', '승려'], ['押しも押されもせぬ', 'おしもおされもせぬ', '확고부동한'],
+                ['書の名人', 'しょのめいじん', '글씨의 명인'], ['天皇', 'てんのう', '천황'], ['思いがけず', 'おもいがけず', '뜻밖에도'],
+                ['得意分野', 'とくいぶんや', '잘하는 분야'], ['優れる', 'すぐれる', '뛰어나다'], ['左右する', 'さゆうする', '좌우하다'],
+                ['塞', 'とりで', '성채, 요새'], ['翁', 'おう', '남자 노인'], ['なぐさめる', '', '위로하다'],
+                ['後日', 'ごじつ', '후일, 훗날'], ['落馬する', 'らくばする', '낙마하다'], ['痛める', 'いためる', '다치다, 상하다'],
+                ['兵士', 'へいし', '병사'], ['幸いする', 'さいわいする', '운좋게 작용하다'], ['徴兵', 'ちょうへい', '징병'],
+                ['免れる', 'まぬがれる', '면하다, 피하다 (まぬかれる로도 읽음)'], ['生き延びる', 'いきのびる', '살아남다, 연명하다'], ['幸福', 'こうふく', '행복'],
+                ['不幸', 'ふこう', '불행'], ['人間万事', 'にんげんばんじ', '인간만사'], ['心がける', 'こころがける', '유의하다'],
+                ['前向きに', 'まえむきに', '긍정적으로']
+            ] },
+            { sec: '文型', list: [
+                ['締め切り', 'しめきり', '마감'], ['どうせ', '', '어차피'], ['頑固', 'がんこ', '완고함'],
+                ['謝る', 'あやまる', '사과하다'], ['占い', 'うらない', '점, 점을 침'], ['勝手', 'かって', '자기 좋을 대로 함'],
+                ['先ほど', 'さきほど', '아까, 조금 전'], ['悔しい', 'くやしい', '분하다, 억울하다'], ['クローゼット', '', '옷장, 벽장']
+            ] }
+        ],
+        bunkei: [
+            { p: '～まい', ko: '~하지 않을 것이다', ex: '\'~는 되지 않을 것이다\' \'~하지 않을 것이다\'라는 말하는 사람의 부정적인 추측을 나타낸다.', s: [
+                'このペースで仕事を続けていても、{r|締|し}め{r|切|き}りまでには{r|到底|とう/てい}終わる<b>まい</b>。',
+                '外国人だからどうせ分かる<b>まい</b>という{r|態度|たい/ど}は、相手にとって失礼です。',
+                '彼女は{r|頑固|がん/こ}だから、いくら彼が{r|謝|あやま}ったところで、簡単には{r|許|ゆる}してくれ<b>まい</b>。'] },
+            { p: '～ようが～まいが・～ようと～まいと', ko: '~하든 안 하든', ex: '같은 동사 의지형의 긍정형과 부정형을 이용하여, \'설령 ~해도 ~하지 않아도\'라는 의미를 나타낸다.', s: [
+                '彼が{r|賛成|さん/せい}し<b>ようが</b>し<b>まいが</b>、私は留学に行くつもりだ。',
+                'この{r|占|うらな}いの結果を信じ<b>ようと</b>信じ<b>まいと</b>、あなたの{r|勝手|かっ/て}です。',
+                '予定があろ<b>うと</b>ある<b>まいと</b>、明日のイベントには全員{r|出席|しゅっ/せき}しなければなりません。'] },
+            { p: '～ことに(は)', ko: '~하게도', ex: '\'상당히 ~한 일이지만\'이라는 의미로, 말하는 사람이 느낀 것을 강조해서 말한다. 약간 문어체적 표현이다.', s: [
+                '{r|嬉|うれ}しい<b>ことに</b>、{r|先|さき}ほど、大学合格の{r|知|し}らせが届きました。',
+                '{r|残念|ざん/ねん}な<b>ことに</b>、土曜日は{r|出張|しゅっ/ちょう}の予定が入っていて、彼の結婚式に出席することができません。',
+                '今日の{r|試合|し/あい}の結果ですが、{r|悔|くや}しい<b>ことに</b>、一点{r|差|さ}で{r|負|ま}けてしまいました。'] },
+            { p: '～きり', ko: '~한 채로 (계속)', ex: '\'~해서 그대로 계속\'이라는 의미이다. 대부분 「~たきり、…ない」의 형태로 쓰여, 어떤 일을 마지막으로 그 다음으로 예상되는 상황이 일어나지 않는 것을 나타낸다.', s: [
+                '彼女とは三年前に{r|同窓会|どう/そう/かい}で会った<b>きり</b>、一度も連絡を取っていない。',
+                '父は近くの店に買い物に行くと言って家を出た<b>きり</b>、何時間{r|経|た}っても{r|戻|もど}って来なかった。',
+                '買った<b>きり</b>ずっと使わずにしまっていたギターが、クローゼットの中から出てきた。'] }
+        ],
+        kaiwa: {
+            audio: 'audio/dk-10-kaiwa.mp3',
+            segs: [[0.13, 6.14], [6.39, 13.72], [14.31, 18.16], [18.85, 20.72], [21.65, 32.63], [33.17, 37.10], [37.38, 49.72], [50.23, 57.33], [57.63, 60.67], [61.79, 68.72], [68.97, 72.35], [72.92, 79.66], [80.02, 87.43]],
+            answers: ['誤り', '名人', '川流れ', '優れた', '得意な', 'なぐさめて', '心がける', '思いがけず', '前向きに', '左右されない'],
+            lines: [
+                ['A', '{r|明日香|あ/す/か}ちゃん。なんだかこのクッキー、全然甘くないんだけど…。'],
+                ['B', 'え？　やだ！　私ったら、{r|砂糖|さ/とう}を入れ忘れちゃったみたい！　ごめんなさい。'],
+                ['A', 'いいよ、いいよ。「{r|弘法|こう/ぼう}も{r|筆|ふで}の[1]」だね。'],
+                ['B', 'コウボウ…？'],
+                ['A', 'このことわざ、知らない？　とっても{r|書|しょ}が上手な弘法{r|大師|だい/し}が、ある時、字を{r|間違|ま/ちが}えて書いてしまったんだ。それで、どんな[2]でも失敗することはある、って意味。'],
+                ['B', 'あぁ。「{r|河童|かっ/ぱ}の[3]」と同じ意味なのね。'],
+                ['A', 'そうそう。泳ぎに[4]人でも{r|溺|おぼ}れることはあるし、料理が[5]明日香ちゃんでも、砂糖を入れ忘れることはあるってこと。でもこのクッキー、おいしいよ。'],
+                ['B', '[6]くれなくても大丈夫。これからは、{r|焼|や}く前にちゃんと{r|確認|かく/にん}するように[7]わ。'],
+                ['A', 'いや、本当に{r|香|こう}ばしくておいしいよ。'],
+                ['B', 'えぇ？…あ、ホントだ。全然甘くないけど、クラッカーみたいでおいしいわね。'],
+                ['A', 'どうやら[8]良い味になったみたいだね。'],
+                ['B', '失敗したと思ったのに成功するなんて、まさに「{r|人間万事|にん/げん/ばん/じ}{r|塞翁|さい/おう}が{r|馬|うま}」ね。'],
+                ['A', 'そうそう。[9]考えようよ。砂糖に{r|仕上|し/あ}がりを[10]なんて、すごいじゃないか。']
+            ]
+        }
+    };
+    READINGS['dk-11'] = {
+        id: 'dk-11', book: 'darakwon-dokkai-chukyu', no: 11, chapter: 'ストーカー',
+        title: 'ストーカー',
+        author: '스토커',
+        authorHtml: '스토커',
+        intro: '\'스토커\'라는 말이 일본 사회에 침투한 것은 1990년대 이후지만, 현재 스토커 사건은 우리와 가장 가까운 범죄사건의 하나가 되고 있습니다. 스토커 행위란 어떠한 것을 가리키는지, 그리고 스토커 사건의 피해자 혹은 가해자가 되지 않기 위해서 유의해야 할 점은 무엇인지 읽어 봅시다.',
+        tabs: [['text', '本文'], ['q', '問題'], ['words', '単語'], ['bunkei', '文型'], ['kanji', '練習'], ['kaiwa', '会話']],
+        exNote: '本の模範解答です。',
+        pages: [
+            { p: 110, lines: [
+                '　{r|警察庁|けい/さつ/ちょう}の{r|統計|とう/けい}によると、2009年のストーカー事件の{r|発生数|はっ/せい/すう}は約１万５千件',
+                'で、これは2000年の「ストーカー{r|規制法|き/せい/ほう}」の{r|施行|し/こう}以来、{r|最多|さい/た}の件数でした。スト',
+                'ーカー事件はますます{r|身近|み/ぢか}な{r|犯罪|はん/ざい}になっているのです。',
+                '　{r|被害者|ひ/がい/しゃ}の{r|大半|たい/はん}が20代と30代の女性であるということがストーカー事件の{r|特徴|とく/ちょう}',
+                'の一つです。ストーカーと被害者との関係で最も多いのは「{r|交際|こう/さい}相手（{r|元|もと}含む）」で',
+                'す。その他も、「{r|配偶者|はい/ぐう/しゃ}（{r|内縁|ない/えん}・元含む）」や「友人・知人」、「{r|勤務先|きん/む/さき}{r|同僚|どう/りょう}・{r|職場|しょく/ば}関',
+                '係者」など、ストーカーの多くは被害者の身近な人間です。{r|犯人|はん/にん}が{r|顔見知|かお/み/し}りであ',
+                'るために事件を{r|訴|うった}えにくく、被害者が{r|泣|な}きを見る場合も多いようです。',
+                '　では、{r|具体的|ぐ/たい/てき}にはどのような{r|行為|こう/い}がストーカー行為にあたるのでしょうか。',
+                'ストーカー規制法によって規制の{r|対象|たい/しょう}となるのは、「つきまとい等」と「ストー',
+                'カー行為」の二つです。「つきまとい等」とは、つきまとい・{r|待|ま}ちぶせ・{r|押|お}しかけ',
+                'や、{r|面会|めん/かい}・交際の要求といった{r|迷惑|めい/わく}行為を{r|指|さ}し、それを同じ相手に対して{r|繰|く}り',
+                '{r|返|かえ}し行うことが「ストーカー行為」と{r|規定|き/てい}されています。',
+                '　ストーカー行為のほとんどは、被害者に対する{r|恋愛感情|れん/あい/かん/じょう}に{r|端|たん}を{r|発|はっ}するといわ',
+                'れています。好きな相手に{r|想|おも}いが{r|通|つう}じなかったとしても、相手に好きになって',
+                'もらえるように{r|努力|ど/りょく}し続ける、という人はいるでしょう。また、自分がこんな',
+                'に{r|想|おも}っているのだから、相手も自分の気持ちを理解してくれるはずだ、と考え',
+                'ることもあるかもしれません。相手を想うあまり、こうした{r|一方的|いっ/ぽう/てき}な感情が{r|膨|ふく}',
+                'らんでいき、それが{r|行|ゆ}きすぎると、ストーカーになってしまうケースがあるの',
+                'です。言いかえれば、誰でもストーカー事件の被害者や{r|加害者|か/がい/しゃ}になりうるとい',
+                'うことです。',
+                '　しかし、しつこくつきまとったり、何度{r|断|ことわ}られても連絡を取ろうとしたりす'
+            ] },
+            { p: 111, lines: [
+                'るのは、たとえ自分はよかれと思ってしたことでも、相手にとっては{r|不愉快極|ふ/ゆ/かい/きわ}',
+                'まりないことです。{r|告白|こく/はく}であれ{r|贈|おく}り{r|物|もの}であれ、相手を想っての{r|行動|こう/どう}であれば、',
+                '何よりも受け取る相手の感情を考えてしかるべきでしょう。そうしないで一方',
+                '的に自分の気持ちばかり{r|押|お}しつけるのは、迷惑以外の{r|何物|なに/もの}でもないのです。',
+                '　もしあなたがストーカー事件に{r|巻|ま}き{r|込|こ}まれたら、周りの人間や警察に相談す',
+                'ることが大切です。あなたが一人で解決しようとしたところで、そうすること',
+                'は難しいでしょう。自分の{r|身|み}を守ることを第一に考え、{r|悩|なや}みや不安を一人で{r|抱|かか}',
+                'え{r|込|こ}まないようにしましょう。'
+            ] }
+        ],
+        qTitle: '読解問題',
+        tebiki: [
+            { t: 'ストーカー事件の特徴とは、どのようなことですか。', ex: '被害者の大半が20代と30代の女性であること、ストーカーの多くが被害者の身近な人間であること。', quote: '20代と30代の女性', page: 110 },
+            { t: 'ストーカー行為とは、どのようなことですか。', ex: 'つきまとい・待ちぶせ・押しかけや、面会・交際の要求といった「つきまとい等」の迷惑行為を同じ相手に対して繰り返し行うこと。', quote: '同じ相手に対して', page: 110 },
+            { t: '恋愛感情が原因でストーカーになってしまうのはなぜですか。', ex: '相手を想うあまり、一方的な感情が膨らんでいき、それが行きすぎてしまうから。', quote: '相手を想うあまり', page: 110 },
+            { t: '告白や贈り物をする時、気を付けなければならないのは、どのようなことですか。', ex: '相手を想っての行動であれば、何よりも受け取る相手の感情を考えなくてはならないということ。（一方的に自分の気持ちばかり押しつけないこと）', quote: '受け取る相手の感情', page: 111 },
+            { t: 'ストーカー事件に巻き込まれたら、どのように対処すべきですか。', ex: '自分の身を守ることを第一に考え、悩みや不安を一人で抱え込まないで、周りの人間や警察に相談する。', quote: '周りの人間や警察に相談', page: 111 }
+        ],
+        ronriTitle: '短文を作りなさい（次の言葉を使って）',
+        ronri: [
+            { t: '새로운 법률의 시행에 따라 음주운전에 대한 벌칙이 엄벌화되었습니다.', note: '施行・罰則・厳罰化', ex: '新しい法律の施行により（施行によって）、飲酒運転に対する罰則が厳罰化されました。' },
+            { t: '용의자는 건물에서 나오자마자 잠복해서 기다리고 있었던 형사들에 의해 체포되었습니다.', note: '容疑者・待ちぶせる・逮捕する', ex: '容疑者は建物から出てきた途端（出て来るや否や）、待ちぶせていた刑事たちによって逮捕されました。' },
+            { t: '그는 그 정도의 성과를 냈으므로 보수를 받아 마땅합니다.', note: '成果・報酬・しかるべきだ', ex: '彼はあれほどの成果を出したのだから、報酬を受け取ってしかるべきです。' },
+            { t: '피해자가 저항한 흔적이 없는 것으로 보아, 이 사건은 안면이 있는 사람의 범행이라고 보여지고 있습니다.', note: '抵抗する・痕跡・顔見知り', ex: '被害者が抵抗した痕跡がないことから、この事件は顔見知りの犯行と見られています。' }
+        ],
+        kanjiIntro: '（　）に入るものを選びましょう。答えは本の正答です。ほかの選択肢は Claude が作りました。',
+        kanji: [
+            { title: '文型：（　）に入る言葉を選んで、文を完成させなさい。', wide: true, items: [
+                { pre: '相手を想う', k: '（　　　）', post: '、その気持ちが行きすぎてストーカーになってしまうことがあります。', a: 'あまり', opts: ['あまり', '極まりない', 'であれ', 'ところで'] },
+                { pre: 'ストーカーに直接迷惑だと言った', k: '（　　　）', post: '、おそらく話を聞き入れないでしょう。', a: 'ところで', opts: ['あまり', '極まりない', 'であれ', 'ところで'] },
+                { pre: '自分の気持ちを一方的に押しつけるのは、相手にとっては不愉快', k: '（　　　）', post: 'ことです。', a: '極まりない', opts: ['あまり', '極まりない', 'であれ', 'ところで'] },
+                { pre: '恋人', k: '（　　）夫婦（　　）', post: '、誰でもストーカー事件の被害者や加害者になりうるのです。', a: 'であれ…であれ', opts: ['であれ…であれ', 'あまり…あまり', 'ところで…ところで', '極まりない…極まりない'] }
+            ] },
+            { title: '文型：～あまり・～極まりない・～であれ・～たところで を使って、文を完成させなさい。', wide: true, items: [
+                { pre: 'それが', k: '（本当・嘘→　　）', post: '、先生の話は私に大きなショックを与えた。', a: '本当であれ嘘であれ', opts: ['本当であれ嘘であれ', '本当のあまり嘘のあまり', '本当極まりない嘘', '本当だったところで'] },
+                { pre: '私が働くカフェには、毎日何時間も店に居続ける', k: '（迷惑→　　）', post: '客がいる。', a: '迷惑極まりない', opts: ['迷惑極まりない', '迷惑のあまり', '迷惑であれ', '迷惑したところで'] },
+                { pre: '彼のコンサートを見て、一部のファンは', k: '（興奮→　　）', post: '倒れてしまった。', a: '興奮のあまり', opts: ['興奮のあまり', '興奮極まりなく', '興奮であれ', '興奮したところで'] },
+                { pre: 'あなたがどれほど必死に', k: '（止める→　　）', post: '、彼女は退職する意志を曲げないだろう。', a: '止めたところで', opts: ['止めたところで', '止めるあまり', '止め極まりない', '止めるであれ'] }
+            ] },
+            { title: '言葉の使い方：抱え込む・規定する・訴える・つきまとう・泣きを見る・巻き込む から選んで、適当な形にしなさい。', wide: true, items: [
+                { pre: '偶然その店にいたせいで、知り合いの夫婦喧嘩に', k: '＿＿＿＿', post: 'しまった。', a: '巻き込まれて', opts: ['巻き込まれて', 'つきまとって', '抱え込んで', '訴えて'] },
+                { pre: 'エサでも欲しいのか、先ほどからずっとのら猫が私の足元に', k: '＿＿＿＿', post: 'いる。', a: 'つきまとって', opts: ['つきまとって', '巻き込まれて', '規定されて', '抱え込んで'] },
+                { pre: '弁護士の友人によると、セクハラで上司を', k: '＿＿＿＿', post: 'たいという相談が増えているという。', a: '訴え', opts: ['訴え', '巻き込み', '規定し', 'つきまとい'] },
+                { pre: 'ストレスを', k: '＿＿＿＿', post: 'ことは体にも良くないので、たまには気分転換も必要です。', a: '抱え込む', opts: ['抱え込む', '訴える', '規定する', '泣きを見る'] },
+                { pre: '面倒臭いからといって努力しないと、あとで', k: '＿＿＿＿', post: 'のは君自身だよ。', a: '泣きを見る', opts: ['泣きを見る', '抱え込む', '巻き込む', '規定する'] }
+            ] }
+        ],
+        words: [
+            { sec: '本文', list: [
+                ['警察庁', 'けいさつちょう', '경찰청'], ['統計', 'とうけい', '통계'], ['ストーカー規制法', 'ストーカーきせいほう', '스토커 규제법'],
+                ['施行', 'しこう', '시행'], ['最多', 'さいた', '최다'], ['被害者', 'ひがいしゃ', '피해자'],
+                ['大半', 'たいはん', '과반, 대부분'], ['配偶者', 'はいぐうしゃ', '배우자'], ['内縁', 'ないえん', '내연'],
+                ['勤務先', 'きんむさき', '근무처'], ['犯人', 'はんにん', '범인'], ['顔見知り', 'かおみしり', '안면이 있는 사람'],
+                ['訴える', 'うったえる', '소송하다, 고소하다'], ['泣きを見る', 'なきをみる', '몹시 괴롭고 불행한 꼴을 당하다'], ['～にあたる', '', '~에 해당되다'],
+                ['つきまとい', '', '늘 따라다님'], ['待ちぶせ', 'まちぶせ', '숨어서 기다림'], ['押しかけ', 'おしかけ', '일방적으로 찾아감'],
+                ['規定する', 'きていする', '규정하다'], ['端を発する', 'たんをはっする', '(계기가 되어) 시작되다'], ['想いが通じる', 'おもいがつうじる', '마음이 통하다'],
+                ['膨らむ', 'ふくらむ', '부풀다'], ['行きすぎる', 'ゆきすぎる', '도를 넘다, 지나치다'], ['言いかえる', 'いいかえる', '바꾸어 말하다'],
+                ['加害者', 'かがいしゃ', '가해자'], ['～うる', '', '~할 수 있다'], ['しつこく', '', '집요하게'],
+                ['よかれと思って', 'よかれとおもって', '잘 한다고 생각해서'], ['不愉快', 'ふゆかい', '불쾌함'], ['～てしかるべきだ', '', '~해 마땅하다(당연하다)'],
+                ['押しつける', 'おしつける', '밀어붙이다'], ['何物でもない', 'なにものでもない', '아무것도 아니다'], ['巻き込まれる', 'まきこまれる', '휘말리다'],
+                ['抱え込む', 'かかえこむ', '껴안다, 떠맡다']
+            ] },
+            { sec: '文型', list: [
+                ['泣き崩れる', 'なきくずれる', '쓰러져 울다'], ['口を出す', 'くちをだす', '말참견을 하다'], ['負担', 'ふたん', '부담'],
+                ['夜中', 'よなか', '한밤중'], ['山道', 'やまみち', '산길'], ['見た目', 'みため', '겉보기, 외관'],
+                ['険しい', 'けわしい', '가파르다, 험하다'], ['知り合い', 'しりあい', '아는 사람, 지인'], ['丁重', 'ていちょう', '정중함'],
+                ['豚肉', 'ぶたにく', '돼지고기'], ['牛肉', 'ぎゅうにく', '소고기'], ['産まれる', 'うまれる', '태어나다'],
+                ['対象外', 'たいしょうがい', '대상외'], ['かなわない', '', '이길 수 없다, 못 당하다'], ['大して', 'たいして', '그리, 별로']
+            ] }
+        ],
+        bunkei: [
+            { p: '～あまり(に)', ko: '~한 나머지', ex: '감정이나 상태를 나타내는 말에 붙어 \'상당히 ~해서\'라는 의미를 나타내며, 그것 때문에 좋지 않은 결과가 되는 것을 말할 때 사용한다.', s: [
+                '仕事に{r|集中|しゅう/ちゅう}する<b>あまり</b>、{r|妻|つま}の誕生日をすっかり忘れてしまっていた。',
+                '事故の知らせを聞いた時、彼女はショックの<b>あまり</b>、その{r|場|ば}で{r|泣|な}き{r|崩|くず}れてしまった。',
+                '子供の{r|将来|しょう/らい}を心配する<b>あまりに</b>口を出しすぎて、子供の{r|負担|ふ/たん}になる親が増えているという。'] },
+            { p: '～極まる・～極まりない', ko: '너무 ~하다, ~하기 짝이 없다', ex: '\'그것 이상은 없을 정도로 상당히 ~하다\'라는 의미를 나타낸다. 딱딱한 문어체적 표현이다.', s: [
+                'こんな{r|夜中|よ/なか}に先生の家に電話をかけるなんて、失礼<b>{r|極|きわ}まりない</b>。',
+                'この{r|山道|やま/みち}は見た目より{r|険|けわ}しいので、女性が一人で歩くのは{r|危険|き/けん}<b>極まりない</b>。',
+                '父の{r|知|し}り{r|合|あ}いから{r|丁重|てい/ちょう}<b>極まる</b>{r|挨拶|あい/さつ}を受けたが、なんと{r|返|かえ}したら良いのか分からなかった。'] },
+            { p: '～であれ～であれ', ko: '~이든 ~이든', ex: '\'A든 B든 두 경우 모두\'라는 의미이다. 「~であろうと、~であろうと」와 같다.', s: [
+                '{r|豚肉|ぶた/にく}<b>であれ</b>{r|牛肉|ぎゅう/にく}<b>であれ</b>、肉なら何でも好きだ。',
+                'お{r|腹|なか}の中の子が男<b>であれ</b>、女<b>であれ</b>、とにかく{r|健康|けん/こう}で{r|産|う}まれてきてほしい。',
+                '{r|国籍|こく/せき}の問題ではありません。日本人<b>であれ</b>外国人<b>であれ</b>、自動車の{r|免許|めん/きょ}を持っていない人は{r|対象外|たい/しょう/がい}です。'] },
+            { p: '～たところで', ko: '~해 보았자', ex: '\'가령 ~했다고 해도, 기대하는 결과로는 되지 않는다\'라는 말하는 사람의 판단을 말할 때 사용한다.', s: [
+                '私がいくら{r|頑張|がん/ば}っ<b>たところで</b>、姉にはかなわないことは分かっている。',
+                '今さらダイエットし<b>たところで</b>、来週海に行く日までには{r|大|たい}してやせないだろう。',
+                '仕事が終わってから急いで行っ<b>たところで</b>、もうパーティーは終わっているはずだ。'] }
+        ],
+        kaiwa: {
+            audio: 'audio/dk-11-kaiwa.mp3',
+            segs: [[0.11, 12.05], [12.32, 14.47], [14.60, 23.23], [23.52, 32.17], [32.79, 42.82], [43.34, 50.36], [50.72, 53.28], [54.15, 62.04], [62.57, 64.89], [65.42, 70.85], [71.30, 76.95], [77.28, 85.33]],
+            answers: ['待ちぶせ', '顔見知り', '一方的に', '訴える', '泣きを見る', '身近', '不愉快', 'しかるべき', '巻き込んじゃって', '膨らんで'],
+            lines: [
+                ['B', '相談があるんだけど…最近、ある人が家の周りをよくウロウロしてて、{r|帰宅|き/たく}時間になると私のアパートの前で[1]してるの。'],
+                ['A', 'え！　それって、ストーカーじゃん！'],
+                ['B', 'やっぱり？　でも実はその人って、私が前に{r|付|つ}き{r|合|あ}ってた人なんだ。'],
+                ['A', 'ストーカーのほとんどは[2]であることが多いって、ニュースでやってたよ。とにかく、一度{r|警察|けい/さつ}に相談に行こう。'],
+                ['B', 'でも、{r|別|わか}れる時に[3]{r|振|ふ}った私にも責任があるような気がするし。彼のことを[4]なんて、できないよ。'],
+                ['A', 'このまま[5]つもり？　いくら[6]な人間だからって、{r|犯罪|はん/ざい}に変わりはないんだよ。'],
+                ['B', 'それは分かってるんだけど…。'],
+                ['A', 'このまま[7]な思いをしながら、不安な生活を続けるより何か{r|対応|たい/おう}を取って[8]だと思うけど。'],
+                ['B', 'うん、そうだよね。'],
+                ['A', 'じゃあ、今から警察に行こうよ。僕も一緒に行ってあげるから。'],
+                ['B', 'ありがとう。なんだか、{r|面倒|めん/どう}なことに[9]、ごめんね。'],
+                ['A', 'ううん。まぁ、相手への{r|想|おも}いがどんどん[10]しまう気持ちは、僕にも分かるから。']
+            ]
+        }
+    };
+    READINGS['dk-12'] = {
+        id: 'dk-12', book: 'darakwon-dokkai-chukyu', no: 12, chapter: '東日本大震災',
+        title: '東日本大震災',
+        author: '동일본 대지진',
+        authorHtml: '동일본 대지진',
+        intro: '2011년 3월 11일, 과거 최대급이라 일컬어지는 지진이 일본열도를 덮쳤습니다. 지진뿐만 아니라 쓰나미와 여진, 원자력발전소 사고에 의해 야기된 피해도 막대했습니다. 동일본 대지진이라 불리는 이 큰 재해는 사람들에게 어떠한 영향을 주었을까요?',
+        tabs: [['text', '本文'], ['q', '問題'], ['words', '単語'], ['bunkei', '文型'], ['kanji', '練習'], ['kaiwa', '会話']],
+        exNote: '本の模範解答です。',
+        notes: {
+            1: { word: 'マグニチュード', en: 'magnitude', text: '大きさの意味で、地震の全体としての規模を表す数値。' }
+        },
+        pages: [
+            { p: 120, lines: [
+                '　2011年３月11日14時46分、日本の{r|東北部|とう/ほく/ぶ}を中心に強い{r|揺|ゆ}れが起きました。',
+                '{r|地震|じ/しん}の{r|規模|き/ぼ}は{n1|マグニチュード}9.0で、これは日本での{r|観測史上|かん/そく/し/じょう}最大のものでし',
+                'た。地震によって発生した10メートル以上もの{r|大津波|おお/つ/なみ}は人や車、家、建物など、',
+                'すべてを{r|押|お}し{r|流|なが}していきました。',
+                '　{r|被害|ひ/がい}は広がり、約２万人の{r|死者|し/しゃ}・{r|行方不明者|ゆく/え/ふ/めい/しゃ}を出すに{r|至|いた}りました。1995年に',
+                '起きた{r|阪神|はん/しん}・{r|淡路大震災|あわ/じ/だい/しん/さい}ですら、死者が6000人あまりだったことを考えると、',
+                'この震災がどれだけ大きかったかが分かるでしょう。{r|政府|せい/ふ}の{r|発表|はっ/ぴょう}によると、被',
+                '害{r|額|がく}はおよそ16{r|兆|ちょう}9000{r|億円|おく/えん}といわれています。{r|間違|ま/ちが}いなく、これは日本にとっ',
+                'て過去最大にして{r|最悪|さい/あく}の{r|災害|さい/がい}です。',
+                '　地震が起きてからというもの、人々は長い間、不安にさらされてきました。',
+                '地震と津波で被害を受けた{r|福島県|ふく/しま/けん}の{r|原子力発電所|げん/し/りょく/はつ/でん/しょ}（{r|原発|げん/ぱつ}）から{r|放射性物質|ほう/しゃ/せい/ぶっ/しつ}が{r|漏|も}れ',
+                '{r|出|だ}すという重大な事故が起こったのです。さらに、他の発電所も被害を受けた',
+                'ことで、東北部や{r|関東地方|かん/とう/ち/ほう}は{r|深刻|しん/こく}な{r|電力不足|でん/りょく/ぶ/そく}に{r|悩|なや}まされました。そのため、{r|地|ち}',
+                '{r|域|いき}をいくつかのグループに分け、時間ごとに{r|停電|てい/でん}になる{r|計画|けい/かく}停電（{r|輪番|りん/ばん}停電）が',
+                '{r|実施|じっ/し}されることになりました。人々は{r|積極的|せっ/きょく/てき}に{r|節電|せつ/でん}を呼びかけ、計画停電は短',
+                '期間で{r|済|す}みましたが、発電所の電力{r|供給|きょう/きゅう}が安定しない{r|限|かぎ}り、{r|今後|こん/ご}も電力不足は',
+                '続く{r|恐|おそ}れがあります。',
+                '　震災後、{r|被災地|ひ/さい/ち}の{r|食料|しょく/りょう}や{r|燃料|ねん/りょう}が{r|底|そこ}を{r|突|つ}きそうであることが{r|報道|ほう/どう}されるなり、',
+                '日本国内はもちろん、海外からも多くの{r|支援|し/えん}が届きました。{r|救助隊|きゅう/じょ/たい}の{r|派遣|は/けん}や{r|救援|きゅう/えん}',
+                '{r|物資|ぶっ/し}だけでなく、インターネットやメディアを{r|通|つう}じた{r|応援|おう/えん}の声も人々を元気づ',
+                'けました。{r|募金|ぼ/きん}やボランティア{r|活動|かつ/どう}など、今も様々な{r|形|かたち}で被災地への支援が続け',
+                'られています。'
+            ] },
+            { p: 121, lines: [
+                '　多くの{r|命|いのち}を{r|奪|うば}った大災害による人々の心の{r|傷|きず}は大きなものでした。それで',
+                'も、人々は力を合わせ、{r|日常|にち/じょう}を{r|取|と}り{r|戻|もど}すために{r|努力|ど/りょく}しています。電力不足、原発',
+                '事故、被災地の{r|復興|ふっ/こう}など、日本に残された課題は大変なものです。特に、今回',
+                'の震災で、原子力発電のリスクや{r|危険性|き/けん/せい}が{r|改|あらた}めて{r|浮|う}き{r|彫|ぼ}りになりました。二度',
+                'と同じような事故を{r|繰|く}り{r|返|かえ}すことのないよう、政府は手を打つ必要があるで',
+                'しょう。そうして、{r|一刻|いっ/こく}も{r|早|はや}く日本に{r|平和|へい/わ}な日々が戻ることを{r|祈|いの}ります。'
+            ] }
+        ],
+        qTitle: '読解問題',
+        tebiki: [
+            { t: '2011年3月11日に起きた地震とは、どのようなものでしたか。', ex: '日本の東北部を中心に起きた、マグニチュード9.0という日本観測史上最大の地震。', quote: '最大のものでし', page: 120 },
+            { t: '東日本大震災での被害はどのようなものでしたか。', ex: '死者・行方不明者は約２万人で、被害額はおよそ16兆9000億円。', quote: '億円', page: 120 },
+            { t: 'この地震によって引き起こされた原発事故とはどのようなものでしたか。', ex: '地震と津波で被害を受けた福島県の原子力発電所から放射性物質が漏れ出すという重大な事故。', quote: '福島県', page: 120 },
+            { t: '被災地への支援には、どのようなものがありますか。', ex: '救助隊の派遣、救援物資、インターネットやメディアを通じた応援の声、募金、ボランティア活動など。', quote: '救助隊', page: 120 },
+            { t: '原子力発電のリスクや危険性に対し、政府はどうするべきですか。', ex: '二度と同じような事故を繰り返すことのないよう、手を打つ必要がある。', quote: '手を打つ必要', page: 121 }
+        ],
+        ronriTitle: '短文を作りなさい（次の言葉を使って）',
+        ronri: [
+            { t: '어머니는 계단에서 떨어졌습니다만, 가벼운 상처로 끝났습니다.', note: '階段・済む', ex: '母は階段から落ちましたが、軽いけがで済みました。' },
+            { t: '장시간 컴퓨터를 사용하기 때문에, 심각한 어깨 결림에 시달리고 있습니다.', note: '深刻な・肩こり・悩まされる', ex: '長時間パソコンを使うため（使うので）、深刻な肩こりに悩まされています。' },
+            { t: '자금이 바닥났기 때문에, 여행을 중단하지 않을 수 없었다.', note: '資金・底を突く・中断する', ex: '資金が底を突いたため（突いたので）、旅行を中断せざるをえなかった。' },
+            { t: '지금도 전세계에서 전쟁이 행하여지고 있어, 많은 사람들이 위험에 처해 있습니다.', note: '戦争・危険・さらす', ex: '今も世界中で戦争が行われていて（行われており）、多くの人が危険にさらされています。' }
+        ],
+        kanjiIntro: '（　）に入るものを選びましょう。答えは本の正答です。ほかの選択肢は Claude が作りました。',
+        kanji: [
+            { title: '文型：（　）に入る言葉を選んで、文を完成させなさい。', wide: true, items: [
+                { pre: '地震の専門家で', k: '（　　　）', post: '、このような大きな震災が起きるとは予想もしなかった。', a: 'すら', opts: ['至り', 'すら', 'からというもの', 'なり'] },
+                { pre: '東日本大震災が起きて', k: '（　　　）', post: '、日本各地でさまざまな問題が生じました。', a: 'からというもの', opts: ['至り', 'すら', 'からというもの', 'なり'] },
+                { pre: '震災の被害は広がり、過去最大の犠牲者を出すに', k: '（　　　）', post: 'ました。', a: '至り', opts: ['至り', 'すら', 'からというもの', 'なり'] },
+                { pre: '原子力発電所が止まる', k: '（　　　）', post: '電力が不足し、人々は節電を呼びかけました。', a: 'なり', opts: ['至り', 'すら', 'からというもの', 'なり'] }
+            ] },
+            { title: '文型：～に至る・～ですら・～てからというもの・～なり を使って、文を完成させなさい。', wide: true, items: [
+                { pre: 'この病気は、大したことないと思って放っておくと、どんどん病気が進行し、', k: '（死→　　）', post: 'こともあるそうだ。', a: '死に至る', opts: ['死に至る', '死ですら', '死ぬなり', '死んでからというもの'] },
+                { pre: '彼は昔の彼女の姿を', k: '（見つける→　　）', post: '走って会場から出て行ってしまった。', a: '見つけるなり', opts: ['見つけるなり', '見つけるに至る', '見つけてからというもの', '見つけですら'] },
+                { pre: '父は毎晩飲んでいたお酒を', k: '（やめる→　　）', post: '、やせて健康になった。', a: 'やめてからというもの', opts: ['やめてからというもの', 'やめるなり', 'やめるに至り', 'やめですら'] },
+                { k: '（家族→　　）', post: '一緒に生活するのは難しいと感じることがあるのに、他人と同居するのは大変だ。', a: '家族ですら', opts: ['家族ですら', '家族に至る', '家族なり', '家族からというもの'] }
+            ] },
+            { title: '言葉の使い方：規模・元気づける・供給・底を突く・観測・手を打つ から選んで、適当な形にしなさい。', wide: true, items: [
+                { pre: '入院した友人を', k: '＿＿＿＿', post: 'ため、お見舞いに行きました。', a: '元気づける', opts: ['元気づける', '手を打つ', '底を突く', '観測する'] },
+                { pre: '政府は少子化の問題に早く', k: '＿＿＿＿', post: 'なければなりません。', a: '手を打た', opts: ['手を打た', '元気づけ', '底を突か', '供給し'] },
+                { pre: '身近な問題に取り組むことも大切ですが、今後は地球', k: '＿＿＿＿', post: 'での環境保護も考えるべきです。', a: '規模', opts: ['規模', '供給', '観測', '底'] },
+                { pre: '毎日遊び歩いているうち、とうとう預金が', k: '＿＿＿＿', post: 'しまいました。', a: '底を突いて', opts: ['底を突いて', '手を打って', '元気づけて', '供給して'] },
+                { pre: '価格を決定するため、需要と', k: '＿＿＿＿', post: 'のバランスを知ることが必要です。', a: '供給', opts: ['供給', '規模', '観測', '手'] }
+            ] }
+        ],
+        words: [
+            { sec: '本文', list: [
+                ['揺れ', 'ゆれ', '요동, 흔들림'], ['規模', 'きぼ', '규모'], ['観測', 'かんそく', '관측'],
+                ['大津波', 'おおつなみ', '대형 쓰나미(해일)'], ['押し流す', 'おしながす', '떠내려가게 하다'], ['死者', 'ししゃ', '사망자'],
+                ['行方不明者', 'ゆくえふめいしゃ', '행방불명자'], ['大震災', 'だいしんさい', '대지진'], ['～あまり', '', '~남짓'],
+                ['被害額', 'ひがいがく', '피해액'], ['およそ', '', '대강, 대략'], ['さらす', '', '위험한 상태에 두다, 처하다'],
+                ['原子力発電所', 'げんしりょくはつでんしょ', '원자력발전소 (原発)'], ['放射性物質', 'ほうしゃせいぶっしつ', '방사성 물질'], ['漏れ出す', 'もれだす', '누출되다, 새어 나오다'],
+                ['電力不足', 'でんりょくぶそく', '전력부족'], ['悩まされる', 'なやまされる', '시달리다'], ['停電', 'ていでん', '정전'],
+                ['輪番', 'りんばん', '윤번(돌아가며 차례로 번을 섬)'], ['実施する', 'じっしする', '실시하다'], ['節電', 'せつでん', '절전'],
+                ['呼びかける', 'よびかける', '호소하다'], ['済む', 'すむ', '끝나다, 마치다'], ['供給', 'きょうきゅう', '공급'],
+                ['燃料', 'ねんりょう', '연료'], ['底を突く', 'そこをつく', '저장해 둔 것이 바닥이 나다'], ['救助隊', 'きゅうじょたい', '구조대'],
+                ['派遣', 'はけん', '파견'], ['救援物資', 'きゅうえんぶっし', '구조물자'], ['元気づける', 'げんきづける', '기운을 북돋우다'],
+                ['募金', 'ぼきん', '모금'], ['命を奪う', 'いのちをうばう', '목숨을 빼앗다'], ['取り戻す', 'とりもどす', '되찾다, 회복하다'],
+                ['浮き彫りになる', 'うきぼりになる', '부각되다'], ['手を打つ', 'てをうつ', '조치를 취하다, 수단을 강구하다'], ['一刻も早く', 'いっこくもはやく', '한시라도 빨리']
+            ] },
+            { sec: '文型', list: [
+                ['さんざん', '', '몹시, 실컷'], ['～たあげく', '', '~한 끝에'], ['重ねる', 'かさねる', '거듭하다'],
+                ['倒産する', 'とうさんする', '도산하다'], ['不況', 'ふきょう', '불황'], ['秀才', 'しゅうさい', '수재'],
+                ['解く', 'とく', '답을 내다, 풀다'], ['騒ぐ', 'さわぐ', '떠들다'], ['進路', 'しんろ', '진로'],
+                ['怒りっぽい', 'おこりっぽい', '화를 잘 내다'], ['見る見るうちに', 'みるみるうちに', '순식간에, 금새'], ['体重', 'たいじゅう', '체중'],
+                ['優秀な', 'ゆうしゅうな', '우수한'], ['業績', 'ぎょうせき', '업적, 실적'], ['目覚める', 'めざめる', '잠에서 깨다'],
+                ['プロフィール', '', '프로필'], ['出社する', 'しゅっしゃする', '회사에 출근하다']
+            ] }
+        ],
+        bunkei: [
+            { p: '～に至る', ko: '~에 이르다', ex: '행동이나 변화의 결과, 어떤 상황이나 사태에 도달한 것을 나타낸다. 「~になる」보다 딱딱한 문어체적 표현이다.', s: [
+                'さんざん{r|悩|なや}んだあげく、仕事を{r|辞|や}めるべきだという{r|結論|けつ/ろん}<b>に{r|至|いた}った</b>。',
+                '二人は何度も話し合いを{r|重|かさ}ねた結果、ついに{r|離婚|り/こん}する<b>に至った</b>。',
+                'あの{r|大企業|だい/き/ぎょう}が{r|倒産|とう/さん}する<b>に至って</b>、ようやく{r|不況|ふ/きょう}の{r|深刻|しん/こく}さに気付いた。'] },
+            { p: '～ですら', ko: '~조차', ex: '어떤 예를 들고 \'그것조차 이러하므로 다른 것도 마찬가지다\'라는 의미를 나타내며, 명사 뒤에 붙는다. 「~でさえ」보다 딱딱한 문어체적 표현이다.', s: [
+                'この問題は難しすぎて、学年一の{r|秀才|しゅう/さい}の{r|三浦|み/うら}さん<b>ですら</b>{r|解|と}けなかった。',
+                '電車やバスの中で{r|騒|さわ}いではいけないことは、子供<b>ですら</b>知っている。',
+                '本人<b>ですら</b>決めるのが難しい将来の{r|進路|しん/ろ}を、他の人に決めてもらおうなんて、無理なことだ。'] },
+            { p: '～てからというもの(は)', ko: '~하고 나서는 (계속)', ex: '그 사건이 계기가 되어, 뭔가 커다란 변화가 일어난 것을 나타낼 때 사용한다. 문어체적 표현이다.', s: [
+                '以前は{r|怒|おこ}りっぽいと言われていた彼ですが、子供が{r|産|う}まれ<b>てからというもの</b>、すっかり優しくなりました。',
+                'テニス部を辞め<b>てからというもの</b>、見る見るうちに太り、{r|体重|たい/じゅう}が10キロも増えてしまった。',
+                '{r|優秀|ゆう/しゅう}な{r|川上|かわ/かみ}さんが営業部に来<b>てからというもの</b>、{r|業績|ぎょう/せき}は上がっていく一方だ。'] },
+            { p: '～なり', ko: '~하자마자', ex: '동작을 나타내는 동사에 붙어, 그 동작 직후에 뭔가 예상할 수 없는 일이 일어난 경우에 사용한다. 「~たとたん(に)」「~や否や」와 같은 의미이다.', s: [
+                '彼女は朝{r|目覚|め/ざ}める<b>なり</b>{r|突然|とつ/ぜん}{r|大声|おお/ごえ}で泣き出した。',
+                'そのウェブサイトにプロフィールを{r|登録|とう/ろく}する<b>なり</b>、すぐに20{r|通|つう}ものメールが届いた。',
+                '退院する<b>なり</b>すぐに{r|出社|しゅっ/しゃ}した部長を見て、社員たちは{r|驚|おどろ}いていた。'] }
+        ],
+        kaiwa: {
+            audio: 'audio/dk-12-kaiwa.mp3',
+            segs: [[0.15, 2.65], [2.97, 8.13], [8.46, 18.25], [18.67, 22.42], [22.50, 29.84], [30.51, 37.85], [38.13, 42.72], [43.32, 53.15], [53.73, 61.82], [62.45, 67.97], [68.30, 80.90], [82.09, 91.62]],
+            answers: ['揺れ', '規模', '津波', '報道される', '漏れ出し', '原発', 'さらされて', '救援', '募金', '一刻も'],
+            lines: [
+                ['A', '昨日の{r|地震|じ/しん}、大丈夫だった？'],
+                ['B', 'すごい[1]だったよね。突然だったから、ビックリしちゃった。'],
+                ['A', '僕は、{r|東日本大震災|ひがし/に/ほん/だい/しん/さい}のことを思い出したよ。あの地震の[2]に比べたら、昨日の地震も軽いものに思えるけど…。'],
+                ['B', 'あの時は、[3]の被害もひどかったものね。'],
+                ['A', 'うん。{r|沿岸部|えん/がん/ぶ}の街が飲み込まれていく様子が、今でも頭に浮かんでくるようだよ。'],
+                ['B', '{r|被災地|ひ/さい/ち}のことが[4]たび、信じられない思いだったわ。まさかこんなことが、って。'],
+                ['A', 'それに、忘れちゃいけないのが、{r|原子力発電所|げん/し/りょく/はつ/でん/しょ}の事故だね。'],
+                ['B', '{r|放射性物質|ほう/しゃ/せい/ぶっ/しつ}が[5]たり、電気が足りなくなったり、あの事故の影響はずっと続いているんだから、忘れることなんてできないわ。'],
+                ['A', '地震に津波、[6]事故、電力不足、あの頃は毎日不安で仕方なかったな。'],
+                ['B', 'でも、被害を受けた人たちは今も不安に[7]いるんだよね。'],
+                ['A', 'そうだよね。[8]{r|物資|ぶっ/し}を送ったり、[9]をしたりすることも重要だけど、なによりも、人々が受けた心の{r|傷|きず}を忘れないことが大切じゃないかな。'],
+                ['B', 'うん。被災地の人たちに[10]早く笑顔と平和な日々が戻るように、私たちも全力で支援を続けていこう。']
+            ]
+        }
+    };
+    READINGS['dk-13'] = {
+        id: 'dk-13', book: 'darakwon-dokkai-chukyu', no: 13, chapter: '国際協力',
+        title: '国際協力',
+        author: '국제협력',
+        authorHtml: '국제협력',
+        intro: '아프리카, 라틴 아메리카, 아시아 등의 일부 국가들은 개발도상국이라 불리며 경제나 위생적인 측면에서 많은 문제를 안고 있습니다. 그 때문에 다른 나라는 그런 나라들을 지원하기 위해 여러 방면에서 국제협력을 하고 있습니다. 일본은 어떤 대응을 하고 있는지, 또 국제협력의 의의는 무엇인지 읽어 봅시다.',
+        tabs: [['text', '本文'], ['q', '問題'], ['words', '単語'], ['bunkei', '文型'], ['kanji', '練習'], ['kaiwa', '会話']],
+        exNote: '本の模範解答です。',
+        pages: [
+            { p: 130, lines: [
+                '　{r|第二次世界大戦|だい/に/じ/せ/かい/たい/せん}が終わってから、多くの国が{r|飛躍的|ひ/やく/てき}な経済発展を{r|遂|と}げてきま',
+                'した。しかしその一方で、{r|内戦|ない/せん}や他国との{r|戦争|せん/そう}などが原因で{r|開発|かい/はつ}が遅れ、多く',
+                'の問題を{r|抱|かか}えている国もあります。',
+                '　日本は、こうした開発{r|途上国|と/じょう/こく}に対して様々な{r|国際協力|こく/さい/きょう/りょく}を{r|行|おこな}っています。その',
+                '一つが、2003年に{r|設立|せつ/りつ}された{r|独立行政法人|どく/りつ/ぎょう/せい/ほう/じん}国際協力{r|機構|き/こう}（Japan International',
+                'Cooperation Agency、{r|略称|りゃく/しょう} JICA）です。JICAは、{r|教育|きょう/いく}、{r|医療|い/りょう}、交通、経済',
+                'など、{r|多角的|た/かく/てき}な{r|視点|し/てん}から開発途上国の{r|現状|げん/じょう}に{r|応|おう}じた課題に{r|取|と}り{r|組|く}んでいます。',
+                '　その一例として、{r|水資源|すい/し/げん}問題への取り組みが{r|挙|あ}げられます。開発途上国に',
+                'おける病気の原因の８{r|割|わり}は{r|汚水|お/すい}にあるといわれており、生活の中で安全な{r|飲料|いん/りょう}',
+                '{r|水|すい}を手に{r|入|い}れられない人の数は、世界中で約９億人にものぼります。{r|国連|こく/れん}は、',
+                '2015年までにこうした人々の{r|割合|わり/あい}を半分に{r|減|へ}らすことを{r|目標|もく/ひょう}に、安全な水の{r|供|きょう}',
+                '{r|給|きゅう}に力を入れています。',
+                '　日本は、{r|給水施設|きゅう/すい/し/せつ}の{r|調査|ちょう/さ}・{r|設計|せっ/けい}・{r|建設|けん/せつ}に{r|継続的|けい/ぞく/てき}に取り組み、2004年から2008年',
+                'までの間に48ヶ国、2800万人の人々に対して安全な飲料水の供給を可能にしま',
+                'した。しかし、施設を{r|建|た}てたものの、建てっぱなしで{r|放置|ほう/ち}されては意味があり',
+                'ません。そこで、開発途上国の{r|労働力|ろう/どう/りょく}に目をつけ、その施設を{r|維持管理|い/じ/かん/り}するため',
+                'の{r|人材|じん/ざい}の{r|育成|いく/せい}も{r|併|あわ}せて行ってきたのです。それだけにとどまらず、日本で{r|技術|ぎ/じゅつ}',
+                'を{r|学|まな}ぶ研修員を受け入れたり、専門家を{r|現地|げん/ち}に{r|派遣|は/けん}したり、{r|機材|き/ざい}を供給したりと',
+                '様々な形で開発途上国への技術協力が行われています。',
+                '　そんな日本もかつては、アメリカや世界銀行から{r|資金援助|し/きん/えん/じょ}を受けていた、い',
+                'わゆる「{r|被|ひ}援助国」でした。それから高度経済成長を{r|経|へ}て、{r|先進国|せん/しん/こく}となり、他の',
+                '国への援助をする{r|立場|たち/ば}になったのです。しかし、援助国だからといって大きな'
+            ] },
+            { p: 131, lines: [
+                '顔をしていてはいけません。東日本{r|大震災|だい/しん/さい}が起こった2011年には、日本は世界',
+                '各国から300億円を超える援助金を受けたといわれています。{r|余裕|よ/ゆう}がある時は誰',
+                'かを助けることができても、またいつ助けられる立場になるかは分からないの',
+                'です。{r|共|とも}に{r|地球上|ち/きゅう/じょう}に{r|生|い}きる{r|仲間|なか/ま}である以上、今後も{r|国境|こっ/きょう}を{r|越|こ}えた{r|助|たす}け{r|合|あ}いが必',
+                '要となるでしょう。'
+            ] }
+        ],
+        qTitle: '読解問題',
+        tebiki: [
+            { t: '開発途上国とは、どのような国のことですか。', ex: '内戦や他国との戦争などが原因で開発が遅れ、多くの問題を抱えている国。', quote: '開発が遅れ', page: 130 },
+            { t: 'JICAはどのような取り組みを行っていますか。', ex: '教育、医療、交通、経済など、多角的な視点から開発途上国の現状に応じた課題に取り組んでいる。', quote: '多角的な', page: 130 },
+            { t: '開発途上国における水資源問題の現状とは、どのようなものですか。', ex: '開発途上国における病気の原因の８割が汚水にあると言われており、生活の中で安全な飲料水を手に入れられない人の数は、世界中で約９億人にものぼる。', quote: '汚水', page: 130 },
+            { t: '開発途上国の給水施設を維持管理するため、どのようなことを行ってきましたか。', ex: '開発途上国の労働力に目をつけ、人材育成を行ってきた。', quote: '労働力に目をつけ', page: 130 },
+            { t: '「今後も国境を越えた助け合いが必要となる」とあるが、その理由は何ですか。', ex: '余裕がある時は誰かを助けることができても、またいつ助けられる立場になるかは分からないから。（共に地球上に生きる仲間だから）', quote: '余裕', page: 131 }
+        ],
+        ronriTitle: '短文を作りなさい（次の言葉を使って）',
+        ronri: [
+            { t: '새로운 프로젝트의 성공에 의해, 회사의 이익은 비약적으로 증대했습니다.', note: '利益・飛躍的・増大', ex: '新しいプロジェクトの成功によって、会社の利益は飛躍的に増大しました。' },
+            { t: '긴 슬럼프의 시기를 거쳐, 그 작가는 3년 만에 새로운 작품을 발표했습니다.', note: 'スランプ・～を経て・発表する', ex: '長いスランプの時期を経て、その作家は３年ぶりに新たな作品を発表しました。' },
+            { t: '몇 가지 원인을 아울러 생각하니, 이 계획의 실패는 당연한 것이었다고 말할 수 있을 것입니다.', note: '併せて・計画・当然', ex: 'いくつかの原因を併せて考えると、この計画の失敗は当然のことだったと言えるでしょう。' },
+            { t: '주관적인 판단을 피하기 위해서 다각적인 시점에서 논의하는 것이 필요합니다.', note: '主観的・避ける・多角的・議論する', ex: '主観的な判断を避けるために、多角的な視点から議論することが必要です。' }
+        ],
+        kanjiIntro: '（　）に入るものを選びましょう。答えは本の正答です。ほかの選択肢は Claude が作りました。',
+        kanji: [
+            { title: '文型：（　）に入る言葉を選んで、文を完成させなさい。', wide: true, items: [
+                { pre: '給水施設を作るだけに', k: '（　　　）', post: '人材育成も同時に行ってきました。', a: 'とどまらず', opts: ['応じた', 'とどまらず', 'っぱなし', '以上'] },
+                { pre: '施設が建て', k: '（　　　）', post: 'になることなく、長い間活用されることを目指したものです。', a: 'っぱなし', opts: ['応じた', 'とどまらず', 'っぱなし', '以上'] },
+                { pre: '同じ人間である', k: '（　　　）', post: '、互いに協力しあうことが必要でしょう。', a: '以上', opts: ['応じた', 'とどまらず', 'っぱなし', '以上'] },
+                { pre: '日本は開発途上国の現状に', k: '（　　　）', post: '様々な課題に取り組んでいます。', a: '応じた', opts: ['応じた', 'とどまらず', 'っぱなし', '以上'] }
+            ] },
+            { title: '文型：～に応じた・～にとどまらず・～っぱなし・～以上 を使って、文を完成させなさい。', wide: true, items: [
+                { pre: '彼はパソコンの電源を', k: '（つける→　　）', post: 'にして、家に帰ってしまった。', a: 'つけっぱなし', opts: ['つけっぱなし', 'つけた以上', 'つけるにとどまらず', 'つけに応じた'] },
+                { pre: '給料は固定制ではなく、', k: '（功績→　　）', post: '報酬が与えられるそうです。', a: '功績に応じた', opts: ['功績に応じた', '功績にとどまらず', '功績っぱなし', '功績である以上'] },
+                { pre: 'ガソリンの値上がりは、', k: '（運輸業→　　）', post: '、様々な分野に影響を与えている。', a: '運輸業にとどまらず', opts: ['運輸業にとどまらず', '運輸業に応じた', '運輸業っぱなし', '運輸業である以上'] },
+                { pre: '国の代表としてオリンピックに', k: '（出る→　　）', post: '、良い成績を残したい。', a: '出る以上', opts: ['出る以上', '出っぱなし', '出るにとどまらず', '出るに応じた'] }
+            ] },
+            { title: '言葉の使い方：力を入れる・目をつける・挙げる・遂げる・派遣する・放置する から選んで、適当な形にしなさい。', wide: true, items: [
+                { pre: '日本から唐の国（中国）に', k: '＿＿＿＿', post: '人々のことを、遣唐使といいます。', a: '派遣された', opts: ['派遣された', '放置された', '挙げられた', '遂げた'] },
+                { pre: '彼女はアメリカ留学を目標に英語の勉強に', k: '＿＿＿＿', post: 'います。', a: '力を入れて', opts: ['力を入れて', '目をつけて', '放置して', '派遣して'] },
+                { pre: '監督はその選手の才能に', k: '＿＿＿＿', post: 'てレギュラーに採用しました。', a: '目をつけ', opts: ['目をつけ', '力を入れ', '遂げ', '挙げ'] },
+                { pre: '一つの目標を', k: '＿＿＿＿', post: '満足するのではなく、また新たな目標を見つけて努力し続けることが必要です。', a: '遂げて', opts: ['遂げて', '挙げて', '放置して', '目をつけて'] },
+                { pre: '駅の周りに', k: '＿＿＿＿', post: 'いた自転車が、ボランティアによって片付けられました。', a: '放置されて', opts: ['放置されて', '派遣されて', '挙げられて', '力を入れて'] }
+            ] }
+        ],
+        words: [
+            { sec: '本文', list: [
+                ['飛躍的', 'ひやくてき', '비약적'], ['遂げる', 'とげる', '이루다, 달성하다'], ['内戦', 'ないせん', '내전'],
+                ['抱える', 'かかえる', '안다, 떠안다'], ['～に対して', '～にたいして', '~에 대해, ~에게'], ['機構', 'きこう', '기구'],
+                ['多角的', 'たかくてき', '다각적'], ['視点', 'してん', '시점'], ['現状', 'げんじょう', '현 상황'],
+                ['水資源', 'すいしげん', '수자원'], ['挙げる', 'あげる', '(예 등을) 들다'], ['汚水', 'おすい', '오수, 더러운 물'],
+                ['飲料水', 'いんりょうすい', '음료수'], ['手に入れる', 'てにいれる', '손에 넣다, 입수하다'], ['割合', 'わりあい', '비율'],
+                ['力を入れる', 'ちからをいれる', '힘을 쏟다'], ['給水施設', 'きゅうすいしせつ', '급수시설'], ['継続的', 'けいぞくてき', '계속적'],
+                ['放置する', 'ほうちする', '방치하다'], ['目をつける', 'めをつける', '주시하다, 노리다'], ['維持管理する', 'いじかんりする', '유지관리하다'],
+                ['人材', 'じんざい', '인재'], ['育成', 'いくせい', '육성'], ['併せて', 'あわせて', '아울러, 겸해서'],
+                ['機材', 'きざい', '기재, 기계와 재료'], ['～を経て', '～をへて', '~을 거쳐'], ['先進国', 'せんしんこく', '선진국'],
+                ['～からといって', '', '~라고 해서'], ['大きな顔をする', 'おおきなかおをする', '뻐기다, 젠체하다'], ['国境を越える', 'こっきょうをこえる', '국경을 초월하다'],
+                ['助け合い', 'たすけあい', '서로 도움']
+            ] },
+            { sec: '文型', list: [
+                ['器具', 'きぐ', '기구'], ['足が棒になる', 'あしがぼうになる', '다리가 뻣뻣해지다'], ['片付ける', 'かたづける', '정리하다, 치우다'], ['一帯', 'いったい', '일대'], ['単なる', 'たんなる', '단순한'],
+                ['芸術の域', 'げいじゅつのいき', '예술의 경지'], ['達する', 'たっする', '이르다, 도달하다'], ['今さら', 'いまさら', '이제 와서'],
+                ['卑怯な', 'ひきょうな', '비겁한']
+            ] }
+        ],
+        bunkei: [
+            { p: '～に応じて・～に応じた', ko: '~에 따라서, ~에 맞게 · ~에 따른, ~에 맞는', ex: '어떤 상황이나 세상일의 변화에 맞춰서 어떤 일을 결정하거나 어떤 일이 바뀐다는 의미를 나타낸다.', s: [
+                '子供の{r|成長|せい/ちょう}<b>に{r|応|おう}じて</b>おもちゃを選ぶことが重要です。',
+                'このレストランのコースメニューでは、{r|季節|き/せつ}<b>に応じた</b>デザートを{r|用意|よう/い}しています。',
+                '台所は{r|貸|か}しますが、料理に使う食材や{r|器具|き/ぐ}は、必要<b>に応じて</b>{r|準備|じゅん/び}して来てください。'] },
+            { p: '～っぱなし', ko: '~한 채임', ex: '\'~한 채임\'이라는 의미로, 해야 하는 일을 하지 않았다는 부정적인 평가에 사용되는 경우가 많다.', s: [
+                '今日は一日中仕事で立ち<b>っぱなし</b>だったので、足が{r|棒|ぼう}になった。',
+                'いつまでも{r|荷物|に/もつ}を出し<b>っぱなし</b>にしていると、捨ててしまうよ。早く{r|片付|かた/づ}けなさい。',
+                '着た服を{r|脱|ぬ}ぎ<b>っぱなし</b>にしないで、きちんと{r|洗濯機|せん/たく/き}に入れてください。'] },
+            { p: '～にとどまらず', ko: '~뿐만 아니라, ~에 그치지 않고', ex: '\'~뿐만 아니라, 게다가\'라는 의미로, 어떤 일이 특정 범위를 넘어서 보다 광범위하게 미치고, 그 뿐만 아니라 다른 것에도 그 영향이 미치는 것을 나타낸다.', s: [
+                '{r|大雪|おお/ゆき}の{r|被害|ひ/がい}は東京だけ<b>にとどまらず</b>、{r|関東|かん/とう}地方{r|一帯|いっ/たい}に{r|及|およ}んだ。',
+                'あのバンドの曲は、{r|単|たん}なる{r|歌謡曲|か/よう/きょく}<b>にとどまらず</b>、{r|芸術|げい/じゅつ}の{r|域|いき}に{r|達|たっ}しているといわれています。',
+                '彼の{r|語学|ご/がく}への{r|興味|きょう/み}は日本語<b>にとどまらず</b>、韓国や中国など、他の国々の{r|言語|げん/ご}にまで広がっていった。'] },
+            { p: '～以上', ko: '~한 이상', ex: '\'~한 상황이라면 당연히 …이다\'라는 의미를 나타낸다. 뒤에는 「~べきだ／~つもりだ／~はずだ／~に違いない／~てはいけない」와 같이 말하는 사람의 판단이나 결의, 권유 등의 표현이 따른다.', s: [
+                '自分からやると言いだした<b>{r|以上|い/じょう}</b>、今さら{r|諦|あきら}めるわけにはいかない。',
+                '彼の{r|卑怯|ひ/きょう}な考えを知ってしまった<b>以上</b>、このまま{r|黙|だま}っていることはできない。',
+                '国民の{r|義務|ぎ/む}である<b>以上</b>、{r|税金|ぜい/きん}は払うべきだ。'] }
+        ],
+        kaiwa: {
+            audio: 'audio/dk-13-kaiwa.mp3',
+            segs: [[0.00, 4.90], [5.43, 6.56], [7.12, 13.66], [14.05, 17.06], [17.41, 32.88], [33.65, 42.10], [42.43, 55.87], [56.32, 57.66], [58.13, 63.70], [64.27, 71.94], [72.31, 87.18], [87.68, 94.64]],
+            answers: ['現状', '供給', '汚水', '給水', '併せて', 'やりっぱなし', '視点', '大きな顔'],
+            lines: [
+                ['A', '今度、JICAの{r|青年海外協力隊|せい/ねん/かい/がい/きょう/りょく/たい}として外国に行くんだ。'],
+                ['B', 'JICAって？'],
+                ['A', '{r|開発途上国|かい/はつ/と/じょう/こく}の[1]に{r|応|おう}じた{r|課題|か/だい}に{r|取|と}り{r|組|く}んで、国際協力を{r|行|おこな}っている{r|機関|き/かん}だよ。'],
+                ['B', '{r|具体的|ぐ/たい/てき}にはどんなことをするの？'],
+                ['A', '例えば、安全な飲み水が手に入らない人のために、JICAは水の[2]に力を入れているんだ。開発途上国の人々の病気は、ほとんどが[3]が原因といわれているんだよ。'],
+                ['B', '{r|確|たし}かに水ってすごく大事なものよね。じゃあ、JICAは外国にたくさん水を送っているの？'],
+                ['A', '日本から水をあげるだけじゃ、{r|根本的|こん/ぽん/てき}な解決にはならないだろう？　もっと多くの人が安全な水を利用できるようにするために、{r|現地|げん/ち}に[4]{r|施設|し/せつ}を作っているんだよ。'],
+                ['B', 'なるほどね。'],
+                ['A', 'それに、その施設を{r|管理|かん/り}するための{r|人材育成|じん/ざい/いく/せい}も[5]行っているんだ。'],
+                ['B', 'やったら[6]、じゃなく、その{r|効果|こう/か}がずっと続くように、色んな[7]から{r|支援|し/えん}をしているのね。'],
+                ['A', 'うん。もちろんJICAは他にも多くの協力事業を行っているんだよ。そんな国際協力の一員になれるなんて、{r|素晴|す/ば}らしいことだろう？　僕は自分を{r|誇|ほこ}りに思うよ。'],
+                ['B', 'まだ何もしていないのに、[8]をしないでよ。ボランティア{r|活動|かつ/どう}、{r|頑張|がん/ば}ってね。']
+            ]
+        }
+    };
+    READINGS['dk-14'] = {
+        id: 'dk-14', book: 'darakwon-dokkai-chukyu', no: 14, chapter: '異常気象',
+        title: '異常気象',
+        author: '이상 기상',
+        authorHtml: '이상 기상',
+        intro: '요즘 뉴스에서 \'이상 기상\'이라는 말을 자주 듣습니다. 이상 기상에는 어떠한 것이 있는지 알고 있습니까? 그리고 이상 기상의 원인은 어떠한 것일까요?',
+        tabs: [['text', '本文'], ['q', '問題'], ['words', '単語'], ['bunkei', '文型'], ['kanji', '練習'], ['kaiwa', '会話']],
+        exNote: '本の模範解答です。',
+        pages: [
+            { p: 140, lines: [
+                '　{r|皆|みな}さんは、エルニーニョやラニーニャという言葉を聞いたことがありますか。',
+                '{r|東太平洋|ひがし/たい/へい/よう}の{r|赤道|せき/どう}{r|付近|ふ/きん}からペルー{r|沿岸|えん/がん}にかけての{r|海水|かい/すい}の温度が{r|上昇|じょう/しょう}する{r|現象|げん/しょう}をエ',
+                'ルニーニョと呼びます。ラニーニャは{r|逆|ぎゃく}に、その{r|地域|ち/いき}の海水の温度が{r|平年|へい/ねん}より',
+                'も低くなる現象のことです。エルニーニョが発生すると、{r|大気|たい/き}の流れが変化',
+                'し、日本では{r|冷夏|れい/か}、{r|暖冬|だん/とう}になります。反対に、ラニーニャの場合は{r|猛暑|もう/しょ}、{r|寒冬|かん/とう}',
+                'になるのです。また、他の国々も{r|干|かん}ばつや{r|豪雨|ごう/う}、{r|台風|たい/ふう}などに{r|見舞|み/ま}われることが',
+                'あります。このように、エルニーニョやラニーニャは、様々な{r|異常気象|い/じょう/き/しょう}を{r|引|ひ}き',
+                '{r|起|お}こします。',
+                '　近年、ニュースで「異常気象」という言葉を聞く{r|機会|き/かい}が多くなりました。世',
+                '界中で異常気象が増えたのは{r|地球温暖化|ち/きゅう/おん/だん/か}が原因だと考える人が多いでしょう。',
+                '{r|実際|じっ/さい}、{r|工業化|こう/ぎょう/か}や{r|文明化|ぶん/めい/か}が{r|急速|きゅう/そく}に進んだ20世紀{r|後半|こう/はん}から、異常気象の原因はす',
+                'べて地球温暖化にあるかのようにいわれてきました。しかし、温暖化が異常気',
+                '象に{r|影響|えい/きょう}しているとはいうものの、それがどの{r|程度|てい/ど}{r|関連|かん/れん}しているのかについて',
+                'は、まだ明らかにされていません。例えば、世界中が{r|激|はげ}しい{r|寒気|かん/き}に見舞われた',
+                'り、オーストラリアで干ばつが起きたりするのは、100年{r|周期|しゅう/き}で見られる現象で',
+                'すが、これには太陽活動のサイクルが関連しているそうです。また、{r|海水面|かい/すい/めん}が',
+                '高くなるというのも、何万年も前から起こっていた現象であり、近年に{r|限|かぎ}った',
+                'ことではありません。',
+                '　しかし、人間の社会活動が原因で異常気象が引き起こされる場合もあります。',
+                'その例が、ヒートアイランド現象です。これは、{r|郊外|こう/がい}に比べて、{r|都市部|と/し/ぶ}の気温',
+                'が高くなる現象のことです。その原因は、都市部には{r|住宅|じゅう/たく}や工場、生活してい',
+                'る人間の数が多いため、発生する熱が多いだけでなく、{r|土地開発|と/ち/かい/はつ}のためにアス'
+            ] },
+            { p: 141, lines: [
+                'ファルトで{r|舗装|ほ/そう}された{r|地面|じ/めん}がその熱を{r|溜|た}めこんでしまうことです。気温が上が',
+                'ると、大気のバランスが{r|崩|くず}れ、{r|局地的|きょく/ち/てき}な集中豪雨などが起きることがありま',
+                'す。また、人間は都市や道路の開発のために広い{r|範囲|はん/い}にわたって{r|森林破壊|しん/りん/は/かい}を{r|行|おこな}',
+                'ってきました。森林は、地球温暖化の原因となる{r|二酸化炭素|に/さん/か/たん/そ}を{r|吸収|きゅう/しゅう}したり、{r|洪|こう}',
+                '{r|水|ずい}や{r|土砂崩|ど/しゃ/くず}れを{r|防|ふせ}いだりする{r|役目|やく/め}を{r|果|は}たしています。その森林破壊をやめない',
+                'ことには、今後も地球温暖化が{r|進行|しん/こう}するだけでなく、異常気象による{r|被害|ひ/がい}が{r|拡|かく}',
+                '{r|大|だい}することにもつながっていくでしょう。大切な地球を守り、自然と{r|共存|きょう/ぞん}して',
+                'いくためには、やはり私たち人間が{r|環境|かん/きょう}問題に{r|取|と}り{r|組|く}まずにはすまないので',
+                'す。'
+            ] }
+        ],
+        qTitle: '読解問題',
+        tebiki: [
+            { t: 'エルニーニョ現象とはどのようなものですか。', ex: '東太平洋の赤道付近からペルー沿岸にかけての海水の温度が上昇する現象。', quote: 'ペルー', page: 140 },
+            { t: 'エルニーニョやラニーニャが発生すると、どのような影響がありますか。', ex: 'エルニーニョが発生すると、大気の流れが変化し、日本では冷夏、暖冬になる。反対に、ラニーニャの場合は猛暑、寒冬になる。また、他の国々も干ばつや豪雨、台風などに見舞われることがある。', quote: '冷夏', page: 140 },
+            { t: '地球温暖化はどの程度異常気象に影響していますか。', ex: 'どの程度関連しているのかについては、まだ明らかにされていない。', quote: '程度', page: 140 },
+            { t: 'ヒートアイランド現象の原因は何ですか。', ex: '都市部には住宅や工場、生活している人間の数が多いため、発生する熱が多いだけでなく、土地開発のためにアスファルトで舗装された地面がその熱を溜めこんでしまうこと。', quote: '住宅', page: 140 },
+            { t: '森林破壊が、異常気象の被害を拡大させることにつながるのはなぜですか。', ex: '森林は地球温暖化の原因となる二酸化炭素を吸収したり、洪水や土砂崩れを防いだりする役目を果たしているから。', quote: '二酸化炭素', page: 141 }
+        ],
+        ronriTitle: '短文を作りなさい（次の言葉を使って）',
+        ronri: [
+            { t: '히트 아일랜드 현상에 의해 호우가 닥쳤습니다.', note: 'ヒートアイランド現象・豪雨・見舞われる', ex: 'ヒートアイランド現象によって、豪雨に見舞われました。' },
+            { t: '이 지역은 삼림파괴가 행하여졌기 때문에, 이전보다 산사태가 일어나기 쉬워졌습니다.', note: '森林破壊・土砂崩れ', ex: 'この地域は、森林破壊が行われたため、以前より土砂崩れが起きやすくなりました。' },
+            { t: '올해는 냉하인 데다가, 일본 각지에서 홍수가 발생하고 있다.', note: '冷夏・洪水・発生する', ex: '今年は冷夏な上、日本各地で洪水が発生している。' },
+            { t: '삼림은 이산화탄소를 흡수하고, 공기를 깨끗하게 하는 책임을 다하고 있습니다.', note: '二酸化炭素・吸収する・役目を果たす', ex: '森林は二酸化炭素を吸収し、空気をきれいにする役目を果たしています。' }
+        ],
+        kanjiIntro: '（　）に入るものを選びましょう。答えは本の正答です。ほかの選択肢は Claude が作りました。',
+        kanji: [
+            { title: '文型：（　）に入る言葉を選んで、文を完成させなさい。', wide: true, items: [
+                { pre: '20世紀後半から、異常気象の原因はすべて地球温暖化にある', k: '（　　　）', post: 'いわれてきました。', a: 'かのように', opts: ['かのように', 'とはいうものの', 'ことには', 'すまない'] },
+                { pre: '自然と共存していくためには、私たちが環境問題に取り組まずには', k: '（　　　）', post: 'のです。', a: 'すまない', opts: ['かのように', 'とはいうものの', 'ことには', 'すまない'] },
+                { pre: '温暖化が異常気象に影響している', k: '（　　　）', post: '、どの程度関連しているかは不明です。', a: 'とはいうものの', opts: ['かのように', 'とはいうものの', 'ことには', 'すまない'] },
+                { pre: '森林破壊をやめない', k: '（　　　）', post: '、今後も地球温暖化が進行していくでしょう。', a: 'ことには', opts: ['かのように', 'とはいうものの', 'ことには', 'すまない'] }
+            ] },
+            { title: '文型：～かのように・～とはいうものの・～ないことには・～ずにはすまない を使って、文を完成させなさい。', wide: true, items: [
+                { pre: '君もあの場に一緒にいたのだから、責任を', k: '（問われる→　　）', post: '。', a: '問われずにはすまない', opts: ['問われずにはすまない', '問われないことには', '問われるかのように', '問われるとはいうものの'] },
+                { k: '（調べてみる→　　）', post: '、実行が可能かどうか判断しかねます。', a: '調べてみないことには', opts: ['調べてみないことには', '調べてみずにはすまない', '調べてみたかのように', '調べてみたとはいうものの'] },
+                { pre: 'ウェディングドレスを着た彼女は、まるで', k: '（輝いている→　　）', post: 'きれいだった。', a: '輝いているかのように', opts: ['輝いているかのように', '輝いているとはいうものの', '輝いていないことには', '輝かずにはすまない'] },
+                { pre: '景気が', k: '（回復している→　　）', post: '、まだ庶民の生活には表れていない。', a: '回復しているとはいうものの', opts: ['回復しているとはいうものの', '回復しているかのように', '回復していないことには', '回復せずにはすまない'] }
+            ] },
+            { title: '言葉の使い方：見舞われる・上昇する・溜めこむ・崩れる・関連する・引き起こす から選んで、適当な形にしなさい。', wide: true, items: [
+                { pre: '経済の発展とともに、物価が急激に', k: '＿＿＿＿', post: '。', a: '上昇した', opts: ['上昇した', '崩れた', '溜めこんだ', '見舞われた'] },
+                { pre: '今日の授業の内容に', k: '＿＿＿＿', post: 'レポートを書いて、来週までに提出しなさい。', a: '関連した', opts: ['関連した', '上昇した', '引き起こした', '溜めこんだ'] },
+                { pre: '現在、日本経済は大不況に', k: '＿＿＿＿', post: 'います。', a: '見舞われて', opts: ['見舞われて', '関連して', '崩れて', '引き起こして'] },
+                { pre: '弟は部屋の中にいらない物まで', k: '＿＿＿＿', post: 'いるため、どこに何があるか分からない。', a: '溜めこんで', opts: ['溜めこんで', '見舞われて', '崩れて', '上昇して'] },
+                { pre: '無理なダイエットは、病気を', k: '＿＿＿＿', post: '原因になることがある。', a: '引き起こす', opts: ['引き起こす', '溜めこむ', '関連する', '崩れる'] }
+            ] }
+        ],
+        words: [
+            { sec: '本文', list: [
+                ['エルニーニョ', '', '엘니뇨'], ['ラニーニャ', '', '라니냐'], ['赤道', 'せきどう', '적도'],
+                ['沿岸', 'えんがん', '연안'], ['上昇する', 'じょうしょうする', '상승하다'], ['平年', 'へいねん', '평년'],
+                ['大気', 'たいき', '대기'], ['冷夏', 'れいか', '평년보다 기온이 낮은 여름'], ['暖冬', 'だんとう', '춥지 않은 겨울'],
+                ['猛暑', 'もうしょ', '혹서'], ['寒冬', 'かんとう', '평년에 비해 기온이 낮은 겨울'], ['干ばつ', 'かんばつ', '가뭄'],
+                ['豪雨', 'ごうう', '호우'], ['～に見舞われる', '～にみまわれる', '~의 엄습을 받다, ~이 닥치다'], ['引き起こす', 'ひきおこす', '일으키다'],
+                ['地球温暖化', 'ちきゅうおんだんか', '지구온난화'], ['急速に', 'きゅうそくに', '급속하게'], ['関連する', 'かんれんする', '관련되다'],
+                ['寒気', 'かんき', '추위'], ['周期', 'しゅうき', '주기'], ['ヒートアイランド現象', 'ヒートアイランドげんしょう', '열섬 현상'],
+                ['郊外', 'こうがい', '교외'], ['発生する', 'はっせいする', '발생하다'], ['アスファルト', '', '아스팔트'],
+                ['舗装する', 'ほそうする', '포장하다'], ['溜めこむ', 'ためこむ', '꾸준히 모으다'], ['崩れる', 'くずれる', '무너지다, 붕괴되다'],
+                ['局地的', 'きょくちてき', '국지적'], ['集中豪雨', 'しゅうちゅうごうう', '집중호우'], ['森林破壊', 'しんりんはかい', '산림파괴'],
+                ['二酸化炭素', 'にさんかたんそ', '이산화탄소'], ['吸収する', 'きゅうしゅうする', '흡수하다'], ['洪水', 'こうずい', '홍수'],
+                ['土砂崩れ', 'どしゃくずれ', '산사태'], ['防ぐ', 'ふせぐ', '방지하다'], ['役目を果たす', 'やくめをはたす', '역할을 다하다'],
+                ['拡大する', 'かくだいする', '확대하다'], ['共存', 'きょうぞん', '공존 (きょうそん으로도 읽음)']
+            ] },
+            { sec: '文型', list: [
+                ['親しげに', 'したしげに', '친한 듯이'], ['振る舞う', 'ふるまう', '행동하다'], ['失恋', 'しつれん', '실연'],
+                ['免許を取る', 'めんきょをとる', '면허를 따다'], ['何事もない', 'なにごともない', '아무 일도 없다'], ['想像', 'そうぞう', '상상'],
+                ['挑戦する', 'ちょうせんする', '도전하다'], ['辞職する', 'じしょくする', '사직하다'], ['お礼を言う', 'おれいをいう', '감사의 인사를 하다']
+            ] }
+        ],
+        bunkei: [
+            { p: '～かのように', ko: '(마치) ~인 듯이', ex: '\'마치 ~인 듯이\'라고 뭔가를 예를 들어 말할 때 사용한다.', s: [
+                'あの二人は今会ったばかりなのに、昔から{r|互|たが}いを知っている<b>かのように</b>、{r|親|した}しげに話している。',
+                '{r|失恋|しつ/れん}したばかりでまだ{r|辛|つら}いだろうに、{r|黒田|くろ/だ}さんは{r|何事|なに/ごと}もなかった<b>かのように</b>明るく{r|振|ふ}る{r|舞|ま}っている。',
+                '去年まで同じクラスにいたのに、彼は私のことなど忘れた<b>かのように</b>、私を{r|無視|む/し}した。'] },
+            { p: '～とはいうものの', ko: '~이기는 하지만', ex: '「~」라는 것은 인정하지만, 실제로는 그 일에서 상상되거나 기대되는 것 그대로는 되지 않는다고 할 때 사용한다.', s: [
+                '{r|希望|き/ぼう}の会社に入社した<b>とはいうものの</b>、毎日忙しすぎて、生活が楽しくない。',
+                '車の{r|免許|めん/きょ}を{r|取|と}った<b>とはいうものの</b>、いつも父が車で{r|出勤|しゅっ/きん}してしまうので、{r|運転|うん/てん}する{r|機会|き/かい}がほとんどない。',
+                'できるだけ{r|頑張|がん/ば}った<b>とはいうものの</b>、{r|試験|し/けん}に{r|合格|ごう/かく}する自信はあまりありません。'] },
+            { p: '～ないことには', ko: '~하지 않고서는', ex: '\'~하지 않으면 …할 수 없다\'라고 할 때 사용한다. 뒤에는 부정의 의미를 가진 문장이 온다.', s: [
+                '彼女の意見を聞いてみ<b>ないことには</b>、私だけでは決められません。',
+                '一度行ってみ<b>ないことには</b>、どんな場所か{r|想像|そう/ぞう}もできません。',
+                '難しいとは分かっていても、{r|挑戦|ちょう/せん}してみ<b>ないことには</b>何も始まらない。'] },
+            { p: '～ずにはすまない', ko: '~하지 않을 수 없다', ex: '상황이나 입장을 생각하면 \'반드시 ~하지 않으면 안 된다. ~하지 않으면 용서받지 못한다\'라고 할 때 사용한다.', s: [
+                'あれだけの問題を起こしたのだから、社長は{r|辞職|じ/しょく}せ<b>ずにはすまない</b>だろう。',
+                '彼には、日本にいる間、色々{r|助|たす}けてもらったので、帰る前に{r|一言|ひと/こと}お{r|礼|れい}を言わ<b>ずにはすみません</b>。',
+                '子供たちが{r|期待|き/たい}して待っているのだから、忙しいからといって、行か<b>ずにはすまない</b>。'] }
+        ],
+        kaiwa: {
+            audio: 'audio/dk-14-kaiwa.mp3',
+            segs: [[0.21, 3.57], [4.06, 9.89], [10.64, 17.56], [17.87, 23.41], [24.19, 31.76], [32.45, 37.08], [37.64, 49.43], [49.72, 57.67], [58.06, 61.65], [62.20, 71.25], [71.97, 77.31]],
+            answers: ['冷夏', '豪雨', '猛暑', '洪水', '森林破壊', '土砂崩れ', '干ばつ', '地球温暖化', '拡大する', '防ぐ'],
+            lines: [
+                ['B', 'もう夏なのに、ずいぶん{r|涼|すず}しいわよね。'],
+                ['A', '今年は[1]だから、お{r|米|こめ}が足りなくなるかもって心配されているらしいよ。'],
+                ['B', 'そうなんだぁ。最近雨が多いし、{r|新潟|にい/がた}の方でも[2]が続いていたもんね。'],
+                ['A', '{r|農家|のう/か}の人は大変だよな。生活が{r|天候|てん/こう}に{r|左右|さ/ゆう}されちゃうから。'],
+                ['B', 'そうね。去年は[3]だったのに、今年はこんなに気温が低くなるなんて、予想もつかないし。'],
+                ['A', '先月は、アメリカの方でも{r|大雨|おお/あめ}で[4]になっていたよね。'],
+                ['B', 'うん。多くの人が{r|避難|ひ/なん}していたわよね。[5]が進んだせいで、[6]が起きて、{r|住宅地|じゅう/たく/ち}への{r|被害|ひ/がい}が広がっているって聞いたわ。'],
+                ['A', '反対にオーストラリアでは[7]が起こっているらしいし、最近、地球全体がおかしい気がする。'],
+                ['B', 'やっぱり[8]の{r|影響|えい/きょう}なのかな。'],
+                ['A', 'それはあるだろうね。{r|異常気象|い/じょう/き/しょう}の被害が[9]のを[10]ためには、{r|環境|かん/きょう}問題に{r|取|と}り{r|組|く}まなくちゃいけないと思うよ。'],
+                ['B', 'うん。地球を守っていくために、{r|身近|み/ぢか}なことから始めることが必要ね。']
+            ]
+        }
+    };
+    READINGS['dk-15'] = {
+        id: 'dk-15', book: 'darakwon-dokkai-chukyu', no: 15, chapter: '裁判員制度',
+        title: '裁判員制度',
+        author: '재판원 제도',
+        authorHtml: '재판원 제도',
+        intro: '여러분은 재판을 보거나 재판에 참가한 적이 있습니까? 재판원 제도에 대해서 어떤 지식을 가지고 있습니까? 공평하고 공정한 재판은 어떻게 실현시킬 수 있을 지 생각해 봅시다.',
+        tabs: [['text', '本文'], ['q', '問題'], ['words', '単語'], ['bunkei', '文型'], ['kanji', '練習'], ['kaiwa', '会話']],
+        exNote: '本の模範解答です。',
+        notes: {
+            1: { word: '冤罪', text: '無実であるのに、犯罪者にされてしまうこと。' }
+        },
+        pages: [
+            { p: 150, lines: [
+                '　{r|皆|みな}さんは、{r|裁判|さい/ばん}に対してどのようなイメージを持っていますか。日本では、',
+                '裁判を{r|身近|み/ぢか}で分かりやすくし、{r|司法|し/ほう}に対する国民の{r|信頼|しん/らい}を{r|向上|こう/じょう}させるべく、',
+                '2009年から{r|裁判員制度|さい/ばん/いん/せい/ど}が始まりました。裁判員制度とは、{r|一般|いっ/ぱん}市民が「裁判員」',
+                'となって{r|刑事|けい/じ}裁判に{r|参加|さん/か}する制度です。くじによって{r|選|えら}ばれた裁判員は{r|本職|ほん/しょく}の{r|裁|さい}',
+                '{r|判官|ばん/かん}３人と{r|共|とも}に話し合って、{r|被告|ひ/こく}が{r|有罪|ゆう/ざい}か{r|無罪|む/ざい}か、有罪だとすれば{r|刑罰|けい/ばつ}はどれく',
+                'らいかを決めます。国民が裁判に参加することにより、市民が持つ{r|日常感覚|にち/じょう/かん/かく}',
+                'や{r|常識|じょう/しき}を裁判に{r|反映|はん/えい}することができると考えられています。',
+                '　裁判員制度が始まってからしばらく{r|経|た}ちましたが、これまでに、いくつかの',
+                '問題点も{r|指摘|し/てき}されています。第一に、裁判員は選ばれたら必ず{r|裁判所|さい/ばん/しょ}に行かな',
+                'ければならないという点です。{r|内閣府|ない/かく/ふ}が「裁判員に選ばれたら裁判所へ行くか',
+                'どうか」を{r|調査|ちょう/さ}したところ、「行きたいと思う」と答えた人が13.6％、「{r|義務|ぎ/む}だ',
+                'から、なるべく行かなければならないと思う」人が57.9％、「義務だとしても行',
+                'くつもりはない」人が25.9％という結果になりました。裁判員は義務といえど',
+                'も、仕事のかたわら何日間も裁判所に行かなければならないのは、大きな{r|負担|ふ/たん}',
+                'となるのです。',
+                '　第二に、{r|法律的|ほう/りつ/てき}な{r|知識|ち/しき}があまりない人々にとって、人を{r|裁|さば}くということは{r|荷|に}',
+                'が重く{r|精神的|せい/しん/てき}にもプレッシャーになるということです。例えば、{r|連続殺人|れん/ぞく/さつ/じん}事件',
+                'の{r|犯人|はん/にん}に{r|死刑判決|し/けい/はん/けつ}を出すかどうかについて、裁判員は{r|選択|せん/たく}を{r|迫|せま}られます。他人',
+                'の{r|生死|せい/し}を決めるというのは、誰でも気がひけることでしょう。また、{r|暴力団|ぼう/りょく/だん}と',
+                '{r|関|かか}わる事件では、{r|恨|うら}みを買うことに{r|恐怖|きょう/ふ}を感じる人も多いようです。',
+                '　第三に、法律に{r|詳|くわ}しくない市民の意見が裁判に反映されても、{r|公平|こう/へい}で{r|公正|こう/せい}な',
+                '判決が出せるのか、という点も指摘されています。裁判員は、法律のプロでは'
+            ] },
+            { p: 151, lines: [
+                'ありませんから、テレビや雑誌などのメディア{r|情報|じょう/ほう}に{r|影響|えい/きょう}されて、意見が変わっ',
+                'てしまうことが考えられます。また、有罪でも無罪だと思い込んだり、{r|逆|ぎゃく}に無',
+                '罪なのに有罪と決めつけ、{n1|{r|冤罪|えん/ざい}}の判決をしてしまったりする可能性もありま',
+                'す。つまり、どのような裁判員が裁判に参加するかで、判決が変わりかねない',
+                'のです。',
+                '　皆さんは、このような裁判員制度について、どう考えますか。自分が選ばれ',
+                'たら、どう感じるでしょうか。今後はこのような問題点を{r|検証|けん/しょう}し、制度の{r|見直|み/なお}',
+                'しをしていくことが期待されています。'
+            ] }
+        ],
+        qTitle: '読解問題',
+        tebiki: [
+            { t: '裁判員制度が開始された目的は何ですか。', ex: '裁判を身近で分かりやすくし、司法に対する国民の信頼を向上させるため。', quote: '司法', page: 150 },
+            { t: '裁判員制度とはどのような制度ですか。', ex: '一般市民が「裁判員」となって刑事裁判に参加する制度。', quote: '刑事', page: 150 },
+            { t: 'なぜ裁判員として裁判所に行くことが国民の負担になるのですか。', ex: '仕事のかたわら何日間も裁判所に行かなければならないから。', quote: '負担', page: 150 },
+            { t: '裁判員の精神的なプレッシャーには、どのようなことがありますか。', ex: '死刑判決を出すかどうかについて、選択を迫られることや、恨みを買うことに恐怖を感じること。', quote: '死刑判決', page: 150 },
+            { t: 'なぜ公平で公正な判決が出せるのかという指摘があるのですか。', ex: '裁判員は、法律のプロではないので、どのような裁判員が裁判に参加するかで、判決が変わりかねないから。', quote: 'かねない', page: 151 }
+        ],
+        ronriTitle: '短文を作りなさい（次の言葉を使って）',
+        ronri: [
+            { t: '사법은 국민에게 있어 그다지 가깝지 않습니다.', note: '司法・身近', ex: '司法は国民にとってあまり身近ではありません。' },
+            { t: '재판원은 일반시민으로부터 뽑혀서 형사재판에 참가합니다.', note: '裁判員・一般市民・刑事裁判', ex: '裁判員は、一般市民から選ばれて、刑事裁判に参加します。' },
+            { t: '공정한 재판을 하는 것으로 국민으로부터의 신뢰를 얻을 수 있습니다.', note: '公正な・信頼', ex: '公正な裁判をすることで、国民からの信頼が得られます（信頼を得ることができます）。' },
+            { t: '그는 무고한 죄로 10년 동안이나 형무소에 들어가 있었습니다.', note: '冤罪・刑務所', ex: '彼は、冤罪で10年間も刑務所に入れられていました。' }
+        ],
+        kanjiIntro: '（　）に入るものを選びましょう。答えは本の正答です。ほかの選択肢は Claude が作りました。',
+        kanji: [
+            { title: '文型：（　）に入る言葉を選んで、文を完成させなさい。', wide: true, items: [
+                { pre: '裁判を分かりやすくし、国民の信頼を向上させる', k: '（　　　）', post: '、裁判員制度が始まった。', a: 'べく', opts: ['べく', 'といえども', 'かたわら', 'かねない'] },
+                { pre: 'どのような裁判員が裁判に参加するかで、判決が変わり', k: '（　　　）', post: '。', a: 'かねない', opts: ['べく', 'といえども', 'かたわら', 'かねない'] },
+                { pre: '裁判員は義務', k: '（　　　）', post: '何日間も裁判所に行くのは負担だ。', a: 'といえども', opts: ['べく', 'といえども', 'かたわら', 'かねない'] },
+                { pre: '裁判員になると、仕事の', k: '（　　　）', post: '裁判に参加しなければならない。', a: 'かたわら', opts: ['べく', 'といえども', 'かたわら', 'かねない'] }
+            ] },
+            { title: '文型：～べく・～といえども・～かたわら・～かねない を使って、文を完成させなさい。', wide: true, items: [
+                { pre: 'そんな言い方をしたら、彼女は気分を', k: '（悪くする→　　）', post: '。', a: '悪くしかねない', opts: ['悪くしかねない', '悪くするべく', '悪くするかたわら', '悪くするといえども'] },
+                { pre: '彼女は来年からイギリスに', k: '（留学する→　　）', post: '、勉強を始めました。', a: '留学すべく', opts: ['留学すべく', '留学しかねない', '留学するかたわら', '留学するといえども'] },
+                { pre: '彼は宮田さんと', k: '（付き合う→　　）', post: '、別の女性とも頻繁にデートしている。', a: '付き合うかたわら', opts: ['付き合うかたわら', '付き合うべく', '付き合いかねない', '付き合うといえども'] },
+                { pre: '昨日、病院で母の顔を', k: '（見て来る→　　）', post: '、退院するまでは心配です。', a: '見て来たといえども', opts: ['見て来たといえども', '見て来るべく', '見て来るかたわら', '見て来かねない'] }
+            ] },
+            { title: '言葉の使い方：思いこむ・迫る・検証する・裁く・反映する・向上する から選んで、適当な形にしなさい。', wide: true, items: [
+                { pre: 'どんな事件でも、法律の知識がないのに人を', k: '＿＿＿＿', post: 'ことは難しい。', a: '裁く', opts: ['裁く', '迫る', '検証する', '思いこむ'] },
+                { pre: '国民の意見が裁判にも', k: '＿＿＿＿', post: 'ようになりました。', a: '反映される', opts: ['反映される', '向上される', '裁かれる', '迫られる'] },
+                { pre: '今朝、警察が事件の現場を', k: '＿＿＿＿', post: 'ました。', a: '検証し', opts: ['検証し', '反映し', '向上し', '裁き'] },
+                { pre: '会社の未来のために何を優先すべきか、難しい判断を', k: '＿＿＿＿', post: 'ました。', a: '迫られ', opts: ['迫られ', '思いこみ', '反映され', '検証し'] },
+                { pre: '会議は明日の午後だと', k: '＿＿＿＿', post: 'いたので、資料はまだ準備できていません。', a: '思いこんで', opts: ['思いこんで', '迫られて', '検証して', '向上して'] }
+            ] }
+        ],
+        words: [
+            { sec: '本文', list: [
+                ['裁判', 'さいばん', '재판'], ['身近', 'みぢか', '가까움'], ['司法', 'しほう', '사법'],
+                ['信頼', 'しんらい', '신뢰'], ['向上する', 'こうじょうする', '향상하다'], ['刑事裁判', 'けいじさいばん', '형사재판'],
+                ['くじ', '', '제비, 추첨'], ['本職', 'ほんしょく', '본직업, 본업'], ['裁判官', 'さいばんかん', '재판관'],
+                ['被告', 'ひこく', '피고'], ['有罪', 'ゆうざい', '유죄'], ['無罪', 'むざい', '무죄'],
+                ['刑罰', 'けいばつ', '형벌'], ['日常感覚', 'にちじょうかんかく', '일상(평소) 감각'], ['反映する', 'はんえいする', '반영하다'],
+                ['指摘する', 'してきする', '지적하다'], ['内閣府', 'ないかくふ', '내각부'], ['～たところ', '', '~했더니'],
+                ['義務', 'ぎむ', '의무'], ['負担', 'ふたん', '부담'], ['裁く', 'さばく', '심판하다, 재판하다'],
+                ['荷が重い', 'にがおもい', '짐(책임)이 무겁다'], ['連続殺人事件', 'れんぞくさつじんじけん', '연쇄살인사건'], ['死刑判決', 'しけいはんけつ', '사형 판결'],
+                ['迫られる', 'せまられる', '강요받다, 쫓기다'], ['生死', 'せいし', '생사'], ['気がひける', 'きがひける', '마음이 내키지 않다'],
+                ['暴力団', 'ぼうりょくだん', '폭력단'], ['関わる', 'かかわる', '관계되다'], ['恨みを買う', 'うらみをかう', '원한을 사다'],
+                ['恐怖', 'きょうふ', '공포'], ['公平', 'こうへい', '공평함'], ['公正', 'こうせい', '공정함'],
+                ['思い込む', 'おもいこむ', '굳게 믿다, 믿어 버리다'], ['検証する', 'けんしょうする', '검증하다']
+            ] },
+            { sec: '文型', list: [
+                ['残業', 'ざんぎょう', '잔업, 야근'], ['同意を得る', 'どういをえる', '동의를 얻다'], ['寮', 'りょう', '기숙사'],
+                ['外出禁止', 'がいしゅつきんし', '외출금지'], ['年末年始', 'ねんまつねんし', '연말연시'], ['別', 'べつ', '제외, 문제 밖'],
+                ['塾', 'じゅく', '학원'], ['勤める', 'つとめる', '근무하다, 종사하다'], ['睡眠を取る', 'すいみんをとる', '수면을 취하다'],
+                ['体を壊す', 'からだをこわす', '몸을 망치다'], ['経営状態', 'けいえいじょうたい', '경영상태'], ['明らかになる', 'あきらかになる', '밝혀지다'],
+                ['株主総会', 'かぶぬしそうかい', '주주총회'], ['石油ストーブ', 'せきゆストーブ', '석유난로'], ['火事になる', 'かじになる', '화재가 나다']
+            ] }
+        ],
+        bunkei: [
+            { p: '～べく', ko: '~하기 위해서', ex: '어떤 목적을 가지고 \'~하려고 생각해서 그렇게 했다\'고 말할 때 사용한다. 뒤에는 명령이나 의뢰를 나타내는 문장은 올 수 없다. する는 するべく・すべく 모두 가능하다.', s: [
+                '明日までにこの{r|資料|し/りょう}を課長に{r|提出|てい/しゅつ}する<b>べく</b>、今夜は遅くまで{r|残業|ざん/ぎょう}をした。',
+                'マンション{r|建設|けん/せつ}に対する市民の{r|同意|どう/い}を{r|得|え}る<b>べく</b>、週末に説明会を{r|開|ひら}いた。',
+                '先月の{r|売|う}り{r|上|あ}げを{r|報告|ほう/こく}す<b>べく</b>、プロジェクトのメンバーにメールを送った。'] },
+            { p: '～といえども', ko: '~라고 해도, ~라 할지라도', ex: '극단적인 입장의 사람이나 사물을 거론하여 「~」에서 받는 인상에 반하는 것을 말할 때 사용한다. 「~といえども」는 「~であっても」「~といっても」와 같은 의미지만 더 딱딱한 표현이다.', s: [
+                '{r|母親|はは/おや}<b>といえども</b>、子供のことをすべて分かっているわけではない。',
+                'この{r|寮|りょう}は、午後11時{r|以降|い/こう}は{r|外出禁止|がい/しゅつ/きん/し}<b>といえども</b>、{r|年末年始|ねん/まつ/ねん/し}は{r|別|べつ}だ。',
+                'いくら{r|恋人|こい/びと}<b>といえども</b>、毎日朝から{r|晩|ばん}まで一緒にいたら疲れる。'] },
+            { p: '～かたわら', ko: '~하는 한편, ~하면서', ex: '「~」을 하는 한편으로 다른 일도 병행해서 한다고 할 때 사용한다. 「~ながら」보다 장기적이고 습관적으로 행하는 일에 쓰며, 직업이나 입장에 대해서 말할 때도 자주 쓴다.', s: [
+                '{r|多田|た/だ}さんは{r|出版社|しゅっ/ぱん/しゃ}で{r|働|はたら}く<b>かたわら</b>、{r|塾|じゅく}の{r|講師|こう/し}もしています。',
+                'あの人は会社に{r|勤|つと}める<b>かたわら</b>、週末はDJとしても{r|活躍|かつ/やく}している。',
+                '姉は{r|研究|けん/きゅう}を続ける<b>かたわら</b>、{r|趣味|しゅ/み}のダンスにも{r|熱心|ねっ/しん}に{r|打|う}ち{r|込|こ}んでいる。'] },
+            { p: '～かねない', ko: '~할지도 모른다', ex: '\'~라는 나쁜 결과가 될지도 모른다\'라고 할 때 사용한다. 결과나 되어가는 추세를 걱정할 때 쓰는 표현이다.', s: [
+                'どんなに忙しくても、{r|睡眠|すい/みん}だけは取らないと、体を{r|壊|こわ}し<b>かねません</b>。',
+                'こんな{r|経営状態|けい/えい/じょう/たい}が{r|明|あき}らかになったら、{r|株主総会|かぶ/ぬし/そう/かい}で大問題になり<b>かねない</b>。',
+                '{r|石油|せき/ゆ}ストーブをつけたまま寝たら、{r|火事|か/じ}になり<b>かねない</b>。'] }
+        ],
+        kaiwa: {
+            audio: 'audio/dk-15-kaiwa.mp3',
+            segs: [[0.17, 9.12], [9.73, 21.90], [22.34, 35.36], [35.69, 46.85], [47.28, 57.03], [57.19, 60.99], [61.62, 70.57], [71.19, 80.40], [81.14, 88.89], [89.64, 99.18], [99.55, 104.90]],
+            answers: ['くじ', '刑事裁判', '裁判官', '反映して', '刑罰', '公平', '気がひける', '恨みを買う', '日常感覚', '向上する'],
+            lines: [
+                ['A', '{r|裁判員制度|さい/ばん/いん/せい/ど}が始まったけど、あれって、いまいちよく分からないよね。裁判員って、どうやって{r|選|えら}んでいるのかな？'],
+                ['B', 'ああ、[1]で選ばれるって新聞に書いてあったよ。誰でも選ばれる可能性があるってことだよね。僕のところにも連絡が来ないかな。'],
+                ['A', 'え？　裁判員に選ばれたいの？　私は行きたくないな。[2]っていわれても、{r|法律|ほう/りつ}とか全然分からないし、どうやって{r|判断|はん/だん}したらいいのか…。'],
+                ['B', '大丈夫だよ。ちゃんと{r|本職|ほん/しょく}の[3]もいるんだから。自分の意見を{r|判決|はん/けつ}に[4]もらえるのってかっこよくない？　{r|正義|せい/ぎ}の{r|味方|み/かた}みたいで。'],
+                ['A', '何言ってるの。どんな[5]を受けるかによって、{r|被告|ひ/こく}の人生は大きく{r|左右|さ/ゆう}されるんだから、{r|責任重大|せき/にん/じゅう/だい}なのよ。'],
+                ['B', '分かっているよ。もちろん、{r|真剣|しん/けん}に考えるよ。'],
+                ['A', '私は{r|被害者|ひ/がい/しゃ}やその家族の話を聞いたら{r|感情的|かん/じょう/てき}になっちゃいそうで、[6]な判断ができるか分からないわ。'],
+                ['B', 'そうだね。それに{r|死刑|し/けい}判決を出して人の{r|生死|せい/し}を決めたりすると思うと、ちょっと[7]よね。'],
+                ['A', 'うん。しかも、{r|暴力団|ぼう/りょく/だん}と{r|関|かか}わったりしたら、後で[8]かもしれないのもプレッシャーだな。'],
+                ['B', 'でも、裁判員制度のお{r|陰|かげ}で僕たち市民の[9]が取り入れられたら、やっぱり裁判の{r|質|しつ}が[10]と思うよ。'],
+                ['A', 'そうね。やっぱり国民の{r|義務|ぎ/む}として参加するべきでしょうね。']
+            ]
+        }
+    };
     function arBookOf(r) { return READING_BOOKS.filter(function(b) { return b.id === (r && r.book); })[0] || READING_BOOKS[0]; }
     function arLayout(st, r) { return st.mode || arBookOf(r || (ar && ar.r)).layout || 'v'; }
     function advState(id) {
@@ -13297,6 +15100,8 @@
                     return '<ruby>' + chars.map(function(c, i) { return c + '<rt>' + parts[i] + '</rt>'; }).join('') + '</ruby>';
                 return '<ruby>' + base + '<rt>' + rd.replace(/\//g, '') + '</rt></ruby>';
             })
+            .replace(/\{>\|([^{}]+)\}/g, '<span class="ar-right">$1</span>')
+            .replace(/\{□\|([^{}]+)\}/g, '<span class="ar-boxch" data-c="$1">$1</span>').replace(/\{□_\}/g, '<span class="ar-boxsp"></span>')
             .replace(/\{n(\d+)\|([^{}]+)\}/g, '<span class="ar-fn" data-n="$1" role="button" tabindex="0">$2</span>')
             .replace(/\{\*\|([^{}]+)\}/g, '<span class="ar-goku" data-w="$1" role="button" tabindex="0">$1</span>')
             .replace(/\{\?(\d+)\}/g, '<span class="ar-mark" data-n="$1" role="button" tabindex="0" aria-label="問い$1"></span>')
@@ -13474,7 +15279,7 @@
     }
     function arBookHtml(r) {
         var maxLen = 0, pages = arPages(r);
-        pages.forEach(function(pg) { pg.lines.forEach(function(l) { maxLen = Math.max(maxLen, l.replace(/\{s\|[^{}]+\}|\{i\}/g, '＿＿＿＿').replace(/\{r\|([^|{}]+)\|[^{}]+\}/g, '$1').replace(/\{[n*]\d*\|([^{}]+)\}/g, '$1').replace(/\{\?\d+\}/g, '').replace(/[{}]/g, '').length); }); });
+        pages.forEach(function(pg) { pg.lines.forEach(function(l) { maxLen = Math.max(maxLen, l.replace(/\{s\|[^{}]+\}|\{i\}/g, '＿＿＿＿').replace(/\{r\|([^|{}]+)\|[^{}]+\}/g, '$1').replace(/\{[n*]\d*\|([^{}]+)\}/g, '$1').replace(/\{\?\d+\}/g, '').replace(/\{□\|([^{}]+)\}|\{□_\}/g, '$1＿＿').replace(/[{}]/g, '').length); }); });
         // a whole book line fits the screen height: 13–22px depending on the window
         var fit = 'clamp(13px, calc((100vh - 222px) / ' + (maxLen + 4.7) + '), 22px)';
         var zoomed = function(f) { return 'calc(' + f + ' * var(--ar-zoom, 1))'; };
@@ -13503,7 +15308,7 @@
         var paras = [], cur = null;
         arPages(r).forEach(function(pg) {
             pg.lines.forEach(function(line, i) {
-                if (!cur || line.charAt(0) === '　') { cur = []; paras.push(cur); line = line.replace(/^　/, ''); }
+                if (!cur || line.charAt(0) === '　' || /^(\{>\||<b>)/.test(line)) { cur = []; paras.push(cur); line = line.replace(/^　/, ''); }
                 cur.push((i === 0 ? '<span class="ar-pganchor" data-p="' + pg.p + '"></span>' : '') + arMarkup(line.replace(/\{i\}/g, '')));
             });
         });
@@ -13852,7 +15657,7 @@
         });
         book.querySelectorAll('.ar-fn').forEach(function(el) { arBindTap(el, function() {
             var nt = r.notes[el.dataset.n];
-            var body = '<span class="footnote-pop-word">' + el.dataset.n + '　' + escapeHtml(nt.word) + (nt.en ? '　' + escapeHtml(nt.en) : '') + '</span>' + escapeHtml(nt.text);
+            var body = '<span class="footnote-pop-word">' + escapeHtml(nt.word) + (nt.en ? '　' + escapeHtml(nt.en) : '') + '</span>' + escapeHtml(nt.text);
             // a portrait, when the note has one (notes[n].photo)
             arPopup(el, nt.photo ? '<div class="ar-fn-pop"><img class="ar-fn-photo" src="' + nt.photo + '" alt="' + escapeHtml(nt.word) + '"><div>' + body + '</div></div>' : body);
         }); });
@@ -14267,7 +16072,7 @@
         });
     }
     function arIntroHtml(r) { return '<div class="ar-pre"><span class="ar-pre-k">読む前に</span><p lang="ko">' + escapeHtml(r.intro) + '</p></div>'; }
-    function arPlainLine(t) { return String(t).replace(/\{s\|[^{}]+\}|\{i\}/g, '').replace(/\{r\|([^|{}]+)\|[^{}]+\}/g, '$1').replace(/<[^>]+>/g, '').replace(/\[(\d+)\]/g, '（　）'); }
+    function arPlainLine(t) { return String(t).replace(/\{s\|[^{}]+\}|\{i\}|\{□_\}/g, '').replace(/\{>\|([^{}]+)\}/g, '$1').replace(/\{□\|([^{}]+)\}/g, '$1').replace(/\{r\|([^|{}]+)\|[^{}]+\}/g, '$1').replace(/<[^>]+>/g, '').replace(/\[(\d+)\]/g, '（　）'); }
     // 単語: the book's word list with its Korean meanings. Tap a word to hear it; ＋ puts it in the 単語帳.
     // furigana under the kanji, centered on them and free to run past their edges (ruby would spread the kanji apart)
     // Each kanji gets its own reading where the book splits it that way somewhere (国技 → 国(こく)技(ぎ));
