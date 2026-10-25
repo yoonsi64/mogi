@@ -4902,6 +4902,13 @@ function windVec(w, k) { var a = w.dir * Math.PI / 180, kk = k || 1; return { h:
 var WIND_LEAN = 0;   // static paintings: which way the day's wind bends willows (+1 toward screen right)
 var CALM = { h: 0.6, z: 0, s: 0.6, sign: 1, dir: 0, k: 1 };
 function gWind(g) { return g.wind || CALM; }
+/* a gust's strength factor at time t: a swell and fall (sin^2), or for a blizzard burst a roar up over ~1 s, a hold, then easing off */
+function gustEnv(G, t) {
+  if (!G) return 1;
+  var u = t - G.t0, K = G.K || 2.5; if (u <= 0 || u >= G.dur) return 1;
+  if (G.burst) { var e = u < 1 ? sstep(0, 1, u) : u < 1.8 ? 1 : 1 - sstep(0, 1, (u - 1.8) / (G.dur - 1.8)); return 1 + (K - 1) * e; }
+  return 1 + (K - 1) * Math.pow(Math.sin(Math.PI * u / G.dur), 2);
+}
 
 /* ---- 08f_weather.js ---- */
 /* ================= weather (shared model: garden, town and sky agree) =================
@@ -5011,17 +5018,6 @@ function paintOvercast(ctx, yo, w) {
 }
 /* blizzard whiteout (in post, device pixels): visibility falls off with distance along the ground, and the air is full of
    streaming bands of blown snow, thicker far away, slanting downwind; the far town and the hills dissolve into it */
-var STREAK_TEX = null;
-function streakTex() {
-  if (STREAK_TEX) return STREAK_TEX;
-  var w = 256, h = 48, c = mkCanvas(w, h), x = c.getContext('2d'), r = mulberry32(919), img = x.createImageData(w, h), d = img.data, nz = makeNoise(41);
-  for (var j = 0; j < h; j++) for (var i = 0; i < w; i++) {
-    var u = i / w, v = j / h, env = Math.pow(Math.sin(Math.PI * u), 1.3) * Math.exp(-Math.pow((v - 0.5) / 0.26, 2));
-    var st = 0.55 + 0.45 * nz.n2(i * 0.025, j * 0.55) + 0.25 * (nz.n2(i * 0.08 + 9, j * 1.3) - 0.5), k = (j * w + i) * 4;
-    d[k] = d[k + 1] = d[k + 2] = 255; d[k + 3] = clamp(env * st * 1.15) * 255;
-  }
-  x.putImageData(img, 0, 0); STREAK_TEX = c; return c;
-}
 function whiteoutAlpha(fogMax) {   // fog alpha by the depth of the ground seen (scene z): clear close by, a whiteout by the far town
   return function (z) { return fogMax * (0.05 + 0.95 * Math.pow(clamp((z - 2) / 98), 1.55)); };
 }
@@ -5033,18 +5029,17 @@ function paintWhiteout(ctx, bw, bh) {
   for (i = 0; i <= 24; i++) { var y = i / 24 * H, gp = y > yo ? groundAt(W / 2, y) : null, zz = gp ? gp.z : GROUND_FAR + 20; g.addColorStop(i / 24, rgb(col, clamp(fa(zz), 0, 0.95))); }
   ctx.fillStyle = g; ctx.fillRect(0, 0, bw, bh);
   // 2. bands of blown snow streaming with the wind, densest in the distance
-  var tex = streakTex(), r = mulberry32(5150), slope = 0.07 * sign, n = Math.round(150 * Math.sqrt(DQ));
+  var r = mulberry32(5150), slope = 0.05 * sign, n = Math.round(110 * Math.sqrt(DQ)), tints = [0, 1, 2].map(function (k) { var tx0 = veilTex(k), c = mkCanvas(tx0.width, tx0.height), cx = c.getContext('2d'); cx.drawImage(tx0, 0, 0); cx.globalCompositeOperation = 'source-in'; cx.fillStyle = rgb(lite); cx.fillRect(0, 0, c.width, c.height); return c; }), tint = tints[0];
   ctx.globalCompositeOperation = 'source-over';
-  var tint = mkCanvas(tex.width, tex.height), tx = tint.getContext('2d'); tx.drawImage(tex, 0, 0); tx.globalCompositeOperation = 'source-in'; tx.fillStyle = rgb(lite); tx.fillRect(0, 0, tint.width, tint.height);
   for (i = 0; i < n; i++) {
     var zf = lerp(8, GROUND_FAR + 10, Math.pow(r(), 0.55)), y2 = P(0, 0, zf).y - r() * 6, gp2 = groundAt(W / 2, y2), z2 = gp2 ? gp2.z : GROUND_FAR;
-    var k2 = CAM.F / P(0, 0, zf).d, L = (10 + r() * 22) * k2 * (0.6 + r() * 0.8), hh = L * (0.05 + r() * 0.06), x2 = r() * (W + L) - L / 2;
-    var a = 0.32 * Math.pow(clamp(fa(z2) / LIT.fog), 0.8) * (0.4 + r() * 0.7) * (night ? 0.7 : 1);
+    var k2 = CAM.F / P(0, 0, zf).d, L = (10 + r() * 22) * k2 * (0.6 + r() * 0.8), hh = L * (0.16 + r() * 0.14), x2 = r() * (W + L) - L / 2; tint = tints[i % 3];
+    var a = 0.3 * Math.pow(clamp(fa(z2) / LIT.fog), 0.8) * (0.4 + r() * 0.7) * (night ? 0.7 : 1);
     ctx.globalAlpha = clamp(a); ctx.setTransform(KS, KS * slope * 0.6, 0, KS, 0, 0);
     ctx.drawImage(tint, x2 - L / 2, y2 - x2 * slope * 0.6 - hh / 2, L, hh);
   }
   // 3. a few long curtains of snow sweeping across the far town
-  for (i = 0; i < 5; i++) { var cy = lerp(yo - 20, H * 0.55, r()), cw = W * (0.5 + r() * 0.6), ch = 26 + r() * 30, cx = r() * W; ctx.globalAlpha = 0.16 + r() * 0.14; ctx.setTransform(KS, KS * slope, 0, KS, 0, 0); ctx.drawImage(tint, cx - cw / 2, cy - cx * slope - ch / 2, cw, ch); }
+  for (i = 0; i < 5; i++) { var cy = lerp(yo - 20, H * 0.55, r()), cw = W * (0.5 + r() * 0.6), ch = 34 + r() * 36, cx = r() * W; tint = tints[(i + 1) % 3]; ctx.globalAlpha = 0.14 + r() * 0.12; ctx.setTransform(KS, KS * slope, 0, KS, 0, 0); ctx.drawImage(tint, cx - cw / 2, cy - cx * slope - ch / 2, cw, ch); }
   ctx.restore();
 }
 /* a faint rainbow opposite the sun after a summer afternoon shower */
@@ -5129,66 +5124,92 @@ function drawLightning(ctx, g, L, t) {
   ctx.globalCompositeOperation = 'source-over';
   return true;
 }
-/* a blizzard: snow driven nearly sideways in three depths (far specks, mid streaks, near fast streaks),
-   gusts that thicken it into a brief whiteout, sheets of snow sweeping across and spindrift racing along the ground */
-var CURTAIN_TEX = null;
-function curtainTex() {
-  if (CURTAIN_TEX) return CURTAIN_TEX;
-  var w = 256, h = 160, c = mkCanvas(w, h), x = c.getContext('2d'), r = mulberry32(77);
-  for (var i = 0; i < 520; i++) {
-    var y = r() * h, x0 = r() * w * 1.4 - w * 0.2, L = 20 + r() * 90, env = Math.sin(Math.PI * y / h);
-    x.strokeStyle = 'rgba(255,255,255,' + (0.05 + 0.2 * r()) * env + ')'; x.lineWidth = 0.6 + r() * 1.6; x.beginPath(); x.moveTo(x0, y); x.lineTo(x0 + L, y + L * 0.04); x.stroke();
+/* a blizzard: powder snow. A dense field of fine soft specks carried fast and sideways by the shared wind, eddying,
+   lifting and dipping, faster the nearer they are; big soft veils of blowing powder drifting across the whole frame;
+   spindrift lifting off the roofs and the ground; and every 8-25 s a burst: the wind roars up, the air fills, a near
+   whiteout sweeps across, then it eases. Nothing is drawn as a line. */
+var VEIL_TEX = [];
+function veilTex(k) {
+  if (VEIL_TEX[k]) return VEIL_TEX[k];
+  var w = 192, h = 96, c = mkCanvas(w, h), x = c.getContext('2d'), img = x.createImageData(w, h), d = img.data, nz = makeNoise(300 + k * 17);
+  for (var j = 0; j < h; j++) for (var i = 0; i < w; i++) {
+    var u = (i / w - 0.5) * 2, v = (j / h - 0.5) * 2, edge = nz.fbm(i * 0.03, j * 0.05, 3) * 0.55;
+    var r = Math.sqrt(u * u * 0.9 + v * v * 1.3) + edge * 0.5 - 0.25, env = (1 - sstep(0.25, 1.0, r)) * sstep(0, 0.3, 1 - Math.abs(u)) * sstep(0, 0.3, 1 - Math.abs(v));   // always feathered to nothing at the border
+    var den = sstep(0.28, 0.75, nz.fbm(i * 0.022 + 7, j * 0.05 - 3, 4) + (k === 2 ? 0.08 : 0)), q = (j * w + i) * 4;
+    d[q] = d[q + 1] = d[q + 2] = 255; d[q + 3] = clamp(env * (0.25 + 0.75 * den)) * 255;
   }
-  var g = x.createLinearGradient(0, 0, w, 0); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.25, 'rgba(0,0,0,0)'); g.addColorStop(0.75, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,1)');
-  x.globalCompositeOperation = 'destination-out'; x.fillStyle = g; x.fillRect(0, 0, w, h);
-  CURTAIN_TEX = c; return c;
+  x.putImageData(img, 0, 0); VEIL_TEX[k] = c; return c;
+}
+var POWDER = null;
+function powderSprite() {   // a soft speck: a gaussian-ish dot
+  if (POWDER) return POWDER;
+  var N = 16, c = mkCanvas(N, N), x = c.getContext('2d'), g = x.createRadialGradient(N / 2, N / 2, 0, N / 2, N / 2, N / 2);
+  g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.35, 'rgba(255,255,255,0.7)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+  x.fillStyle = g; x.fillRect(0, 0, N, N); POWDER = c; return c;
 }
 function makeBlizzard(g, rng) {
-  var B = { f: [], cur: [], spin: [], t: 0 }, i, NL = [520, 280, 70];
-  for (var l = 0; l < 3; l++) for (i = 0; i < NL[l]; i++) B.f.push({ l: l, x: rng() * (g.W + 80) - 40, y: rng() * g.H, sp: 0.7 + rng() * 0.6, ph: rng() * TAU, sz: rng() });
-  for (i = 0; i < 4; i++) B.cur.push({ x: rng() * (g.W + 400) - 200, y: g.horizonY - 60 + rng() * (g.H - g.horizonY + 40), w: 160 + rng() * 160, h: 50 + rng() * 70, sp: 0.8 + rng() * 0.5, a: 0.12 + rng() * 0.12 });
-  for (i = 0; i < 9; i++) B.spin.push({ x: rng() * g.W, y: g.horizonY + 20 + Math.pow(rng(), 0.6) * (g.H - g.horizonY - 20), w: 30 + rng() * 60, sp: 0.8 + rng() * 0.7, a: 0.18 + rng() * 0.2 });
+  var B = { f: [], veils: [], drift: [], big: null, t: 0, lastB: 0 }, i, n = [950, 340, 64];
+  for (var l = 0; l < 3; l++) for (i = 0; i < n[l]; i++) {
+    var d = l === 0 ? rng() * 0.45 : l === 1 ? 0.45 + rng() * 0.4 : 0.85 + rng() * 0.15;
+    B.f.push({ l: l, d: d, x: rng() * (g.W + 60) - 30, y: rng() * g.H, r: l === 0 ? 0.26 + rng() * 0.26 : l === 1 ? 0.45 + rng() * 0.4 : 0.9 + rng() * 1.3, a: 0.35 + rng() * 0.55, ph: rng() * TAU, sp: 0.75 + rng() * 0.5, extra: rng() < 0.5 });   // extra: only out in a burst
+  }
+  for (i = 0; i < 6; i++) B.veils.push({ x: rng() * (g.W + 300) - 150, y: g.H * (0.05 + 0.9 * rng()), w: 140 + rng() * 220, h: 30 + rng() * 50, sp: 0.6 + rng() * 0.6, a: 0.12 + rng() * 0.14, k: i % 3, ph: rng() * TAU });
+  for (i = 0; i < 9; i++) B.drift.push(newDriftWisp(g, rng, true));
   return B;
 }
+function newDriftWisp(g, rng, anywhere) {   // spindrift lifting off a roof or the ground, carried downwind, rising and thinning
+  return { x: rng() * g.W, y: g.horizonY - 20 + rng() * (g.H - g.horizonY + 10), w: 40 + rng() * 70, h: 8 + rng() * 10, life: 0, dur: 2.5 + rng() * 2.5, t0: anywhere ? rng() * 2 : 0, sp: 0.8 + rng() * 0.5, a: 0.2 + rng() * 0.2, k: (rng() * 3) | 0, rise: 4 + rng() * 8 };
+}
 function drawBlizzard(ctx, g, B, t, dt) {
-  var Wd = gWind(g), sg = Wd.sign, k = Wd.k || 1, gust = clamp((k - 1) / 1.6), str = 0.75 + 0.35 * Math.min(1, Wd.s / Math.max(0.01, Wd.k)), night = g.LIT.name === 'night', i, f;
-  var U = [62, 110, 190], V = [16, 26, 40], span = g.W + 80;
-  B.t += dt;
-  // sheets of snow sweeping across, behind the flakes
-  var ct = curtainTex(), slope = 0.12;
-  B.cur.forEach(function (c) {
-    c.x += sg * dt * 150 * c.sp * str * (0.8 + 0.5 * gust);
-    if (sg > 0 && c.x - c.w > g.W + 40) { c.x = -c.w - 40; c.y = g.horizonY - 60 + Math.random() * (g.H - g.horizonY + 40); } else if (sg < 0 && c.x + c.w < -40) { c.x = g.W + c.w + 40; c.y = g.horizonY - 60 + Math.random() * (g.H - g.horizonY + 40); }
-    ctx.save(); ctx.globalAlpha = clamp(c.a * (0.7 + 0.9 * gust) * (night ? 0.6 : 1)); ctx.translate(c.x, c.y); ctx.transform(1, slope, 0, 1, 0, 0); if (sg < 0) ctx.scale(-1, 1);
-    ctx.drawImage(ct, -c.w / 2, -c.h / 2, c.w, c.h); ctx.restore();
+  var Wd = gWind(g), sg = Wd.sign, burst = clamp(((Wd.k || 1) - 1) / 1.5), night = g.LIT.name === 'night', i, f, W0 = g.W, H0 = g.H;
+  var col = night ? [168, 178, 208] : [250, 252, 255], na = night ? 0.55 : 1, rng = Math.random;
+  B.t += dt; var T = B.t, spd = 1 + 1.5 * burst;
+  // 1. veils of blowing powder (and, in a burst, the near-whiteout sweeping across): all soft, so painted at quarter
+  //    resolution and laid over the frame in one draw
+  var cvs = ctx.canvas, vw = Math.ceil(cvs.width / 4), vh = Math.ceil(cvs.height / 4);
+  B.vc = B.vc || mkCanvas(vw, vh); if (B.vc.width !== vw || B.vc.height !== vh) { B.vc.width = vw; B.vc.height = vh; }
+  var main = ctx; ctx = B.vc.getContext('2d'); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.clearRect(0, 0, vw, vh); ctx.setTransform(vw / W0, 0, 0, vh / H0, 0, 0);
+  ctx.save();
+  B.veils.forEach(function (v) {
+    v.x += sg * dt * 70 * v.sp * spd; var yy = v.y + Math.sin(T * 0.4 + v.ph) * 6 - burst * 8;
+    if (sg > 0 && v.x - v.w > W0 + 20) { v.x = -v.w - 20; v.y = H0 * (0.05 + 0.9 * rng()); } else if (sg < 0 && v.x + v.w < -20) { v.x = W0 + v.w + 20; v.y = H0 * (0.05 + 0.9 * rng()); }
+    ctx.globalAlpha = clamp(v.a * (0.9 + 1.6 * burst) * na); ctx.drawImage(veilTex(v.k), v.x - v.w / 2, yy - v.h / 2, v.w, v.h);
   });
-  // spindrift: snow streaming low over the ground
-  var st = tintedSprite(night ? [150, 160, 190] : [244, 247, 252]);
-  B.spin.forEach(function (c) {
-    c.x += sg * dt * 210 * c.sp * (0.7 + 0.6 * gust); if (sg > 0 && c.x - c.w > g.W) c.x = -c.w; else if (sg < 0 && c.x + c.w < 0) c.x = g.W + c.w;
-    stamp(ctx, st, c.x, c.y, c.w, 1.6 + c.w * 0.03, c.a * (0.6 + 0.8 * gust) * (night ? 0.6 : 1));
+  if (burst > 0.02 && (!B.big || B.big.done)) { if (!B.big || B.lastB < 0.02) B.big = { x: sg > 0 ? -W0 * 0.8 : W0 * 1.8, done: false }; }
+  if (B.big && !B.big.done) {
+    var bg = B.big; bg.x += sg * dt * W0 * 0.55 * (0.6 + burst);
+    ctx.globalAlpha = clamp(0.72 * burst * na + 0.1 * burst); ctx.drawImage(veilTex(2), bg.x - W0 * 0.8, -H0 * 0.15, W0 * 1.6, H0 * 1.3);
+    if ((sg > 0 && bg.x - W0 * 0.8 > W0) || (sg < 0 && bg.x + W0 * 0.8 < 0)) bg.done = true;
+  }
+  if (burst > 0.02) { ctx.globalAlpha = 1; ctx.fillStyle = rgb(night ? [70, 78, 104] : [230, 234, 242], 0.26 * burst); ctx.fillRect(0, 0, W0, H0); }
+  // 2. spindrift off the roofs and the ground
+  B.drift.forEach(function (q, k) {
+    q.life += dt; var u = (q.life - q.t0) / q.dur; if (u > 1) { B.drift[k] = newDriftWisp(g, rng, false); return; } if (u < 0) return;
+    q.x += sg * dt * 90 * q.sp * spd; q.y -= dt * q.rise * (1 + burst);
+    ctx.globalAlpha = clamp(q.a * Math.sin(Math.PI * u) * (0.8 + 0.8 * burst) * na); ctx.drawImage(veilTex(q.k), q.x - q.w / 2 * (0.6 + 0.6 * u), q.y - q.h / 2 * (1 + u), q.w * (0.6 + 0.6 * u), q.h * (1 + u));
   });
+  B.lastB = burst;
+  ctx.restore(); ctx = main; ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.imageSmoothingQuality = 'low'; ctx.drawImage(B.vc, 0, 0, cvs.width, cvs.height); ctx.restore(); ctx.save();
+  // 3. the powder: specks in three depths, eddying in the wind; the near ones soft blobs barely smeared by their speed
+  var P0 = new Path2D(), P0b = new Path2D(), P1 = new Path2D(), P1b = new Path2D(), E0 = new Path2D(), E1 = new Path2D(), spr = powderSprite(), span = W0 + 60;
   ctx.globalAlpha = 1;
-  // the flakes
-  var col = night ? [150, 162, 196] : [250, 252, 255], P0 = new Path2D(), P1 = new Path2D(), P2 = new Path2D(), P3 = new Path2D();
   for (i = 0; i < B.f.length; i++) {
     f = B.f[i];
-    var u = U[f.l] * f.sp * str * (1 + 0.9 * gust), v = V[f.l] * f.sp + Math.sin(B.t * (1.3 + f.l * 0.4) + f.ph) * (8 + f.l * 6);
-    f.x += sg * u * dt; f.y += v * dt;
-    if (f.y > g.H + 4) { f.y -= g.H + 8; f.x = Math.random() * span - 40; }
-    if (f.x > g.W + 40) { f.x -= span; f.y = Math.random() * g.H; } else if (f.x < -40) { f.x += span; f.y = Math.random() * g.H; }
-    if (f.l === 0) { var r0 = 0.28 + f.sz * 0.25; P0.rect(f.x - r0, f.y - r0, r0 * 2, r0 * 2); }
-    else { var L = (f.l === 1 ? 0.016 : 0.024) * u * (0.5 + f.sz), pp = f.l === 1 ? P1 : f.sz < 0.6 ? P2 : P3; pp.moveTo(f.x, f.y); pp.lineTo(f.x - sg * L, f.y - L * v / u); }
+    var U = (35 + 150 * f.d) * f.sp * spd, V = 6 + 20 * f.d;
+    var vx = sg * U + 22 * (0.4 + f.d) * Math.sin(0.05 * f.y + T * 1.3 + f.ph) * (1 + burst), vy = V + 16 * (0.4 + f.d) * Math.sin(0.04 * f.x - T * 1.7 + f.ph * 1.3) - 14 * burst * Math.sin(T * 0.9 + f.ph);
+    f.x += vx * dt; f.y += vy * dt;
+    if (f.y > H0 + 4) { f.y -= H0 + 8; f.x = rng() * span - 30; } else if (f.y < -6) f.y += H0 + 8;
+    if (f.x > W0 + 30) { f.x -= span; f.y = rng() * H0; } else if (f.x < -30) { f.x += span; f.y = rng() * H0; }
+    var vis = f.extra ? burst : 1; if (vis < 0.03) continue;
+    if (f.l === 0) { var pp = f.extra ? E0 : f.a > 0.62 ? P0 : P0b; pp.rect(f.x - f.r, f.y - f.r, f.r * 2, f.r * 2); }
+    else if (f.l === 1) { var pq = f.extra ? E1 : f.a > 0.62 ? P1 : P1b; if (f.r < 0.62) pq.rect(f.x - f.r * 0.9, f.y - f.r * 0.9, f.r * 1.8, f.r * 1.8); else { pq.moveTo(f.x + f.r, f.y); pq.arc(f.x, f.y, f.r, 0, TAU); } }
+    else { var sm = 1 + Math.min(0.9, Math.abs(vx) / 260); ctx.globalAlpha = clamp(f.a * 0.75 * vis * na); ctx.drawImage(spr, f.x - f.r * sm, f.y - f.r, f.r * 2 * sm, f.r * 2); }
   }
-  var fa = night ? 0.5 : 1;
-  ctx.fillStyle = rgb(col, 0.55 * fa); ctx.fill(P0);
-  ctx.lineCap = 'round';
-  ctx.strokeStyle = rgb(col, (0.42 + 0.2 * gust) * fa); ctx.lineWidth = 0.5; ctx.stroke(P1);
-  ctx.strokeStyle = rgb(col, (0.5 + 0.2 * gust) * fa); ctx.lineWidth = 0.75; ctx.stroke(P2);
-  ctx.strokeStyle = rgb(col, (0.4 + 0.2 * gust) * fa); ctx.lineWidth = 1.25; ctx.stroke(P3);
-  ctx.lineCap = 'butt';
-  // a gust: the air fills, the town dims into the white for a moment
-  if (gust > 0.02) { ctx.fillStyle = rgb(night ? [70, 78, 104] : [226, 230, 240], 0.12 * gust); ctx.fillRect(0, 0, g.W, g.H); }
+  var fb = (night ? 0.55 : 0.8) * (1 + 0.25 * burst);
+  ctx.globalAlpha = 1; ctx.fillStyle = rgb(col, clamp(0.95 * fb)); ctx.fill(P0); ctx.fillStyle = rgb(col, clamp(0.6 * fb)); ctx.fill(P0b);
+  ctx.fillStyle = rgb(col, clamp(0.8 * fb)); ctx.fill(P1); ctx.fillStyle = rgb(col, clamp(0.5 * fb)); ctx.fill(P1b);
+  if (burst > 0.03) { ctx.fillStyle = rgb(col, clamp(0.7 * fb * burst)); ctx.fill(E0); ctx.fillStyle = rgb(col, clamp(0.75 * fb * burst)); ctx.fill(E1); }   // the specks only out in a burst
+  ctx.restore(); ctx.globalAlpha = 1;
 }
 /* the bangasa umbrella over a walker */
 var UMB_COLS = [[150, 40, 30], [40, 52, 84], [176, 124, 64], [60, 70, 60], [120, 30, 40]];
@@ -5693,8 +5714,7 @@ function makeSwayFx(sw, g, layer) {
   return { A: sw.atlas, s: s, trees: trees, gain: gain, layer: layer, U: U, gust: null, t: 0, dirty: true, shown: false, hz: 15, W: g.W };
 }
 function swayGustAt(S, t) {
-  var G = S.gust; if (!G) return 1;
-  var u = (t - G.t0) / G.dur; return u > 0 && u < 1 ? 1 + ((G.K || 2.5) - 1) * Math.pow(Math.sin(Math.PI * u), 2) : 1;
+  return gustEnv(S.gust, t);
 }
 function stepSway(S, g, dt, t, gust) {
   if (gust && gust !== S.gust) S.gust = gust;
@@ -5925,7 +5945,7 @@ function mount(el, opts) {
     var dq = q === 'full' ? clamp(ks / 2.7, 1, 1.9) : clamp(ks / 2, 0.6, 1.25);
     var qn = q === 'full' ? 'full' : 'card';
     var ev = so.event === undefined ? o.event : so.event, sp = seasonStep(so.date === undefined ? o.date : so.date, so.season), wsign = windVec(windAt(nowDate())).sign, wxs = curWeather();
-    return { key: [VERSION, so.stage, so.season, so.light, ev || '-', sp === null ? '-' : 'p' + sp, wsign > 0 ? 'wR' : 'wL', wxs.wx + (wxs.after ? '+a' : '') + (swayWanted(wxs.wx) ? '~s1' : ''), qn, bw + 'x' + bh + (wk > 1 ? '|w' + wk : '')].join('|'), stage: so.stage, season: so.season, light: so.light, event: ev || null, sp: sp, wsign: wsign, wx: wxs.wx, after: wxs.after, W: Wl, H: Hl, KS: ks, DQ: dq, bw: bw, bh: bh, q: qn };
+    return { key: [VERSION, so.stage, so.season, so.light, ev || '-', sp === null ? '-' : 'p' + sp, wsign > 0 ? 'wR' : 'wL', wxs.wx + (wxs.after ? '+a' : '') + (swayWanted(wxs.wx) ? (wxs.wx === 'blizzard' ? '~s2' : '~s1') : ''), qn, bw + 'x' + bh + (wk > 1 ? '|w' + wk : '')].join('|'), stage: so.stage, season: so.season, light: so.light, event: ev || null, sp: sp, wsign: wsign, wx: wxs.wx, after: wxs.after, W: Wl, H: Hl, KS: ks, DQ: dq, bw: bw, bh: bh, q: qn };
   }
   /* get a painting: cache first, else paint (and cache it) */
   var jobs = {};
@@ -6021,10 +6041,10 @@ function mount(el, opts) {
   var windRaw = null, windT = -99;
   function gustK() {
     var k = 1;
-    function env(t0, dur, K) { var u = (clock - t0) / dur; return u > 0 && u < 1 ? 1 + (K - 1) * Math.pow(Math.sin(Math.PI * u), 2) : 1; }
+    function env(t0, dur, K) { return gustEnv({ t0: t0, dur: dur, K: K }, clock); }
     if (petals && petals.gust) k = Math.max(k, env(petals.gust.t0, petals.gust.dur, petals.gust.K || 2.5));
     if (leafGust) k = Math.max(k, env(leafGust.t0, leafGust.dur, leafGust.K || 2.5));
-    if (cues.gust) k = Math.max(k, env(cues.gust.t0, cues.gust.dur, cues.gust.K || 2.5));
+    if (cues.gust) k = Math.max(k, gustEnv(cues.gust, clock));
     return k;
   }
   function updateWind(force) {
@@ -6080,7 +6100,7 @@ function mount(el, opts) {
       n.thunder = clock + (g.wx === 'storm' ? 20 + frng() * 40 : 40 + frng() * 50);
     }
     if (g.wx === 'typhoon' && clock > n.gust) { if (cue('gust', null, true)) { cues.gust = { t0: clock, dur: 3 + frng() * 2, K: 2 + frng() }; n.gust = clock + 8 + frng() * 7; } else n.gust = clock + 2; }
-    else if (g.wx === 'blizzard' && clock > n.gust) { if (cue('gust', null, true)) { cues.gust = { t0: clock, dur: 4, K: 2 + frng() }; n.gust = clock + 14 + frng() * 12; } else n.gust = clock + 2; }
+    else if (g.wx === 'blizzard' && clock > n.gust) { if (cue('gust', null, true)) { cues.gust = { t0: clock, dur: 4.5 + frng() * 2, K: 2.3 + frng() * 0.7, burst: true }; n.gust = clock + 8 + frng() * 17; } else n.gust = clock + 2; }   // irregular bursts, 8-25 s apart
     else if (clock > n.gust && g.season !== 'spring') {
       if (g.season === 'autumn') { if (!leafGust && cue('gust', null, true)) { leafGust = makeLeafGust(g, frng, clock); n.gust = clock + 35 + frng() * 35; } else n.gust = clock + 3; }
       else if (cue('gust', null, true)) { cues.gust = { t0: clock, dur: 4, K: 2 + frng() }; n.gust = clock + 45 + frng() * 30; } else n.gust = clock + 3;
@@ -6453,7 +6473,7 @@ function mount(el, opts) {
       if (wl) wl.width = wl.height = 0; if (bl) bl.width = bl.height = 0;
       cur = null; reveal = null; fallers = []; petals = null; dflies = null; bflies = null;
     },
-    get _dbg() { return { fv: fv, sv: sv, cv: cv, tv: tv, cur: cur, wl: wl, bl: bl, petals: petals, clock: clock, frame: function (n) { for (var i = 0; i < (n || 1); i++) { clock += 1 / 30; tickFx(1 / 30); } drawFrame(false); }, setClock: function (c) { clock = c; }, redraw: function () { drawFrame(false); }, clearRare: function () { rare = null; if (cur) cur.geo.rareNow = null; }, bolt: function () { lightning = { t0: clock, bolt: makeBolt(cur.geo, frng) }; cues.next.thunder = clock; }, get wfx() { return wfx; }, get fallers() { return fallers; }, get cloudX() { return cloudX; }, get leafGust() { return leafGust; }, forceGust: function () { if (petals) petals.nextGust = clock; cues.next.gust = clock; }, smokeDrift: function () { var g = cur.geo; return gWind(g).h; }, get dflies() { return dflies; }, get bflies() { return bflies; }, worldScreen: function (x, y, z) { var g = cur.geo, st = saveState(); try { W = g.W; H = g.H; CAM = g.cam; var c = P(x, y, z); return [c.x / g.W, c.y / g.H]; } finally { restoreState(st); } }, walkerScreen: function (w) { var g = cur.geo, st = saveState(); try { W = g.W; H = g.H; CAM = g.cam; F = g.F; var q = walkerPos(g, w), f = P(q.x, q.y + 0.8, q.z); return [f.x / g.W, f.y / g.H]; } finally { restoreState(st); } }, norenScreen: function (n) { var g = cur.geo, st = saveState(); try { W = g.W; H = g.H; CAM = g.cam; var c = Pa(n.W.at((n.s0 + n.s1) / 2, n.top - 0.5, 0.3)); return [c.x / g.W, c.y / g.H]; } finally { restoreState(st); } }, get wind() { return cur && cur.geo.wind; }, set swayOnly(v) { dbgSwayOnly = !!v; }, tapTruth: function () { var sp = cur.spec, g = cur.geo; return withScene({ W: sp.W, H: sp.H, KS: 1, stage: sp.stage, season: sp.season, light: sp.light, event: sp.event, sp: sp.sp, wx: sp.wx, wsign: sp.wsign }, function () { return tapTruth(g); }); }, resetTaps: function () { var g = cur.geo, I = g.I; if (!I) return; I.trees = []; I.birds = []; I.lamps = []; I.koi = I.paddy = I.bell = I.taiko = I.cat = null; I.wheel = 0; g.walkers = g.walkers.filter(function (w) { return !w.temp; }); g.walkers.forEach(function (w) { w.react = null; }); g.noren.forEach(function (n) { n.boost = null; }); }, set noSway(v) { if (v) { dbgSway = swayFx || dbgSway; swayFx = null; } else if (dbgSway) swayFx = dbgSway; }, get sway() { return swayFx; }, still: function () { drawFrame(true); }, swayDraw: function (o) { if (swayFx) { var S = swayFx; S.prof = o || null; drawSwayLayer(S); S.prof = null; } }, hideBugs: function () { var a = dflies, b = bflies; dflies = bflies = null; drawFrame(false); dflies = a; bflies = b; } }; },
+    get _dbg() { return { fv: fv, sv: sv, cv: cv, tv: tv, cur: cur, wl: wl, bl: bl, petals: petals, clock: clock, frame: function (n) { for (var i = 0; i < (n || 1); i++) { clock += 1 / 30; tickFx(1 / 30); } drawFrame(false); }, setClock: function (c) { clock = c; }, redraw: function () { drawFrame(false); }, clearRare: function () { rare = null; if (cur) cur.geo.rareNow = null; }, bolt: function () { lightning = { t0: clock, bolt: makeBolt(cur.geo, frng) }; cues.next.thunder = clock; }, get wfx() { return wfx; }, get fallers() { return fallers; }, get cloudX() { return cloudX; }, get leafGust() { return leafGust; }, forceGust: function () { if (petals) petals.nextGust = clock; cues.next.gust = clock; }, smokeDrift: function () { var g = cur.geo; return gWind(g).h; }, get dflies() { return dflies; }, get bflies() { return bflies; }, worldScreen: function (x, y, z) { var g = cur.geo, st = saveState(); try { W = g.W; H = g.H; CAM = g.cam; var c = P(x, y, z); return [c.x / g.W, c.y / g.H]; } finally { restoreState(st); } }, walkerScreen: function (w) { var g = cur.geo, st = saveState(); try { W = g.W; H = g.H; CAM = g.cam; F = g.F; var q = walkerPos(g, w), f = P(q.x, q.y + 0.8, q.z); return [f.x / g.W, f.y / g.H]; } finally { restoreState(st); } }, norenScreen: function (n) { var g = cur.geo, st = saveState(); try { W = g.W; H = g.H; CAM = g.cam; var c = Pa(n.W.at((n.s0 + n.s1) / 2, n.top - 0.5, 0.3)); return [c.x / g.W, c.y / g.H]; } finally { restoreState(st); } }, get wind() { return cur && cur.geo.wind; }, set swayOnly(v) { dbgSwayOnly = !!v; }, tapTruth: function () { var sp = cur.spec, g = cur.geo; return withScene({ W: sp.W, H: sp.H, KS: 1, stage: sp.stage, season: sp.season, light: sp.light, event: sp.event, sp: sp.sp, wx: sp.wx, wsign: sp.wsign }, function () { return tapTruth(g); }); }, resetTaps: function () { var g = cur.geo, I = g.I; if (!I) return; I.trees = []; I.birds = []; I.lamps = []; I.koi = I.paddy = I.bell = I.taiko = I.cat = null; I.wheel = 0; g.walkers = g.walkers.filter(function (w) { return !w.temp; }); g.walkers.forEach(function (w) { w.react = null; }); g.noren.forEach(function (n) { n.boost = null; }); }, set noSway(v) { if (v) { dbgSway = swayFx || dbgSway; swayFx = null; } else if (dbgSway) swayFx = dbgSway; }, get sway() { return swayFx; }, still: function () { drawFrame(true); }, setGustIn: function (sec) { cues.next.gust = clock + sec; if (sec > 100) cues.gust = null; }, swayDraw: function (o) { if (swayFx) { var S = swayFx; S.prof = o || null; drawSwayLayer(S); S.prof = null; } }, hideBugs: function () { var a = dflies, b = bflies; dflies = bflies = null; drawFrame(false); dflies = a; bflies = b; } }; },
     get stats() { return { source: stats.source, ms: stats.ms, history: stats.history.slice(), running: running() }; }
   };
   if (size) lastReq = refresh(false);
