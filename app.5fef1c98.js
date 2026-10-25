@@ -10892,6 +10892,7 @@
     READING_BOOKS.push({
         id: 'hufs-chukyu-dokkai',
         title: '中級日本語読解',
+        rubyFirst: true,        // the book prints no furigana in the 本文: ours are given on a word's first appearance only
         short: '中級日本語読解',
         publisher: '한국외국어대학교 출판부',
         edition: '중급일본어독해　한국외국어대학교 일본어대학 교재편찬위원회 엮음',
@@ -12131,7 +12132,7 @@
                 'って彼が{r|真|しん}に自由になることができると考えるなら、{r|間違|ま/ちが}いである。',
                 '{r|解放|かい/ほう}というのは{r|或|あ}る物からの自由であり、このような自由は{r|消極的|しょう/きょく/てき}',
                 'な自由に{r|過|す}ぎない。旅に出ると、{r|誰|だれ}でも{r|出来心|できごころ}になり{r|易|やす}いものであ',
-                'り、{n3|<ruby>気<rt>き</rt>粉<rt>まぐ</rt></ruby>れ}になりがちである。人の{r|出来心|できごころ}を利用しようとする者に',
+                'り、{n3|{r|気粉|き/まぐ}れ}になりがちである。人の{r|出来心|できごころ}を利用しようとする者に',
                 'は、その人を旅に{r|連|つ}れ出すのが{r|手近|て/ぢか}かな方法である。旅は人を多か',
                 'れ少なかれ{r|冒険的|ぼう/けん/てき}にする。しかしこの{r|冒険|ぼう/けん}といえども{r|出来心|できごころ}であり、',
                 '{r|気粉|き/まぐ}れであろう。旅における{r|漂泊|ひょう/はく}の{r|感情|かん/じょう}がそのような{r|出来心|できごころ}の{r|根底|こん/てい}',
@@ -13403,13 +13404,32 @@
     }
     function arSource() { return ar ? (arBookOf(ar.r).short + '・' + ar.r.title) : ''; }
 
+    // The 本文 as it is shown. In a book whose furigana are ours (not printed), a word keeps its reading only the first
+    // time it appears in the 課; later appearances are plain. Books that print their own furigana are shown as printed.
+    var arPagesCache = {};
+    function arPages(r) {
+        if (!arBookOf(r).rubyFirst) return r.pages;
+        if (arPagesCache[r.id] && arPagesCache[r.id].src === r.pages) return arPagesCache[r.id].pages;
+        var seen = {};
+        var pages = r.pages.map(function(pg) {
+            return { p: pg.p, lines: pg.lines.map(function(l) {
+                return l.replace(/\{r\|([^|{}]+)\|([^{}]+)\}/g, function(m, base, rd) {
+                    var k = base + '|' + rd.replace(/\//g, '');
+                    if (seen[k]) return base;
+                    seen[k] = 1; return m;
+                });
+            }) };
+        });
+        arPagesCache[r.id] = { src: r.pages, pages: pages };
+        return pages;
+    }
     function arBookHtml(r) {
-        var maxLen = 0;
-        r.pages.forEach(function(pg) { pg.lines.forEach(function(l) { maxLen = Math.max(maxLen, l.replace(/\{s\|[^{}]+\}|\{i\}/g, '＿＿＿＿').replace(/\{r\|([^|{}]+)\|[^{}]+\}/g, '$1').replace(/\{[n*]\d*\|([^{}]+)\}/g, '$1').replace(/\{\?\d+\}/g, '').replace(/[{}]/g, '').length); }); });
+        var maxLen = 0, pages = arPages(r);
+        pages.forEach(function(pg) { pg.lines.forEach(function(l) { maxLen = Math.max(maxLen, l.replace(/\{s\|[^{}]+\}|\{i\}/g, '＿＿＿＿').replace(/\{r\|([^|{}]+)\|[^{}]+\}/g, '$1').replace(/\{[n*]\d*\|([^{}]+)\}/g, '$1').replace(/\{\?\d+\}/g, '').replace(/[{}]/g, '').length); }); });
         // a whole book line fits the screen height: 13–22px depending on the window
         var fit = 'clamp(13px, calc((100vh - 222px) / ' + (maxLen + 4.7) + '), 22px)';
         var zoomed = function(f) { return 'calc(' + f + ' * var(--ar-zoom, 1))'; };
-        return '<div class="ar-book ar-v" style="--ar-len:' + (maxLen + 0.6) + 'em; --ar-fs:' + zoomed(fit) + '; --ar-fs:' + zoomed(fit.replace('100vh', '100dvh')) + '; font-size: var(--ar-fs)">' + r.pages.map(function(pg, pi) {
+        return '<div class="ar-book ar-v" style="--ar-len:' + (maxLen + 0.6) + 'em; --ar-fs:' + zoomed(fit) + '; --ar-fs:' + zoomed(fit.replace('100vh', '100dvh')) + '; font-size: var(--ar-fs)">' + pages.map(function(pg, pi) {
             return '<section class="ar-page" data-p="' + pg.p + '">' +
                 (pi === 0 ? '<div class="ar-title">' + arTateLatin(escapeHtml(r.title)) + '</div><div class="ar-author">' + r.authorHtml + '</div>' : '') +
                 pg.lines.map(function(line, i) { var n = i + 1; return '<div class="ar-line"' + (n % 5 === 0 ? ' data-n="' + n + '"' : '') + '>' + arTateLatin(arMarkup(line)) + '</div>'; }).join('') +
@@ -13432,7 +13452,7 @@
     }
     function arParagraphsHtml(r) {
         var paras = [], cur = null;
-        r.pages.forEach(function(pg) {
+        arPages(r).forEach(function(pg) {
             pg.lines.forEach(function(line, i) {
                 if (!cur || line.charAt(0) === '　') { cur = []; paras.push(cur); line = line.replace(/^　/, ''); }
                 cur.push((i === 0 ? '<span class="ar-pganchor" data-p="' + pg.p + '"></span>' : '') + arMarkup(line.replace(/\{i\}/g, '')));
