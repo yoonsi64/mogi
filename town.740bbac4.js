@@ -435,6 +435,20 @@ function drawBranches(ctx, segs, bark, wmul, snowK) {
     }
     ctx.lineCap = 'butt';
   }
+  if (F && F.wx === 'blizzard' && SEA.snow && !sil()) plasterSegs(ctx, pr, wmul);
+}
+/* blizzard: snow plastered up the windward side of trunks and upright limbs, in broken streaks */
+function plasterSegs(ctx, pr, wmul) {
+  var sg = WIND_LEAN >= 0 ? 1 : -1, rng = mulberry32(pr.length * 13 + 7);
+  ctx.strokeStyle = rgb(mixc(mulc(SNOW, lightTint(1)), [255, 255, 255], 0.1), 0.92); ctx.lineCap = 'round';
+  for (var j = 0; j < pr.length; j++) {
+    var A = pr[j].a, B = pr[j].b, S = pr[j].s, w0 = Math.max(0.3, S.r0 * A.k * (wmul || 1)), w1 = Math.max(0.22, S.r1 * B.k * (wmul || 1)), d = sub(S.b, S.a), vert = Math.abs(d[1]) / (Math.hypot(d[0], d[1], d[2]) || 1);
+    if (vert < 0.4 || w0 < 0.45) continue;
+    ctx.lineWidth = w0 * 0.5; ctx.beginPath();
+    for (var q = 0; q < 3; q++) { var f0 = q / 3 + rng() * 0.08, f1 = (q + 1) / 3 - rng() * 0.12; if (rng() < 0.2) continue; ctx.moveTo(lerp(A.x - sg * w0 * 0.68, B.x - sg * w1 * 0.68, f0), lerp(A.y, B.y, f0)); ctx.lineTo(lerp(A.x - sg * w0 * 0.68, B.x - sg * w1 * 0.68, f1), lerp(A.y, B.y, f1)); }
+    ctx.stroke();
+  }
+  ctx.lineCap = 'butt';
 }
 
 /* ================= Japanese maple: layered sprays ================= */
@@ -1161,7 +1175,7 @@ function roofPlane(ctx, pl, R, rng, snow) {
     ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = 0.45; ctx.fillStyle = GRAINPAT; ctx.fillRect(0, 0, W, H); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
   }
   if (snow) {
-    var sc = shade(mixc(SNOW, [210, 220, 236], 0.15), n, { amb: 1.12 }), top = clamp(0.88 * snow);
+    var sc = shade(mixc(SNOW, [210, 220, 236], 0.15), n, { amb: 1.12 }), top = clamp((F.wx === 'blizzard' ? 0.98 : 0.88) * snow);
     // a deep soft blanket; on the lower part streaks where tiles show through
     ctx.globalAlpha = top; ctx.fillStyle = rgb(sc); ctx.fill(path); ctx.globalAlpha = 1;
     var sg0 = at(Le / 2, 0), sg1 = at(Le / 2, Lg), sgr = ctx.createLinearGradient(sg0.x, sg0.y, sg1.x, sg1.y);
@@ -1187,7 +1201,11 @@ function eaveEdge(ctx, pl, R, rng, snow, at, Le) {
   else if (!snow) { ctx.strokeStyle = rgb(scl(c, 1.35), 0.7); ctx.lineWidth = 0.4; ctx.beginPath(); top.forEach(function (p, k) { if (k) ctx.lineTo(p.x, p.y + 0.2); else ctx.moveTo(p.x, p.y + 0.2); }); ctx.stroke(); }
   if (snow) {
     // a rounded overhanging lip, then icicles
-    ctx.strokeStyle = rgb(shade(SNOW, [0, 1, 0])); ctx.lineWidth = Math.max(0.7, 0.18 * top[0].x * 0 + 0.12 * Pa(e0).k); ctx.lineCap = 'round'; ctx.beginPath(); top.forEach(function (p, k) { if (k) ctx.lineTo(p.x, p.y - 0.2); else ctx.moveTo(p.x, p.y - 0.2); }); ctx.stroke(); ctx.lineCap = 'butt';
+    if (F.wx === 'blizzard') { // a heavy, rounded load hanging over the eave
+      var kE = Pa(e0).k; ctx.lineCap = 'round';
+      ctx.strokeStyle = rgb(shade(mixc(SNOW, [200, 212, 232], 0.25), norm([n[0], 0.2, n[2]]))); ctx.lineWidth = Math.max(1, 0.3 * kE); ctx.beginPath(); top.forEach(function (p, k) { if (k) ctx.lineTo(p.x, p.y - 0.06 * kE); else ctx.moveTo(p.x, p.y - 0.06 * kE); }); ctx.stroke();
+      ctx.strokeStyle = rgb(shade(SNOW, [0, 1, 0])); ctx.lineWidth = Math.max(0.7, 0.2 * kE); ctx.beginPath(); top.forEach(function (p, k) { if (k) ctx.lineTo(p.x, p.y - 0.14 * kE); else ctx.moveTo(p.x, p.y - 0.14 * kE); }); ctx.stroke(); ctx.lineCap = 'butt';
+    } else { ctx.strokeStyle = rgb(shade(SNOW, [0, 1, 0])); ctx.lineWidth = Math.max(0.7, 0.18 * top[0].x * 0 + 0.12 * Pa(e0).k); ctx.lineCap = 'round'; ctx.beginPath(); top.forEach(function (p, k) { if (k) ctx.lineTo(p.x, p.y - 0.2); else ctx.moveTo(p.x, p.y - 0.2); }); ctx.stroke(); ctx.lineCap = 'butt'; }
     if (pl.kind === 'front' || pl.kind === 'side') {
       var ic = rgb(mixc(shade([226, 236, 246], [0, 0.4, -1], { amb: 1.2 }), [255, 255, 255], 0.2), 0.9), kk = Pa(e0).k;
       ctx.fillStyle = ic; ctx.beginPath();
@@ -1276,6 +1294,10 @@ function prism(ctx, cx, cz, y0, y1, r0, r1, n, rot, alb, o) {
     all.addPath(path); out.push({ f: f, pp: pp });
   }
   if (o.tex && !sil()) grainClip(ctx, all, o.tex);
+  if (F && F.wx === 'blizzard' && SEA.snow && !sil() && MODE === 'n' && y1 - y0 > 3 * Math.max(r0, r1) && r0 < 0.45 && o.snow !== 0) {   // snow plastered on the windward side of a post
+    var sg = WIND_LEAN >= 0 ? 1 : -1, pa = P(cx - sg * r0 * 0.75, y0 + 0.12, cz), pb = P(cx - sg * r1 * 0.75, y1 - 0.06, cz);
+    ctx.strokeStyle = rgb(mixc(mulc(SNOW, lightTint(1)), [255, 255, 255], 0.1), 0.9); ctx.lineWidth = Math.max(0.3, Math.min(r0, 0.2) * pa.k * 0.8); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke(); ctx.lineCap = 'butt';
+  }
   return { all: all, out: out };
 }
 function mossDabs(ctx, pts3, count, rng, amt) {
@@ -2317,21 +2339,21 @@ function standSign(ctx, p3, W0, seed) {
 function placeProps(put) {
   if (F.farm) {
     var fb = farmFrame();
-    put(FARM.x, FARM.z - 7.5, { draw: function (c) { fence(c, [FARM.x - 8.5, FARM.z - 8], [FARM.x - 2.5, FARM.z - 8.3], 1.1, 'bamboo'); fence(c, [FARM.x + 1.5, FARM.z - 8.4], [FARM.x + 6.5, FARM.z - 8.2], 1.1, 'bamboo'); } });
-    put(FARM.x + 7.5, FARM.z - 2, { draw: function (c) { bales(c, FARM.x + 7.5, FARM.z - 2, 5); } });
+    put(FARM.x, FARM.z - 7.5, { draw: function (c) { fence(c, [FARM.x - 8.5, FARM.z - 8], [FARM.x - 2.5, FARM.z - 8.3], 1.1, 'bamboo'); fence(c, [FARM.x + 1.5, FARM.z - 8.4], [FARM.x + 6.5, FARM.z - 8.2], 1.1, 'bamboo'); }, driftLine: [[[FARM.x - 8.5, FARM.z - 8], [FARM.x - 2.5, FARM.z - 8.3]], [[FARM.x + 1.5, FARM.z - 8.4], [FARM.x + 6.5, FARM.z - 8.2]]] });
+    put(FARM.x + 7.5, FARM.z - 2, { draw: function (c) { bales(c, FARM.x + 7.5, FARM.z - 2, 5); }, drift: 0.9 });
   }
-  if (F.teahouse) { var tb = teaFrame(), hp = tb.L(-4.6, -1.5, 0); put(hp[0], hp[2], { draw: function (c) { handcart(c, hp[0], hp[2], 0.9, true); } }); }
-  if (F.shrine) put(SHRINE.x, SHRINE.z - 3, { draw: function (c) { fence(c, [SHRINE.x - 3, SHRINE.z - 2.6], [SHRINE.x + 3, SHRINE.z - 3.2], 0.8, 'wood'); } });
+  if (F.teahouse) { var tb = teaFrame(), hp = tb.L(-4.6, -1.5, 0); put(hp[0], hp[2], { draw: function (c) { handcart(c, hp[0], hp[2], 0.9, true); }, drift: 0.7 }); }
+  if (F.shrine) put(SHRINE.x, SHRINE.z - 3, { draw: function (c) { fence(c, [SHRINE.x - 3, SHRINE.z - 2.6], [SHRINE.x + 3, SHRINE.z - 3.2], 0.8, 'wood'); }, driftLine: [[[SHRINE.x - 3, SHRINE.z - 2.6], [SHRINE.x + 3, SHRINE.z - 3.2]]] });
   if (F.nagaya) { var l0 = stPt(13.4, 33.6), l1 = stPt(13.2, 36.9); put(l0[0], l0[1], { draw: function (c) { laundry(c, l0, l1); } }); }
-  if (F.landing) { var lb = landingGeom().B, bp = lb.L(4.6, 1.6, 0); put(bp[0], bp[2], { draw: function (c) { bales(c, bp[0], bp[2], 5); } }); }
-  if (F.market) put(MARKET.x + 7, MARKET.z - 2, { draw: function (c) { handcart(c, MARKET.x + 7, MARKET.z - 2, -0.4, true); } });
-  if (F.kura) { var kp = krPt(12, RIVER_HW + 1.8); put(kp[0], kp[1], { draw: function (c) { bales(c, kp[0], kp[1], 3); } }); }
+  if (F.landing) { var lb = landingGeom().B, bp = lb.L(4.6, 1.6, 0); put(bp[0], bp[2], { draw: function (c) { bales(c, bp[0], bp[2], 5); }, drift: 0.8 }); }
+  if (F.market) put(MARKET.x + 7, MARKET.z - 2, { draw: function (c) { handcart(c, MARKET.x + 7, MARKET.z - 2, -0.4, true); }, drift: 0.7 });
+  if (F.kura) { var kp = krPt(12, RIVER_HW + 1.8); put(kp[0], kp[1], { draw: function (c) { bales(c, kp[0], kp[1], 3); }, drift: 0.7 }); }
   // rain barrels and standing signs at the shopfronts
   doorList().forEach(function (d, i) {
     if (d.kind === 'temple' || d.kind === 'mill' || d.kind === 'nagaya') return;
     var key = doorKey(d) - 0.04;
-    if (i % 2 === 0) { var rb = d.W.at(d.s1 + 0.7, 0, 0.55); put(rb[0], rb[2], { draw: function (c) { rainBarrel(c, rb); }, key: key }); }
-    else if (d.kind === 'machiya' || d.kind === 'shoka' || d.kind === 'inn') { var sg = d.W.at(d.s0 - 0.6, 0, 0.9); put(sg[0], sg[2], { draw: function (c) { standSign(c, sg, d.W, i); }, key: key }); }
+    if (i % 2 === 0) { var rb = d.W.at(d.s1 + 0.7, 0, 0.55); put(rb[0], rb[2], { draw: function (c) { rainBarrel(c, rb); }, key: key, drift: 0.55 }); }
+    else if (d.kind === 'machiya' || d.kind === 'shoka' || d.kind === 'inn') { var sg = d.W.at(d.s0 - 0.6, 0, 0.9); put(sg[0], sg[2], { draw: function (c) { standSign(c, sg, d.W, i); }, key: key, drift: 0.4 }); }
   });
 }
 
@@ -2451,7 +2473,7 @@ function groundRows(D, M, PW, y0, y1, S) {
   var rc = SEA.river, haze = LIT.haze, hazeK = LIT.hazeK, pmode = SEA.paddy, paddyOn = F.paddy, town = F.town, street = F.street, gutter = F.machiya;
   var n2 = NZ.n2, fbm = NZ.fbm;
   var GD = S.grid, gnx = GD.nx, gst = GD.nz, Gsoil = GD.soil, Ggrass = GD.grass, Gsnow = GD.snow, Ggnz = GD.gnz, Gpath = GD.path, Gchan = GD.chan, Gyard = GD.yard, Gpatch = GD.patch, Gtrk = GD.trk, ist = 1 / GG.st;
-  var wet = F.wet || F.after, damp = F.wet ? 1 : 0.35, typh = F.wx === 'typhoon', puddle = 0;
+  var wet = F.wet || F.after, damp = F.wet ? 1 : 0.35, typh = F.wx === 'typhoon', bliz = F.wx === 'blizzard' && snow, puddle = 0, iceA = 0;
   var dryK = SEA.name === 'autumn' ? 1 : SEA.name === 'summer' ? 0.55 : SEA.name === 'spring' ? 0.4 : 0.8, dryC = mixc(SEA.soil[1], [196, 176, 120], 0.5);
   for (var py = y0; py < y1; py++) {
     var sy = (py + 0.5) / KS, b = -(sy - CAM.cy) / CAM.F, dy = -CAM.s + b * CAM.c, rowk = py * PW * 4, px;
@@ -2598,7 +2620,18 @@ function groundRows(D, M, PW, y0, y1, S) {
           if (dep < 0.15) { var sh2 = (0.15 - dep) * 4; wr += (120 - wr) * sh2; wg += (112 - wg) * sh2; wb += (92 - wb) * sh2; }
           var fres = clamp(0.3 + 0.18 * (rip - 0.5) + 0.12 * Math.sin(x * 0.9 + z * 0.3 + rip * 6) * (1 - clamp(fp / 0.3)));
           wr += (sky[0] - wr) * fres; wg += (sky[1] - wg) * fres; wb += (sky[2] - wb) * fres;
-          if (snow) {
+          iceA = 0;
+          if (bliz) {   // shelves of ice out from both banks, snow drifted over them; pans of ice in the dark open water
+            var edgeN = (n2(x * 0.7 + 3, z * 1.9) - 0.5) * 1.2 + (n2(x * 2.6, z * 5.2) - 0.5) * 0.5, shelf = sstep(-2.3 + edgeN, -1.9 + edgeN, wd);
+            var pan = n2(x * 0.42 - z * 0.3 + 17, z * 1.5 + x * 0.12) + (n2(x * 2.4, z * 4.1) - 0.5) * 0.16, panA = sstep(0.74, 0.77, pan) * (1 - shelf), rim = sstep(0.71, 0.74, pan) * (1 - sstep(0.74, 0.77, pan)) * (1 - shelf);
+            wr *= 0.82; wg *= 0.86; wb *= 0.92;   // cold, dark open water
+            iceA = Math.max(shelf, panA);
+            var icf = clamp(0.5 + (n2(x * 2, z * 0.8) - 0.5) * 0.9), sd2 = clamp((n2(x * 1.3 + 5, z * 3.1) - 0.35) * 1.6) * shelf;
+            var ir = 196 + 40 * icf + 14 * sd2, ig = 208 + 32 * icf + 10 * sd2, ib = 222 + 26 * icf;
+            if (shelf > 0 && shelf < 0.9) { ir -= 50 * (1 - shelf) * shelf * 4 * 0.25; ig -= 40 * (1 - shelf) * shelf; ib -= 26 * (1 - shelf) * shelf; }   // the shelf's broken edge
+            wr += (ir - wr) * iceA; wg += (ig - wg) * iceA; wb += (ib - wb) * iceA;
+            wr += (150 - wr) * rim * 0.5; wg += (168 - wg) * rim * 0.5; wb += (186 - wb) * rim * 0.5;
+          } else if (snow) {
             var ice = sstep(-1.6, -0.9, wd) * 0.85;
             if (ice > 0) { var icf = clamp(0.5 + (n2(x * 2, z * 0.8) - 0.5) * 0.8), ir = 186 + 46 * icf, ig = 200 + 38 * icf, ib = 214 + 34 * icf; wr += (ir - wr) * ice; wg += (ig - wg) * ice; wb += (ib - wb) * ice; }
           }
@@ -2608,7 +2641,8 @@ function groundRows(D, M, PW, y0, y1, S) {
       r *= gi[0]; g *= gi[1]; bl *= gi[2];
       if (hz > 0) { r += (haze[0] - r) * hz; g += (haze[1] - g) * hz; bl += (haze[2] - bl) * hz; }
       D[k] = r; D[k + 1] = g; D[k + 2] = bl; D[k + 3] = alphaRow;
-      if (M) { var mw = Math.max(w * (snow ? clamp((-wd - 0.9) * 2) : 1), puddle * 0.9); if (mw > 0) M[k + 3] = 255 * mw; }
+      if (M) { var mw = Math.max(w * (bliz ? 1 - iceA : snow ? clamp((-wd - 0.9) * 2) : 1), puddle * 0.9); if (mw > 0) M[k + 3] = 255 * mw; }
+      iceA = 0;
     }
   }
 }
@@ -2737,12 +2771,12 @@ function buildScene() {
     var gr = mulberry32(900 + gi);
     for (var n = 0; n < gv[3]; n++) {
       var tx = gv[0] + (gr() - 0.5) * 7, tz = gv[1] + (gr() - 0.5) * 5, tt = genBroad(950 + gi * 7 + n, tx, tz, 1.0 + gr() * 0.3, 1.15), pal = n % 3 === 2 && SEA.maple ? SEA.maple : null;
-      (function (tt, tx, tz, pal) { put(tx, tz, { draw: function (c) { drawBroad(c, tt, { dab: 0.26, pal: pal }); }, ao: function (c) { mapleAO(c, tt); } }); })(tt, tx, tz, pal);
+      (function (tt, tx, tz, pal) { put(tx, tz, { draw: function (c) { drawBroad(c, tt, { dab: 0.26, pal: pal }); }, ao: function (c) { mapleAO(c, tt); }, sway: swayTree('broad', tt), tap: pal ? 'maple' : 'broad' }); })(tt, tx, tz, pal);
     }
   });
   // the lone tree by the road
   var t0 = genBroad(31, TREE0.x, TREE0.z, 1.5 * F.tree0, 1.2);
-  put(TREE0.x, TREE0.z, { draw: function (c) { drawBroad(c, t0, { dab: 0.28, cap: 40 }); }, ao: function (c) { mapleAO(c, t0); } });
+  put(TREE0.x, TREE0.z, { draw: function (c) { drawBroad(c, t0, { dab: 0.28, cap: 40 }); }, ao: function (c) { mapleAO(c, t0); }, sway: swayTree('broad', t0), tap: 'broad' });
   // bridges
   if (F.stoneBridge) put(BR.x, BR.z, { draw: drawStoneBridge, key: P(BR.x + 1.5, 0, BR.z - 2).d, refl: true, noShadow: false });
   else put(BR.x, BR.z, { draw: drawPlankBridge, key: P(BR.x, 0, BR.z - 1).d, refl: true });
@@ -2756,63 +2790,66 @@ function buildScene() {
   // cherries along the river
   if (F.riverCherry > 0) [[-46, 64.5, 0.9], [-14.5, 40.6, 0.8], [-28, 47.3, 0.85], [19.5, 21.5, 0.95], [31.5, 14.5, 0.9]].forEach(function (a, ii) {
     var sk = genTownSakura(800 + ii, a[0], a[1], a[2] * 1.45 * F.riverCherry, 1.5);
-    put(a[0], a[1], { draw: function (c) { drawSakura(c, sk, { density: sakDens(sk), dab: 0.24, cap: 60, batch: true }); }, ao: function (c) { mapleAO(c, sk); }, refl: true });
+    put(a[0], a[1], { draw: function (c) { drawSakura(c, sk, { density: sakDens(sk), dab: 0.24, cap: 60, batch: true }); }, ao: function (c) { mapleAO(c, sk); }, refl: true, sway: swayTree('broad', sk), tap: 'cherry' });
   });
   // willows at the bridge foot
-  if (F.shoka) [[stPt(-4.4, 5.6), 61], [stPt(-3.6, -5.8), 62]].forEach(function (a) { var wl = genWillow(a[1], a[0][0], a[0][1], 1.9); put(a[0][0], a[0][1], { draw: function (c) { drawWillow(c, wl); }, ao: function (c) { mapleAO(c, wl); }, refl: true }); });
+  if (F.shoka) [[stPt(-4.4, 5.6), 61], [stPt(-3.6, -5.8), 62]].forEach(function (a) { var wl = genWillow(a[1], a[0][0], a[0][1], 1.9); put(a[0][0], a[0][1], { draw: function (c) { drawWillow(c, wl); }, ao: function (c) { mapleAO(c, wl); }, refl: true, sway: swayTree('willow', wl), tap: 'willow' }); });
   // ---- the countryside
   function simple(x, z, fn, o) { o = o || {}; o.draw = fn; return put(x, z, o); }
   function circAO(x, z, r) { return function (c) { var p = P(x, 0, z); c.beginPath(); c.ellipse(p.x, p.y, r * p.k, r * p.k * CAM.s, 0, 0, TAU); c.fill(); }; }
-  if (F.sign) simple(SIGN.x, SIGN.z, drawSignpost, { ao: circAO(SIGN.x + 0.4, SIGN.z, 0.7) });
-  if (F.teahouse) { var tb = teaFrame(); YARDS.push({ x: TEA.x, z: TEA.z - 1, u: tb.u, v: tb.v, w: 8, d: 9, pad: 1.5, k: 0.7 }); simple(TEA.x, TEA.z, drawTeahouse, { ao: function (c) { footAO(c, { x: TEA.x, z: TEA.z, u: tb.u, w: 5.6, d: 4.2 }); }, key: P(TEA.x + 1, 0, TEA.z - 2).d }); }
-  if (F.well) simple(WELL.x, WELL.z, drawWell, { ao: circAO(WELL.x, WELL.z, 0.9) });
+  if (F.sign) simple(SIGN.x, SIGN.z, drawSignpost, { ao: circAO(SIGN.x + 0.4, SIGN.z, 0.7), drift: 0.5 });
+  if (F.teahouse) { var tb = teaFrame(); YARDS.push({ x: TEA.x, z: TEA.z - 1, u: tb.u, v: tb.v, w: 8, d: 9, pad: 1.5, k: 0.7 }); simple(TEA.x, TEA.z, drawTeahouse, { ao: function (c) { footAO(c, { x: TEA.x, z: TEA.z, u: tb.u, w: 5.6, d: 4.2 }); }, key: P(TEA.x + 1, 0, TEA.z - 2).d, foot: { x: TEA.x, z: TEA.z, u: tb.u, w: 5.6, d: 4.2 } }); }
+  if (F.well) simple(WELL.x, WELL.z, drawWell, { ao: circAO(WELL.x, WELL.z, 0.9), drift: 0.9 });
   if (F.farm) {
     var fb = farmFrame(); YARDS.push({ x: FARM.x, z: FARM.z - 2, u: fb.u, v: fb.v, w: 16, d: 13, pad: 2, k: 0.8 });
-    simple(FARM.x, FARM.z, drawFarm, { ao: function (c) { footAO(c, { x: FARM.x, z: FARM.z, u: fb.u, w: 11.5, d: 7.6 }); } });
-    var kk = genBroad(37, KAKI.x, KAKI.z, 1.35, 1.2); put(KAKI.x, KAKI.z, { draw: function (c) { drawBroad(c, kk, { dab: 0.22, fruit: true, accent: sname === 'autumn' ? { p: 0.22, pal: [[200, 80, 20], [236, 120, 30], [250, 170, 70]] } : null, pal: sname === 'autumn' ? [[90, 40, 16], [140, 66, 22], [184, 98, 30], [210, 132, 44], [228, 166, 70], [240, 196, 110]] : null, density: sname === 'autumn' ? 0.45 : 1 }); }, ao: function (c) { mapleAO(c, kk); } });
+    simple(FARM.x, FARM.z, drawFarm, { ao: function (c) { footAO(c, { x: FARM.x, z: FARM.z, u: fb.u, w: 11.5, d: 7.6 }); }, foot: { x: FARM.x, z: FARM.z, u: fb.u, w: 11.5, d: 7.6 } });
+    var kk = genBroad(37, KAKI.x, KAKI.z, 1.35, 1.2); put(KAKI.x, KAKI.z, { draw: function (c) { drawBroad(c, kk, { dab: 0.22, fruit: true, accent: sname === 'autumn' ? { p: 0.22, pal: [[200, 80, 20], [236, 120, 30], [250, 170, 70]] } : null, pal: sname === 'autumn' ? [[90, 40, 16], [140, 66, 22], [184, 98, 30], [210, 132, 44], [228, 166, 70], [240, 196, 110]] : null, density: sname === 'autumn' ? 0.45 : 1 }); }, ao: function (c) { mapleAO(c, kk); }, sway: swayTree('broad', kk), tap: 'kaki' });
     if (sname === 'autumn' && F.paddy && F.prog < 0.875) { put(HAZA[0][0], HAZA[0][1], { draw: function (c) { drawHaza(c, HAZA[0][0], HAZA[0][1], 8, 0.02); } }); put(HAZA[1][0], HAZA[1][1], { draw: function (c) { drawHaza(c, HAZA[1][0], HAZA[1][1], 7, -0.06); } }); }
   }
   if (F.mill) {
     var mb = millFrame(); YARDS.push({ x: MILL.x, z: MILL.z, u: mb.u, v: mb.v, w: 7, d: 7, pad: 1.5, k: 0.6 });
-    simple(MILL.x, MILL.z, drawMill, { ao: function (c) { footAO(c, { x: MILL.x, z: MILL.z, u: mb.u, w: 5, d: 4.4 }); }, refl: true, key: P(MILL.wx, 0, MILL.wz - 0.5).d - 0.5 });
+    simple(MILL.x, MILL.z, drawMill, { ao: function (c) { footAO(c, { x: MILL.x, z: MILL.z, u: mb.u, w: 5, d: 4.4 }); }, refl: true, key: P(MILL.wx, 0, MILL.wz - 0.5).d - 0.5, foot: { x: MILL.x, z: MILL.z, u: mb.u, w: 5, d: 4.4 } });
   }
   if (F.shrine) {
     YARDS.push({ x: SHRINE.x, z: SHRINE.z, u: [1, 0], v: [0, 1], w: 5, d: 5, pad: 1.2, k: 0.7 });
-    simple(SHRINE.x, SHRINE.z, drawHokora, { ao: circAO(SHRINE.x, SHRINE.z, 2) });
+    simple(SHRINE.x, SHRINE.z, drawHokora, { ao: circAO(SHRINE.x, SHRINE.z, 2), drift: 1.1 });
     simple(TORII.x, TORII.z, drawTorii, { ao: function (c) { var tb2 = toriiFrame(); [-1.45, 1.45].forEach(function (a) { var p = Pa(tb2.L(a, 0, 0)); c.beginPath(); c.ellipse(p.x, p.y, 0.4 * p.k, 0.2 * p.k, 0, 0, TAU); c.fill(); }); } });
-    [[4.0, 1.4, 10.5, 701], [5.4, -1.8, 9, 702], [6.6, 1.2, 9.5, 703], [2.4, 2.8, 10, 704]].map(function (a) { return [SHRINE.x + a[0], SHRINE.z + a[1], a[2], a[3]]; }).forEach(function (a) { put(a[0], a[1], { draw: function (c) { drawCedar(c, a[0], a[1], a[2], a[3]); }, ao: circAO(a[0], a[1], 1.4) }); });
+    [[4.0, 1.4, 10.5, 701], [5.4, -1.8, 9, 702], [6.6, 1.2, 9.5, 703], [2.4, 2.8, 10, 704]].map(function (a) { return [SHRINE.x + a[0], SHRINE.z + a[1], a[2], a[3]]; }).forEach(function (a) { put(a[0], a[1], { draw: function (c) { drawCedar(c, a[0], a[1], a[2], a[3]); }, ao: circAO(a[0], a[1], 1.4), sway: swayCedar(a[0], a[1], a[2], a[3]), tap: 'cedar' }); });
   }
   if (F.landing) simple(landingGeom().B.x, landingGeom().B.z, drawLanding, { refl: true, key: P(landingGeom().B.x, 0, landingGeom().B.z - 3).d });
   // ---- the town's landmarks
   if (F.tower) simple(TOWER.x, TOWER.z, drawTower, { ao: circAO(TOWER.x, TOWER.z, 2) });
   if (F.temple) {
     var tf = templeFrame(); YARDS.push({ x: TEMPLE.x, z: TEMPLE.z - 3, u: tf.u, v: tf.v, w: 24, d: 22, pad: 2, k: 0.9 });
-    simple(TEMPLE.x, TEMPLE.z, drawTemple, { ao: function (c) { footAO(c, { x: TEMPLE.x, z: TEMPLE.z, u: tf.u, w: 15.8, d: 13.5 }, 0.6); } });
-    simple(BELL.x, BELL.z, drawBelfry, { ao: circAO(BELL.x, BELL.z, 2.6) });
-    [[-28, 95.5, 1.4, 51], [-47, 80, 1.25, 52]].forEach(function (a) { var mt = genBroad(a[3], a[0], a[1], a[2], 1.2); put(a[0], a[1], { draw: function (c) { if (SEA.maple) drawBroad(c, mt, { pal: SEA.maple, dab: 0.26 }); else drawBroad(c, mt); }, ao: function (c) { mapleAO(c, mt); } }); });
-    var tc = genTownSakura(820, -6, 94, 1.4, 1.4); put(-6, 94, { draw: function (c) { drawSakura(c, tc, { density: sakDens(tc), dab: 0.24, cap: 60, batch: true }); } });
+    simple(TEMPLE.x, TEMPLE.z, drawTemple, { ao: function (c) { footAO(c, { x: TEMPLE.x, z: TEMPLE.z, u: tf.u, w: 15.8, d: 13.5 }, 0.6); }, foot: { x: TEMPLE.x, z: TEMPLE.z, u: tf.u, w: 15.8, d: 13.5 } });
+    simple(BELL.x, BELL.z, drawBelfry, { ao: circAO(BELL.x, BELL.z, 2.6), tap: 'bell' });
+    [[-28, 95.5, 1.4, 51], [-47, 80, 1.25, 52]].forEach(function (a) { var mt = genBroad(a[3], a[0], a[1], a[2], 1.2); put(a[0], a[1], { draw: function (c) { if (SEA.maple) drawBroad(c, mt, { pal: SEA.maple, dab: 0.26 }); else drawBroad(c, mt); }, ao: function (c) { mapleAO(c, mt); }, sway: swayTree('broad', mt), tap: 'maple' }); });
+    var tc = genTownSakura(820, -6, 94, 1.4, 1.4); put(-6, 94, { draw: function (c) { drawSakura(c, tc, { density: sakDens(tc), dab: 0.24, cap: 60, batch: true }); }, sway: swayTree('broad', tc), tap: 'cherry' });
   }
   if (F.pagoda) { YARDS.push({ x: PAGODA.x, z: PAGODA.z, u: [1, 0], v: [0, 1], w: 10, d: 10, pad: 1.5, k: 0.9 }); simple(PAGODA.x, PAGODA.z, drawPagoda, { ao: circAO(PAGODA.x, PAGODA.z, 4.6) }); }
-  if (F.theatre) { var th = theatreFrame(); YARDS.push({ x: th.x, z: th.z, u: th.u, v: th.v, w: 12, d: 15, pad: 2 }); simple(th.x, th.z, drawTheatre, { ao: function (c) { footAO(c, { x: th.x, z: th.z, u: th.u, w: 9.5, d: 11 }); }, key: P.apply(null, th.L(0, -3, 0)).d }); }
+  if (F.theatre) { var th = theatreFrame(); YARDS.push({ x: th.x, z: th.z, u: th.u, v: th.v, w: 12, d: 15, pad: 2 }); simple(th.x, th.z, drawTheatre, { ao: function (c) { footAO(c, { x: th.x, z: th.z, u: th.u, w: 9.5, d: 11 }); }, key: P.apply(null, th.L(0, -3, 0)).d, foot: { x: th.x, z: th.z, u: th.u, w: 9.5, d: 11 } }); }
   if (F.market) simple(MARKET.x, MARKET.z, drawMarket, { key: P(MARKET.x, 0, MARKET.z - 1).d });
   if (F.buke) BUKE.forEach(function (bk) {
     var sp = { x: bk.x, z: bk.z, u: KR_DIR, w: bk.w, d: bk.d, seed: bk.seed }; YARDS.push({ x: bk.x, z: bk.z, u: KR_DIR, v: STREET_DIR, w: bk.w, d: bk.d, pad: 1.5, k: 0.6 });
     var pq = BF(bk.x, bk.z, KR_DIR, 0).L(bk.w * 0.3, 1.5, 0), pn = genPine(bk.seed, pq[0], pq[2], 3.2); 
-    put(bk.x, bk.z, { draw: function (c) { drawBuke(c, sp); drawPine(c, pn); }, ao: function (c) { footAO(c, { x: bk.x, z: bk.z, u: KR_DIR, w: bk.w, d: bk.d }, 0.4); }, key: P(bk.x - STREET_DIR[0] * bk.d / 2, 0, bk.z - STREET_DIR[1] * bk.d / 2).d });
+    var bkey = P(bk.x - STREET_DIR[0] * bk.d / 2, 0, bk.z - STREET_DIR[1] * bk.d / 2).d;
+    put(bk.x, bk.z, { draw: function (c) { drawBuke(c, sp); }, ao: function (c) { footAO(c, { x: bk.x, z: bk.z, u: KR_DIR, w: bk.w, d: bk.d }, 0.4); }, key: bkey, foot: { x: bk.x, z: bk.z, u: KR_DIR, w: bk.w, d: bk.d } });
+    put(pq[0], pq[2], { draw: function (c) { drawPine(c, pn); }, key: bkey - 1e-4, sway: swayTree('pine', pn), tap: 'pine' });
   });
   if (F.ishigaki) { var ig = ishiGeom(); put(CASTLE.x, CASTLE.z, { draw: function (c) { drawIshigaki(c); if (F.keep) drawKeep(c); }, key: P(CASTLE.x, 0, CASTLE.z - 6).d, ao: function (c) { footAO(c, { x: CASTLE.x, z: CASTLE.z, u: ig.B.u, w: ig.w + 3, d: ig.d + 3 }, 0.6); } }); }
-  if (F.ishigaki || F.buke) [[22, 80.5], [44, 81], [28, 95]].forEach(function (a, ii) { var pn = genPine(600 + ii, a[0], a[1], 3.0, hillH(a[0], a[1])); put(a[0], a[1], { draw: function (c) { drawPine(c, pn); } }); });
+  if (F.ishigaki || F.buke) [[22, 80.5], [44, 81], [28, 95]].forEach(function (a, ii) { var pn = genPine(600 + ii, a[0], a[1], 3.0, hillH(a[0], a[1])); put(a[0], a[1], { draw: function (c) { drawPine(c, pn); }, sway: swayTree('pine', pn), tap: 'pine' }); });
   placeProps(put);
   // seasonal events
   if (F.event) {
     doorList().forEach(function (d, k) { var c = d.W.at((d.s0 + d.s1) / 2, 0, 0.6); put(c[0], c[2], { draw: function (cx) { drawDoorDeco(cx, d, k); }, key: doorKey(d) - 0.05, noShadow: true }); });
     if (F.event === 'hinamatsuri') {
       put(0, 0, { draw: function (cx) { drawEventExtras(cx, 'hina'); }, key: P(stPt(3.9, 10.5)[0], 0, stPt(3.9, 10.5)[1]).d - 0.05, noShadow: true });
-      [[-25.5, 21.5, 1.0, 71], [-3.5, 31, 0.9, 72]].concat(F.shoka ? [[rvPt(4, 6)[0], rvPt(4, 6)[1], 0.9, 73]] : []).forEach(function (a) { var pt = genBroad(a[3], a[0], a[1], a[2], 1.3); put(a[0], a[1], { draw: function (cx) { drawPeach(cx, pt); }, ao: function (cx) { mapleAO(cx, pt); } }); });
+      [[-25.5, 21.5, 1.0, 71], [-3.5, 31, 0.9, 72]].concat(F.shoka ? [[rvPt(4, 6)[0], rvPt(4, 6)[1], 0.9, 73]] : []).forEach(function (a) { var pt = genBroad(a[3], a[0], a[1], a[2], 1.3); put(a[0], a[1], { draw: function (cx) { drawPeach(cx, pt); }, ao: function (cx) { mapleAO(cx, pt); }, sway: swayTree('broad', pt), tap: 'peach' }); });
     }
     if (F.event === 'tsukimi') put(0, 0, { draw: function (cx) { drawEventExtras(cx, 'tsukimi'); }, key: P(FARM.x, 0, FARM.z - 5).d - 0.05, noShadow: true });
     if (F.event === 'kodomo') koiPoles().forEach(function (q) { put(q[0], q[1], { draw: function (cx) { prism(cx, q[0], q[1], 0, q[2], 0.08, 0.06, 6, 0, [140, 120, 90], { snow: 0 }); if (!sil()) { var tp = P(q[0], q[2] + 0.2, q[1]); cx.fillStyle = rgb(mulc([220, 180, 70], lightTint(1))); cx.beginPath(); cx.arc(tp.x, tp.y, 0.16 * tp.k, 0, TAU); cx.fill(); } } }); });
   }
+  if (F.wx === 'blizzard' && SEA.snow) addBlizzardDrifts(up);
   up.sort(function (a, b) { return b.key - a.key; }); flat.sort(function (a, b) { return b.key - a.key; });
   return { up: up, flat: flat, surf: surf };
 }
@@ -3210,6 +3247,68 @@ function drawHillShrine(ctx) {
   if (LIT.lit && !S) { var lp = P(tx - 1.4, ty + 0.9, tz - 1.3); ctx.fillStyle = 'rgb(255,206,140)'; ctx.beginPath(); ctx.arc(lp.x, lp.y, Math.max(0.5, 0.12 * lp.k), 0, TAU); ctx.fill(); addGlow(lp, 6, 0.5, false); }
 }
 
+/* ---- 06b_drift.js ---- */
+/* ================= blizzard: snow driven against things =================
+   Drifts pile against the windward wall of every house (the side the wind comes from), and in small mounds at the
+   upwind foot of trees, posts, barrels and fences. Each drift is its own depth-sorted object: in front of a wall the
+   camera sees, behind one it does not. */
+function galeSign() { return WIND_LEAN >= 0 ? 1 : -1; }   // +1: the wind blows toward screen right
+function snowCol(ny) { return shade(mixc(SNOW, [214, 224, 240], 0.12), norm([0, ny === undefined ? 1 : ny, -0.25]), { amb: 1.12 }); }
+/* a wedge of snow against a wall from a to b (ground points [x, z]), outward normal n ([x, z]): it buries the foot of
+   the wall up to a wavy crest, then slopes away and melts into the snow on the ground */
+function drawWallDrift(ctx, a, b, n, h, e, seed) {
+  var r = mulberry32(seed), N = 16, top = [], base = [], toe = [], i, S = sil(), ph = r() * 9;
+  for (i = 0; i <= N; i++) {
+    var u = -0.1 + 1.2 * i / N, cu = clamp(u), end = u < 0 ? 1 + u / 0.1 : u > 1 ? 1 - (u - 1) / 0.1 : 1;
+    var prof = (0.35 + 0.65 * Math.pow(Math.sin(Math.PI * (0.08 + 0.84 * cu)), 0.6)) * Math.max(0, end), wob = 0.8 + 0.4 * NZ.n2(u * 3.4 + ph, ph);
+    var x = a[0] + (b[0] - a[0]) * u, z = a[1] + (b[1] - a[1]) * u, hh = h * prof * wob, ee = e * (0.4 + 0.6 * prof) * (0.85 + 0.3 * NZ.n2(u * 2.3 + 5, ph));
+    top.push(P(x + n[0] * 0.03, hh, z + n[1] * 0.03)); base.push(P(x, 0, z)); toe.push(P(x + n[0] * ee, 0, z + n[1] * ee));
+  }
+  var pp = top.concat(toe.slice().reverse());
+  ctx.beginPath(); ctx.moveTo(pp[0].x, pp[0].y); for (i = 1; i < pp.length; i++) ctx.lineTo(pp[i].x, pp[i].y); ctx.closePath();
+  if (S) { ctx.fillStyle = '#000'; ctx.fill(); return; }
+  var m = N >> 1, mt = top[m], mb = base[m], mo = toe[m], dx = mo.x - mt.x, dy = mo.y - mt.y, L2 = dx * dx + dy * dy || 1;
+  var fb = clamp(((mb.x - mt.x) * dx + (mb.y - mt.y) * dy) / L2, 0.05, 0.9), lt = lightTint(1), c0 = mulc([240, 244, 252], lt), c1 = mulc([226, 232, 244], lt);
+  var gr = ctx.createLinearGradient(mt.x, mt.y, mo.x, mo.y);
+  gr.addColorStop(0, rgb(c0)); gr.addColorStop(fb, rgb(c1)); gr.addColorStop(Math.min(1, fb + (1 - fb) * 0.5), rgb(c1, 0.55)); gr.addColorStop(1, rgb(c1, 0));
+  ctx.fillStyle = gr; ctx.fill();
+  // the crest, wind-sharpened, and a faint blue hollow where it meets the wall
+  ctx.lineCap = 'round'; ctx.strokeStyle = rgb(mixc(c0, [255, 255, 255], 0.3), 0.8); ctx.lineWidth = Math.max(0.3, 0.035 * mt.k); ctx.beginPath();
+  for (i = 2; i < N - 1; i++) { if (i === 2) ctx.moveTo(top[i].x, top[i].y); else ctx.lineTo(top[i].x, top[i].y); }
+  ctx.stroke(); ctx.lineCap = 'butt';
+}
+/* a soft mound at the foot of something, heaped on its upwind side */
+function drawMound(ctx, x, z, rr, h) {
+  var c = P(x, 0, z), t = P(x, h, z), rx = rr * c.k, ry = rx * CAM.s * 1.1 + Math.max(0.6, c.y - t.y) * 0.5, S = sil();
+  if (S) { ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(c.x, c.y - ry * 0.3, rx * 0.8, ry * 0.7, 0, 0, TAU); ctx.fill(); return; }
+  var lt = lightTint(1), cy = c.y - ry * 0.35, g = ctx.createRadialGradient(c.x - galeSign() * rx * 0.15, cy - ry * 0.2, 0, c.x, cy, rx);
+  g.addColorStop(0, rgb(mulc([244, 247, 253], lt))); g.addColorStop(0.55, rgb(mulc([230, 236, 246], lt), 0.85)); g.addColorStop(1, rgb(mulc([226, 232, 244], lt), 0));
+  ctx.save(); ctx.translate(c.x, cy); ctx.scale(1, ry / rx); ctx.translate(-c.x, -cy); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(c.x, cy, rx, 0, TAU); ctx.fill(); ctx.restore();
+}
+function addBlizzardDrifts(up) {
+  var sg = galeSign(), out = [], seed = 1;
+  up.forEach(function (o) {
+    if (o.foot) {
+      var f = o.foot, B = BF(f.x, f.z, f.u, 0), hw = f.w / 2, hd = f.d / 2;
+      [[0, -1, -hw, -hd, hw, -hd], [1, 0, hw, -hd, hw, hd], [0, 1, hw, hd, -hw, hd], [-1, 0, -hw, hd, -hw, -hd]].forEach(function (wl) {
+        var nn = B.N(wl[0], wl[1], 0), n = [nn[0], nn[2]];
+        if (n[0] * sg > -0.3) return;   // only the walls facing the wind
+        var A = B.L(wl[2], wl[3], 0), Bp = B.L(wl[4], wl[5], 0), L = Math.hypot(Bp[0] - A[0], Bp[2] - A[2]), c = [(A[0] + Bp[0]) / 2, 0.4, (A[2] + Bp[2]) / 2];
+        var vis = faceVisible(c, [n[0], 0, n[1]]), h = 0.45 + 0.35 * Math.min(1, L / 7), e = 1.3 + 0.7 * Math.min(1, L / 7), sd = seed++;
+        out.push({ x: c[0], z: c[2], key: o.key + (vis ? -0.03 : 0.03), noShadow: true, draw: function (cx) { drawWallDrift(cx, [A[0], A[2]], [Bp[0], Bp[2]], n, h, e, sd * 131); } });
+      });
+    }
+    var m = o.drift || (o.sway && o.sway.base ? 0.7 + (o.sway.kind === 'willow' ? 0.4 : 0) : 0);
+    if (m) { var bx = o.sway ? o.sway.base[0] : o.x, bz = o.sway ? o.sway.base[2] : o.z, mk = P(bx, 0, bz).d; out.push({ x: bx, z: bz, key: (o.key < 1e5 ? Math.min(o.key, mk) : mk) - 0.02, noShadow: true, draw: function (cx) { drawMound(cx, bx - sg * m * 0.5, bz, m, m * 0.4); } }); }
+    if (o.driftLine) o.driftLine.forEach(function (ln, k) {
+      var a = ln[0], b = ln[1], L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = [-(b[1] - a[1]) / L, (b[0] - a[0]) / L]; if (n[0] * sg > 0) n = [-n[0], -n[1]];
+      var sd = seed++, c = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+      out.push({ x: c[0], z: c[1], key: P(c[0] + n[0], 0, c[1] + n[1]).d < P(c[0], 0, c[1]).d ? o.key - 0.02 : o.key + 0.02, noShadow: true, draw: function (cx) { drawWallDrift(cx, a, b, n, 0.4, 0.8, sd * 71); } });
+    });
+  });
+  out.forEach(function (d) { up.push(d); });
+}
+
 /* ---- 06z_blur.js ---- */
 /* ================= blur & compositing helpers (no ctx.filter needed) ================= */
 var TMPS = [];
@@ -3337,6 +3436,8 @@ async function renderStatic(job) {
   var oprof = job.prof ? [] : null;
   for (i = 0; i < scene.up.length; i++) { var to = now(); scene.up[i].draw(ox); if (oprof) { ox.getImageData(0, 0, 1, 1); oprof.push([(now() - to), +scene.up[i].x.toFixed(2), +scene.up[i].z.toFixed(2)]); } tk = tick(); if (tk) await tk; }
   if (oprof) { PH.sum = Math.round(oprof.reduce(function (s, a) { return s + a[0]; }, 0)); PH.n = oprof.length; oprof.sort(function (a, b) { return b[0] - a[0]; }); PH.top = oprof.slice(0, 12); }
+  var swayOn = job.mask !== false && swayWanted(F.wx) && scene.up.some(function (o) { return o.sway; }), base0 = null;
+  if (swayOn) { base0 = tmpCanvas(bw, bh); base0.getContext('2d').drawImage(out, 0, 0); }   // the town before anything stands on it (for the trees' patches)
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(obj, 0, 0); ctx.restore();
   mark('objects');
   await tick(true);
@@ -3344,6 +3445,8 @@ async function renderStatic(job) {
   var reflGlows = GLOWS.filter(function (g) { return g.refl; }), glows = GLOWS.filter(function (g) { return !g.refl; });
   post(ctx, bw, bh, glows, reflGlows, mc);
   mark('post');
+  var sway = null;
+  if (swayOn) { sway = await bakeSway(job, scene, out, base0, glows, reflGlows, mc, tick); mark('sway'); }
   // 8b. where the sky shows (for the drifting clouds): not behind the ranges, the hills, the ground or anything standing
   var sky = mkCanvas(hw, Math.round(hh * 0.62)), skx = sky.getContext('2d'); skx.fillStyle = '#fff'; skx.fillRect(0, 0, sky.width, sky.height);
   skx.globalCompositeOperation = 'destination-out'; if (rangeP) { lsT(skx, KS * hw / bw); skx.fill(rangeP); skx.setTransform(1, 0, 0, 1, 0, 0); }
@@ -3376,7 +3479,7 @@ async function renderStatic(job) {
     MODE = 'n';
   }
   freeTmps(); mark('mask');
-  return { canvas: out, mask: wm, occ: occ, glows: glows, clouds: clouds, sky: sky, ms: now() - t0, phases: PH };
+  return { canvas: out, mask: wm, occ: occ, glows: glows, clouds: clouds, sky: sky, sway: sway, ms: now() - t0, phases: PH };
 }
 function post(ctx, bw, bh, glows, reflGlows, mc) {
   var yo = CAM.cy - 150, i;
@@ -3389,7 +3492,8 @@ function post(ctx, bw, bh, glows, reflGlows, mc) {
   gm.addColorStop(0, 'rgba(0,0,0,0.35)'); gm.addColorStop(st(0.12 * 300), 'rgba(0,0,0,0.12)'); gm.addColorStop(st(0.22 * 300), 'rgba(0,0,0,0)'); gm.addColorStop(Math.max(st(0.36 * 300) + 0.01, st(0.88 * 300)), 'rgba(0,0,0,0)'); gm.addColorStop(1, 'rgba(0,0,0,0.7)');
   tbx.fillStyle = gm; tbx.fillRect(0, 0, bw, bh); ctx.drawImage(tb, 0, 0);
   // weather: distance veiled in rain, spray or driven snow (screen height stands in for depth)
-  if (LIT.fog) {
+  if (LIT.blizzard) paintWhiteout(ctx, bw, bh);
+  else if (LIT.fog) {
     var fg = ctx.createLinearGradient(0, (yo + P(0, 0, 100).y - yo) * KS, 0, P(0, 0, 30).y * KS), hzc = LIT.haze;
     fg.addColorStop(0, rgb(hzc, LIT.fog)); fg.addColorStop(0.55, rgb(hzc, LIT.fog * 0.45)); fg.addColorStop(1, rgb(hzc, LIT.fog * 0.12));
     ctx.fillStyle = fg; ctx.fillRect(0, 0, bw, bh);
@@ -3407,7 +3511,8 @@ function post(ctx, bw, bh, glows, reflGlows, mc) {
   if (L.lit) {
     ctx.globalCompositeOperation = 'lighter';
     var gk = L.name === 'night' ? 1.25 : 0.85;
-    glows.forEach(function (g) { drawGlow(ctx, g.x * KS, g.y * KS, g.r * KS * (g.far ? 1 : 1.25), g.a * gk); });
+    if (LIT.blizzard) glows.forEach(function (g) { var r = g.r * KS * (g.far ? 1 : 1.25); drawGlow(ctx, g.x * KS, g.y * KS, r * 3.4, g.a * gk * 0.16); drawGlow(ctx, g.x * KS, g.y * KS, r * 1.6, g.a * gk * 0.62); });   // lamps through driven snow: wide and soft
+    else glows.forEach(function (g) { drawGlow(ctx, g.x * KS, g.y * KS, g.r * KS * (g.far ? 1 : 1.25), g.a * gk); });
     if (mc && reflGlows.length) {
       var rgc = tmpCanvas(bw, bh), rgx = rgc.getContext('2d'); rgx.globalCompositeOperation = 'lighter';
       reflGlows.forEach(function (g) { drawGlow(rgx, g.x * KS, g.y * KS, g.r * KS * 1.6, g.a * gk * 1.4, 0.45); });
@@ -3432,6 +3537,178 @@ function drawGlow(ctx, x, y, r, a, squash) {
   g.addColorStop(0, 'rgba(255,196,110,' + (0.6 * a) + ')'); g.addColorStop(0.3, 'rgba(255,150,64,' + (0.24 * a) + ')'); g.addColorStop(1, 'rgba(255,120,40,0)');
   ctx.save(); if (squash) { ctx.translate(x, y); ctx.scale(1, 1 / squash); ctx.translate(-x, -y); }
   ctx.fillStyle = g; ctx.fillRect(x - r, y - r, 2 * r, 2 * r); ctx.restore();
+}
+
+/* ---- 07b_sway.js ---- */
+/* ================= trees in a gale: baked layers for the animated sway =================
+   In a typhoon, blizzard or storm the painter bakes, for every tree that reads at this scale:
+     sprite  the tree exactly as painted (final pixels, post-processing included), alpha = where it differs from the town without it
+     patch   what lies behind it: the same painting with the swaying trees left out (rendered and post-processed a second time)
+     mask    the silhouettes of everything standing in front of it (so a bent crown never slides over a nearer roof)
+     wood    willows only: the trunk and limbs, which bend less than the hanging fronds
+   The overlay covers each tree with its patch and redraws the sprite bent from the base, so no ghost edge is left behind. */
+var SWAY_WX = { typhoon: 1, blizzard: 0.8, storm: 0.3 };
+function swayWanted(wx) { return !!SWAY_WX[wx]; }
+function swayTree(kind, t) {
+  return {
+    kind: kind, base: t.base,
+    pts: function () {
+      var L = [];
+      t.segs.forEach(function (s) { L.push([s.a, s.r0 + 0.1], [s.b, s.r1 + 0.1]); });
+      if (t.sprays) t.sprays.forEach(function (s) { L.push([s.p, s.r * 1.25 + 0.15]); });
+      if (t.twigs) t.twigs.forEach(function (tw) { L.push([tw[2], 0.15]); });
+      if (t.strands) t.strands.forEach(function (st) { for (var k = 0; k <= 4; k++) L.push([strandPt(st, k / 4), 0.25]); });
+      if (t.pads) t.pads.forEach(function (pd) { L.push([[pd.x, pd.y, pd.z], pd.r * 1.15 + 0.15]); });
+      if (t.yuki) L.push([[t.top[0], t.top[1] + 1.2 * t.S, t.top[2]], 0.3]);
+      return L;
+    },
+    wood: kind === 'willow' ? function (c) { drawBranches(c, t.segs, [[0, 0, 0], [0, 0, 0], [0, 0, 0]]); } : null
+  };
+}
+function swayCedar(x, z, h, seed) {
+  return { kind: 'cedar', base: [x, 0, z], pts: function () { return [[[x, 0, z], 0.5], [[x, h, z], 0.6], [[x, h * 0.3, z], h * 0.17 + 0.6], [[x, h * 0.6, z], h * 0.12 + 0.5]]; }, wood: null };
+}
+/* how far each kind may bend (fraction of its height at the top) and how stiff it is */
+var SWAY_KIND = { broad: { amp: 0.06, f: 0.7, max: 0.14 }, willow: { amp: 0.07, f: 0.45, max: 0.22 }, pine: { amp: 0.04, f: 0.55, max: 0.09 }, cedar: { amp: 0.045, f: 0.42, max: 0.1 } };
+function swayLogicalBox(o) {
+  var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  o.sway.pts().forEach(function (q) { var p = Pa(q[0]), r = q[1] * p.k; x0 = Math.min(x0, p.x - r); x1 = Math.max(x1, p.x + r); y0 = Math.min(y0, p.y - r); y1 = Math.max(y1, p.y + r); });
+  return [x0 - 2, y0 - 2, x1 + 2, y1 + 2];
+}
+/* separable max filter on a 0/1 byte mask */
+function dilateMask(m, w, h, r) {
+  if (r <= 0) return m;
+  var t = new Uint8Array(w * h), o = new Uint8Array(w * h), x, y, k;
+  for (y = 0; y < h; y++) { var row = y * w, run = -1e9; for (x = 0; x < w; x++) if (m[row + x]) { for (k = Math.max(0, x - r); k <= Math.min(w - 1, x + r); k++) t[row + k] = 1; } }
+  for (x = 0; x < w; x++) for (y = 0; y < h; y++) if (t[y * w + x]) { for (k = Math.max(0, y - r); k <= Math.min(h - 1, y + r); k++) o[k * w + x] = 1; }
+  return o;
+}
+async function bakeSway(job, scene, out, base0, glows, reflGlows, mc, tick) {
+  var bw = out.width, bh = out.height, list = [], i, j, tk;
+  scene.up.forEach(function (o, idx) { if (o.sway) { var b = swayLogicalBox(o); var gb = [Math.max(0, Math.floor(b[0] * KS)), Math.max(0, Math.floor(b[1] * KS)), Math.min(bw, Math.ceil(b[2] * KS)), Math.min(bh, Math.ceil(b[3] * KS))]; if (gb[2] - gb[0] > 3 && gb[3] - gb[1] > 3) list.push({ o: o, idx: idx, gb: gb }); } });
+  if (!list.length) return null;
+  var U = [bw, bh, 0, 0]; list.forEach(function (q) { U[0] = Math.min(U[0], q.gb[0]); U[1] = Math.min(U[1], q.gb[1]); U[2] = Math.max(U[2], q.gb[2]); U[3] = Math.max(U[3], q.gb[3]); });
+  // 1. the town with the swaying trees left out, post-processed like the painting
+  var on = tmpCanvas(bw, bh), ox = on.getContext('2d'), clipP = new Path2D();
+  list.forEach(function (q) { clipP.rect(q.gb[0] / KS - 1, q.gb[1] / KS - 1, (q.gb[2] - q.gb[0]) / KS + 2, (q.gb[3] - q.gb[1]) / KS + 2); });
+  ox.setTransform(KS, 0, 0, KS, 0, 0); ox.save(); ox.clip(clipP);
+  var gl0 = GLOWS.length;
+  for (i = 0; i < scene.up.length; i++) { if (scene.up[i].sway) continue; scene.up[i].draw(ox); tk = tick(); if (tk) await tk; }
+  GLOWS.length = gl0; ox.restore();
+  var bx = base0.getContext('2d'); bx.setTransform(1, 0, 0, 1, 0, 0); bx.drawImage(on, 0, 0);
+  post(bx, bw, bh, glows, reflGlows, mc);
+  await tick(true);
+  // 2. where the painting differs: the trees
+  var ux = U[0], uy = U[1], uw = U[2] - U[0], uh = U[3] - U[1];
+  var A = out.getContext('2d').getImageData(ux, uy, uw, uh).data, Bd = bx.getImageData(ux, uy, uw, uh).data, N = uw * uh, D = new Uint8Array(N), Lb = new Int16Array(N);
+  for (i = 0; i < N; i++) { var k4 = i * 4, d0 = Math.abs(A[k4] - Bd[k4]), d1 = Math.abs(A[k4 + 1] - Bd[k4 + 1]), d2 = Math.abs(A[k4 + 2] - Bd[k4 + 2]); D[i] = Math.max(d0, d1, d2); Lb[i] = -1; }
+  // 3. whose pixel: the nearest tree whose (slightly grown) silhouette covers it, else the nearest whose box holds it
+  var sc = tmpCanvas(8, 8), sx = sc.getContext('2d'), mode0 = MODE, rad = Math.max(2, Math.round(KS * 0.45));
+  function silOf(q, fn) {
+    var w = q.gb[2] - q.gb[0], h = q.gb[3] - q.gb[1]; if (sc.width < w || sc.height < h) { sc.width = Math.max(sc.width, w); sc.height = Math.max(sc.height, h); }
+    sx.setTransform(1, 0, 0, 1, 0, 0); sx.clearRect(0, 0, w, h); sx.setTransform(KS, 0, 0, KS, -q.gb[0], -q.gb[1]);
+    MODE = 'k'; fn(sx); MODE = mode0;
+    var a = sx.getImageData(0, 0, w, h).data, m = new Uint8Array(w * h); for (var p = 0; p < w * h; p++) m[p] = a[p * 4 + 3] > 20 ? 1 : 0; return m;
+  }
+  for (j = list.length - 1; j >= 0; j--) {
+    var q = list[j], gw = q.gb[2] - q.gb[0], gh = q.gb[3] - q.gb[1]; q.sil = silOf(q, q.o.draw); var m = dilateMask(q.sil, gw, gh, rad);
+    if (q.o.sway.wood) q.wood = dilateMask(silOf(q, q.o.sway.wood), gw, gh, 1);
+    for (var yy = 0; yy < gh; yy++) for (var xx = 0; xx < gw; xx++) { if (!m[yy * gw + xx]) continue; var pi = (q.gb[1] + yy - uy) * uw + (q.gb[0] + xx - ux); if (Lb[pi] < 0 && D[pi] > 2) Lb[pi] = j; }
+    tk = tick(); if (tk) await tk;
+  }
+  for (j = list.length - 1; j >= 0; j--) { var g2 = list[j].gb; for (var y2 = g2[1]; y2 < g2[3]; y2++) for (var x2 = g2[0]; x2 < g2[2]; x2++) { var p2 = (y2 - uy) * uw + (x2 - ux); if (Lb[p2] < 0 && D[p2] > 4) Lb[p2] = j; } }
+  // 4. what stands in front of each tree: walk the scene from the nearest object back, keeping the silhouettes gathered so far
+  list.forEach(function (q) { var K = SWAY_KIND[q.o.sway.kind] || SWAY_KIND.broad, e = Math.ceil((q.gb[3] - q.gb[1]) * K.max * 1.2 + 4); q.ge = [Math.max(0, q.gb[0] - e), Math.max(0, q.gb[1] - e), Math.min(bw, q.gb[2] + e), q.gb[3]]; });
+  var acc = tmpCanvas(bw, bh), cc = acc.getContext('2d'), mclip = new Path2D(), byIdx = {};
+  list.forEach(function (q) { mclip.rect(q.ge[0] / KS, q.ge[1] / KS, (q.ge[2] - q.ge[0]) / KS, (q.ge[3] - q.ge[1]) / KS); byIdx[q.idx] = q; });
+  cc.setTransform(KS, 0, 0, KS, 0, 0); cc.save(); cc.clip(mclip); MODE = 'k';
+  for (i = scene.up.length - 1; i >= 0; i--) {
+    var u = scene.up[i];
+    if (u.sway) { var Q = byIdx[i]; if (Q) { var ew = Q.ge[2] - Q.ge[0], eh = Q.ge[3] - Q.ge[1], od = cc.getImageData(Q.ge[0], Q.ge[1], ew, eh).data; Q.occ = new Uint8Array(ew * eh); for (var o2 = 0; o2 < ew * eh; o2++) Q.occ[o2] = od[o2 * 4 + 3]; } continue; }
+    if (u.key >= 1e5) continue;
+    u.draw(cc); tk = tick(); if (tk) { MODE = mode0; await tk; MODE = 'k'; }
+  }
+  MODE = mode0; cc.restore();
+  // 5. each tree: the pixels it owns, the pixels of it hidden behind nearer things (filled in, so a bend never opens a gap),
+  //    its bend allowance and its place in the atlas
+  var metas = [];
+  list.forEach(function (q, jj) {
+    var gw = q.gb[2] - q.gb[0], gh = q.gb[3] - q.gb[1], ew = q.ge[2] - q.ge[0], b = [1e9, 1e9, -1, -1], hole = new Uint8Array(gw * gh), x, y;
+    for (y = 0; y < gh; y++) for (x = 0; x < gw; x++) {
+      var pi = (q.gb[1] + y - uy) * uw + (q.gb[0] + x - ux), L = Lb[pi], li = y * gw + x, own = L === jj;
+      if (!own && q.sil[li]) { var oc = q.occ ? q.occ[(q.gb[1] + y - q.ge[1]) * ew + (q.gb[0] + x - q.ge[0])] : 0; if (oc > 100 || L > jj) hole[li] = 1; }
+      if (own || hole[li]) { var X = q.gb[0] + x, Y = q.gb[1] + y; if (X < b[0]) b[0] = X; if (X > b[2]) b[2] = X; if (Y < b[1]) b[1] = Y; if (Y > b[3]) b[3] = Y; }
+    }
+    if (b[2] < 0 || b[2] - b[0] < 2 || b[3] - b[1] < 2) return;
+    b[0] = Math.max(0, b[0] - 2); b[1] = Math.max(0, b[1] - 2); b[2] = Math.min(bw, b[2] + 3); b[3] = Math.min(bh, b[3] + 3);
+    var bp = Pa(q.o.sway.base), by = bp.y * KS, hp = Math.max(4, by - b[1]), K = SWAY_KIND[q.o.sway.kind] || SWAY_KIND.broad, mg = Math.ceil(hp * K.max * 1.15 + 3);
+    q.hole = hole;
+    metas.push({ q: q, jj: jj, box: b, w: b[2] - b[0], h: b[3] - b[1], mg: mg, by: by, hp: hp, cx: (b[0] + b[2]) / 2, kind: q.o.sway.kind, key: q.o.key, seed: q.idx });
+  });
+  if (!metas.length) return null;
+  // shelf-pack: sprite, patch, (wood), mask per tree
+  var items = [];
+  metas.forEach(function (M) { items.push({ M: M, t: 'aS', w: M.w, h: M.h }, { M: M, t: 'aP', w: M.w, h: M.h }); if (M.q.wood) items.push({ M: M, t: 'aW', w: M.w, h: M.h }); items.push({ M: M, t: 'aM', w: M.w + 2 * M.mg, h: M.h + M.mg }); });
+  var AW = Math.max(256, Math.min(bw, 2400)), cx = 0, cy = 0, rowH = 0;
+  items.sort(function (a, b) { return b.h - a.h; });
+  items.forEach(function (it) { if (cx + it.w > AW) { cx = 0; cy += rowH + 2; rowH = 0; } it.M[it.t] = [cx, cy]; cx += it.w + 2; rowH = Math.max(rowH, it.h); });
+  var AH = cy + rowH + 2, atlas = mkCanvas(AW, AH), ax = atlas.getContext('2d'), img = ax.createImageData(AW, AH), Z = img.data;
+  // 6. sprite (the painting where the tree shows, its hidden parts filled from its own colours), patch (what lies behind it),
+  //    wood (willow limbs), mask (what stands in front)
+  metas.forEach(function (M) {
+    var q = M.q, b = M.box, w = M.w, h = M.h, own = new Uint8Array(w * h), fill = new Uint8Array(w * h), x, y, gb = q.gb, gw = gb[2] - gb[0], gh = gb[3] - gb[1], wood = q.wood;
+    for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+      var pi = (b[1] + y - uy) * uw + (b[0] + x - ux), gx = b[0] + x - gb[0], gy = b[1] + y - gb[1], inG = gx >= 0 && gy >= 0 && gx < gw && gy < gh;
+      own[y * w + x] = Lb[pi] === M.jj && D[pi] > 1 ? 1 : 0; fill[y * w + x] = inG && q.hole[gy * gw + gx] ? 1 : 0;
+    }
+    // colours: own pixels from the painting, hidden ones grown inward from them (onion-peel average of known neighbours)
+    var R = new Float32Array(w * h * 3), known = new Uint8Array(w * h), front = [], li;
+    for (li = 0; li < w * h; li++) if (own[li]) { var s4 = ((b[1] + ((li / w) | 0) - uy) * uw + (b[0] + li % w - ux)) * 4; R[li * 3] = A[s4]; R[li * 3 + 1] = A[s4 + 1]; R[li * 3 + 2] = A[s4 + 2]; known[li] = 1; }
+    for (li = 0; li < w * h; li++) if (fill[li] && !known[li]) front.push(li);
+    for (var pass = 0; pass < 400 && front.length; pass++) {
+      var next = [], set = [];
+      for (var f = 0; f < front.length; f++) {
+        var id = front[f], fx = id % w, fy = (id / w) | 0, sr = 0, sg = 0, sb = 0, n = 0;
+        for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++) { var nx = fx + dx, ny = fy + dy; if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue; var ni = ny * w + nx; if (known[ni] === 1) { sr += R[ni * 3]; sg += R[ni * 3 + 1]; sb += R[ni * 3 + 2]; n++; } }
+        if (n) { R[id * 3] = sr / n; R[id * 3 + 1] = sg / n; R[id * 3 + 2] = sb / n; set.push(id); } else next.push(id);
+      }
+      if (!set.length) break;
+      for (f = 0; f < set.length; f++) known[set[f]] = 1;
+      front = next;
+    }
+    var grown = dilateMask(own, w, h, 2);
+    for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+      li = y * w + x; var pi2 = (b[1] + y - uy) * uw + (b[0] + x - ux), s5 = pi2 * 4;
+      if (own[li] || (fill[li] && known[li])) {
+        var gx2 = b[0] + x - gb[0], gy2 = b[1] + y - gb[1], isWood = !!wood && gx2 >= 0 && gy2 >= 0 && gx2 < gw && gy2 < gh && wood[gy2 * gw + gx2] === 1;
+        var slot = isWood ? M.aW : M.aS, o4 = ((slot[1] + y) * AW + slot[0] + x) * 4;
+        Z[o4] = R[li * 3]; Z[o4 + 1] = R[li * 3 + 1]; Z[o4 + 2] = R[li * 3 + 2]; Z[o4 + 3] = own[li] ? Math.round(255 * clamp((D[pi2] - 1) / 3)) : 255;   // own: the colour already holds the antialiased mix
+      }
+      if (grown[li]) { var o5 = ((M.aP[1] + y) * AW + M.aP[0] + x) * 4; Z[o5] = Bd[s5]; Z[o5 + 1] = Bd[s5 + 1]; Z[o5 + 2] = Bd[s5 + 2]; Z[o5 + 3] = own[li] ? 255 : 150; }
+    }
+    // the mask: silhouettes of everything nearer, over the tree's reach
+    var ew = q.ge[2] - q.ge[0], mx0 = b[0] - M.mg, my0 = b[1] - M.mg, mw = w + 2 * M.mg, mh = h + M.mg, mb = [1e9, 1e9, -1, -1];
+    if (q.occ) for (y = 0; y < mh; y++) for (x = 0; x < mw; x++) {
+      var ex = mx0 + x - q.ge[0], ey = my0 + y - q.ge[1]; if (ex < 0 || ey < 0 || ex >= ew || ey >= q.ge[3] - q.ge[1]) continue;
+      var al = q.occ[ey * ew + ex]; if (al < 8) continue;
+      var o6 = ((M.aM[1] + y) * AW + M.aM[0] + x) * 4; Z[o6 + 3] = al;
+      if (x < mb[0]) mb[0] = x; if (x > mb[2]) mb[2] = x; if (y < mb[1]) mb[1] = y; if (y > mb[3]) mb[3] = y;
+    }
+    M.mb = mb[2] < 0 ? null : [mb[0], mb[1], mb[2] - mb[0] + 1, mb[3] - mb[1] + 1];
+  });
+  // the opaque span of every 8 rows of each sprite, so the overlay draws no more than it must
+  function spans(slot, M) {
+    if (!slot) return null;
+    var out = [];
+    for (var y0 = 0; y0 < M.h; y0 += 8) { var a0 = 1e9, a1 = -1; for (var y = y0; y < Math.min(M.h, y0 + 8); y++) for (var x = 0; x < M.w; x++) if (Z[((slot[1] + y) * AW + slot[0] + x) * 4 + 3]) { if (x < a0) a0 = x; if (x > a1) a1 = x; } out.push(a1 < 0 ? [0, 0] : [a0, a1 + 1]); }
+    return out;
+  }
+  metas.forEach(function (M) { M.rs = spans(M.aS, M); M.rw = spans(M.aW, M); });
+  ax.putImageData(img, 0, 0); img = null; Z = null;
+  return {
+    atlas: atlas, bw: bw,
+    meta: metas.map(function (M) { return { k: M.kind, b: M.box, s: M.aS, p: M.aP, w: M.aW || null, m: M.aM, mb: M.mb, rs: M.rs, rw: M.rw, mg: M.mg, by: Math.round(M.by * 10) / 10, hp: Math.round(M.hp * 10) / 10, cx: M.cx, key: M.key, seed: M.seed }; })
+  };
 }
 
 /* ---- 08_anim.js ---- */
@@ -3577,7 +3854,7 @@ function animGeo(o) {
   g.cherries = [];
   if (F.riverCherry > 0) [[-46, 64.5, 0.9], [-14.5, 40.6, 0.8], [-28, 47.3, 0.85], [19.5, 21.5, 0.95], [31.5, 14.5, 0.9]].forEach(function (a) { g.cherries.push([a[0], a[1], 4.6 * a[2], 3.2]); });
   if (F.temple) g.cherries.push([-6, 94, 4.8, 3]);
-  g.fallers = g.wx === 'typhoon' ? (o.season === 'autumn' || o.season === 'summer' ? 'leaf' : null) : o.season === 'autumn' ? 'leaf' : wxSnowy(g.wx) || (o.season === 'winter' && !wxWet(g.wx)) ? 'snow' : null;
+  g.fallers = g.wx === 'blizzard' ? null : g.wx === 'typhoon' ? (o.season === 'autumn' || o.season === 'summer' ? 'leaf' : null) : o.season === 'autumn' ? 'leaf' : wxSnowy(g.wx) || (o.season === 'winter' && !wxWet(g.wx)) ? 'snow' : null;
   g.petalSrc = petalSources(g);
   g.srcs = [];
   if (o.season === 'autumn') {
@@ -3593,7 +3870,7 @@ function animGeo(o) {
   g.ridgeY = skyBand() + 46;
   g.horizonY = P(0, 0, 92).y;
   g.tsukimi = F.event === 'tsukimi' && (o.light === 'dusk' || o.light === 'night');
-  g.moon = LIT.moon || g.tsukimi ? moonGlade() : null;
+  g.moon = (LIT.moon || g.tsukimi) && (g.wx === 'clear' || g.wx === 'cloudy') ? moonGlade() : null;   // no moon on the water under rain, snow or a gale
   g.koi = F.event === 'kodomo' ? koiPoles() : [];
   g.tana = F.event === 'tanabata' ? tanabataList() : [];
   if (F.event === 'obon' && LIT.lit) { g.toro = { pa: boatPath(), n: 16, off: [] }; for (i = 0; i < 16; i++) g.toro.off.push([rng() * 200, (rng() - 0.5) * 7, rng() * TAU]); }
@@ -4695,8 +4972,8 @@ function weatherLight(L, w) {
   if (!w || w === 'clear' || w === 'after') return L;
   var o = {}, k; for (k in L) o[k] = L[k];
   var night = L.name === 'night', dusk = L.name === 'dusk', dark = w === 'storm' ? 1 : w === 'typhoon' ? 0.95 : w === 'blizzard' ? 0.5 : w === 'rain' ? 0.6 : w === 'snow' ? 0.35 : 0.2;
-  var grey = night ? [26, 32, 46] : dusk ? [118, 104, 112] : w === 'typhoon' ? [132, 146, 128] : w === 'blizzard' ? [218, 222, 232] : [150, 156, 166];
-  var greyD = night ? [14, 18, 30] : dusk ? [70, 62, 74] : w === 'typhoon' ? [84, 98, 84] : w === 'blizzard' ? [180, 186, 200] : [96, 102, 116];
+  var grey = night ? [26, 32, 46] : dusk ? [118, 104, 112] : w === 'typhoon' ? [132, 146, 128] : w === 'blizzard' ? [196, 204, 218] : [150, 156, 166];
+  var greyD = night ? [14, 18, 30] : dusk ? [70, 62, 74] : w === 'typhoon' ? [84, 98, 84] : w === 'blizzard' ? [156, 166, 184] : [96, 102, 116];
   var g = mixc(grey, greyD, clamp((dark - 0.3) / 0.7));
   var lift = w === 'cloudy' ? 0.55 : w === 'snow' ? 0.75 : 0.85;
   o.skyTop = mixc(L.skyTop, g, lift); o.skyHor = mixc(L.skyHor, mixc(g, [255, 255, 255], night ? 0 : 0.2), lift);
@@ -4707,12 +4984,17 @@ function weatherLight(L, w) {
   o.sunGlow = 'rgba(255,255,255,0)'; o.wash = ['rgba(200,210,220,0.12)', 'rgba(200,210,220,0.04)'];
   if (L.grade) o.grade = L.grade.map(function (c) { return mixc(c, [200, 204, 214], 0.3); });
   o.vig = scl(L.vig, 1 - dark * 0.15); o.mist = Math.max(L.mist, wxWet(w) ? 0.45 : L.mist);
-  if (w === 'blizzard') { o.haze = night ? [60, 66, 86] : mixc([226, 230, 238], o.haze, 0.2); o.hazeK = L.hazeK * 3.2; o.win = Math.max(L.win, 0.4); o.lit = true; }
+  if (w === 'blizzard') {   // a whiteout: dim, cool and shadowless; the lamps lit by day
+    o.haze = night ? [56, 64, 88] : dusk ? [168, 166, 180] : mixc([204, 212, 226], o.haze, 0.15); o.hazeK = L.hazeK * 3.4; o.win = Math.max(L.win, 0.45); o.lit = true;
+    o.sunc = scl(L.sunc, 0.1); o.amb = mulc(o.amb, night ? [0.92, 0.96, 1.08] : [0.9, 0.95, 1.04]); o.shadowA = L.shadowA * 0.05; o.bloom = L.bloom * 0.4;
+    o.grade = night ? (L.grade || [[255, 255, 255], [255, 255, 255], [255, 255, 255]]).map(function (c) { return mulc(c, [0.9, 0.94, 1.04]); }) : [[222, 228, 242], [232, 237, 247], [224, 230, 242]];
+    o.vig = scl(L.vig, 0.92); o.blizzard = true;
+  }
   if (w === 'typhoon') { o.hazeK = L.hazeK * 2.2; o.win = Math.max(L.win, 0.25); }
   if (w === 'rain' || w === 'storm') o.win = Math.max(L.win, 0.15);
   function tint(Q) { var d = Math.max(0, Q.sun[1]) * 0.95; return [Q.amb[0] + Q.sunc[0] * d, Q.amb[1] + Q.sunc[1] * d, Q.amb[2] + Q.sunc[2] * d]; }
   var tb = tint(L), tw = tint(o); o.foliageTint = [clamp(tw[0] / tb[0], 0.3, 1.1), clamp(tw[1] / tb[1], 0.3, 1.1), clamp(tw[2] / tb[2], 0.3, 1.1)];
-  o.fog = w === 'blizzard' ? 0.8 : w === 'typhoon' ? 0.45 : w === 'storm' ? 0.32 : w === 'rain' ? 0.24 : w === 'snow' ? 0.3 : 0.08;
+  o.fog = w === 'blizzard' ? 0.86 : w === 'typhoon' ? 0.45 : w === 'storm' ? 0.32 : w === 'rain' ? 0.24 : w === 'snow' ? 0.3 : 0.08;
   o.wx = w; o.base = L;
   return o;
 }
@@ -4727,6 +5009,44 @@ function paintOvercast(ctx, yo, w) {
     ctx.save(); ctx.translate(x, y); ctx.scale(1, ry / rx); ctx.translate(-x, -y); ctx.fillStyle = gg; ctx.fillRect(x - rx, y - rx, rx * 2, rx * 2); ctx.restore();
   }
 }
+/* blizzard whiteout (in post, device pixels): visibility falls off with distance along the ground, and the air is full of
+   streaming bands of blown snow, thicker far away, slanting downwind; the far town and the hills dissolve into it */
+var STREAK_TEX = null;
+function streakTex() {
+  if (STREAK_TEX) return STREAK_TEX;
+  var w = 256, h = 48, c = mkCanvas(w, h), x = c.getContext('2d'), r = mulberry32(919), img = x.createImageData(w, h), d = img.data, nz = makeNoise(41);
+  for (var j = 0; j < h; j++) for (var i = 0; i < w; i++) {
+    var u = i / w, v = j / h, env = Math.pow(Math.sin(Math.PI * u), 1.3) * Math.exp(-Math.pow((v - 0.5) / 0.26, 2));
+    var st = 0.55 + 0.45 * nz.n2(i * 0.025, j * 0.55) + 0.25 * (nz.n2(i * 0.08 + 9, j * 1.3) - 0.5), k = (j * w + i) * 4;
+    d[k] = d[k + 1] = d[k + 2] = 255; d[k + 3] = clamp(env * st * 1.15) * 255;
+  }
+  x.putImageData(img, 0, 0); STREAK_TEX = c; return c;
+}
+function whiteoutAlpha(fogMax) {   // fog alpha by the depth of the ground seen (scene z): clear close by, a whiteout by the far town
+  return function (z) { return fogMax * (0.05 + 0.95 * Math.pow(clamp((z - 2) / 98), 1.55)); };
+}
+function paintWhiteout(ctx, bw, bh) {
+  var night = LIT.name === 'night', col = LIT.haze, lite = night ? mixc(col, [150, 162, 196], 0.35) : mixc(col, [246, 248, 252], 0.55), fa = whiteoutAlpha(LIT.fog), sign = WIND_LEAN >= 0 ? 1 : -1, i;
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+  // 1. the veil: per screen row, by the distance of the ground seen there (above the ground: the far limit)
+  var g = ctx.createLinearGradient(0, 0, 0, bh), yo = P(0, 0, GROUND_FAR).y;
+  for (i = 0; i <= 24; i++) { var y = i / 24 * H, gp = y > yo ? groundAt(W / 2, y) : null, zz = gp ? gp.z : GROUND_FAR + 20; g.addColorStop(i / 24, rgb(col, clamp(fa(zz), 0, 0.95))); }
+  ctx.fillStyle = g; ctx.fillRect(0, 0, bw, bh);
+  // 2. bands of blown snow streaming with the wind, densest in the distance
+  var tex = streakTex(), r = mulberry32(5150), slope = 0.07 * sign, n = Math.round(150 * Math.sqrt(DQ));
+  ctx.globalCompositeOperation = 'source-over';
+  var tint = mkCanvas(tex.width, tex.height), tx = tint.getContext('2d'); tx.drawImage(tex, 0, 0); tx.globalCompositeOperation = 'source-in'; tx.fillStyle = rgb(lite); tx.fillRect(0, 0, tint.width, tint.height);
+  for (i = 0; i < n; i++) {
+    var zf = lerp(8, GROUND_FAR + 10, Math.pow(r(), 0.55)), y2 = P(0, 0, zf).y - r() * 6, gp2 = groundAt(W / 2, y2), z2 = gp2 ? gp2.z : GROUND_FAR;
+    var k2 = CAM.F / P(0, 0, zf).d, L = (10 + r() * 22) * k2 * (0.6 + r() * 0.8), hh = L * (0.05 + r() * 0.06), x2 = r() * (W + L) - L / 2;
+    var a = 0.32 * Math.pow(clamp(fa(z2) / LIT.fog), 0.8) * (0.4 + r() * 0.7) * (night ? 0.7 : 1);
+    ctx.globalAlpha = clamp(a); ctx.setTransform(KS, KS * slope * 0.6, 0, KS, 0, 0);
+    ctx.drawImage(tint, x2 - L / 2, y2 - x2 * slope * 0.6 - hh / 2, L, hh);
+  }
+  // 3. a few long curtains of snow sweeping across the far town
+  for (i = 0; i < 5; i++) { var cy = lerp(yo - 20, H * 0.55, r()), cw = W * (0.5 + r() * 0.6), ch = 26 + r() * 30, cx = r() * W; ctx.globalAlpha = 0.16 + r() * 0.14; ctx.setTransform(KS, KS * slope, 0, KS, 0, 0); ctx.drawImage(tint, cx - cw / 2, cy - cx * slope - ch / 2, cw, ch); }
+  ctx.restore();
+}
 /* a faint rainbow opposite the sun after a summer afternoon shower */
 function paintRainbow(ctx, yo) {
   var cx = W * (LIT.sunX > 0.5 ? 0.3 : 0.7), cy = yo + 122, R = 112, cols = [[255, 70, 60], [255, 160, 50], [255, 236, 90], [90, 210, 100], [80, 140, 255], [130, 90, 220]];
@@ -4738,7 +5058,7 @@ function paintRainbow(ctx, yo) {
 /* ---------------- animated weather (overlay) ---------------- */
 function initWeatherFx(g, rng) {
   var wx = g.wx, X = { wx: wx, drops: [], splash: [], ripples: [], drips: [], flash: null };
-  if (!wxWet(wx)) return wxSnowy(wx) ? X : null;
+  if (!wxWet(wx)) { if (wx === 'blizzard') X.bz = makeBlizzard(g, rng); return wxSnowy(wx) ? X : null; }
   var heavy = wx === 'storm' ? 1.6 : wx === 'typhoon' ? 2.2 : 1, layers = [[0.35, 230], [0.65, 120], [1, 46]];
   layers.forEach(function (Ly, li) { for (var i = 0; i < Math.round(Ly[1] * heavy); i++) X.drops.push({ x: rng() * (g.W + 120) - 60, y: rng() * g.H, d: Ly[0], v: 150 + Ly[0] * 160 + rng() * 40, L: 3 + Ly[0] * 9 + rng() * 3, li: li }); });
   for (var i = 0; i < 40 * heavy; i++) X.splash.push({ x: rng() * g.W, y: g.horizonY + Math.pow(rng(), 0.7) * (g.H - g.horizonY), t: rng(), r: rng() });
@@ -4809,13 +5129,66 @@ function drawLightning(ctx, g, L, t) {
   ctx.globalCompositeOperation = 'source-over';
   return true;
 }
-/* a blizzard: driven snow veils sweeping across */
-function drawBlizzardVeil(ctx, g, t) {
-  var Wd = gWind(g);
-  for (var i = 0; i < 5; i++) {
-    var span = g.W + 260, sx = ((t * (40 + i * 9) * Wd.sign + i * 173) % span + span) % span - 130, y = g.H * (0.15 + i * 0.17), gr = ctx.createRadialGradient(sx, y, 0, sx, y, 130);
-    gr.addColorStop(0, 'rgba(240,244,250,0.28)'); gr.addColorStop(1, 'rgba(240,244,250,0)'); ctx.fillStyle = gr; ctx.save(); ctx.translate(sx, y); ctx.scale(1, 0.35); ctx.translate(-sx, -y); ctx.fillRect(sx - 130, y - 130, 260, 260); ctx.restore();
+/* a blizzard: snow driven nearly sideways in three depths (far specks, mid streaks, near fast streaks),
+   gusts that thicken it into a brief whiteout, sheets of snow sweeping across and spindrift racing along the ground */
+var CURTAIN_TEX = null;
+function curtainTex() {
+  if (CURTAIN_TEX) return CURTAIN_TEX;
+  var w = 256, h = 160, c = mkCanvas(w, h), x = c.getContext('2d'), r = mulberry32(77);
+  for (var i = 0; i < 520; i++) {
+    var y = r() * h, x0 = r() * w * 1.4 - w * 0.2, L = 20 + r() * 90, env = Math.sin(Math.PI * y / h);
+    x.strokeStyle = 'rgba(255,255,255,' + (0.05 + 0.2 * r()) * env + ')'; x.lineWidth = 0.6 + r() * 1.6; x.beginPath(); x.moveTo(x0, y); x.lineTo(x0 + L, y + L * 0.04); x.stroke();
   }
+  var g = x.createLinearGradient(0, 0, w, 0); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.25, 'rgba(0,0,0,0)'); g.addColorStop(0.75, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,1)');
+  x.globalCompositeOperation = 'destination-out'; x.fillStyle = g; x.fillRect(0, 0, w, h);
+  CURTAIN_TEX = c; return c;
+}
+function makeBlizzard(g, rng) {
+  var B = { f: [], cur: [], spin: [], t: 0 }, i, NL = [520, 280, 70];
+  for (var l = 0; l < 3; l++) for (i = 0; i < NL[l]; i++) B.f.push({ l: l, x: rng() * (g.W + 80) - 40, y: rng() * g.H, sp: 0.7 + rng() * 0.6, ph: rng() * TAU, sz: rng() });
+  for (i = 0; i < 4; i++) B.cur.push({ x: rng() * (g.W + 400) - 200, y: g.horizonY - 60 + rng() * (g.H - g.horizonY + 40), w: 160 + rng() * 160, h: 50 + rng() * 70, sp: 0.8 + rng() * 0.5, a: 0.12 + rng() * 0.12 });
+  for (i = 0; i < 9; i++) B.spin.push({ x: rng() * g.W, y: g.horizonY + 20 + Math.pow(rng(), 0.6) * (g.H - g.horizonY - 20), w: 30 + rng() * 60, sp: 0.8 + rng() * 0.7, a: 0.18 + rng() * 0.2 });
+  return B;
+}
+function drawBlizzard(ctx, g, B, t, dt) {
+  var Wd = gWind(g), sg = Wd.sign, k = Wd.k || 1, gust = clamp((k - 1) / 1.6), str = 0.75 + 0.35 * Math.min(1, Wd.s / Math.max(0.01, Wd.k)), night = g.LIT.name === 'night', i, f;
+  var U = [62, 110, 190], V = [16, 26, 40], span = g.W + 80;
+  B.t += dt;
+  // sheets of snow sweeping across, behind the flakes
+  var ct = curtainTex(), slope = 0.12;
+  B.cur.forEach(function (c) {
+    c.x += sg * dt * 150 * c.sp * str * (0.8 + 0.5 * gust);
+    if (sg > 0 && c.x - c.w > g.W + 40) { c.x = -c.w - 40; c.y = g.horizonY - 60 + Math.random() * (g.H - g.horizonY + 40); } else if (sg < 0 && c.x + c.w < -40) { c.x = g.W + c.w + 40; c.y = g.horizonY - 60 + Math.random() * (g.H - g.horizonY + 40); }
+    ctx.save(); ctx.globalAlpha = clamp(c.a * (0.7 + 0.9 * gust) * (night ? 0.6 : 1)); ctx.translate(c.x, c.y); ctx.transform(1, slope, 0, 1, 0, 0); if (sg < 0) ctx.scale(-1, 1);
+    ctx.drawImage(ct, -c.w / 2, -c.h / 2, c.w, c.h); ctx.restore();
+  });
+  // spindrift: snow streaming low over the ground
+  var st = tintedSprite(night ? [150, 160, 190] : [244, 247, 252]);
+  B.spin.forEach(function (c) {
+    c.x += sg * dt * 210 * c.sp * (0.7 + 0.6 * gust); if (sg > 0 && c.x - c.w > g.W) c.x = -c.w; else if (sg < 0 && c.x + c.w < 0) c.x = g.W + c.w;
+    stamp(ctx, st, c.x, c.y, c.w, 1.6 + c.w * 0.03, c.a * (0.6 + 0.8 * gust) * (night ? 0.6 : 1));
+  });
+  ctx.globalAlpha = 1;
+  // the flakes
+  var col = night ? [150, 162, 196] : [250, 252, 255], P0 = new Path2D(), P1 = new Path2D(), P2 = new Path2D(), P3 = new Path2D();
+  for (i = 0; i < B.f.length; i++) {
+    f = B.f[i];
+    var u = U[f.l] * f.sp * str * (1 + 0.9 * gust), v = V[f.l] * f.sp + Math.sin(B.t * (1.3 + f.l * 0.4) + f.ph) * (8 + f.l * 6);
+    f.x += sg * u * dt; f.y += v * dt;
+    if (f.y > g.H + 4) { f.y -= g.H + 8; f.x = Math.random() * span - 40; }
+    if (f.x > g.W + 40) { f.x -= span; f.y = Math.random() * g.H; } else if (f.x < -40) { f.x += span; f.y = Math.random() * g.H; }
+    if (f.l === 0) { var r0 = 0.28 + f.sz * 0.25; P0.rect(f.x - r0, f.y - r0, r0 * 2, r0 * 2); }
+    else { var L = (f.l === 1 ? 0.016 : 0.024) * u * (0.5 + f.sz), pp = f.l === 1 ? P1 : f.sz < 0.6 ? P2 : P3; pp.moveTo(f.x, f.y); pp.lineTo(f.x - sg * L, f.y - L * v / u); }
+  }
+  var fa = night ? 0.5 : 1;
+  ctx.fillStyle = rgb(col, 0.55 * fa); ctx.fill(P0);
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = rgb(col, (0.42 + 0.2 * gust) * fa); ctx.lineWidth = 0.5; ctx.stroke(P1);
+  ctx.strokeStyle = rgb(col, (0.5 + 0.2 * gust) * fa); ctx.lineWidth = 0.75; ctx.stroke(P2);
+  ctx.strokeStyle = rgb(col, (0.4 + 0.2 * gust) * fa); ctx.lineWidth = 1.25; ctx.stroke(P3);
+  ctx.lineCap = 'butt';
+  // a gust: the air fills, the town dims into the white for a moment
+  if (gust > 0.02) { ctx.fillStyle = rgb(night ? [70, 78, 104] : [226, 230, 240], 0.12 * gust); ctx.fillRect(0, 0, g.W, g.H); }
 }
 /* the bangasa umbrella over a walker */
 var UMB_COLS = [[150, 40, 30], [40, 52, 84], [176, 124, 64], [60, 70, 60], [120, 30, 40]];
@@ -4956,63 +5329,64 @@ function townCatSpot() {   // a town cat dozing in the sun
   if (F.teahouse) { var tb = teaFrame(), q = tb.L(1.6, -2.6, 0); return { x: q[0], z: q[2], y: 0 }; }
   return null;
 }
-function tapTrees() {   // trees one can tap: [x, z, crown height, crown radius, kind]
+/* trees one can tap: from the scene's own trees, so the target is where the crown is painted */
+function tapTreeList() {
   var out = [];
-  if (F.riverCherry > 0) RIVER_CHERRY.forEach(function (a) { out.push([a[0], a[1], 3.6 * a[2] * F.riverCherry, 3.6 * a[2] * F.riverCherry, 'cherry']); });
-  if (F.temple) { out.push([-6, 94, 3.8, 3.8, 'cherry']); out.push([-28, 95.5, 3.4, 3.2, 'maple']); out.push([-47, 80, 3.2, 3, 'maple']); }
-  out.push([TREE0.x, TREE0.z, 4.2 * F.tree0, 4.2 * F.tree0, 'broad']);
-  if (F.farm) out.push([KAKI.x, KAKI.z, 3.0, 2.8, 'kaki']);
-  GROVES.forEach(function (gv) { if (F.s < gv[2]) out.push([gv[0], gv[1], 3.6, 3.4, 'broad']); });
+  buildScene().up.forEach(function (o) {
+    if (!o.tap || !o.sway) return;
+    var b = swayLogicalBox(o), bp = Pa(o.sway.base);
+    out.push({ x: (b[0] + b[2]) / 2, y: (b[1] + Math.min(b[3], bp.y)) / 2, rx: (b[2] - b[0]) / 2 + 2, ry: (Math.min(b[3], bp.y + 2) - b[1]) / 2 + 2, kind: o.tap, d: o.key, w: o.sway });
+  });
   return out;
 }
 function initInteract(g) {
   var I = { bell: null, birds: [], wheel: 0, lamps: [], trees: [], koi: null, paddy: null, taiko: null, cat: null, outs: [] };
-  if (g.stage >= 14) I.bellP = P(BELL.x, 3.2, BELL.z);
+  if (g.stage >= 14) { I.bellP = P(BELL.x, 3.2, BELL.z); var bb = screenBox([[BELL.x - 2.6, 0, BELL.z - 2.6], [BELL.x + 2.6, 6.2, BELL.z + 2.6]], 1); I.bellBox = { x: (bb[0] + bb[2]) / 2, y: (bb[1] + bb[3]) / 2, rx: (bb[2] - bb[0]) / 2 + 2, ry: (bb[3] - bb[1]) / 2 + 2, d: P(BELL.x, 0, BELL.z).d }; }
   if (g.F.mill) I.wheelP = Pa(g.wheel ? g.wheel.c : millWheelGeom().c);
   if (g.F.festival) { var tk = TAIKO(); I.taikoW = tk; I.taikoP = P(tk.x, 1.2, tk.z); }
   var cs = townCatSpot(); if (cs) { I.catW = cs; I.catP = P(cs.x, 0.3, cs.z); }
-  I.treeList = tapTrees().map(function (q) { var p = P(q[0], q[2], q[1]); return { x: p.x, y: p.y, r: q[3] * p.k, w: q, kind: q[4] }; });
+  I.treeList = tapTreeList();
+  if (I.wheelP) I.wheelR = MILL.wr * I.wheelP.k + 2;
   return I;
 }
 /* the hit test: returns the name of what was touched, after starting its animation */
 function tapScene(g, I, x, y, t, rng, api) {
-  function near(p, r) { return p && Math.hypot(p.x - x, (p.y - y) * 1.15) < r; }
-  // a cat
-  if (api.rareCat && near(api.rareCat, 10)) { api.rareCatTap(); return 'cat'; }
-  if (I.catP && near(I.catP, 9)) { I.cat = { t0: t, kind: rng() < 0.5 ? 'stretch' : 'hop' }; return 'cat'; }
-  // a townsperson
-  var best = null, bd = 9;
-  for (var i = 0; i < g.walkers.length; i++) { var w = g.walkers[i], wp = walkerPos(g, w), f = P(wp.x, wp.y + 0.8, wp.z), d = Math.hypot(f.x - x, f.y - y); if (d < bd) { bd = d; best = w; } }
-  if (best) { best.react = { t0: t, kind: rng() < 0.6 ? 'bow' : 'wave', pause0: best.pause }; best.pause = Math.max(best.pause, 2.6); return 'person'; }
-  if (I.taikoP && near(I.taikoP, 14)) { I.taiko = { t0: t }; return 'taiko'; }
-  if (I.bellP && near(I.bellP, 20)) {
+  // every target near the touch scores its distance over its own size; the best one answers (small things favoured)
+  var best = null;
+  function cand(sc, fn) { if (sc < 1 && (!best || sc < best.s)) best = { s: sc, fn: fn }; }
+  function circ(p, r) { return Math.hypot(p.x - x, (p.y - y) * 1.15) / r; }
+  if (api.rareCat) cand(circ(api.rareCat, 10) * 0.7, function () { api.rareCatTap(); return 'cat'; });
+  if (I.catP && api.catShown) cand(circ(I.catP, Math.max(6, 1.3 * I.catP.k + 2)) * 0.7, function () { I.cat = { t0: t, kind: rng() < 0.5 ? 'stretch' : 'hop' }; return 'cat'; });
+  g.walkers.forEach(function (w) {
+    var wp = walkerPos(g, w), f = P(wp.x, wp.y + 0.8, wp.z);
+    cand(circ(f, Math.max(6, 1.1 * f.k + 2.5)) * 0.7, function () { w.react = { t0: t, kind: rng() < 0.6 ? 'bow' : 'wave', pause0: w.pause }; w.pause = Math.max(w.pause, 2.6); return 'person'; });
+  });
+  if (I.taikoP) cand(circ(I.taikoP, Math.max(8, 1.8 * I.taikoP.k)) * 0.8, function () { I.taiko = { t0: t }; return 'taiko'; });
+  var big = I.treeList.slice(); if (I.bellBox) big.push({ x: I.bellBox.x, y: I.bellBox.y, rx: I.bellBox.rx, ry: I.bellBox.ry, d: I.bellBox.d, bell: true });
+  function ringBell() {
     I.bell = { t0: t };
     var tf = templeFrame(); for (var b = 0; b < 8; b++) { var rp = P(tf.L(-5 + b * 1.4, 0.5, 0)[0], 9.2, tf.L(-5 + b * 1.4, 0.5, 0)[2]); I.birds.push({ x: rp.x, y: rp.y, vx: (rng() - 0.5) * 16, vy: -10 - rng() * 8, t0: t + 0.3 + rng() * 0.5, ph: rng() * TAU }); }
     return 'bell';
   }
-  if (I.wheelP && near(I.wheelP, 16)) { I.wheel = t; return 'wheel'; }
+  if (I.wheelP) cand(circ(I.wheelP, Math.max(7, I.wheelR)), function () { I.wheel = t; return 'wheel'; });
   // a shop noren: it flutters and someone steps out
-  for (i = 0; i < g.noren.length; i++) {
-    var n = g.noren[i], a = Pa(n.W.at(n.s0 - 0.6, n.top + 0.6, 0.3)), c = Pa(n.W.at(n.s1 + 0.6, 0, 0.3));
-    if (x > Math.min(a.x, c.x) - 3 && x < Math.max(a.x, c.x) + 3 && y > Math.min(a.y, c.y) - 3 && y < Math.max(a.y, c.y) + 3) {
+  g.noren.forEach(function (n) {
+    var a = Pa(n.W.at(n.s0 - 0.3, n.top + 0.3, 0.3)), c = Pa(n.W.at(n.s1 + 0.3, n.top - n.len - 0.4, 0.3)), cx = (a.x + c.x) / 2, cy = (a.y + c.y) / 2, hw = Math.abs(a.x - c.x) / 2 + 3, hh = Math.abs(a.y - c.y) / 2 + 3;
+    cand(Math.max(Math.abs(x - cx) / hw, Math.abs(y - cy) / hh) * 0.75, function () {
       n.boost = t;
       var mid = (n.s0 + n.s1) / 2, d0 = n.W.at(mid, 0, 0.25), d1 = n.W.at(mid + 0.4, 0, 3.4), d2 = n.W.at(mid + 4, 0, 3.6), pa = { pts: [[d0[0], d0[2]], [d1[0], d1[2]], [d2[0], d2[2]]], band: n.band, spread: 0, w: 0 };
       pa.pa = polyLen(pa.pts); g.paths.push(pa);
       var nw = makeWalker(g, g.paths.length - 1, rng, 99); nw.s = 0; nw.dir = 1; nw.pause = 0; nw.temp = t + 16; g.walkers.push(nw);
       return 'noren';
-    }
-  }
+    });
+  });
   // a lantern
-  for (i = 0; i < (g.glows || []).length; i++) { var gl = g.glows[i]; if (Math.hypot(gl.x - x, gl.y - y) < 6) { I.lamps.push({ i: i, t0: t }); return 'lantern'; } }
-  // a tree
-  for (i = I.treeList.length - 1; i >= 0; i--) {
-    var tr = I.treeList[i]; if (Math.hypot(tr.x - x, (tr.y - y) * 1.2) < tr.r * 1.1 + 4) {
-      var parts = [], kind = g.SEA.snow ? 'snow' : g.season === 'spring' && tr.kind === 'cherry' ? 'petal' : g.season === 'autumn' ? 'leaf' : 'leafg';
-      for (var k = 0; k < 26; k++) parts.push({ x: tr.x + (rng() - 0.5) * tr.r * 1.4, y: tr.y + (rng() - 0.5) * tr.r * 0.7, vx: (rng() - 0.5) * 6, vy: kind === 'snow' ? 4 + rng() * 6 : 2 + rng() * 5, rot: rng() * TAU, ph: rng() * TAU, col: kind === 'leaf' ? ramp([[176, 40, 22], [222, 110, 40], [232, 176, 60]], rng()) : kind === 'leafg' ? ramp([[60, 100, 40], [110, 150, 60]], rng()) : [250, 226, 234] });
-      I.trees.push({ t0: t, kind: kind, parts: parts, floor: tr.y + tr.r * 1.4 });
-      return 'tree';
-    }
-  }
+  (g.glows || []).forEach(function (gl, i) { cand(Math.hypot(gl.x - x, gl.y - y) / Math.max(5, Math.min(9, gl.r * 0.5)) * 0.7, function () { I.lamps.push({ i: i, t0: t }); return 'lantern'; }); });
+  // a tree: the nearest crown that holds the touch well inside it, else the best fit
+  var tb = null;
+  big.forEach(function (tr) { var sc = Math.hypot((x - tr.x) / tr.rx, (y - tr.y) / tr.ry); if (sc < 1 && (!tb || (sc < 0.8 && tb.s >= 0.8) || ((sc < 0.8) === (tb.s < 0.8) && (sc < 0.8 ? tr.d < tb.tr.d : sc < tb.s)))) tb = { s: sc, tr: tr }; });
+  if (tb) cand(tb.s, function () { if (tb.tr.bell) return ringBell(); shakeTree(g, I, tb.tr, t, rng); return 'tree'; });
+  if (best) return best.fn();
   // the river: food for the koi
   var gp = groundAt(x, y);
   if (gp && riverD(gp.x, gp.z) < 0.4) { var wpt = { x: gp.x, z: gp.z }; if (riverD(wpt.x, wpt.z) > -1) { var c0 = nearestRiver(wpt.x, wpt.z); wpt = c0; } I.koi = { t0: t, x: wpt.x, z: wpt.z, fish: [0, 1, 2, 3].map(function (j) { var a2 = rng() * TAU; return { a: a2, r: 4 + rng() * 3, col: [[236, 110, 40], [246, 240, 230], [222, 176, 60], [210, 60, 40]][j], ph: rng() * TAU }; }) }; return 'koi'; }
@@ -5022,6 +5396,33 @@ function tapScene(g, I, x, y, t, rng, api) {
     if (pc) { var what = g.season === 'autumn' || g.season === 'winter' ? 'sparrow' : 'frog', sp = P(gp.x, 0, gp.z); I.paddy = { t0: t, what: what, x: sp.x, y: sp.y, k: sp.k, items: [0, 1, 2, 3, 4, 5].map(function () { return { dx: (rng() - 0.5) * 12, dy: (rng() - 0.5) * 4, vx: (rng() - 0.5) * 14, ph: rng() * TAU, d: rng() * 0.4 }; }) }; return 'paddy'; }
   }
   return null;
+}
+/* what a shaken tree lets fall: the season's own (petals only from a cherry in bloom, leaves coloured like its crown, snow) */
+function tapFallKind(g, kind) {
+  var S = g.SEA, se = g.season;
+  if (S.snow) return { k: 'snow' };
+  if (kind === 'pine' || kind === 'cedar') return { k: 'needle', n: 10, cols: kind === 'pine' ? [[120, 96, 54], [150, 120, 70], [90, 110, 60]] : [[130, 86, 50], [160, 110, 66]] };
+  if (se === 'spring') {
+    if (kind === 'cherry') { var st = sakuraState(g.F.prog === undefined ? 0.5 : g.F.prog); if (st.bloom > 0.25) return { k: 'petal' }; if (st.leaf < 0.2) return { k: 'none' }; }
+    if (kind === 'peach') return { k: 'petal', cols: [[246, 170, 196], [236, 140, 176], [250, 200, 214]] };
+    if (S.leafK !== undefined && S.leafK < 0.15) return { k: 'none' };   // still bare
+    return { k: 'leaf', n: 9, shape: kind === 'maple' ? 'momiji' : kind === 'willow' ? 'narrow' : 'oval', cols: [[150, 186, 80], [176, 204, 100], [120, 164, 64]] };
+  }
+  if (se === 'summer') return { k: 'leaf', n: 9, shape: kind === 'maple' ? 'momiji' : kind === 'willow' ? 'narrow' : 'oval', cols: [[52, 96, 36], [76, 120, 44], [100, 140, 56]] };
+  if (se === 'autumn') {
+    var pal = kind === 'maple' ? S.maple : kind === 'willow' ? S.willow : kind === 'cherry' ? [[150, 40, 24], [196, 70, 30], [226, 120, 50], [236, 160, 80]] : kind === 'kaki' ? [[150, 70, 24], [200, 100, 30], [232, 140, 46], [240, 176, 80]] : S.broad;
+    pal = (pal || S.broad).slice(Math.floor((pal || S.broad).length * 0.35));
+    return { k: 'leaf', n: 26, shape: kind === 'maple' ? 'momiji' : kind === 'willow' ? 'narrow' : 'oval', cols: pal };
+  }
+  return { k: 'none' };
+}
+function shakeTree(g, I, tr, t, rng) {
+  var F0 = tapFallKind(g, tr.kind), parts = [], n = F0.k === 'none' ? 0 : F0.n || 26;
+  for (var k = 0; k < n; k++) {
+    var col = F0.cols ? ramp(F0.cols, rng()) : F0.k === 'petal' ? mixc([250, 226, 234], [255, 242, 246], rng()) : [250, 252, 255];
+    parts.push({ x: tr.x + (rng() - 0.5) * tr.rx * 1.4, y: tr.y + (rng() - 0.5) * tr.ry * 0.9, vx: (rng() - 0.5) * 6, vy: F0.k === 'snow' ? 4 + rng() * 6 : F0.k === 'needle' ? 6 + rng() * 5 : 2 + rng() * 5, rot: rng() * TAU, ph: rng() * TAU, col: col });
+  }
+  I.trees.push({ t0: t, kind: F0.k, shape: F0.shape || 'oval', parts: parts, floor: tr.y + tr.ry * 1.2 });
 }
 function nearestRiver(x, z) { var best = null, bd = 1e9; for (var i = 0; i < RIVER_S.length; i++) { var q = RIVER_S[i], d = Math.hypot(q[0] - x, q[1] - z); if (d < bd) { bd = d; best = q; } } var f = Math.min(1, (RIVER_HW - 1.5) / Math.max(0.01, bd)); return { x: best[0] + (x - best[0]) * f, z: best[1] + (z - best[1]) * f }; }
 function stepInteract(g, I, dt, t) {
@@ -5060,7 +5461,8 @@ function drawInteract(ctx, g, I, t) {
       ctx.globalAlpha = fa;
       if (T.kind === 'snow') { ctx.fillStyle = 'rgba(250,252,255,0.9)'; ctx.beginPath(); ctx.arc(p.x, p.y, 0.7 + (p.ph % 1) * 0.6, 0, TAU); ctx.fill(); }
       else if (T.kind === 'petal') { ctx.fillStyle = rgb(mulc(p.col, tint.map(function (v) { return Math.max(0.6, v); }))); ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.scale(1, 0.3 + 0.7 * Math.abs(Math.cos(p.rot * 2))); ctx.beginPath(); ctx.ellipse(0, 0, 1.0, 0.6, 0, 0, TAU); ctx.fill(); ctx.restore(); }
-      else { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.scale(1, 0.35 + 0.65 * Math.abs(Math.cos(p.rot * 1.3))); leafShape(ctx, 0, 0, 1.3, -Math.PI / 2, 1, rgb(mulc(p.col, tint))); ctx.restore(); }
+      else if (T.kind === 'needle') { ctx.strokeStyle = rgb(mulc(p.col, tint)); ctx.lineWidth = 0.35; ctx.beginPath(); ctx.moveTo(p.x - Math.cos(p.rot) * 0.9, p.y - Math.sin(p.rot) * 0.9); ctx.lineTo(p.x + Math.cos(p.rot) * 0.9, p.y + Math.sin(p.rot) * 0.9); ctx.stroke(); }
+      else { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.scale(1, 0.35 + 0.65 * Math.abs(Math.cos(p.rot * 1.3))); if (T.shape === 'momiji') { var mp = new Path2D(); leafAdd(mp, 0, 0, 1.4, -Math.PI / 2, 'momiji', 1); ctx.fillStyle = rgb(mulc(p.col, tint)); ctx.fill(mp); } else if (T.shape === 'narrow') { ctx.fillStyle = rgb(mulc(p.col, tint)); ctx.beginPath(); ctx.ellipse(0, 0, 0.35, 1.5, 0, 0, TAU); ctx.fill(); } else leafShape(ctx, 0, 0, 1.3, -Math.PI / 2, 1, rgb(mulc(p.col, tint))); ctx.restore(); }
     });
     ctx.globalAlpha = 1;
   });
@@ -5114,6 +5516,30 @@ function drawTownCat(ctx, g, I, t) {
   if (a >= 0 && I.cat.kind === 'stretch') { o.lie = false; o.sit = false; o.h = 0.72 * (1 + 0.15 * Math.sin(clamp(a / 2) * Math.PI)); o.len = 1.25 * (1 + 0.25 * Math.sin(clamp(a / 2) * Math.PI)); o.tailUp = 0.8; }
   else if (a >= 0) { o.lie = false; o.moving = a < 1.2; var hop = clamp(a / 0.6); p = P(c.x + (a < 1.2 ? a * 0.8 : 0.96), Math.sin(hop * Math.PI) * 0.5, c.z); }
   beast(ctx, p.x, p.y, p.k, o, t);
+}
+
+/* where each tappable thing is actually painted (debug/test): silhouettes of the static scene, front to back, so a
+   target's point is one where it is really visible; moving things from the same anchors the overlay draws them at */
+function tapTruth(g) {
+  var scene = buildScene(), up = scene.up, w = Math.ceil(g.W), h = Math.ceil(g.H), acc = mkCanvas(w, h), ax = acc.getContext('2d'), tmp = mkCanvas(w, h), tx = tmp.getContext('2d'), out = [], mode0 = MODE;
+  MODE = 'k';
+  try {
+    for (var i = up.length - 1; i >= 0; i--) {
+      var o = up[i];
+      if (o.tap) {
+        tx.setTransform(1, 0, 0, 1, 0, 0); tx.clearRect(0, 0, w, h); o.draw(tx);
+        var a = tx.getImageData(0, 0, w, h).data, b = ax.getImageData(0, 0, w, h).data, sx = 0, sy = 0, n = 0, pts = [];
+        for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) { var k = (y * w + x) * 4 + 3; if (a[k] > 128 && b[k] < 60) { sx += x; sy += y; n++; pts.push(x, y); } }
+        if (n > 3) {
+          var cx = sx / n, cy = sy / n, best = 1e9, bx = cx, by = cy;
+          for (var j = 0; j < pts.length; j += 2) { var d = Math.hypot(pts[j] - cx, pts[j + 1] - cy); if (d < best) { best = d; bx = pts[j]; by = pts[j + 1]; } }
+          out.push({ tap: o.tap, x: bx + 0.5, y: by + 0.5, n: n });
+        }
+      }
+      if (o.key < 1e5) o.draw(ax);
+    }
+  } finally { MODE = mode0; }
+  return out;
 }
 
 /* ---- 08i_life.js ---- */
@@ -5247,6 +5673,90 @@ function stall(ctx, g, a, col, t) {   // a small stall: a counter, a cloth awnin
   var lp = { x: c.x + 0.7 * k, y: c.y - 1.55 * k }; ctx.fillStyle = lit ? 'rgb(255,206,140)' : rgb(mulc([236, 228, 210], tint)); ctx.beginPath(); ctx.ellipse(lp.x, lp.y, 0.13 * k, 0.18 * k, 0, 0, TAU); ctx.fill();
   if (lit) { ctx.globalCompositeOperation = 'lighter'; stamp(ctx, sprite('warm'), lp.x, lp.y, 1.4 * k, 1.4 * k, 0.5 * (0.85 + 0.15 * Math.sin(t * 5 + a.x))); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; }
 }
+
+/* ---- 08j_sway.js ---- */
+/* ================= trees in a gale (overlay) =================
+   Each baked tree is a damped spring driven by the shared wind: a lean downwind, turbulence of its own,
+   and the gusts arriving a little later the further downwind it stands. Every frame the tree is covered with its
+   patch (the town behind it) and its sprite is redrawn in horizontal strips, each sheared so the bend is
+   continuous and rooted at the base; then whatever stands in front of it is cut back out. */
+function makeSwayFx(sw, g, layer) {
+  var fvW = layer.width, fvH = layer.height;
+  var s = fvW / sw.bw, rng = mulberry32(4242), gain = SWAY_WX[g.wx] || 0, U = [1e9, 1e9, -1e9, -1e9];
+  var trees = sw.meta.map(function (m, i) {
+    var K = SWAY_KIND[m.k] || SWAY_KIND.broad, hl = m.hp / (sw.bw / g.W);   // height in scene units (~ screen size)
+    var f = K.f * (0.85 + rng() * 0.3) * clamp(Math.sqrt(40 / Math.max(8, hl)), 0.7, 1.5);
+    U[0] = Math.min(U[0], (m.b[0] - m.mg) * s); U[1] = Math.min(U[1], (m.b[1] - m.mg) * s); U[2] = Math.max(U[2], (m.b[2] + m.mg) * s); U[3] = Math.max(U[3], m.b[3] * s);
+    return { m: m, K: K, w: Math.PI * 2 * f, z: 0.2 + rng() * 0.08, x: null, v: 0, y: 0, vy: 0, wf: Math.PI * 2 * (0.9 + rng() * 0.4), seed: (m.seed * 7919 + 13) >>> 0, ph: rng() * TAU, lx: m.cx / sw.bw * g.W };
+  });
+  U = [Math.max(0, Math.floor(U[0]) - 2), Math.max(0, Math.floor(U[1]) - 2), Math.min(fvW, Math.ceil(U[2]) + 2), Math.min(fvH, Math.ceil(U[3]) + 2)];
+  return { A: sw.atlas, s: s, trees: trees, gain: gain, layer: layer, U: U, gust: null, t: 0, dirty: true, shown: false, hz: 15, W: g.W };
+}
+function swayGustAt(S, t) {
+  var G = S.gust; if (!G) return 1;
+  var u = (t - G.t0) / G.dur; return u > 0 && u < 1 ? 1 + ((G.K || 2.5) - 1) * Math.pow(Math.sin(Math.PI * u), 2) : 1;
+}
+function stepSway(S, g, dt, t, gust) {
+  if (gust && gust !== S.gust) S.gust = gust;
+  var Wd = g.wind0 || gWind(g), sign = Wd.h >= 0 ? 1 : -1, h0 = g.wx === 'storm' ? Wd.h : sign * Math.max(Math.abs(Wd.h), 0.8), n = Math.max(1, Math.ceil(dt / (1 / 60))), h = dt / n;
+  for (var i = 0; i < S.trees.length; i++) {
+    var T = S.trees[i], K = T.K, up = sign > 0 ? T.lx : S.W - T.lx, td = t - up / 150;   // a gust front sweeps downwind
+    var turb = 0.42 * windNoise(T.seed, td * 0.55) + 0.26 * windNoise(T.seed + 7, td * 1.6) + 0.32 * windNoise(99, td * 0.35);   // its own buffeting + the town's
+    var push = h0 * (1 + turb) * swayGustAt(S, td), tgt, tgtF = 0;
+    if (T.m.k === 'willow') { tgt = K.amp * (push - h0); tgtF = 0.15 * (push - h0 * 0.6) + 0.04 * windNoise(T.seed + 3, td * 2.3) * sign; }   // the painting already leans with the day's wind
+    else tgt = K.max * Math.tanh(K.amp * push / K.max);
+    tgt *= S.gain; tgtF *= S.gain;
+    if (T.x === null) { T.x = tgt; T.y = tgtF; }
+    for (var k = 0; k < n; k++) {
+      T.v += (T.w * T.w * (tgt - T.x) - 2 * T.z * T.w * T.v) * h; T.x += T.v * h;
+      T.vy += (T.wf * T.wf * (tgtF - T.y) - 2 * 0.14 * T.wf * T.vy) * h; T.y += T.vy * h;
+    }
+  }
+  S.t = t; S.acc = (S.acc || 0) + dt; if (S.acc >= 1 / S.hz - 0.004) { S.acc = 0; S.dirty = true; }   // redrawn at ~15 Hz (less on a slow device)
+}
+/* draw one sprite (atlas slot `slot`) through a displacement field fn(hfrac, y) -> [dx, dy] (painting px), straight into the layer */
+function swayStrips(x, S, m, slot, rows, fn, nS) {
+  var s = S.s, b = m.b, w = b[2] - b[0], h = b[3] - b[1], step = h / nS;
+  for (var i = 0; i < nS; i++) {
+    var ya = b[1] + i * step, yb = i === nS - 1 ? b[3] : b[1] + (i + 1) * step + 1, hh = yb - ya;
+    var da = fn(clamp((m.by - ya) / m.hp), ya), db = fn(clamp((m.by - yb) / m.hp), yb);
+    var c1 = -(da[0] - db[0]) / hh, c0 = db[0] + (da[0] - db[0]) * yb / hh, e1 = -(da[1] - db[1]) / hh, e0 = db[1] + (da[1] - db[1]) * yb / hh;
+    // painting (X, Y) -> (X + c1 Y + c0, Y (1 + e1) + e0): a shear per strip, continuous from strip to strip
+    x.setTransform(s, 0, s * c1, s * (1 + e1), s * c0, s * e0);
+    var x0 = 0, x1 = w;
+    if (rows) { x0 = 1e9; x1 = -1; for (var r = Math.floor((ya - b[1]) / 8); r <= Math.min(rows.length - 1, Math.floor((yb - b[1] - 0.01) / 8)); r++) { if (rows[r][1] > rows[r][0]) { x0 = Math.min(x0, rows[r][0]); x1 = Math.max(x1, rows[r][1]); } } if (x1 < 0) continue; }
+    x.drawImage(S.A, slot[0] + x0, slot[1] + (ya - b[1]), x1 - x0, hh, b[0] + x0, ya, x1 - x0, hh);
+  }
+}
+/* the layer, tree by tree from far to near: the tree bent, then whatever stands in front of it punched out.
+   While the trees move, the painting canvas underneath shows the town without them (the patches, baked in once),
+   so a punched hole shows exactly the nearer thing. */
+function swayPatchBase(x, S, on) {   // x: the painting canvas at its own resolution
+  for (var i = 0; i < S.trees.length; i++) { var M = S.trees[i].m, bw = M.b[2] - M.b[0], bh = M.b[3] - M.b[1]; x.drawImage(S.A, M.p[0], M.p[1], bw, bh, M.b[0], M.b[1], bw, bh); }
+}
+function drawSwayLayer(S) {
+  var t0 = now(), L = S.layer, x = L.getContext('2d'), s = S.s, U = S.U, i, t = S.t;
+  x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'source-over'; x.globalAlpha = 1; x.clearRect(U[0], U[1], U[2] - U[0], U[3] - U[1]);
+  for (i = 0; i < S.trees.length; i++) {
+    var T = S.trees[i], M = T.m, mg = M.mg, lim = mg - 2, bw = M.b[2] - M.b[0], bh = M.b[3] - M.b[1];
+    x.globalCompositeOperation = 'source-over';
+    if (S.prof && S.prof.noTree) continue;
+    var hp = M.hp, X = T.x || 0, Y = T.y, ph = T.ph, nS = clamp(Math.round(bh * s / 10), 4, 12);
+    if (M.k === 'willow') {
+      // the fronds stream out from the crown, the tips most, rising as they go; ripples run down them
+      swayStrips(x, S, M, M.s, M.rs, function (hf, y) { var lo = Math.pow(1 - hf, 0.8), dx = hp * (X * Math.pow(hf, 1.4) + Y * lo + 0.012 * lo * Math.sin(y / (hp * 0.2) * TAU - t * 9.5 + ph)); return [clamp(dx, -lim, lim), -hp * 0.3 * Math.abs(Y) * Math.pow(1 - hf, 1.5)]; }, 14);
+      if (M.w) swayStrips(x, S, M, M.w, M.rw, function (hf) { return [clamp(hp * X * Math.pow(hf, 1.6), -lim, lim), 0]; }, nS);
+    } else {
+      var fl = M.k === 'broad' ? 0.005 : 0.0025;
+      swayStrips(x, S, M, M.s, M.rs, function (hf, y) { var dx = hp * (X * Math.pow(hf, 1.5) + fl * hf * Math.sin(t * 10.5 + y / (hp * 0.35) * TAU + ph)); return [clamp(dx, -lim, lim), hp * 0.5 * X * X * hf * hf]; }, nS);
+    }
+    if (M.mb && !(S.prof && S.prof.noMask)) { var mb = M.mb, mx = M.b[0] - mg + mb[0], my = M.b[1] - mg + mb[1]; x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'destination-out'; x.drawImage(S.A, M.m[0] + mb[0], M.m[1] + mb[1], mb[2], mb[3], mx * s, my * s, mb[2] * s, mb[3] * s); }
+  }
+  x.globalCompositeOperation = 'source-over'; x.setTransform(1, 0, 0, 1, 0, 0);
+  S.dirty = false; S.shown = true;
+  var ms = now() - t0; S.ms = S.ms === undefined ? ms : S.ms * 0.9 + ms * 0.1; S.hz = S.ms > 14 ? 7.5 : S.ms > 8 ? 10 : 15;
+}
+function clearSway(S) { if (!S.shown) return; var U = S.U, x = S.layer.getContext('2d'); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(U[0], U[1], U[2] - U[0], U[3] - U[1]); S.shown = false; S.dirty = true; }
 
 /* ---- 09_runtime.js ---- */
 /* ================= public API & controller ================= */
@@ -5385,9 +5895,9 @@ function mount(el, opts) {
     c.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;display:block;pointer-events:none;z-index:' + z + ';';
     return c;
   }
-  var cv = mk(0), tv = mk(1), fv = mk(2);
+  var cv = mk(0), tv = mk(1), fv = mk(2), sv = mk(0);   // sv: trees bent by a gale, between the painting and the overlay
   var cs = getComputedStyle(el); if (cs.position === 'static') el.style.position = 'relative';
-  el.insertBefore(fv, el.firstChild); el.insertBefore(tv, fv); el.insertBefore(cv, tv);
+  el.insertBefore(fv, el.firstChild); el.insertBefore(tv, fv); el.insertBefore(sv, tv); el.insertBefore(cv, sv);
   var cur = null;          // displayed painting {spec, img, mask, occ, glows, geo}
   var want = null, pendingTimer = null;
   var size = measure();
@@ -5415,7 +5925,7 @@ function mount(el, opts) {
     var dq = q === 'full' ? clamp(ks / 2.7, 1, 1.9) : clamp(ks / 2, 0.6, 1.25);
     var qn = q === 'full' ? 'full' : 'card';
     var ev = so.event === undefined ? o.event : so.event, sp = seasonStep(so.date === undefined ? o.date : so.date, so.season), wsign = windVec(windAt(nowDate())).sign, wxs = curWeather();
-    return { key: [VERSION, so.stage, so.season, so.light, ev || '-', sp === null ? '-' : 'p' + sp, wsign > 0 ? 'wR' : 'wL', wxs.wx + (wxs.after ? '+a' : ''), qn, bw + 'x' + bh + (wk > 1 ? '|w' + wk : '')].join('|'), stage: so.stage, season: so.season, light: so.light, event: ev || null, sp: sp, wsign: wsign, wx: wxs.wx, after: wxs.after, W: Wl, H: Hl, KS: ks, DQ: dq, bw: bw, bh: bh, q: qn };
+    return { key: [VERSION, so.stage, so.season, so.light, ev || '-', sp === null ? '-' : 'p' + sp, wsign > 0 ? 'wR' : 'wL', wxs.wx + (wxs.after ? '+a' : '') + (swayWanted(wxs.wx) ? '~s1' : ''), qn, bw + 'x' + bh + (wk > 1 ? '|w' + wk : '')].join('|'), stage: so.stage, season: so.season, light: so.light, event: ev || null, sp: sp, wsign: wsign, wx: wxs.wx, after: wxs.after, W: Wl, H: Hl, KS: ks, DQ: dq, bw: bw, bh: bh, q: qn };
   }
   /* get a painting: cache first, else paint (and cache it) */
   var jobs = {};
@@ -5427,10 +5937,10 @@ function mount(el, opts) {
     var p = J.p = cacheGet(spec.key).then(function (rec) {
       if (J.cancelled) throw CANCEL;
       if (!rec || !rec.img) return null;
-      var oc = rec.occ || [];
-      return Promise.all([blobToCanvas(rec.img), blobToCanvas(rec.mask), blobToCanvas(rec.clouds), blobToCanvas(rec.sky)].concat(oc.map(blobToCanvas))).then(function (a) {
+      var oc = rec.occ || [], sw = rec.sway && rec.sway.atlas ? rec.sway : null;
+      return Promise.all([blobToCanvas(rec.img), blobToCanvas(rec.mask), blobToCanvas(rec.clouds), blobToCanvas(rec.sky), sw ? blobToCanvas(sw.atlas) : null].concat(oc.map(blobToCanvas))).then(function (a) {
         if (!a[0] || a[0].width !== spec.bw) return null;
-        return { img: a[0], mask: a[1], clouds: a[2], sky: a[3], occ: a.slice(4), glows: rec.glows || [], src: 'cache' };
+        return { img: a[0], mask: a[1], clouds: a[2], sky: a[3], occ: a.slice(5), glows: rec.glows || [], sway: sw && a[4] ? { atlas: a[4], meta: sw.meta, bw: sw.bw } : null, src: 'cache' };
       }).catch(function () { return null; });
     }).then(function (got) {
       if (got) return got;
@@ -5438,11 +5948,11 @@ function mount(el, opts) {
       return enqueue(function () {
         if (J.cancelled || dead) throw CANCEL;
         return renderStatic({ stage: spec.stage, season: spec.season, light: spec.light, event: spec.event, sp: spec.sp, wsign: spec.wsign, wx: spec.wx, after: spec.after, W: spec.W, H: spec.H, KS: spec.KS, DQ: spec.DQ, bw: spec.bw, bh: spec.bh, get cancelled() { return J.cancelled || dead; } }).then(function (r) {
-          var res = { img: r.canvas, mask: r.mask, clouds: r.clouds, sky: r.sky, occ: r.occ, glows: r.glows.map(function (g) { return { x: g.x, y: g.y, r: g.r, a: g.a }; }), src: 'paint' };
+          var res = { img: r.canvas, mask: r.mask, clouds: r.clouds, sky: r.sky, occ: r.occ, glows: r.glows.map(function (g) { return { x: g.x, y: g.y, r: g.r, a: g.a }; }), sway: r.sway, src: 'paint' };
           // store in the background
           setTimeout(function () {
-            Promise.all([toBlob(r.canvas, 'image/jpeg', 0.92), r.mask ? toBlob(r.mask, 'image/png') : null, r.clouds ? toBlob(r.clouds, 'image/png') : null, r.sky ? toBlob(r.sky, 'image/png') : null].concat(r.occ.map(function (c) { return c ? toBlob(c, 'image/png') : null; }))).then(function (b) {
-              if (b[0]) return cachePut(spec.key, { img: b[0], mask: b[1], clouds: b[2], sky: b[3], occ: b.slice(4), glows: res.glows, t: Date.now(), v: VERSION });
+            Promise.all([toBlob(r.canvas, 'image/jpeg', 0.92), r.mask ? toBlob(r.mask, 'image/png') : null, r.clouds ? toBlob(r.clouds, 'image/png') : null, r.sky ? toBlob(r.sky, 'image/png') : null, r.sway ? toBlob(r.sway.atlas, 'image/png') : null].concat(r.occ.map(function (c) { return c ? toBlob(c, 'image/png') : null; }))).then(function (b) {
+              if (b[0]) return cachePut(spec.key, { img: b[0], mask: b[1], clouds: b[2], sky: b[3], occ: b.slice(5), glows: res.glows, sway: r.sway && b[4] ? { atlas: b[4], meta: r.sway.meta, bw: r.sway.bw } : null, t: Date.now(), v: VERSION });
             }).catch(function () { });
           }, 60);
           return res;
@@ -5474,13 +5984,14 @@ function mount(el, opts) {
     if (reveal && fade) finishReveal();
     var first = !cur;
     if (fade && cur && !reducedMotion()) {
+      if (cvBg) swayBase(false);   // the crossfade starts from the whole painting
       sizeCanvas(tv, Math.min(cv.width, ovW()), Math.min(cv.height, ovH())); var tx = tv.getContext('2d'); tx.globalCompositeOperation = 'source-over'; tx.drawImage(cv, 0, 0, tv.width, tv.height);
       tv.style.transition = 'none'; tv.style.opacity = '1';
     }
     sizeCanvas(cv, res.spec.bw, res.spec.bh);
-    cv.getContext('2d').drawImage(res.img, 0, 0);
+    cv.getContext('2d').drawImage(res.img, 0, 0); cvBg = false;
     // keep a water / occluder mask at the overlay layer size
-    cur = { spec: res.spec, img: res.img, mask: res.mask, clouds: res.clouds, sky: res.sky, occ: res.occ, glows: res.glows, geo: makeGeo(res) };
+    cur = { spec: res.spec, img: res.img, mask: res.mask, clouds: res.clouds, sky: res.sky, occ: res.occ, glows: res.glows, sway: res.sway || null, geo: makeGeo(res) };
     setupFx();
     stats.source = res.src; stats.ms = Math.round(res.ms);
     if (first || fade) {
@@ -5494,7 +6005,7 @@ function mount(el, opts) {
   function ovW() { return Math.round(Math.min(cur ? cur.spec.bw : 800, size.cssW * Math.min(size.dpr, 2))); }
   function ovH() { return Math.round(ovW() * (cur ? cur.spec.H / cur.spec.W : 0.75)); }
   var wl = null, bl = null, fallers = [], petals = null, frng = mulberry32(99), bird = null, clock = 0, lastTs = 0, raf = 0;
-  var cues = { last: -99, next: {}, gust: null, rings: [] }, leafGust = null, wfx = null, lightning = null, wxCheck = 0, FW = null, dflies = null, bflies = null, rare = null, rareRoll = 0;
+  var cues = { last: -99, next: {}, gust: null, rings: [] }, leafGust = null, wfx = null, swayFx = null, lightning = null, wxCheck = 0, FW = null, dflies = null, bflies = null, rare = null, rareRoll = 0;
   var RARE_P = 0.065;
   /* the shared wind, from the given date moving on with real time */
   function fwWanted() { return o.fireworks === true || o.fireworks === false ? o.fireworks : fireworksAt(nowDate()); }
@@ -5532,15 +6043,18 @@ function mount(el, opts) {
     if (g.fallers === 'leaf') { g.nFall = leafCount(prog); fallers = initFallers(g, frng); }
     leafGust = null;
     wfx = initWeatherFx(g, frng); lightning = null; setupFireworks(g);
+    swayFx = null; sizeCanvas(sv, 1, 1); sv.getContext('2d').clearRect(0, 0, 1, 1);
+    try { if (cur.sway && cur.sway.meta.length) { sizeCanvas(sv, fv.width, fv.height); sv.getContext('2d').clearRect(0, 0, sv.width, sv.height); swayFx = makeSwayFx(cur.sway, g, sv); } } catch (e) { swayFx = null; if (window.console) console.error(e); }
     if (cur.spec.after && g.season === 'summer' && g.light === 'day') setTimeout(function () { if (!dead) cue('rainbow', null, true); }, 0);   // a faint rainbow is in the sky
     g.life = withScene({ W: cur.spec.W, H: cur.spec.H, KS: cur.spec.KS, stage: cur.spec.stage, season: cur.spec.season, light: cur.spec.light, event: cur.spec.event }, function () { return lifeScenes(g, nowDate(), mulberry32(31 + cur.spec.stage)); });
-    g.I = withScene({ W: cur.spec.W, H: cur.spec.H, KS: cur.spec.KS, stage: cur.spec.stage, season: cur.spec.season, light: cur.spec.light, event: cur.spec.event }, function () { return initInteract(g); }); cues.next.thunder = clock + 6 + frng() * 14;
+    g.I = withScene({ W: cur.spec.W, H: cur.spec.H, KS: cur.spec.KS, stage: cur.spec.stage, season: cur.spec.season, light: cur.spec.light, event: cur.spec.event, sp: cur.spec.sp, wx: cur.spec.wx, wsign: cur.spec.wsign }, function () { return initInteract(g); }); cues.next.thunder = clock + 6 + frng() * 14;
     if (g.wx !== 'clear' && g.wx !== 'cloudy') { dflies = bflies = null; }
     else dflies = withScene({ W: cur.spec.W, H: cur.spec.H, KS: cur.spec.KS, stage: cur.spec.stage, season: cur.spec.season, light: cur.spec.light, event: cur.spec.event }, function () { return initDragonflies(g, frng); });
     if (g.wx === 'clear' || g.wx === 'cloudy') bflies = withScene({ W: cur.spec.W, H: cur.spec.H, KS: cur.spec.KS, stage: cur.spec.stage, season: cur.spec.season, light: cur.spec.light, event: cur.spec.event }, function () { return initButterflies(g, frng); });
     if (!bird || bird.season !== cur.spec.season || bird.light !== cur.spec.light) bird = { next: clock + 4 + frng() * 6, season: cur.spec.season, light: cur.spec.light };
     rare = null; rareRoll = clock + 20 + frng() * 20;
     cues.next = { bell: clock + 6 + frng() * 6, wheel: clock + 9 + frng() * 10, splash: clock + 12 + frng() * 14, gust: clock + 35 + frng() * 35, thunder: clock + 6 + frng() * 14 };
+    if (g.wx === 'typhoon' || g.wx === 'blizzard') cues.next.gust = clock + 2 + frng() * 4;   // a gale: the first gust soon
   }
   /* ---- sound cues: a gentle rhythm, never two within a few seconds ---- */
   function cue(name, info, force) {
@@ -5588,7 +6102,13 @@ function mount(el, opts) {
     return true;
   }
   /* ---- one overlay frame ---- */
-  var reveal = null;
+  var reveal = null, dbgSwayOnly = false, dbgSway = null, cvBg = false;
+  function swayBase(on) {   // the painting canvas: the whole painting, or (trees moving) the town without the swaying trees
+    if (!cur || cvBg === on) return;
+    var x = cv.getContext('2d'); x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'source-over'; x.globalAlpha = 1; x.drawImage(cur.img, 0, 0);
+    if (on && swayFx) swayPatchBase(x, swayFx);
+    cvBg = on;
+  }
   function drawFrame(still) {
     if (!cur || dead) return;
     var g = cur.geo, t = clock, ctx = fv.getContext('2d'), sc = fv.width / g.W;
@@ -5597,6 +6117,7 @@ function mount(el, opts) {
       W = g.W; H = g.H; CAM = g.cam; KS = g.KS; MODE = 'n'; F = g.F; SEA = g.SEA; LIT = g.LIT; setLight(LIT);
       ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.clearRect(0, 0, fv.width, fv.height);
       var motion = !still;
+      if (dbgSwayOnly) { if (swayFx && motion) { if (swayFx.dirty) drawSwayLayer(swayFx); swayBase(true); } return; }
       drawCloudLayer(ctx, g);
       if (g.tsukimi && cur.clouds && (g.wx === 'clear' || g.wx === 'cloudy')) drawSkyMasked(ctx, g, function (c) { drawMoonAt(c, true, g.light === 'night'); });   // the harvest moon stays clear of the clouds
       // water: shimmer, the boat's reflection, the moon's path, rings, floating petals; cut to visible water
@@ -5607,6 +6128,7 @@ function mount(el, opts) {
         wx.setTransform(1, 0, 0, 1, 0, 0); wx.globalCompositeOperation = 'destination-in'; wx.drawImage(cur.mask, 0, 0); wx.globalCompositeOperation = 'source-over';
         ctx.drawImage(wl, 0, 0, fv.width, fv.height);
       }
+      if (swayFx && motion) { if (swayFx.dirty) drawSwayLayer(swayFx); swayBase(true); } else { if (swayFx) clearSway(swayFx); swayBase(false); }   // trees bent by a gale: their own canvas, redrawn when they moved
       // the depth bands, far to near, each cut by what stands in front of it
       var bx = bl.getContext('2d');
       for (var band = NBANDS - 1; band >= 0; band--) {
@@ -5637,7 +6159,7 @@ function mount(el, opts) {
         if (rare && !g.rareNow) rare.def.draw(ctx, g, rare.st, clamp((t - rare.t0) / rare.def.dur), t);
         if (g.I) drawInteract(ctx, g, g.I, t);
         if (FW) drawFireworks(ctx, g, FW, t);
-        if (wfx) { drawWeatherFx(ctx, g, wfx, t, Math.min(0.1, Math.max(0, t - (wfx.lt || t)))); wfx.lt = t; if (g.wx === 'blizzard') drawBlizzardVeil(ctx, g, t); }
+        if (wfx) { var wdt = Math.min(0.1, Math.max(0, t - (wfx.lt || t))); drawWeatherFx(ctx, g, wfx, t, wdt); wfx.lt = t; if (wfx.bz) drawBlizzard(ctx, g, wfx.bz, t, wdt); }
         if (lightning) { if (!drawLightningFlash(ctx, g, lightning, t)) lightning = null; else drawSkyMasked(ctx, g, function (c) { drawLightning(c, g, lightning, t); }); }
       }
       if (reveal) drawReveal(ctx, g);
@@ -5684,6 +6206,7 @@ function mount(el, opts) {
     if (fallers.length) stepFallers(fallers, g, dt, frng);
     if (leafGust && !stepLeafGust(leafGust, g, dt, clock, frng)) leafGust = null;
     if (g.I) stepInteract(g, g.I, dt, clock);
+    if (swayFx) stepSway(swayFx, g, dt, clock, cues.gust);
     if (FW) stepFireworks(g, FW, dt, clock, frng, fwFinale(), function (S) { cue('firework', { delay: Math.round((0.8 + (1 - S.size) * 0.6 + frng() * 0.6) * 100) / 100, size: Math.round(S.size * 100) / 100, kind: S.kind }, true); });
     if (cues.gust && clock > cues.gust.t0 + cues.gust.dur) cues.gust = null;
     if (petals) { var hadG = !!petals.gust; stepPetals(petals, g, dt, clock, frng); if (!hadG && petals.gust) cue('gust', null, true); }
@@ -5905,10 +6428,10 @@ function mount(el, opts) {
       if (!cur || dead || !isFinite(nx) || !isFinite(ny)) return null;
       var g = cur.geo, st = saveState(), hit = null;
       try {
-        W = g.W; H = g.H; CAM = g.cam; KS = g.KS; MODE = 'n'; F = g.F; SEA = g.SEA; LIT = g.LIT; setLight(LIT);
+        W = g.W; H = g.H; CAM = g.cam; KS = g.KS; MODE = 'n'; F = g.F; SEA = g.SEA; LIT = g.LIT; setLight(LIT); WIND_LEAN = cur.spec.wsign === -1 ? -1 : 1;
         var rc = null;
         if (rare && (rare.def.id === 'shironeko' || rare.def.id === 'mikeneko')) { var cp = rare.def.id === 'shironeko' ? mixc(rare.st.a, rare.st.b, 0.6) : rare.st.bench; rc = Pa(cp); }
-        hit = tapScene(g, g.I, clamp(nx) * g.W, clamp(ny) * g.H, clock, frng, { rareCat: rc, rareCatTap: function () { rare.t0 = Math.min(rare.t0, clock - rare.def.dur * 0.86); } });
+        hit = tapScene(g, g.I, clamp(nx) * g.W, clamp(ny) * g.H, clock, frng, { rareCat: rc, catShown: !(wxWet(g.wx) || wxSnowy(g.wx)) && g.light !== 'night', rareCatTap: function () { rare.t0 = Math.min(rare.t0, clock - rare.def.dur * 0.86); } });
       } catch (e) { if (window.console) console.error(e); hit = null; }
       finally { restoreState(st); }
       if (!hit) return null;
@@ -5926,11 +6449,11 @@ function mount(el, opts) {
       if (raf) cancelAnimationFrame(raf); raf = 0;
       document.removeEventListener('visibilitychange', onVis);
       try { if (io) io.disconnect(); if (ro) ro.disconnect(); if (rmq) { if (rmq.removeEventListener) rmq.removeEventListener('change', onRM); else if (rmq.removeListener) rmq.removeListener(onRM); } } catch (e) { /* ignore */ }
-      [cv, tv, fv].forEach(function (c) { if (c.parentNode) c.parentNode.removeChild(c); c.width = c.height = 0; });
+      [cv, tv, fv, sv].forEach(function (c) { if (c.parentNode) c.parentNode.removeChild(c); c.width = c.height = 0; });
       if (wl) wl.width = wl.height = 0; if (bl) bl.width = bl.height = 0;
       cur = null; reveal = null; fallers = []; petals = null; dflies = null; bflies = null;
     },
-    get _dbg() { return { fv: fv, cv: cv, tv: tv, cur: cur, wl: wl, bl: bl, petals: petals, clock: clock, frame: function (n) { for (var i = 0; i < (n || 1); i++) { clock += 1 / 30; tickFx(1 / 30); } drawFrame(false); }, setClock: function (c) { clock = c; }, redraw: function () { drawFrame(false); }, clearRare: function () { rare = null; if (cur) cur.geo.rareNow = null; }, bolt: function () { lightning = { t0: clock, bolt: makeBolt(cur.geo, frng) }; cues.next.thunder = clock; }, get wfx() { return wfx; }, get fallers() { return fallers; }, get cloudX() { return cloudX; }, get leafGust() { return leafGust; }, forceGust: function () { if (petals) petals.nextGust = clock; cues.next.gust = clock; }, smokeDrift: function () { var g = cur.geo; return gWind(g).h; }, get dflies() { return dflies; }, get bflies() { return bflies; }, worldScreen: function (x, y, z) { var g = cur.geo, st = saveState(); try { W = g.W; H = g.H; CAM = g.cam; var c = P(x, y, z); return [c.x / g.W, c.y / g.H]; } finally { restoreState(st); } }, walkerScreen: function (w) { var g = cur.geo, st = saveState(); try { W = g.W; H = g.H; CAM = g.cam; F = g.F; var q = walkerPos(g, w), f = P(q.x, q.y + 0.8, q.z); return [f.x / g.W, f.y / g.H]; } finally { restoreState(st); } }, norenScreen: function (n) { var g = cur.geo, st = saveState(); try { W = g.W; H = g.H; CAM = g.cam; var c = Pa(n.W.at((n.s0 + n.s1) / 2, n.top - 0.5, 0.3)); return [c.x / g.W, c.y / g.H]; } finally { restoreState(st); } }, get wind() { return cur && cur.geo.wind; }, hideBugs: function () { var a = dflies, b = bflies; dflies = bflies = null; drawFrame(false); dflies = a; bflies = b; } }; },
+    get _dbg() { return { fv: fv, sv: sv, cv: cv, tv: tv, cur: cur, wl: wl, bl: bl, petals: petals, clock: clock, frame: function (n) { for (var i = 0; i < (n || 1); i++) { clock += 1 / 30; tickFx(1 / 30); } drawFrame(false); }, setClock: function (c) { clock = c; }, redraw: function () { drawFrame(false); }, clearRare: function () { rare = null; if (cur) cur.geo.rareNow = null; }, bolt: function () { lightning = { t0: clock, bolt: makeBolt(cur.geo, frng) }; cues.next.thunder = clock; }, get wfx() { return wfx; }, get fallers() { return fallers; }, get cloudX() { return cloudX; }, get leafGust() { return leafGust; }, forceGust: function () { if (petals) petals.nextGust = clock; cues.next.gust = clock; }, smokeDrift: function () { var g = cur.geo; return gWind(g).h; }, get dflies() { return dflies; }, get bflies() { return bflies; }, worldScreen: function (x, y, z) { var g = cur.geo, st = saveState(); try { W = g.W; H = g.H; CAM = g.cam; var c = P(x, y, z); return [c.x / g.W, c.y / g.H]; } finally { restoreState(st); } }, walkerScreen: function (w) { var g = cur.geo, st = saveState(); try { W = g.W; H = g.H; CAM = g.cam; F = g.F; var q = walkerPos(g, w), f = P(q.x, q.y + 0.8, q.z); return [f.x / g.W, f.y / g.H]; } finally { restoreState(st); } }, norenScreen: function (n) { var g = cur.geo, st = saveState(); try { W = g.W; H = g.H; CAM = g.cam; var c = Pa(n.W.at((n.s0 + n.s1) / 2, n.top - 0.5, 0.3)); return [c.x / g.W, c.y / g.H]; } finally { restoreState(st); } }, get wind() { return cur && cur.geo.wind; }, set swayOnly(v) { dbgSwayOnly = !!v; }, tapTruth: function () { var sp = cur.spec, g = cur.geo; return withScene({ W: sp.W, H: sp.H, KS: 1, stage: sp.stage, season: sp.season, light: sp.light, event: sp.event, sp: sp.sp, wx: sp.wx, wsign: sp.wsign }, function () { return tapTruth(g); }); }, resetTaps: function () { var g = cur.geo, I = g.I; if (!I) return; I.trees = []; I.birds = []; I.lamps = []; I.koi = I.paddy = I.bell = I.taiko = I.cat = null; I.wheel = 0; g.walkers = g.walkers.filter(function (w) { return !w.temp; }); g.walkers.forEach(function (w) { w.react = null; }); g.noren.forEach(function (n) { n.boost = null; }); }, set noSway(v) { if (v) { dbgSway = swayFx || dbgSway; swayFx = null; } else if (dbgSway) swayFx = dbgSway; }, get sway() { return swayFx; }, still: function () { drawFrame(true); }, swayDraw: function (o) { if (swayFx) { var S = swayFx; S.prof = o || null; drawSwayLayer(S); S.prof = null; } }, hideBugs: function () { var a = dflies, b = bflies; dflies = bflies = null; drawFrame(false); dflies = a; bflies = b; } }; },
     get stats() { return { source: stats.source, ms: stats.ms, history: stats.history.slice(), running: running() }; }
   };
   if (size) lastReq = refresh(false);
