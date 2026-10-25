@@ -5467,10 +5467,9 @@
         // Home, top to bottom: today (goal, week, streak, exam countdown), start / review, the garden, a row of
         // tools (模擬試験 opens its panel below the row), today's word, then the books under two tabs.
         var examN = examDaysLeft();
-        var examChip = examN === null ? '<button class="home-exam-chip" id="home-exam-setup">📅 試験日を設定</button>'
-            : examN > 0 ? '<span class="home-exam-chip set">N1まで あと<b>' + examN + '</b>日</span>'
-            : examN === 0 ? '<span class="home-exam-chip set today">今日は試験日 がんばって！</span>'
-            : '<button class="home-exam-chip" id="exam-set-next">次のJLPTに設定</button>';
+        // with an exam date: the full countdown card (days left, date, pace, a quote) above everything;
+        // without one: a small chip in the today card to set it
+        var examChip = examN === null ? '<button class="home-exam-chip" id="home-exam-setup">📅 試験日を設定</button>' : '';
         var first = LIBRARIES[0];
         var startBtn = last
             ? '<button id="home-resume" class="primary">続きから<small>' + (isMultiLib() ? escapeHtml(getLib(last.lib).short || getLib(last.lib).title) + '　' : '') + escapeHtml(placeLabel(getLib(last.lib), last.week, last.day)) + '（' + last.status.answered + ' / ' + last.status.max + '）</small></button>'
@@ -5480,13 +5479,13 @@
         var lastR = readOnlyEntries().slice(-1)[0];
 
         var html = '<div class="home">' +
+            (examN !== null ? examCardHtml() : '') +
             '<div class="home-today">' + ringSvg(goalPct, 78, todayRec.answered + '問', '目標 ' + dailyGoal) +
             '<div class="home-today-text"><div class="home-hello" id="home-hello">' + getGreeting() + '</div>' +
             (todayRec.answered >= dailyGoal ? '<b>今日の目標を達成しました ✓</b>' : 'あと <b>' + Math.max(0, dailyGoal - todayRec.answered) + '問</b> で今日の目標達成') +
             weekBarsSvg() +
             '<div class="home-today-meta"><span>連続 <b>' + streaks.current + '日</b></span><span>正答率 <b>' + (todayRec.answered ? Math.round(todayRec.correct / todayRec.answered * 100) + '%' : '—') + '</b></span>' + examChip + '</div>' +
             '</div>' +
-            (examN !== null && examN >= 0 ? '<div class="home-today-quote">' + examQuoteHtml() + '</div>' : '') +
             '</div>' +
             backupReminderHtml() +
             '<div class="home-actions">' + startBtn +
