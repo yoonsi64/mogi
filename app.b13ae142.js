@@ -5481,7 +5481,7 @@
         var html = '<div class="home">' +
             '<div class="home-hello" id="home-hello">' + getGreeting() + '</div>' +
             (examN !== null ? examCardHtml() : '') +
-            '<div class="home-today">' + ringSvg(goalPct, 78, todayRec.answered + '問', '目標 ' + dailyGoal) +
+            '<div class="home-today">' + ringSvg(goalPct, 66, todayRec.answered + '問', '目標 ' + dailyGoal) +
             '<div class="home-today-text">' +
             (todayRec.answered >= dailyGoal ? '<b>今日の目標を達成しました ✓</b>' : 'あと <b>' + Math.max(0, dailyGoal - todayRec.answered) + '問</b> で今日の目標達成') +
             weekBarsSvg() +

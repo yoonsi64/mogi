@@ -3047,3 +3047,9 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
 .home .exam-quote-gloss { display: none; }
 .home .exam-quote-who { font-size: 0.72rem; margin-top: 1px; }
 .home .exam-quote-who span { display: none; }
+
+/* today's progress on home, concise: smaller ring, a short week chart, tighter lines */
+.home .home-today { padding: 10px 14px; gap: 12px; margin-bottom: 10px; }
+.home .home-today-text { line-height: 1.5; font-size: 0.82rem; }
+.home .home-today-text .week-bars { max-width: 128px; margin: 3px 0 1px; }
+.home .home-today-meta { gap: 2px 10px; }
