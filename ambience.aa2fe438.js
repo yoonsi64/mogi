@@ -2976,14 +2976,18 @@ function mountSky(el, opts) {
     if (fw) { fwl = fw.step(t, function (delay, kind, whistle) { var S = sound(); if (S) S.cue('firework', { delay: delay, kind: kind, whistle: whistle }); }); g.setTransform(dpr, 0, 0, dpr, 0, 0); fw.draw(g, cam, t, wind); }
     drawTanabata(); drawHighlight();
     // the foreground: still layers, the swaying trees, the out-of-focus nearest leaves
-    var sx = dot3(windVec(wind), cam.r), sw = st.reduced ? 0 : Math.min(3.2, wind.strength);
+    var sx = dot3(windVec(wind), cam.r), sw = st.reduced ? 0 : Math.min(3.2, wind.strength), gale = !st.reduced && (st.weather === 'typhoon' || st.weather === 'blizzard');
     var osc = Math.sin(t * 1.05) * 0.55 + Math.sin(t * 2.3 + 1) * 0.25 + Math.sin(t * 0.43 + 2) * 0.35;
     var A = (sx * sw * 1.6 + osc * sw * (0.7 + Math.abs(sx))) * dpr;
+    if (gale) { // a typhoon or blizzard: the trees bend hard downwind and thrash in the gusts, never calming
+      var sd = sx >= 0 ? 1 : -1, surge = 0.5 + 0.5 * Math.sin(t * 0.37 + Math.sin(t * 0.13) * 2), thr = Math.sin(t * 3.1) * 0.5 + Math.sin(t * 5.3 + 1.7) * 0.3 + Math.sin(t * 1.7 + 0.4) * 0.6;
+      A = (sd * (7 + 6 * surge) * (0.6 + 0.4 * Math.abs(sx)) + thr * (2.5 + 3 * surge)) * dpr;
+    }
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.drawImage(scene, 0, 0, scene.width, scene.height, 0, 0, cv.width, cv.height);
     swayDraw(folC, A, cv.height);
     g.drawImage(frontC, 0, 0, frontC.width, frontC.height, 0, 0, cv.width, cv.height);
-    swayDraw(nearB, A * 2.2 + Math.sin(t * 1.7) * sw * dpr * 0.8, cv.height);
+    swayDraw(nearB, gale ? A * 1.4 : A * 2.2 + Math.sin(t * 1.7) * sw * dpr * 0.8, cv.height);
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     if (st.lights && (st.light === 'night' || st.light === 'dusk')) drawGlows(t);
     if (fl > 0) flashScene([200, 210, 255], fl * 0.28);
@@ -3186,13 +3190,21 @@ Fx.prototype.spawn = function (q, cam, anywhere, wv) {
 Fx.prototype.step = function (dt, cam, wind) {
   if (!this.p.length) return;
   var wv = windVec(wind), ws = wind.strength, k = this.kind, i, r = this.rnd;
+  this.T = (this.T || 0) + dt; var T = this.T; // gusts: slow surges with sharper bursts
+  this.gust = clamp(0.45 + 0.35 * Math.sin(T * 0.45) + 0.25 * Math.sin(T * 1.3 + 1) * Math.max(0, Math.sin(T * 0.21 + 2)), 0, 1);
   for (i = 0; i < this.p.length; i++) {
     var q = this.p[i];
     if (!q.p || this.fresh) { this.spawn(q, cam, true, wv); continue; }
     q.t += dt;
     var vx, vy, vz;
     if (k === 'rain') { var h = 1.5 + ws * 6; vx = wv[0] * h; vy = wv[1] * h; vz = -8.5; }
-    else if (k === 'snow') { var hs = 0.4 + ws * (this.st.weather === 'blizzard' ? 5 : 2.2); vx = wv[0] * hs + Math.sin(q.t * 1.3 + q.ph) * 0.35; vy = wv[1] * hs + Math.cos(q.t * 1.1 + q.ph) * 0.35; vz = -0.75 * q.s - 0.3; }
+    else if (k === 'snow' && this.st.weather === 'blizzard') { // driven almost sideways, in surges, swirling in the eddies
+      var gu = this.gust, hb = (3 + 5 * Math.max(0.9, ws)) * (0.55 + 0.9 * gu) * (0.8 + 0.4 * q.s), sw2 = 1.2 + 1.4 * gu;
+      vx = wv[0] * hb + Math.sin(q.t * 2.3 + q.ph) * sw2 - wv[1] * Math.sin(q.t * 1.1 + q.ph * 2) * sw2 * 0.6;
+      vy = wv[1] * hb + Math.cos(q.t * 1.9 + q.ph) * sw2 + wv[0] * Math.sin(q.t * 1.1 + q.ph * 2) * sw2 * 0.6;
+      vz = -1.1 * q.s - 0.4 + Math.sin(q.t * 1.6 + q.ph) * 1.1 * gu;
+    }
+    else if (k === 'snow') { var hs = 0.4 + ws * 2.2; vx = wv[0] * hs + Math.sin(q.t * 1.3 + q.ph) * 0.35; vy = wv[1] * hs + Math.cos(q.t * 1.1 + q.ph) * 0.35; vz = -0.75 * q.s - 0.3; }
     else { var hp = 0.6 + ws * 3; vx = wv[0] * hp + Math.sin(q.t * 2.1 + q.ph) * 0.5; vy = wv[1] * hp + Math.cos(q.t * 1.7 + q.ph) * 0.5; vz = -0.55 - 0.35 * Math.sin(q.t * 3 + q.ph); }
     q.v = [vx, vy, vz];
     q.p = [q.p[0] + vx * dt, q.p[1] + vy * dt, q.p[2] + vz * dt];
@@ -3219,6 +3231,16 @@ Fx.prototype.draw = function (g, cam, st) {
   } else if (k === 'snow') {
     var spr = st.flakeSpr || (st.flakeSpr = (function () { var c = document.createElement('canvas'); c.width = c.height = 32; var x = c.getContext('2d'), gr = x.createRadialGradient(16, 16, 0, 16, 16, 16); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.45, 'rgba(255,255,255,0.7)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, 32, 32); return c; })());
     var bright = st.light === 'night' ? (st.world === 'town' ? 0.75 : 0.55) : 0.95;
+    if (st.weather === 'blizzard') { // streaks: the flakes move too fast to read as dots
+      g.lineCap = 'round'; var sc = st.light === 'night' ? (st.world === 'town' ? [236, 226, 214] : [196, 204, 220]) : [255, 255, 255];
+      for (i = 0; i < this.p.length; i++) {
+        var f = this.p[i]; if (!f.v) continue; var a2 = cam.p(f.p), b2 = cam.p(v3(f.p, f.v, -0.014 * (0.6 + 0.8 * f.c))); if (!a2 || !b2) continue;
+        var rr = clamp(0.009 * f.s * F / a2[2], 0.5, 9), near = a2[2] < 1.5;
+        g.strokeStyle = rgbas(sc, bright * (near ? 0.22 : clamp(0.85 - a2[2] * 0.06, 0.25, 0.8))); g.lineWidth = rr * (near ? 1.6 : 1);
+        g.beginPath(); g.moveTo(a2[0], a2[1]); g.lineTo(b2[0], b2[1]); g.stroke();
+      }
+      return;
+    }
     for (i = 0; i < this.p.length; i++) {
       var s = this.p[i], p = cam.p(s.p); if (!p) continue;
       var r = clamp(0.011 * s.s * F / p[2], 0.7, 18) * (p[2] < 1.2 ? 1.6 : 1), al2 = bright * (p[2] < 1.2 ? 0.4 : 0.85);
