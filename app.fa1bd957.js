@@ -4575,7 +4575,7 @@
             gdRenderView(); gdSoundUpdate();
         });
     }
-    var GD_CUE_ALIAS = { bees: 'fuji', startle: 'bird' };       // painter cue names that share a sound
+    var GD_CUE_ALIAS = { bees: 'fuji', startle: 'birdtap' };   // birdtap: a bird you touched (always answers, whatever the weather)       // painter cue names that share a sound
     function gdCueName(n) { return GD_CUE_ALIAS[n] || n; }
     function gdSceneTap(x, y) {
         if (!GD.vctrl || !GD.vctrl.tap || gdSkyOpen()) return;

@@ -6825,7 +6825,7 @@ function mount(el, opts) {
       stepFauna(g.FA, g, dt, clock, frng, g.walkers);
       if (g.birds && faunaOK(g) && clock > g.FA.next && g.FA.sky.length < 2) {
         var nb = newSkyBird(g, frng); if (nb) { g.FA.sky.push(nb); cue(nb.cue); }
-        g.FA.next = clock + (g.light === 'dusk' ? 16 + frng() * 14 : 22 + frng() * 26);
+        g.FA.next = clock + (g.light === 'dusk' ? 16 + frng() * 14 : 22 + frng() * 26) * (wxWet(g.wx) || wxSnowy(g.wx) ? 4 : 1);   // few birds fly in rain or snow
       }
     }
     if (rare && clock > rare.t0 + rare.def.dur) { rare = null; g.rareNow = null; }

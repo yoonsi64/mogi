@@ -3998,6 +3998,7 @@ function sndCue(E, name, arg, focus, at) {
     case 'splash': snNoise(E, t, out(0.3, R(-0.5, 0.5)), { kind: 'pink', type: 'lowpass', f: 2600, q: 0.6, att: 0.005, dec: 0.25 }); for (var i = 0; i < 5; i++) snPlink(E, t + 0.08 + i * R(0.05, 0.12), out(0.05, R(-0.5, 0.5)), R(500, 1400), 1, 0.06); return;
     case 'drip': snPlink(E, t, out(0.22, R(-0.4, 0.4)), R(700, 1000), 1, 0.12); return;
     case 'bird': (E.rnd() < 0.5 ? BIRD.shijukara : BIRD.hiyodori)(E, t, out(0.18 * (SND.birdK || 1), R(-0.7, 0.7), 9000)); return;
+    case 'birdtap': (E.rnd() < 0.5 ? BIRD.shijukara : BIRD.hiyodori)(E, t, out(0.18, R(-0.7, 0.7), 9000)); return;
     case 'gust': snNoise(E, t, out(0.07, R(-0.5, 0.5)), { kind: 'pink', type: 'bandpass', f: 2600, q: 0.5, att: 1.0, hold: 1.2, dec: 2.2 }); snNoise(E, t + 0.4, out(0.05, R(-0.5, 0.5)), { kind: 'brown', type: 'lowpass', f: 500, att: 0.9, hold: 1, dec: 2 }); return;
     case 'bell': snBonsho(E, t, out(0.45, 0, 3000), R(118, 128), 1, focus ? 16 : 24); return;
     case 'wheel': // the water wheel: a wooden creak and spill
@@ -4054,7 +4055,7 @@ var MogiSound = {
       // in rain or snow most birds keep quiet under cover: a bird seen crossing calls only now and then, and softly
       var cwx = SND.opts && SND.opts.weather, badWx = cwx === 'rain' || cwx === 'storm' || cwx === 'typhoon' || cwx === 'snow' || cwx === 'blizzard';
       SND.birdK = 1;
-      if (badWx && (name === 'bird' || name === 'crow' || name === 'startle')) { if (Math.random() > 0.25) return; SND.birdK = 0.35; }
+      if (badWx && (name === 'bird' || name === 'crow')) { if (Math.random() > 0.25) return; SND.birdK = 0.35; }
       sndCue(SND.E, String(name || ''), id, SND.opts && SND.opts.focus); } catch (e) { }
   },
   stop: function (instant) {

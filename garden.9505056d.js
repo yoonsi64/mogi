@@ -4538,7 +4538,7 @@ function startTap(hit, g, t, rng, cue, rare) {
     case 'tsukubai': o.dur = 4.2; o.poured = false; break;
     case 'lantern':
       o.lit = !!g.LIT.lit; o.dur = o.lit ? 1.6 : 2.6; o.top = [LAY.lantern.x, 1.45, LAY.lantern.z]; o.dir = rng() < 0.5 ? 1 : -1;
-      if (!o.lit) cue('bird'); else cue('lantern'); break;
+      if (!o.lit) cue('birdtap'); else cue('lantern'); break;
     case 'tree':
       o.c = hit.c; o.R = hit.R; o.tk = hit.kind; o.dur = 4.5; o.parts = [];
       // what comes down depends on the tree and the season: petals only from a sakura in bloom
@@ -4552,8 +4552,8 @@ function startTap(hit, g, t, rng, cue, rare) {
       for (i = 0; i < n; i++) o.parts.push({ x: c.x + (rng() - 0.5) * hit.R * c.k * 1.4, y: c.y + (rng() - 0.6) * hit.R * c.k * 0.8, vy: (mode === 'needle' ? 10 : 6) + rng() * 6, vx: (rng() - 0.5) * 3, ph: rng() * TAU, rot: rng() * TAU, sz: mode === 'petal' ? 1 + rng() * 0.6 : mode === 'sleaf' || mode === 'sgreen' ? 1.5 + rng() * 0.7 : 1.4 + rng() * 0.8, d: rng() * (n < 5 ? 1.2 : 0.6), floor: c.y + hit.R * c.k * (1.1 + rng() * 0.8), col: cols[(rng() * cols.length) | 0] });
       cue('gust'); break;
     case 'fuji': o.dur = 4.5; o.bees = []; for (i = 0; i < 3; i++) o.bees.push({ ph: rng() * TAU, w: 1.5 + rng(), r: 6 + rng() * 6, dx: (rng() - 0.5) * 30 }); cue('bees'); break;
-    case 'bridge': case 'stone': o.perch = hit.perch; o.dur = 4.2; o.dir = rng() < 0.5 ? 1 : -1; cue('bird'); break;
-    case 'rare': if (rare) { rareStartle(rare); cue(rare.id === 'usagi' || rare.id === 'kitsune' || rare.id === 'tanuki' || rare.id === 'shika' ? 'startle' : 'bird', { id: rare.id }); } o.dur = 0.1; break;
+    case 'bridge': case 'stone': o.perch = hit.perch; o.dur = 4.2; o.dir = rng() < 0.5 ? 1 : -1; cue('birdtap'); break;
+    case 'rare': if (rare) { rareStartle(rare); cue(rare.id === 'usagi' || rare.id === 'kitsune' || rare.id === 'tanuki' || rare.id === 'shika' ? 'startle' : 'birdtap', { id: rare.id }); } o.dur = 0.1; break;
   }
   return o;
 }
@@ -5463,7 +5463,7 @@ function mount(el, opts) {
         var ltr = frng() < 0.5, y = g.horizonY * (0.15 + frng() * 0.45);
         cue('bird');
         bird.cur = { t0: clock, dur: 8 + frng() * 5, x0: ltr ? -12 : g.W + 12, x1: ltr ? g.W + 12 : -12, y: y, rise: (frng() - 0.3) * 20, flap: 9 + frng() * 4, s: 0.8 + frng() * 0.5 };
-        bird.next = clock + (22 + frng() * 30) * (g.wet || g.LIT.weather === 'snow' ? 3 : 1);   // birds keep under cover in the rain
+        bird.next = clock + (22 + frng() * 30) * (g.wet || g.LIT.weather === 'snow' ? 6 : 1);   // birds keep under cover in the rain
       }
     }
     if (reveal) stepReveal(dt);
