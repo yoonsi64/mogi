@@ -2917,69 +2917,142 @@ function drawMoonAt(ctx, bigMoon, night) {
   var ms = mr / 7.5; ctx.fillStyle = bigMoon && !night ? 'rgba(214,170,120,0.35)' : 'rgba(200,196,180,0.35)'; [[-2.5, -1.6, 2.2], [2, 1.2, 1.7], [-0.8, 2.8, 1.3], [2.4, -2.4, 1]].forEach(function (c) { ctx.beginPath(); ctx.arc(mx + c[0] * ms, my + c[1] * ms, c[2] * ms, 0, TAU); ctx.fill(); });
 }
 function moonPos() { return { x: W * 0.43, y: 16 + skyBand() * 0.5 }; }
-/* clouds: banks of rounded heads over a flat base, lit from the sun's side, shaded beneath */
+/* clouds, painted per pixel like a sky study: fair-weather cumulus with flat shaded bases, billowing sunlit heads and torn
+   edges; high cirrus and autumn's 鱗雲 (cirrocumulus) in rows of little flecks; grey stratocumulus when cloudy and a low ragged
+   nimbostratus under rain. The noise repeats across spanW so the band drifts seamlessly. Lit by the hour: white heads and
+   blue-grey bases by day, warm undersides at dusk, faint moonlit edges at night; hazed toward the horizon. */
+var CLOUD_NZ = null;
+function cloudNoise() {
+  if (CLOUD_NZ) return CLOUD_NZ;
+  var r = mulberry32(4242), V = new Float32Array(256 * 256);
+  for (var i = 0; i < V.length; i++) V[i] = r();
+  function n(u, v, P) {   // value noise, u periodic with period P (integer cells)
+    var X = Math.floor(u), Y = Math.floor(v), fx = u - X, fy = v - Y, x0 = ((X % P) + P) % P, x1 = (x0 + 1) % P, y0 = Y & 255, y1 = (Y + 1) & 255;
+    var a = V[(y0 << 8) | (x0 & 255)], b = V[(y0 << 8) | (x1 & 255)], c = V[(y1 << 8) | (x0 & 255)], d = V[(y1 << 8) | (x1 & 255)];
+    fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+    return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
+  }
+  function f(u, v, P, oct) { var s = 0, a = 0.5, nrm = 0; for (var o = 0; o < oct; o++) { s += a * n(u, v + o * 37.1, P); nrm += a; a *= 0.5; u *= 2; v *= 2; P *= 2; } return s / nrm; }
+  CLOUD_NZ = { n: n, f: f }; return CLOUD_NZ;
+}
+function cloudLayers(yo, winter) {   // the open sky is y < yo + ~30..45 (the wooded ranges rise into it)
+  var wx = F.wx || 'clear', se = SEA.name, dusk = LIT.name === 'dusk', L = [];
+  // cu: cumulus (yb base, hm height, cov coverage, P masses across the band, a alpha, sm fragments); lower = farther = smaller and flatter
+  function cu(yb, hm, cov, P, a, sm) { L.push({ t: 'cu', yb: yo + yb, hm: hm, cov: cov, P: P, a: a, sm: sm || 0 }); }
+  function sc(y0, y1, cov, cell, a, dark, virga) { L.push({ t: 'sc', y0: yo + y0, y1: yo + y1, cov: cov, P: Math.round(W * 2 / cell), vs: cell * 0.36, a: a, dark: dark || 0, virga: virga || 0 }); }
+  function hi(t, y0, y1, P, a) { L.push({ t: t, y0: yo + y0, y1: yo + y1, P: P, a: a }); }
+  if (wx === 'rain' || wx === 'storm' || wx === 'typhoon' || wx === 'snow' || wx === 'blizzard') {
+    var dk = wx === 'storm' || wx === 'typhoon' ? 0.8 : wx === 'snow' || wx === 'blizzard' ? 0.2 : 0.55;
+    sc(-30, 22, 0.97, 70, 0.8, dk * 0.5, 0);              // the lid: a deck of soft rolls
+    sc(8, 36, 0.62, 34, 0.9, dk, wx === 'snow' || wx === 'blizzard' ? 0.5 : 1);   // low ragged cloud, rain hanging from it
+    return L;
+  }
+  if (wx === 'cloudy') { sc(-30, 16, 0.8, 56, 0.7, 0.1, 0); cu(20, 10, 0.6, 7, 0.95, 0.5); cu(31, 7, 0.65, 10, 0.9, 0.6); return L; }
+  if (dusk) hi('sk', 14, 30, 4, 0.9);   // thin bright streaks low in the west
+  if (se === 'summer') { hi('ci', -10, 6, 5, 0.4); cu(8, 12, 0.5, 6, 1, 0.5); cu(27, 18, 0.62, 5, 1, 0.8); cu(33, 6, 0.4, 12, 0.85, 0.7); }
+  else if (se === 'autumn') { hi('cc', -10, 20, 5, 0.65); cu(27, 9, 0.48, 7, 0.95, 0.7); }
+  else if (se === 'spring') { sc(-10, 10, 0.4, 60, 0.4, 0); cu(25, 12, 0.6, 6, 0.9, 0.7); cu(32, 6, 0.45, 11, 0.8, 0.6); hi('ci', -10, 2, 5, 0.3); }
+  else { hi('ci', -10, 14, 5, 0.5); sc(12, 26, 0.42, 48, 0.55, 0); cu(28, 7, 0.45, 9, 0.85, 0.5); }
+  return L;
+}
 function paintClouds(ctx, yo, night, dusk, spanW) {
   spanW = spanW || W;
-  var L = LIT, rng = mulberry32(17 + (SEA.snow ? 5 : 0)), morning = L.name === 'morning', winter = !!SEA.snow, wx = F.wx || 'clear', ov = wx !== 'clear', heavy = wx !== 'clear' && wx !== 'cloudy';
-  var lit = night ? [96, 110, 150] : dusk ? [255, 196, 150] : morning ? [255, 246, 238] : [255, 253, 248];
-  var body = night ? [34, 44, 74] : dusk ? [150, 112, 142] : morning ? [206, 204, 216] : winter ? [196, 202, 212] : [214, 220, 230];
-  var shadow = night ? [22, 30, 56] : dusk ? [112, 84, 120] : morning ? [170, 172, 192] : winter ? [160, 168, 182] : [172, 182, 202];
-  if (ov) { lit = mixc(lit, [200, 206, 214], night ? 0.2 : 0.6); body = mixc(body, heavy ? [96, 100, 112] : [168, 172, 182], night ? 0.3 : 0.7); shadow = mixc(shadow, heavy ? [62, 66, 80] : [130, 136, 150], night ? 0.3 : 0.7); if (wx === 'typhoon') { body = mixc(body, [90, 104, 92], 0.5); shadow = mixc(shadow, [56, 68, 60], 0.5); } }
-  var alpha = night ? 0.75 : 0.95, sunL = L.sunX < 0.5 ? -1 : 1, n = Math.round((winter ? 8 : 6) * (ov ? (heavy ? 2.4 : 1.7) : 1) * spanW / W * 0.8);
-  if (heavy || wx === 'cloudy') {   // overcast: soft, flat stratus masses drifting under the lid, darker beneath
-    var nS = Math.round((heavy ? 16 : 10) * spanW / W);
-    for (var q = 0; q < nS; q++) {
-      var sw = 70 + rng() * 120, sy = yo + (heavy ? 4 : -2) + rng() * 44, sx = rng() * spanW, sh = sw * (0.07 + rng() * 0.05);
-      [-spanW, 0, spanW].forEach(function (dx) {
-        var x = sx + dx; if (x + sw < -10 || x - sw > spanW + 10) return;
-        var gg = ctx.createRadialGradient(x, sy, 0, x, sy, sw); gg.addColorStop(0, rgb(mixc(body, shadow, 0.35), heavy ? 0.6 : 0.42)); gg.addColorStop(0.6, rgb(body, heavy ? 0.3 : 0.2)); gg.addColorStop(1, rgb(body, 0));
-        ctx.save(); ctx.translate(x, sy); ctx.scale(1, sh / sw); ctx.translate(-x, -sy); ctx.fillStyle = gg; ctx.fillRect(x - sw, sy - sw, sw * 2, sw * 2); ctx.restore();
-        var tg = ctx.createRadialGradient(x - sw * 0.1, sy - sh * 0.5, 0, x - sw * 0.1, sy - sh * 0.5, sw * 0.6); tg.addColorStop(0, rgb(lit, night ? 0.06 : 0.16)); tg.addColorStop(1, rgb(lit, 0));
-        ctx.save(); ctx.translate(x, sy - sh * 0.5); ctx.scale(1, sh / sw); ctx.translate(-x, -(sy - sh * 0.5)); ctx.fillStyle = tg; ctx.fillRect(x - sw, sy - sh * 0.5 - sw, sw * 2, sw * 2); ctx.restore();
-      });
-    }
-    if (heavy) return;
-    n = Math.round(n * 0.35);
+  var T = ctx.getTransform ? ctx.getTransform() : { a: 2 }, sc0 = Math.abs(T.a) || 2, r = Math.min(0.95, sc0), L = LIT, morning = L.name === 'morning', winter = !!SEA.snow, wx = F.wx || 'clear', ov = wx !== 'clear';
+  var yH = 100 + yo, HH = Math.min(H * 0.62, yH + 6), pw = Math.max(2, Math.round(spanW * r)), ph = Math.max(2, Math.round(HH * r)), NZc = cloudNoise(), nf = NZc.f, nn = NZc.n;
+  var layers = cloudLayers(yo, winter);
+  // palette: sunlit, the body, the shaded side, the base
+  var lit = night ? [116, 128, 168] : dusk ? [255, 184, 120] : morning ? [255, 244, 232] : [255, 253, 247];
+  var mid = night ? [62, 72, 106] : dusk ? [226, 150, 140] : morning ? [226, 222, 232] : [232, 234, 240];
+  var shd = night ? [40, 48, 80] : dusk ? [116, 110, 150] : morning ? [162, 164, 188] : winter ? [162, 170, 186] : [168, 178, 200];
+  var bas = night ? [30, 36, 64] : dusk ? [96, 88, 128] : morning ? [138, 140, 166] : [140, 150, 174];
+  if (ov) { var gk = night ? 0.3 : 0.75; lit = mixc(lit, [226, 230, 236], gk * 0.75); mid = mixc(mid, [184, 188, 196], gk); shd = mixc(shd, [118, 124, 138], gk); bas = mixc(bas, [92, 98, 112], gk); }
+  var hz = mixc(L.skyHor, L.haze, 0.5), aK = night ? 0.7 : 1;
+  // the light on the screen: toward the sun (the moon at night), from above by day, from the side and below at dusk
+  var sunX = night ? 0.43 : L.sunX, lx = (sunX < 0.5 ? -1 : 1) * (dusk ? 0.92 : 0.5), ly = dusk ? 0.38 : night ? -0.6 : morning ? -0.5 : -0.86, ll = Math.hypot(lx, ly); lx /= ll; ly /= ll;
+  function tone(br, base) {   // shaded -> body -> lit, and the base darker
+    var c = br < 0.5 ? mixc(shd, mid, br * 2) : mixc(mid, lit, (br - 0.5) * 2);
+    return base > 0 ? mixc(c, bas, base) : c;
   }
-  var specs = [];
-  for (var i = 0; i < n; i++) {
-    var w = 34 + rng() * 70, y = yo - 2 + 6 + rng() * 34 + (i % 2) * 6, x = (i + 0.5 + (rng() - 0.5) * 0.4) / n * spanW;
-    specs.push({ x: x, y: y, w: w, h: w * (0.2 + rng() * 0.12) * (winter ? 0.8 : 1) });
-  }
-  specs.sort(function (a, b) { return a.y - b.y; });
-  specs.forEach(function (c) {
-    var puffs = [], k = 7 + Math.round(c.w / 9), j;
-    for (j = 0; j < k; j++) {   // a chain of overlapping puffs along the base, larger toward the middle
-      var u = -1 + 2 * (j + 0.5) / k + (rng() - 0.5) * 0.25 / k, env = 1 - u * u * 0.8, r = c.w * (0.1 + 0.06 * rng()) * (0.5 + 0.5 * env);
-      puffs.push({ x: c.x + u * c.w * 0.44, y: c.y - r * (0.35 + 0.3 * rng()), r: r });
+  var img = new ImageData(pw, ph), D = img.data, i, j;
+  function put(k4, c0, d) { var ea = D[k4 + 3] / 255, na = d + ea * (1 - d); if (na <= 0) return; D[k4] = (c0[0] * d + D[k4] * ea * (1 - d)) / na; D[k4 + 1] = (c0[1] * d + D[k4 + 1] * ea * (1 - d)) / na; D[k4 + 2] = (c0[2] * d + D[k4 + 2] * ea * (1 - d)) / na; D[k4 + 3] = na * 255; }
+  for (var li = 0; li < layers.length; li++) {
+    var Ly = layers[li], yA, yB;
+    if (Ly.t === 'cu') { yA = Ly.yb - Ly.hm * 1.9; yB = Ly.yb + Ly.hm * 0.35; } else { yA = Ly.y0 - 8; yB = Ly.y1 + (Ly.virga ? 30 : 8); }
+    var j0 = Math.max(0, Math.floor(yA * r)), j1 = Math.min(ph, Math.ceil(yB * r));
+    if (j1 <= j0) continue;
+    if (Ly.t === 'cu') {
+      // per column: the masses, the height of their heads, a ragged base line
+      var Ac = new Float32Array(pw), Tc = new Float32Array(pw);
+      for (i = 0; i < pw; i++) { var u0 = (i + 0.5) / r / spanW, m = nf(u0 * Ly.P, 3.3 + Ly.yb * 0.13, Ly.P, 3), fr = Ly.sm ? nf(u0 * Ly.P * 4, 9.1 + Ly.yb, Ly.P * 4, 2) : 0;
+        var A = sstep(0.66 - Ly.cov * 0.3, 0.8 - Ly.cov * 0.3, m), Af = Ly.sm * sstep(0.7, 0.8, fr) * 0.45 * (1 - A); Ac[i] = Math.max(A, Af);
+        var hd = nf(u0 * Ly.P * 5, 7.7 + Ly.yb, Ly.P * 5, 3); Tc[i] = Math.pow(Ac[i], 0.5) * (0.35 + 1.4 * sstep(0.2, 0.8, hd) * (0.55 + 0.45 * A)); }
+      var hm = Ly.hm, P8 = Ly.P * 10;
+      var CF = function (ii, x, y) {   // the cloud field: >0 inside; the billows of a 2D noise roughen it, the base is flat but soft
+        var t = (Ly.yb - y) / hm; if (ii < 0) ii = 0; if (ii >= pw) ii = pw - 1;
+        if (Ac[ii] < 0.02 || t < -0.4 || t > 1.8) return -1;
+        var bl = nf(x / spanW * P8, y / (hm * 0.3), P8, 3) - 0.5, b2 = nf(x / spanW * P8 * 3, y / (hm * 0.1), P8 * 3, 2) - 0.5;
+        return Math.min(Tc[ii] - t + bl * 0.6 + b2 * 0.18, (t + 0.1 + bl * 0.22 + b2 * 0.1) * 2.6);
+      };
+      for (j = j0; j < j1; j++) {
+        var y = (j + 0.5) / r, haze = sstep(yo + 8, yo + 42, y) * 0.5, row = j * pw, sx = Math.round(lx * hm * 0.22 * r), sy = ly * hm * 0.22, sx2 = Math.round(lx * hm * 0.6 * r), sy2 = ly * hm * 0.6;
+        for (i = 0; i < pw; i++) {
+          if (Ac[i] < 0.02 && (i < 3 || Ac[i - 3] < 0.02) && (i > pw - 4 || Ac[i + 3] < 0.02)) continue;
+          var x = (i + 0.5) / r, f = CF(i, x, y); if (f <= -0.02) continue;
+          var tt = clamp((Ly.yb - y) / hm), w = lerp(0.4, 0.16, sstep(0.25, 1, tt)), d = sstep(-0.04, w, f); if (d < 0.01) continue;
+          var o1 = Math.max(0, CF(i + sx, x + lx * hm * 0.22, y + sy)), o2 = Math.max(0, CF(i + sx2, x + lx * hm * 0.6, y + sy2));
+          var br = Math.exp(-(o1 * 2.2 + o2 * 1.4)) * 0.78 + tt * 0.28;
+          if (dusk) br = Math.max(br * 0.72, (1 - sstep(0, 0.45, tt)) * 0.82 * Math.exp(-o2 * 1.2));   // the low sun lights the undersides
+          if (night) br = br * 0.7 + (1 - d) * 0.35;   // moonlight only on the thin edges
+          var base = (1 - sstep(0, 0.28, tt)) * (dusk ? 0.15 : 0.5) * (1 - br * 0.6);
+          put((row + i) * 4, haze > 0 ? mixc(tone(clamp(br), base), hz, haze) : tone(clamp(br), base), Math.pow(d, 0.9) * Ly.a * aK * (1 - haze * 0.4));
+        }
+      }
+      continue;
     }
-    for (j = 0; j < Math.max(2, k / 3); j++) { var uh = (rng() - 0.5) * 0.9, rh = c.w * (0.13 + 0.06 * rng()) * (1 - Math.abs(uh) * 0.6); puffs.push({ x: c.x + uh * c.w * 0.4, y: c.y - c.h * (0.55 + 0.4 * rng()) - rh * 0.3, r: rh }); }   // the heads
-    var shifts = spanW > W ? [-spanW, 0, spanW] : [0], wr = [];
-    for (j = 0; j < 4; j++) wr.push([(rng() - 0.5) * c.w * 1.2, 0.5 + rng() * 1.5, c.w * (0.2 + rng() * 0.25), 0.8 + rng()]);
-    shifts.forEach(function (dx) {
-    if (c.x + dx + c.w < -10 || c.x + dx - c.w > spanW + 10) return;
-    ctx.save(); ctx.translate(dx, 0);
-    var bodyP = new Path2D();
-    puffs.forEach(function (p) { bodyP.moveTo(p.x + p.r, p.y); bodyP.arc(p.x, p.y, p.r, 0, TAU); });
-    ctx.save();
-    var gr = ctx.createLinearGradient(0, c.y - c.h * 1.4, 0, c.y);
-    gr.addColorStop(0, rgb(body, alpha)); gr.addColorStop(1, rgb(shadow, alpha));
-    ctx.fillStyle = gr; ctx.fill(bodyP);
-    ctx.clip(bodyP);
-    // light on the heads, from the sun's side (from below at dusk)
-    puffs.forEach(function (p) {
-      var ox = sunL * p.r * 0.32, oy = dusk ? p.r * 0.35 : -p.r * 0.35, hg = ctx.createRadialGradient(p.x + ox, p.y + oy, 0, p.x + ox, p.y + oy, p.r * 0.95);
-      hg.addColorStop(0, rgb(lit, night ? 0.32 : 0.6)); hg.addColorStop(1, rgb(lit, 0)); ctx.fillStyle = hg; ctx.fillRect(p.x - p.r * 2, p.y - p.r * 2, p.r * 4, p.r * 4);
-    });
-    // a soft shadowed belly
-    var bg = ctx.createLinearGradient(0, c.y - c.h * 0.45, 0, c.y); bg.addColorStop(0, rgb(shadow, 0)); bg.addColorStop(1, rgb(shadow, dusk ? 0.2 : 0.45)); ctx.fillStyle = bg; ctx.fillRect(c.x - c.w, c.y - c.h, c.w * 2, c.h + 1);
-    ctx.restore();
-    // wisps trailing from the base
-    ctx.fillStyle = rgb(mixc(body, lit, 0.4), night ? 0.12 : 0.22);
-    wr.forEach(function (q) { ctx.beginPath(); ctx.ellipse(c.x + q[0], c.y + q[1], q[2], q[3], 0, 0, TAU); ctx.fill(); });
-    ctx.restore();
-    });
-  });
+    for (j = j0; j < j1; j++) {
+      var y2 = (j + 0.5) / r, haze2 = sstep(yo + 8, yo + 42, y2) * 0.5, row2 = j * pw;
+      for (i = 0; i < pw; i++) {
+        var x2 = (i + 0.5) / r, u = x2 / spanW, d2 = 0, c0;
+        if (Ly.t === 'sc') {   // stratocumulus / nimbostratus: lumps and rolls of many sizes, lit from above, a ragged darker base
+          var bot = Ly.y1 + (nf(u * Ly.P * 0.6, 5.5 + Ly.y1, Math.max(1, Math.round(Ly.P * 0.6)), 3) - 0.5) * 18;
+          var env = sstep(Ly.y0 - 8, Ly.y0 + 10, y2) * (1 - sstep(bot - 9, bot + 1, y2));
+          var vg = 0;
+          if (Ly.virga && y2 > bot - 6) { var vm = sstep(0.45, 0.7, nf(u * Ly.P * 0.35, 1.7, Math.max(1, Math.round(Ly.P * 0.35)), 2)); vg = vm * Ly.virga * (1 - sstep(bot - 2, bot + 26, y2)) * (0.55 + 0.45 * nn(u * Ly.P * 6, y2 / 40, Ly.P * 6)) * 0.5; }
+          if (env < 0.01 && vg < 0.01) continue;
+          var wu = u * Ly.P + (nf(u * Ly.P * 0.5, y2 / (Ly.vs * 3), Math.max(1, Math.round(Ly.P * 0.5)), 2) - 0.5) * 1.6;
+          var lump = function (yy) { return nf(wu, yy / Ly.vs, Ly.P, 4); };
+          var n0 = lump(y2), thr = 0.62 - Ly.cov * 0.42;
+          var dd = sstep(thr, thr + 0.22, n0) * env;
+          if (dd > 0.01) {
+            var a1 = sstep(thr, thr + 0.22, lump(y2 - Ly.vs * 0.35)), a2 = sstep(thr, thr + 0.22, lump(y2 - Ly.vs * 0.9));
+            var br2 = Math.exp(-(a1 * 0.9 + a2 * 0.6)) * 0.95 + 0.12 - Ly.dark * 0.3, bs = sstep(bot - 16, bot, y2) * (0.35 + Ly.dark * 0.5);
+            if (dusk) br2 = Math.max(br2, sstep(bot - 10, bot, y2) * 0.7);
+            c0 = tone(clamp(br2), clamp(bs + Ly.dark * 0.25)); d2 = dd * Ly.a;
+          } else c0 = null;
+          if (vg > 0.01) { var cv = mixc(tone(0.35, 0.5), hz, 0.35); if (c0) { c0 = mixc(cv, c0, d2 / (d2 + vg)); d2 = Math.max(d2, vg); } else { c0 = cv; d2 = vg; } }
+          if (!c0 || d2 < 0.01) continue;
+        } else if (Ly.t === 'cc') {   // 鱗雲: drifting sheets of small flecks, smaller toward the horizon
+          var band = sstep(0.5, 0.7, nf(u * Ly.P, y2 / 22, Ly.P, 3)) * (1 - sstep(Ly.y1 - 14, Ly.y1, y2)); if (band < 0.01) continue;
+          var ps = 1 + (y2 - Ly.y0) / 60, sk = x2 + y2 * 0.9, fl = nn(sk / spanW * 300 * ps, y2 / 1.9 * ps, Math.round(300 * ps)) * 0.7 + nn(sk / spanW * 600, y2 + 9, 600) * 0.3;
+          d2 = sstep(0.5, 0.82, fl) * band * (0.6 + 0.4 * sstep(0.4, 0.8, nf(u * Ly.P * 3, y2 / 8, Ly.P * 3, 2))); if (d2 < 0.01) continue;
+          c0 = tone(0.55 + fl * 0.45, 0); d2 *= Ly.a * 0.8;
+        } else if (Ly.t === 'sk') {   // thin bright streaks low in the sky at sunset
+          var mk = sstep(0.5, 0.75, nf(u * Ly.P, 4.4, Ly.P, 2)) * sstep(Ly.y0 - 4, Ly.y0 + 3, y2) * (1 - sstep(Ly.y1 - 5, Ly.y1, y2)); if (mk < 0.01) continue;
+          var stv = nf(u * Ly.P * 12, y2 / 1.6, Ly.P * 12, 3); d2 = sstep(0.55, 0.78, stv) * mk; if (d2 < 0.01) continue;
+          var nearSun = Math.exp(-Math.pow((u * 2 % 1) - sunX, 2) * 8); c0 = mixc(mixc(mid, lit, 0.6), [255, 226, 170], nearSun * 0.6); d2 *= Ly.a;
+        } else {   // cirrus: hair-fine streaks combed by the high wind
+          var bnd = sstep(0.52, 0.72, nf(u * Ly.P, y2 / 18, Ly.P, 2)) * (1 - sstep(Ly.y1 - 14, Ly.y1, y2)) * sstep(Ly.y0, Ly.y0 + 6, y2 + 10); if (bnd < 0.01) continue;
+          var sx3 = x2 - y2 * 2.2; d2 = sstep(0.55, 0.82, nf(sx3 / spanW * Ly.P * 4, y2 / 1.8, Ly.P * 4, 3)) * bnd; if (d2 < 0.01) continue;
+          c0 = tone(0.85, 0); d2 *= Ly.a;
+        }
+        if (haze2 > 0) { c0 = mixc(c0, hz, haze2); d2 *= 1 - haze2 * 0.4; }
+        put((row2 + i) * 4, c0, d2 * aK);
+      }
+    }
+  }
+  var cc = mkCanvas(pw, ph); cc.getContext('2d').putImageData(img, 0, 0);
+  ctx.save(); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; ctx.drawImage(cc, 0, 0, spanW, HH); ctx.restore();
+  cc.width = cc.height = 0;
 }
 /* ---------------- the far ranges (screen space): blue peaks, then a wooded range with fields and a hamlet ---------------- */
 function paintRanges(ctx, yo, bigMoon, night) {
@@ -3478,8 +3551,39 @@ async function renderStatic(job) {
     }
     MODE = 'n';
   }
+  // 10b. the depth of whatever stands nearest at each pixel (half res, in the spare band's slot): the key of the object, in
+  // centimetres, as R (high byte) and G (low byte). Anything that moves among the buildings is cut wherever a nearer object stands.
+  if (job.mask !== false) {
+    while (occ.length < NBANDS) occ.push(null);
+    occ[NBANDS - 1] = await bakeDepth(scene, hw, hh, bw, tick);
+  }
   freeTmps(); mark('mask');
   return { canvas: out, mask: wm, occ: occ, glows: glows, clouds: clouds, sky: sky, sway: sway, ms: now() - t0, phases: PH };
+}
+async function bakeDepth(scene, hw, hh, bw, tick) {
+  var dm = mkCanvas(hw, hh), dx = dm.getContext('2d'), tc = tmpCanvas(hw, hh), tx = tc.getContext('2d'), tk, mode0 = MODE;
+  MODE = 'k';
+  try {
+    for (var j = 0; j < scene.up.length; j++) {   // far to near: nearer objects overwrite
+      var u = scene.up[j]; if (u.key >= 1e5) continue;
+      tx.setTransform(1, 0, 0, 1, 0, 0); tx.globalCompositeOperation = 'source-over'; tx.clearRect(0, 0, hw, hh);
+      tx.setTransform(KS * hw / bw, 0, 0, KS * hw / bw, 0, 0); u.draw(tx);
+      var v = clamp(Math.round(u.key * 100), 0, 65535);
+      tx.setTransform(1, 0, 0, 1, 0, 0); tx.globalCompositeOperation = 'source-in'; tx.fillStyle = 'rgb(' + (v >> 8) + ',' + (v & 255) + ',0)'; tx.fillRect(0, 0, hw, hh);
+      dx.drawImage(tc, 0, 0);
+      tk = tick(); if (tk) await tk;
+    }
+  } finally { MODE = mode0; }
+  return dm;
+}
+/* the depth map decoded: per half-res pixel the key of the nearest standing object (1e9 where nothing stands) */
+function decodeDepth(c) {
+  if (!c) return null;
+  try {
+    var w = c.width, h = c.height, a = c.getContext('2d').getImageData(0, 0, w, h).data, d = new Float32Array(w * h);
+    for (var i = 0; i < w * h; i++) d[i] = a[i * 4 + 3] > 140 ? (a[i * 4] * 256 + a[i * 4 + 1]) / 100 : 1e9;
+    return { w: w, h: h, d: d };
+  } catch (e) { return null; }
 }
 function post(ctx, bw, bh, glows, reflGlows, mc) {
   var yo = CAM.cy - 150, i;
@@ -4067,8 +4171,11 @@ function drawBoatAnim(ctx, g, t) {
   var sp = Pa(stern), hp = Pa(head), push = Math.sin(t * 0.7) * 0.4;
   ctx.fillStyle = rgb(mulc([50, 62, 96], tint)); ctx.beginPath(); ctx.moveTo(sp.x - 0.2 * k, sp.y); ctx.lineTo(sp.x + 0.2 * k, sp.y); ctx.lineTo(hp.x + 0.16 * k, hp.y + 0.3 * k); ctx.lineTo(hp.x - 0.16 * k, hp.y + 0.3 * k); ctx.closePath(); ctx.fill();
   ctx.fillStyle = rgb(mulc([196, 168, 110], tint)); ctx.beginPath(); ctx.moveTo(hp.x - 0.38 * k, hp.y + 0.12 * k); ctx.quadraticCurveTo(hp.x, hp.y - 0.35 * k, hp.x + 0.38 * k, hp.y + 0.12 * k); ctx.closePath(); ctx.fill();
-  var pt0 = Pa(B.L(-1.6 + 0.3, 0, WL + 1.7 + bob)), pt1 = Pa(B.L(-1.6 - 1.2 - push, 0.3, WL - 0.6));
-  ctx.strokeStyle = rgb(mulc([150, 130, 90], tint)); ctx.lineWidth = Math.max(0.3, 0.05 * k); ctx.beginPath(); ctx.moveTo(pt0.x, pt0.y - 0.6 * k); ctx.lineTo(pt1.x, pt1.y); ctx.stroke();
+  // the pole: from the boatman's hands down and back into the river; below the surface only a faint refracted ghost, a ring where it enters
+  var top3 = B.L(-1.3, 0, WL + 2.3 + bob), bot3 = B.L(-2.8 - push, 0.3, WL - 0.7), fe = (top3[1] - WL) / (top3[1] - bot3[1]), ent3 = mixc(top3, bot3, fe), pt0 = Pa(top3), pe = Pa(ent3), pt1 = Pa(bot3);
+  ctx.strokeStyle = rgb(mulc([150, 130, 90], tint)); ctx.lineWidth = Math.max(0.3, 0.05 * k); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(pt0.x, pt0.y); ctx.lineTo(pe.x, pe.y); ctx.stroke(); ctx.lineCap = 'butt';
+  ctx.globalAlpha = fade * 0.28; ctx.beginPath(); ctx.moveTo(pe.x, pe.y); ctx.lineTo(pe.x + (pt1.x - pe.x) * 0.7, pe.y + (pt1.y - pe.y) * 0.45); ctx.stroke(); ctx.globalAlpha = fade;
+  ctx.strokeStyle = rgb(mulc([220, 230, 238], tint), 0.55); ctx.lineWidth = Math.max(0.25, 0.03 * k); ctx.beginPath(); ctx.ellipse(pe.x, pe.y, (0.2 + 0.08 * Math.sin(t * 3)) * k, 0.06 * k, 0, 0, TAU); ctx.stroke();
   var pa = Pa(B.L(0.6, 0, WL + 0.5 + bob)); ctx.fillStyle = rgb(mulc([120, 60, 44], tint)); ctx.beginPath(); ctx.ellipse(pa.x, pa.y - 0.3 * k, 0.2 * k, 0.3 * k, 0, 0, TAU); ctx.fill(); ctx.fillStyle = rgb(mulc([200, 176, 120], tint)); ctx.beginPath(); ctx.ellipse(pa.x, pa.y - 0.62 * k, 0.32 * k, 0.1 * k, 0, 0, TAU); ctx.fill();
   if (g.LIT.lit) { var lp = Pa(B.L(1.7, 0, WL + 1.1 + bob)); ctx.fillStyle = 'rgb(255,206,140)'; ctx.beginPath(); ctx.ellipse(lp.x, lp.y, 0.13 * k, 0.17 * k, 0, 0, TAU); ctx.fill(); ctx.globalCompositeOperation = 'lighter'; stamp(ctx, sprite('warm'), lp.x, lp.y, 1.8 * k, 1.8 * k, 0.6 * fade); ctx.globalCompositeOperation = 'source-over'; }
   ctx.globalAlpha = 1;
@@ -4132,7 +4239,6 @@ function bandItems(g, band) {
   if (band === 1 && g.wheel) it.push({ d: Pa(g.wheel.c).d, k: 'wheel' });
   for (i = 0; i < g.koi.length && g.wx !== 'typhoon'; i++) { var kb = P(g.koi[i][0], 0, g.koi[i][1]).d < P(0, 0, 36).d ? 0 : 2; if (kb === band) it.push({ d: P(g.koi[i][0], 0, g.koi[i][1]).d, k: 'koi', o: g.koi[i], i: i }); }
   for (i = 0; i < g.tana.length; i++) { var tb = Pa(g.tana[i].base).d < P(0, 0, 36).d ? 0 : 2; if (tb === band) it.push({ d: Pa(g.tana[i].base).d - 0.1, k: 'tana', o: g.tana[i] }); }
-  if (band === 1 && g.boat) it.push({ d: 1e5, k: 'boat' });
   if (band === 1 && g.fwOn) it.push({ d: 1e5 - 1, k: 'yakata' });
   if (g.rareNow && g.rareNow.band === band) it.push({ d: g.rareNow.key, k: 'rare' });
   if (g.life) for (i = 0; i < g.life.length; i++) if (g.life[i].band === band) it.push({ d: g.life[i].d, k: 'life', o: g.life[i] });
@@ -4165,6 +4271,33 @@ function drawBand(ctx, g, band, t, still) {
   return it.length;
 }
 
+/* something that moves among the buildings, drawn on its own and cut wherever the depth map says a standing object is nearer
+   than dkey (its own depth). bb: its logical screen box; fn(c) draws it in logical coordinates. */
+var CUT = { s: null, m: null };
+function drawCut(ctx, g, bb, dkey, fn) {
+  var T = ctx.getTransform ? ctx.getTransform() : { a: 1, e: 0, f: 0 }, sc = T.a || 1, cw = ctx.canvas.width, ch = ctx.canvas.height;
+  var px0 = Math.max(0, Math.floor(bb[0] * sc + T.e)), py0 = Math.max(0, Math.floor(bb[1] * sc + T.f)), px1 = Math.min(cw, Math.ceil(bb[2] * sc + T.e)), py1 = Math.min(ch, Math.ceil(bb[3] * sc + T.f));
+  if (px1 - px0 < 1 || py1 - py0 < 1) return;
+  var D = g.depth;
+  if (!D) { fn(ctx); return; }
+  var pw = px1 - px0, ph = py1 - py0, S = CUT.s || (CUT.s = mkCanvas(2, 2)); if (S.width < pw || S.height < ph) { S.width = Math.max(S.width, pw); S.height = Math.max(S.height, ph); }
+  var sx = S.getContext('2d'); sx.setTransform(1, 0, 0, 1, 0, 0); sx.globalCompositeOperation = 'source-over'; sx.globalAlpha = 1; sx.clearRect(0, 0, pw, ph);
+  sx.setTransform(sc, 0, 0, sc, T.e - px0, T.f - py0); fn(sx); sx.setTransform(1, 0, 0, 1, 0, 0);
+  // the mask, at the depth map's resolution
+  var df = D.w / g.W, lx0 = (px0 - T.e) / sc, ly0 = (py0 - T.f) / sc, lx1 = (px1 - T.e) / sc, ly1 = (py1 - T.f) / sc;
+  var mx0 = Math.max(0, Math.floor(lx0 * df)), my0 = Math.max(0, Math.floor(ly0 * df)), mx1 = Math.min(D.w, Math.ceil(lx1 * df)), my1 = Math.min(D.h, Math.ceil(ly1 * df)), mw = mx1 - mx0, mh = my1 - my0;
+  if (mw > 0 && mh > 0) {
+    var M = CUT.m || (CUT.m = mkCanvas(2, 2)); if (M.width < mw || M.height < mh) { M.width = Math.max(M.width, mw); M.height = Math.max(M.height, mh); }
+    var mc = M.getContext('2d'), im = mc.createImageData(mw, mh), a = im.data, any = false;
+    for (var y = 0; y < mh; y++) { var row = (my0 + y) * D.w; for (var x = 0; x < mw; x++) if (D.d[row + mx0 + x] < dkey) { a[(y * mw + x) * 4 + 3] = 255; any = true; } }
+    if (any) { mc.putImageData(im, 0, 0); sx.globalCompositeOperation = 'destination-out'; sx.imageSmoothingEnabled = true; sx.drawImage(M, 0, 0, mw, mh, (mx0 / df) * sc + T.e - px0, (my0 / df) * sc + T.f - py0, mw / df * sc, mh / df * sc); sx.globalCompositeOperation = 'source-over'; }
+  }
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(S, 0, 0, pw, ph, px0, py0, pw, ph); ctx.restore();
+}
+function drawLoose(ctx, g, t, rare) {
+  if (g.boat) { var st = boatState(g, t); if (st) { var c = P(st.x, WL, st.z), k = c.k; drawCut(ctx, g, [c.x - 4.5 * k, c.y - 3.2 * k, c.x + 4.5 * k, c.y + 1.2 * k], c.d - 0.6, function (cx) { drawBoatAnim(cx, g, t); }); } }
+  if (rare && rare.def.loose && g.rareNow === rare) rare.def.loose(ctx, g, rare.st, clamp((t - rare.t0) / rare.def.dur), t);
+}
 /* koinobori: a streamer and three carp on the wind */
 function drawKoinobori(ctx, g, q, t, idx) {
   var Wd = gWind(g), sg = Wd.sign, tint = g.tint, top = q[2], wind = clamp(0.45 + Wd.s * 0.55 + 0.18 * Math.sin(t * 0.5 + idx), 0.35, 1.08), x0 = q[0], z0 = q[1];
@@ -5281,7 +5414,7 @@ function fwLaunchPts(g) {   // barges on the river, as screen points
 }
 function newShell(g, rng, finale) {
   var L = g.fw.launch[(rng() * g.fw.launch.length) | 0], r = rng(), kind = finale ? (r < 0.5 ? 'botan' : r < 0.8 ? 'kiku' : 'senrin') : (r < 0.32 ? 'kiku' : r < 0.58 ? 'botan' : r < 0.8 ? 'yanagi' : 'senrin');
-  var size = finale ? 0.4 + rng() * 0.4 : 0.6 + rng() * 0.4, bx = clamp(L.x + (rng() - 0.5) * 90, 40, g.W - 40), by = 30 + rng() * 40 + (1 - size) * 22;
+  var size = finale ? 0.4 + rng() * 0.4 : 0.6 + rng() * 0.4, bx = clamp(L.x + (rng() - 0.5) * 90, 40, g.W - 40), by = Math.max(14, Math.min(30 + rng() * 40, g.horizonY * 0.55 + rng() * 26) + (1 - size) * 16);   // high enough to open in clear sky above the ridge
   var c1 = FW_COLS[(rng() * FW_COLS.length) | 0], c2 = rng() < 0.5 ? FW_COLS[(rng() * FW_COLS.length) | 0] : c1;
   if (kind === 'yanagi') { c1 = [255, 200, 120]; c2 = [220, 150, 70]; }
   return { kind: kind, x0: L.x, y0: L.y, bx: bx, by: by, rise: 1.1 + rng() * 0.5 + (finale ? -0.4 : 0), R: (36 + 46 * size) * (kind === 'senrin' ? 0.7 : 1), c1: c1, c2: c2, size: size, seed: (rng() * 1e9) | 0, t0: 0, n: kind === 'botan' ? 80 : kind === 'yanagi' ? 54 : kind === 'senrin' ? 30 : 72 };
@@ -5342,9 +5475,8 @@ function drawFireworks(ctx, g, FW, t) {
     for (j = 0; j < pts.length; j++) { var tw = S.kind === 'kiku' && a > life * 0.6 ? (Math.sin(t * 30 + j) > 0 ? 1 : 0.3) : 1; stamp(ctx, spc, pts[j].x, pts[j].y, sz, sz, fade * flick * tw); if (a < life * 0.5) stamp(ctx, spr, pts[j].x, pts[j].y, sz * 0.45, sz * 0.45, fade * 0.9); }
   }
   ctx.globalAlpha = 1;
-  // the whole scene lit for a moment in the colour of the burst
-  if (flash > 0.02) { ctx.fillStyle = rgb(fc, 0.16 * flash); ctx.fillRect(0, 0, g.W, g.H); }
   ctx.globalCompositeOperation = 'source-over';
+  return { flash: flash, fc: fc };   // the caller lights the whole scene with it (the bursts themselves stay in open sky)
 }
 /* on the water: each burst's light laid down as a broken column */
 function drawFireworkReflections(ctx, g, FW, t) {
@@ -6370,7 +6502,7 @@ function drawFaunaGround(ctx, g, FA, band, t) {
 
 /* ---- 09_runtime.js ---- */
 /* ================= public API & controller ================= */
-var VERSION = '1.2.0';
+var VERSION = '1.2.1';
 var SEASON_KEYS = ['spring', 'summer', 'autumn', 'winter'], LIGHT_KEYS = ['morning', 'day', 'dusk', 'night'];
 var WEATHERS = ['clear', 'cloudy', 'rain', 'storm', 'snow', 'typhoon', 'blizzard'];
 var EVENTS = ['shogatsu', 'setsubun', 'hinamatsuri', 'kodomo', 'tanabata', 'obon', 'tsukimi'];
@@ -6578,7 +6710,7 @@ function mount(el, opts) {
   }
   function makeGeo(res) {
     var sp = res.spec;
-    return withScene({ W: sp.W, H: sp.H, KS: sp.KS, stage: sp.stage, season: sp.season, light: sp.light, event: sp.event, sp: sp.sp, wx: sp.wx, after: sp.after, wsign: sp.wsign }, function () { var g = animGeo(sp); g.glows = res.glows || []; g.water = waterGrid(res.mask, g); return g; });
+    return withScene({ W: sp.W, H: sp.H, KS: sp.KS, stage: sp.stage, season: sp.season, light: sp.light, event: sp.event, sp: sp.sp, wx: sp.wx, after: sp.after, wsign: sp.wsign }, function () { var g = animGeo(sp); g.glows = res.glows || []; g.water = waterGrid(res.mask, g); g.depth = decodeDepth(res.occ && res.occ[NBANDS - 1]); return g; });
   }
   function waterGrid(mask, g) {
     if (!mask || (g.season !== 'spring' && !wxWet(g.wx))) return null;
@@ -6756,6 +6888,7 @@ function mount(el, opts) {
         ctx.drawImage(bl, x0, y0, x1 - x0, y1 - y0, x0, y0, x1 - x0, y1 - y0);
       }
       ctx.setTransform(sc, 0, 0, sc, 0, 0);
+      if (motion) drawLoose(ctx, g, t, rare);   // the boat and the rare animals: cut per pixel by whatever stands nearer
       if (motion) {
         drawSmoke(ctx, g, t);
         drawMist(ctx, g, t);
@@ -6769,7 +6902,7 @@ function mount(el, opts) {
         if (g.FA) drawSkyBirds(ctx, g, g.FA, t);
         if (rare && !g.rareNow) rare.def.draw(ctx, g, rare.st, clamp((t - rare.t0) / rare.def.dur), t);
         if (g.I) drawInteract(ctx, g, g.I, t);
-        if (FW) drawFireworks(ctx, g, FW, t);
+        if (FW) { var fwr = null; drawSkyMasked(ctx, g, function (c) { fwr = drawFireworks(c, g, FW, t); }, 'lighter'); if (fwr && fwr.flash > 0.02) { ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = rgb(mixc(fwr.fc, [255, 220, 170], 0.4), 0.055 * Math.min(1, fwr.flash)); ctx.fillRect(0, 0, g.W, g.H); ctx.globalCompositeOperation = 'source-over'; } }   // bursts, sparks and smoke only where the sky shows; their flash lights everything
         if (wfx) { var wdt = Math.min(0.1, Math.max(0, t - (wfx.lt || t))); drawWeatherFx(ctx, g, wfx, t, wdt); wfx.lt = t; if (wfx.bz) drawBlizzard(ctx, g, wfx.bz, t, wdt); }
         if (lightning) { if (!drawLightningFlash(ctx, g, lightning, t)) lightning = null; else drawSkyMasked(ctx, g, function (c) { drawLightning(c, g, lightning, t); }); }
       }
@@ -6789,14 +6922,14 @@ function mount(el, opts) {
     ctx.drawImage(cloudTmp, 0, 0);
   }
   var skyTmp = null;
-  function drawSkyMasked(ctx, g, fn) {   // draw something that belongs to the sky: hidden by the ranges, hills and town
+  function drawSkyMasked(ctx, g, fn, op) {   // draw something that belongs to the sky: hidden by the ranges, hills and town (op: how it lands, e.g. 'lighter')
     if (!cur.sky) { fn(ctx); return; }
     var cw = fv.width, ch = Math.round(fv.height * 0.62), sc = cw / g.W;
     skyTmp = skyTmp || mkCanvas(2, 2); sizeCanvas(skyTmp, cw, ch);
     var x = skyTmp.getContext('2d'); x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'source-over'; x.clearRect(0, 0, cw, ch);
     x.setTransform(sc, 0, 0, sc, 0, 0); fn(x); x.setTransform(1, 0, 0, 1, 0, 0);
     x.globalCompositeOperation = 'destination-in'; x.drawImage(cur.sky, 0, 0, cw, ch); x.globalCompositeOperation = 'source-over';
-    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(skyTmp, 0, 0); ctx.restore();
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); if (op) ctx.globalCompositeOperation = op; ctx.drawImage(skyTmp, 0, 0); ctx.restore();
   }
   function drawRings(ctx, g, t) {
     for (var i = cues.rings.length - 1; i >= 0; i--) {
