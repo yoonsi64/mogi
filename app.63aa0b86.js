@@ -13417,6 +13417,7 @@
     // ordinary words with lower case (Facebook, Web) stay turned on their side. Only the text between tags is touched.
     function arTateLatin(html) {
         return html.split(/(<[^>]+>)/).map(function(part, i) {
+            if (!(i % 2)) part = part.replace(/\(/g, '（').replace(/\)/g, '）');      // full-width brackets: they turn properly in vertical text
             if (i % 2 || !/[0-9A-Za-zＡ-Ｚ]/.test(part)) return part;
             return part.replace(/[A-Za-z][A-Za-z.'’&-]*|[0-9]+(?:[.,][0-9]+)*/g, function(w) {
                 if (/^[0-9]{1,2}$/.test(w)) return '<span class="ar-tcy">' + w + '</span>';
