@@ -2992,7 +2992,7 @@ var GLSL_MAIN = GLSL_P + GLSL_COMMON + '\n' + GLSL_DOME + '\n' + [
   '  if (gk < 1.0) disp = tone(skyLin(d));',
   '  if (gk > 0.0) { float tg; disp = mix(disp, groundD(d, tg), gk); }',
   '#ifdef F_BACK',
-  '  disp += texture2D(uBack, vP * 0.5 + 0.5).rgb;',
+  '  { vec4 bk = texture2D(uBack, vP * 0.5 + 0.5) * (1.0 - gk); disp = disp * (1.0 - bk.a) + bk.rgb; }',   // fireworks, meteors, bolts: over the sky only, under the world
   '#endif',
   '  vec3 o = disp * (1.0 - f.a) + f.rgb;',
   '  float ma = 0.0;',
@@ -3788,7 +3788,7 @@ function mountSky(el, opts) {
   }
   function faceCanvases() {
     if (GS.cv) return GS.cv;
-    var N = GLR.CN; GS.cv = [0, 1, 2, 3].map(function () { var c = mk(); c.width = c.height = N; return c; }); return GS.cv;
+    var N = GLR.CN; GS.cv = [0, 1, 2, 3].map(function () { var c = mk(); c.width = c.height = N; try { c.getContext('2d', { willReadFrequently: !!st.fireworks }); } catch (e) { } return c; }); return GS.cv;
   }
   function viewFaces() { // the faces the view sees now, then the ones beside them
     var seen = {}, out = [], pts = [[0.5, 0.5], [0, 0], [1, 0], [0, 1], [1, 1], [0.5, 0], [0.5, 1], [0, 0.5], [1, 0.5]];
@@ -3836,12 +3836,33 @@ function mountSky(el, opts) {
       blurFace(c[2], c[3], 3.2);
       c.slice(0, 3).forEach(function (cc) { grainFace(cc, st.light === 'night' ? 0.3 : 0.42); });
       if (typeof window !== 'undefined' && window.__faceDump) window.__faceDump(P.f, c);
+      if (st.fireworks) occFace(P.f, c);
       GLR.uploadFace(P.f, c[0], c[1], c[2]);
       if (P.S.drips && GS.drips) { var dd = P.S.drips; for (var k = 0; k < dd.length; k += 1) if (cubeFaceOf(dd[k]) === P.f) GS.drips.push(dd[k]); st.dripPts = GS.drips; }
       GS.newFaces[P.f] = 1; GS.faceReady[P.f] = 1; GS.painting = null; any = true;
       camDirty = true;
     }
     return any;
+  }
+  /* where the painted world covers the sky (for fireworks): a 1 x 0.5 deg grid of the view, filled face by face */
+  function occFace(f, c) {
+    var N = GLR.CN, O = st.fwOcc; if (!O || O.key !== GS.cubeKey) O = st.fwOcc = { key: GS.cubeKey, raw: new Uint8Array(360 * 170), occ: new Uint8Array(360 * 170), ridge: new Float32Array(360), faces: 0, ready: false, ver: 0 };
+    var fc = faceCamera(f, N, N), D = fwDirs(), ds = [0, 1, 2].map(function (i) { return c[i].getContext('2d').getImageData(0, 0, N, N).data; }), i;
+    for (i = 0; i < D.length; i++) {
+      if (D[i].f !== f) continue; var p = fc.p(D[i].v); if (!p) continue;
+      var x = clamp(Math.round(p[0]), 0, N - 1), y = clamp(Math.round(p[1]), 0, N - 1), o = (y * N + x) * 4 + 3;
+      if (ds[0][o] > 40 || ds[1][o] > 40 || ds[2][o] > 40) O.raw[i] = 1;
+    }
+    O.faces |= 1 << f;
+    if ((O.faces & 0x3b) === 0x3b) { // the four sides and the top: dilate (sway, blur, a margin) and find the ridge
+      var a, e, R = O.raw, Q = O.occ, M = new Uint8Array(360 * 170); Q.fill(0);
+      // solid mass only: a cell counts when most of the 5 x 4.5 deg around it is covered (wires and lantern strings drop out;
+      // whatever is in front of a burst still hides it, as the sky layer is drawn under the world)
+      for (e = 0; e < 170; e++) for (a = 0; a < 360; a++) { var n = 0, m = 0; for (var e2 = Math.max(0, e - 4); e2 <= Math.min(169, e + 4); e2++) for (var a2 = -2; a2 <= 2; a2++) { m++; n += R[e2 * 360 + (a + a2 + 360) % 360]; } if (n * 2 > m) M[e * 360 + a] = 1; }
+      for (e = 0; e < 170; e++) for (a = 0; a < 360; a++) if (M[e * 360 + a]) for (var de = -1; de <= 3; de++) for (var da = -2; da <= 2; da++) { var ee = e + de; if (ee >= 0 && ee < 170) Q[ee * 360 + (a + da + 360) % 360] = 1; }
+      for (a = 0; a < 360; a++) { var top = 0, run = 0; for (e = 0; e < 170; e++) { if (Q[e * 360 + a]) { top = -6 + (e + 1) * 0.5; run = 0; } else if (++run > 4) break; } O.ridge[a] = top; }
+      O.ready = true; O.ver++;
+    }
   }
   function blurFace(dst, src, px) {
     var dg = dst.getContext('2d'); dg.setTransform(1, 0, 0, 1, 0, 0);
@@ -3910,6 +3931,7 @@ function mountSky(el, opts) {
     glPaintStep(GS.faceReady.indexOf(0) >= 0 && !busy ? 40 : busy ? 6 : 14);
     // the cloud dome: a first one quickly; the drifting refresh in thin strips, thinner still while the view moves
     if (!busy || GS.domeFresh && GS.domeRow >= 0 || GS.domeFade >= 0) glDomeWork(t, GS.domeFresh && GS.domeRow >= 0 ? GLR.DS / 6 : GLR.DS / 48 * GS.q * GS.q);
+    if (fw && fw.siteAz !== null && !userCam && GS.fwCam !== fw.occVer) { GS.fwCam = fw.occVer; cam.set(fw.siteAz, 31, cam.zoom, W, H); camDirty = true; } // face the open sky over the launch site
     if (st.rainbowK > 0 && !st.rainbowCued && rainbowVisible()) { st.rainbowCued = true; fireCue('rainbow'); }
     // planets move slowly: refresh their buffer now and then
     if (st.frameMs !== GS.planetsMs) { GS.planetsMs = st.frameMs; GLR.setPlanets(st.planets.filter(function (pl) { return pl.v[2] > 0.005 && Math.acos(clamp(dot3(pl.v, st.frame.sun), -1, 1)) * R2D >= 12; })); }
@@ -3927,6 +3949,8 @@ function mountSky(el, opts) {
     U.uOver = over && cS ? [1].concat(lin3(cS.far)) : [0, 0, 0, 0];
     var fl = storm.step(t, cam, st, function (delay) { var S = sound(); if (S) S.cue('thunder', delay); });
     U.uFlash = [0.75 * fl, 0.8 * fl, 1.0 * fl, fl > 0 ? 1.2 : 0]; U.uFlashDir = storm.f ? enuOf(20, storm.f.az) : [0, 1, 0];
+    if (fw && fw.flash > 0.01 && fw.flash > fl) { // a burst: a brief glow of the sky and the clouds around it
+      var fk = Math.min(1, fw.flash) * 0.075, fcol = fw.flashCol; U.uFlash = [fcol[0] / 255 * fk, fcol[1] / 255 * fk, fcol[2] / 255 * fk, 1]; U.uFlashDir = fw.flashDir; }
     var Lg = GS.L || sceneLight(st), kz = Lg.key && Lg.key.d[2] > 0 ? Lg.key.d[2] : 0;
     U.uAmb = Lg.key ? v3(Lg.amb, Lg.key.c, kz) : Lg.amb;
     U.uHaze = vsc(Lg.haze, 1 / 255); U.uHz = [Lg.hazeD, Lg.hazeK];
@@ -3951,7 +3975,7 @@ function mountSky(el, opts) {
       GLR.uploadBack(bk); U.uBackOn = 1;
     } else U.uBackOn = 0;
     var ff = [0.78 * fl * 0.28, 0.82 * fl * 0.28, fl * 0.28], mx = Math.max(fwl[0], fwl[1], fwl[2]);
-    if (mx > 0.01) { var fc2 = mix([fwl[0] / mx, fwl[1] / mx, fwl[2] / mx], [1, 0.9, 0.78], 0.5), fk = Math.min(0.08, mx * 0.025); ff = [ff[0] + fc2[0] * fk, ff[1] + fc2[1] * fk, ff[2] + fc2[2] * fk]; }
+    if (mx > 0.01) { var fc2 = mix([fwl[0] / mx, fwl[1] / mx, fwl[2] / mx], [1, 0.9, 0.78], 0.5), fk = Math.min(0.1, mx * 0.04); ff = [ff[0] + fc2[0] * fk, ff[1] + fc2[1] * fk, ff[2] + fc2[2] * fk]; }
     U.uFgFlash = ff;
     // stars
     var Ss = { on: st.starFade > 0, M: st.frame.M,
@@ -4448,85 +4472,216 @@ Storm.prototype.drawSky = function (g, cam, k, boltOnly) { // the flash inside t
   g.restore();
 };
 
-/* ---- fireworks (花火): kiku, botan, yanagi, senrin, and a closing star mine ---- */
-var FW_COLS = [[255, 200, 120], [255, 120, 90], [140, 220, 255], [190, 255, 150], [255, 150, 220], [255, 236, 190], [180, 160, 255]];
-function Fireworks(st) { this.st = st; this.shells = []; this.smoke = []; this.rnd = mulberry((Date.now() & 0xffff) + 99); this.next = 0.6; this.cycle = 0; this.light = [0, 0, 0]; }
-Fireworks.prototype.site = function () { var town = this.st.world === 'town'; return { az: town ? 58 : 170, d: town ? 230 : 430, h: town ? 1 : 0.85 }; };
-Fireworks.prototype.launch = function (t, kind, onBoom, small) {
-  var r = this.rnd, S = this.site(), az = S.az + (r() - 0.5) * (small ? 40 : 24), d = S.d * (0.85 + r() * 0.3);
-  var alt = (small ? 120 + r() * 70 : 190 + r() * 110) * S.h, R = (small ? 55 + r() * 30 : 110 + r() * 80) * S.h;
-  var c = PA(az, d, alt), col = FW_COLS[(r() * FW_COLS.length) | 0], col2 = FW_COLS[(r() * FW_COLS.length) | 0], n = kind === 'yanagi' ? 110 : kind === 'senrin' ? 26 : small ? 70 : 170, i, stars = [];
-  for (i = 0; i < n; i++) { var z = r() * 2 - 1, ph = r() * TAU, rr = Math.sqrt(1 - z * z); stars.push([rr * Math.cos(ph), rr * Math.sin(ph), z, 0.85 + r() * 0.3]); }
-  var rise = small ? 0.9 : 2.2 + r() * 0.6;
-  this.shells.push({ kind: kind, c: c, base: PA(az, d, GZ), R: R, col: col, col2: col2, stars: stars, t0: t + rise, rise: rise, life: kind === 'yanagi' ? 5.5 : kind === 'senrin' ? 3.8 : small ? 2.2 : 3.2, whistle: !small && r() < 0.3, boomed: false, sub: null });
-  var self = this;
-  this.shells[this.shells.length - 1].onBurst = function (sh) { if (onBoom) onBoom(vlen(sh.c) / 343, sh.kind === 'botan' || sh.kind === 'senrin' ? 'crackle' : sh.kind, sh.whistle); self.smoke.push({ p: sh.c, r: sh.R * 0.9, t0: sh.t0, a: 0.5 }); };
+/* ---- fireworks (打ち上げ花火): 菊, 牡丹, 冠菊 (yanagi), 千輪, 輪, 八重芯, and a closing スターマイン ----
+   Shells rise from a launch site about 1.2 km away and break 15-40 deg up, always where the sky is open: the painted
+   world's cube map gives an occupancy grid of the view (st.fwOcc, 1 deg x 0.5 deg), and each burst is placed so that its
+   whole sphere, and the band its stars fall through, clear the hills, roofs and trees with a margin. Stars are short
+   motion-blurred streaks (a coloured halo, a hot core, additive); they decelerate, sag under gravity, change colour
+   once and twinkle out well above the ridge. The break gives a brief flash (about 0.3 s) that lights the sky, the
+   clouds and the foreground; the smoke is faint, dark, drifts with the wind and is lit only by later bursts. */
+var FW_COLS = [[255, 196, 120], [255, 110, 84], [130, 210, 255], [170, 255, 140], [255, 140, 210], [255, 240, 200], [190, 150, 255], [255, 226, 110]];
+var FW_GOLD = [255, 188, 96];
+var FW_DIRS = null;
+function fwDirs() { // the cells of the occupancy grid: 360 az x 170 el (-6 .. 79 deg)
+  if (FW_DIRS) return FW_DIRS;
+  FW_DIRS = [];
+  for (var ei = 0; ei < 170; ei++) for (var a = 0; a < 360; a++) { var v = enuOf(-6 + ei * 0.5 + 0.25, a + 0.5); FW_DIRS.push({ v: v, f: cubeFaceOf(v) }); }
+  return FW_DIRS;
+}
+function Fireworks(st) { this.st = st; this.shells = []; this.smoke = []; this.rnd = mulberry((Date.now() & 0xffff) + 99); this.next = 0.6; this.light = [0, 0, 0]; this.flash = 0; this.flashDir = [0, 1, 0.3]; this.flashCol = [1, 1, 1]; this.siteAz = null; this.occVer = -1; }
+Fireworks.prototype.pref = function () { return this.st.world === 'town' ? 58 : 170; };
+Fireworks.prototype.blocked = function (az, el) { // under the skyline: hills, roofs, trees, eaves (things that hang free, like lantern strings, may pass in front)
+  return el < this.ridge(az);
 };
-Fireworks.prototype.step = function (t, onBoom) {
-  var r = this.rnd;
-  if (t > this.next) {
-    var cyc = (t % 95);
-    if (cyc > 78 && cyc < 90) { this.launch(t, r() < 0.5 ? 'botan' : 'kiku', onBoom, true); this.next = t + 0.25 + r() * 0.35; }
-    else { var kinds = ['kiku', 'botan', 'yanagi', 'senrin', 'kiku', 'botan']; this.launch(t, kinds[(r() * kinds.length) | 0], onBoom, false); this.next = t + 2.5 + r() * 4; }
+Fireworks.prototype.ridge = function (az) { var O = this.st.fwOcc; return O && O.ready ? O.ridge[((Math.floor(az) % 360) + 360) % 360] : 12; };
+Fireworks.prototype.topAt = function (az) { return this.ridge(az); };
+/* the disc of angular radius r around (az, el), and the band of height `drop` below it, are clear of the world */
+Fireworks.prototype.open = function (az, el, r, drop) {
+  var ce = Math.max(0.3, cosd(el)), de, da;
+  for (de = -r - drop; de <= r; de += 1) for (da = -r; da <= r; da += 1) {
+    if (de >= -r && da * da + de * de > r * r) continue;
+    var a = az + da / ce, e = el + de;
+    if (e < this.ridge(a) + 2.5) return false;
   }
-  var light = [0, 0, 0];
-  for (var i = this.shells.length - 1; i >= 0; i--) {
+  return true;
+};
+Fireworks.prototype.chooseSite = function () { // the most open stretch of sky near the usual launch site
+  var pref = this.pref(), best = pref, bs = 1e9, a, k;
+  for (a = pref - 60; a <= pref + 60; a += 2) {
+    var m = 0; for (k = -10; k <= 10; k += 2) m = Math.max(m, this.topAt(a + k));
+    var sc = m + Math.abs(a - pref) * 0.12; if (sc < bs) { bs = sc; best = a; }
+  }
+  this.siteAz = norm360(best);
+};
+Fireworks.prototype.place = function (r, drop, small) {
+  var rn = this.rnd, az0 = this.siteAz === null ? this.pref() : this.siteAz, i, j;
+  var tAz = az0 + (rn() - 0.5) * (small ? 56 : 16), tEl = small ? 15 + rn() * 26 : 21 + rn() * 12;
+  tEl = Math.max(tEl, r + 9 + rn() * 5);   // a big shell breaks high enough that the whole sphere is in the sky
+  var order = [0, 3, -3, 6, -6, 9, -9, 13, -13, 18, -18, 24, -24, 30, -30];
+  for (i = 0; i <= 14; i++) {
+    var el = Math.min(58, tEl + i * 2), ce = Math.max(0.3, cosd(el));
+    for (j = 0; j < order.length; j++) if (this.open(tAz + order[j] / ce, el, r + 2.5, drop)) return [norm360(tAz + order[j] / ce), el];
+  }
+  return [norm360(tAz), Math.min(60, Math.max(tEl, this.topAt(tAz) + r + drop + 3))];
+};
+/* star directions: an even sphere (crisp, symmetric breaks) or a ring */
+function fwSphere(n, rnd, k, jit) {
+  var out = [], i, ph0 = rnd() * TAU;
+  for (i = 0; i < n; i++) {
+    var z = 1 - 2 * (i + 0.5) / n, rr = Math.sqrt(1 - z * z), ph = ph0 + i * 2.39996323;
+    var v = nrm3([rr * Math.cos(ph) + (rnd() - 0.5) * jit, rr * Math.sin(ph) + (rnd() - 0.5) * jit, z + (rnd() - 0.5) * jit]);
+    out.push([v[0], v[1], v[2], k * (1 + (rnd() - 0.5) * 0.05), 0, rnd()]);
+  }
+  return out;
+}
+Fireworks.prototype.launch = function (t, kind, onBoom, small) {
+  var r = this.rnd, D = 900 + r() * 300, self = this, i;
+  var spec = {
+    kiku: { R: 160, n: 190, life: 2.9, drag: 1.9, fall: 7, trail: 0.95, jit: 0.1 }, botan: { R: 150, n: 170, life: 2.4, drag: 2.3, fall: 5, trail: 0.14, jit: 0.07 },
+    kamuro: { R: 170, n: 150, life: 4.6, drag: 2.4, fall: 38, trail: 1.9, jit: 0.1 },   // 冠菊: heavy gold willows of sparks
+    yanagi: { R: 140, n: 120, life: 5.4, drag: 3.0, fall: 62, trail: 2.6, jit: 0.12 }, senrin: { R: 110, n: 24, life: 0.95, drag: 2.2, fall: 4, trail: 0.12, jit: 0.15 },
+    ring: { R: 140, n: 64, life: 2.3, drag: 2.3, fall: 5, trail: 0.35, jit: 0 }, shin: { R: 165, n: 170, life: 2.9, drag: 2.0, fall: 6, trail: 0.7, jit: 0.07 }
+  }[kind] || { R: 140, n: 120, life: 2.4, drag: 2.2, fall: 5, trail: 0.3, jit: 0.08 };
+  // sizes vary a lot: small fill shells, mid shells, and now and then a huge 10号 that fills much of the view
+  var q0 = r(), huge = !small && (kind === 'kiku' || kind === 'kamuro' || kind === 'yanagi' || kind === 'shin') && q0 < 0.32;
+  var sz = small ? 0.35 + r() * 0.25 : huge ? 1.6 + r() * 0.5 : q0 < 0.65 ? 0.7 + r() * 0.3 : 1.05 + r() * 0.35, R = spec.R * sz, life = spec.life * (small ? 0.75 : huge ? 1.25 : 1);
+  var angR = Math.atan(R * 1.05 / D) * R2D, drop = Math.atan(spec.fall * life * 0.7 / D) * R2D;
+  var pl = this.place(angR, drop, small), c = vsc(enuOf(pl[1], pl[0]), D), base = PA(pl[0], D * cosd(pl[1]), GZ - 20);
+  var col = FW_COLS[(r() * FW_COLS.length) | 0], col2 = FW_COLS[(r() * FW_COLS.length) | 0], colB = FW_COLS[(r() * FW_COLS.length) | 0];
+  if (kind === 'yanagi' || kind === 'kamuro') { col = FW_GOLD; col2 = [255, 150, 70]; colB = kind === 'kamuro' && r() < 0.5 ? FW_COLS[(r() * FW_COLS.length) | 0] : FW_GOLD; }
+  var stars;
+  if (kind === 'ring') { // a great circle turned mostly toward you, and a small pistil
+    var vw = nrm3(vsc(c, -1)), tw = nrm3([vw[0] + (r() - 0.5) * 0.9, vw[1] + (r() - 0.5) * 0.9, vw[2] + (r() - 0.5) * 0.9]);
+    var e1 = nrm3(cross3(tw, [0, 0, 1])), e2 = cross3(tw, e1); stars = [];
+    for (i = 0; i < spec.n; i++) { var an = i / spec.n * TAU; stars.push([e1[0] * Math.cos(an) + e2[0] * Math.sin(an), e1[1] * Math.cos(an) + e2[1] * Math.sin(an), e1[2] * Math.cos(an) + e2[2] * Math.sin(an), 1, 0, r()]); }
+    stars = stars.concat(fwSphere(18, r, 0.22, 0.1).map(function (q) { q[4] = 1; return q; }));
+  } else {
+    stars = fwSphere(Math.round(spec.n * (small ? 0.65 : huge ? 1.3 : 1)), r, 1, 0.06).map(function (q) { q[3] *= 1 + (r() - 0.5) * 2 * spec.jit; return q; });
+    if (kind === 'kamuro') stars.forEach(function (q, k) { if (k % 3 === 0) q[4] = 1; });
+    if (kind === 'shin') stars = stars.concat(fwSphere(64, r, 0.5, 0.06).map(function (q) { q[4] = 1; return q; }));   // 八重芯: a second sphere inside
+  }
+  var rise = small ? 1.3 + r() * 0.4 : 2.3 + r() * 0.7, wv = windVec(this.st.wind || { az: 0, strength: 0 }), ws = 1 + 2 * ((this.st.wind && this.st.wind.strength) || 0);
+  var sh = { kind: kind, c: c, base: base, D: D, R: R, col: col, col2: col2, colB: colB, stars: stars, t0: t + rise, rise: rise, life: life, drag: spec.drag, fall: spec.fall, trail: spec.trail,
+    e0: 1 - Math.exp(-spec.drag * 1.2), wd: vsc(wv, ws), whistle: !small && r() < 0.3, boomed: false, small: small, wob: r() * 10 };
+  sh.onBurst = function (s) { if (onBoom && !s.silent) onBoom(s.D / 343, s.kind === 'botan' || s.kind === 'senrin' ? 'crackle' : s.kind, s.whistle); self.smoke.push({ p: s.c, r: s.R * 0.5, t0: s.t0, k: Math.min(1.4, s.R / 160) }); };
+  this.shells.push(sh);
+  if (kind === 'senrin') sh.stars.forEach(function (d) { // 千輪: each carrier star pops into a small flower a beat later
+    var dt = 0.75 + r() * 0.35, pc = fwPos(sh, d, dt), pcol = r() < 0.4 ? [255, 246, 220] : FW_COLS[(r() * FW_COLS.length) | 0];
+    self.shells.push({ kind: 'pop', c: pc, base: null, D: D, R: 12 + r() * 8, col: pcol, col2: pcol, colB: pcol, stars: fwSphere(18, r, 1, 0.15), t0: sh.t0 + dt, rise: 0, life: 0.85 + r() * 0.3, drag: 3.2, fall: 3, trail: 0.05,
+      e0: 1 - Math.exp(-3.2 * 1.2), wd: sh.wd, silent: true, boomed: false, onBurst: function () { } });
+  });
+};
+/* star position: drag-damped expansion, gravity with drag, a little wind */
+function fwPos(s, d, a) {
+  var x = s.R * d[3] * (1 - Math.exp(-s.drag * a)) / s.e0, fall = s.fall * (a - (1 - Math.exp(-1.1 * a)) / 1.1);
+  return [s.c[0] + d[0] * x + s.wd[0] * a, s.c[1] + d[1] * x + s.wd[1] * a, s.c[2] + d[2] * x - fall];
+}
+Fireworks.prototype.step = function (t, onBoom) {
+  var r = this.rnd, O = this.st.fwOcc;
+  if (O && O.ver !== this.occVer && O.ready) { this.occVer = O.ver; this.chooseSite(); }
+  else if (!O && this.siteAz === null && t > 1) this.chooseSite();
+  if (t > this.next && (this.siteAz !== null || t > 8)) {
+    var cyc = (t + (this.tOff || 0)) % 95;   // (tOff: debug, to see the finale)
+    if (cyc > 78 && cyc < 90) { // スターマイン: a rapid volley of small shells, rings and pops
+      var big = r() < 0.22; this.launch(t, big ? ['kiku', 'kamuro', 'botan'][(r() * 3) | 0] : ['botan', 'kiku', 'ring', 'botan', 'senrin', 'kiku'][(r() * 6) | 0], onBoom, !big); this.next = t + (big ? 0.5 : 0.16) + r() * 0.3;
+    } else {
+      this.launch(t, ['kiku', 'kiku', 'botan', 'kamuro', 'yanagi', 'senrin', 'ring', 'shin', 'botan', 'kiku', 'kamuro', 'botan'][(r() * 12) | 0], onBoom, false);
+      var q = r(); this.next = t + (q < 0.18 ? 0.5 + r() * 0.6 : q < 0.85 ? 3 + r() * 3.5 : 7.5 + r() * 4);   // singles, the odd pair, pauses
+    }
+  }
+  var light = [0, 0, 0], fmax = 0, i;
+  for (i = this.shells.length - 1; i >= 0; i--) {
     var s = this.shells[i], a = t - s.t0;
     if (a >= 0 && !s.boomed) { s.boomed = true; s.onBurst(s); }
-    if (a > s.life + (s.kind === 'senrin' ? 1.2 : 0)) { this.shells.splice(i, 1); continue; }
-    if (a > 0) { var k = Math.max(0, 1 - a / s.life) * (a < 0.15 ? 2.2 : 1) * (s.R / 120) * 2000 / vlen(s.c); light[0] += s.col[0] / 255 * k; light[1] += s.col[1] / 255 * k; light[2] += s.col[2] / 255 * k; }
+    if (a > s.life + 0.2) { this.shells.splice(i, 1); continue; }
+    if (a > 0) {
+      var fl = Math.exp(-a / 0.1) * (s.R / 160) * (s.kind === 'pop' ? 0.25 : 1), k = (fl + 0.08 * Math.max(0, 1 - a / s.life) * s.R / 180) * 1200 / s.D;
+      light[0] += s.col[0] / 255 * k; light[1] += s.col[1] / 255 * k; light[2] += s.col[2] / 255 * k;
+      if (fl > fmax) { fmax = fl; this.flashDir = nrm3(s.c); this.flashCol = mix(s.col, [255, 244, 225], 0.5); }
+    }
   }
-  for (i = this.smoke.length - 1; i >= 0; i--) if (t - this.smoke[i].t0 > 40) this.smoke.splice(i, 1);
-  this.light = light;
+  for (i = this.smoke.length - 1; i >= 0; i--) if (t - this.smoke[i].t0 > 32) this.smoke.splice(i, 1);
+  this.light = light; this.flash = fmax;
   return light;
 };
-/* star position: drag-damped expansion plus gravity (analytic) */
-function fwPos(s, d, a, speedK, droop) {
-  var kd = 1.6, e = (1 - Math.exp(-kd * a)) / kd, v = s.R * 1.6 * d[3] * speedK, g = 9.8 * droop * (a - e) / kd;
-  return [s.c[0] + d[0] * v * e, s.c[1] + d[1] * v * e, s.c[2] + d[2] * v * e - g * 6];
-}
 Fireworks.prototype.draw = function (g, cam, t, wind) {
-  var self = this, F = cam.F, wv = windVec(wind), i;
-  g.save(); g.globalCompositeOperation = 'lighter'; g.lineCap = 'round';
-  // smoke: drifts with the wind, glows when a burst lights it
-  var Lk = (this.light[0] + this.light[1] + this.light[2]) / 3;
-  this.smoke.forEach(function (sm) {
-    var age = t - sm.t0; if (age < 0.5) return;
-    var p3 = v3(sm.p, wv, (1.5 + wind.strength * 5) * age), p = cam.p(p3); if (!p) return;
-    var R = (sm.r + age * 3) * F / p[2], al = Math.min(1, (age - 0.5) / 2) * Math.max(0, 1 - age / 40) * (0.05 + Math.min(0.25, Lk * 0.25));
-    var gr = g.createRadialGradient(p[0], p[1], 0, p[0], p[1], R); gr.addColorStop(0, 'rgba(180,170,170,' + al.toFixed(3) + ')'); gr.addColorStop(1, 'rgba(180,170,170,0)');
-    g.fillStyle = gr; g.fillRect(p[0] - R, p[1] - R, R * 2, R * 2);
+  var self = this, wv = windVec(wind), zk = Math.sqrt(cam.zoom), i;
+  function vis(P) { // fade out near the ridge, hide what the world covers
+    var l = vlen(P), el = Math.asin(P[2] / l) * R2D, az = Math.atan2(P[0], P[1]) * R2D;
+    var rg = self.ridge(az); return smooth(rg + 0.5, rg + 3.5, el);
+  }
+  g.save();
+  // smoke: faint and dark, drifting and spreading; lit only while a burst is bright
+  var Lk = Math.min(1, this.flash * 1.5);
+  this.smoke.forEach(function (sm, si) {
+    var age = t - sm.t0; if (age < 0.6) return;
+    var al = Math.min(1, (age - 0.6) / 2) * Math.max(0, 1 - age / 32) * sm.k;
+    var c = mix([30, 28, 36], vsc(self.flashCol, 0.5), Lk), a0 = al * (0.06 + 0.11 * Lk);
+    for (var k = 0; k < 7; k++) { // ragged puffs, sheared by the wind
+      var h1 = hash2(si * 13 + k, 3.1) - 0.5, h2 = hash2(si * 7 + k, 8.3) - 0.5, h3 = hash2(si + k * 5, 1.7);
+      var P = v3(v3(v3(sm.p, wv, (1.5 + wind.strength * 4) * age * (0.7 + 0.6 * h3)), [0, 0, 1], 0.5 * age + h2 * sm.r * 0.8), [wv[1], -wv[0], 0], h1 * sm.r * 1.2);
+      if (vis(P) <= 0) continue; var p = cam.p(P); if (!p) continue;
+      var R = (sm.r * (0.25 + 0.25 * h3) + age * 1.4) * cam.F / p[2];
+      var gr = g.createRadialGradient(p[0], p[1], 0, p[0], p[1], R); gr.addColorStop(0, rgba(c, a0)); gr.addColorStop(1, rgba(c, 0));
+      g.fillStyle = gr; g.fillRect(p[0] - R, p[1] - R, R * 2, R * 2);
+    }
   });
+  g.globalCompositeOperation = 'lighter'; g.lineCap = 'round';
   this.shells.forEach(function (s) {
-    var a = t - s.t0;
-    if (a < 0) { // the rising shell: a faint wavering tail
-      var u = 1 + a / s.rise, p0 = cam.p(lerp3(s.base, s.c, Math.max(0, u - 0.08))), p1 = cam.p(lerp3(s.base, s.c, Math.max(0, u)));
-      if (p0 && p1) { g.strokeStyle = 'rgba(255,210,150,0.55)'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(p0[0], p0[1]); g.lineTo(p1[0] + Math.sin(t * 40) * 0.6, p1[1]); g.stroke(); }
-      return;
-    }
-    var life = s.life, fade = a < life * 0.6 ? 1 : Math.max(0, 1 - (a - life * 0.6) / (life * 0.4)), col = a < life * 0.45 ? s.col : mix(s.col, s.col2, Math.min(1, (a - life * 0.45) * 3));
-    if (a < 0.12) { var pc = cam.p(s.c); if (pc) { var Rf = s.R * 0.5 * F / pc[2], gf = g.createRadialGradient(pc[0], pc[1], 0, pc[0], pc[1], Rf); gf.addColorStop(0, 'rgba(255,250,235,' + (0.8 * (1 - a / 0.12)).toFixed(3) + ')'); gf.addColorStop(1, 'rgba(255,240,220,0)'); g.fillStyle = gf; g.fillRect(pc[0] - Rf, pc[1] - Rf, Rf * 2, Rf * 2); } }
-    if (s.kind === 'senrin') { // many little flowers popping a beat later
-      s.stars.forEach(function (d, k) {
-        var sub = fwPos(s, d, Math.min(a, 0.9), 0.55, 0.3), b = a - 0.9 - (k % 5) * 0.08; if (b < 0) { var pp = cam.p(sub); if (pp) { g.fillStyle = 'rgba(255,220,170,0.8)'; g.fillRect(pp[0] - 0.8, pp[1] - 0.8, 1.6, 1.6); } return; }
-        var ps = cam.p(sub); if (!ps) return; var rr = (6 + b * 18) * F / ps[2], al = Math.max(0, 1 - b / 1.6), cc = FW_COLS[k % FW_COLS.length];
-        for (var j = 0; j < 10; j++) { var an = j / 10 * TAU + k; g.fillStyle = rgbas(cc, al); g.fillRect(ps[0] + Math.cos(an) * rr - 1, ps[1] + Math.sin(an) * rr + b * b * 4 - 1, 2, 2); }
-        if (b < 0.1) { g.fillStyle = 'rgba(255,255,240,0.6)'; g.beginPath(); g.arc(ps[0], ps[1], rr * 0.6, 0, TAU); g.fill(); }
-      });
-      return;
-    }
-    var trail = s.kind === 'kiku' ? 0.35 : s.kind === 'yanagi' ? 1.6 : 0.06, droop = s.kind === 'yanagi' ? 1.8 : 0.6, spd = s.kind === 'yanagi' ? 0.75 : 1;
-    s.stars.forEach(function (d, k) {
-      var P = fwPos(s, d, a, spd, droop), p = cam.p(P); if (!p) return;
-      var al = fade * (0.75 + 0.25 * Math.sin(t * 30 + k));
-      if (s.kind === 'botan' && a > life * 0.7) al *= (k + Math.floor(t * 20)) % 3 ? 0.2 : 1.4; // crackle at the end
-      var c = s.kind === 'yanagi' ? [255, 196, 110] : col;
-      if (trail > 0.1) { // a tail of sparks behind the star, drooping toward you
-        var Q = fwPos(s, d, Math.max(0, a - trail), spd, droop), q = cam.p(Q); if (q) { var lg = g.createLinearGradient(q[0], q[1], p[0], p[1]); lg.addColorStop(0, rgbas(c, 0)); lg.addColorStop(1, rgbas(c, al * 0.75)); g.strokeStyle = lg; g.lineWidth = clamp(1.6 * F / p[2], 1, 3.6); g.beginPath(); g.moveTo(q[0], q[1]); g.lineTo(p[0], p[1]); g.stroke(); }
+    var a = t - s.t0, k, j;
+    if (a < 0) { // the rise: a faint sparkling tail, wavering a little
+      if (!s.base) return;
+      g.fillStyle = 'rgba(255,214,160,1)';
+      for (k = 0; k < 22; k++) {
+        var u = 1 + (a - k * 0.03) / s.rise; if (u < 0) break;
+        var h = 1 - (1 - u) * (1 - u), P = lerp3(s.base, s.c, h), wob = Math.sin((u * 30 + s.wob) * 1.3) * 3; P = [P[0] + wob * 0.6, P[1] - wob * 0.4, P[2]];
+        var vk = vis(P); if (vk <= 0) continue; var p = cam.p(P); if (!p) continue;
+        var al = (k === 0 ? 0.95 : 0.6 * (1 - k / 22)) * vk * (hash2(k + Math.floor(t * 25), s.wob) > 0.3 ? 1 : 0.25), rr = (k === 0 ? 1.3 : 0.75) * zk;
+        g.globalAlpha = al; g.fillRect(p[0] - rr, p[1] - rr, rr * 2, rr * 2);
       }
-      var rr = clamp(2.6 * F / p[2], 1.2, 4.5); g.fillStyle = rgbas(mix(c, [255, 255, 255], 0.55), al); g.beginPath(); g.arc(p[0], p[1], rr * 0.55, 0, TAU); g.fill();
-      var gs = glowSprite(c), R2 = rr * 4.5; g.globalAlpha = Math.min(1, al * 1.4); g.drawImage(gs, p[0] - R2, p[1] - R2, R2 * 2, R2 * 2); g.globalAlpha = 1;
+      g.globalAlpha = 1; return;
+    }
+    var life = s.life, gold = s.kind === 'yanagi' || s.kind === 'kamuro', tc = gold ? 1 : smooth(life * 0.38, life * 0.5, a);
+    var layers = [mix(s.col, s.col2, tc), mix(s.colB, s.col, tc)];
+    var fade = 1;
+    if (s.kind === 'senrin') fade *= 0.4;
+    // the break: a small hot flash at the centre (the sky glow is a uniform of the sky pass)
+    if (a < 0.12 && s.kind !== 'pop' && !s.small) { var pc = cam.p(s.c); if (pc && vis(s.c) > 0) { var Rf = s.R * 0.18 * cam.F / pc[2], gf = g.createRadialGradient(pc[0], pc[1], 0, pc[0], pc[1], Rf); gf.addColorStop(0, 'rgba(255,250,235,' + (0.9 * (1 - a / 0.12)).toFixed(3) + ')'); gf.addColorStop(1, 'rgba(255,240,220,0)'); g.fillStyle = gf; g.fillRect(pc[0] - Rf, pc[1] - Rf, Rf * 2, Rf * 2); } }
+    var NB = 5, segs = [[], []], heads = [[], []], tr = Math.min(s.trail, a * (gold ? 0.9 : 0.75) + 0.08), nseg = tr > 0.8 ? 9 : tr > 0.3 ? 6 : tr > 0.1 ? 3 : 1;
+    for (j = 0; j < 2; j++) { segs[j] = []; for (k = 0; k < NB; k++) segs[j].push([]); }
+    s.stars.forEach(function (d, si) {
+      var P = fwPos(s, d, a), vk = vis(P); if (vk <= 0) return;
+      var p = cam.p(P); if (!p) return;
+      var own = life * (gold ? 0.8 + 0.2 * d[5] : 0.62 + 0.38 * d[5]), u = a / own;   // each star burns out on its own
+      if (u >= 1) return;
+      var al = vk * (gold ? 1 - Math.pow(u, 2.2) : u < 0.72 ? 1 : 1 - (u - 0.72) / 0.28);
+      al *= 0.8 + 0.2 * hash2(si, Math.floor(t * 24));                                     // a little flicker all the time
+      if (u > 0.6) al *= hash2(si, Math.floor(t * 15) + s.wob) > 0.35 ? 1 : 0.12;            // twinkling out
+      if (s.kind === 'botan' && u > 0.55 && u < 0.62) al *= 1.6;                            // the colour change flashes
+      if (al < 0.02) return;
+      var L = d[4], prev = p;
+      for (var q = 1; q <= nseg; q++) {
+        var aq = Math.max(0, a - tr * q / nseg), Q = cam.p(fwPos(s, d, aq)); if (!Q) break;
+        var aa = al * Math.pow(1 - (q - 1) / nseg, gold ? 1.1 : 1.6) * (gold || s.kind === 'kiku' ? (0.55 + 0.45 * hash2(si * 7 + q, Math.floor(t * 18))) : 1);
+        segs[L][Math.min(NB - 1, Math.floor(aa * NB))].push(prev[0], prev[1], Q[0], Q[1]); prev = Q;
+        if (aq <= 0) break;
+      }
+      heads[L].push(p[0], p[1], al);
     });
+    for (j = 0; j < 2; j++) {
+      var c = layers[j], hot = mix(c, [255, 255, 250], 0.7);
+      for (k = 0; k < NB; k++) {
+        var A = segs[j][k]; if (!A.length) continue; var ak = (k + 0.6) / NB, m;
+        g.strokeStyle = rgba(c, 0.2 * ak); g.lineWidth = 3.4 * zk; g.beginPath(); for (m = 0; m < A.length; m += 4) { g.moveTo(A[m], A[m + 1]); g.lineTo(A[m + 2], A[m + 3]); } g.stroke();
+        g.strokeStyle = rgba(c, 0.85 * ak); g.lineWidth = 1.25 * zk; g.beginPath(); for (m = 0; m < A.length; m += 4) { g.moveTo(A[m], A[m + 1]); g.lineTo(A[m + 2], A[m + 3]); } g.stroke();
+      }
+      var H = heads[j]; if (!H.length) continue;
+      var gs = glowSprite(c), hs = (s.kind === 'botan' ? 8 : s.kind === 'pop' ? 4 : 6.5) * zk;   // a coloured halo round each star
+      for (k = 0; k < H.length; k += 3) { g.globalAlpha = Math.min(1, H[k + 2] * 1.3); g.drawImage(gs, H[k] - hs, H[k + 1] - hs, hs * 2, hs * 2); }
+      g.fillStyle = rgba(hot, 1);
+      for (k = 0; k < H.length; k += 3) { var hr = (s.kind === 'botan' ? 1.25 : s.kind === 'pop' ? 0.75 : 0.95) * zk; g.globalAlpha = Math.min(1, H[k + 2]); g.fillRect(H[k] - hr, H[k + 1] - hr, hr * 2, hr * 2); }
+      g.globalAlpha = 1;
+    }
   });
   g.restore();
 };
