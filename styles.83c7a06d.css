@@ -3003,12 +3003,18 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
 .home-actions { margin-bottom: 10px; }
 .home-actions button { min-height: 58px; }
 
-@media (max-width: 899px) {
-    .gd-card .gd-crop { position: relative; aspect-ratio: 2.3 / 1; overflow: hidden; background: #2a2620; }
-    .gd-card .gd-crop .gd-scene { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-43%); }
-    .gd-card .gd-info { padding: 8px 12px 10px; }
-}
-@media (min-width: 900px) { .gd-card .gd-crop { position: relative; } }
+/* the garden / town card: the painting fills the card, the caption lies over its foot */
+.home .gd-card, .gd-card#gd-card { display: block; }
+.gd-card .gd-crop { position: relative; aspect-ratio: 2 / 1; overflow: hidden; background: #2a2620; }
+.gd-card .gd-crop .gd-scene { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-46%); aspect-ratio: 4 / 3; height: auto; }
+@media (min-width: 900px) { .gd-card .gd-crop { aspect-ratio: 2.6 / 1; } .gd-card .gd-crop .gd-scene { transform: translateY(-40%); } }
+.gd-card .gd-info { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; padding: 22px 12px 8px; color: #fff;
+    background: linear-gradient(to top, rgba(14,10,6,.72), rgba(14,10,6,.38) 60%, rgba(14,10,6,0)); pointer-events: none; }
+.gd-cap { display: flex; align-items: baseline; gap: 10px; font-size: 0.76rem; color: rgba(255,255,255,.85); white-space: nowrap; }
+.gd-cap-name { font-family: var(--mincho); font-size: 1.15rem; color: #fff; }
+.gd-cap-next { margin-left: auto; font-weight: bold; color: #ffc89e; overflow: hidden; text-overflow: ellipsis; }
+.gd-cap-bar { height: 3px; margin-top: 5px; background: rgba(255,255,255,.25); border-radius: 2px; overflow: hidden; }
+.gd-cap-bar i { display: block; height: 100%; background: linear-gradient(90deg, #e07a4a, #ffb27a); border-radius: 2px; }
 
 .home-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: 8px; margin: 0 0 12px; }
 .home-tile, .home-tiles .omk-home { position: relative; width: auto; margin: 0; min-height: 82px; padding: 10px 4px 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;

@@ -4250,6 +4250,14 @@
                                           : '<span>' + gdWorld(s.w).k + 'が完成しました ─ 四季めぐり</span>') +
             (nx ? '<span class="gd-step">' + gdFmt(s.min - cur.min) + ' / ' + gdFmt(nx.min - cur.min) + '</span>' : '') + '</div>';
     }
+    // the home card's caption: one line over the painting (name, total, time to the next change) and a thin bar
+    function gdCardInfoHtml(s) {
+        var nx = s.next, cur = s.stages[s.stage] || { min: 0 };
+        var pct = nx ? Math.max(2, Math.min(100, Math.round((s.min - cur.min) / (nx.min - cur.min) * 100))) : 100;
+        return '<div class="gd-cap"><b class="gd-cap-name">' + gdWorld(s.w).k + '</b><span>合計 ' + gdFmt(s.min) + '</span>' +
+            '<span class="gd-cap-next">' + (nx ? '次の変化まで ' + gdFmt(nx.min - s.min) : '完成 ─ 四季めぐり') + '</span></div>' +
+            '<div class="gd-cap-bar"><i style="width:' + pct + '%"></i></div>';
+    }
     // ---------- めずらしい生き物: rare animals that show up now and then (the painter decides; we keep the log) ----------
     // each device keeps its own log (jlptRareSeen_<device> = { 'garden:kawasemi': firstSeenMs, ... }) so two devices never overwrite each other
     var RARE_KEY = 'jlptRareSeen_' + studyDevice;
@@ -4299,7 +4307,7 @@
             GD.el = document.createElement('div');
             GD.el.className = 'gd-card'; GD.el.id = 'gd-card';
             GD.el.setAttribute('role', 'button'); GD.el.tabIndex = 0;
-            GD.el.innerHTML = '<div class="gd-crop"><div class="gd-scene"></div><span class="gd-tag"></span></div><div class="gd-info"></div>';
+            GD.el.innerHTML = '<div class="gd-crop"><div class="gd-scene"></div><span class="gd-tag"></span><div class="gd-info"></div></div>';
             GD.el.addEventListener('click', openGarden);
             GD.el.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openGarden(); } });
         }
@@ -4307,7 +4315,7 @@
         GD.el.setAttribute('aria-label', gdWorld().title + 'を開く');
         if (GD.ctrl && GD.ctrlWorld !== worldActive()) { GD.ctrl.destroy(); GD.ctrl = null; GD.shown = null; }   // switched between 庭 and 町
         var s = gdState();
-        GD.el.querySelector('.gd-info').innerHTML = gdInfoHtml(s, s.stage);
+        GD.el.querySelector('.gd-info').innerHTML = gdCardInfoHtml(s);
         if (onHomeNow()) skyRecordState(s);
         GD.el.querySelector('.gd-tag').textContent = GD_SEASON[s.season] + '・' + GD_LIGHT[s.light] + (s.weather && s.weather !== 'clear' ? '・' + GD_WEATHER[s.weather] : '') + (s.event ? '・' + GD_EVENTS[s.event] : '') + (s.fireworks ? '・花火' : '');
         var o = { stage: s.stage, season: s.season, light: s.light, event: s.event, weather: s.weather, fireworks: s.fireworks, date: new Date(), quality: 'card', animate: true,
