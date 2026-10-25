@@ -4379,7 +4379,7 @@
                 '<div class="gd-main">' +
                 '<div class="gd-stagebox"><div class="gd-zoom"><div class="gd-zoom-inner"><div class="gd-scene gd-scene-full"></div></div>' +
                 '<button class="gd-zoom-reset" hidden>元の大きさ</button><div class="gd-hint">ピンチで拡大・ドラッグで移動</div>' +
-                '<button class="gd-lookup" hidden>☾ 見上げる</button>' +
+                '<button class="gd-lookup" hidden>☾ 見上げる</button><button class="gd-fullbtn" aria-label="全画面">⛶ 全画面</button>' +
                 '<div class="gd-sky" aria-hidden="true"><div class="gd-sky-canvas"></div><button class="gd-sky-back">↓ 戻る</button></div></div></div>' +
                 '<div class="gd-side"><div class="gd-info"></div><button class="gd-focus-btn">🍵 集中モード</button><div class="gd-back" hidden><button></button></div>' +
                 '<div class="gd-dev"></div><div class="gd-list-title"></div><div class="gd-list"></div><div class="gd-rare-box"></div></div>' +
@@ -4414,6 +4414,7 @@
                 if (sm && GD.vctrl && GD.vctrl._summon) GD.vctrl._summon(sm.dataset.id);
             });
             GD.view.querySelector('.gd-lookup').addEventListener('click', gdOpenSky);
+            GD.view.querySelector('.gd-fullbtn').addEventListener('click', openFullView);
             GD.view.querySelector('.gd-focus-btn').addEventListener('click', function() { openFocus(); });
             GD.view.querySelector('.gd-sky-back').addEventListener('click', gdCloseSky);
             gdPinch(GD.view.querySelector('.gd-zoom'), GD.view.querySelector('.gd-zoom-inner'), GD.view.querySelector('.gd-zoom-reset'));
@@ -4450,7 +4451,7 @@
                  date: d.season && d.season !== s.season ? ({ spring: new Date(new Date().getFullYear(), 3, 20), summer: new Date(new Date().getFullYear(), 6, 20), autumn: new Date(new Date().getFullYear(), 9, 25), winter: new Date(new Date().getFullYear(), 0, 20) })[d.season] : new Date(),
                  quality: 'full', animate: true,
                  onCue: function(name, info) {
-                     if (!gardenOpen()) return;
+                     if (!gardenOpen() || fullOpen()) return;
                      if (name === 'rare' && !GD.devMode) rareRecord(gdViewWorld(), info, true);
                      if (name === 'rainbow' && !GD.devMode) skyRecord('rainbow');
                      if (window.MogiSound && getSetting('gdSound', true) && (!gdSkyOpen() || name === 'thunder' || name === 'firework')) MogiSound.cue(gdCueName(name), name === 'thunder' || name === 'firework' ? info && info.delay : info && info.id);
@@ -4731,9 +4732,12 @@
     document.addEventListener('fullscreenchange', function() { if (!document.fullscreenElement && GD.focus && GD.focus.locked && focusOpen()) { GD.focus.locked = false; GD.focus.el.classList.toggle('rot', window.innerHeight > window.innerWidth); } });
     // 集中モード is shown sideways: full screen and turned to landscape where the phone allows it (Android); where it
     // does not (iPhone), the picture is laid out sideways in portrait, so turning the phone shows it the right way up
-    function focusLandscape(on) {
-        var f = GD.focus, el = f.el;
-        var fit = function() { el.classList.toggle('rot', focusOpen() && !f.locked && window.innerHeight > window.innerWidth); };
+    function focusLandscape(on) { gdLandscape(GD.focus, on, focusOpen); }
+    // full screen and turned to landscape where the phone allows it (Android); where it does not (iPhone), the overlay is
+    // laid out sideways in portrait, so turning the phone shows it the right way up
+    function gdLandscape(f, on, isOpen) {
+        var el = f.el;
+        var fit = function() { el.classList.toggle('rot', isOpen() && !f.locked && window.innerHeight > window.innerWidth); };
         if (on) {
             f.locked = false;
             try {
@@ -4750,6 +4754,75 @@
             try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen(); } catch (e) {}
             f.locked = false; el.classList.remove('rot');
         }
+    }
+    // ---------- 全画面: the garden or town alone, filling the phone sideways ----------
+    function fullOpen() { return !!(GD.full && GD.full.el.classList.contains('active')); }
+    function openFullView() {
+        var w = gdViewWorld(), E = gdEngineFor(w);
+        if (!E) return;
+        if (!GD.full) {
+            var el = document.createElement('div');
+            el.className = 'gd-full';
+            el.innerHTML = '<div class="gfv-zoom"><div class="gfv-inner"><div class="gf-scene gfv-scene"></div></div><button class="gd-zoom-reset" hidden>元の大きさ</button></div>' +
+                '<div class="gfv-bar"><button class="gfv-close" aria-label="閉じる">✕</button><span class="gfv-title"></span><button class="gfv-sound" aria-label="音"></button></div>';
+            document.body.appendChild(el);
+            GD.full = { el: el };
+            el.querySelector('.gfv-close').addEventListener('click', closeFullView);
+            el.querySelector('.gfv-sound').addEventListener('click', function() {
+                setSetting('gdSound', !getSetting('gdSound', true));
+                if (window.MogiSound) MogiSound.unlock();
+                gdSoundUpdate(); fullDrawBar();
+            });
+            GD.full.zoomReset = gdPinch(el.querySelector('.gfv-zoom'), el.querySelector('.gfv-inner'), el.querySelector('.gd-zoom-reset'), function(x, y) {
+                var c = GD.full.ctrl; if (!c || !c.tap) return;
+                var r = el.querySelector('.gfv-scene').getBoundingClientRect(); if (!r.width) return;
+                // sideways in portrait: the picture's x runs down the screen
+                var nx = el.classList.contains('rot') ? (y - r.top) / r.height : (x - r.left) / r.width;
+                var ny = el.classList.contains('rot') ? 1 - (x - r.left) / r.width : (y - r.top) / r.height;
+                try { c.tap(nx, ny); } catch (e) {}
+            });
+            // the bar fades away; a touch near the top brings it back
+            el.addEventListener('pointerdown', function() { fullWake(); });
+        }
+        var f = GD.full, s = gdState(w), o = gdViewOpts(s);
+        f.world = w;
+        f.el.classList.add('active');
+        document.body.classList.add('gd-on');
+        gdLandscape(f, true, fullOpen);
+        f.zoomReset && f.zoomReset();
+        if (GD.vctrl) GD.vctrl.pause();
+        var box = f.el.querySelector('.gfv-scene'); box.innerHTML = '';
+        o.quality = 'full';
+        o.onCue = function(name, info) {
+            if (!fullOpen()) return;
+            if (name === 'rare' && !GD.devMode) rareRecord(w, info, true);
+            if (name === 'rainbow' && !GD.devMode) skyRecord('rainbow');
+            if (window.MogiSound && getSetting('gdSound', true)) MogiSound.cue(gdCueName(name), name === 'thunder' || name === 'firework' ? info && info.delay : info && info.id);
+        };
+        f.ctrl = gdEngineFor(w).mount(box, o);
+        f.el.querySelector('.gfv-title').textContent = gdWorld(w).title + '　' + GD_SEASON[o.season] + '・' + GD_LIGHT[o.light] +
+            (o.weather && o.weather !== 'clear' ? '・' + GD_WEATHER[o.weather] : '') + (o.event ? '・' + GD_EVENTS[o.event] : '');
+        fullDrawBar(); fullWake();
+        syncNavHistory();
+    }
+    function fullDrawBar() {
+        var b = GD.full.el.querySelector('.gfv-sound');
+        b.hidden = !window.MogiSound; b.textContent = getSetting('gdSound', true) ? '🔊' : '🔇';
+    }
+    function fullWake() {
+        var f = GD.full; if (!f) return;
+        f.el.classList.remove('quiet');
+        clearTimeout(f.quietT); f.quietT = setTimeout(function() { f.el.classList.add('quiet'); }, 3500);
+    }
+    function closeFullView() {
+        var f = GD.full; if (!f || !fullOpen()) return;
+        gdLandscape(f, false, fullOpen);
+        if (f.ctrl) { f.ctrl.destroy(); f.ctrl = null; }
+        f.el.querySelector('.gfv-scene').innerHTML = '';
+        f.el.classList.remove('active');
+        if (GD.vctrl) GD.vctrl.resume();
+        if (!gardenOpen()) document.body.classList.remove('gd-on');
+        syncNavHistory();
     }
     function closeFocus() {
         var f = GD.focus; if (!f || !focusOpen()) return;
@@ -4769,10 +4842,10 @@
     }
     // two fingers zoom (up to 4×) around the point between them, one finger moves it once zoomed, double-tap zooms in
     // or out; on a computer the wheel zooms and dragging moves
-    function gdPinch(box, el, reset) {
+    function gdPinch(box, el, reset, onTap) {
         var s = 1, tx = 0, ty = 0, MAX = 4, pinch = null, pan = null, lastTap = 0, drag = null, touch0 = null, tapTimer = null, mouse0 = null;
         // a single short tap (not a pan, a pinch or the first half of a double-tap) touches the scene: feed the koi…
-        var sceneTap = function(x, y) { clearTimeout(tapTimer); tapTimer = setTimeout(function() { gdSceneTap(x, y); }, 280); };
+        var sceneTap = function(x, y) { clearTimeout(tapTimer); tapTimer = setTimeout(function() { (onTap || gdSceneTap)(x, y); }, 280); };
         var apply = function(animate) {
             var w = box.clientWidth, h = box.clientHeight;
             s = Math.min(MAX, Math.max(1, s));
@@ -4832,7 +4905,9 @@
         window.addEventListener('mouseup', function() { drag = null; });
         box.addEventListener('dblclick', function(e) { clearTimeout(tapTimer); var p = local(e); if (s > 1) { s = 1; tx = 0; ty = 0; } else zoomAt(p.x, p.y, 2.5); apply(true); });
         reset.addEventListener('click', function() { s = 1; tx = 0; ty = 0; apply(true); });
-        GD.zoomReset = function() { s = 1; tx = 0; ty = 0; apply(false); };
+        var resetFn = function() { s = 1; tx = 0; ty = 0; apply(false); };
+        if (!onTap) GD.zoomReset = resetFn;
+        return resetFn;
     }
 
     function getHeatmapStyle(seconds) {
@@ -14247,7 +14322,8 @@
         if (typeof diffOpen === 'function' && diffOpen()) d++;
         if (typeof gardenOpen === 'function' && gardenOpen()) d++;
         if (typeof gdSkyOpen === 'function' && gdSkyOpen()) d++;
-        if (typeof focusOpen === 'function' && focusOpen()) d++;          // the 画廊 sits on top of the results (or 設定): Back closes it first
+        if (typeof focusOpen === 'function' && focusOpen()) d++;
+        if (typeof fullOpen === 'function' && fullOpen()) d++;          // the 画廊 sits on top of the results (or 設定): Back closes it first
         if (typeof rpOpen === 'function' && rpOpen()) d += (rp && rp.state !== 'list') ? 2 : 1;
         if (typeof arOpen === 'function' && arOpen()) d++;
         if (typeof mockOpen === 'function' && mockOpen()) d += mockGridOpen() ? 2 : 1;
@@ -14271,6 +14347,7 @@
         }
     }
     function navBackOneLevel() {
+        if (fullOpen()) { closeFullView(); return; }
         if (focusOpen()) { closeFocus(); return; }
         if (gdSkyOpen()) { gdCloseSky(); return; }
         if (gardenOpen()) { closeGarden(); return; }

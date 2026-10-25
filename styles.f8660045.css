@@ -645,6 +645,19 @@
         .gd-sky-back { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 2; border: 0; border-radius: 999px; padding: 7px 16px; font-size: 0.8rem; background: rgba(255, 255, 255, 0.14); color: #f3ead7; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
         .gd-st.locked .gd-st-name, .gd-st.next .gd-st-name { letter-spacing: 0.2em; }
         .gd-rare-box .gd-list-title { margin-top: 22px; }
+        .gd-fullbtn { position: absolute; right: 10px; top: 10px; z-index: 4; border: 0; border-radius: 999px; padding: 6px 12px; font-size: 0.78rem; background: rgba(12, 16, 34, 0.55); color: #f3ead7; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+        .gd-zoom.zoomed .gd-fullbtn { display: none; }
+        .gd-full { position: fixed; inset: 0; z-index: 3950; background: #0d0c0a; display: none; overflow: hidden; color: #f6eedf; container-type: size; }
+        .gd-full.active { display: block; }
+        .gd-full.rot { inset: auto; left: 0; top: 0; width: 100vh; height: 100vw; transform-origin: top left; transform: translateX(100vw) rotate(90deg); }
+        .gfv-zoom { position: absolute; inset: 0; overflow: hidden; touch-action: none; }
+        .gfv-inner { position: absolute; inset: 0; transform-origin: 0 0; will-change: transform; }
+        .gfv-bar { position: absolute; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0)); transition: opacity 0.6s; }
+        .gd-full.quiet .gfv-bar { opacity: 0; }
+        .gfv-bar button { width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(0,0,0,0.4); color: #fff; font-size: 1rem; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+        .gfv-bar button[hidden] { display: none; }
+        .gfv-title { flex: 1; font-family: var(--mincho); font-weight: 700; letter-spacing: 0.1em; text-shadow: 0 1px 6px rgba(0,0,0,0.6); font-size: 0.95rem; }
+        .gd-full .gd-zoom-reset { position: absolute; right: 12px; bottom: 12px; }
         .gd-focus-btn { display: block; width: 100%; margin-top: 14px; padding: 12px; border-radius: 10px; border: 1px solid rgba(233, 185, 143, 0.5); background: rgba(228, 138, 82, 0.14); color: #f5ecdb; font-family: var(--mincho); font-weight: 700; font-size: 1rem; letter-spacing: 0.1em; }
         .gd-focus-btn[hidden] { display: none; }
         .gd-focus { position: fixed; inset: 0; z-index: 3900; background: #0d0c0a; display: none; overflow: hidden; color: #f6eedf; container-type: size; }
