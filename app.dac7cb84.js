@@ -4444,6 +4444,8 @@
         if (window.MogiSound) MogiSound.stop();
         GD.devMode = false;
         syncNavHistory();
+        // the home card shows the world chosen in the view (庭 or 町), straight away
+        if (GD.el && GD.el.isConnected) { var sl = document.createElement('div'); sl.id = 'home-garden-slot'; GD.el.replaceWith(sl); gdMountCard(); }
     }
     function gdViewOpts(s) {
         var d = GD.dev || {};
