@@ -5379,11 +5379,11 @@
         if (lib.cover) return '<span class="lib-cover has-img' + (size ? ' ' + size : '') + '" aria-hidden="true"><img src="' + lib.cover + '" alt=""></span>';
         return '<span class="lib-cover' + (size ? ' ' + size : '') + '" aria-hidden="true"><span>' + escapeHtml(lib.badge || '') + '</span></span>';
     }
-    // Home: one card per book. Tap the header to fold/unfold it (remembered per book).
+    // Home: one card per book. Every card starts folded when the app opens; tap the header to unfold it
+    // (remembered until the app is closed).
+    var libOpenNow = {};
     function libIsOpen(lib, last) {
-        var open = getSetting('libOpen', {});
-        if (open[lib.id] !== undefined) return !!open[lib.id];
-        return true;
+        return !!libOpenNow[lib.id];
     }
     function libCardHtml(lib, last, dueMap) {
         var qs = libQuestions(lib.id);
@@ -5527,9 +5527,7 @@
                 var open = !card.classList.contains('open');
                 card.classList.toggle('open', open);
                 h.setAttribute('aria-expanded', open);
-                var states = Object.assign({}, getSetting('libOpen', {}));
-                states[card.dataset.lib] = open;
-                setSetting('libOpen', states);
+                libOpenNow[card.dataset.lib] = open;
             });
         });
         if (last) document.getElementById('home-resume').addEventListener('click', function() { startDay(last.week, last.day, last.lib); });
