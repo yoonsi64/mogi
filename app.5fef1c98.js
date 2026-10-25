@@ -14205,7 +14205,7 @@
                     box.querySelector('.kj-res').innerHTML = arKanjiResult(it, st.kanji[box.dataset.k]);
                     var gap = box.querySelector('.kj-gap');
                     if (gap && (it.pre || it.post)) { gap.className = 'kj-gap filled'; gap.textContent = it.a; }
-                    if (it.pre || it.post) speakText(escapeHtml(arKjSentence(it)));          // hear the finished sentence
+                    if (it.pre || it.post) speakText(escapeHtml(arTtsKana(arKjSentence(it))));          // hear the finished sentence
                     body.querySelector('.kj-score b').textContent = all.filter(function(x) { return st.kanji[x.key] && st.kanji[x.key].ok; }).length;
                 });
             });
@@ -14214,7 +14214,7 @@
         body.addEventListener('click', function(e) {
             var b = e.target.closest('.kj-say'); if (!b) return;
             var box = b.closest('.kj-item'), it = byKey[box.dataset.k];
-            if (it) speakText(escapeHtml(arKjSentence(it)));
+            if (it) speakText(escapeHtml(arTtsKana(arKjSentence(it))));
         });
     }
     function arIntroHtml(r) { return '<div class="ar-pre"><span class="ar-pre-k">読む前に</span><p lang="ko">' + escapeHtml(r.intro) + '</p></div>'; }
@@ -14293,7 +14293,7 @@
                 }).join('') + '</ul></section>';
         }).join('');
         body.scrollTop = 0;
-        body.querySelectorAll('.ab-say').forEach(function(b) { b.addEventListener('click', function() { speakText(escapeHtml(b.dataset.t)); }); });
+        body.querySelectorAll('.ab-say').forEach(function(b) { b.addEventListener('click', function() { speakText(escapeHtml(arTtsKana(b.dataset.t))); }); });
     }
     // 会話: the dialogue with its blanks. Tap a blank, then a word from the 語群; tap 🔊 to hear the line.
     function renderArKaiwa(body, r, st) {
