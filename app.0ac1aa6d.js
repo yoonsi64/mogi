@@ -8533,7 +8533,7 @@
         if (!id) return '';
         if (clozeCache['@' + id] != null) return clozeCache['@' + id];
         var txt = READINGS[id].pages.map(function(pg) { return pg.lines.join(''); }).join('')
-            .replace(/\{r\|([^|{}]+)\|[^{}]*\}/g, '$1').replace(/\{[^|{}]*\|([^{}]+)\}/g, '$1').replace(/[{}]/g, '').replace(/　/g, '\n');
+            .replace(/\{s\|[^{}]+\}|\{i\}/g, '').replace(/\{r\|([^|{}]+)\|[^{}]*\}/g, '$1').replace(/\{[^|{}]*\|([^{}]+)\}/g, '$1').replace(/[{}]/g, '').replace(/　/g, '\n');
         return (clozeCache['@' + id] = txt);
     }
     function sentenceAround(text, word, hint) {
@@ -12672,7 +12672,11 @@
             })
             .replace(/\{n(\d+)\|([^{}]+)\}/g, '<span class="ar-fn" data-n="$1" role="button" tabindex="0">$2</span>')
             .replace(/\{\*\|([^{}]+)\}/g, '<span class="ar-goku" data-w="$1" role="button" tabindex="0">$1</span>')
-            .replace(/\{\?(\d+)\}/g, '<span class="ar-mark" data-n="$1" role="button" tabindex="0" aria-label="問い$1"></span>');
+            .replace(/\{\?(\d+)\}/g, '<span class="ar-mark" data-n="$1" role="button" tabindex="0" aria-label="問い$1"></span>')
+            // a play: {s|A} is the speaker's name in its own column (not read aloud; each speech is read on its own),
+            // {i} lines a continued speech up under the text
+            .replace(/\{s\|([^{}]+)\}/g, '\u2063<span class="ar-spk">$1</span>')
+            .replace(/\{i\}/g, '<span class="ar-spk"></span>');
     }
     // Everything a reading asks for: ? marks, 手引き 2–, 論理の力, 言語活動 (手引き1 is 「通読しよう」: a checkbox)
     function arOpenQuestions(r) {
@@ -12824,7 +12828,7 @@
 
     function arBookHtml(r) {
         var maxLen = 0;
-        r.pages.forEach(function(pg) { pg.lines.forEach(function(l) { maxLen = Math.max(maxLen, l.replace(/\{r\|([^|{}]+)\|[^{}]+\}/g, '$1').replace(/\{[n*]\d*\|([^{}]+)\}/g, '$1').replace(/\{\?\d+\}/g, '').replace(/[{}]/g, '').length); }); });
+        r.pages.forEach(function(pg) { pg.lines.forEach(function(l) { maxLen = Math.max(maxLen, l.replace(/\{s\|[^{}]+\}|\{i\}/g, '＿＿＿＿').replace(/\{r\|([^|{}]+)\|[^{}]+\}/g, '$1').replace(/\{[n*]\d*\|([^{}]+)\}/g, '$1').replace(/\{\?\d+\}/g, '').replace(/[{}]/g, '').length); }); });
         // a whole book line fits the screen height: 13–22px depending on the window
         var fit = 'clamp(13px, calc((100vh - 222px) / ' + (maxLen + 4.7) + '), 22px)';
         var zoomed = function(f) { return 'calc(' + f + ' * var(--ar-zoom, 1))'; };
@@ -12853,7 +12857,7 @@
         r.pages.forEach(function(pg) {
             pg.lines.forEach(function(line, i) {
                 if (!cur || line.charAt(0) === '　') { cur = []; paras.push(cur); line = line.replace(/^　/, ''); }
-                cur.push((i === 0 ? '<span class="ar-pganchor" data-p="' + pg.p + '"></span>' : '') + arMarkup(line));
+                cur.push((i === 0 ? '<span class="ar-pganchor" data-p="' + pg.p + '"></span>' : '') + arMarkup(line.replace(/\{i\}/g, '')));
             });
         });
         return paras.map(function(p) { return '<p>' + p.join('') + '</p>'; }).join('');
@@ -12924,7 +12928,7 @@
         var book = document.querySelector('#ar-view .ar-book'), text = arPlainText(book).text;
         if (!book) {      // not on the 本文 tab: build the same text from the data
             text = '';
-            r.pages.forEach(function(pg) { pg.lines.forEach(function(l) { text += arMarkup(l).replace(/<rt>[^<]*<\/rt>/g, '').replace(/<[^>]+>/g, ''); }); });
+            r.pages.forEach(function(pg) { pg.lines.forEach(function(l) { text += arMarkup(l).replace(/<rt>[^<]*<\/rt>/g, '').replace(/<span class="ar-spk">[^<]*<\/span>/g, '').replace(/<[^>]+>/g, ''); }); });
         }
         var start = 0;
         for (var i = 0; i < text.length; i++) {
@@ -12976,7 +12980,7 @@
         var nodes = [], text = '';
         if (!book) return { nodes: nodes, text: text };
         var walker = document.createTreeWalker(book, NodeFilter.SHOW_TEXT, {
-            acceptNode: function(n) { return n.parentElement.closest('rt, .ar-pganchor, .ar-pgbadge, .ar-title, .ar-author, .ar-h-title, .ar-h-author, .ar-pre') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; }
+            acceptNode: function(n) { return n.parentElement.closest('rt, .ar-pganchor, .ar-pgbadge, .ar-title, .ar-author, .ar-h-title, .ar-h-author, .ar-pre, .ar-spk') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; }
         });
         var n;
         while ((n = walker.nextNode())) { nodes.push({ n: n, s: text.length }); text += n.data; }
@@ -13612,7 +13616,7 @@
         });
     }
     function arIntroHtml(r) { return '<div class="ar-pre"><span class="ar-pre-k">読む前に</span><p lang="ko">' + escapeHtml(r.intro) + '</p></div>'; }
-    function arPlainLine(t) { return String(t).replace(/\{r\|([^|{}]+)\|[^{}]+\}/g, '$1').replace(/<[^>]+>/g, '').replace(/\[(\d+)\]/g, '（　）'); }
+    function arPlainLine(t) { return String(t).replace(/\{s\|[^{}]+\}|\{i\}/g, '').replace(/\{r\|([^|{}]+)\|[^{}]+\}/g, '$1').replace(/<[^>]+>/g, '').replace(/\[(\d+)\]/g, '（　）'); }
     // 単語: the book's word list with its Korean meanings. Tap a word to hear it; ＋ puts it in the 単語帳.
     // furigana under the kanji, centered on them and free to run past their edges (ruby would spread the kanji apart)
     // Each kanji gets its own reading where the book splits it that way somewhere (国技 → 国(こく)技(ぎ));
