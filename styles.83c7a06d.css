@@ -2988,7 +2988,6 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
 
 /* ===== Home, reorganized: today card, start / review, garden strip, tool tiles, book tabs ===== */
 .home-today { flex-wrap: wrap; align-items: center; }
-.home-today .home-hello { margin-bottom: 2px; font-size: 0.95rem; }
 .home-today-text .week-bars { margin: 4px 0 2px; }
 .home-today-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
 .home-exam-chip { font: inherit; font-size: 0.74rem; font-weight: bold; color: var(--active-blue); background: none; border: 1px dashed var(--active-blue); border-radius: 999px; padding: 1px 9px; line-height: 1.6; cursor: pointer; white-space: nowrap; }
@@ -3034,3 +3033,17 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
 .home-shelf-tabs button { flex: 1; padding: 10px 0 9px; background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -1px; font: inherit; font-size: 0.92rem; font-weight: bold; color: var(--text-sub); cursor: pointer; }
 .home-shelf-tabs button small { font-weight: normal; font-size: 0.72rem; margin-left: 4px; }
 .home-shelf-tabs button[aria-selected="true"] { color: var(--text-main); border-bottom-color: var(--text-main); }
+
+/* the 試験日 card on home, concise: days left beside the label and date, one line of pace, the quote without notes */
+.home .home-exam { padding: 10px 14px 9px; border-top-width: 3px; margin-bottom: 10px; }
+.home .exam-head { align-items: center; }
+.home .exam-label { font-size: 0.8rem; letter-spacing: 0.5px; }
+.home .exam-days { font-size: 0.85rem; }
+.home .exam-days b { font-size: 1.9rem; margin: 0 3px; }
+.home .exam-date { font-size: 0.72rem; margin-top: 0; }
+.home .exam-msg { font-size: 0.76rem; margin-top: 4px; line-height: 1.45; }
+.home .exam-quote { margin-top: 7px; padding-top: 7px; }
+.home .exam-quote-text { font-size: 0.82rem; line-height: 1.65; }
+.home .exam-quote-gloss { display: none; }
+.home .exam-quote-who { font-size: 0.72rem; margin-top: 1px; }
+.home .exam-quote-who span { display: none; }
