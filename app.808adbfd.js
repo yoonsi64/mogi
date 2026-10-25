@@ -13419,7 +13419,7 @@
     // ordinary words with lower case (Facebook, Web) stay turned on their side. Only the text between tags is touched.
     function arTateLatin(html) {
         return html.split(/(<[^>]+>)/).map(function(part, i) {
-            if (!(i % 2)) part = part.replace(/\(/g, '（').replace(/\)/g, '）');      // full-width brackets: they turn properly in vertical text
+            if (!(i % 2)) part = part.replace(/\(/g, '（').replace(/\)/g, '）').replace(/\?/g, '？').replace(/!/g, '！');      // full-width brackets turn properly in vertical text; ？！ stand upright
             if (i % 2 || !/[0-9A-Za-zＡ-Ｚ]/.test(part)) return part;
             return part.replace(/[A-Za-z][A-Za-z.'’&-]*|[0-9]+(?:[.,][0-9]+)*/g, function(w) {
                 if (/^[0-9]{1,2}$/.test(w)) return '<span class="ar-tcy">' + w + '</span>';
@@ -13637,7 +13637,11 @@
         if (sent.el) { first = book.querySelector(sent.el); if (first) first.classList.add('ar-tts-el'); }
         else {
             arPlainText(book).nodes.forEach(function(x) {
-                var a = Math.max(from, x.s), b = Math.min(sent.e, x.s + x.n.data.length);
+                var a = Math.max(from, x.s), b = Math.min(sent.e, x.s + x.n.data.length), d = x.n.data, blank = /[\s　\u2063]/;
+                // only visible characters are lit: an invisible mark (a speech's start in a play) or a space would get
+                // its own box at the top of the column
+                while (a < b && blank.test(d.charAt(a - x.s))) a++;
+                while (b > a && blank.test(d.charAt(b - 1 - x.s))) b--;
                 if (a >= b) return;
                 var range = document.createRange();
                 range.setStart(x.n, a - x.s); range.setEnd(x.n, b - x.s);
