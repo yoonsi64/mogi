@@ -3944,8 +3944,8 @@ SnScene.prototype.build = function () {
     var lF = snFilt(c, 'lowpass', 300, 0.5), lG = snGain(c, 0.012 * k, S.gnd); lF.connect(lG); S.src('brown', lF, 1);
     var pF = snFilt(c, 'bandpass', 3200, 0.5), pG = snGain(c, 0.12 * k, S.nat); pF.connect(pG); S.src('patter', pF, 1); S.mod(pG.gain, 0.03 * k, 0.003);
     if (wx === 'typhoon') { S.mod(hG.gain, 0.03, 0.004); S.mod(pG.gain, 0.1, 0.005); } // lashing in waves
-    S.gen(0.35 / k, function (t) { snPlink(E, t, S.out('gnd', 0.025, r(-0.9, 0.9)), r(900, 2600), r(0.4, 1), r(0.03, 0.08)); });            // drops on leaves and eaves
-    S.gen(0.09 / k, function (t) { snPlink(E, t, S.out('gnd', 0.01, r(-0.9, 0.9), 6000), r(1800, 4200), r(0.3, 1), 0.025); });               // rain on the pond / river
+    S.gen(1.1 / k, function (t) { snPlink(E, t, S.out('gnd', 0.009, r(-0.9, 0.9), 5000), r(900, 2600), r(0.4, 1), r(0.03, 0.06)); });            // drops on leaves and eaves (a few, soft: the patter carries the rain)
+    S.gen(0.16 / k, function (t) { snPlink(E, t, S.out('gnd', 0.005, r(-0.9, 0.9), 5000), r(1800, 4200), r(0.3, 1), 0.02); });               // rain on the pond / river
     var gF = snFilt(c, 'bandpass', 1700, 1.8), gG = snGain(c, 0.012, S.gnd), gA = snGain(c, 0.6); gF.connect(gA); gA.connect(gG); S.src('pink', gF, 1);
     var gl = snOsc(c, 'sine', 6.3), gLg = snGain(c, 0.4, gA.gain); gl.connect(gLg); gl.start(S.t0); S.srcs.push(gl); S.mod(gl.frequency, 3, 0.003);   // gutter trickle
     if (wx === 'storm' || wx === 'typhoon') S.gen(wx === 'storm' ? 40 : 70, function (t) { if (S.E.lastThunder && t - S.E.lastThunder < 30) return; snThunder(E, t, S.out('nat', focus ? 0.15 : 0.28, r(-0.6, 0.6)), r(2.5, 9)); });
