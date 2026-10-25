@@ -4537,9 +4537,7 @@
         var sel = function(id, list, val) {
             return '<select data-k="' + id + '">' + list.map(function(x) { return '<option value="' + x[0] + '"' + (String(x[0]) === String(val) ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select>';
         };
-        var worlds = [['garden', '庭']]; if (window.MogiTown) worlds.push(['town', '町']);
         devBox.innerHTML = '<div class="gd-dev-title">開発者メニュー・すべて解放（記録は変わりません）</div>' +
-            sel('world', worlds, w) +
             sel('stage', s.stages.map(function(st, i) { return [i, (i + 1) + ' ' + gdLabel(st)]; }), o.stage) +
             sel('season', Object.keys(GD_SEASON).map(function(k) { return [k, GD_SEASON[k]]; }), o.season) +
             sel('light', Object.keys(GD_LIGHT).map(function(k) { return [k, GD_LIGHT[k]]; }), o.light) +

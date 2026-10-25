@@ -6073,7 +6073,7 @@ function mount(el, opts) {
     if (g.wx === 'clear' || g.wx === 'cloudy') bflies = withScene({ W: cur.spec.W, H: cur.spec.H, KS: cur.spec.KS, stage: cur.spec.stage, season: cur.spec.season, light: cur.spec.light, event: cur.spec.event }, function () { return initButterflies(g, frng); });
     if (!bird || bird.season !== cur.spec.season || bird.light !== cur.spec.light) bird = { next: clock + 4 + frng() * 6, season: cur.spec.season, light: cur.spec.light };
     rare = null; rareRoll = clock + 20 + frng() * 20;
-    cues.next = { bell: clock + 6 + frng() * 6, wheel: clock + 9 + frng() * 10, splash: clock + 12 + frng() * 14, gust: clock + 35 + frng() * 35, thunder: clock + 6 + frng() * 14 };
+    cues.next = { bell: clock + 6 + frng() * 6, wheel: clock + 9 + frng() * 10, splash: clock + 12 + frng() * 14, gust: clock + 35 + frng() * 35, thunder: clock + 3 + frng() * 7 };
     if (g.wx === 'typhoon' || g.wx === 'blizzard') cues.next.gust = clock + 2 + frng() * 4;   // a gale: the first gust soon
   }
   /* ---- sound cues: a gentle rhythm, never two within a few seconds ---- */
@@ -6096,8 +6096,9 @@ function mount(el, opts) {
       } else n.splash = clock + 3;
     }
     if ((g.wx === 'storm' || g.wx === 'typhoon') && clock > n.thunder) {
-      if (g.wx === 'storm' || frng() < 0.5) { lightning = { t0: clock, bolt: makeBolt(g, frng) }; cue('thunder', { delay: Math.round((1 + frng() * 3) * 100) / 100 }, true); }
-      n.thunder = clock + (g.wx === 'storm' ? 20 + frng() * 40 : 40 + frng() * 50);
+      if (g.wx === 'storm' || frng() < 0.75) { lightning = { t0: clock, bolt: makeBolt(g, frng) }; cue('thunder', { delay: Math.round((1 + frng() * 3) * 100) / 100 }, true); }
+      // a storm flashes every 8–26 s, a typhoon every 14–38 s; now and then a second strike follows closely
+      n.thunder = clock + (frng() < 0.2 ? 2.5 + frng() * 3 : g.wx === 'storm' ? 8 + frng() * 18 : 14 + frng() * 24);
     }
     if (g.wx === 'typhoon' && clock > n.gust) { if (cue('gust', null, true)) { cues.gust = { t0: clock, dur: 3 + frng() * 2, K: 2 + frng() }; n.gust = clock + 8 + frng() * 7; } else n.gust = clock + 2; }
     else if (g.wx === 'blizzard' && clock > n.gust) { if (cue('gust', null, true)) { cues.gust = { t0: clock, dur: 4.5 + frng() * 2, K: 2.3 + frng() * 0.7, burst: true }; n.gust = clock + 8 + frng() * 17; } else n.gust = clock + 2; }   // irregular bursts, 8-25 s apart
