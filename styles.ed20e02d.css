@@ -2985,3 +2985,52 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
         .gist-row button { padding: 8px 14px; border-radius: var(--radius-sm, 8px); border: 1px solid var(--border-dark); background: var(--surface); color: var(--text-main); font-weight: bold; }
         .gist-row button.primary { background: var(--active-blue); border-color: var(--active-blue); color: #fff; }
         .gist-err { color: var(--incorrect-color); }
+
+/* ===== Home, reorganized: today card, start / review, garden strip, tool tiles, book tabs ===== */
+.home-today { flex-wrap: wrap; align-items: center; }
+.home-today .home-hello { margin-bottom: 2px; font-size: 0.95rem; }
+.home-today-text .week-bars { margin: 4px 0 2px; }
+.home-today-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.home-exam-chip { font: inherit; font-size: 0.74rem; font-weight: bold; color: var(--active-blue); background: none; border: 1px dashed var(--active-blue); border-radius: 999px; padding: 1px 9px; line-height: 1.6; cursor: pointer; white-space: nowrap; }
+.home-exam-chip.set { border-style: solid; cursor: default; color: var(--text-main); border-color: var(--border-light); }
+.home-exam-chip.set b { color: var(--pen, var(--active-blue)); font-size: 0.9rem; margin: 0 1px; }
+.home-exam-chip.today { color: var(--pen, var(--active-blue)); }
+.home-today-quote { flex-basis: 100%; border-top: 1px solid var(--border-light); padding-top: 8px; margin-top: 2px; }
+.home-today-quote .exam-quote { margin: 0; padding: 0; border: none; background: none; }
+.home-today-quote .exam-quote-text { font-size: 0.8rem; line-height: 1.6; margin: 0; }
+.home-today-quote .exam-quote-gloss { display: none; }
+.home-today-quote .exam-quote-who { font-size: 0.7rem; margin: 2px 0 0; text-align: right; }
+.home-today-quote .exam-quote-who span { display: inline; margin-left: 6px; }
+.home-actions { margin-bottom: 10px; }
+.home-actions button { min-height: 58px; }
+
+@media (max-width: 899px) {
+    .gd-card .gd-crop { position: relative; aspect-ratio: 2.3 / 1; overflow: hidden; background: #2a2620; }
+    .gd-card .gd-crop .gd-scene { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-43%); }
+    .gd-card .gd-info { padding: 8px 12px 10px; }
+}
+@media (min-width: 900px) { .gd-card .gd-crop { position: relative; } }
+
+.home-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: 8px; margin: 0 0 12px; }
+.home-tile, .home-tiles .omk-home { position: relative; width: auto; margin: 0; min-height: 82px; padding: 10px 4px 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    text-align: center; border: 1px solid var(--border-light); border-radius: var(--radius, 12px); background: var(--surface); color: var(--text-main); box-shadow: var(--shadow); cursor: pointer; font: inherit; -webkit-tap-highlight-color: transparent; }
+.home-tile b, .home-tiles .omk-tile-main { font-size: 0.8rem; font-weight: bold; white-space: nowrap; }
+.home-tile small, .home-tiles .omk-tile-sub { font-size: 0.66rem; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.home-tile-icon, .home-tiles .omk-home-icon { font-size: 1.45rem; line-height: 1.15; margin-bottom: 2px; }
+.home-tile.on { border-color: var(--active-blue); box-shadow: 0 0 0 1px var(--active-blue) inset, var(--shadow); }
+.home-tiles .omk-home { border-left-width: 1px; }
+.home-tiles .omk-home:not(.locked) { border-color: var(--omk-red, #b8312f); }
+.home-tiles .omk-home-text { display: none; }
+.home-tiles .omk-home-go { position: absolute; right: 5px; top: 4px; font-size: 0.7rem; }
+.home-tiles .omk-home:not(.locked) .omk-home-go { display: none; }
+.home-tiles .omk-tile-sub { color: var(--omk-red, #b8312f); font-weight: bold; }
+.home-tiles .omk-home.locked .omk-tile-sub { color: var(--text-sub); font-weight: normal; }
+.omk-tile-main, .omk-tile-sub { display: none; }
+.home-tiles .omk-tile-main, .home-tiles .omk-tile-sub { display: block; }
+.home-mock-panel { margin: -2px 0 14px; }
+.home-mock-panel .home-section { display: none; }
+
+.home-shelf-tabs { display: flex; margin: 6px 0 12px; border-bottom: 1px solid var(--border-light); }
+.home-shelf-tabs button { flex: 1; padding: 10px 0 9px; background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -1px; font: inherit; font-size: 0.92rem; font-weight: bold; color: var(--text-sub); cursor: pointer; }
+.home-shelf-tabs button small { font-weight: normal; font-size: 0.72rem; margin-left: 4px; }
+.home-shelf-tabs button[aria-selected="true"] { color: var(--text-main); border-bottom-color: var(--text-main); }

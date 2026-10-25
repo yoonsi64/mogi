@@ -1305,6 +1305,8 @@
             (kept ? '<span class="omk-home-icon omk-home-oma3d" role="button" tabindex="0" aria-label="お守りを3Dで見る" title="お守りを3Dで見る">' + icon + '</span>'
                   : '<span class="omk-home-icon" aria-hidden="true">' + icon + '</span>') +
             '<span class="omk-home-text"><span class="omk-home-main">' + main + '</span><small>' + sub + '</small></span>' +
+            // the short form shown when the card sits in the home screen's row of tools
+            '<b class="omk-tile-main">おみくじ</b><small class="omk-tile-sub">' + (entry ? entry.r : left > 0 ? 'あと' + left + '問' : '引けます！') + '</small>' +
             '<span class="omk-home-go" aria-hidden="true">' + (state === 'locked' ? '🔒' : '›') + '</span></button>';
     }
     function bindOmikujiHome() {

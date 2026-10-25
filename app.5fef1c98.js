@@ -4299,7 +4299,7 @@
             GD.el = document.createElement('div');
             GD.el.className = 'gd-card'; GD.el.id = 'gd-card';
             GD.el.setAttribute('role', 'button'); GD.el.tabIndex = 0;
-            GD.el.innerHTML = '<div class="gd-scene"><span class="gd-tag"></span></div><div class="gd-info"></div>';
+            GD.el.innerHTML = '<div class="gd-crop"><div class="gd-scene"></div><span class="gd-tag"></span></div><div class="gd-info"></div>';
             GD.el.addEventListener('click', openGarden);
             GD.el.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openGarden(); } });
         }
@@ -5451,6 +5451,7 @@
         '</section>';
     }
 
+    var homeMockOpen = false;          // the 模擬試験 panel under the tool row: closed when the app opens, kept while it runs
     function showHomePlaceholder() {
         currentQuestions = [];
         quizFooter.style.display = 'none';
@@ -5463,17 +5464,42 @@
         var due = getReviewQuestionIds().length;
         var last = getLastSession();
 
+        // Home, top to bottom: today (goal, week, streak, exam countdown), start / review, the garden, a row of
+        // tools (模擬試験 opens its panel below the row), today's word, then the books under two tabs.
+        var examN = examDaysLeft();
+        var examChip = examN === null ? '<button class="home-exam-chip" id="home-exam-setup">📅 試験日を設定</button>'
+            : examN > 0 ? '<span class="home-exam-chip set">N1まで あと<b>' + examN + '</b>日</span>'
+            : examN === 0 ? '<span class="home-exam-chip set today">今日は試験日 がんばって！</span>'
+            : '<button class="home-exam-chip" id="exam-set-next">次のJLPTに設定</button>';
+        var first = LIBRARIES[0];
+        var startBtn = last
+            ? '<button id="home-resume" class="primary">続きから<small>' + (isMultiLib() ? escapeHtml(getLib(last.lib).short || getLib(last.lib).title) + '　' : '') + escapeHtml(placeLabel(getLib(last.lib), last.week, last.day)) + '（' + last.status.answered + ' / ' + last.status.max + '）</small></button>'
+            : first ? '<button id="home-start" class="primary">今日の学習を始める<small>' + escapeHtml(first.short || first.title) + '・' + escapeHtml(placeLabel(first, 1, 1)) + '</small></button>'
+            : '<button id="home-resume" class="primary" disabled>続きから<small>途中の日はありません</small></button>';
+        var hasMock = mockLibs().length > 0;
+        var lastR = readOnlyEntries().slice(-1)[0];
+
         var html = '<div class="home">' +
-            '<div class="home-hello" id="home-hello">' + getGreeting() + '</div>' +
-            examCardHtml() +
-            backupReminderHtml() +
             '<div class="home-today">' + ringSvg(goalPct, 78, todayRec.answered + '問', '目標 ' + dailyGoal) +
-            '<div class="home-today-text">' + weekBarsSvg() +
-            (todayRec.answered >= dailyGoal ? '<b>今日の目標を達成しました ✓</b><br>' : 'あと <b>' + Math.max(0, dailyGoal - todayRec.answered) + '問</b> で今日の目標達成<br>') +
-            '連続学習 <b>' + streaks.current + '日</b>　正答率 <b>' + (todayRec.answered ? Math.round(todayRec.correct / todayRec.answered * 100) + '%' : '—') + '</b>' +
-            '</div></div>' +
+            '<div class="home-today-text"><div class="home-hello" id="home-hello">' + getGreeting() + '</div>' +
+            (todayRec.answered >= dailyGoal ? '<b>今日の目標を達成しました ✓</b>' : 'あと <b>' + Math.max(0, dailyGoal - todayRec.answered) + '問</b> で今日の目標達成') +
+            weekBarsSvg() +
+            '<div class="home-today-meta"><span>連続 <b>' + streaks.current + '日</b></span><span>正答率 <b>' + (todayRec.answered ? Math.round(todayRec.correct / todayRec.answered * 100) + '%' : '—') + '</b></span>' + examChip + '</div>' +
+            '</div>' +
+            (examN !== null && examN >= 0 ? '<div class="home-today-quote">' + examQuoteHtml() + '</div>' : '') +
+            '</div>' +
+            backupReminderHtml() +
+            '<div class="home-actions">' + startBtn +
+            '<button id="home-review" ' + (due ? '' : 'disabled') + '>今日の復習<small>' + (due ? due + '問' : 'ありません') + '</small></button>' +
+            '</div>' +
             gardenSlotHtml() +
-            omikujiHomeHtml() +
+            '<div class="home-tiles">' +
+                (hasMock ? '<button class="home-tile' + (homeMockOpen ? ' on' : '') + '" id="home-mock-tile" aria-expanded="' + homeMockOpen + '"><span class="home-tile-icon">📝</span><b>模擬試験</b><small>' + mockLibs().length + '回分</small></button>' : '') +
+                '<button class="home-tile rp-home" id="rp-home"><span class="home-tile-icon">⏱️</span><b>読む速さ</b><small>' + (lastR ? '前回 ' + charsPerMin(lastR.chars, lastR.ms) + '字/分' : '1分に何字') + '</small></button>' +
+                omikujiHomeHtml() +
+                '<button class="home-tile" id="home-sky"><span class="home-tile-icon">🌌</span><b>見上げる</b><small>' + (worldActive() === 'town' ? '町の空' : '庭の空') + '</small></button>' +
+            '</div>' +
+            (hasMock ? '<div class="home-mock-panel" id="home-mock-panel"' + (homeMockOpen ? '' : ' hidden') + '>' + mockSectionHtml() + '</div>' : '') +
             (function() {
                 var w = todaysWord();
                 if (!w) return '';
@@ -5481,24 +5507,19 @@
                     '<span class="home-word-label">今日の単語<span class="home-word-go">単語帳へ ›</span></span><span class="home-word-text">' + entryWordHtml(w) + '</span>' +
                     '<span class="home-word-meaning">' + (w.meaning ? escapeHtml(w.meaning) : '（意味・メモなし）') + '</span><button class="home-word-hint" id="home-word-reveal">意味を見る</button></div>';
             })() +
-            '<div class="home-actions">' +
-            '<button id="home-resume" class="primary" ' + (last ? '' : 'disabled') + '>' +
-            (last ? '続きから<small>' + (isMultiLib() ? escapeHtml(getLib(last.lib).short || getLib(last.lib).title) + '　' : '') + escapeHtml(placeLabel(getLib(last.lib), last.week, last.day)) + '（' + last.status.answered + ' / ' + last.status.max + '）</small>' : '続きから<small>途中の日はありません</small>') + '</button>' +
-            '<button id="home-review" ' + (due ? '' : 'disabled') + '>今日の復習<small>' + (due ? due + '問' : 'ありません') + '</small></button>' +
-            '</div>' +
-            (function() {
-                var ro = readOnlyEntries(), lastR = ro[ro.length - 1];
-                return '<button class="rp-home" id="rp-home"><span class="rp-home-icon">⏱️</span><span class="rp-home-text"><b>読む速さを測る</b>' +
-                    '<small>' + (lastR ? '前回 ' + charsPerMin(lastR.chars, lastR.ms) + '字/分・' : '') + '文章だけを読んで、1分に何字読めるか測ります</small></span><span class="rp-home-go">›</span></button>';
-            })();
+            '';
 
-        html += mockSectionHtml();
-        html += '<div class="home-section"><span>JLPT 教材</span><span>' + LIBRARIES.length + '冊</span></div>';
         var dueMap = dueByDay();
+        var shelf = READING_BOOKS.length && getSetting('homeShelf', 'jlpt') === 'read' ? 'read' : 'jlpt';
+        if (READING_BOOKS.length) html += '<div class="home-shelf-tabs" role="tablist">' +
+            '<button role="tab" data-shelf="jlpt" aria-selected="' + (shelf === 'jlpt') + '">JLPT 教材<small>' + LIBRARIES.length + '冊</small></button>' +
+            '<button role="tab" data-shelf="read" aria-selected="' + (shelf === 'read') + '">読解<small>' + READING_BOOKS.length + '冊</small></button></div>';
+        else html += '<div class="home-section"><span>JLPT 教材</span><span>' + LIBRARIES.length + '冊</span></div>';
+        html += '<div class="home-shelf" data-shelf="jlpt"' + (shelf === 'jlpt' ? '' : ' hidden') + '>';
         LIBRARIES.forEach(function(lib) { html += libCardHtml(lib, last, dueMap); });
-        html += '<div class="home-section ar-home-section"><span>読解</span><span>' + READING_BOOKS.length + '冊</span></div>';
+        html += '</div><div class="home-shelf" data-shelf="read"' + (shelf === 'read' ? '' : ' hidden') + '>';
         READING_BOOKS.forEach(function(b) { html += readingBookCardHtml(b); });
-        html += '</div>';
+        html += '</div></div>';
         quizContainer.innerHTML = html;
         gdMountCard();
         restoreHomeSpot();          // in the same frame as the new page, so it never shows at the top first
@@ -5531,7 +5552,30 @@
             });
         });
         if (last) document.getElementById('home-resume').addEventListener('click', function() { startDay(last.week, last.day, last.lib); });
+        var startB = document.getElementById('home-start');
+        if (startB) startB.addEventListener('click', function() { startDay(1, 1, first.id); });
         document.getElementById('rp-home').addEventListener('click', openReadingPractice);
+        var mockTile = document.getElementById('home-mock-tile');
+        if (mockTile) mockTile.addEventListener('click', function() {
+            homeMockOpen = !homeMockOpen;
+            mockTile.classList.toggle('on', homeMockOpen);
+            mockTile.setAttribute('aria-expanded', homeMockOpen);
+            var panel = document.getElementById('home-mock-panel');
+            panel.hidden = !homeMockOpen;
+            if (homeMockOpen) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+        document.getElementById('home-sky').addEventListener('click', function() {
+            if (!window.MogiSky || !gdEngine()) { showToast('空はまだ読み込み中です', 1600); return; }
+            openGarden();
+            setTimeout(gdOpenSky, 60);
+        });
+        quizContainer.querySelectorAll('.home-shelf-tabs button').forEach(function(t) {
+            t.addEventListener('click', function() {
+                setSetting('homeShelf', t.dataset.shelf);
+                quizContainer.querySelectorAll('.home-shelf-tabs button').forEach(function(x) { x.setAttribute('aria-selected', String(x === t)); });
+                quizContainer.querySelectorAll('.home-shelf').forEach(function(sh) { sh.hidden = sh.dataset.shelf !== t.dataset.shelf; });
+            });
+        });
         if (due) document.getElementById('home-review').addEventListener('click', function() { pendingOrigin = 'home'; startReviewPractice(); });
         bindOmikujiHome();
         var wordCard = document.getElementById('home-word');
