@@ -4441,7 +4441,7 @@
         document.body.classList.remove('gd-on');
         if (GD.vctrl) { GD.vctrl.destroy(); GD.vctrl = null; }
         GD.view.querySelector('.gd-scene-full').innerHTML = '';
-        if (window.MogiSound) MogiSound.stop();
+        if (window.MogiSound) MogiSound.stop(true);      // silent the moment the home screen is back
         GD.devMode = false;
         syncNavHistory();
         // the home card shows the world chosen in the view (庭 or 町), straight away
@@ -4478,7 +4478,7 @@
         btn.textContent = on ? '🔊' : '🔇';
         btn.setAttribute('aria-label', on ? '音を消す' : '音を出す');
         if (!window.MogiSound) return;
-        if (!on || !gardenOpen() || document.hidden) { MogiSound.stop(); return; }
+        if (!on || !gardenOpen() || document.hidden) { MogiSound.stop(true); return; }
         var w = gdViewWorld(), o = gdViewOpts(gdState(w));
         MogiSound.play({ world: w, season: o.season, light: o.light, stage: o.stage, event: o.event, weather: o.weather, fireworks: o.fireworks, sky: gdSkyOpen() });
     }
@@ -4843,7 +4843,7 @@
         f.el.querySelector('.gf-scene').innerHTML = '';
         f.el.classList.remove('active');
         if (!gardenOpen()) document.body.classList.remove('gd-on');
-        if (window.MogiSound) { if (gardenOpen()) gdSoundUpdate(); else MogiSound.stop(); }
+        if (window.MogiSound) { if (gardenOpen()) gdSoundUpdate(); else MogiSound.stop(true); }
         if (mins > 0) showToast('おつかれさまでした。集中 ' + mins + '分');
         syncNavHistory();
         if (gardenOpen()) gdRenderView(); else if (onHomeNow()) showHomePlaceholder();

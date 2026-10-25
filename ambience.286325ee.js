@@ -4038,6 +4038,7 @@ var MogiSound = {
     try {
       var E = sndEnsure(); if (!E) return;
       if (SND.ctx.state === 'suspended' && SND.ctx.resume) SND.ctx.resume();
+      if (SND.hushed) { SND.hushed = false; sndApplyVol(); }
       var o = sndNorm(opts), key = sndKey(o), t = SND.ctx.currentTime;
       SND.opts = o;
       if (SND.cur && SND.key === key) { SND.cur.setSky(o.sky, t); MogiSound.playing = true; return; }
@@ -4048,12 +4049,18 @@ var MogiSound = {
     } catch (e) { }
   },
   cue: function (name, id) {
-    try { if (!SND.E || MogiSound.muted || SND.muted) return; if (SND.ctx.state === 'suspended' && SND.ctx.resume) SND.ctx.resume(); sndCue(SND.E, String(name || ''), id, SND.opts && SND.opts.focus); } catch (e) { }
+    try { if (!SND.E || MogiSound.muted || SND.muted || SND.hushed) return; if (SND.ctx.state === 'suspended' && SND.ctx.resume) SND.ctx.resume(); sndCue(SND.E, String(name || ''), id, SND.opts && SND.opts.focus); } catch (e) { }
   },
-  stop: function () {
+  stop: function (instant) {
     try {
       MogiSound.playing = false; if (!SND.E) return;
-      var t = SND.ctx.currentTime; if (SND.cur) { SND.cur.fade(0, t, 1.5); SND.cur.stop(t + 1.7); SND.cur = null; SND.key = ''; }
+      var t = SND.ctx.currentTime;
+      if (instant) { // silence now: the scene, any thunder or call still on its way, the reverb tail
+        SND.E.out.gain.cancelScheduledValues(t); SND.E.out.gain.setValueAtTime(0, t);
+        if (SND.cur) { SND.cur.stop(t + 0.05); SND.cur = null; SND.key = ''; }
+        if (SND.ctx.suspend) { var cx = SND.ctx; setTimeout(function () { if (!MogiSound.playing && cx.state === 'running') cx.suspend(); }, 80); }
+        SND.hushed = true;
+      } else if (SND.cur) { SND.cur.fade(0, t, 1.5); SND.cur.stop(t + 1.7); SND.cur = null; SND.key = ''; }
       if (SND.timer) { clearInterval(SND.timer); SND.timer = 0; }
     } catch (e) { }
   },
