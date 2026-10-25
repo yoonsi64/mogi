@@ -3850,7 +3850,7 @@ SnScene.prototype.build = function () {
   var day = L === 'day' || L === 'morning', night = L === 'night', dusk = L === 'dusk', town = w === 'town', focus = !!o.focus;
   var wet = wx === 'rain' || wx === 'storm' || wx === 'typhoon', snowy = wx === 'snow' || wx === 'blizzard';
   var d0 = new Date(this.date0), mo = d0.getMonth() + 1, dd = d0.getDate(), tsuyu = (mo === 6 && dd >= 7) || (mo === 7 && dd <= 19);
-  var life = wet ? 0.12 : snowy ? 0.18 : wx === 'cloudy' ? 0.7 : 1;      // birds and insects fall quiet in bad weather
+  var life = wet ? 0.05 : snowy ? 0.1 : wx === 'cloudy' ? 0.7 : 1;      // birds and insects fall quiet in bad weather
   var rateK = focus ? 0.5 : 1; this.evK = focus ? 0.7 : 1;
   var R = function (m) { return m / Math.max(0.05, life * rateK); };    // interval scaled by liveliness
   var r = function (a, b) { return S.r(a, b); };
@@ -3890,7 +3890,8 @@ SnScene.prototype.build = function () {
     S.gen(0.5, function (t) { snPlink(E, t, S.out('gnd', 0.008, r(-0.7, 0.7), 2500), r(300, 900), 1, 0.08); });
   }
   // ---------- life: birds, insects, frogs by season and hour ----------
-  var bird = function (k, lv, pan) { return function (t) { BIRD[k](E, t, S.out('nat', lv, pan === undefined ? r(-0.85, 0.85) : pan, r(5000, 12000))); }; };
+  var birdLv = wet ? 0.45 : snowy ? 0.6 : 1;      // and the few that do call, call softly
+  var bird = function (k, lv, pan) { return function (t) { BIRD[k](E, t, S.out('nat', lv * birdLv, pan === undefined ? r(-0.85, 0.85) : pan, r(5000, 12000))); }; };
   var bug = function (k, lv, grp) { return function (t) { BUG[k](E, t, S.out(grp || 'gnd', lv, r(-0.9, 0.9), r(6000, 12000))); }; };
   if (se === 'spring') {
     if (day) { S.gen(R(14), bird('uguisu', 0.09)); S.gen(R(5), bird('suzume', 0.035)); if (!focus) S.gen(R(30), bird('hiyodori', 0.04)); S.gen(R(22), bird('shijukara', 0.035)); }
@@ -3996,12 +3997,12 @@ function sndCue(E, name, arg, focus, at) {
       snKnock(E, t, out(0.13, R(-0.3, 0.3)), R(520, 600), 1, 0.25); snNoise(E, t + 0.04, out(0.12, 0.1, 3000), { kind: 'pink', f: 1400, q: 0.7, att: 0.05, hold: 0.25, dec: 0.4 }); return;
     case 'splash': snNoise(E, t, out(0.3, R(-0.5, 0.5)), { kind: 'pink', type: 'lowpass', f: 2600, q: 0.6, att: 0.005, dec: 0.25 }); for (var i = 0; i < 5; i++) snPlink(E, t + 0.08 + i * R(0.05, 0.12), out(0.05, R(-0.5, 0.5)), R(500, 1400), 1, 0.06); return;
     case 'drip': snPlink(E, t, out(0.22, R(-0.4, 0.4)), R(700, 1000), 1, 0.12); return;
-    case 'bird': (E.rnd() < 0.5 ? BIRD.shijukara : BIRD.hiyodori)(E, t, out(0.18, R(-0.7, 0.7), 9000)); return;
+    case 'bird': (E.rnd() < 0.5 ? BIRD.shijukara : BIRD.hiyodori)(E, t, out(0.18 * (SND.birdK || 1), R(-0.7, 0.7), 9000)); return;
     case 'gust': snNoise(E, t, out(0.07, R(-0.5, 0.5)), { kind: 'pink', type: 'bandpass', f: 2600, q: 0.5, att: 1.0, hold: 1.2, dec: 2.2 }); snNoise(E, t + 0.4, out(0.05, R(-0.5, 0.5)), { kind: 'brown', type: 'lowpass', f: 500, att: 0.9, hold: 1, dec: 2 }); return;
     case 'bell': snBonsho(E, t, out(0.45, 0, 3000), R(118, 128), 1, focus ? 16 : 24); return;
     case 'wheel': // the water wheel: a wooden creak and spill
       var o1 = out(0.16, R(-0.4, 0.4), 4000), j; for (j = 0; j < 14; j++) snNoise(E, t + j * 0.035 + R(0, 0.01), o1, { f: R(700, 950), q: 8, dec: 0.02, peak: 0.6 + Math.sin(j / 3) * 0.3 }); snNoise(E, t + 0.5, out(0.18, 0.2, 5000), { kind: 'pink', f: 1300, q: 0.6, att: 0.1, hold: 0.6, dec: 0.6 }); return;
-    case 'crow': BIRD.hashibuto(E, t, out(0.22, R(-0.6, 0.6), 7000)); return;
+    case 'crow': BIRD.hashibuto(E, t, out(0.22 * (SND.birdK || 1), R(-0.6, 0.6), 7000)); return;
     case 'reveal': snChime(E, t, out(0.1, 0), 1); return;
     case 'rare': var f = RARE[arg]; if (f) { f(E, t, out(0.24, R(-0.5, 0.5), 11000)); return; } snChime(E, t, out(0.14, 0), 1, [2093, 2637, 3136, 4186]); return;
     case 'thunder': E.lastThunder = t; snThunder(E, t + Math.max(0, +arg || 0), out(0.3, R(-0.5, 0.5)), Math.max(0, +arg || 3)); return;
@@ -4049,7 +4050,12 @@ var MogiSound = {
     } catch (e) { }
   },
   cue: function (name, id) {
-    try { if (!SND.E || MogiSound.muted || SND.muted || SND.hushed) return; if (SND.ctx.state === 'suspended' && SND.ctx.resume) SND.ctx.resume(); sndCue(SND.E, String(name || ''), id, SND.opts && SND.opts.focus); } catch (e) { }
+    try { if (!SND.E || MogiSound.muted || SND.muted || SND.hushed) return; if (SND.ctx.state === 'suspended' && SND.ctx.resume) SND.ctx.resume();
+      // in rain or snow most birds keep quiet under cover: a bird seen crossing calls only now and then, and softly
+      var cwx = SND.opts && SND.opts.weather, badWx = cwx === 'rain' || cwx === 'storm' || cwx === 'typhoon' || cwx === 'snow' || cwx === 'blizzard';
+      SND.birdK = 1;
+      if (badWx && (name === 'bird' || name === 'crow' || name === 'startle')) { if (Math.random() > 0.25) return; SND.birdK = 0.35; }
+      sndCue(SND.E, String(name || ''), id, SND.opts && SND.opts.focus); } catch (e) { }
   },
   stop: function (instant) {
     try {
