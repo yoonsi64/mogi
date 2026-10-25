@@ -974,7 +974,7 @@ function paintWall(ctx, W, alb, o) {
   if (o.grime !== 0) { var g = ctx.createLinearGradient(0, b0.y, 0, t0.y); g.addColorStop(0, 'rgba(46,36,28,' + (o.grime || 0.32) + ')'); g.addColorStop(1, 'rgba(46,36,28,0)'); ctx.fillStyle = g; ctx.fillRect(0, t0.y, W2(), b0.y - t0.y + 2); }
   if (o.eave) { // the overhang's shadow along the top
     var e0 = Pa(W.at(W.len / 2, W.y1)), e1 = Pa(W.at(W.len / 2, W.y1 - o.eave)), g2 = ctx.createLinearGradient(0, e0.y, 0, e1.y);
-    g2.addColorStop(0, 'rgba(20,16,24,' + (0.5 * (LIT.shadowA + 0.3)) + ')'); g2.addColorStop(1, 'rgba(20,16,24,0)'); ctx.fillStyle = g2; ctx.fillRect(0, e0.y - 8, W2(), e1.y - e0.y + 8);
+    g2.addColorStop(0, 'rgba(20,16,24,' + Math.min(0.85, 0.5 * (LIT.shadowA + 0.3) * (o.eaveK || 1)) + ')'); g2.addColorStop(1, 'rgba(20,16,24,0)'); ctx.fillStyle = g2; ctx.fillRect(0, e0.y - 8, W2(), e1.y - e0.y + 8);
   }
   if (o.streaks) { ctx.strokeStyle = 'rgba(70,60,50,0.12)'; ctx.lineWidth = 0.5; ctx.beginPath(); var r = mulberry32(o.seed || 3); for (var i = 0; i < W.len * 1.5; i++) { var s = r() * W.len, y1 = W.y1 - r() * 0.3, y2 = y1 - 0.4 - r() * 1.2; wline(ctx, W, s, y1, s, y2, 0.01); } ctx.stroke(); }
   if (o.age !== 0 && alb[0] > 175 && MODE === 'n') wallAge(ctx, W, alb, o);
@@ -1149,7 +1149,7 @@ function roofGeom(B, R) {
   return { planes: planes, gables: gables, yR: yR, yM: yM, Rg: Rg, bm: bm, L: L, R: R };
 }
 function planePath(pp) { var p = new Path2D(); pp.forEach(function (q, i) { if (i) p.lineTo(q.x, q.y); else p.moveTo(q.x, q.y); }); p.closePath(); return p; }
-function roofAlb(R) { return R.mat === 'thatch' ? MAT.thatch : R.mat === 'board' ? MAT.board : R.mat === 'bark' ? [112, 70, 52] : R.mat === 'copper' ? MAT.copper : R.col || MAT.tile; }
+function roofAlb(R) { if (R.mat === 'thatch') return MAT.thatch; if (R.mat === 'board') return MAT.board; if (R.mat === 'bark') return [112, 70, 52]; if (R.mat === 'copper') return MAT.copper; if (R.col) return R.col; var h = hash2((R.seed || 0) | 0, 31), h2 = hash2((R.seed || 0) | 0, 47); return scl(mixc(MAT.tile, h < 0.5 ? [104, 100, 96] : [86, 96, 112], Math.abs(h - 0.5) * 0.9), 0.92 + 0.14 * h2); }   // each roof's own fired grey: some warmer and older, some bluer and newer
 function drawRoof(ctx, B, R) {
   var G = roofGeom(B, R), rng = mulberry32(R.seed || 11), snow = SEA.snow * (R.snowK === undefined ? 1 : R.snowK);
   var items = [];
@@ -2201,13 +2201,21 @@ function drawIshigaki(ctx) {
     ctx.save(); poly(ctx, pf); ctx.clip();
     var r = mulberry32(901 + fi * 17), t = 0, row = 0, kk = Pa(E(0, 0.5)).k, wedges = [];
     function stone(u0, u1, ta, tb, base, nR, jit) {   // one fitted stone: an irregular, slightly rounded polygon inside its cell, tight joints
-      var gp = 0.005, tg = (tb - ta) * 0.045, pts = [], cu = (u0 + u1) / 2, ct = (ta + tb) / 2;
+      var gp = 0.009, tg = (tb - ta) * 0.07, pts = [], cu = (u0 + u1) / 2, ct = (ta + tb) / 2;
       var cs = [[u0 + gp, ta + tg], [cu + (r() - 0.5) * (u1 - u0) * 0.25, ta + tg * 0.4 + (r() - 0.5) * (tb - ta) * jit * 0.4], [u1 - gp, ta + tg], [u1 - gp * 0.6 + (r() - 0.5) * (u1 - u0) * jit * 0.08, ct + (r() - 0.5) * (tb - ta) * 0.3], [u1 - gp, tb - tg], [cu + (r() - 0.5) * (u1 - u0) * 0.3, tb - tg * 0.4 + (r() - 0.5) * (tb - ta) * jit * 0.35], [u0 + gp, tb - tg], [u0 + gp * 0.6 + (r() - 0.5) * (u1 - u0) * jit * 0.08, ct + (r() - 0.5) * (tb - ta) * 0.3]];
       cs.forEach(function (c, ci) { var q = cs[(ci + 1) % 8]; pts.push(Pa(E(c[0], c[1]))); pts.push(Pa(E(lerp(c[0], q[0], 0.5) + (ci % 2 ? 0 : (cu - lerp(c[0], q[0], 0.5)) * 0.04), lerp(c[1], q[1], 0.5) + (ci % 2 ? 0 : (ct - lerp(c[1], q[1], 0.5)) * 0.06)))); });
-      var c0 = shade(base, nR); poly(ctx, pts); ctx.fillStyle = rgb(c0); ctx.fill();
-      if (kk * G.h * (tb - ta) > 2.2) {   // its face bulges a little: the top edge catches the light, the foot is in shade
-        ctx.strokeStyle = rgb(mixc(c0, [255, 250, 236], 0.28), 0.6); ctx.lineWidth = 0.35; ctx.beginPath(); ctx.moveTo(pts[12].x, pts[12].y); ctx.lineTo(pts[11].x, pts[11].y); ctx.lineTo(pts[10].x, pts[10].y); ctx.lineTo(pts[9].x, pts[9].y); ctx.lineTo(pts[8].x, pts[8].y); ctx.stroke();
-        ctx.strokeStyle = rgb(scl(c0, 0.6), 0.55); ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); ctx.lineTo(pts[1].x, pts[1].y); ctx.lineTo(pts[2].x, pts[2].y); ctx.lineTo(pts[3].x, pts[3].y); ctx.lineTo(pts[4].x, pts[4].y); ctx.stroke();
+      var c0 = shade(base, nR); ctx.beginPath(); var mx0 = (pts[0].x + pts[15].x) / 2, my0 = (pts[0].y + pts[15].y) / 2; ctx.moveTo(mx0, my0);
+      for (var pi = 0; pi < 16; pi++) { var P1 = pts[pi], P2 = pts[(pi + 1) % 16]; ctx.quadraticCurveTo(P1.x, P1.y, (P1.x + P2.x) / 2, (P1.y + P2.y) / 2); }   // rounded: the curve runs through the edge midpoints
+      ctx.closePath(); ctx.fillStyle = rgb(c0); ctx.fill();
+      if (jit < 0.5) {   // a dressed corner stone: a rough split face (a few cracks and pits) and a dark joint round it
+        ctx.strokeStyle = rgb(scl(c0, 0.45), 0.75); ctx.lineWidth = Math.max(0.35, 0.03 * kk); ctx.stroke();
+        ctx.save(); ctx.clip(); ctx.strokeStyle = rgb(scl(c0, 0.7), 0.5); ctx.lineWidth = 0.3; ctx.beginPath();
+        for (var ci2 = 0; ci2 < 3; ci2++) { var cu2 = lerp(u0, u1, 0.2 + r() * 0.6), ct2 = lerp(ta, tb, 0.2 + r() * 0.6), cq = Pa(E(cu2, ct2)), cq2 = Pa(E(cu2 + (r() - 0.5) * (u1 - u0) * 0.5, ct2 + (r() - 0.5) * (tb - ta) * 0.6)); ctx.moveTo(cq.x, cq.y); ctx.lineTo(cq2.x, cq2.y); }
+        ctx.stroke(); for (ci2 = 0; ci2 < 5; ci2++) { var pq3 = Pa(E(lerp(u0, u1, r()), lerp(ta, tb, r()))); ctx.fillStyle = rgb(scl(c0, r() < 0.5 ? 0.78 : 1.12), 0.6); ctx.fillRect(pq3.x, pq3.y, Math.max(0.4, 0.03 * kk), Math.max(0.4, 0.03 * kk)); } ctx.restore();
+      }
+      if (kk * G.h * (tb - ta) > 2.2) {   // its face bulges: lit toward the top and the sun, in shade at the foot
+        var cc = Pa(E((u0 + u1) / 2, ta + (tb - ta) * 0.62)), rad = Math.max(1, Math.max(Math.abs(pts[4].x - pts[12].x), Math.abs(pts[0].y - pts[8].y)) * 0.75), bg = ctx.createRadialGradient(cc.x, cc.y, 0, cc.x, cc.y, rad);
+        bg.addColorStop(0, rgb(mixc(c0, [255, 248, 230], 0.18), 0.55)); bg.addColorStop(0.6, rgb(c0, 0)); bg.addColorStop(1, rgb(scl(c0, 0.55), 0.55)); ctx.fillStyle = bg; ctx.fill();
       }
       if (!snow && r() < 0.06) { ctx.fillStyle = rgb(shade([66, 84, 48], up), 0.32); ctx.fill(); }   // moss and lichen
     }
@@ -2219,9 +2227,9 @@ function drawIshigaki(ctx) {
         if (atL) { wu = longL ? 0.26 : 0.1; corner = true; }
         else { wu = (0.07 + r() * 0.2) * (1 - 0.35 * t); var cw = longR ? 0.26 : 0.1; if (rem - wu < cw + 0.04) { wu = rem - cw; if (wu < 0.03) { wu = rem; corner = true; } } }
         if (!corner && Math.abs(u + wu - 1) < 1e-6) corner = true;
-        var u1 = Math.min(1, u + wu), tall = !corner && r() < 0.35 && t1 < 0.93 ? rh * (0.3 + r() * 0.6) : 0, drop = !corner && r() < 0.35 ? -rh * r() * 0.3 : 0;
+        var u1 = Math.min(1, u + wu), tall = !corner && r() < 0.45 && t1 < 0.93 ? rh * (0.35 + r() * 0.75) : 0, drop = !corner && r() < 0.45 ? -rh * (0.15 + r() * 0.35) : 0;   // courses broken: stones run up into the course above or sit low
         var base = mixc(mixc([142, 136, 124], [106, 102, 94], r()), [126, 114, 96], r() * 0.45); base = scl(base, 0.68 + 0.38 * r() * r() + 0.1 * r());
-        if (corner) base = mixc(scl(mixc([150, 144, 132], [168, 162, 150], r()), 0.95 + 0.1 * r()), base, 0.25);   // the dressed corner stones, paler and squarer
+        if (corner) base = mixc(scl(mixc([138, 132, 120], [150, 142, 128], r()), 0.78 + 0.24 * r()), base, 0.55);   // the dressed corner stones, each its own tone
         stone(u, u1, t + drop, t1 + tall, base, nR, corner ? 0.15 : 1);
         if (!corner && u > -0.9 && r() < 0.55) wedges.push([u, t1 - rh * (0.15 + r() * 0.25), rh, nR]);   // a small wedge stone (間詰石) where the joints meet
         u = u1;
@@ -2241,7 +2249,7 @@ function drawIshigaki(ctx) {
   });
   // the top: a narrow court of trodden earth (mostly covered by the keep), and the 塀 along its edge
   var yt = G.y0 + G.h, tt = [B.L(-G.w / 2, -G.d / 2, yt), B.L(G.w / 2, -G.d / 2, yt), B.L(G.w / 2, G.d / 2, yt), B.L(-G.w / 2, G.d / 2, yt)];
-  fillPts(ctx, tt, shade(snow ? SNOW : [150, 138, 118], up), 0.4);
+  fillPts(ctx, tt, shade(snow ? SNOW : [104, 96, 84], up), 0.4);   // dark trodden gravel
   if (!F.keep && !S) { [[-4.5, 1.5], [4.5, 2.5]].forEach(function (q) { var p = B.L(q[0], q[1], 0); drawPine(ctx, genPine(500 + q[0] | 0, p[0], p[2], 2.2, yt)); }); }
 }
 /* the castle stands far off: veil it (and whatever farther stands behind it in its box) a little in the air's colour */
@@ -2302,12 +2310,12 @@ function castleScrub(ctx, G, ins) {
 /* 天守: the keep after 彦根城: three storeys of white plaster over black 下見板, barred windows (華頭窓 on the top storey);
    heavy 本瓦 roofs with deep eaves and swept-up corners; 千鳥破風 and a 唐破風 on the front; gold 鯱 on the top ridge */
 function drawKeep(ctx) {
-  var G = ishiGeom(), B = G.B, S = sil(), y = G.y0 + G.h, tiers = [[11.8, 8.6, 3.4], [8.6, 5.9, 2.9], [6.0, 3.8, 2.7]], tile = [62, 66, 76], white = [244, 242, 236], sl = 0.55, ovD = 1.25;
+  var G = ishiGeom(), B = G.B, S = sil(), y = G.y0 + G.h, tiers = [[12.5, 9.1, 3.4], [9.1, 6.3, 2.9], [6.3, 4.0, 2.7]], tile = [62, 66, 76], white = [244, 242, 236], sl = 0.55, ovD = 1.25;
   tiers.forEach(function (t, i) {
     var Wl = boxWalls(B, t[0], t[1], y, y + t[2]), top = i === tiers.length - 1, nx = tiers[i + 1];
     [Wl.f, Wl.l, Wl.r].forEach(function (q) {
       if (!q.vis) return;
-      paintWall(ctx, q, white, { grime: 0.04, tex: 0.15, eave: 0.9, age: 0, lo: { amb: 1.4 } });
+      paintWall(ctx, q, white, { grime: 0.04, tex: 0.15, eave: 1.3, eaveK: 1.9, age: 0, lo: { amb: 1.4 } });   // the deep eave's shadow anchors each storey under its roof
       if (S) return;
       boards(ctx, q, 0, q.len, q.y0, q.y0 + (i === 0 ? 1.5 : 0.8), [38, 34, 36]);   // 下見板
       wquad(ctx, q, 0, q.len, q.y1 - 0.42, q.y1 - 0.3, lit([196, 192, 184], q.n), 0.02, 0);   // 長押

@@ -1791,12 +1791,16 @@ function clumpTree(S, T, g, se, kd) {
     var dabR = sh === 'sugi' || sh === 'pine' ? 0.17 : sh === 'take' ? 0.15 : 0.22, B = {};
     var aer = clamp((T.d - 12) / 120, 0.06, 0.42) * L.hazeK, dark = mix(fog(L, shade(L, vsc(pal[0], 0.8), T.b, [0, 0, 1], 0.3), T.d), L.haze, aer);   // the shadowed mass inside the crown; aerial perspective
     g.fillStyle = rgbs(dark); g.beginPath();
-    clumps.forEach(function (C) { var pc = cam.p([T.b[0] + C[0], T.b[1] + C[1], T.b[2] + C[2] - C[3] * 0.1]); if (!pc) return; var R = C[3] * 0.8 * cam.F / pc[2]; g.moveTo(pc[0] + R * C[4], pc[1]); g.ellipse(pc[0], pc[1], R * C[4], R * (sh === 'pine' ? 0.4 : 0.85), 0, 0, TAU); });
+    clumps.forEach(function (C) { var pc = cam.p([T.b[0] + C[0], T.b[1] + C[1], T.b[2] + C[2] - C[3] * 0.1]); if (!pc) return; var R = C[3] * (T.open ? 0.62 : 0.8) * cam.F / pc[2]; g.moveTo(pc[0] + R * C[4], pc[1]); g.ellipse(pc[0], pc[1], R * C[4], R * (sh === 'pine' ? 0.4 : 0.85), 0, 0, TAU); });
     g.fill();
+    if (T.open && p0) { g.strokeStyle = rgbs(mix(fog(L, shade(L, [58, 46, 38], T.b, [0, 0, 1], 0.4), T.d), L.haze, aer)); g.lineCap = 'round';   // limbs into the crown, seen through its gaps
+      clumps.forEach(function (C, ci) { if (ci % 2) return; var q0 = cam.p(v3(T.b, [0, 0, 1], T.h * 0.38)), q1 = cam.p([T.b[0] + C[0] * 0.8, T.b[1] + C[1] * 0.8, T.b[2] + C[2] - C[3] * 0.3]); if (!q0 || !q1) return; g.lineWidth = Math.max(0.5, 0.09 * cam.F / q0[2]); g.beginPath(); g.moveTo(q0[0], q0[1]); g.quadraticCurveTo((q0[0] + q1[0]) / 2 + (r() - 0.5) * 4, (q0[1] + q1[1]) / 2, q1[0], q1[1]); g.stroke(); });
+      g.lineCap = 'butt'; }
     clumps.forEach(function (C) {
       var cc = [T.b[0] + C[0], T.b[1] + C[1], T.b[2] + C[2]], pcc = cam.p(cc), nd = Math.round(clamp(Math.pow(C[3] * C[4] / dabR, 2) * 1.6, 16, 700) * S.lod * (pcc ? clamp(30 / pcc[2], 0.5, 1.2) : 1));
       for (j = 0; j < nd; j++) {
-        var u = r() * TAU, v = Math.acos(2 * r() - 1), rr5 = C[3] * Math.pow(r(), 0.35), nn = [Math.sin(v) * Math.cos(u), Math.sin(v) * Math.sin(u), Math.cos(v) * (sh === 'pine' ? 0.4 : sh === 'sugi' ? 1.3 : 1)];
+        var u = r() * TAU, v = Math.acos(2 * r() - 1), rr5 = C[3] * Math.pow(r(), T.open ? 0.55 : 0.35);
+        if (T.open && rr5 > C[3] * 0.85 && r() < 0.5) continue; var nn = [Math.sin(v) * Math.cos(u), Math.sin(v) * Math.sin(u), Math.cos(v) * (sh === 'pine' ? 0.4 : sh === 'sugi' ? 1.3 : 1)];
         var P = [cc[0] + nn[0] * rr5 * C[4], cc[1] + nn[1] * rr5 * C[4], cc[2] + nn[2] * rr5];
         var lit = clamp(dot3(nrm3(nn), kd) * 0.6 + 0.4 + nn[2] * 0.25, 0, 1) * (0.4 + 0.6 * rr5 / C[3]);   // the interior is dark
         var ci = lit < 0.42 ? 0 : lit < 0.72 ? 1 : 2, col = mix(fog(L, shade(L, mix(pal[ci], pal[Math.min(2, ci + 1)], r() * 0.4), P, nrm3(v3(nn, [0, 0, 1], 0.4)), 0.4, 0.85), T.d), L.haze, aer);
@@ -1991,10 +1995,10 @@ function teahouseCorner(S, o) {
     for (k2 = 0; k2 < 10; k2++) { var an = k2 / 10 * TAU, rx = 0.46 * (0.88 + 0.2 * rr()), ry = 0.3 * (0.88 + 0.2 * rr()), P0 = v3(v3(c, ax, Math.cos(an) * rx), ay, Math.sin(an) * ry); top.push(v3(P0, [0, 0, 1], 0.24 + 0.02 * rr())); bot.push(P0); }
     var gd = S.ctx(vlen(c)); gd.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
     var pc = S.cam.p(c); if (pc) { var ar = 0.7 * S.cam.F / pc[2], ga = gd.createRadialGradient(pc[0], pc[1], 0, pc[0], pc[1], ar); ga.addColorStop(0, 'rgba(20,18,12,0.5)'); ga.addColorStop(1, 'rgba(20,18,12,0)'); gd.fillStyle = ga; gd.beginPath(); gd.ellipse(pc[0], pc[1], ar, ar * 0.5, 0, 0, TAU); gd.fill(); }
-    for (k2 = 0; k2 < 10; k2++) { var k3 = (k2 + 1) % 10, sq = [bot[k2], bot[k3], top[k3], top[k2]], sn = nrm3(cross3(vsub(bot[k3], bot[k2]), [0, 0, 1])); S.facet(sq, [124, 120, 110], vsc(sn, dot3(sn, vsub(bot[k2], c)) > 0 ? 1 : -1), { wrap: 0.3 }); }
-    var tc = S.facet(top, L.snow ? [232, 236, 242] : [158, 152, 140], [0, 0, 1], { wrap: 0.35 });
+    for (k2 = 0; k2 < 10; k2++) { var k3 = (k2 + 1) % 10, sq = [bot[k2], bot[k3], top[k3], top[k2]], sn = nrm3(cross3(vsub(bot[k3], bot[k2]), [0, 0, 1])); S.facet(sq, [96, 92, 84], vsc(sn, dot3(sn, vsub(bot[k2], c)) > 0 ? 1 : -1), { wrap: 0.3 }); }
+    var tc = S.facet(top, L.snow ? [232, 236, 242] : [122, 118, 108], [0, 0, 1], { wrap: 0.35 });
     if (tc && !L.snow) { speckle(S, [top[0], top[3], top[5], top[8]], tc, 40);
-      var mg = S.ctx(vlen(c)); mg.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); for (k2 = 0; k2 < 26; k2++) { var mi = (rr() * 10) | 0, mp = S.cam.p(lerp3(top[mi], lerp3(top[0], top[5], 0.5), rr() * 0.25)); if (!mp) continue; var mr = (0.02 + 0.04 * rr()) * S.cam.F / mp[2]; mg.fillStyle = rgbas(shade(L, rr() < 0.5 ? [72, 96, 46] : [104, 124, 60], c, [0, 0, 1], 0.4), 0.75); mg.beginPath(); mg.ellipse(mp[0], mp[1], mr, mr * 0.6, rr() * 3, 0, TAU); mg.fill(); } } })();
+      var mg = S.ctx(vlen(c)); mg.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); for (k2 = 0; k2 < 160; k2++) { var mi = (rr() * 10) | 0, mp = S.cam.p(lerp3(lerp3(top[mi], top[(mi + 1) % 10], rr()), lerp3(top[0], top[5], 0.5), Math.pow(rr(), 2) * 0.3)); if (!mp) continue; var mr = (0.006 + 0.012 * rr()) * S.cam.F / mp[2]; mg.fillStyle = rgbas(shade(L, rr() < 0.5 ? [56, 76, 36] : [86, 106, 48], c, [0, 0, 1], 0.4), 0.8); mg.beginPath(); mg.ellipse(mp[0], mp[1], mr, mr * 0.6, rr() * 3, 0, TAU); mg.fill(); } } })();
   [[0, 0], [U, 0], [0, V], [U - 0.95, 0]].forEach(function (q) { S.limb(thP(T, q[0], q[1], GZ), thP(T, q[0], q[1], zW), 0.06, 0.06, post); });
   S.limb(thP(T, -0.1, 0, zW - 0.05), thP(T, U + 0.1, 0, zW - 0.05), 0.07, 0.07, post); S.limb(thP(T, 0, -0.1, zW - 0.05), thP(T, 0, V + 0.1, zW - 0.05), 0.07, 0.07, post);
   // soffit: reed lath (小舞) between round bamboo rafters, warm where the window light reaches
@@ -3269,7 +3273,7 @@ function castle3D(S, b, keep) {
   function col(c) { return mix(c, L.haze, aer); }
   var Hh = b[2] - GZ;
   // the castle hill: a landform rising from the town to the foot of the 石垣, irregular, with scrub, pines and rocks on it
-  var W0 = 8, D0 = 6.2, H = 6.5, NR = 9, NT = 40, grass = L.snow ? [222, 226, 234] : L.season === 'autumn' ? [100, 90, 54] : [58, 82, 44], earth = [112, 96, 74];
+  var W0 = 8, D0 = 6.2, H = 6.5, NR = 9, NT = 40, grass = L.snow ? [222, 226, 234] : L.season === 'autumn' ? [80, 70, 44] : [40, 58, 34], earth = [112, 96, 74];
   function hillZ(r, th) { var e = r * r * (3 - 2 * r); return -0.9 - (Hh - 0.9) * e + Math.sin(th * 3 + 1.3) * 0.7 * r * (1 - r) * 4 + Math.sin(th * 7 + 0.4) * 0.3 * r * (1 - r) * 4; }
   function hillP(r, th) { var ax0 = W0 + 4.6, ay0 = D0 + 4.6, ax1 = 36, ay1 = 30, c = Math.cos(th), sn = Math.sin(th), sq = function (v) { return Math.sign(v) * Math.pow(Math.abs(v), 0.7); };
     var x0 = sq(c) * ax0, y0 = sq(sn) * ay0, x1 = c * ax1 * (1 + 0.08 * Math.sin(th * 5)), y1 = sn * ay1 * (1 + 0.08 * Math.sin(th * 4 + 2)); return Q(x0 + (x1 - x0) * r, y0 + (y1 - y0) * r, hillZ(r, th)); }
@@ -3292,22 +3296,22 @@ function castle3D(S, b, keep) {
     S.fillPoly(poly, rgbs(col(shade(L, [118, 112, 102], rc, nrm3(v3(up, fw, -0.6)), 0.4)))); }
   // the 大手門 at the foot of the path, the 塀 following the contour on either side
   otemon(S, gate, rt, fw, col, L);
-  [-1, 1].forEach(function (sg) { var prev = null; for (k = 0; k <= 10; k++) { var th = thG + sg * (0.07 + 0.95 * k / 10), pw = hillP(rG, th); if (prev) castleWall(S, prev, pw, 2.0, col, L); prev = pw; } });
-  towerBox(S, hillP(rG, thG + 1.05), rt, fw, 1.6, 1.4, 2.6, col, L);
+  [-1, 1].forEach(function (sg) { var prev = null; for (k = 0; k <= 6; k++) { var th = thG + sg * (0.07 + 0.5 * k / 6), pw = hillP(rG + 0.05, th); if (prev) castleWall(S, prev, pw, 1.6, col, L); prev = pw; } });
   // 石垣: its foot sinks into the slope
   ishigaki(S, b, rt, fw, W0, D0, H, col, L);
   // the wood over the slope: pine and broadleaf crowns, dense from behind the town's roofs up to the stones; the lowest bushes
   // overlap the foot of the 石垣 and hide the join
   var trees = [];
-  for (k = 0; k < 230; k++) { var r3 = 0.1 + 0.95 * hash2(k, 3), t3 = Math.PI * (0.92 + 1.16 * hash2(k, 5)); if (Math.abs(t3 - 1.5 * Math.PI) < 0.07 && r3 < rG) continue;
+  for (k = 0; k < 230; k++) { var r3 = 0.1 + 0.95 * hash2(k, 3), t3 = Math.PI * (0.92 + 1.16 * hash2(k, 5)); if (Math.abs(t3 - 1.5 * Math.PI) < 0.035 && r3 < rG) continue;
     trees.push({ c: hillP(r3, t3), R: 1.8 + 1.8 * hash2(k, 7), pine: hash2(k, 11) < 0.45, tone: 0.8 + 0.4 * hash2(k, 17) }); }
+  for (k = 0; k < 60; k++) { var r5 = 0.2 + 0.85 * hash2(k, 71), t5 = 1.5 * Math.PI + (hash2(k, 73) < 0.5 ? -1 : 1) * (0.045 + 0.3 * hash2(k, 75)); trees.push({ c: hillP(r5, t5), R: 1.6 + 1.6 * hash2(k, 77), pine: hash2(k, 79) < 0.4, tone: 0.8 + 0.4 * hash2(k, 81) }); }   // the wood closes in on either side of the path
   for (k = 0; k <= 30; k++) { var uu = -1 + 2 * k / 30; trees.push({ c: Q(uu * (W0 + 3.6) + (hash2(k, 29) - 0.5), -(D0 + 3.8) - hash2(k, 31) * 1.5, -1.0), R: 1.1 + 0.8 * hash2(k, 33), pine: false, tone: 0.85 + 0.3 * hash2(k, 35), low: true }); }
   [-1, 1].forEach(function (sg) { for (k = 0; k <= 10; k++) trees.push({ c: Q(sg * (W0 + 3.9 + hash2(k, sg + 40)), -(D0 + 3.4) + (D0 * 2 + 4) * k / 10, -1.0), R: 1.2 + 0.8 * hash2(k, sg + 44), pine: false, tone: 0.85 + 0.3 * hash2(k, sg + 46), low: true }); });
   var capZ = b[2] + 0.8;   // the wood stops short of the stones' upper courses: only the foot is hidden
   // painted as the garden's woods are: clumped leaf dabs, a dark mass inside, the same aerial perspective
   var kd = L.key ? L.key.d : [0.3, -0.5, 0.8], gT = S.g; gT.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
   var TL = trees.map(function (t, ti) { var dT = vlen([t.c[0], t.c[1], 0]), zLim = capZ * dT / l - 0.5, h = t.low ? t.R * 2.0 : t.R * 2.6 + 1.2, room = (zLim - t.c[2]) / 1.1; if (h > room) h = Math.max(1.4, room);   // seen from the street, no crown rises above the foot of the stones
-      return { b: t.c, d: vlen(t.c), type: t.pine ? 'pine' : (hash2(ti, 61) < 0.5 ? 'kusu' : 'keyaki'), h: h, seed: 7000 + ti * 13 }; });
+      return { b: t.c, d: vlen(t.c), type: t.pine ? 'pine' : (hash2(ti, 61) < 0.5 ? 'kusu' : 'keyaki'), h: h, seed: 7000 + ti * 13, open: true }; });
   TL.sort(function (a2, b2) { return b2.d - a2.d; }).forEach(function (T2) { clumpTree(S, T2, gT, L.season, kd); });
   var zt = H - 0.3;
   if (!keep) { castleWall(S, Q(-W0 + 0.3, -D0 + 0.3, zt), Q(W0 - 0.3, -D0 + 0.3, zt), 1.5, col, L); return; }
@@ -3364,18 +3368,20 @@ function ishigaki(S, b, rt, fw, W0, D0, H, col, L) {
     S.fillPoly(face, rgbs(col(shade(L, [40, 38, 34], test, nt, 0.3))));
     var rnd = mulberry(901 + si * 17), t = 0, row = 0;
     while (t < 0.995) {
-      var rh = (0.13 - 0.06 * t) * (0.75 + rnd() * 0.5), t1 = Math.min(1, t + rh), u = -1, nrmR = nrm3(v3(vsc(n0, H * rh), up, off(t) - off(t1)));
+      var rh = (0.13 - 0.06 * t) * (0.55 + rnd() * 0.9), t1 = Math.min(1, t + rh), u = -1, nrmR = nrm3(v3(vsc(n0, H * rh), up, off(t) - off(t1)));
       while (u < 1) {
-        var corner = u < -0.94 || u > 0.94, wu = corner ? (row % 2 ? 0.16 : 0.08) : (0.09 + rnd() * 0.16) * (1 - 0.4 * t), u1 = Math.min(1, u + wu);
+        var corner = u < -0.94 || u > 0.94, wu = corner ? (row % 2 ? 0.17 : 0.07) : (0.04 + rnd() * rnd() * 0.3 + 0.03 * rnd()) * (1 - 0.35 * t), u1 = Math.min(1, u + wu);
         var gap = 0.004, tg = rh * 0.05, j1 = (rnd() - 0.5) * rh * 0.25, j2 = (rnd() - 0.5) * rh * 0.25;
         var ext = corner ? 0 : (rnd() < 0.3 ? rh * (0.2 + 0.4 * rnd()) : 0), sh = corner ? 0 : (rnd() - 0.5) * rh * 0.35;
-        var poly = [E(u + gap, t + tg + j1 * 0.5 + sh), E((u + u1) / 2 + (rnd() - 0.5) * wu * 0.3, t + tg * 0.5 + (rnd() - 0.5) * rh * 0.2 + sh), E(u1 - gap, t + tg + j2 * 0.5 + sh), E(u1 - gap * 1.5 - rnd() * wu * 0.12, t1 - tg + j2 * 0.4 + ext + sh), E((u + u1) / 2, t1 - tg * 0.6 + (rnd() - 0.5) * rh * 0.25 + ext + sh), E(u + gap * 1.5 + rnd() * wu * 0.12, t1 - tg + j1 * 0.4 + ext + sh)];
+        var poly = [], ua = u + gap * 2, ub = u1 - gap * 2, va = t + tg + sh + Math.abs(j1) * 0.3, vb = t1 - tg + ext + sh - Math.abs(j2) * 0.3, rnd2 = rnd() * 6, sq = corner ? 0.25 : 0.55 + 0.3 * rnd();   // a rounded, lumpy stone filling its cell
+        for (var pk = 0; pk < 12; pk++) { var an = pk / 12 * TAU, ca = Math.cos(an), sa = Math.sin(an), ex = Math.pow(Math.abs(ca), sq) * Math.sign(ca), ey = Math.pow(Math.abs(sa), sq) * Math.sign(sa), lr = 1 - 0.08 * (1 + Math.sin(an * 3 + rnd2));
+          poly.push(E((ua + ub) / 2 + (ub - ua) / 2 * ex * lr, (va + vb) / 2 + (vb - va) / 2 * ey * lr)); }
         var tone = 0.62 + 0.42 * rnd() * rnd() + 0.1 * rnd(), base = mix(mix([132, 126, 114], [104, 100, 92], rnd()), [118, 108, 92], rnd() * 0.5);
         if (corner) base = mix(base, [150, 144, 132], 0.45);
         var c0 = col(shade(L, vsc(base, tone), poly[0], nrmR, 0.35));
         if (S.poly(poly, false)) {
           g.fillStyle = rgbs(c0); g.fill();
-          var pT = S.cam.p(poly[4]), pB = S.cam.p(poly[1]);   // each stone bulges: lit at the top, shadowed at the foot
+          var pT = S.cam.p(poly[3]), pB = S.cam.p(poly[9]);   // each stone bulges: lit at the top, shadowed at the foot
           if (pT && pB) { var gg = g.createLinearGradient(0, pT[1], 0, pB[1]); gg.addColorStop(0, 'rgba(255,250,236,0.16)'); gg.addColorStop(0.5, 'rgba(0,0,0,0)'); gg.addColorStop(1, 'rgba(0,0,0,0.22)'); g.fillStyle = gg; g.fill(); }
           if (!L.snow && rnd() < 0.07) { g.fillStyle = rgbas(col(shade(L, [66, 84, 48], poly[1], [0, 0, 1], 0.4)), 0.3); g.fill(); }   // moss and lichen
         }
@@ -3418,7 +3424,10 @@ function keepWalls(S, b, rt, fw, T, ti, col, L) {
     if (dot3(n0, W(0, T.z0 + 1)) >= 0) return;
     var zb = T.z0 + (T.z1 - T.z0) * (ti === 0 ? 0.4 : 0.06);
     var cW = S.facet([W(-1, zb), W(1, zb), W(1, T.z1), W(-1, T.z1)], col(wallW), n0, { wrap: 0.3 });
-    if (cW) speckle(S, [W(-1, zb), W(1, zb), W(1, T.z1), W(-1, T.z1)], cW, Math.round(hw * 14));
+    if (cW) { speckle(S, [W(-1, zb), W(1, zb), W(1, T.z1), W(-1, T.z1)], cW, Math.round(hw * 14));
+      if (S.poly([W(-1, zb), W(1, zb), W(1, T.z1), W(-1, T.z1)], false)) { g = S.g; g.save(); g.clip(); g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); var rb = mulberry(ti * 17 + (n0[0] * 10 | 0) + 300);   // the plaster's tone drifts: patches of repair, rain-dulled streaks
+        for (var bk = 0; bk < 7; bk++) { var bp = S.cam.p(W(-1 + 2 * rb(), zb + (T.z1 - zb) * rb())); if (!bp) continue; var br = (0.6 + 1.2 * rb()) * S.cam.F / bp[2], gb = g.createRadialGradient(bp[0], bp[1], 0, bp[0], bp[1], br); gb.addColorStop(0, rb() < 0.6 ? 'rgba(120,108,92,0.13)' : 'rgba(255,250,240,0.12)'); gb.addColorStop(1, 'rgba(120,108,92,0)'); g.fillStyle = gb; g.fillRect(bp[0] - br, bp[1] - br, br * 2, br * 2); }
+        g.restore(); } }
     var cB = S.facet([W(-1, T.z0), W(1, T.z0), W(1, zb), W(-1, zb)], col([40, 36, 34]), n0, { wrap: 0.3 });
     g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
     if (cB && ti === 0) { g.strokeStyle = rgbas(col(shade(L, [86, 80, 74], W(0, zb), n0, 0.3)), 0.55); g.lineWidth = 0.6; g.beginPath(); for (var y = T.z0 + 0.22; y < zb; y += 0.22) S.bl(W(-1, y), W(1, y), g); g.stroke(); }
@@ -3435,8 +3444,8 @@ function keepWalls(S, b, rt, fw, T, ti, col, L) {
       g.strokeStyle = rgbas(col(shade(L, [190, 184, 174], W(0, z0w), n0, 0.3)), 0.85); g.lineWidth = 0.5; g.beginPath(); for (var bi = 1; bi < 5; bi++) { var ub = u0 + (u1 - u0) * bi / 5; S.bl(v3(W(ub, z0w), n0, 0.03), v3(W(ub, z1w), n0, 0.03), g); } g.stroke();
     }
     // the shadow under the eaves
-    var pT = S.cam.p(W(0, T.z1)), pB = S.cam.p(W(0, T.z1 - 1.1));
-    if (pT && pB && S.poly([W(-1, T.z1 - 1.1), W(1, T.z1 - 1.1), W(1, T.z1), W(-1, T.z1)], false)) { var gr = g.createLinearGradient(pT[0], pT[1], pB[0], pB[1]); gr.addColorStop(0, 'rgba(30,26,34,0.62)'); gr.addColorStop(0.5, 'rgba(30,26,34,0.22)'); gr.addColorStop(1, 'rgba(30,26,34,0)'); g.fillStyle = gr; g.fill(); }
+    var pT = S.cam.p(W(0, T.z1)), pB = S.cam.p(W(0, T.z1 - 1.7));
+    if (pT && pB && S.poly([W(-1, T.z1 - 1.7), W(1, T.z1 - 1.7), W(1, T.z1), W(-1, T.z1)], false)) { var gr = g.createLinearGradient(pT[0], pT[1], pB[0], pB[1]); gr.addColorStop(0, 'rgba(30,26,34,0.74)'); gr.addColorStop(0.5, 'rgba(30,26,34,0.22)'); gr.addColorStop(1, 'rgba(30,26,34,0)'); g.fillStyle = gr; g.fill(); }
     var pL = S.cam.p(W(-1, (zb + T.z1) / 2)), pR = S.cam.p(W(1, (zb + T.z1) / 2));   // soft shading toward the corners, a little grime above the boards
     if (pL && pR && S.poly([W(-1, zb), W(1, zb), W(1, T.z1), W(-1, T.z1)], false)) { var gh = g.createLinearGradient(pL[0], pL[1], pR[0], pR[1]); gh.addColorStop(0, 'rgba(60,50,44,0.16)'); gh.addColorStop(0.15, 'rgba(60,50,44,0)'); gh.addColorStop(0.85, 'rgba(60,50,44,0)'); gh.addColorStop(1, 'rgba(60,50,44,0.16)'); g.fillStyle = gh; g.fill(); }
     // 石落とし: little projecting bays at the corners of the first storey, their floors slanting out
@@ -3490,10 +3499,10 @@ function tileRoof(S, b, rt, fw, W, D, ze, wN, dN, zN, col, L, ti, ovl, T, gable)
       var cc = S.facet(q, col(vsc(tileA, 0.96 + 0.06 * i / N)), nn, { wrap: 0.45 }); if (cc) { vis = true; g = S.g; g.strokeStyle = g.fillStyle; g.lineWidth = 0.8; g.stroke(); }
     }
     if (vis) { // the rows of round tiles: each a ridged line, lit along its crest, a shadow in the valley beside it; a few dark wet streaks
-      var nc = Math.round(hw * 2 / 0.3), nL = nrm3(v3(n0, up, 1.4)), lit = shade(L, vsc(tileA, 1.32), mid, nL, 0.5), dk = shade(L, vsc(tileA, 0.5), mid, n0, 0.3), wl = px(mid, 0.1), rs = mulberry(ti * 31 + fi);
+      var nc = Math.round(hw * 2 / 0.3), nL = nrm3(v3(n0, up, 1.4)), lit = shade(L, vsc(tileA, 1.6), mid, nL, 0.5), dk = shade(L, vsc(tileA, 0.36), mid, n0, 0.3), wl = px(mid, 0.11), rs = mulberry(ti * 31 + fi);
       for (k = 0; k <= nc; k++) { var u2 = -1 + 2 * k / nc, row = []; for (i = 0; i <= 6; i++) row.push(Ef(u2, i / 6 * 0.98));
-        strokeRow(row.map(function (pp) { return v3(pp, t0, 0.07); }), col(dk), 0.55, wl * 0.7);
-        strokeRow(row, col(vsc(lit, 0.9 + 0.2 * rs())), 0.75, wl); }
+        strokeRow(row.map(function (pp) { return v3(pp, t0, 0.075); }), col(dk), 0.72, wl * 0.8);
+        strokeRow(row, col(vsc(lit, 0.85 + 0.3 * rs())), 0.85, wl); }
       for (k = 0; k < 4; k++) { var u3 = -0.9 + 1.8 * rs(), t1 = 0.2 + 0.6 * rs(), sw = []; for (i = 0; i <= 4; i++) sw.push(Ef(u3, t1 * i / 4)); strokeRow(sw, col(vsc(tileA, 0.55)), 0.3, wl * 2.2); }
     }
   });
