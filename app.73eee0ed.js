@@ -4740,11 +4740,13 @@
         var fit = function() { el.classList.toggle('rot', isOpen() && window.innerHeight > window.innerWidth); }; // still upright (no turn, or the turn is pending): lay it sideways
         if (on) {
             f.locked = false;
-            // no browser full screen (it shows its own "how to exit" notice): an installed app may turn sideways by itself;
-            // otherwise the view is laid out sideways while the phone is upright
+            // the whole page goes full screen (not the overlay itself, which the browser would refuse to rotate), then turns
+            // sideways; where it can't turn, the view is laid out sideways while the phone is upright
             try {
-                Promise.resolve(screen.orientation && screen.orientation.lock ? screen.orientation.lock('landscape') : Promise.reject())
-                    .then(function() { f.locked = true; fit(); setTimeout(fit, 700); }).catch(function() { fit(); });
+                var root = document.documentElement, fs = root.requestFullscreen ? root.requestFullscreen({ navigationUI: 'hide' }) : null;
+                Promise.resolve(fs).catch(function() {}).then(function() {
+                    return screen.orientation && screen.orientation.lock ? screen.orientation.lock('landscape') : Promise.reject();
+                }).then(function() { f.locked = true; fit(); setTimeout(fit, 700); }).catch(function() { fit(); });
             } catch (e) {}
             fit();
             if (!f.fitBound) { f.fitBound = true; window.addEventListener('resize', fit); }
