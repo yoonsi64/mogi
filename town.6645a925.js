@@ -1048,9 +1048,13 @@ function lattice(ctx, W, s0, s1, y0, y1, o) {
 function shoji(ctx, W, s0, s1, y0, y1, o) {
   if (!W.vis) return;
   o = o || {}; var on = !!o.lit, out = o.out || 0.03;
-  wquad(ctx, W, s0, s1, y0, y1, on ? WIN_ON : lit(MAT.shoji, W.n, { amb: 1.15 }), out, 0.3);
+  var sp3 = wquad(ctx, W, s0, s1, y0, y1, on ? WIN_ON : lit(MAT.shoji, W.n, { amb: 1.15 }), out, 0.3);
   if (sil()) return;
-  var fr = on ? 'rgba(120,76,40,0.8)' : rgb(lit(MAT.woodL, W.n)), pn = Math.max(1, Math.round((s1 - s0) / 0.9));
+  if (on) {   // the paper lit from within: brightest where the lamp stands, the corners dimmer
+    var cm = Pa(W.at((s0 + s1) / 2, y0 + (y1 - y0) * 0.42, out)), rr3 = Math.max(Math.abs(sp3[1].x - sp3[0].x), Math.abs(sp3[2].y - sp3[1].y)) * 0.8, lg = ctx.createRadialGradient(cm.x, cm.y, 0, cm.x, cm.y, rr3);
+    lg.addColorStop(0, 'rgba(255,246,222,0.75)'); lg.addColorStop(0.7, 'rgba(255,214,150,0)'); lg.addColorStop(1, 'rgba(190,110,50,0.22)'); poly(ctx, sp3); ctx.fillStyle = lg; ctx.fill();
+  }
+  var fr = on ? 'rgba(96,58,30,0.85)' : rgb(lit(MAT.woodL, W.n)), pn = Math.max(1, Math.round((s1 - s0) / 0.9));
   ctx.strokeStyle = fr; ctx.lineWidth = 0.35; ctx.beginPath();
   var rows = Math.max(2, Math.round((y1 - y0) / 0.32));
   for (var i = 0; i <= pn; i++) { var s = lerp(s0, s1, i / pn); wline(ctx, W, s, y0, s, y1, out + 0.01); }
@@ -1058,7 +1062,7 @@ function shoji(ctx, W, s0, s1, y0, y1, o) {
   for (i = 0; i < pn; i++) { var sm = lerp(s0, s1, (i + 0.5) / pn); wline(ctx, W, sm, y0, sm, y1, out + 0.01); }
   ctx.stroke();
   ctx.strokeStyle = rgb(lit(MAT.wood, W.n)); ctx.lineWidth = 0.6; ctx.beginPath(); wline(ctx, W, s0, y0, s1, y0, out + 0.01); wline(ctx, W, s0, y1, s1, y1, out + 0.01); ctx.stroke();
-  if (on) addGlow(Pa(W.at((s0 + s1) / 2, (y0 + y1) / 2, out)), 5 + (s1 - s0) * 1.3, 0.36, true);
+  if (on) addGlow(Pa(W.at((s0 + s1) / 2, (y0 + y1) / 2, out)), 5 + (s1 - s0) * 1.3, 0.46, true);
 }
 /* mushiko-mado: plastered slit windows of the low upper storey */
 function mushiko(ctx, W, s0, s1, y0, y1, on) {
@@ -4628,9 +4632,14 @@ function drawPerson(ctx, g, w, t) {
   var sx = P(p3.x + p3.dx, p3.y, p3.z + p3.dz).x - feet.x, face = w.still ? (Math.sin(w.ph * 3) >= 0 ? 1 : -1) : sx >= 0 ? 1 : -1, fx = feet.x, fy = feet.y;
   var tl = (t || 0) - (w.react ? w.react.t0 : 0), env = w.react ? Math.sin(clamp(tl / 2.6) * Math.PI) : 0;
   // the shadow, soft and thrown away from the light
-  var ls = g.LIT.ls || [0.7, -0.6], sg = ctx.createRadialGradient(fx, fy, 0, fx, fy, h * 0.22);
-  sg.addColorStop(0, 'rgba(20,16,24,' + (0.28 * g.lum) + ')'); sg.addColorStop(1, 'rgba(20,16,24,0)');
-  ctx.fillStyle = sg; ctx.beginPath(); ctx.ellipse(fx - ls[0] * h * 0.07, fy + h * 0.005, h * 0.2, h * 0.055, 0, 0, TAU); ctx.fill();
+  var ls = g.LIT.ls || [0.7, -0.6], sunny = g.LIT.name !== 'night' && !wxWet(g.wx) && g.wx !== 'cloudy' && g.wx !== 'snow' && g.wx !== 'blizzard', cl = clamp(g.lum * 1.1, 0.35, 1);
+  if (sunny) {   // the cast shadow, long and soft, away from the sun
+    var cx0 = fx - ls[0] * h * 0.2, sg = ctx.createRadialGradient(cx0, fy, 0, cx0, fy, h * 0.3);
+    sg.addColorStop(0, 'rgba(20,16,28,' + (0.42 * cl) + ')'); sg.addColorStop(1, 'rgba(20,16,28,0)');
+    ctx.fillStyle = sg; ctx.beginPath(); ctx.ellipse(cx0, fy + h * 0.004, h * (0.17 + 0.12 * Math.abs(ls[0])), h * 0.045, -ls[0] * 0.08, 0, TAU); ctx.fill();
+  }
+  ctx.fillStyle = 'rgba(16,12,20,' + ((sunny ? 0.62 : 0.5) * cl) + ')'; ctx.beginPath(); ctx.ellipse(fx, fy + h * 0.004, h * 0.085, h * 0.026, 0, 0, TAU); ctx.fill();   // the contact where the feet press the ground
+  if (wxWet(g.wx) && !g.SEA.snow) { var rg = ctx.createLinearGradient(0, fy, 0, fy + h * 0.35); rg.addColorStop(0, 'rgba(30,26,34,0.22)'); rg.addColorStop(1, 'rgba(30,26,34,0)'); ctx.fillStyle = rg; ctx.fillRect(fx - h * 0.07, fy, h * 0.14, h * 0.35); }   // on the wet street, the figure's dark reflection
   var hold = w.load === 'pole' ? 'pole' : w.load === 'pack' ? 'pack' : w.load === 'basket' ? 'head' : w.umb || w.parasol ? 'umb' : w.lantern ? 'lantern' : null, arms = null;
   if (w.react && w.react.kind !== 'bow') { var wv = Math.sin(tl * 9) * 0.35; arms = [[Math.PI / 2 + face * 0.2, -1], [face > 0 ? -1.2 - wv * 0.4 - env * 0.3 : -Math.PI + 1.2 + wv * 0.4 + env * 0.3, 1]]; }
   if (w.still && !w.react && !arms && w.ph % 1 < 0.25) arms = [[Math.PI / 2, -1], [face > 0 ? -1.0 : -Math.PI + 1.0, 1]];   // pointing up at the sky
@@ -4811,13 +4820,13 @@ function drawWaterLayer(ctx, g, t) {
 }
 function drawSmoke(ctx, g, t) {
   if (!g.smoke || !g.smoke.length) return;
-  var Wd = gWind(g), night = g.LIT.name === 'night', dusk = g.LIT.name === 'dusk', col = night ? [120, 130, 160] : dusk ? [214, 190, 186] : [236, 236, 232], spr = tintedSprite(col), T = 7, N = 7;
+  var Wd = gWind(g), night = g.LIT.name === 'night', dusk = g.LIT.name === 'dusk', col = night ? [130, 140, 170] : dusk ? [222, 200, 196] : [232, 236, 240], spr = tintedSprite(col), T = 9, N = 10;
   for (var i = 0; i < g.smoke.length; i++) {
     var s = g.smoke[i], p = Pa(s.p), k = p.k;
-    for (var j = 0; j < N; j++) {
-      var age = (t + s.ph + j * T / N) % T, f = age / T, rise = age * 0.55 * k * (1.15 - Math.min(0.6, Math.abs(Wd.h) * 0.5)), drift = age * age * 0.11 * k * Wd.h + Math.sin(age * 0.9 + s.ph + j) * 0.25 * k;
-      var r = (0.35 + f * 1.6) * k, a = s.a * 0.32 * Math.sin(Math.PI * Math.min(1, f * 1.15)) * (1 - f * 0.4);
-      stamp(ctx, spr, p.x + drift, p.y - rise, r, r * 0.8, a);
+    for (var j = 0; j < N; j++) {   // wood smoke: a thin bluish thread near the vent, wavering, opening into a soft plume that leans on the wind and thins away
+      var age = (t + s.ph + j * T / N) % T, f = age / T, rise = age * 0.5 * k * (1.15 - Math.min(0.6, Math.abs(Wd.h) * 0.5)), wav = Math.sin(age * 1.3 + s.ph * 2 + j * 0.7) * (0.08 + f * 0.45) * k, drift = age * age * 0.09 * k * Wd.h + wav;
+      var r = (0.2 + f * f * 2.2 + f * 0.6) * k, a = s.a * 0.72 * Math.min(1, f * 6) * Math.pow(1 - f, 1.15);
+      stamp(ctx, spr, p.x + drift, p.y - rise, r, r * (0.7 + 0.2 * f), a);
     }
   }
   ctx.globalAlpha = 1;
@@ -6554,6 +6563,595 @@ function foxPaint2(ctx, o) {
   ctx.restore();
 }
 
+/* ================= small birds: a perched and a flying side view in the local frame (the perch at 0, 0) =================
+   L is the bird's length bill to tail in metres (drawn 1.5x so a 15 cm bird reads in the garden; noted in BIRDV). pitch: the
+   body's slant (negative raises the head). Markings are painted inside the body and head outlines. */
+var BIRDV = 1.6;
+var SBIRD = {
+  ooruri: { throat: [20, 22, 34], L: 0.165, pitch: -0.55, body: 0.2, head: 0.105, bill: 0.07, billD: 0.032, tail: 0.36, tars: 0.1, tip: 0.12, tailA: 0.2,
+    back: [36, 74, 168], crown: [84, 150, 232], under: [246, 246, 242], wing: [30, 60, 140], flight: [24, 30, 52], tailC: [38, 72, 164], billC: [22, 22, 26], legs: [54, 54, 60], eye: [24, 20, 20] },
+  ruri: { throat: [244, 242, 236], L: 0.14, pitch: -0.5, body: 0.21, head: 0.11, bill: 0.06, billD: 0.03, tail: 0.38, tars: 0.14, tip: 0.1, tailA: 0.25,
+    back: [62, 100, 178], crown: [76, 116, 204], under: [238, 236, 230], wing: [70, 80, 110], flight: [50, 54, 70], tailC: [48, 92, 196], billC: [24, 22, 22], legs: [48, 44, 44], eye: [24, 20, 20] },
+  kawasemi: { throat: [246, 240, 230], L: 0.17, pitch: -0.95, body: 0.19, head: 0.135, bill: 0.24, billD: 0.05, tail: 0.17, tars: 0.05, tip: 0.04, tailA: 0.1,
+    back: [26, 112, 150], crown: [30, 104, 140], under: [224, 112, 44], wing: [26, 100, 132], flight: [22, 60, 84], tailC: [26, 76, 150], billC: [20, 20, 24], legs: [220, 74, 50], eye: [20, 16, 16] },
+  mejiro: { throat: [230, 214, 70], L: 0.12, pitch: -0.4, body: 0.22, head: 0.12, bill: 0.07, billD: 0.024, tail: 0.32, tars: 0.12, tip: 0.1, tailA: 0.15,
+    back: [118, 146, 48], crown: [132, 158, 48], under: [228, 226, 216], wing: [104, 126, 48], flight: [70, 76, 50], tailC: [94, 110, 44], billC: [54, 50, 48], legs: [96, 96, 100], eye: [40, 30, 24] },
+  uguisu: { throat: [214, 208, 186], L: 0.15, pitch: -0.35, body: 0.19, head: 0.1, bill: 0.07, billD: 0.026, tail: 0.42, tars: 0.12, tip: 0.04, tailA: 0.05,
+    back: [138, 128, 80], crown: [132, 120, 76], under: [216, 212, 194], wing: [128, 114, 72], flight: [96, 84, 56], tailC: [122, 110, 70], billC: [96, 80, 62], legs: [196, 160, 140], eye: [30, 24, 20] }
+};
+function sbMarks(ctx, kind, part, B, rx, ry, S, o) {   // the species' markings, painted inside the body ('body') or head ('head', in head units)
+  if (kind === 'ooruri') {
+    if (part === 'body') { var q0 = B(rx * 1.1, -ry * 0.6), q1 = B(rx * 0.75, ry * 0.75), q2 = B(rx * 0.05, ry * 0.4), q3 = B(rx * 0.25, -ry * 0.4); ctx.fillStyle = zc([22, 24, 38]); ctx.beginPath(); ctx.moveTo(q0[0], q0[1]); ctx.quadraticCurveTo(q1[0], q1[1], q2[0], q2[1]); ctx.quadraticCurveTo(q3[0], q3[1], q0[0], q0[1]); ctx.fill(); zsoft(ctx, B(-rx * 0.1, -ry * 0.5)[0], B(-rx * 0.1, -ry * 0.5)[1], rx * 0.8, ry * 0.35, [60, 120, 220], 0.4); }   // black breast; a glossy back
+    else { zsoft(ctx, 0.25, 0.45, 0.95, 0.75, [18, 20, 30], 1); zsoft(ctx, -0.1, -0.55, 0.85, 0.45, S.crown, 0.9); }   // black face and throat under the shining cerulean crown
+  } else if (kind === 'ruri') {
+    if (part === 'body') { zsoft(ctx, B(-rx * 0.05, ry * 0.25)[0], B(-rx * 0.05, ry * 0.25)[1], rx * 0.42, ry * 0.45, [234, 136, 50], 1, 1, o.pitch); zsoft(ctx, B(rx * 0.35, -ry * 0.55)[0], B(rx * 0.35, -ry * 0.55)[1], rx * 0.3, ry * 0.28, [100, 160, 246], 0.95); }   // orange flank; the bright blue shoulder
+    else { ctx.strokeStyle = zc([168, 200, 246], 1, 0.9); ctx.lineWidth = 0.16; ctx.beginPath(); ctx.moveTo(0.85, -0.3); ctx.quadraticCurveTo(0.3, -0.62, -0.35, -0.42); ctx.stroke(); zsoft(ctx, 0.3, 0.7, 0.6, 0.45, [244, 242, 236], 1); }   // pale blue brow; white throat
+  } else if (kind === 'kawasemi') {
+    if (part === 'body') { zsoft(ctx, B(-rx * 0.2, -ry * 0.62)[0], B(-rx * 0.2, -ry * 0.62)[1], rx * 1.1, ry * 0.18, [86, 214, 238], 1, 1, o.pitch); zsoft(ctx, B(rx * 0.4, -ry * 0.1)[0], B(rx * 0.4, -ry * 0.1)[1], rx * 0.35, ry * 0.8, [226, 116, 46], 0.9); }   // the azure stripe down the back; orange breast
+    else {
+      zsoft(ctx, 0.15, 0.2, 0.62, 0.32, [232, 128, 56], 1);                 // orange cheek through the eye
+      zsoft(ctx, -0.25, 0.55, 0.32, 0.38, [246, 244, 236], 1);              // the white neck patch
+      zsoft(ctx, 0.45, 0.78, 0.5, 0.25, [246, 240, 230], 0.95);            // white throat
+      zsoft(ctx, 0.2, 0.56, 0.55, 0.12, [30, 140, 172], 0.9, 1, -0.15);    // the turquoise moustache stripe
+      ctx.fillStyle = zc([110, 200, 226], 1, 0.75); for (var i = 0; i < 9; i++) { var a = -2.6 + i * 0.32; ctx.beginPath(); ctx.arc(Math.cos(a) * 0.55 + 0.05, Math.sin(a) * 0.55 - 0.05, 0.055, 0, TAU); ctx.fill(); }   // the pale-blue speckled crown
+    }
+  } else if (kind === 'mejiro') {
+    if (part === 'body') { zsoft(ctx, B(rx * 0.1, ry * 0.45)[0], B(rx * 0.1, ry * 0.45)[1], rx * 0.6, ry * 0.4, [196, 176, 146], 0.55); zsoft(ctx, B(rx * 0.75, -ry * 0.1)[0], B(rx * 0.75, -ry * 0.1)[1], rx * 0.35, ry * 0.5, [232, 216, 62], 0.9); }   // buff flanks; yellow upper breast
+    else { zsoft(ctx, 0.4, 0.62, 0.65, 0.45, [236, 218, 60], 1); }   // the yellow throat (the white eye-ring is drawn with the eye)
+  } else if (kind === 'uguisu') {
+    if (part === 'body') { zsoft(ctx, B(-rx * 0.05, ry * 0.4)[0], B(-rx * 0.05, ry * 0.4)[1], rx * 0.7, ry * 0.4, [186, 174, 140], 0.5); }
+    else { ctx.strokeStyle = zc([216, 208, 172], 1, 0.9); ctx.lineWidth = 0.14; ctx.beginPath(); ctx.moveTo(0.9, -0.22); ctx.quadraticCurveTo(0.3, -0.5, -0.5, -0.3); ctx.stroke(); ctx.strokeStyle = zc([86, 74, 52], 1, 0.75); ctx.lineWidth = 0.1; ctx.beginPath(); ctx.moveTo(0.95, 0.02); ctx.lineTo(-0.4, -0.05); ctx.stroke(); }   // the pale brow over a dark eye-stripe
+  }
+}
+
+/* ================= small birds, painted: one feathered silhouette (the body, the neck and the head as a single outline, scalloped
+   where the contour feathers lie), the folded wing as layered feathers (the coverts in rows, the tertials, the long primaries
+   stacked to a point past the rump), the tail as separate feathers. Flying: each wing a fan of primaries from the hand, the
+   secondaries along the arm, the coverts over their bases. Local frame: metres, the perch at the origin, y down ---- */
+function sbOutline(B, rx, ry, Hc, hr, pitchH, sc) {   // body, neck and head as one smooth closed outline (with a little scallop of feathers)
+  var P = [], i, n = 26;
+  // round the body from the vent (under the tail) forward along the belly to the breast, then the throat up to the chin
+  for (i = 0; i <= n; i++) { var a = Math.PI * 0.95 - i / n * Math.PI * 1.0; P.push(B(Math.cos(a) * rx * (Math.cos(a) > 0 ? 1.0 : 1.05), Math.sin(a) * ry * 1.02)); }
+  var ch = Math.cos(pitchH), shh = Math.sin(pitchH);
+  function H(lx, ly) { return [Hc[0] + (lx * ch - ly * shh) * hr, Hc[1] + (lx * shh + ly * ch) * hr]; }
+  P.push(H(0.15, 0.92)); P.push(H(0.7, 0.62)); P.push(H(0.95, 0.15));     // the throat to the chin and the gape
+  P.push(H(0.92, -0.32)); P.push(H(0.55, -0.85)); P.push(H(0.0, -1.0)); P.push(H(-0.55, -0.85)); P.push(H(-0.92, -0.3));   // the forehead, the crown, the nape
+  for (i = 0; i <= n; i++) { var a2 = -Math.PI * 0.28 - i / n * Math.PI * 0.62; P.push(B(Math.cos(a2) * rx * (Math.cos(a2) > 0 ? 0.98 : 1.05), Math.sin(a2) * ry)); }   // the mantle and the back to the rump
+  var d = pSmooth(P, true, 3);
+  if (sc) d = d.map(function (q, k) { var nx = d[(k + 1) % d.length][1] - d[(k - 1 + d.length) % d.length][1], ny = -(d[(k + 1) % d.length][0] - d[(k - 1 + d.length) % d.length][0]), l = Math.hypot(nx, ny) || 1, w = Math.sin(k * 1.9) * sc; return [q[0] + nx / l * w, q[1] + ny / l * w]; });
+  return d;
+}
+function sbFeather(len, wid, tipR) {   // one feather as an outline along +x: a quill with vanes, a rounded (or pointed) tip
+  var o = [[0, 0]], i; for (i = 1; i <= 6; i++) { var u = i / 6; o.push([u * len, -wid * Math.sin(Math.min(1, u * 1.2) * Math.PI * 0.5) * (u > 0.8 ? lerp(1, tipR, (u - 0.8) / 0.2) : 1)]); }
+  o.push([len * 1.02, 0]); for (i = 6; i >= 1; i--) { var u2 = i / 6; o.push([u2 * len, wid * 0.85 * Math.sin(Math.min(1, u2 * 1.2) * Math.PI * 0.5) * (u2 > 0.8 ? lerp(1, tipR, (u2 - 0.8) / 0.2) : 1)]); }
+  return o;
+}
+function sbDrawFeather(ctx, at, ang, len, wid, tipR, c0, c1, edgeC) {
+  var f = sbFeather(len, wid, tipR), c = Math.cos(ang), s = Math.sin(ang), pts = f.map(function (q) { return [at[0] + q[0] * c - q[1] * s, at[1] + q[0] * s + q[1] * c]; }), p = pPath(pSmooth(pts, true, 2));
+  var e = [at[0] + c * len, at[1] + s * len], g = ctx.createLinearGradient(at[0], at[1], e[0], e[1]); g.addColorStop(0, zc(c0)); g.addColorStop(1, zc(c1)); ctx.fillStyle = g; ctx.fill(p);
+  if (edgeC) { ctx.strokeStyle = zc(edgeC[0], 1, edgeC[1]); ctx.lineWidth = edgeC[2]; ctx.stroke(p); }
+}
+/* ================= the small birds, painted (v3): one feathered body (the body, the neck and the head filled as one shape, its edge
+   softened), the species' colour patches laid on it with soft but definite edges, a light feather texture following the
+   lie of the plumage; the folded wing built of real layers (lesser and median coverts as small rounded feathers, the greater
+   coverts in a row, the tertials, the secondaries, the long primaries stacked to their staggered tips); a tail of separate
+   feathers; legs and toes gripping the perch, shaded round; a proper eye with its catchlight. In flight and with the wings
+   half open, the same layered wing (b3Wing) spread: primaries with slotted tips, secondaries, the covert rows.
+   Local frame: metres, the perch (the toes) at the origin, y down, facing +x. Sizes are drawn BIRDV times life ---- */
+var SB3 = {
+  // L: bill tip to tail tip (m, life); rx, ry: the body's half length and half depth; hr: the head's radius; tail; bill, billD;
+  // tars: the visible tarsus; pitch: the body's lie (negative: head up); tipX: how far the folded primaries reach past the rump
+  ooruri: { L: 0.165, rx: 0.21, ry: 0.105, hr: 0.098, tail: 0.34, bill: 0.075, billD: 0.03, tars: 0.12, pitch: -0.95, tipX: 0.5, split: -0.05,
+    up: [30, 60, 152], under: [246, 246, 244], wing: [28, 54, 136], flight: [20, 26, 48], tailC: [32, 64, 158], billC: [24, 24, 28], legs: [52, 52, 58], eye: [18, 14, 14] },
+  ruri: { L: 0.14, rx: 0.21, ry: 0.125, hr: 0.105, tail: 0.33, bill: 0.06, billD: 0.03, tars: 0.15, pitch: -0.55, tipX: 0.35, split: 0.02,
+    up: [56, 94, 178], under: [242, 240, 236], wing: [60, 78, 120], flight: [40, 46, 66], tailC: [52, 96, 198], billC: [26, 24, 24], legs: [44, 40, 40], eye: [18, 14, 14] },
+  kawasemi: { L: 0.17, rx: 0.165, ry: 0.1, hr: 0.125, tail: 0.15, bill: 0.24, billD: 0.05, tars: 0.025, pitch: -1.15, tipX: 0.2, split: 0.0,
+    up: [28, 108, 146], under: [226, 112, 42], wing: [26, 104, 136], flight: [18, 58, 82], tailC: [28, 84, 160], billC: [22, 22, 26], legs: [222, 70, 50], eye: [16, 12, 12] },
+  mejiro: { L: 0.12, rx: 0.2, ry: 0.12, hr: 0.11, tail: 0.3, bill: 0.08, billD: 0.022, tars: 0.12, pitch: -0.5, tipX: 0.3, split: 0.05,
+    up: [122, 148, 50], under: [226, 226, 220], wing: [108, 132, 48], flight: [66, 76, 48], tailC: [92, 110, 44], billC: [50, 48, 48], legs: [92, 92, 100], eye: [40, 28, 22] },
+  uguisu: { L: 0.15, rx: 0.19, ry: 0.1, hr: 0.095, tail: 0.4, bill: 0.075, billD: 0.024, tars: 0.13, pitch: -0.35, tipX: 0.15, split: 0.08,
+    up: [130, 120, 78], under: [212, 208, 192], wing: [124, 112, 72], flight: [92, 82, 56], tailC: [118, 106, 68], billC: [92, 78, 62], legs: [200, 166, 146], eye: [28, 22, 18] }
+};
+/* a soft-edged colour patch: a polygon filled in nested passes (dense in the middle, fading out over its edge) */
+function b3Patch(ctx, pts, col, a, soft) {
+  var c = [0, 0]; pts.forEach(function (q) { c[0] += q[0] / pts.length; c[1] += q[1] / pts.length; });
+  var d = pSmooth(pts, true, 3), K = soft === undefined ? [[1.06, 0.3], [1.0, 0.55], [0.94, 1]] : soft;
+  K.forEach(function (k) { ctx.fillStyle = zc(col, 1, (a === undefined ? 1 : a) * k[1]); ctx.fill(pPath(d.map(function (q) { return [c[0] + (q[0] - c[0]) * k[0], c[1] + (q[1] - c[1]) * k[0]]; }))); });
+}
+/* one feather, with a soft shadow under it and (optionally) a pale fringe along its edge */
+function b3Outline(len, wid, tipR) {   // a feather along +x: widest a third of the way out, the outer vane narrower, the tip rounded (tipR 1) or pointed (0)
+  var o = [], i, N = 9;
+  function w(u, k) { var body = Math.pow(Math.sin(Math.min(1, u / 0.35) * Math.PI / 2), 0.8), end = u > 0.6 ? Math.pow(1 - (u - 0.6) / 0.4, lerp(1.6, 0.45, tipR)) : 1; return wid * k * body * end; }
+  for (i = 0; i <= N; i++) { var u = i / N; o.push([u * len, -w(u, 0.62)]); }
+  for (i = N; i >= 0; i--) { var u2 = i / N; o.push([u2 * len, w(u2, 1)]); }
+  return o;
+}
+function b3Feather(ctx, at, ang, len, wid, tipR, c0, c1, fringe, shadow) {
+  var f = b3Outline(len, wid, tipR), c = Math.cos(ang), s = Math.sin(ang), pts = f.map(function (q) { return [at[0] + q[0] * c - q[1] * s, at[1] + q[0] * s + q[1] * c]; }), p = pPath(pSmooth(pts, true, 2));
+  if (shadow) { var sx = -s * wid * 0.5, sy = c * wid * 0.5; ctx.save(); ctx.translate(sx, sy + wid * 0.3); ctx.fillStyle = zc([20, 18, 26], 1, shadow); ctx.fill(p); ctx.restore(); }
+  var e = [at[0] + c * len, at[1] + s * len], g = ctx.createLinearGradient(at[0], at[1], e[0], e[1]); g.addColorStop(0, zc(c0)); g.addColorStop(1, zc(c1)); ctx.fillStyle = g; ctx.fill(p);
+  if (fringe) { ctx.strokeStyle = zc(fringe[0], 1, fringe[1] * 0.8); ctx.lineWidth = fringe[2]; ctx.stroke(p);
+    ctx.strokeStyle = zc(mixc(c0, c1, 0.5), 0.6, 0.45); ctx.beginPath(); ctx.moveTo(at[0], at[1]); ctx.lineTo(at[0] + c * len * 0.92 - s * wid * 0.12, at[1] + s * len * 0.92 + c * wid * 0.12); ctx.stroke(); }   // the shaft
+  return p;
+}
+/* an open wing, layered: sh the shoulder, wr the wrist, tp the hand's tip, ch the chord at the arm. cols: { cov, sec, pri, tip, fr }
+   (coverts, secondaries, primaries, the primaries' tips, the fringe colour); o: { slots (0..1: how separated the primary tips are),
+   n (feather counts), far (in the shade), lod, L (for line widths), sw (secondary length factor) } */
+function b3Wing(ctx, sh, wr, tp, ch, cols, o) {
+  // the wing as a cambered surface: the leading edge bowed forward at the wrist (the arm a rounded curve, the hand sweeping back to
+  // the tip), the secondaries along the arm varying in length (the trailing edge a gentle S), the primaries fanning from the hand
+  // and splaying at the tip with open slots between them; each feather its own tone; then the light across the camber: bright
+  // along the leading edge and the coverts, a soft shadow in the hollow behind them, the feather tips a little translucent
+  o = o || {}; var k = o.far ? 0.8 : 1, L = o.L || 0.2, lw = Math.max(L * 0.004, 0.6 / Math.max(1, RL.k)), RW = mulberry32(o.seed || 7);
+  function sc(c, j) { return scl(c, k * (j || 1)); }
+  function frame(a, b) { var dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1, nx = -dy / l, ny = dx / l; if (nx > 0) { nx = -nx; ny = -ny; } return { a: Math.atan2(dy, dx), n: Math.atan2(ny, nx), l: l, nx: nx, ny: ny }; }
+  function aL(a0, a1, u) { var d = a1 - a0; while (d > Math.PI) d -= TAU; while (d < -Math.PI) d += TAU; return a0 + d * u; }
+  var fa = frame(sh, wr), fh = frame(wr, tp), NP = o.np || 9, NS = o.ns || 9, slot = o.slots === undefined ? 0.5 : o.slots, sw = o.sw || 1, i, u;
+  // the leading edge: the arm bowed forward (away from the trailing side), the hand a curve swept back
+  var bowA = [lerp(sh[0], wr[0], 0.5) - Math.cos(fa.n) * fa.l * 0.2, lerp(sh[1], wr[1], 0.5) - Math.sin(fa.n) * fa.l * 0.2], bowH = [lerp(wr[0], tp[0], 0.45) - Math.cos(fh.n) * fh.l * 0.08, lerp(wr[1], tp[1], 0.45) - Math.sin(fh.n) * fh.l * 0.08];
+  function arm(u2) { var v = 1 - u2; return [v * v * sh[0] + 2 * v * u2 * bowA[0] + u2 * u2 * wr[0], v * v * sh[1] + 2 * v * u2 * bowA[1] + u2 * u2 * wr[1]]; }
+  function hand(u2) { var v = 1 - u2; return [v * v * wr[0] + 2 * v * u2 * bowH[0] + u2 * u2 * tp[0], v * v * wr[1] + 2 * v * u2 * bowH[1] + u2 * u2 * tp[1]]; }
+  function armA(u2) { var a = arm(Math.max(0, u2 - 0.02)), b = arm(Math.min(1, u2 + 0.02)); return frame(a, b).n; }
+  function handA(u2) { var a = hand(Math.max(0, u2 - 0.02)), b = hand(Math.min(1, u2 + 0.02)); return frame(a, b); }
+  var all = new Path2D(), feathers = [];
+  // the shape under everything, so no gaps show between the feathers
+  var pp = []; for (i = 0; i <= 8; i++) pp.push(arm(i / 8)); for (i = 1; i <= 8; i++) pp.push(hand(i / 8));
+  for (i = 6; i >= 0; i--) { u = i / 6; var hq = hand(u * 0.8), an = aL(handA(u * 0.8).n, fh.a, Math.pow(u, 1.3) * 0.8); pp.push([hq[0] + Math.cos(an) * ch * lerp(0.9, 1.15, u), hq[1] + Math.sin(an) * ch * lerp(0.9, 1.15, u)]); }
+  for (i = 6; i >= 0; i--) { u = i / 6; var aq = arm(u); pp.push([aq[0] + Math.cos(armA(u)) * ch * 0.75 * sw, aq[1] + Math.sin(armA(u)) * ch * 0.75 * sw]); }
+  var base = pPath(pSmooth(pp, true, 2)); ctx.fillStyle = zgrad2(ctx, sh[0], sh[1], tp[0], tp[1], sc(cols.sec), sc(cols.pri), RL.hi * 0.95, 0.88); ctx.fill(base); all.addPath(base);
+  if (o.lod) { ctx.fillStyle = zc(sc(cols.cov), 1, 0.9); ctx.fill(pPath(pLimb([sh, bowA, wr, bowH], [ch * 0.05, ch * 0.05, ch * 0.04, ch * 0.02], [ch * 0.42, ch * 0.4, ch * 0.32, ch * 0.12], 3).out)); return base; }
+  function F(at, ang, len, wid, tipR, c0, c1, fr, sh2) { var p = b3Feather(ctx, at, ang, len, wid, tipR, c0, c1, fr, sh2); all.addPath(p); return p; }
+  // the primaries: from the hand, the outer ones long and narrow-tipped (the emarginated tips leave slots), splayed apart at the tip
+  for (i = NP - 1; i >= 0; i--) {
+    u = i / (NP - 1); var hu = 0.1 + u * 0.78, rp = hand(hu), hf = handA(hu), ap = aL(hf.n, fh.a, 0.2 + Math.pow(u, 1.2) * 0.62) + (u - 0.6) * 0.12 * slot, len = ch * lerp(0.92, 1.32, Math.sin(Math.min(1, u * 1.1) * Math.PI * 0.55)) * (i === NP - 1 ? 0.88 : 1) * (0.96 + RW() * 0.08);
+    var tone = 0.92 + RW() * 0.12; F(rp, ap, len, ch * lerp(0.15, 0.11, u) * (1 - 0.25 * slot * u), lerp(0.35, 0.02, u), sc(cols.pri, tone), sc(cols.tip || cols.pri, tone), cols.fr ? [sc(cols.fr), 0.22, lw] : null, 0.14);
+  }
+  // the secondaries along the arm: rounded, their lengths varying (longest at the middle, shorter near the body and the wrist)
+  for (i = 0; i < NS; i++) { u = (i + 0.5) / NS; var ra = arm(u), ln = ch * (0.72 + 0.12 * Math.sin(u * Math.PI) + 0.04 * Math.sin(i * 2.3)) * sw; F(ra, armA(u) + (u - 0.5) * 0.18, ln, ch * 0.2, 1, sc(cols.sec, 0.94 + RW() * 0.1), sc(cols.secT || cols.sec, 0.9), cols.fr ? [sc(cols.fr), 0.28, lw] : null, 0.14); }
+  // the coverts: the greater row over the flight feathers' bases, the median row, the lesser coverts along the leading edge
+  [[0.48, 0.15, 12, 0.2], [0.3, 0.13, 10, 0.18], [0.18, 0.1, 9, 0.14]].forEach(function (row, ri) {
+    var cl = ri === 0 ? (cols.gcov || cols.cov) : cols.cov;
+    for (var j = 0; j < row[2]; j++) {
+      var uu = (j + 0.5) / row[2], onH = uu > 0.66, at = onH ? hand((uu - 0.66) / 0.34 * 0.45) : arm(uu / 0.66), aa = (onH ? handA((uu - 0.66) / 0.34 * 0.45).n : armA(uu / 0.66)) + 0.1 - ri * 0.05;
+      F(at, aa, ch * row[0] * (onH ? 0.8 : 1) * (0.92 + RW() * 0.16), ch * row[1] * 1.25, 1, sc(mixc(cl, [255, 255, 255], 0.04 * ri), 0.97 + RW() * 0.06), sc(mixc(cl, cols.sec, 0.25)), cols.fr && ri === 0 ? [sc(cols.fr), 0.25, lw] : null, row[3]);
+    }
+  });
+  var lc = pLimb([sh, bowA, wr, bowH, hand(0.6)], [ch * 0.05, ch * 0.05, ch * 0.045, ch * 0.03, ch * 0.015], [ch * 0.16, ch * 0.15, ch * 0.13, ch * 0.08, ch * 0.03], 4), lp = pPath(lc.out);   // the rounded leading edge (the patagium)
+  ctx.fillStyle = zgrad2(ctx, sh[0], sh[1], tp[0], tp[1], sc(cols.cov), sc(mixc(cols.cov, cols.sec, 0.25)), RL.hi, 0.96); ctx.fill(lp); all.addPath(lp);
+  // the light across the camber, over the whole wing
+  ctx.save(); ctx.clip(all);
+  var mA = arm(0.5), cn = [Math.cos(armA(0.5)), Math.sin(armA(0.5))], gC = ctx.createLinearGradient(mA[0] - cn[0] * ch * 0.1, mA[1] - cn[1] * ch * 0.1, mA[0] + cn[0] * ch * 1.0, mA[1] + cn[1] * ch * 1.0);
+  gC.addColorStop(0, 'rgba(255,252,240,0.22)'); gC.addColorStop(0.3, 'rgba(255,252,240,0)'); gC.addColorStop(0.5, 'rgba(20,20,40,0.16)'); gC.addColorStop(0.85, 'rgba(20,20,40,0.04)'); gC.addColorStop(1, 'rgba(255,255,255,0.06)');
+  ctx.fillStyle = gC; ctx.fillRect(Math.min(sh[0], tp[0]) - ch * 2, Math.min(sh[1], tp[1]) - ch * 2, Math.abs(tp[0] - sh[0]) + ch * 4, Math.abs(tp[1] - sh[1]) + ch * 4);
+  var wq = hand(0.15); zsoft(ctx, wq[0] + Math.cos(fh.n) * ch * 0.4, wq[1] + Math.sin(fh.n) * ch * 0.4, ch * 0.5, ch * 0.3, [20, 20, 40], 0.12);   // the hollow behind the wrist
+  ctx.restore();
+  return base;
+}
+/* a wing seen nearly edge-on (level in the stroke): a clean tapered shape, the leading edge lit, a little of the upper side showing */
+function b3Edge(ctx, sh, wr, tp, ch, cw, cd, far, k, trail) {
+  var dk = far ? 0.8 : 1, th = lerp(0.3, 0.16, k), bw = [lerp(sh[0], wr[0], 0.5), lerp(sh[1], wr[1], 0.5) - ch * 0.04];
+  var lb = pLimb([sh, bw, wr, [lerp(wr[0], tp[0], 0.6), lerp(wr[1], tp[1], 0.6)], tp], [ch * 0.02, ch * 0.06, ch * 0.06, ch * 0.035, ch * 0.004], [ch * th * 0.3, ch * th, ch * th * 0.85, ch * th * 0.5, ch * 0.006], 4), p = pPath(lb.out);
+  var a0 = lb.at(0.4, 1), a1 = lb.at(0.4, -1), g = ctx.createLinearGradient(a0[0], a0[1], a1[0], a1[1]); g.addColorStop(0, zc(scl(mixc(cw, cd, 0.5), dk))); g.addColorStop(0.55, zc(scl(cw, dk))); g.addColorStop(1, zc(scl(mixc(cw, [255, 255, 255], 0.25), dk)));
+  ctx.fillStyle = g; ctx.fill(p);
+  ctx.save(); ctx.clip(p);
+  if (trail) { var tb = []; for (var i = 0; i <= 10; i++) tb.push(lb.at(i / 10 * 0.62, 1.2)); for (i = 10; i >= 0; i--) tb.push(lb.at(i / 10 * 0.62, 0.35)); ctx.fillStyle = zc(scl(trail, dk)); ctx.fill(pPath(pSmooth(tb, true, 2))); }   // the black secondaries showing along the trailing edge
+  ctx.restore();
+  ctx.strokeStyle = zc(scl(cd, 0.75 * dk), 1, 0.35); ctx.lineWidth = Math.max(ch * 0.012, 0.6 / Math.max(1, RL.k)); ctx.beginPath(); for (i = 0; i <= 12; i++) { var q = lb.at(0.05 + i / 12 * 0.95, 0.85 + 0.12 * Math.sin(i * 1.7)); if (i) ctx.lineTo(q[0], q[1]); else ctx.moveTo(q[0], q[1]); } ctx.stroke();   // the ragged line of feather tips
+  return p;
+}
+function b3Folded(ctx, Wf, S, rx, ry, lod, L, kind) {
+  // the wing folded along the side: the coverts a smooth, tidy shoulder patch; under them the tertials and secondaries; the primaries
+  // stacked into a pointed tip lying over the rump. Wf(u, v): u 0 the shoulder .. 1 the tip, v -1 the upper (back) edge .. 1 the lower
+  var lw = Math.max(L * 0.003, 0.6 / Math.max(1, RL.k)), fr = mixc(S.wing, [255, 255, 255], kind === 'uguisu' ? 0.18 : 0.28);
+  var Wp = [[0.0, -0.7], [0.25, -1.0], [0.6, -0.75], [1.0, -0.05], [0.7, 0.35], [0.4, 0.75], [0.15, 0.8], [0.0, 0.2]].map(function (q) { return Wf(q[0], q[1]); });
+  var wp = pPath(pSmooth(Wp, true, 3)), o0 = Wf(0, 0), o1 = Wf(1, 0);
+  ctx.fillStyle = zgrad2(ctx, o0[0], o0[1], o1[0], o1[1], S.wing, mixc(S.wing, S.flight, 0.6), RL.hi * 0.98, 0.9); ctx.fill(wp);
+  if (lod) return wp;
+  ctx.save(); ctx.clip(wp);
+  var i, ang = Math.atan2(o1[1] - o0[1], o1[0] - o0[0]), len = Math.hypot(o1[0] - o0[0], o1[1] - o0[1]);
+  // the primaries: long, pointed, stacked; their tips staggered toward the point
+  for (i = 0; i < 6; i++) b3Feather(ctx, Wf(0.42 - i * 0.02, 0.5 - i * 0.13), ang - 0.05 + i * 0.012, len * (0.5 + i * 0.03), ry * 0.13, 0.05, mixc(S.flight, S.wing, 0.25), S.flight, [fr, 0.25, lw], 0.1);
+  // the secondaries and tertials: shorter, rounded, fringed pale
+  for (i = 0; i < 4; i++) b3Feather(ctx, Wf(0.3 - i * 0.03, 0.35 - i * 0.25), ang + 0.06 - i * 0.02, len * (0.42 - i * 0.03), ry * 0.17, 1, mixc(S.wing, S.flight, 0.2), mixc(S.wing, S.flight, 0.55), [fr, 0.35, lw], 0.1);
+  ctx.restore();
+  // the coverts: one smooth rounded patch over the shoulder, its lower edge a tidy row of rounded tips
+  var cv = [[0.0, -0.75], [0.2, -1.0], [0.46, -0.8], [0.5, -0.2], [0.42, 0.45], [0.2, 0.65], [0.02, 0.3]].map(function (q) { return Wf(q[0], q[1]); }), cp = pPath(pSmooth(cv, true, 3));
+  ctx.fillStyle = zgrad2(ctx, o0[0], o0[1] - ry * 0.3, o0[0], o0[1] + ry * 0.4, mixc(S.wing, S.up, 0.4), S.wing, RL.hi, 0.95); ctx.fill(cp);
+  ctx.strokeStyle = zc(fr, 1, 0.35); ctx.lineWidth = lw; ctx.lineCap = 'round';
+  for (i = 0; i < 5; i++) { var a = Wf(0.44 - i * 0.02, -0.55 + i * 0.25), b = Wf(0.36 - i * 0.02, -0.38 + i * 0.25); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.quadraticCurveTo(lerp(a[0], b[0], 0.5) + (b[1] - a[1]) * 0.4, lerp(a[1], b[1], 0.5) - (b[0] - a[0]) * 0.4, b[0], b[1]); ctx.stroke(); }   // the greater coverts' tips, a soft row
+  return wp;
+}
+function sb3Paint(ctx, kind, o) {
+  var S = SB3[kind], L = S.L * BIRDV, fl = o.fluff ? 1.12 : 1, pitch = S.pitch + (o.pitch || 0), cr = clamp(o.crouch || 0), t = o.t || 0, m;
+  RL.k = pScale(ctx); m = pLm();
+  var lod = MODE === 'm' || RL.k * L < 26, turn = clamp(o.turn || 0);   // turn: 0 profile .. 1 three-quarter (the breast toward us)
+  var rx = L * S.rx * (1 - turn * 0.16), ry = L * S.ry * fl, hr = L * S.hr * fl, tl = S.tars * L * (1 - cr * 0.45);
+  var c = Math.cos(pitch), s = Math.sin(pitch), low = Math.sqrt(rx * rx * s * s + ry * ry * c * c), bc = [0, -tl - low * 0.9];
+  // the body's lowest point (where the belly feathers meet the legs) is straight above the toes
+  var ta0 = Math.atan2(ry * c, rx * s), lowP = [rx * Math.cos(ta0) * c - ry * Math.sin(ta0) * s, rx * Math.cos(ta0) * s + ry * Math.sin(ta0) * c]; if (lowP[1] < 0) lowP = [-lowP[0], -lowP[1]];
+  bc[0] = -lowP[0] * 0.85;
+  function B(lx, ly) { return [bc[0] + lx * c - ly * s, bc[1] + lx * s + ly * c]; }
+  var hd = o.head || {}, yaw = clamp((hd.yaw || 0) + turn * 0.35), hp = (hd.pitch || 0) + pitch * 0.12 + (o.tilt || 0) + 0.05, Hc = B(rx * 0.8, -ry * 0.6 - hr * 0.5);   // (the head kept near level, whatever the body's lie)
+  var ch = Math.cos(hp), shh = Math.sin(hp); function H(lx, ly) { return [Hc[0] + (lx * ch - ly * shh) * hr, Hc[1] + (lx * shh + ly * ch) * hr]; }
+  var lw = Math.max(L * 0.004, 0.6 / Math.max(1, RL.k));
+  // 1. the far leg and the tail (behind the body)
+  var legW = Math.max(L * (kind === 'kawasemi' ? 0.016 : 0.015), 0.7 / Math.max(1, RL.k));
+  function leg(far) {
+    var hip = [bc[0] + lowP[0] * 0.85 + (far ? L * 0.012 : -L * 0.004), bc[1] + lowP[1] * 0.96], ft = [far ? L * 0.016 : -L * 0.006, 0], k2 = far ? 0.75 : 1;   // only the short tarsus shows below the belly feathers
+    var g = ctx.createLinearGradient(hip[0] - legW, hip[1], hip[0] + legW, hip[1]); g.addColorStop(0, zc(scl(S.legs, 1.2 * k2))); g.addColorStop(1, zc(scl(S.legs, 0.7 * k2)));
+    ctx.strokeStyle = g; ctx.lineWidth = legW; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(hip[0], hip[1]); ctx.quadraticCurveTo(lerp(hip[0], ft[0], 0.5) + L * 0.01, lerp(hip[1], ft[1], 0.5), ft[0], ft[1] - L * 0.004); ctx.stroke();
+    ctx.strokeStyle = zc(scl(S.legs, 0.9 * k2)); ctx.lineWidth = legW * 0.8; ctx.beginPath();   // the toes round the perch: three forward, one back
+    [[0.07, 0.02], [0.055, 0.03], [-0.045, 0.02]].forEach(function (q) { ctx.moveTo(ft[0], ft[1] - L * 0.004); ctx.quadraticCurveTo(ft[0] + q[0] * L * 0.6, ft[1] - L * 0.006, ft[0] + q[0] * L, ft[1] + q[1] * L * 0.5); });
+    ctx.stroke(); ctx.lineCap = 'butt';
+  }
+  leg(true);
+  var ta = pitch + 0.15 + (o.flick || 0) * 0.55 + (o.cock || 0) * 1.1, tL = S.tail * L, r0 = B(-rx * 0.82, ry * 0.15), nT = lod ? 3 : 6;
+  for (var fi = 0; fi < nT; fi++) { var sp = (fi / (nT - 1) - 0.5) * 0.12 * (1 + (o.flick || 0) * 0.8 + turn), fa = Math.PI + ta + sp, tc = fi % 2 ? scl(S.tailC, 0.9) : S.tailC; b3Feather(ctx, r0, fa, tL * (1 - Math.abs(fi / (nT - 1) - 0.5) * 0.08), tL * 0.12, 0.65, tc, scl(S.tailC, 0.65), lod ? null : [scl(S.tailC, 0.5), 0.4, lw], lod ? 0 : 0.1); }
+  if (kind === 'ooruri') { var tw = [r0[0] - Math.cos(ta) * tL * 0.3, r0[1] - Math.sin(ta) * tL * 0.3 + ry * 0.08]; zsoft(ctx, tw[0], tw[1], tL * 0.18, ry * 0.18, [248, 248, 244], 0.85, 1, ta); }   // the white at the base of the outer tail
+  // 2. the one silhouette: body, neck, head; the undertail coverts under the rump
+  var bodyD = pSmooth([B(-rx * 1.12, -ry * 0.05), B(-rx * 0.7, -ry * 0.78), B(0, -ry * 0.98), B(rx * 0.7, -ry * 0.85), B(rx * 1.02, -ry * 0.05), B(rx * 0.78, ry * 0.8), B(0, ry * 1.0), B(-rx * 0.75, ry * 0.6), B(-rx * 1.12, ry * 0.2)], true, 4);   // full at the breast, tapering to the tail
+  var nb = B(rx * 0.35, -ry * 0.3), neck = pLimb([nb, [lerp(nb[0], Hc[0], 0.55), lerp(nb[1], Hc[1], 0.55)], Hc], [ry * 0.75, hr * 0.85, hr * 0.8], [ry * 0.85, hr * 0.9, hr * 0.85], 4);
+  function ellD(cx, cy, a, b, r) { var d = [], cr2 = Math.cos(r), sr = Math.sin(r); for (var i = 0; i < 24; i++) { var t2 = i / 24 * TAU, x = Math.cos(t2) * a, y = Math.sin(t2) * b; d.push([cx + x * cr2 - y * sr, cy + x * sr + y * cr2]); } return d; }
+  var utc = B(-rx * 0.8, ry * 0.55), sil = new Path2D();   // (every part wound the same way, so they fill as one)
+  [bodyD, neck.out, ellD(Hc[0], Hc[1], hr * (1 - turn * 0.05), hr, hp), ellD(utc[0], utc[1], rx * 0.35, ry * 0.32, pitch)].forEach(function (d) { pPath(pWind(d, true), sil); });
+  if (!lod) qFuzz(ctx, sil, S.up, S.under, B(0, -ry)[1], B(0, ry)[1], Math.max(lw * 2.2, 1.3 / Math.max(1, RL.k)));   // a soft feathered edge, not an outline
+  var up = B(0, -ry), dn = B(0, ry), gr = ctx.createLinearGradient(up[0], up[1], dn[0], dn[1]), sp0 = 0.5 + S.split * 0.5 - turn * 0.18;   // (turned toward us, more of the breast shows)
+  gr.addColorStop(0, zc(S.up, RL.hi)); gr.addColorStop(Math.max(0, sp0 - 0.1), zc(S.up, 0.95)); gr.addColorStop(Math.min(1, sp0 + 0.02), zc(S.under, 1.02)); gr.addColorStop(1, zc(S.under, lerp(RL.lo, 1, 0.4)));
+  ctx.fillStyle = gr; ctx.fill(sil);
+  ctx.save(); ctx.clip(sil);
+  // the head in the upper colour, the throat in the lower: then the species' patches
+  zsoft(ctx, Hc[0] - hr * 0.1, Hc[1] - hr * 0.2, hr * 1.15, hr * 1.0, S.up, 1, RL.hi * 0.98);
+  b3Marks(ctx, kind, B, H, rx, ry, hr, S, turn);
+  // the soft round of the body: light across the top, shade under the belly and behind the leg
+  // the body in the round: a cool shadow wrapping under the belly and the vent, the breast catching the light, a rim of sky light along the back
+  var vn2 = [-s, c], bl0 = B(0, ry * 0.3), gV = ctx.createLinearGradient(bl0[0] - vn2[0] * ry * 1.3, bl0[1] - vn2[1] * ry * 1.3, bl0[0] + vn2[0] * ry * 0.9, bl0[1] + vn2[1] * ry * 0.9);
+  gV.addColorStop(0, 'rgba(255,250,238,0.16)'); gV.addColorStop(0.45, 'rgba(255,250,238,0)'); gV.addColorStop(0.75, 'rgba(40,40,70,0.12)'); gV.addColorStop(1, 'rgba(30,30,60,0.34)');
+  ctx.fillStyle = gV; ctx.fill(pPath(bodyD));   // (the body only: the head keeps its own colours)
+  var brq = B(rx * 0.6, ry * 0.15); zsoft(ctx, brq[0], brq[1], rx * 0.45, ry * 0.5, [255, 252, 244], 0.16 * (0.5 + 0.5 * clamp(-pL()[1])), 1, pitch);   // the breast's round
+  if (!lod) { ctx.save(); ctx.translate(vn2[0] * lw * 2.2, vn2[1] * lw * 2.2); ctx.strokeStyle = zc(RL.rimC, 1, RL.rimA * 0.55); ctx.lineWidth = lw * 1.3; ctx.beginPath(); var bd2 = pWind(bodyD, true); for (var ri = 0; ri < bd2.length; ri++) { var q0 = bd2[ri], dq = (q0[0] - bc[0]) * vn2[0] + (q0[1] - bc[1]) * vn2[1]; if (Math.hypot(q0[0] - Hc[0], q0[1] - Hc[1]) < hr * 1.6 || pInside(neck.out, q0[0], q0[1])) { dq = 0; } if (dq < -ry * 0.45) { if (ri && ((bd2[ri - 1][0] - bc[0]) * vn2[0] + (bd2[ri - 1][1] - bc[1]) * vn2[1]) < -ry * 0.45) ctx.lineTo(q0[0], q0[1]); else ctx.moveTo(q0[0], q0[1]); } } ctx.stroke(); ctx.restore(); }   // the rim light along the back
+  // the feather texture: short soft curved strokes along the lie of the plumage, a shade lighter above and darker below
+  if (!lod) {
+    var lt = new Path2D(), dk = new Path2D(), R = pRand('sb3' + kind, 160), bb = pBox(pSmooth([B(-rx, -ry), B(rx, -ry), B(rx, ry), B(-rx, ry), Hc], true, 1));
+    for (var k = 0; k < 160; k++) { var x = lerp(bb[0] - hr, bb[2] + hr, R[k * 4]), y = lerp(bb[1] - hr, bb[3], R[k * 4 + 1]), a = Math.PI + pitch + 0.25 + (R[k * 4 + 2] - 0.5) * 0.5, l2 = L * 0.035 * (0.6 + R[k * 4 + 3] * 0.6), P2 = R[k * 4 + 3] > 0.5 ? lt : dk; P2.moveTo(x, y); P2.quadraticCurveTo(x + Math.cos(a) * l2 * 0.5 - Math.sin(a) * l2 * 0.2, y + Math.sin(a) * l2 * 0.5 + Math.cos(a) * l2 * 0.2, x + Math.cos(a) * l2, y + Math.sin(a) * l2); }
+    ctx.lineCap = 'round'; ctx.lineWidth = Math.max(lw, 0.9 / Math.max(1, RL.k)); ctx.strokeStyle = 'rgba(255,255,255,0.14)'; ctx.stroke(lt); ctx.strokeStyle = 'rgba(0,0,10,0.1)'; ctx.stroke(dk);
+    // the breast and flank feathers: small soft scallops in loose rows, low in contrast (a light edge over a darker base)
+    var sc1 = new Path2D(), sc2 = new Path2D(), RS = mulberry32(kind.length * 31);
+    for (var rw = 0; rw < 6; rw++) for (var kk = 0; kk < 7; kk++) { var fx = rx * (0.75 - kk * 0.24 + (rw % 2) * 0.12 + (RS() - 0.5) * 0.12), fy = ry * (-0.15 + rw * 0.17 + (RS() - 0.5) * 0.08), fq = B(fx, fy), fr2 = L * 0.022 * (0.8 + RS() * 0.4); if (fx * fx / (rx * rx) + fy * fy / (ry * ry) > 0.8) continue; sc1.moveTo(fq[0] + Math.cos(pitch + 0.5) * fr2, fq[1] + Math.sin(pitch + 0.5) * fr2); sc1.arc(fq[0], fq[1], fr2, pitch + 0.5, pitch + 2.6); sc2.moveTo(fq[0] + Math.cos(pitch + 0.6) * fr2 * 0.85, fq[1] + Math.sin(pitch + 0.6) * fr2 * 0.85 + lw); sc2.arc(fq[0], fq[1] + lw, fr2 * 0.85, pitch + 0.6, pitch + 2.5); }
+    ctx.lineWidth = Math.max(lw * 0.9, 0.7 / Math.max(1, RL.k)); ctx.strokeStyle = 'rgba(20,20,40,0.045)'; ctx.stroke(sc2); ctx.strokeStyle = 'rgba(255,255,255,0.11)'; ctx.stroke(sc1);
+  }
+  ctx.restore();
+  // 3. the wing: folded on the side, or half open (lifted, the feathers spreading)
+  var wo = clamp(o.wings || 0);
+  // the folded wing lies along the side, on its upper half: from the shoulder (behind the neck) back to a point over the rump
+  var sh0 = B(rx * (0.45 - turn * 0.15), -ry * 0.42), tipF = B(-rx * (1.0 + S.tipX), -ry * 0.2), vn = [-s, c];   // vn: toward the belly
+  function Wf(u, v) { var px = lerp(sh0[0], tipF[0], u), py = lerp(sh0[1], tipF[1], u), wd = ry * 0.52 * (1 - u * 0.75); return [px + vn[0] * wd * v, py + vn[1] * wd * v]; }
+  if (wo < 0.05) b3Folded(ctx, Wf, S, rx, ry, lod, L, kind);
+  else {   // half open: the wing lifts from the shoulder, the hand opening
+    var span = L * 0.75 * (0.55 + 0.45 * wo), wr = [sh0[0] - span * 0.18, sh0[1] - span * 0.35 * wo], tp2 = [wr[0] - span * lerp(0.62, 0.3, wo), wr[1] - span * 0.38 * wo + span * 0.25 * (1 - wo)];
+    b3Wing(ctx, sh0, wr, tp2, L * 0.2, { cov: S.wing, sec: mixc(S.wing, S.flight, 0.35), pri: S.flight, tip: scl(S.flight, 0.8), fr: mixc(S.wing, [255, 255, 255], 0.3) }, { L: L, lod: lod, np: 7, ns: 6, slots: 0.3 });
+  }
+  // the near leg, over the belly
+  leg(false);
+  // 4. the head's details: the bill, shaded round, the gape; the eye with its catchlight
+  var bl = S.bill * L * (1 - 0.45 * yaw), bd = S.billD * L, ex = hr * 0.88, sing = clamp(o.sing || 0), op = sing * bd * 1.2;
+  ctx.save(); ctx.translate(Hc[0], Hc[1]); ctx.rotate(hp);
+  var gB = ctx.createLinearGradient(ex, -bd * 0.6, ex, bd * 0.6); gB.addColorStop(0, zc(scl(S.billC, 1.5))); gB.addColorStop(0.35, zc(S.billC)); gB.addColorStop(1, zc(scl(S.billC, 0.7)));
+  ctx.fillStyle = gB; ctx.beginPath(); ctx.moveTo(ex - hr * 0.12, -bd * 0.55); ctx.quadraticCurveTo(ex + bl * 0.55, -bd * 0.42, ex + bl, -op * 0.3); ctx.quadraticCurveTo(ex + bl * 0.5, bd * 0.0, ex - hr * 0.06, bd * 0.08); ctx.closePath(); ctx.fill();   // the upper mandible
+  var gL = ctx.createLinearGradient(ex, 0, ex, bd * 0.6); gL.addColorStop(0, zc(kind === 'kawasemi' && o.female ? [214, 96, 50] : S.billC)); gL.addColorStop(1, zc(scl(kind === 'kawasemi' && o.female ? [214, 96, 50] : S.billC, 0.65)));
+  ctx.fillStyle = gL; ctx.beginPath(); ctx.moveTo(ex - hr * 0.06, bd * 0.12); ctx.lineTo(ex + bl * 0.93, op + bd * 0.1); ctx.quadraticCurveTo(ex + bl * 0.4, bd * 0.55 + op * 0.4, ex - hr * 0.1, bd * 0.5); ctx.closePath(); ctx.fill();   // the lower
+  if (op > 0) { ctx.fillStyle = 'rgba(170,70,70,0.8)'; ctx.beginPath(); ctx.moveTo(ex, bd * 0.1); ctx.lineTo(ex + bl * 0.6, op * 0.6); ctx.lineTo(ex + bl * 0.55, bd * 0.1 - op * 0.1); ctx.closePath(); ctx.fill(); }
+  ctx.strokeStyle = zc(scl(S.billC, 0.4), 1, 0.7); ctx.lineWidth = lw; ctx.beginPath(); ctx.moveTo(ex - hr * 0.1, bd * 0.1); ctx.lineTo(ex + bl * 0.9, bd * 0.1 + op * 0.5); ctx.stroke();   // the gape line
+  var bk = o.blink === undefined ? 1 : o.blink, er = hr * (kind === 'kawasemi' ? 0.15 : kind === 'mejiro' ? 0.2 : 0.21), exx = hr * (0.32 + yaw * 0.15), ey = -hr * 0.12;
+  if (kind === 'mejiro') { ctx.fillStyle = zc([252, 252, 248]); ctx.beginPath(); ctx.arc(exx, ey, er * 1.85, 0, TAU); ctx.fill(); ctx.strokeStyle = zc([200, 200, 196], 1, 0.6); ctx.lineWidth = lw; ctx.stroke(); }   // the bold white eye-ring
+  else { ctx.strokeStyle = zc([30, 26, 30], 1, 0.6); ctx.lineWidth = lw * 1.4; ctx.beginPath(); ctx.arc(exx, ey, er * 1.2, 0, TAU); ctx.stroke(); }   // the dark lid rim
+  zeye(ctx, exx, ey, er, S.eye, bk, false);
+  ctx.restore();
+}
+/* the species' colour patches (on the body in B, on the head in H, both in their own units) */
+function b3Marks(ctx, kind, B, H, rx, ry, hr, S, turn) {
+  function bp(pts) { return pts.map(function (q) { return B(rx * q[0], ry * q[1]); }); }
+  function hp(pts) { return pts.map(function (q) { return H(q[0], q[1]); }); }
+  if (kind === 'ooruri') {
+    b3Patch(ctx, hp([[-0.35, -0.75], [0.15, -0.98], [0.75, -0.62], [0.55, -0.42], [0.0, -0.52], [-0.45, -0.5]]), [74, 144, 236], 0.7, [[1.15, 0.2], [1.0, 0.35], [0.8, 0.5]]);   // the crown a shining cobalt, blending into the darker back
+    b3Patch(ctx, [H(1.0, -0.12), H(0.5, -0.38), H(0.0, -0.32), H(-0.45, 0.25), B(rx * 0.4, ry * 0.05), B(rx * 0.62, ry * 0.5), B(rx * 1.0, ry * 0.15), H(0.95, 0.55)], [16, 18, 28], 1, [[1.015, 0.6], [1.0, 1]]);   // the black face, throat and upper breast, the border to the white belly sharp
+    b3Patch(ctx, bp([[-0.9, -0.55], [-0.2, -0.95], [0.6, -0.8], [0.5, -0.35], [-0.6, -0.25]]), [44, 84, 180], 0.4);   // the gloss along the back
+  } else if (kind === 'ruri') {
+    b3Patch(ctx, bp([[-0.35, -0.05], [0.25, -0.2], [0.65, 0.15], [0.4, 0.6], [-0.2, 0.55]]), [238, 152, 58], 1);   // the orange-yellow flank
+    b3Patch(ctx, hp([[0.95, 0.15], [0.6, 0.3], [0.1, 0.6], [0.2, 1.0], [0.8, 0.8]]), [246, 244, 238], 0.95);   // the white throat
+    ctx.strokeStyle = zc([248, 248, 252], 1, 0.9); ctx.lineWidth = hr * 0.14; ctx.lineCap = 'round'; var e0 = H(0.85, -0.38), e1 = H(0.35, -0.5), e2 = H(-0.15, -0.42); ctx.beginPath(); ctx.moveTo(e0[0], e0[1]); ctx.quadraticCurveTo(e1[0], e1[1], e2[0], e2[1]); ctx.stroke(); ctx.lineCap = 'butt';   // the white eyebrow
+    b3Patch(ctx, bp([[0.3, -0.8], [0.7, -0.6], [0.55, -0.35], [0.25, -0.45]]), [110, 170, 250], 0.8);   // the bright blue shoulder
+  } else if (kind === 'kawasemi') {
+    b3Patch(ctx, hp([[1.0, 0.05], [0.4, -0.1], [-0.3, -0.05], [-0.4, 0.25], [0.3, 0.3], [0.95, 0.35]]), [232, 126, 52], 1);   // the orange cheek through the eye
+    b3Patch(ctx, hp([[-0.35, 0.2], [-0.75, 0.1], [-0.85, 0.6], [-0.45, 0.75]]), [246, 244, 236], 1);   // the white neck patch
+    b3Patch(ctx, hp([[0.95, 0.42], [0.4, 0.45], [0.1, 0.85], [0.7, 0.95]]), [246, 240, 228], 1);   // the white throat
+    b3Patch(ctx, hp([[0.9, 0.36], [0.3, 0.38], [-0.3, 0.36], [-0.3, 0.46], [0.3, 0.48], [0.9, 0.44]]), [30, 120, 156], 0.9, [[1, 1]]);   // the blue-green moustache stripe
+    var KR = mulberry32(77); ctx.fillStyle = zc([126, 206, 230], 1, 0.75); for (var i = 0; i < 22; i++) { var qx = -0.75 + KR() * 1.5, qy = -0.95 + KR() * 0.75; if (qx * qx + qy * qy > 0.85) continue; var q = H(qx, qy); ctx.beginPath(); ctx.ellipse(q[0], q[1], hr * 0.05, hr * 0.03, 0.3, 0, TAU); ctx.fill(); }   // the fine pale bars of the crown and nape
+    b3Patch(ctx, bp([[-1.0, -0.4], [-0.3, -0.95], [0.4, -0.9], [0.5, -0.75], [-0.3, -0.7], [-0.95, -0.15]]), [74, 222, 240], 1);   // the electric-turquoise stripe down the back
+  } else if (kind === 'mejiro') {
+    b3Patch(ctx, hp([[1.0, 0.1], [0.5, 0.25], [0.0, 0.5], [0.1, 1.0], [0.8, 0.85]]).concat(bp([[0.85, 0.0], [1.0, -0.25]])), [236, 218, 58], 1);   // the yellow throat
+    b3Patch(ctx, bp([[-0.5, 0.2], [0.3, 0.15], [0.55, 0.55], [0.0, 0.85], [-0.6, 0.6]]), [188, 168, 136], 0.65);   // the brownish flanks
+  } else if (kind === 'uguisu') {
+    ctx.strokeStyle = zc([222, 214, 184], 1, 0.7); ctx.lineWidth = hr * 0.1; ctx.lineCap = 'round'; var u0 = H(0.9, -0.3), u1 = H(0.3, -0.45), u2 = H(-0.4, -0.3); ctx.beginPath(); ctx.moveTo(u0[0], u0[1]); ctx.quadraticCurveTo(u1[0], u1[1], u2[0], u2[1]); ctx.stroke();   // the faint pale eyebrow
+    ctx.strokeStyle = zc([96, 84, 58], 1, 0.5); ctx.lineWidth = hr * 0.08; var v0 = H(0.95, -0.05), v1 = H(-0.3, -0.1); ctx.beginPath(); ctx.moveTo(v0[0], v0[1]); ctx.lineTo(v1[0], v1[1]); ctx.stroke(); ctx.lineCap = 'butt';   // and the faint dark line through the eye
+    b3Patch(ctx, hp([[0.95, 0.2], [0.4, 0.35], [0.0, 0.6], [0.2, 1.0], [0.8, 0.8]]), [226, 222, 208], 0.8);   // the pale throat
+  }
+  void turn;
+}
+/* in flight, side-on: the wings beat through a real stroke (raised and extended on the downstroke, the hand folded back on the way
+   up); a bounding flier closes them between bursts. ph: the stroke phase; fold 0..1 (closed); brake 0..1 (landing) */
+function sb3Fly(ctx, kind, o) {
+  var S = SB3[kind], L = S.L * BIRDV, ph = o.ph || 0, fold = clamp(o.fold || 0), m;
+  RL.k = pScale(ctx); m = pLm();
+  var lod = MODE === 'm' || RL.k * L < 26, rx = L * S.rx * 1.05, ry = L * S.ry * 0.85, hr = L * S.hr, pt = o.pitch || 0;
+  var c = Math.cos(pt), s = Math.sin(pt); function B(lx, ly) { return [lx * c - ly * s, lx * s + ly * c]; }
+  var lw = Math.max(L * 0.004, 0.6 / Math.max(1, RL.k));
+  // the stroke: y = up (1) .. down (-1); the downstroke (cos falling) with the wing at full stretch, the upstroke with the hand swept back
+  var up = Math.cos(ph), dn = Math.sin(ph) > 0, ext = (dn ? 1 : 0.45 + 0.25 * (1 - Math.abs(up))) * (1 - fold * 0.8);
+  function wing(far) {
+    var sh = B(rx * 0.25, -ry * 0.4), span = L * 0.8, u2 = up * (far ? 0.85 : 1), arm = span * 0.38, hand = span * 0.55 * ext;
+    var wr = [sh[0] - arm * (0.25 + 0.2 * (1 - Math.abs(u2))) - fold * rx * 0.4, sh[1] - arm * u2 * (1 - fold * 0.7)];
+    var sweep = dn ? 0.25 : 0.85, tp = [wr[0] - hand * (sweep + 0.3 * (1 - Math.abs(u2))) - fold * rx * 0.5, wr[1] - hand * u2 * (1 - sweep * 0.5) * (1 - fold * 0.7)];
+    if (fold > 0.6) { b3Edge(ctx, B(rx * 0.35, -ry * 0.45), B(-rx * 0.25, -ry * (far ? 0.7 : 0.6)), B(-rx * 1.35, -ry * 0.25), L * 0.2, S.wing, S.flight, far, 1); return; }   // folded tight back along the body (the dive)
+    if (Math.abs(u2) < 0.4 && fold < 0.5) { b3Edge(ctx, sh, wr, tp, L * 0.2, S.wing, S.flight, far, 1 - Math.abs(u2) / 0.4); return; }   // level: the wing seen nearly edge-on
+    b3Wing(ctx, sh, wr, tp, L * 0.2 * (1 - fold * 0.3), { cov: S.wing, sec: mixc(S.wing, S.flight, 0.35), pri: S.flight, tip: scl(S.flight, 0.8), fr: mixc(S.wing, [255, 255, 255], 0.25) }, { L: L, lod: lod, far: far, np: 8, ns: 7, slots: dn ? 0.4 : 0.1 });
+  }
+  wing(true);
+  var ta = 0.05 + (o.brake || 0) * 0.6, r0 = B(-rx * 0.85, ry * 0.05), tL = S.tail * L;
+  for (var fi = 0; fi < 6; fi++) b3Feather(ctx, r0, Math.PI + ta + pt + (fi / 5 - 0.5) * (0.2 + (o.brake || 0) * 0.5), tL, tL * 0.12, 0.65, S.tailC, scl(S.tailC, 0.65), null, 0);
+  var Hc = B(rx * 0.95 + hr * 0.45, -ry * 0.25), bD = pSmooth([B(-rx, -ry * 0.1), B(-rx * 0.6, -ry * 0.9), B(rx * 0.4, -ry), B(rx * 1.0, -ry * 0.4), B(rx * 0.9, ry * 0.6), B(0, ry), B(-rx * 0.8, ry * 0.5)], true, 4), hD = [];
+  for (var hi = 0; hi < 24; hi++) { var at2 = hi / 24 * TAU; hD.push([Hc[0] + Math.cos(at2) * hr, Hc[1] + Math.sin(at2) * hr * 0.95]); }
+  var sil = new Path2D(); pPath(pWind(bD, true), sil); pPath(pWind(hD, true), sil);
+  var gr = ctx.createLinearGradient(0, -ry, 0, ry); gr.addColorStop(0, zc(S.up, RL.hi)); gr.addColorStop(0.5, zc(S.up)); gr.addColorStop(0.62, zc(S.under)); gr.addColorStop(1, zc(S.under, RL.lo * 1.2)); ctx.fillStyle = gr; ctx.fill(sil);
+  var hpp = pt * 0.5, chh = Math.cos(hpp), shh2 = Math.sin(hpp); function H(lx, ly) { return [Hc[0] + (lx * chh - ly * shh2) * hr, Hc[1] + (lx * shh2 + ly * chh) * hr]; }
+  ctx.save(); ctx.clip(sil); zsoft(ctx, Hc[0], Hc[1] - hr * 0.2, hr * 1.1, hr, S.up, 1); b3Marks(ctx, kind, B, H, rx, ry, hr, S, 0); ctx.restore();
+  ctx.save(); ctx.translate(Hc[0], Hc[1]); ctx.rotate(hpp);
+  var bl = S.bill * L, bd = S.billD * L; ctx.fillStyle = zgrad2(ctx, 0, -bd, 0, bd, scl(S.billC, 1.4), scl(S.billC, 0.7), 1, 1); ctx.beginPath(); ctx.moveTo(hr * 0.75, -bd * 0.5); ctx.lineTo(hr * 0.8 + bl, 0); ctx.lineTo(hr * 0.75, bd * 0.5); ctx.closePath(); ctx.fill();
+  if (kind === 'mejiro') { ctx.fillStyle = zc([250, 250, 246]); ctx.beginPath(); ctx.arc(hr * 0.32, -hr * 0.12, hr * 0.38, 0, TAU); ctx.fill(); }
+  zeye(ctx, hr * 0.32, -hr * 0.12, hr * 0.19, S.eye, 1, false); ctx.restore();
+  // the feet tucked up under the tail
+  ctx.strokeStyle = zc(S.legs, 0.9); ctx.lineWidth = Math.max(L * 0.016, 0.6 / Math.max(1, RL.k)); ctx.lineCap = 'round'; var fq = B(-rx * 0.2, ry * 0.8), fq2 = B(-rx * 0.6, ry * 0.75); ctx.beginPath(); ctx.moveTo(fq[0], fq[1]); ctx.lineTo(fq2[0], fq2[1]); ctx.stroke(); ctx.lineCap = 'butt';
+  wing(false);
+}
+
+function birdPaint2(ctx, kind, o) { sb3Paint(ctx, kind, o); }
+function birdFlyPaint2(ctx, kind, o) { sb3Fly(ctx, kind, o); }
+
+/* ================= the tall white waders =================
+   コサギ (little egret, 60 cm, the garden's 白鷺): all white, a slim S-necked heron with a black dagger bill, black legs and
+   yellow feet, two long nape plumes and lacy back plumes in the breeding season. 丹頂 (red-crowned crane, 1.4 m): white, the
+   bare red crown, black face, throat and neck with a white band from behind the eye down the nape, the black inner wing
+   feathers (secondaries and tertials) drooping over the white tail like a bustle, long dark legs, a heavy olive bill.
+   Local frame: metres, feet at the origin; ext 0 neck folded .. 1 stretched; strike 0..1; step: walking phase (radians) */
+var WADE = {
+  sagi: { L: 0.62, legH: 0.36, body: 0.1, neck: 0.42, head: 0.032, bill: 0.085, white: [248, 248, 244], shade: [196, 204, 216], billC: [26, 24, 24], legs: [30, 28, 28], feet: [214, 190, 60], lore: [220, 210, 120], eye: [220, 190, 50] },
+  tsuru: { L: 1.4, legH: 0.78, body: 0.2, neck: 0.62, head: 0.06, bill: 0.15, white: [248, 248, 246], shade: [200, 206, 218], billC: [150, 156, 120], legs: [44, 42, 44], feet: [44, 42, 44], black: [22, 22, 26], red: [214, 32, 36], eye: [60, 40, 30] }
+};
+/* an open wader wing as layered feathers: the secondaries along the arm, the primaries fanned from the wrist to the tip, two rows of
+   coverts over their bases and the leading edge (sh shoulder, wr wrist, tp the hand's tip, ch the chord); the crane's
+   secondaries are black, its primaries white */
+function wdWing(ctx, S, cr, sh, wr, tp, ch, far, lod, L) {
+  var k = far ? 0.84 : 1, wh = scl(S.white, k), sd = scl(S.shade, k), bk = cr ? scl(S.black, far ? 0.9 : 1) : null, ed = [S.shade, 0.3, L * 0.002];
+  function frame(a, b) { var dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1, nx = -dy / l, ny = dx / l; if (nx > 0) { nx = -nx; ny = -ny; } return { a: Math.atan2(dy, dx), n: Math.atan2(ny, nx) }; }
+  var fa = frame(sh, wr), fh = frame(wr, tp);
+  function aLerp(a0, a1, u) { var d = a1 - a0; while (d > Math.PI) d -= TAU; while (d < -Math.PI) d += TAU; return a0 + d * u; }
+  var NP = lod ? 0 : 9, NS = lod ? 0 : 9, i, u;
+  {   // the wing as one shape first (all that is drawn when it is small on screen): no gaps between the feathers laid over it
+    var pp = [sh, wr, tp]; for (i = 6; i >= 0; i--) { u = i / 6; var r0 = [lerp(wr[0], tp[0], u), lerp(wr[1], tp[1], u)], an = aLerp(fh.n, fh.a, u * u); pp.push([r0[0] + Math.cos(an) * ch * lerp(1, 1.2, u), r0[1] + Math.sin(an) * ch * lerp(1, 1.2, u)]); }
+    for (i = 5; i >= 0; i--) { u = i / 5; var r1 = [lerp(sh[0], wr[0], u), lerp(sh[1], wr[1], u)]; pp.push([r1[0] + Math.cos(fa.n) * ch * 0.85, r1[1] + Math.sin(fa.n) * ch * 0.85]); }
+    var p0 = pPath(pp); ctx.fillStyle = zgrad2(ctx, sh[0], sh[1], tp[0], tp[1], wh, sd, RL.hi, lerp(RL.lo, 1, 0.3)); ctx.fill(p0);
+    if (cr) { ctx.save(); ctx.clip(p0); var b0 = [lerp(sh[0], wr[0], 0.1) + Math.cos(fa.n) * ch * 0.4, lerp(sh[1], wr[1], 0.1) + Math.sin(fa.n) * ch * 0.4]; ctx.strokeStyle = zc(bk); ctx.lineWidth = ch * 0.9; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(b0[0], b0[1]); ctx.lineTo(wr[0] + Math.cos(fa.n) * ch * 0.5, wr[1] + Math.sin(fa.n) * ch * 0.5); ctx.stroke(); ctx.lineCap = 'butt'; ctx.restore(); }
+    if (lod) return;
+  }
+  for (i = 0; i < NS; i++) {   // the secondaries (and the crane's black tertials near the body)
+    u = (i + 0.5) / NS; var ra = [lerp(sh[0], wr[0], u), lerp(sh[1], wr[1], u)], ang = fa.n + (u - 0.5) * 0.25;
+    sbDrawFeather(ctx, ra, ang, ch * (0.86 + 0.05 * Math.sin(i * 1.7)), ch * 0.22, 0.75, cr ? scl(bk, 1.3) : wh, cr ? bk : mixc(wh, sd, 0.7), cr ? [[90, 90, 100], 0.35, L * 0.002] : ed);
+  }
+  for (i = 0; i < NP; i++) {   // the primaries: fanned from the wrist, the outermost along the hand, longest near the tip
+    u = i / (NP - 1); var rp = [lerp(wr[0], tp[0], u * 0.82), lerp(wr[1], tp[1], u * 0.82)], ap = aLerp(fh.n, fh.a, Math.pow(u, 1.4) * 0.85);
+    sbDrawFeather(ctx, rp, ap, ch * lerp(0.95, 1.25, Math.sin(u * Math.PI * 0.6)), ch * 0.2, 0.55, wh, mixc(wh, sd, 0.7), ed);
+  }
+  for (i = 0; i < 12; i++) {   // the greater coverts over the bases of the flight feathers
+    u = (i + 0.5) / 12; var rc = u < 0.55 ? [lerp(sh[0], wr[0], u / 0.55), lerp(sh[1], wr[1], u / 0.55)] : [lerp(wr[0], tp[0], (u - 0.55) / 0.45 * 0.6), lerp(wr[1], tp[1], (u - 0.55) / 0.45 * 0.6)];
+    sbDrawFeather(ctx, rc, (u < 0.55 ? fa.n : fh.n) + 0.15, ch * 0.45, ch * 0.13, 0.7, wh, mixc(wh, sd, 0.45), ed);
+  }
+  var lc = pLimb([sh, wr, [lerp(wr[0], tp[0], 0.6), lerp(wr[1], tp[1], 0.6)]], [ch * 0.05, ch * 0.04, ch * 0.02], [ch * 0.3, ch * 0.24, ch * 0.12], 4), lp = pPath(lc.out);   // the lesser coverts: the soft leading edge of the arm
+  ctx.fillStyle = zgrad2(ctx, sh[0], sh[1], tp[0], tp[1], wh, mixc(wh, sd, 0.4), RL.hi, lerp(RL.lo, 1, 0.5)); ctx.fill(lp);
+  zrim(ctx, lp, L * 0.008, 1);
+}
+/* the waders, painted (v3): one continuous feathered body (an elongated teardrop torso, the long neck growing out of the breast as
+   a feathered S, the small head on it, all filled as one shape), soft white plumage shaded cool where it turns from the light
+   with a light texture of feathers; the folded wing as soft rows of coverts over the long flight feathers; the egret's lace of
+   back plumes falling past the tail and the two fine nape plumes; the crane's black inner wing feathers draped over the tail as a
+   fluffy bustle, its black throat and neck with the white band down the nape, the bare red crown. Legs as shaded round limbs with
+   the heel bending back; open wings as layered feathers (b3Wing). Local frame: metres, feet at the origin, y down, facing +x */
+var WD3 = {
+  sagi: { rx: 0.115, ry: 0.052, nL: 0.3, nw0: 0.03, nw1: 0.014, hr: 0.024, bill: 0.085, billD: 0.012, legH: 0.33, pitch: -0.32, wChord: 0.15, wSpan: 0.5 },
+  tsuru: { rx: 0.29, ry: 0.13, nL: 0.6, nw0: 0.075, nw1: 0.032, hr: 0.05, bill: 0.15, billD: 0.024, legH: 0.74, pitch: -0.18, wChord: 0.36, wSpan: 1.15 }
+};
+function wd3Spine(kind, ext, sk, o) {   // the neck's centre line, in neck lengths from its base (x forward, y down)
+  var cr = kind === 'tsuru', P;
+  function mix(A, Bq, u) { return A.map(function (q, i) { return [lerp(q[0], Bq[i][0], u), lerp(q[1], Bq[i][1], u)]; }); }
+  if (cr) {
+    var rest = [[0, 0], [0.07, -0.3], [0.12, -0.6], [0.16, -0.85], [0.26, -0.98]], low = [[0, 0], [0.12, -0.22], [0.25, -0.42], [0.32, -0.6], [0.42, -0.66]];
+    P = mix(low, rest, ext);
+    if (o.call) P = mix(P, [[0, 0], [0.03, -0.3], [0.04, -0.62], [0.02, -0.88], [-0.04, -1.02]], 1);   // the head thrown back to call
+  } else {
+    var fold = [[0, 0], [0.06, -0.22], [-0.04, -0.4], [0.06, -0.56], [0.2, -0.6]], str = [[0, 0], [0.1, -0.3], [0.13, -0.58], [0.26, -0.8], [0.42, -0.86]];
+    P = mix(fold, str, ext);
+  }
+  var strike = cr ? [[0, 0], [0.25, -0.1], [0.5, 0.05], [0.7, 0.28], [0.82, 0.5]] : [[0, 0], [0.26, -0.1], [0.52, -0.02], [0.72, 0.14], [0.85, 0.3]];   // a smooth extended curve, forward and down
+  return mix(P, strike, sk);
+}
+function wd3Paint(ctx, kind, o) {
+  var S = WADE[kind], D = WD3[kind], cr = kind === 'tsuru', L = S.L, t = o.t || 0, m, ext = clamp(o.ext === undefined ? 0.5 : o.ext), sk = clamp(o.strike || 0), st = o.step;
+  RL.k = pScale(ctx); m = pLm();
+  var lod = MODE === 'm' || RL.k * L < 50, lw = Math.max(L * 0.002, 0.6 / Math.max(1, RL.k)), WH = S.white, SH = S.shade;
+  var legH = D.legH * (1 - (o.crouch || 0) * 0.2), br = Math.sin(t * 1.5) * L * 0.002;
+  var pitch = D.pitch + (o.pitch || 0) + sk * 0.12, c = Math.cos(pitch), s = Math.sin(pitch), rx = D.rx, ry = D.ry;
+  var bc = [-rx * 0.1, -legH - ry * 0.55 + br];
+  function B(lx, ly) { return [bc[0] + lx * c - ly * s, bc[1] + lx * s + ly * c]; }
+  var hip = B(-rx * 0.05, ry * 0.5);
+  // the legs: the thigh hidden in the belly feathers, the heel (the ankle) bending back, the long bare tarsus, the long toes
+  function leg(far) {
+    var pp = far ? Math.PI : 0, moving = st !== null && st !== undefined, lift = moving ? Math.max(0, Math.sin(st + pp)) : 0, fx = moving ? Math.cos(st + pp) * L * 0.09 : (far ? -1 : 1) * L * 0.02;
+    var foot = [fx, -lift * L * 0.05], heel = [lerp(hip[0], foot[0], 0.5) - L * 0.03 - lift * L * 0.05, lerp(hip[1], foot[1], 0.48) - lift * L * 0.02], k2 = far ? 0.75 : 1;
+    var lb = pLimb([hip, [lerp(hip[0], heel[0], 0.5) + L * 0.008, lerp(hip[1], heel[1], 0.5)], heel, [lerp(heel[0], foot[0], 0.5), lerp(heel[1], foot[1], 0.5)], foot], [L * 0.012, L * 0.009, L * 0.008, L * 0.0055, L * 0.005], [L * 0.012, L * 0.009, L * 0.008, L * 0.0055, L * 0.005], 4);
+    var a0 = lb.at(0.6, -1), a1 = lb.at(0.6, 1), g = ctx.createLinearGradient(a0[0], a0[1], a1[0], a1[1]); g.addColorStop(0, zc(scl(S.legs, 1.8 * k2))); g.addColorStop(0.45, zc(scl(S.legs, k2))); g.addColorStop(1, zc(scl(S.legs, 0.6 * k2)));
+    ctx.fillStyle = g; ctx.fill(pPath(lb.out));
+    var hk = lb.at(0.5, 0); ctx.fillStyle = zc(scl(S.legs, 0.9 * k2)); ctx.beginPath(); ctx.ellipse(hk[0], hk[1], L * 0.009, L * 0.011, 0, 0, TAU); ctx.fill();   // the heel joint
+    ctx.strokeStyle = zc(scl(S.feet, k2)); ctx.lineWidth = Math.max(lw * 1.5, L * 0.006); ctx.lineCap = 'round'; ctx.beginPath();
+    var tg = lift > 0.2 ? 0.7 : 0; [[0.09, 0.01], [0.06, 0.004], [-0.04, 0.003]].forEach(function (q, i) { ctx.moveTo(foot[0], foot[1]); ctx.lineTo(foot[0] + q[0] * L * (1 - tg * 0.4), foot[1] + q[1] * L + tg * L * 0.04 * (i < 2 ? 1 : 0)); }); ctx.stroke(); ctx.lineCap = 'butt';
+  }
+  leg(true);
+  // the neck's line and the head
+  var nb = B(rx * 0.78, -ry * 0.25), sp = wd3Spine(kind, ext, sk, o), nL = D.nL, hd = o.head || {};
+  var pts = sp.map(function (q) { return [nb[0] + q[0] * nL, nb[1] + q[1] * nL]; }), head = pts[pts.length - 1], pre = pts[pts.length - 2];
+  var tA = Math.atan2(head[1] - pre[1], head[0] - pre[0]), bA = sk > 0.3 ? lerp(0.1, tA, sk) : (hd.pitch || 0) * 0.8 + (o.call ? -1.0 : 0) + 0.08 + (1 - ext) * 0.05;   // the bill's angle: level, or along the neck in the strike
+  var hr = D.hr, nw = [D.nw0 * 1.4, D.nw0, D.nw1 * 1.2, D.nw1, hr * 0.75];
+  var nk = pLimb([B(rx * 0.35, -ry * 0.1)].concat(pts), [ry * 0.9].concat(nw), [ry * 0.95].concat(nw.map(function (v, i) { return v * (i === 0 ? 1.15 : 1); })), 5);
+  // the body: an elongated teardrop, the breast full and round, tapering to the tail
+  var bodyD = pSmooth([B(rx * 1.0, -ry * 0.1), B(rx * 0.75, -ry * 0.85), B(0, -ry * 1.0), B(-rx * 0.8, -ry * 0.7), B(-rx * 1.35, -ry * 0.05), B(-rx * 0.85, ry * 0.55), B(0, ry * 0.95), B(rx * 0.7, ry * 0.75)], true, 4);
+  var hD = []; for (var hi = 0; hi < 20; hi++) { var ha = hi / 20 * TAU, hx = Math.cos(ha) * hr * 1.25, hy = Math.sin(ha) * hr * 0.95; hD.push([head[0] + hx * Math.cos(bA) - hy * Math.sin(bA), head[1] + hx * Math.sin(bA) + hy * Math.cos(bA)]); }
+  var sil = new Path2D(); [bodyD, nk.out, hD].forEach(function (d) { pPath(pWind(d, true), sil); });
+  if (!lod) qFuzz(ctx, sil, WH, SH, head[1], bc[1] + ry, lw * 1.5);
+  var top = Math.min(head[1], bc[1] - ry), g1 = ctx.createLinearGradient(0, top, 0, bc[1] + ry);
+  g1.addColorStop(0, zc(WH, RL.hi)); g1.addColorStop(0.7, zc(WH, 0.98)); g1.addColorStop(1, zc(mixc(WH, SH, 0.7), lerp(RL.lo, 1, 0.45)));
+  ctx.fillStyle = g1; ctx.fill(sil);
+  ctx.save(); ctx.clip(sil);
+  // the turn of the form: cool shade down the belly and under the neck, light along the back
+  zsoft(ctx, B(-rx * 0.1, ry * 0.7)[0], B(-rx * 0.1, ry * 0.7)[1], rx * 1.0, ry * 0.45, SH, 0.45, 1, pitch);
+  zsoft(ctx, B(rx * 0.1, -ry * 0.75)[0], B(rx * 0.1, -ry * 0.75)[1], rx * 0.9, ry * 0.3, [255, 252, 244], 0.35, 1, pitch);
+  var vnw = [-s, c], bw0 = B(0, 0), gW = ctx.createLinearGradient(bw0[0] - vnw[0] * ry, bw0[1] - vnw[1] * ry, bw0[0] + vnw[0] * ry, bw0[1] + vnw[1] * ry);   // the body in the round: rim-lit back, a cool belly
+  gW.addColorStop(0, 'rgba(255,252,240,0.25)'); gW.addColorStop(0.35, 'rgba(255,252,240,0)'); gW.addColorStop(0.7, 'rgba(60,70,100,0.1)'); gW.addColorStop(1, 'rgba(50,60,95,0.32)'); ctx.fillStyle = gW; ctx.fill(pPath(bodyD));
+  if (!lod) { var RSW = mulberry32(kind.length * 17), scw = new Path2D(); for (var rw2 = 0; rw2 < 5; rw2++) for (var kw = 0; kw < 8; kw++) { var wq2 = B(rx * (0.8 - kw * 0.25 + (rw2 % 2) * 0.12), ry * (-0.1 + rw2 * 0.2)), wr2 = rx * 0.07 * (0.8 + RSW() * 0.4); scw.moveTo(wq2[0] + Math.cos(pitch + 0.5) * wr2, wq2[1] + Math.sin(pitch + 0.5) * wr2); scw.arc(wq2[0], wq2[1], wr2, pitch + 0.5, pitch + 2.6); } ctx.strokeStyle = zc(SH, 0.9, 0.25); ctx.lineWidth = lw; ctx.stroke(scw); }   // the breast and flank feathers, faint
+  for (var su = 0.2; su < 0.95; su += 0.25) { var nq = nk.at(su, 0.7); zsoft(ctx, nq[0], nq[1], nL * 0.12, D.nw0 * 0.6, SH, 0.3, 1, Math.atan2(nk.at(su + 0.05, 0)[1] - nk.at(su, 0)[1], nk.at(su + 0.05, 0)[0] - nk.at(su, 0)[0])); }
+  if (cr) {   // the black throat and neck sides, the white band from behind the eye down the nape; white again at the base
+    var blk = []; for (var u = 0.16; u <= 1.0001; u += 0.04) blk.push(nk.at(u, 1.3));
+    for (u = 1.0; u >= 0.16; u -= 0.04) blk.push(nk.at(u, lerp(-0.1, -0.55, clamp((u - 0.2) / 0.6))));
+    var bpth = pPath(pSmooth(blk, true, 2)); ctx.fillStyle = zgrad2(ctx, nb[0], nb[1], head[0], head[1], S.black, scl(S.black, 1.25), 1, 1); ctx.fill(bpth);
+    ctx.strokeStyle = zc(S.black, 1, 0.35); ctx.lineWidth = lw * 3; ctx.stroke(bpth);   // its edge a little soft
+    var nb2 = nk.at(0.14, 0.4); zsoft(ctx, nb2[0], nb2[1], D.nw0 * 1.6, D.nw0 * 1.1, WH, 0.9);
+  }
+  // the folded wing: soft rows of coverts over the long flight feathers, lying back along the side
+  var wo = clamp(o.wings || 0);
+  if (!lod && wo < 0.05) {
+    ctx.lineWidth = lw * 1.2; ctx.lineCap = 'round';
+    for (var row = 0; row < 4; row++) for (var kf = 0; kf < 6 - row; kf++) { var fq = B(rx * (0.55 - kf * 0.26 - row * 0.12), -ry * (0.55 - row * 0.28)); ctx.strokeStyle = zc(SH, 0.92, 0.35); ctx.beginPath(); ctx.arc(fq[0], fq[1], rx * 0.13, pitch + 0.5, pitch + 2.4); ctx.stroke(); }
+    for (var fp = 0; fp < 5; fp++) { var p0 = B(-rx * (0.1 + fp * 0.12), ry * (0.05 + fp * 0.06)), p1 = B(-rx * (1.0 + fp * 0.04), -ry * (0.15 - fp * 0.08)); ctx.strokeStyle = zc(SH, 0.85, 0.3); ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.quadraticCurveTo(lerp(p0[0], p1[0], 0.5), lerp(p0[1], p1[1], 0.5) + ry * 0.05, p1[0], p1[1]); ctx.stroke(); }   // the long primaries lying along the side
+  }
+  // the feather texture: short soft strokes along the lie of the plumage (along the body, down the neck)
+  if (!lod) {
+    var tx = new Path2D(), R = pRand('wd3' + kind, 220), bb = pBox(bodyD);
+    for (var k = 0; k < 140; k++) { var x = lerp(bb[0], bb[2], R[k * 4]), y = lerp(bb[1], bb[3], R[k * 4 + 1]); if (!pInside(bodyD, x, y)) continue; var a = Math.PI + pitch + 0.2 + (R[k * 4 + 2] - 0.5) * 0.4, l2 = rx * 0.12 * (0.6 + R[k * 4 + 3] * 0.6); tx.moveTo(x, y); tx.quadraticCurveTo(x + Math.cos(a) * l2 * 0.5 - Math.sin(a) * l2 * 0.15, y + Math.sin(a) * l2 * 0.5 + Math.cos(a) * l2 * 0.15, x + Math.cos(a) * l2, y + Math.sin(a) * l2); }
+    for (k = 140; k < 220; k++) { var nu = 0.1 + R[k * 4] * 0.85, nv = R[k * 4 + 1] * 2 - 1, q = nk.at(nu, nv), a2 = q[2] + Math.PI + (R[k * 4 + 2] - 0.5) * 0.3, l3 = nL * 0.05; tx.moveTo(q[0], q[1]); tx.lineTo(q[0] + Math.cos(a2) * l3, q[1] + Math.sin(a2) * l3); }
+    ctx.strokeStyle = zc(SH, 0.95, 0.3); ctx.lineWidth = lw * 1.1; ctx.lineCap = 'round'; ctx.stroke(tx);
+  }
+  ctx.restore();
+  zrim(ctx, sil, L * 0.006, 0.9);
+  // the plumes: the egret's lace falling past the tail; the crane's black bustle
+  if (cr) {
+    // the bustle: the long black tertials and inner secondaries, loose and curling, draping down over the white tail from the back
+    var RB = mulberry32(13), NB = lod ? 6 : 13;
+    for (var bk = 0; bk < NB; bk++) {   // separate long plumes, curving back and down over the tail, each tapering to a curled tip, with a sheen
+      var u0 = bk / (NB - 1), at0 = B(-rx * (0.1 + u0 * 0.72), -ry * (0.86 - u0 * 0.3) + (RB() - 0.5) * ry * 0.08);
+      var Lb = rx * (0.75 + RB() * 0.35) * (0.8 + 0.3 * Math.sin(u0 * Math.PI)), aB = Math.PI + pitch - 0.2 - u0 * 0.3 + (RB() - 0.5) * 0.15, droop = Lb * (0.45 + u0 * 0.3 + RB() * 0.15);
+      var P0 = at0, P2 = [P0[0] + Math.cos(aB) * Lb * 0.85, P0[1] + Math.sin(aB) * Lb + droop], P1 = [lerp(P0[0], P2[0], 0.55), lerp(P0[1], P2[1], 0.2)], curl = [P2[0] + rx * 0.05, P2[1] + rx * 0.03];
+      var lb = pLimb([P0, P1, P2, curl], [rx * 0.07, rx * 0.075, rx * 0.035, rx * 0.006], [rx * 0.06, rx * 0.065, rx * 0.03, rx * 0.006], 4), pq = pPath(lb.out);
+      ctx.save(); ctx.translate(rx * 0.015, rx * 0.03); ctx.fillStyle = zc([16, 14, 20], 1, 0.22); ctx.fill(pq); ctx.restore();   // its soft shadow on what is under it
+      var e0 = lb.at(0.3, -1), e1 = lb.at(0.3, 1), gB2 = ctx.createLinearGradient(e0[0], e0[1], e1[0], e1[1]), sh2 = 1.25 + RB() * 0.5;
+      gB2.addColorStop(0, zc(scl(S.black, sh2 + 0.4))); gB2.addColorStop(0.45, zc(scl(S.black, sh2))); gB2.addColorStop(1, zc(scl(S.black, 0.9)));
+      ctx.fillStyle = gB2; ctx.fill(pq);
+      if (!lod) { ctx.strokeStyle = zc([150, 152, 168], 1, 0.3); ctx.lineWidth = lw * 1.2; ctx.beginPath(); for (var j = 0; j <= 8; j++) { var q = lb.at(0.05 + j / 8 * 0.8, -0.35); if (j) ctx.lineTo(q[0], q[1]); else ctx.moveTo(q[0], q[1]); } ctx.stroke();   // the sheen along the plume
+        ctx.strokeStyle = zc(scl(S.black, 1.8), 1, 0.35); ctx.lineWidth = lw * 0.8; ctx.beginPath(); for (j = 0; j < 6; j++) { var q2 = lb.at(0.25 + j * 0.12, 0.9), q3 = lb.at(0.3 + j * 0.12, 1.6); ctx.moveTo(q2[0], q2[1]); ctx.lineTo(q3[0], q3[1]); } ctx.stroke(); }   // loose barbs at its edge
+    }
+  } else if (o.plumes) {
+    var RP = mulberry32(29), pl = new Path2D(), pl2 = new Path2D(), sway = Math.sin(t * 1.2) * 0.02;
+    for (var pk = 0; pk < 18; pk++) {
+      var r0 = B(-rx * (0.1 + RP() * 0.5), -ry * (0.75 - RP() * 0.3)), Lp = rx * (1.3 + RP() * 0.7), aP = Math.PI + pitch + 0.18 + RP() * 0.25 + sway, e0 = [r0[0] + Math.cos(aP) * Lp, r0[1] + Math.sin(aP) * Lp + Lp * 0.18], mq = [lerp(r0[0], e0[0], 0.55), lerp(r0[1], e0[1], 0.55) - Lp * 0.04], pq2 = pk % 3 ? pl : pl2;
+      pq2.moveTo(r0[0], r0[1]); pq2.quadraticCurveTo(mq[0], mq[1], e0[0], e0[1]);
+      if (!lod) for (var bb2 = 0.35; bb2 < 1; bb2 += 0.16) { var bq = [lerp(lerp(r0[0], mq[0], bb2), lerp(mq[0], e0[0], bb2), bb2), lerp(lerp(r0[1], mq[1], bb2), lerp(mq[1], e0[1], bb2), bb2)]; pl.moveTo(bq[0], bq[1]); pl.lineTo(bq[0] - Math.cos(aP - 0.6) * rx * 0.08, bq[1] - Math.sin(aP - 0.6) * rx * 0.08 + rx * 0.03); }   // the fine barbs: a lace, not a line
+    }
+    ctx.lineCap = 'round'; ctx.strokeStyle = zc(WH, 1, 0.45); ctx.lineWidth = lw; ctx.stroke(pl); ctx.strokeStyle = zc(WH, 1, 0.7); ctx.lineWidth = lw * 1.3; ctx.stroke(pl2);
+  }
+  // open wings (the crane's dance, a balance on landing): layered, the far one behind
+  if (wo > 0.02) {
+    [-1, 1].forEach(function (sd) {
+      var sh = B(rx * (0.35 - sd * 0.06), -ry * 0.75), span = D.wSpan * (0.5 + 0.5 * wo), wr = [sh[0] - span * (0.15 + 0.05 * sd), sh[1] - span * (0.4 + 0.05 * sd) * wo], tp = [wr[0] - span * (0.3 + 0.08 * sd), wr[1] - span * (0.3 + 0.06 * sd) * wo + span * 0.2 * (1 - wo)];
+      b3Wing(ctx, sh, wr, tp, D.wChord * (0.6 + 0.4 * wo), cr ? { cov: WH, gcov: mixc(WH, SH, 0.2), sec: S.black, secT: scl(S.black, 1.3), pri: WH, tip: mixc(WH, SH, 0.5), fr: SH } : { cov: WH, sec: mixc(WH, SH, 0.25), pri: WH, tip: mixc(WH, SH, 0.45), fr: SH }, { L: L, lod: lod, far: sd < 0, np: 10, ns: 12, slots: cr ? 0.7 : 0.4 });
+    });
+  }
+  leg(false);
+  // the head and the dagger bill
+  ctx.save(); ctx.translate(head[0], head[1]); ctx.rotate(bA);
+  var bl = D.bill, bd = D.billD, ex = hr * 1.05;
+  if (cr) {   // black face and throat, the white band behind the eye running down the nape, the bare red crown (matte skin)
+    var hp2 = new Path2D(); hp2.ellipse(0, 0, hr * 1.25, hr * 0.95, 0, 0, TAU); ctx.save(); ctx.clip(hp2);
+    ctx.fillStyle = zc(S.black); ctx.fillRect(-hr * 2, -hr * 2, hr * 4, hr * 4);
+    zsoft(ctx, -hr * 0.9, hr * 0.15, hr * 0.7, hr * 0.5, WH, 1); zsoft(ctx, -hr * 0.4, -hr * 0.05, hr * 0.35, hr * 0.25, WH, 0.9);
+    var rc = ctx.createRadialGradient(hr * 0.05, -hr * 0.75, 0, hr * 0.05, -hr * 0.6, hr * 0.7); rc.addColorStop(0, zc(scl(S.red, 1.05))); rc.addColorStop(0.75, zc(scl(S.red, 0.85))); rc.addColorStop(1, zc(scl(S.red, 0.6), 1, 0));
+    ctx.fillStyle = rc; ctx.beginPath(); ctx.ellipse(hr * 0.05, -hr * 0.62, hr * 0.75, hr * 0.42, 0.1, 0, TAU); ctx.fill();
+    if (!lod) { var RR = mulberry32(5); ctx.fillStyle = zc(scl(S.red, 0.7), 1, 0.5); for (var rk = 0; rk < 10; rk++) { ctx.beginPath(); ctx.arc(hr * (-0.4 + RR() * 0.9), -hr * (0.45 + RR() * 0.4), hr * 0.05, 0, TAU); ctx.fill(); } }   // the skin's papillae
+    ctx.restore();
+  } else {
+    var hp3 = new Path2D(); hp3.ellipse(0, 0, hr * 1.25, hr * 0.95, 0, 0, TAU); ctx.save(); ctx.clip(hp3); zsoft(ctx, hr * 0.8, -hr * 0.05, hr * 0.5, hr * 0.3, S.lore, 0.85); zsoft(ctx, 0, hr * 0.5, hr * 1.1, hr * 0.5, SH, 0.35); ctx.restore();   // the yellow lore; the shade under the jaw
+    if (o.plumes) { ctx.strokeStyle = zc(WH, 1, 0.9); ctx.lineWidth = lw * 1.4; ctx.lineCap = 'round'; var pw = Math.sin(t * 1.3) * 0.08; ctx.beginPath(); ctx.moveTo(-hr * 0.7, -hr * 0.4); ctx.quadraticCurveTo(-hr * 2.6, -hr * 0.3 + pw * hr, -hr * 3.8, hr * 1.1); ctx.moveTo(-hr * 0.7, -hr * 0.25); ctx.quadraticCurveTo(-hr * 2.3, hr * 0.1 + pw * hr, -hr * 3.2, hr * 1.5); ctx.stroke(); }   // the two fine nape plumes
+  }
+  var op = o.call ? bd * 0.7 : 0, gB = ctx.createLinearGradient(0, -bd, 0, bd); gB.addColorStop(0, zc(scl(S.billC, 1.6))); gB.addColorStop(0.4, zc(S.billC)); gB.addColorStop(1, zc(scl(S.billC, 0.65)));
+  ctx.fillStyle = gB; ctx.beginPath(); ctx.moveTo(ex - hr * 0.3, -bd); ctx.quadraticCurveTo(ex + bl * 0.5, -bd * 0.75, ex + bl, -op * 0.3); ctx.lineTo(ex - hr * 0.2, bd * 0.1); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(ex - hr * 0.2, bd * 0.15); ctx.lineTo(ex + bl * 0.96, op); ctx.quadraticCurveTo(ex + bl * 0.45, bd * 0.8 + op * 0.4, ex - hr * 0.3, bd * 0.9); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = zc(scl(S.billC, 0.4), 1, 0.6); ctx.lineWidth = lw; ctx.beginPath(); ctx.moveTo(ex - hr * 0.2, bd * 0.12); ctx.lineTo(ex + bl * 0.95, op * 0.5); ctx.stroke();
+  if (o.fishUp > 0.05) { ctx.save(); ctx.translate(ex + bl * 0.75, bd * 0.3); ctx.scale(L * 1.1, L * 1.1); ctx.globalAlpha *= o.fishUp; kfFish(ctx, -0.02, 0, 0.3); ctx.restore(); }
+  zeye(ctx, hr * 0.42, -hr * 0.12, hr * 0.2, S.eye, o.blink === undefined ? 1 : o.blink, false);
+  ctx.restore();
+}
+/* in flight, side-on: the egret with its neck drawn back into an S on its shoulders, the crane with its neck straight out; the legs
+   trailing past the tail with a slight droop (reaching down to land); the wings layered and beating through a real stroke */
+function wd3Fly(ctx, kind, o) {
+  var S = WADE[kind], D = WD3[kind], cr = kind === 'tsuru', L = S.L, m, ld = clamp(o.land || 0), pitch = (o.pitch || 0) - ld * 0.45;
+  RL.k = pScale(ctx); m = pLm();
+  var lod = MODE === 'm' || RL.k * L < 50, lw = Math.max(L * 0.002, 0.6 / Math.max(1, RL.k)), WH = S.white, SH = S.shade, ph = o.ph || 0;
+  var c = Math.cos(pitch), s = Math.sin(pitch), rx = D.rx * 1.05, ry = D.ry * 0.85; function B(lx, ly) { return [lx * c - ly * s, lx * s + ly * c]; }
+  var up = o.glide ? 0.1 : Math.cos(ph), dn = Math.sin(ph) > 0 || o.glide, ext = dn ? 1 : 0.55 + 0.2 * (1 - Math.abs(up));
+  if (ld > 0) { up = lerp(up, 0.8, ld); ext = lerp(ext, 0.9, ld); }
+  function wing(far) {
+    var sh = B(rx * 0.25, -ry * 0.45), span = D.wSpan, u2 = up * (far ? 0.85 : 1), arm = span * 0.42, hand = span * 0.5 * ext;
+    var wr = [sh[0] - arm * (0.2 + 0.25 * (1 - Math.abs(u2))), sh[1] - arm * u2], sweep = dn ? 0.25 : 0.8, tp = [wr[0] - hand * (sweep + 0.3 * (1 - Math.abs(u2))), wr[1] - hand * u2 * (1 - sweep * 0.5)];
+    if (Math.abs(u2) < 0.35) { b3Edge(ctx, sh, wr, tp, D.wChord, WH, SH, far, 1 - Math.abs(u2) / 0.35, cr ? S.black : null); return; }
+    b3Wing(ctx, sh, wr, tp, D.wChord, cr ? { cov: WH, gcov: mixc(WH, SH, 0.2), sec: S.black, secT: scl(S.black, 1.3), pri: WH, tip: mixc(WH, SH, 0.5), fr: SH } : { cov: WH, sec: mixc(WH, SH, 0.25), pri: WH, tip: mixc(WH, SH, 0.45), fr: SH }, { L: L, lod: lod, far: far, np: 10, ns: 12, slots: cr ? 0.8 : 0.45 });
+  }
+  wing(true);
+  // the legs trailing (or reaching down to land): round, a little apart, drooping toward the feet
+  var hipP = B(-rx * 0.55, ry * 0.35), la = lerp(0.12, 1.25, ld), lL = D.legH * 0.95;
+  [0.012, -0.012].forEach(function (dz, i) {
+    var ft = [hipP[0] - Math.cos(la + i * 0.05) * lL, hipP[1] + Math.sin(la + i * 0.05) * lL + lL * 0.06], md = [lerp(hipP[0], ft[0], 0.5), lerp(hipP[1], ft[1], 0.5) + lL * 0.03];
+    var lb = pLimb([hipP, md, ft], [L * 0.011, L * 0.007, L * 0.005], [L * 0.011, L * 0.007, L * 0.005], 4), a0 = lb.at(0.5, -1), a1 = lb.at(0.5, 1), g = ctx.createLinearGradient(a0[0], a0[1], a1[0], a1[1]);
+    g.addColorStop(0, zc(scl(S.legs, 1.7 * (i ? 0.8 : 1)))); g.addColorStop(1, zc(scl(S.legs, 0.6 * (i ? 0.8 : 1)))); ctx.fillStyle = g; ctx.fill(pPath(lb.out));
+    ctx.strokeStyle = zc(S.feet); ctx.lineWidth = Math.max(lw * 1.4, L * 0.005); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(ft[0], ft[1]); ctx.lineTo(ft[0] - Math.cos(la) * L * 0.07, ft[1] + Math.sin(la) * L * 0.07 + L * 0.01); ctx.stroke(); ctx.lineCap = 'butt';
+    void dz;
+  });
+  var bodyD = pSmooth([B(rx, -ry * 0.1), B(rx * 0.6, -ry * 0.85), B(-rx * 0.4, -ry * 0.85), B(-rx * 1.25, -ry * 0.1), B(-rx * 0.6, ry * 0.7), B(rx * 0.5, ry * 0.75)], true, 4), hr = D.hr, nb = B(rx * 0.85, -ry * 0.15), pts, head;
+  if (cr) { head = B(rx * 0.85 + D.nL * 0.95, -ry * 0.3); pts = [B(rx * 0.4, 0), nb, [lerp(nb[0], head[0], 0.5), lerp(nb[1], head[1], 0.5) - ry * 0.05], head]; }
+  else { head = B(rx * 1.05 + hr * 2.5, -ry * 0.7); pts = [B(rx * 0.4, 0), nb, B(rx * 1.25, ry * 0.45), B(rx * 1.45, -ry * 0.1), head]; }   // the egret's neck folded back into an S, the bulge under the throat
+  var nwv = cr ? [ry * 0.8, D.nw0, D.nw1 * 1.1, hr * 0.75] : [ry * 0.8, D.nw0 * 1.2, D.nw0 * 1.1, D.nw1 * 1.3, hr * 0.8];
+  var nk = pLimb(pts, nwv, nwv, 5), hD = []; for (var hi = 0; hi < 20; hi++) { var ha = hi / 20 * TAU; hD.push([head[0] + Math.cos(ha) * hr * 1.25, head[1] + Math.sin(ha) * hr * 0.95]); }
+  var sil = new Path2D(); [bodyD, nk.out, hD].forEach(function (d) { pPath(pWind(d, true), sil); });
+  var g1 = ctx.createLinearGradient(0, -ry, 0, ry); g1.addColorStop(0, zc(WH, RL.hi)); g1.addColorStop(1, zc(mixc(WH, SH, 0.7), lerp(RL.lo, 1, 0.45))); ctx.fillStyle = g1; ctx.fill(sil);
+  ctx.save(); ctx.clip(sil); zsoft(ctx, 0, ry * 0.6, rx * 1.1, ry * 0.4, SH, 0.4);
+  if (cr) { var blk = []; for (var u = 0.3; u <= 1.0001; u += 0.05) blk.push(nk.at(u, 1.3)); for (u = 1; u >= 0.3; u -= 0.05) blk.push(nk.at(u, -0.2)); ctx.fillStyle = zc(S.black); ctx.fill(pPath(blk)); }
+  ctx.restore();
+  if (cr) { var bus = []; for (var bk = 0; bk < 6; bk++) bus.push(B(-rx * (0.6 + bk * 0.12), ry * (-0.2 + bk * 0.06))); ctx.strokeStyle = zc(S.black); ctx.lineWidth = ry * 0.35; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(bus[0][0], bus[0][1]); bus.forEach(function (q) { ctx.lineTo(q[0], q[1]); }); ctx.stroke(); ctx.lineCap = 'butt'; }   // the black of the inner wing along the trailing edge at the body
+  ctx.save(); ctx.translate(head[0], head[1]); ctx.rotate(pitch * 0.5);
+  if (cr) { ctx.fillStyle = zc(S.black); ctx.beginPath(); ctx.ellipse(0, 0, hr * 1.25, hr * 0.95, 0, 0, TAU); ctx.fill(); ctx.fillStyle = zc(scl(S.red, 0.9)); ctx.beginPath(); ctx.ellipse(0, -hr * 0.6, hr * 0.6, hr * 0.35, 0, 0, TAU); ctx.fill(); zsoft(ctx, -hr * 0.8, hr * 0.2, hr * 0.5, hr * 0.35, WH, 1); }
+  else zsoft(ctx, hr * 0.8, -hr * 0.05, hr * 0.5, hr * 0.3, S.lore, 0.8);
+  ctx.fillStyle = zgrad2(ctx, 0, -D.billD, 0, D.billD, scl(S.billC, 1.5), scl(S.billC, 0.7), 1, 1); ctx.beginPath(); ctx.moveTo(hr * 0.8, -D.billD); ctx.lineTo(hr + D.bill, 0); ctx.lineTo(hr * 0.8, D.billD); ctx.closePath(); ctx.fill();
+  zeye(ctx, hr * 0.42, -hr * 0.12, hr * 0.2, S.eye, 1, false); ctx.restore();
+  wing(false);
+}
+
+function waderPaint(ctx, kind, o) { wd3Paint(ctx, kind, o); }
+function waderFlyPaint(ctx, kind, o) { wd3Fly(ctx, kind, o); }
+
+function kfFish(ctx, x, y, rot) { ctx.save(); ctx.translate(x, y); ctx.rotate(rot); var gr = ctx.createLinearGradient(0, -0.012, 0, 0.012); gr.addColorStop(0, zc([140, 150, 150])); gr.addColorStop(1, zc([226, 232, 230])); ctx.fillStyle = gr; ctx.beginPath(); ctx.moveTo(-0.015, 0); ctx.quadraticCurveTo(0.03, -0.014, 0.07, 0); ctx.quadraticCurveTo(0.03, 0.012, -0.015, 0); ctx.fill(); ctx.beginPath(); ctx.moveTo(0.065, 0); ctx.lineTo(0.09, -0.012); ctx.lineTo(0.088, 0.012); ctx.closePath(); ctx.fill(); ctx.restore(); }
 /* ---- the raccoon dog (ホンドタヌキ), drawn as one painted animal: about 25 cm at the shoulder, body 55 cm, round and low in a
    long grizzled coat. Dark legs and chest, a dark band over the shoulders, the black mask across the eyes and cheeks with a
    pale brow and muzzle above it, small rounded ears rimmed dark, a short bushy tail dark along the top ---- */
@@ -7387,6 +7985,87 @@ function swallowDraw(ctx, g, C, s, t, ph, dkey) {
   void q1;
 }
 var RARE_N = {};
+/* ================= the garden's birds in the town: the egret, the crane and the kingfisher, painted with the garden's v3
+   painters (sb3Paint / sb3Fly, wd3Paint / wd3Fly) in the town's light, cut by what stands nearer ================= */
+function townBirdPlace(c, g, x, y, z, dir, mag, paint) { zrl(g, dir); RL.lum = g.lum; zPlace(c, x, y, z, dir, 1, mag); paint(c); c.restore(); }
+function townAir(e, t) {   // the garden's glide in (eased to a landing) or climb out
+  var u = clamp((t - e.t0) / (e.t1 - e.t0)), out = !!e.out, w = out ? u * u : 1 - (1 - u) * (1 - u);
+  var p = [lerp(e.a[0], e.b[0], w), out ? lerp(e.a[1], e.b[1], Math.pow(u, 1.8)) : lerp(e.a[1], e.b[1], 1 - Math.pow(1 - u, 0.7)), lerp(e.a[2], e.b[2], w)];
+  return { p: p, u: u };
+}
+function townWader(ctx, g, st, T, t, kind, mag) {
+  var S = WADE[kind], seen = function (p, fn) { var q = P(p[0], p[1], p[2]), k = q.k * mag, ext = S.L * 1.6 * k; drawCut(ctx, g, [q.x - ext, q.y - ext * 1.4, q.x + ext, q.y + ext * 0.4], q.d - 0.4, fn); st.now = [p[0], p[1], p[2]]; };
+  var fade = clamp(Math.min(T, (st.fout.t1 - T)) / 0.8);
+  if (T < st.fin.t1 || T >= st.fout.t0) {   // in the air
+    var e = T < st.fin.t1 ? st.fin : st.fout, q = townAir(e, T), q2 = townAir(e, Math.min(e.t1, T + 0.05)), s0 = P(q.p[0], q.p[1], q.p[2]), s1 = P(q2.p[0], q2.p[1], q2.p[2]), dx = s1.x - s0.x, dy = s1.y - s0.y, dr = Math.abs(dx) > 0.01 ? (dx > 0 ? 1 : -1) : (st.face || 1);
+    st.face = dr; var land = e.out ? 0 : sstep(0.72, 0.98, q.u), takeoff = e.out ? 1 - sstep(0, 0.3, q.u) : 0, gl = !e.out && q.u > 0.35 && q.u < 0.7, ph = t * (kind === 'tsuru' ? 6.5 : 9) + st.seed;
+    seen(q.p, function (c) {
+      if (fade < 1) c.globalAlpha = fade;
+      if (q.p[1] < 2.5) { var gp = P(q.p[0], 0, q.p[2]); pbShadow(c, gp.x, gp.y, gp.k, dr, S.L * 0.5 * (1 - q.p[1] / 2.5), null, pbLight(g), g.LIT && g.LIT.ls ? g.LIT.ls[0] * dr : 0.6); }
+      townBirdPlace(c, g, q.p[0], q.p[1], q.p[2], dr, mag, function (cc) {
+        if ((land > 0.85 && !e.out) || takeoff > 0.85) waderPaint(cc, kind, { t: t, ext: 0.7, wings: 1, step: null });
+        else { cc.translate(0, -S.L * 0.45); waderFlyPaint(cc, kind, { ph: gl ? 0 : ph, glide: gl, land: Math.max(land, takeoff * 0.7), pitch: clamp(Math.atan2(dy, Math.abs(dx) + 0.01), -0.4, 0.4) * dr * 0.6 }); }
+      });
+      c.globalAlpha = 1;
+    });
+    return;
+  }
+  // on the ground: the plan's walk, the species' acts (the garden's poses)
+  var Sx = landState(st, T - st.off), o = { t: t, blink: zblink(t, st.seed % 71), step: Sx.walk ? Sx.dist / (kind === 'tsuru' ? 0.5 : 0.24) * TAU : null, ext: kind === 'tsuru' ? 0.75 : 0.45, plumes: kind === 'sagi' };
+  var au = Sx.f * (Sx.e.t1 - Sx.e.t0), lift = 0, q3 = P(Sx.x, 0, Sx.z), q4 = P(Sx.x + Sx.dx, 0, Sx.z + Sx.dz);
+  if (Sx.walk && Math.abs(q4.x - q3.x) > 0.15 * q3.k) st.face = q4.x > q3.x ? 1 : -1; if (!st.face) st.face = 1;
+  if (Sx.act === 'settle') { o.wings = 1 - sstep(0, kind === 'tsuru' ? 1.2 : 0.8, au); o.ext = kind === 'tsuru' ? 0.85 : 0.7; }
+  else if (Sx.act === 'hunt') {   // the neck drawn back, a long still look at the water, the lunge, and up again (with a fish, sometimes)
+    var ld = 2.2; o.ext = lerp(0.45, 0.15, sstep(0.2, 1.2, au)); o.head = { pitch: 0.35 * sstep(0.5, 1.5, au) };
+    if (au > ld && au < ld + 0.6) o.strike = Math.sin((au - ld) / 0.6 * Math.PI); else if (au >= ld + 0.6) { o.ext = 0.6; if (st.fish) o.fishUp = 1 - sstep(ld + 2.0, ld + 2.6, au); }
+  } else if (Sx.act === 'probe') { var dn = Math.max(0, Math.sin(au * 1.6)); o.ext = 0.75 - dn * 0.3; o.strike = dn > 0.6 ? (dn - 0.6) * 2.2 : 0; o.head = { pitch: dn * 0.6 }; }
+  else if (Sx.act === 'dance') {
+    var c2 = au % 3.6;
+    if (c2 < 0.9) { o.ext = lerp(0.8, 0.2, sstep(0, 0.6, c2)); o.head = { pitch: 0.9 * sstep(0, 0.6, c2) }; o.pitch = 0.25 * sstep(0, 0.6, c2); }
+    else if (c2 < 2.4) { var w = (c2 - 0.9) / 1.5; o.wings = Math.sin(w * Math.PI); lift = Math.max(0, Math.sin((w - 0.15) / 0.7 * Math.PI)) * 0.45 * (w > 0.15 && w < 0.85 ? 1 : 0); o.ext = 0.9; o.step = lift > 0 ? 0.5 : null; }
+    else { var w2 = (c2 - 2.4) / 1.2; o.wings = 0.35 * (1 - w2); o.ext = lerp(0.9, 0.6, w2); o.head = { pitch: 0.4 * Math.sin(w2 * Math.PI) }; }
+    if (au < 0.1) st.face = -st.face;   // it turns to dance
+  } else if (Sx.act === 'call') { var cl = sstep(0.3, 0.8, au) * (1 - sstep(2.6, 3.2, au)); o.call = cl > 0.5; o.ext = 1; o.wings = cl * 0.3; o.pitch = -0.1 * cl; }
+  var y = lift, wet = kind === 'sagi' && g.SEA.paddy === 'flood' ? -0.05 : 0;
+  seen([Sx.x, y, Sx.z], function (c) {
+    var gp = P(Sx.x, 0, Sx.z); pbShadow(c, gp.x, gp.y, gp.k * mag, st.face, S.L * 0.32 * (1 - lift), null, pbLight(g), g.LIT && g.LIT.ls ? g.LIT.ls[0] * st.face : 0.6);
+    townBirdPlace(c, g, Sx.x, y + wet, Sx.z, st.face, mag, function (cc) { waderPaint(cc, kind, o); });
+  });
+}
+function townWaderRings(ctx, g, st, T, t) {   // rings round the egret's legs where it wades
+  if (T < st.fin.t1 || T >= st.fout.t0 || g.SEA.paddy !== 'flood') return;
+  var Sx = landState(st, T - st.off), c = P(Sx.x, WL * 0 - 0.04, Sx.z), rph = (t * 0.7) % 1;
+  for (var r = 0; r < 2; r++) { var u = (rph + r * 0.5) % 1, rr = (0.06 + u * 0.3) * c.k; ctx.strokeStyle = 'rgba(232,240,246,' + (0.4 * (1 - u)) + ')'; ctx.lineWidth = Math.max(0.5, 0.01 * c.k); ctx.beginPath(); ctx.ellipse(c.x, c.y, rr, rr * CAM.s * 0.9, 0, 0, TAU); ctx.stroke(); }
+}
+function townKingfisher(ctx, g, st, T, t) {
+  var mag = 2.0 / BIRDV, S2 = SB3.kawasemi, L2 = S2.L * BIRDV, A = st.A, B = st.B, pe = st.perch, dv = st.dive;
+  var tIn = 2.6, tW = 9.5, tD = 2.1, tF = 6.2, p, dir, mode, uu;   // in, watch, dive and back, the fish, out
+  function cut(p3, fn) { var q = P(p3[0], p3[1], p3[2]), e = 0.5 * q.k; drawCut(ctx, g, [q.x - e, q.y - e, q.x + e, q.y + e * 0.5], q.d - 0.3, fn); st.now = p3; }
+  // the stake it perches on, standing in the shallows
+  var s0 = P(pe[0], WL - 0.2, pe[2]), s1 = P(pe[0], pe[1] - 0.02, pe[2]);
+  drawCut(ctx, g, [s1.x - 2, s1.y - 2, s1.x + 2, s0.y + 2], s0.d - 0.2, function (c) { c.strokeStyle = rgb(mulc([84, 66, 50], g.tint)); c.lineWidth = Math.max(0.6, 0.07 * s1.k); c.lineCap = 'round'; c.beginPath(); c.moveTo(s0.x, s0.y); c.lineTo(s1.x, s1.y); c.stroke(); c.lineCap = 'butt'; });
+  if (T < tIn) { uu = easeIO(T / tIn); p = [lerp(A[0], pe[0], uu), lerp(A[1], pe[1], uu) + Math.sin(uu * Math.PI) * 0.25, lerp(A[2], pe[2], uu)]; mode = 'fly'; dir = P(pe[0], 0, pe[2]).x > P(A[0], 0, A[2]).x ? 1 : -1; }
+  else if (T < tIn + tW) { p = pe; mode = 'watch'; uu = T - tIn; }
+  else if (T < tIn + tW + tD) { uu = (T - tIn - tW) / tD; mode = 'dive'; }
+  else if (T < tIn + tW + tD + tF) { p = pe; mode = 'fish'; uu = T - tIn - tW - tD; }
+  else { uu = clamp((T - tIn - tW - tD - tF) / 1.8); p = [lerp(pe[0], B[0], easeIO(uu)), pe[1] + Math.sin(uu * Math.PI) * 0.3, lerp(pe[2], B[2], easeIO(uu))]; mode = 'fly'; dir = P(B[0], 0, B[2]).x > P(pe[0], 0, pe[2]).x ? 1 : -1; }
+  var dvDir = P(dv[0], 0, dv[2]).x > P(pe[0], 0, pe[2]).x ? 1 : -1;
+  if (mode === 'fly') { var fade = clamp(Math.min(T, 22 - T) / 0.4); cut(p, function (c) { if (fade < 1) c.globalAlpha = fade; townBirdPlace(c, g, p[0], p[1], p[2], dir, mag, function (cc) { birdFlyPaint2(cc, 'kawasemi', { ph: t * 60, pitch: 0 }); }); c.globalAlpha = 1; }); return; }
+  if (mode === 'dive') {   // down in a straight line, the splash, back up to the stake with the fish
+    if (uu < 0.3) { var w = uu / 0.3, pd = [lerp(pe[0], dv[0], w), lerp(pe[1] + 0.1, WL, w * w), lerp(pe[2], dv[2], w)]; cut(pd, function (c) { townBirdPlace(c, g, pd[0], pd[1], pd[2], dvDir, mag, function (cc) { cc.rotate(0.9); birdFlyPaint2(cc, 'kawasemi', { ph: Math.PI * 0.5, fold: 0.85, pitch: 0 }); }); }); }
+    if (uu > 0.28 && uu < 0.5) { var c0 = P(dv[0], WL, dv[2]), su = (uu - 0.28) / 0.22; drawCut(ctx, g, [c0.x - c0.k, c0.y - c0.k, c0.x + c0.k, c0.y + 2], c0.d - 0.3, function (c) { c.fillStyle = 'rgba(240,248,252,' + (0.85 * (1 - su)) + ')'; for (var d = 0; d < 10; d++) { var an = d / 10 * Math.PI, hh = Math.sin(su * Math.PI) * (0.12 + (d % 3) * 0.05); c.beginPath(); c.arc(c0.x + Math.cos(an) * su * 0.5 * c0.k * (d % 2 ? 1 : -1), c0.y - hh * c0.k, Math.max(0.5, 0.014 * c0.k), 0, TAU); c.fill(); } }); }
+    if (uu > 0.42) { var w2 = easeIO((uu - 0.42) / 0.58), pu = [lerp(dv[0], pe[0], w2), lerp(WL, pe[1], w2) + Math.sin(w2 * Math.PI) * 0.2, lerp(dv[2], pe[2], w2)]; cut(pu, function (c) { townBirdPlace(c, g, pu[0], pu[1], pu[2], -dvDir, mag, function (cc) { birdFlyPaint2(cc, 'kawasemi', { ph: t * 50, pitch: -0.3 * (1 - w2) }); kfFish(cc, 0.2 * L2, 0.1 * L2, 0.3); }); }); }
+    return;
+  }
+  // on the stake: the watch (head bobbing, a crouch before the dive), then the fish beaten against the stake and swallowed
+  var face = mode === 'watch' ? dvDir : -dvDir;
+  cut(pe, function (c) {
+    var bo = { t: t, blink: zblink(t, st.seed % 61) };
+    if (mode === 'watch') { var bb = Math.max(0, Math.sin(uu * 1.4)) > 0.9 ? Math.sin(uu * 14) * 0.15 : 0; bo.head = { pitch: 0.35 + bb, yaw: 0 }; bo.pitch = 0.1; bo.crouch = Math.max(0, Math.sin(uu * 0.7 - 2)) * 0.5 + sstep(tW - 1.2, tW, uu) * 0.6; if (uu < 0.25) bo.wings = 1 - uu / 0.25; }
+    else { bo.fish = uu < 5 ? 1 : 0; bo.head = { pitch: uu < 3.5 ? 0.6 * Math.max(0, Math.sin(uu * 5)) - 0.2 : -0.5 * sstep(4.5, 5, uu) * (1 - sstep(5.2, 5.8, uu)) }; if (uu < 0.25) bo.wings = 1 - uu / 0.25; }
+    townBirdPlace(c, g, pe[0], pe[1], pe[2], face, mag, function (cc) { birdPaint2(cc, 'kawasemi', bo); if (mode === 'fish' && uu < 5) kfFish(cc, L2 * 0.5 + (uu < 3.5 ? Math.sin(uu * 5) * 0.02 : 0), -S2.tars * L2 - L2 * 0.32, uu < 3.5 ? Math.sin(uu * 5) * 0.5 : 0.3); });
+  });
+}
 var RARE_DEFS = [
   { id: 'shironeko', name: '白い猫', season: ALL_S, light: ['morning', 'day', 'dusk'], minStage: 9, w: 1, dur: 22, desc: '商家の屋根の上を、白い猫がゆっくり歩いていきます',
     // along the ridge of the merchant house: over the ridge-end, a slow walk, a sit to wash and watch, on and down the far side
@@ -7467,12 +8146,31 @@ var RARE_DEFS = [
         }
       }, 0.9);
     } },
-  { id: 'shirasagi', name: '白鷺', season: ['summer'], light: ['morning', 'day', 'dusk'], minStage: 5, w: 1, dur: 22, desc: '青田に白鷺が舞い降りました',
-    setup: function () { return { sky: [60, 18, 2], land: [22.5, 0, 15.8], walk: [25.5, 0, 15.2], away: [5, 20, -6] }; },
-    draw: function (ctx, g, st, u, t) { var ph = phase3(u, 0.2, 0.82), p, q; ctx.globalAlpha = fadeIO(u); if (ph.m === 'stay') { p = mixc(st.land, st.walk, ph.f); q = Pa(p); var cyc = (ph.f * 9) % 1, walk = cyc < 0.55; drawWader(ctx, q.x, q.y, q.k * 1.25, 'egret', { face: 1, ext: walk ? 0.55 : 0.75, step: walk ? cyc * 9 : null, strike: !walk && cyc > 0.7 ? Math.sin((cyc - 0.7) / 0.3 * Math.PI) : 0, tint: g.tint, lum: g.lum }); } else { var inn = ph.m === 'in', e = inn ? Math.sin(ph.f * Math.PI / 2) : ph.f * ph.f; p = inn ? mixc(st.sky, st.land, e) : mixc(st.walk, st.away, e); q = Pa(p); var wb = wingBeat('egret', t, 0.2, inn && ph.f > 0.45 && ph.f < 0.85 ? 'glide' : 'flap'); if (inn && ph.f > 0.9) drawWader(ctx, q.x, q.y + 0, q.k * 1.25, 'egret', { face: 1, ext: 0.7, tint: g.tint, lum: g.lum }); else drawFlyer(ctx, q.x, q.y - q.k * 0.6, q.k * 1.25, 'egret', { psi: inn ? Math.PI - 0.35 : -0.4, th: wb.th, dth: wb.dth, tint: g.tint }); } ctx.globalAlpha = 1; } },
-  { id: 'tancho', name: '丹頂鶴', season: ['winter'], light: ['morning', 'day'], minStage: 5, w: 0.2, dur: 24, desc: '雪の田んぼに丹頂鶴が舞い降りました。めったに見られません',
-    setup: function () { return { sky: [62, 22, 30], land: [24, 0, 15.2], away: [70, 26, 40] }; },
-    draw: function (ctx, g, st, u, t) { var ph = phase3(u, 0.22, 0.82), p, q; ctx.globalAlpha = fadeIO(u); if (ph.m === 'stay') { q = Pa(st.land); var dn = ph.f > 0.35 && ph.f < 0.7, dv = dn ? Math.max(0, Math.sin((ph.f - 0.35) / 0.35 * Math.PI * 4)) : 0; drawWader(ctx, q.x, q.y - dv * q.k * 0.25, q.k * 1.15, 'crane', { face: ph.f > 0.5 ? -1 : 1, ext: dn ? 0.9 : 0.6, dance: dn ? dv : 0, strike: !dn && Math.sin(ph.f * 30) > 0.8 ? 0.8 : 0, tint: g.tint, lum: g.lum }); } else { var inn = ph.m === 'in', e = inn ? Math.sin(ph.f * Math.PI / 2) : ph.f * ph.f; p = inn ? mixc(st.sky, st.land, e) : mixc(st.land, st.away, e); q = Pa(p); var wb = wingBeat('crane', t, 0.1, inn && ph.f > 0.5 && ph.f < 0.88 ? 'glide' : 'flap'); if (inn && ph.f > 0.92) drawWader(ctx, q.x, q.y, q.k * 1.15, 'crane', { face: 1, ext: 0.8, dance: 0.6, tint: g.tint, lum: g.lum }); else drawFlyer(ctx, q.x, q.y - q.k * 0.7, q.k * 1.15, 'crane', { psi: inn ? Math.PI - 0.3 : -0.3, th: wb.th, dth: wb.dth, tint: g.tint }); } ctx.globalAlpha = 1; } },
+  { id: 'shirasagi', name: '白鷺', season: ['summer'], light: ['morning', 'day', 'dusk'], minStage: 5, w: 1, dur: 35, desc: '青田に白鷺が舞い降りました',
+    // the garden's egret in the green paddies right of the road: a long glide down on bowed wings, a settle, a slow stalk through
+    // the rice with the neck drawn back, a freeze, the lightning strike (sometimes with a fish), on a few steps, and away
+    setup: function () {
+      var n = (RARE_N.sagi = (RARE_N.sagi || 0) + 1), r = mulberry32(330 + n * 7), s1 = [20.5 + r() * 4, 15.2 + r() * 1.2], s2 = [s1[0] + 0.75, s1[1] - 0.3], s3 = [s2[0] + 0.7, s2[1] + 0.35];
+      var pl = landPlan(s1, [{ wait: 2.2, act: 'settle', fill: false }, { go: s2, v: 0.25 }, { wait: 5.5, act: 'hunt' }, { go: s3, v: 0.25 }, { wait: 4.5, act: 'hunt' }], 24);
+      pl.fin = { a: [s1[0] - 22, 14, s1[1] + 14], b: [s1[0], 0, s1[1]], t0: 0, t1: 5 }; pl.off = 5;
+      pl.fout = { out: true, a: [s3[0], 0, s3[1]], b: [s3[0] + 26, 16, s3[1] + 18], t0: 5 + pl.T + 0.4, t1: 5 + pl.T + 5.4 };
+      pl.fish = n % 3 !== 0; pl.seed = 50 + n; pl.p0 = [s1[0], 0, s1[1]]; pl.p1 = [s3[0], 0, s3[1]]; return pl;
+    },
+    draw: function () { },
+    water: function (ctx, g, st, u, t) { townWaderRings(ctx, g, st, u * 35, t); },
+    loose: function (ctx, g, st, u, t) { townWader(ctx, g, st, u * 35, t, 'sagi', 1.25); } },
+  { id: 'tancho', name: '丹頂鶴', season: ['winter'], light: ['morning', 'day'], minStage: 5, w: 0.2, dur: 35, desc: '雪の田んぼに丹頂鶴が舞い降りました。めったに見られません',
+    // the garden's crane on the snow of the fields: it glides in on its broad wings, walks and probes, dances (the bow, the wings
+    // flung open, a bounding leap, the bow again) and calls with its head thrown back, then runs a few steps and lifts off
+    setup: function () {
+      var n = (RARE_N.tsuru = (RARE_N.tsuru || 0) + 1), s1 = [23 + (n % 2) * 2, 15.4], s2 = [s1[0] + 1.6, s1[1] - 0.3];
+      var pl = landPlan(s1, [{ wait: 2.5, act: 'settle', fill: false }, { go: s2, v: 0.45 }, { wait: 4.0, act: 'probe', fill: false }, { wait: 7.5, act: 'dance', fill: false }, { wait: 3.5, act: 'call', fill: false }], 22);
+      pl.fin = { a: [s1[0] - 30, 18, s1[1] + 24], b: [s1[0], 0, s1[1]], t0: 0, t1: 6 }; pl.off = 6;
+      pl.fout = { out: true, a: [s2[0], 0, s2[1]], b: [s2[0] + 34, 20, s2[1] + 26], t0: 6 + pl.T + 0.5, t1: 6 + pl.T + 6 };
+      pl.seed = 70 + n; pl.p0 = [s1[0], 0, s1[1]]; pl.p1 = [s2[0], 0, s2[1]]; return pl;
+    },
+    draw: function () { },
+    loose: function (ctx, g, st, u, t) { townWader(ctx, g, st, u * 35, t, 'tsuru', 1.15); } },
   { id: 'tsubame', name: 'ツバメ', season: ['spring'], light: ['morning', 'day'], minStage: 9, w: 1, dur: 14, desc: 'ツバメが軒先をすいすいとかすめていきます',
     setup: function () { return swallowSetup((RARE_N.tsubame = (RARE_N.tsubame || 0) + 1)); },
     draw: function () { },
@@ -7553,9 +8251,20 @@ var RARE_DEFS = [
         townGarden(harePaint2, c, 0, 0, k, o, g, S.x, S.z, fs, 1.0); c.globalAlpha = 1;
       });
     } },
-  { id: 'kawasemi', name: 'カワセミ', season: ['spring', 'summer', 'autumn'], light: ['morning', 'day'], minStage: 0, w: 0.7, dur: 12, desc: '川面をカワセミが青い光のように横切りました',
-    setup: function () { var a = RIVER_S[Math.round(RIVER_S.length * 0.25)], b = RIVER_S[Math.round(RIVER_S.length * 0.62)]; return { a: [a[0], 0.6, a[1]], b: [b[0], 0.6, b[1]], perch: [BR_NEAR[0] - 3.5, 1.2, BR_NEAR[1] + 2.5] }; },
-    draw: function (ctx, g, st, u, t) { var ph = phase3(u, 0.25, 0.7), p, perch = ph.m === 'stay', plunge = 0; if (ph.m === 'in') p = mixc(st.a, st.perch, ph.f); else if (perch) { p = st.perch.slice(); if (ph.f > 0.6 && ph.f < 0.8) { plunge = (ph.f - 0.6) / 0.2; p[1] = 1.2 - Math.sin(plunge * Math.PI) * 2.0; } } else p = mixc(st.perch, st.b, ph.f); var q = Pa(p), tn = g.tint.map(function (v) { return Math.max(0.75, v); }); ctx.globalAlpha = fadeIO(u); var po = P(st.perch[0], 0, st.perch[2]); if (perch || ph.m === 'in') { ctx.strokeStyle = rgb(mulc([110, 90, 60], g.tint)); ctx.lineWidth = Math.max(0.4, 0.08 * po.k); ctx.beginPath(); ctx.moveTo(po.x, po.y); ctx.lineTo(po.x, Pa(st.perch).y + 0.15 * po.k); ctx.stroke(); } if (perch && !plunge) drawPerched(ctx, q.x, q.y + 0.1 * q.k, q.k * 2.8, 'kingfisher', { face: faceOf(st.a, st.perch), look: Math.sin(t * 1.4) > 0.6, peck: Math.max(0, Math.sin(t * 0.9)) * 0.25, tint: tn, shadow: false }); else { var wb = wingBeat('kingfisher', t, 0, 'flap'); drawFlyer(ctx, q.x, q.y, q.k * 2.8, 'kingfisher', { psi: plunge ? (plunge < 0.5 ? 1.2 : -1.2) * faceOf(st.a, st.perch) : (ph.m === 'out' ? (faceOf(st.perch, st.b) > 0 ? 0 : Math.PI) : (faceOf(st.a, st.perch) > 0 ? 0 : Math.PI)), th: wb.th, dth: wb.dth, tint: tn }); if (plunge > 0.45 && plunge < 0.6) { var wp = P(p[0], WL, p[2]); ctx.strokeStyle = 'rgba(236,244,250,0.7)'; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.ellipse(wp.x, wp.y, 0.3 * wp.k, 0.08 * wp.k, 0, 0, TAU); ctx.stroke(); } } ctx.globalAlpha = 1; } },
+  { id: 'kawasemi', name: 'カワセミ', season: ['spring', 'summer', 'autumn'], light: ['morning', 'day'], minStage: 0, w: 0.7, dur: 22, desc: '川面をカワセミが青い光のように横切りました',
+    // the garden's kingfisher: in fast and low along the river to a stake by the far bank's stones, a watch with the head bobbing, the
+    // dive straight down (the splash, the rings), back up to the stake with a fish, which it beats and swallows, and away
+    setup: function () {
+      var n = (RARE_N.kawasemi = (RARE_N.kawasemi || 0) + 1), f = 0.37 + (n % 2) * 0.04, a = riverAt(f, RIVER_HW - 1.1), b = riverAt(f, -(RIVER_HW - 1.1)), nr = a[1] > b[1] ? a : b, sg = nr === a ? 1 : -1, dv = riverAt(f + 0.006, sg * (RIVER_HW - 3.0));
+      var A0 = riverAt(f - 0.08, sg * (RIVER_HW - 2)), A1 = riverAt(f + 0.09, sg * (RIVER_HW - 2.5));
+      return { perch: [nr[0], WL + 1.05, nr[1]], dive: [dv[0], WL, dv[1]], A: [A0[0], WL + 0.7, A0[1]], B: [A1[0], WL + 0.8, A1[1]], seed: 80 + n, fishK: n % 2 };
+    },
+    draw: function () { },
+    water: function (ctx, g, st, u, t) {   // the rings where it went in
+      var T = u * 22, d0 = 12.2, d1 = 14.2; if (T < d0 + 0.5 || T > d1 + 2.5) return; var c = P(st.dive[0], WL, st.dive[2]), su = clamp((T - d0 - 0.5) / 2.2);
+      for (var r = 0; r < 3; r++) { var rr = (0.05 + su * 0.5 - r * 0.09) * c.k; if (rr <= 0) continue; ctx.strokeStyle = 'rgba(236,244,250,' + (0.55 * (1 - su)) + ')'; ctx.lineWidth = Math.max(0.5, 0.012 * c.k); ctx.beginPath(); ctx.ellipse(c.x, c.y, rr, rr * CAM.s * 0.9, 0, 0, TAU); ctx.stroke(); }
+    },
+    loose: function (ctx, g, st, u, t) { townKingfisher(ctx, g, st, u * 22, t); } },
   { id: 'tanuki', name: '狸', season: ['spring', 'summer', 'autumn'], light: ['night'], minStage: 2, w: 0.9, dur: 30, desc: '夜道を、狸がとことこ歩いていきます',
     // the garden's tanuki at night by the teahouse: an unhurried amble in from behind it, nose to the ground foraging along the
     // road's verge, a pause to sit up and look round (the eyes catching the lamplight), and away down the road out of the picture
@@ -10006,7 +10715,7 @@ var API = {
   weatherAt: weatherAt,
   fireworksAt: fireworksAt
 };
-try { Object.defineProperty(API, '_dbg', { value: { renderStatic: renderStatic, makeCam: makeCam, focusFor: focusFor, idbOpen: idbOpen, P: function () { return P.apply(null, arguments); }, folk: { paint: paintFolk, dress: dressFor, env: folkEnv, setSc: function (v) { FOLK_SC = v; } }, animals: { sika: function (ctx, x, y, k, o, g) { townSika(ctx, x, y, k, o, g); }, fox: function (ctx, x, y, k, o, g) { townGarden(foxPaint2, ctx, x, y, k, o, g); }, cat2: function (ctx, x, y, k, o, g) { townCat(ctx, x, y, k, o, g); }, dog2: function (ctx, x, y, k, o, g) { townDog(ctx, x, y, k, o, g); }, tanuki: function (ctx, x, y, k, o, g) { townGarden(tanukiPaint2, ctx, x, y, k, o, g); }, hare: function (ctx, x, y, k, o, g) { if (o.hopU !== undefined) { var hp = hareHop(o.hopU, 0.12, 0.8), q; for (q in hp) o[q] = hp[q]; } townGarden(harePaint2, ctx, x, y, k, o, g); }, }, fauna: { swallowPos: swallowPos, drawFlyer: drawFlyer, drawPerched: drawPerched, drawWader: drawWader, drawDragonfly: drawDragonfly, drawButterfly: drawButterfly, wingBeat: wingBeat, fireflyGlow: fireflyGlow, sprite: sprite, stamp: stamp } }, enumerable: false }); } catch (e) { /* ignore */ }
+try { Object.defineProperty(API, '_dbg', { value: { renderStatic: renderStatic, makeCam: makeCam, focusFor: focusFor, idbOpen: idbOpen, P: function () { return P.apply(null, arguments); }, folk: { paint: paintFolk, dress: dressFor, env: folkEnv, setSc: function (v) { FOLK_SC = v; } }, animals: { sika: function (ctx, x, y, k, o, g) { townSika(ctx, x, y, k, o, g); }, sb3: function (ctx, x, y, k, o, g) { townGarden(function (c, oo) { sb3Paint(c, oo.kind, oo); }, ctx, x, y, k, o, g); }, sb3f: function (ctx, x, y, k, o, g) { townGarden(function (c, oo) { sb3Fly(c, oo.kind, oo); }, ctx, x, y, k, o, g); }, wd3: function (ctx, x, y, k, o, g) { townGarden(function (c, oo) { wd3Paint(c, oo.kind, oo); }, ctx, x, y, k, o, g); }, wd3f: function (ctx, x, y, k, o, g) { townGarden(function (c, oo) { wd3Fly(c, oo.kind, oo); }, ctx, x, y, k, o, g); }, fox: function (ctx, x, y, k, o, g) { townGarden(foxPaint2, ctx, x, y, k, o, g); }, cat2: function (ctx, x, y, k, o, g) { townCat(ctx, x, y, k, o, g); }, dog2: function (ctx, x, y, k, o, g) { townDog(ctx, x, y, k, o, g); }, tanuki: function (ctx, x, y, k, o, g) { townGarden(tanukiPaint2, ctx, x, y, k, o, g); }, hare: function (ctx, x, y, k, o, g) { if (o.hopU !== undefined) { var hp = hareHop(o.hopU, 0.12, 0.8), q; for (q in hp) o[q] = hp[q]; } townGarden(harePaint2, ctx, x, y, k, o, g); }, }, fauna: { swallowPos: swallowPos, drawFlyer: drawFlyer, drawPerched: drawPerched, drawWader: drawWader, drawDragonfly: drawDragonfly, drawButterfly: drawButterfly, wingBeat: wingBeat, fireflyGlow: fireflyGlow, sprite: sprite, stamp: stamp } }, enumerable: false }); } catch (e) { /* ignore */ }
 window.MogiTown = API;
 
 })();

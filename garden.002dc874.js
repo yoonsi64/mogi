@@ -1039,16 +1039,18 @@ function drawRock(ctx, R, mossK) {
   for (i = 0; i < rr * rr * 0.08 * DQ; i++) { var x = c0.x + (rng() - 0.5) * rr * 2.2, y = c0.y + (rng() - 0.5) * R.ry * c0.k * 2; ctx.fillStyle = rng() < 0.5 ? 'rgba(214,206,170,0.33)' : 'rgba(40,36,32,0.22)'; ctx.fillRect(x, y, (0.5 + rng() * 0.7) / Math.sqrt(DQ), (0.5 + rng() * 0.5) / Math.sqrt(DQ)); }
   // the damp at its foot (darker, a little green), moss in the crevices low down, pale lichen on the dry upper faces
   var bt = P(R.cx, R.by, R.cz), tp2 = P(R.cx, R.by + R.ry * 0.9, R.cz), gd = ctx.createLinearGradient(0, bt.y, 0, tp2.y);
-  gd.addColorStop(0, LIT.wet ? 'rgba(20,26,18,0.5)' : 'rgba(26,32,22,0.34)'); gd.addColorStop(0.35, 'rgba(26,32,22,0.1)'); gd.addColorStop(1, 'rgba(26,32,22,0)'); ctx.fillStyle = gd; ctx.fillRect(c0.x - rr * 2, tp2.y - rr, rr * 4, bt.y - tp2.y + rr * 2);
-  if (!snow && !sil()) {
+  gd.addColorStop(0, LIT.wet ? 'rgba(20,26,18,0.5)' : 'rgba(26,32,22,0.34)'); gd.addColorStop(0.35, 'rgba(26,32,22,0.1)'); gd.addColorStop(1, 'rgba(26,32,22,0)'); if (!((typeof window !== 'undefined' && window.__dx) || {}).c) ctx.fillStyle = gd; else ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(c0.x - rr * 2, tp2.y - rr, rr * 4, bt.y - tp2.y + rr * 2);
+  if (((typeof window !== 'undefined' && window.__dx) || {}).c) gd = 'rgba(0,0,0,0)';
+  ctx.fillStyle = gd; ctx.fillRect(0,0,0,0);
+  if (!snow && !sil() && !((typeof window !== 'undefined' && window.__dx) || {}).c) {
     var ms3 = Math.min(1, R.moss * mossK + 0.25);
     for (i = 0; i < vis.length; i++) {
-      var t3 = vis[i].t, hy3 = (t3.c[1] - R.by) / (R.ry || 1); if (hy3 > 0.35 || t3.sn[1] > 0.6 || rng() > ms3 * 0.6) continue;   // the crevices low down, where it stays damp
-      var p4 = Pa(t3.c); ctx.fillStyle = rgb(mulc(ramp(mossC, 0.25 + rng() * 0.4), lightTint(1)), 0.75); ctx.beginPath(); ctx.ellipse(p4.x + (rng() - 0.5) * 2, p4.y + (rng() - 0.5) * 1.2, (0.6 + rng() * 1.2) / Math.sqrt(DQ), (0.4 + rng() * 0.7) / Math.sqrt(DQ), 0, 0, TAU); ctx.fill();
+      var t3 = vis[i].t, hy3 = (t3.c[1] - R.by) / (R.ry || 1); if (hy3 > 0.16 || t3.sn[1] > 0.4 || rng() > ms3 * 0.22) continue;   // the crevices low down, where it stays damp
+      var p4 = Pa(t3.c); ctx.fillStyle = rgb(mulc(ramp(mossC, 0.2 + rng() * 0.3), lightTint(1)), 0.5); ctx.beginPath(); ctx.ellipse(p4.x + (rng() - 0.5) * 2, p4.y + (rng() - 0.5) * 1.2, (0.4 + rng() * 0.7) / Math.sqrt(DQ), (0.3 + rng() * 0.4) / Math.sqrt(DQ), 0, 0, TAU); ctx.fill();
     }
     for (i = 0; i < vis.length; i++) {
-      var t4 = vis[i].t; if (t4.sn[1] < 0.2 || NZ.n3(t4.c[0] * 6 + 3, t4.c[1] * 6, t4.c[2] * 6) < 0.62) continue;   // lichen: pale grey-green rosettes, a few ochre
-      var p5 = Pa(t4.c), lc = rng() < 0.75 ? [196, 202, 176] : [204, 172, 104]; ctx.fillStyle = rgb(mulc(lc, lightTint(1)), 0.45); ctx.beginPath(); ctx.arc(p5.x + (rng() - 0.5) * 2, p5.y + (rng() - 0.5) * 1.5, (0.5 + rng() * 1.1) / Math.sqrt(DQ), 0, TAU); ctx.fill();
+      var t4 = vis[i].t; if (t4.sn[1] < 0.2 || NZ.n3(t4.c[0] * 6 + 3, t4.c[1] * 6, t4.c[2] * 6) < 0.74 || rng() > 0.5) continue;   // lichen: pale grey-green rosettes, a few ochre
+      var p5 = Pa(t4.c), lc = rng() < 0.8 ? [186, 192, 168] : [196, 168, 108]; ctx.fillStyle = rgb(mulc(lc, lightTint(1)), 0.22); ctx.beginPath(); ctx.arc(p5.x + (rng() - 0.5) * 2, p5.y + (rng() - 0.5) * 1.5, (0.35 + rng() * 0.6) / Math.sqrt(DQ), 0, TAU); ctx.fill();
     }
   }
   if (LIT.wet && !sil()) {   // rain: a wet sheen, a few bright streaks where the sky catches the wet top
@@ -1154,7 +1156,7 @@ function drawLantern(ctx, L, lit) {
   if (SEA.snow && !sil()) snowCap(ctx, x, 1.6, z, 0.36, 0.07);
   var r2 = mulberry32(5);
   if (!sil()) { var lb0 = P(x, 0, z), lb1 = P(x, 0.45, z), gL = ctx.createLinearGradient(0, lb0.y, 0, lb1.y); gL.addColorStop(0, LIT.wet ? 'rgba(20,26,18,0.45)' : 'rgba(26,32,22,0.3)'); gL.addColorStop(1, 'rgba(26,32,22,0)'); ctx.save(); b1.out.forEach(function (q) { var pts = q.f.pts.map(Pa); poly(ctx, pts); }); ctx.clip(); ctx.fillStyle = gL; ctx.fillRect(lb0.x - lb0.k, lb1.y, lb0.k * 2, lb0.y - lb1.y + 4); ctx.restore();   // the damp at its foot
-    for (var li = 0; li < 18; li++) { var lq = P(x + (r2() - 0.5) * 0.4, 0.3 + r2() * 1.3, z - 0.18), lcol = r2() < 0.7 ? [196, 202, 176] : [204, 172, 104]; ctx.fillStyle = rgb(mulc(lcol, lightTint(1)), 0.4); ctx.beginPath(); ctx.arc(lq.x, lq.y, (0.4 + r2() * 0.9) / Math.sqrt(DQ), 0, TAU); ctx.fill(); } }   // lichen
+    for (var li = 0; li < 8; li++) { var lq = P(x + (r2() - 0.5) * 0.4, 0.3 + r2() * 1.3, z - 0.18), lcol = r2() < 0.7 ? [196, 202, 176] : [204, 172, 104]; ctx.fillStyle = rgb(mulc(lcol, lightTint(1)), 0.22); ctx.beginPath(); ctx.arc(lq.x, lq.y, (0.35 + r2() * 0.6) / Math.sqrt(DQ), 0, TAU); ctx.fill(); } }   // lichen
   rf.out.forEach(function (q) { mossDabs(ctx, q.f.pts, 40, r2, 1); });
   cd.out.forEach(function (q) { if (q.f.top) mossDabs(ctx, q.f.pts, 30, r2, 1); });
   b1.out.forEach(function (q) { mossDabs(ctx, q.f.pts, 26, r2, 0.9); });
@@ -2247,14 +2249,16 @@ function groundRows(D, M, PW, y0, y1, S) {
         r += (g0[0] + (g1[0] - g0[0]) * gf - r) * ga; g += (g0[1] + (g1[1] - g0[1]) * gf - g) * ga; bl += (g0[2] + (g1[2] - g0[2]) * gf - bl) * ga;
         // the lawn's own variety: drier straw-coloured patches, darker lush ones (clover, damp hollows), and the fine grain of the blades
         var wx = x + (n2(x * 3.1 + 2, z * 3.1) - 0.5) * 0.5, wz = z + (n2(x * 3.1, z * 3.1 + 8) - 0.5) * 0.5, dv = n2(wx * 1.9 + 11, wz * 1.9 - 4) * 0.75 + n2(wx * 5.3, wz * 5.3 + 3) * 0.25;   // warped: irregular shapes
+        var DX = (typeof window !== 'undefined' && window.__dx) || {};
+        if (DX.a) dv = 0.5;
         if (dv > 0.6 && !snow) { var dA = sstep(0.6, 0.625, dv) * ga * dryK * (0.8 + 0.4 * gr); r += (dryC[0] - r) * dA; g += (dryC[1] - g) * dA; bl += (dryC[2] - bl) * dA; }   // the dry ground: a crisp edge
         else if (dv < 0.36) { var lA = sstep(0.36, 0.335, dv) * ga; r *= 1 - lA * 0.2; g *= 1 - lA * 0.08; bl *= 1 - lA * 0.18; }
         if (fp < 0.1) { var gs = (n2(x * 30 + 7, z * 9) - 0.5) * 0.3 * (1 - fp / 0.1) * ga + (gr - 0.5) * 0.12 * ga; r *= 1 + gs; g *= 1 + gs; bl *= 1 + gs * 0.8; }   // the grain of the blades
-        if (!snow && fp < 0.07) {   // small crisp things on the lawn: clover and moss tufts; fallen leaves in autumn, petals in spring
+        if (!snow && fp < 0.12) {   // small crisp things on the lawn: clover and moss tufts; fallen leaves in autumn, petals in spring
           var cx2 = Math.floor(x * 9), cz2 = Math.floor(z * 9), ch = hash2(cx2 + 911, cz2 - 37);
-          if (ch < 0.16) { var jx = (cx2 + 0.3 + hash2(cx2, cz2 + 5) * 0.4) / 9, jz = (cz2 + 0.3 + hash2(cx2 + 3, cz2) * 0.4) / 9, rr2 = 0.022 + ch * 0.12, dd3 = Math.hypot(x - jx, (z - jz) * 1.3);
-            if (dd3 < rr2) { var tA = (1 - sstep(rr2 * 0.8, rr2, dd3)) * ga * (1 - fp / 0.07), kind2 = ch < 0.05 ? 0 : ch < 0.1 ? 1 : 2, sh2 = 0.85 + 0.3 * clamp((jx - x) * Lhx + (jz - z) * Lhz + 0.5);
-              var tc0 = kind2 === 0 ? [g0[0] * 0.62, g0[1] * 0.85, g0[2] * 0.7] : kind2 === 1 ? [mossPal[2][0], mossPal[2][1], mossPal[2][2]] : leafC; if (kind2 === 2 && !leafC) tA = 0;
+          if (ch < 0.2) { var jx = (cx2 + 0.3 + hash2(cx2, cz2 + 5) * 0.4) / 9, jz = (cz2 + 0.3 + hash2(cx2 + 3, cz2) * 0.4) / 9, rr2 = 0.022 + ch * 0.12, dd3 = Math.hypot(x - jx, (z - jz) * 1.3);
+            if (dd3 < rr2) { var tA = (1 - sstep(rr2 * 0.8, rr2, dd3)) * Math.max(ga, 0.5) * (1 - fp / 0.12), kind2 = ch < 0.05 ? 0 : ch < 0.1 ? 1 : 2, sh2 = 0.85 + 0.3 * clamp((jx - x) * Lhx + (jz - z) * Lhz + 0.5);
+              var tc0 = kind2 === 0 ? [g0[0] * 0.62, g0[1] * 0.85, g0[2] * 0.7] : kind2 === 1 || !leafC ? [mossPal[2][0], mossPal[2][1], mossPal[2][2]] : leafC;
               r += (tc0[0] * sh2 - r) * tA; g += (tc0[1] * sh2 - g) * tA; bl += (tc0[2] * sh2 - bl) * tA; } }
         }
       }
@@ -2333,7 +2337,7 @@ function groundRows(D, M, PW, y0, y1, S) {
         }
       }
       // the ground's gentle relief, lit from the sun's side: small mounds and hollows in the lawn and the moss (not the raked gravel, not the water)
-      if (gA < 0.5 && w < 0.5) { var hc = n2(x * 3.4 + 5, z * 3.4), hdx = n2(x * 3.4 + 5.08, z * 3.4) - hc, hdz = n2(x * 3.4 + 5, z * 3.4 + 0.08) - hc, rel = 1 + (hdx * Lhx + hdz * Lhz) * 3.2 * (1 - gA * 2) * (1 - w * 2); r *= rel; g *= rel; bl *= rel; }
+      if (gA < 0.5 && w < 0.5 && !((typeof window !== 'undefined' && window.__dx) || {}).b) { var hc = n2(x * 3.4 + 5, z * 3.4), hdx = n2(x * 3.4 + 5.08, z * 3.4) - hc, hdz = n2(x * 3.4 + 5, z * 3.4 + 0.08) - hc, rel = 1 + (hdx * Lhx + hdz * Lhz) * 3.2 * (1 - gA * 2) * (1 - w * 2); r *= rel; g *= rel; bl *= rel; }
       var ed = 1 - 0.35 * sstep(edgeZ - 0.9, edgeZ, z);
       r *= ed * gi[0]; g *= ed * gi[1]; bl *= ed * gi[2];
       if (hz > 0) { r += (haze[0] - r) * hz; g += (haze[1] - g) * hz; bl += (haze[2] - bl) * hz; }
@@ -2734,7 +2738,7 @@ function post(ctx, bw, bh, glows, reflGlows, mc) {
   tbx.drawImage(b, 0, 0); tbx.globalCompositeOperation = 'destination-in';
   function st(ly) { return clamp((ly + yo) / H); }
   var gm = tbx.createLinearGradient(0, 0, 0, bh);
-  gm.addColorStop(0, 'rgba(0,0,0,0.42)'); gm.addColorStop(st(0.17 * 300), 'rgba(0,0,0,0.22)'); gm.addColorStop(st(0.29 * 300), 'rgba(0,0,0,0)'); gm.addColorStop(Math.max(st(0.29 * 300) + 0.01, st(0.9 * 300)), 'rgba(0,0,0,0)'); gm.addColorStop(1, 'rgba(0,0,0,0.7)');
+  gm.addColorStop(0, 'rgba(0,0,0,0.42)'); gm.addColorStop(st(0.17 * 300), 'rgba(0,0,0,0.22)'); gm.addColorStop(st(0.29 * 300), 'rgba(0,0,0,0)'); gm.addColorStop(Math.max(st(0.29 * 300) + 0.01, st(0.94 * 300)), 'rgba(0,0,0,0)'); gm.addColorStop(1, 'rgba(0,0,0,0.3)');
   tbx.fillStyle = gm; tbx.fillRect(0, 0, bw, bh); ctx.drawImage(tb, 0, 0);
   // light wash from the sun / moon
   var L = LIT, sx = bw * (L.sunX < 0.5 ? L.sunX - 0.08 : L.sunX + 0.08), sy = (yo * KS) + bh * 0 - bh * 0.05 + L.sunY * KS * 120;
