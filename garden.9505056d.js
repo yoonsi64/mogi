@@ -4158,11 +4158,21 @@ function paintPuddles(ctx) {
 }
 function paintRainVeil(ctx, yo) { // slanting curtains of rain over the far hills
   if (!(LIT.wet > 0.6) || LIT.after) return;
-  if (LIT.weather === 'typhoon') { var tr = mulberry32(78), tc2 = mixc(LIT.haze, [255, 255, 255], 0.25); for (var j = 0; j < 9; j++) { var tx = tr() * W, tw = 30 + tr() * 60, ts = 40 * BENDS; ctx.fillStyle = rgb(tc2, 0.14); ctx.beginPath(); ctx.moveTo(tx, yo); ctx.lineTo(tx + tw, yo); ctx.lineTo(tx + tw - ts, yo + 90); ctx.lineTo(tx - ts, yo + 90); ctx.closePath(); ctx.fill(); } }
+  if (LIT.weather === 'typhoon') { // driven curtains over the far hills, soft-sided (a sheared gradient, no polygon edge)
+    var tr = mulberry32(78), tc2 = mixc(LIT.haze, [255, 255, 255], 0.25);
+    for (var j = 0; j < 9; j++) {
+      var tx = tr() * W, tw = 30 + tr() * 60, ts = 40 * BENDS, gq = ctx.createRadialGradient(0, 0, 0, 0, 0, 1); gq.addColorStop(0, rgb(tc2, 0.2)); gq.addColorStop(0.55, rgb(tc2, 0.13)); gq.addColorStop(1, rgb(tc2, 0));
+      ctx.save(); ctx.translate(tx + tw / 2 - ts / 2, yo + 45); ctx.transform(1, 0, -ts / 90, 1, 0, 0); ctx.scale(tw * 0.62, 52); ctx.fillStyle = gq; ctx.fillRect(-1, -1, 2, 2); ctx.restore();
+    }
+  }
   var rng = mulberry32(77), c = mixc(LIT.haze, [255, 255, 255], 0.2);
   for (var i = 0; i < 7; i++) {
     var x = rng() * W, w = 20 + rng() * 50, sl = 8 + rng() * 10, g = ctx.createLinearGradient(0, yo + 4, 0, yo + 80);
     g.addColorStop(0, rgb(c, 0)); g.addColorStop(0.35, rgb(c, 0.16 + 0.1 * LIT.dark)); g.addColorStop(1, rgb(c, 0.05));
+    if (LIT.weather === 'typhoon') { // the same curtain, soft-sided
+      var gs = ctx.createRadialGradient(0, 0, 0, 0, 0, 1); gs.addColorStop(0, rgb(c, 0.15 + 0.08 * LIT.dark)); gs.addColorStop(0.6, rgb(c, 0.08)); gs.addColorStop(1, rgb(c, 0));
+      ctx.save(); ctx.translate(x + w / 2 - sl * 0.4, yo + 34); ctx.transform(1, 0, -sl / 76, 1, 0, 0); ctx.scale(w * 0.65, 46); ctx.fillStyle = gs; ctx.fillRect(-1, -1, 2, 2); ctx.restore(); continue;
+    }
     ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x, yo + 4); ctx.lineTo(x + w, yo + 4); ctx.lineTo(x + w - sl, yo + 80); ctx.lineTo(x - sl, yo + 80); ctx.closePath(); ctx.fill();
   }
 }
@@ -4316,7 +4326,7 @@ function makeGaleFx(S, g, rng) {
     S.caps = g.ripplePts ? g.ripplePts.slice(0, 40) : [];
     S.nextBolt = 20 + rng() * 40;
   } else {
-    S.flakes = []; for (i = 0; i < 380; i++) S.flakes.push(newFlake(g, rng, true));
+    makePowder(S, g, rng);
   }
 }
 function newDebris(g, rng, anywhere) {
@@ -4324,14 +4334,12 @@ function newDebris(g, rng, anywhere) {
   var cols = aut ? [[176, 52, 28], [214, 120, 40], [200, 170, 60], [80, 110, 50]] : sum ? [[60, 100, 40], [90, 130, 50], [120, 150, 60]] : [[110, 120, 70], [140, 120, 80]];
   return { x: anywhere ? rng() * g.W : (sd > 0 ? -20 - rng() * 60 : g.W + 20 + rng() * 60), y: g.horizonY - 30 + rng() * (g.H - g.horizonY + 10), sp: 0.8 + rng() * 0.7, rot: rng() * TAU, rs: (rng() - 0.5) * 14, ph: rng() * TAU, twig: rng() < 0.25, sz: 0.9 + rng() * 1.2, col: cols[(rng() * cols.length) | 0] };
 }
-function newFlake(g, rng, anywhere) {
-  var d = Math.pow(rng(), 1.4), sd = (g.wind || { side: 1 }).side;
-  return { x: anywhere ? rng() * g.W : (rng() < 0.6 ? (sd > 0 ? -10 - rng() * 30 : g.W + 10 + rng() * 30) : rng() * g.W), y: anywhere ? rng() * g.H : -6 - rng() * 20, d: d, sp: 0.6 + rng() * 0.6, ph: rng() * TAU };
-}
 function stepGaleFx(S, g, dt, rng, cue) {
   var Wd = g.wind || windVec({ dir: 0, strength: 1 }), sd = Wd.side, i, v = (S.w === 'typhoon' ? 120 : 80) * (0.7 + 0.5 * Wd.s);
-  if (S.t > S.nextGust) { S.gustT = S.t; cue('gust'); S.nextGust = S.t + 4 + rng() * 6; }
-  S.gustK = S.gustT !== undefined ? Math.max(0, 1 - Math.abs(S.t - S.gustT - 1.2) / 1.6) : 0;
+  if (!S.flakes) {
+    if (S.t > S.nextGust) { S.gustT = S.t; cue('gust'); S.nextGust = S.t + 4 + rng() * 6; }
+    S.gustK = S.gustT !== undefined ? Math.max(0, 1 - Math.abs(S.t - S.gustT - 1.2) / 1.6) : 0;
+  } else S.gustK = galeBurstAt(S, S.t);   // a blizzard blows in bursts (see stepPowder)
   var vv = v * (1 + 0.8 * S.gustK);
   if (S.scud) {
     S.scud.forEach(function (c) { c.x += sd * vv * 0.5 * c.sp * dt; if (sd > 0 && c.x - c.w > g.W) c.x = -c.w; if (sd < 0 && c.x + c.w < 0) c.x = g.W + c.w; });
@@ -4341,7 +4349,7 @@ function stepGaleFx(S, g, dt, rng, cue) {
     if (S.t > S.nextBolt) { S.bolt = { t0: S.t, dur: 0.12, pts: [[g.W * (0.2 + rng() * 0.6), -4]], br: null }; var b = S.bolt.pts[0]; for (var k = 0; k < 7; k++) b = [b[0] + (rng() - 0.5) * 7, b[1] + 4 + rng() * 4], S.bolt.pts.push(b); cue('thunder', { delay: Math.round((1.5 + rng() * 2.5) * 100) / 100 }); S.nextBolt = S.t + 40 + rng() * 50; }
     if (S.bolt && S.t - S.bolt.t0 > 0.4) S.bolt = null;
   }
-  if (S.flakes) for (i = 0; i < S.flakes.length; i++) { var f = S.flakes[i], spd = (30 + 110 * f.d) * f.sp; f.x += sd * vv * (0.35 + 1.1 * f.d) * f.sp * dt; f.y += spd * 0.45 * dt + Math.sin(S.t * 2 + f.ph) * 6 * dt; if (f.x < -40 || f.x > g.W + 40 || f.y > g.H + 6) S.flakes[i] = newFlake(g, rng, false); }
+  if (S.flakes) stepPowder(S, g, dt, rng, cue, vv / (1 + 0.8 * S.gustK));
 }
 function drawGaleSky(sky, S, g) { // the low cloud racing over, in the sky only
   if (!S.scud) return;
@@ -4352,16 +4360,14 @@ function drawGaleFx(ctx, S, g) {
   var night = g.LIT.id === 'night', sd = (g.wind || { side: 1 }).side, i;
   if (S.sheets) { // sheets of rain sweeping across and spray off the ground
     var rc = night ? [120, 134, 150] : [214, 222, 226];
-    S.sheets.forEach(function (c) { var gr = ctx.createLinearGradient(c.x - c.w, 0, c.x + c.w, 0); gr.addColorStop(0, rgb(rc, 0)); gr.addColorStop(0.5, rgb(rc, c.a * (1 + S.gustK))); gr.addColorStop(1, rgb(rc, 0)); ctx.fillStyle = gr; ctx.beginPath(); ctx.moveTo(c.x - c.w, 0); ctx.lineTo(c.x + c.w, 0); ctx.lineTo(c.x + c.w + sd * 40, g.H); ctx.lineTo(c.x - c.w + sd * 40, g.H); ctx.closePath(); ctx.fill(); });
+    S.sheets.forEach(function (c) { // a soft curtain: the gradient is sheared with the slant, so its sides fade instead of ending in an edge
+      var gr = ctx.createLinearGradient(c.x - c.w, 0, c.x + c.w, 0), a2 = c.a * (1 + S.gustK); gr.addColorStop(0, rgb(rc, 0)); gr.addColorStop(0.3, rgb(rc, a2 * 0.6)); gr.addColorStop(0.5, rgb(rc, a2)); gr.addColorStop(0.7, rgb(rc, a2 * 0.6)); gr.addColorStop(1, rgb(rc, 0));
+      ctx.save(); ctx.transform(1, 0, sd * 40 / g.H, 1, 0, 0); ctx.fillStyle = gr; ctx.fillRect(c.x - c.w, 0, c.w * 2, g.H); ctx.restore(); });
     var ms = tintedSprite(night ? [90, 100, 116] : [230, 234, 236]);
     S.spray.forEach(function (c) { stamp(ctx, ms, c.x, c.y, c.w, 10, c.a * (1 + S.gustK)); }); ctx.globalAlpha = 1;
     for (i = 0; i < S.debris.length; i++) { var d = S.debris[i]; ctx.save(); ctx.translate(d.x, d.y); ctx.rotate(d.rot); ctx.scale(1, 0.3 + 0.7 * Math.abs(Math.sin(d.rot * 0.7))); if (d.twig) { ctx.strokeStyle = rgb(mulc([90, 70, 52], g.tint)); ctx.lineWidth = 0.45; ctx.beginPath(); ctx.moveTo(-d.sz * 1.4, 0); ctx.lineTo(d.sz * 1.4, 0); ctx.moveTo(0, 0); ctx.lineTo(d.sz * 0.6, -d.sz * 0.6); ctx.stroke(); } else { ctx.fillStyle = rgb(mulc(d.col, g.tint)); ctx.beginPath(); ctx.ellipse(0, 0, d.sz, d.sz * 0.5, 0, 0, TAU); ctx.fill(); } ctx.restore(); }
   }
-  if (S.flakes) { // blizzard: far flakes as dots, near ones as sideways streaks
-    var sc = night ? [196, 206, 230] : [250, 252, 255], P0 = new Path2D(), P1 = new Path2D(), P2 = new Path2D();
-    for (i = 0; i < S.flakes.length; i++) { var f = S.flakes[i], r = 0.35 + f.d * 0.9; if (f.d < 0.55) { var pp = f.d < 0.25 ? P0 : P1; pp.moveTo(f.x + r, f.y); pp.arc(f.x, f.y, r, 0, TAU); } else { P2.moveTo(f.x, f.y); P2.lineTo(f.x - sd * (4 + 10 * f.d), f.y - 1.5 - 2 * f.d); } }
-    ctx.fillStyle = rgb(sc, 0.5); ctx.fill(P0); ctx.fillStyle = rgb(sc, 0.8); ctx.fill(P1); ctx.strokeStyle = rgb(sc, 0.6); ctx.lineWidth = 1.1; ctx.lineCap = 'round'; ctx.stroke(P2); ctx.lineCap = 'butt';
-  }
+  if (S.flakes) drawPowder(ctx, S, g);
 }
 function drawWhitecaps(ctx, S, g) { // a gale on the pond: wind streaks and breaking crests
   if (!S || !S.caps || !S.caps.length) return;
@@ -4792,7 +4798,7 @@ function stepSway(S, g, dt, wfx) {
     if (amp > 0) {
       // gusts arrive at the upwind trees first; turbulence is each tree's own
       var xn = it.d.base[0] / g.W, lag = (side > 0 ? xn : 1 - xn) * 1.1, u = wfx ? (wfx.t || 0) - lag - gT : 99;
-      var gust = gale ? sstep(0, 1, 1 - Math.abs(u - 1.3) / 1.9) : 0;
+      var gust = w === 'blizzard' && wfx ? 1.35 * galeBurstAt(wfx, (wfx.t || 0) - lag) : gale ? sstep(0, 1, 1 - Math.abs(u - 1.3) / 1.9) : 0;   // a blizzard's bursts bend them harder
       var turb = (vnoise1(it.seed, t * 0.75) - 0.5) * 0.65 + (vnoise1(it.seed + 3, t * 2.1) - 0.5) * 0.45;
       var load = 0.9 * gust + turb + (gale ? 0.2 * (Wd.s - 0.95) : 0) - 0.18;   // about the painted lean: gusts bend further, lulls let it spring back
       target = amp * it.d.flex * Math.min(it.hgt, 125) * 0.036 * load * side;
@@ -4840,9 +4846,125 @@ function drawSway(ctx, S, g, img, sc) {
   }
 }
 
+/* ---- 08h_powder.js ---- */
+/* ================= blizzard: powder snow blown across the whole picture =================
+   - a dense field of very fine soft grains (soft dots, a slight smear when fast, never lines), carried sideways by the
+     shared wind through a swirling, drifting flow (eddies, lifts and dips; near grains faster than far ones)
+   - large soft veils of blowing powder (noise-textured, feathered), and spindrift puffs lifting off the ground, the
+     fence line and the tree crowns
+   - every 8-25 s a burst: the wind surges over ~1 s, the grains thicken and speed up, a near-whiteout sweeps across,
+     the trees bend harder (08g reads galeBurstAt), then it eases off. */
+function galeBurstAt(S, t) {
+  if (!S || S.burstT === undefined) return 0;
+  var u = t - S.burstT; if (u < 0 || u > S.burstDur) return 0;
+  if (u < 1) return sstep(0, 1, u);
+  var e0 = S.burstDur - S.burstEase; return u < e0 ? 1 : 1 - sstep(0, 1, (u - e0) / S.burstEase);
+}
+function powderDot(col) { // a soft grain
+  var k = 'pd' + col.join(','); if (SPR[k]) return SPR[k];
+  var N = 24, c = mkCanvas(N, N), x = c.getContext('2d'), gr = x.createRadialGradient(N / 2, N / 2, 0, N / 2, N / 2, N / 2);
+  gr.addColorStop(0, rgb(col, 1)); gr.addColorStop(0.35, rgb(col, 0.75)); gr.addColorStop(0.7, rgb(col, 0.22)); gr.addColorStop(1, rgb(col, 0));
+  x.fillStyle = gr; x.fillRect(0, 0, N, N); SPR[k] = c; return c;
+}
+function powderTex(i, col) { // a feathered wisp of blowing powder: long horizontal tendrils, no edge anywhere
+  var k = 'pv' + i + col.join(','); if (SPR[k]) return SPR[k];
+  var w = 192, h = 72, c = mkCanvas(w, h), x = c.getContext('2d'), im = x.createImageData(w, h), d = im.data;
+  for (var y = 0; y < h; y++) for (var q = 0; q < w; q++) {
+    var dx = (q - w / 2) / (w / 2), dy = (y - h / 2) / (h / 2), e = sstep(0, 0.75, 1 - (dx * dx + dy * dy));
+    var n = NZ.fbm(q * 0.028 + i * 17.3, y * 0.085 + i * 5.1, 4), a = e * sstep(0.32, 0.78, n), o = (y * w + q) * 4;
+    d[o] = col[0]; d[o + 1] = col[1]; d[o + 2] = col[2]; d[o + 3] = Math.round(255 * a);
+  }
+  x.putImageData(im, 0, 0); SPR[k] = c; return c;
+}
+function powderTile(layer, col, sc) { // a seamless tile of very fine grains (device pixels), scrolled as one far / middle layer
+  var T = Math.max(64, Math.round(150 * sc)), k = 'pt' + layer + col.join(',') + T; if (SPR[k]) return SPR[k];
+  var c = mkCanvas(T, T), x = c.getContext('2d'), r = mulberry32(4100 + layer * 77), dot = powderDot(col);
+  for (var i = 0; i < 610; i++) { // far grains and, fewer, middle ones, in one tile (one fill per frame)
+    var mid = i >= 460, px = r() * T, py = r() * T, rad = (mid ? 0.45 + r() * 0.5 : 0.24 + r() * 0.3) * sc, a = mid ? 0.45 + r() * 0.45 : 0.3 + r() * 0.45;
+    x.globalAlpha = a;
+    for (var ox = -1; ox <= 1; ox++) for (var oy = -1; oy <= 1; oy++) { var qx = px + ox * T, qy = py + oy * T; if (qx > -rad && qx < T + rad && qy > -rad && qy < T + rad) x.drawImage(dot, qx - rad, qy - rad, rad * 2, rad * 2); }
+  }
+  SPR[k] = { c: c, T: T }; return SPR[k];
+}
+function newGrain(g, rng, x, y) {
+  var d = Math.pow(rng(), 1.3);
+  return { x: x, y: y, d: d, sp: 0.75 + rng() * 0.5, ph: rng() * TAU, r: (0.32 + d * 1.15) * (0.7 + rng() * 0.6), a: (0.3 + 0.6 * rng()) * (0.45 + 0.55 * d) };
+}
+function makePowder(S, g, rng) {
+  var n = Math.round(g.W * g.H / 1000 * 3.4), extra = Math.round(n * 1.1), i;
+  S.flakes = []; for (i = 0; i < n + extra; i++) S.flakes.push(newGrain(g, rng, rng() * (g.W + 40) - 20, rng() * (g.H + 20) - 10));
+  S.nBase = n;
+  S.lay = [{ x: 0, y: 0, k: 0.55, f: 9 }];
+  S.veils = []; for (i = 0; i < 6; i++) S.veils.push({ x: rng() * (g.W + 300) - 150, y: g.H * (0.08 + 0.88 * Math.pow(rng(), 0.7)), w: 130 + rng() * 160, h: 30 + rng() * 60, sp: 0.9 + rng() * 0.6, a: 0.12 + rng() * 0.14, tex: i % 3, ph: rng() * TAU });
+  S.drifts = []; S.driftAcc = 0; S.nextBurst = 6 + rng() * 8; S.burstT = -99; S.burstDur = 0; S.burstEase = 2.6;
+}
+function stepPowder(S, g, dt, rng, cue, v) {
+  var Wd = g.wind || { side: 1, s: 1 }, sd = Wd.side, t = S.t, i, W2 = g.W, H2 = g.H;
+  if (t > S.nextBurst) { S.burstT = t; S.burstEase = 2.2 + rng() * 1.2; S.burstDur = 1 + 1.2 + rng() * 1.8 + S.burstEase; S.nextBurst = t + 8 + rng() * 17; cue('gust'); }
+  var bk = galeBurstAt(S, t), V = v * (1 + 1.5 * bk);
+  for (i = 0; i < S.flakes.length; i++) {
+    var f = S.flakes[i], base = V * (0.35 + 1.25 * f.d) * f.sp;
+    // the flow: swirls that travel with the wind, so grains speed up and slow, rise and dip, but never blow back
+    var sw = Math.sin(f.y * 0.045 + t * 1.3 + Math.sin(f.x * 0.021 - sd * t * 0.8 + f.ph * 0.3));
+    var lift = Math.sin(f.x * 0.032 - sd * t * 2.1 + f.ph) * Math.cos(f.y * 0.038 + t * 0.7);
+    f.x += sd * base * (1 + 0.45 * sw) * dt;
+    f.y += ((9 + 16 * f.d) + (12 + 22 * f.d) * (1 + bk) * lift) * dt;
+    if (f.x > W2 + 22 || f.x < -22) S.flakes[i] = newGrain(g, rng, sd > 0 ? -20 : W2 + 20, rng() * (H2 + 20) - 10);
+    else if (f.y > H2 + 10) S.flakes[i] = newGrain(g, rng, rng() * (W2 + 40) - 20, -8);
+    else if (f.y < -14) S.flakes[i] = newGrain(g, rng, rng() * (W2 + 40) - 20, H2 + 6);
+  }
+  S.lay.forEach(function (L2, j) { L2.x += sd * V * L2.k * dt; L2.y += (L2.f + 10 * (1 + bk) * Math.sin(t * (0.7 + 0.3 * j) + j * 2)) * dt; });   // the fine layers: logical px, wrapped when drawn
+  S.veils.forEach(function (c) { c.x += sd * V * 0.85 * c.sp * dt; c.y += Math.sin(t * 0.4 + c.ph) * 4 * dt; if (sd > 0 && c.x - c.w / 2 > W2) c.x = -c.w / 2; if (sd < 0 && c.x + c.w / 2 < 0) c.x = W2 + c.w / 2; });
+  // spindrift: puffs torn off the ground, the fence line and the crowns, lifting as they go
+  S.driftAcc += dt * (1.4 + 4.5 * bk);
+  while (S.driftAcc >= 1 && S.drifts.length < 26) {
+    S.driftAcc -= 1; var r = rng(), x, y, tops = g.swayTops;
+    if (r < 0.45) { x = rng() * W2; y = g.horizonY + 8 + rng() * (H2 - g.horizonY - 8); }
+    else if (r < 0.72 || !tops || !tops.length) { x = rng() * W2; y = g.horizonY - 3 - rng() * 14; }
+    else { var tp = tops[(rng() * tops.length) | 0]; x = tp.x + (rng() - 0.5) * tp.w; y = tp.y + 4 + rng() * 10; }
+    S.drifts.push({ x: x, y: y, t0: t, life: 1.6 + rng() * 2, w0: 6 + rng() * 8, w1: 36 + rng() * 50, vx: sd * V * (0.45 + 0.4 * rng()), vy: -(9 + rng() * 18), a: 0.14 + rng() * 0.16, tex: (rng() * 3) | 0 });
+  }
+  if (S.driftAcc > 1) S.driftAcc = 1;
+  for (i = S.drifts.length - 1; i >= 0; i--) { var p = S.drifts[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.vy *= 0.985; if (t - p.t0 > p.life) S.drifts.splice(i, 1); }
+}
+function drawPowder(ctx, S, g) {
+  var L = g.LIT, night = L.id === 'night', dusk = L.id === 'dusk', col = night ? [178, 190, 222] : dusk ? [240, 232, 236] : [248, 250, 255], t = S.t, i;
+  var bk = galeBurstAt(S, t), nk = night ? 0.75 : 1, sd = (g.wind || { side: 1 }).side;
+  // veils of blowing powder, behind the grains
+  S.veils.forEach(function (c) { ctx.globalAlpha = Math.min(1, c.a * (1 + 1.3 * bk) * nk); ctx.drawImage(powderTex(c.tex, col), c.x - c.w / 2, c.y - c.h / 2, c.w, c.h); });
+  S.drifts.forEach(function (p) {
+    var u = (t - p.t0) / p.life; if (u < 0 || u > 1) return; var w = lerp(p.w0, p.w1, Math.pow(u, 0.7)), h = w * 0.4;
+    ctx.globalAlpha = p.a * Math.sin(Math.PI * Math.pow(u, 0.6)) * nk; ctx.drawImage(powderTex(p.tex, col), p.x - w * (0.5 + 0.2 * sd), p.y - h * 0.6, w, h);
+  });
+  // the fine powder: two seamless layers of tiny grains scrolling with the wind (drawn out a little in a burst)
+  var dsc = ctx.canvas.width / g.W;
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+  S.lay.forEach(function (L2, j) {
+    var tl = powderTile(j, col, dsc), T = tl.c.width, stx = 1 + 0.45 * bk, ox = Math.round(((L2.x * dsc / stx) % T + T) % T), oy = Math.round(((L2.y * dsc) % T + T) % T);   // whole pixels: a plain copy, no resampling
+    if (!tl.pat) tl.pat = ctx.createPattern(tl.c, 'repeat');   // a pattern fill: seamless, one call per layer
+    ctx.globalAlpha = Math.min(1, 0.8 * (1 + 0.5 * bk) * nk);
+    if (stx < 1.01) stx = 1; ctx.setTransform(stx, 0, 0, 1, ox * stx, oy); ctx.fillStyle = tl.pat; ctx.fillRect(-ox, -oy, ctx.canvas.width / stx + T, ctx.canvas.height + T);
+  });
+  ctx.restore();
+  // the near grains: soft dots in the swirling flow, slightly drawn out along the wind when they are fast
+  var spr = powderDot(col), n = Math.min(S.flakes.length, S.nBase + Math.round((S.flakes.length - S.nBase) * bk)), sm = 0.6 + 1.6 * bk;
+  for (i = 0; i < n; i++) {
+    var f = S.flakes[i], dw = f.r * 2 * (1 + f.d * sm), dh = f.r * 2;
+    ctx.globalAlpha = f.a * nk; ctx.drawImage(spr, f.x - dw * 0.5, f.y - dh * 0.5, dw, dh);
+  }
+  // a burst: the air itself goes white for a moment, and a wall of powder sweeps across
+  if (bk > 0.01) {
+    var fog = night ? [120, 130, 160] : dusk ? [226, 220, 226] : [240, 242, 246], u2 = clamp((t - S.burstT) / S.burstDur), cx = sd > 0 ? lerp(-0.7, 1.7, u2) * g.W : lerp(1.7, -0.7, u2) * g.W;
+    ctx.globalAlpha = 0.2 * bk; ctx.fillStyle = rgb(fog); ctx.fillRect(0, 0, g.W, g.H);
+    var tx = powderTex(0, col);
+    ctx.globalAlpha = 0.7 * bk * nk; ctx.drawImage(tx, cx - g.W * 0.8, -g.H * 0.25, g.W * 1.6, g.H * 1.5);
+  }
+  ctx.globalAlpha = 1;
+}
+
 /* ---- 09_runtime.js ---- */
 /* ================= public API & controller ================= */
-var VERSION = '1.3.0';
+var VERSION = '1.3.1';
 var SEASON_KEYS = ['spring', 'summer', 'autumn', 'winter'], LIGHT_KEYS = ['morning', 'day', 'dusk', 'night'];
 function withScene(o, fn) {
   var st = saveState();
@@ -5110,7 +5232,7 @@ function mount(el, opts) {
       if (dead || cur !== c) return;
       enqueue(function () { if (dead || cur !== c) return null; return swayJob(jobFor(spec, { get cancelled() { return dead || cur !== c; } })); }).then(function (r) {
         if (dead || cur !== c || !r) return;
-        c.swayData = r; sway = makeSway(r, c.geo); if (sway) sway.cur = c;
+        c.swayData = r; sway = makeSway(r, c.geo); if (sway) sway.cur = c; swayTops(c.geo);
         cacheGet(spec.key).then(function (rec) { if (rec && rec.img && !rec.sway) { rec.sway = r; return cachePut(spec.key, rec); } }).catch(function () { });
       }).catch(function (e) { if (e !== CANCEL && window.console) console.warn('garden: sway', e); });
     }, 350);
@@ -5147,8 +5269,10 @@ function mount(el, opts) {
     if (!bird || bird.season !== cur.spec.season) bird = { next: clock + 5 + frng() * 8, season: cur.spec.season };
     taps = [];
     if (!sway || sway.cur !== cur) { sway = makeSway(cur.swayData, g); if (sway) sway.cur = cur; }
+    swayTops(g);
     if (L.after && g.season === 'summer' && g.light === 'day' && rainbowCued !== cur.spec.key) { rainbowCued = cur.spec.key; setTimeout(function () { if (!dead) cue('rainbow'); }, 0); }
   }
+  function swayTops(g) { g.swayTops = sway ? sway.items.map(function (it) { return { x: it.d.base[0], y: it.d.top, w: Math.min(60, it.hgt * 0.8) }; }) : null; }   // where spindrift can lift off the crowns
   function setupDragons() {
     if (!cur) return;
     var g = cur.geo, d = hasDate() ? o.date : seasonFor() === g.season ? new Date() : null; // the insects' calendar
