@@ -5471,10 +5471,11 @@
         // without one: a small chip in the today card to set it
         var examChip = examN === null ? '<button class="home-exam-chip" id="home-exam-setup">📅 試験日を設定</button>' : '';
         var first = LIBRARIES[0];
+        // the next things to do, as small pills in the today card: carry on (or start) and, when any are due, 復習
         var startBtn = last
-            ? '<button id="home-resume" class="primary">続きから<small>' + (isMultiLib() ? escapeHtml(getLib(last.lib).short || getLib(last.lib).title) + '　' : '') + escapeHtml(placeLabel(getLib(last.lib), last.week, last.day)) + '（' + last.status.answered + ' / ' + last.status.max + '）</small></button>'
-            : first ? '<button id="home-start" class="primary">今日の学習を始める<small>' + escapeHtml(first.short || first.title) + '・' + escapeHtml(placeLabel(first, 1, 1)) + '</small></button>'
-            : '<button id="home-resume" class="primary" disabled>続きから<small>途中の日はありません</small></button>';
+            ? '<button id="home-resume" class="home-pill go">▶ 続きから<small>' + (isMultiLib() ? escapeHtml(getLib(last.lib).short || getLib(last.lib).title) + '・' : '') + escapeHtml(placeLabel(getLib(last.lib), last.week, last.day)) + ' ' + last.status.answered + '/' + last.status.max + '</small></button>'
+            : first ? '<button id="home-start" class="home-pill go">▶ はじめる<small>' + escapeHtml(first.short || first.title) + '・' + escapeHtml(placeLabel(first, 1, 1)) + '</small></button>' : '';
+        var pills = startBtn + (due ? '<button id="home-review" class="home-pill">復習<small>' + due + '問</small></button>' : '');
         var hasMock = mockLibs().length > 0;
         var lastR = readOnlyEntries().slice(-1)[0];
 
@@ -5487,11 +5488,9 @@
             weekBarsSvg() +
             '<div class="home-today-meta"><span>連続 <b>' + streaks.current + '日</b></span><span>正答率 <b>' + (todayRec.answered ? Math.round(todayRec.correct / todayRec.answered * 100) + '%' : '—') + '</b></span>' + examChip + '</div>' +
             '</div>' +
+            (pills ? '<div class="home-pills">' + pills + '</div>' : '') +
             '</div>' +
             backupReminderHtml() +
-            '<div class="home-actions">' + startBtn +
-            '<button id="home-review" ' + (due ? '' : 'disabled') + '>今日の復習<small>' + (due ? due + '問' : 'ありません') + '</small></button>' +
-            '</div>' +
             gardenSlotHtml() +
             '<div class="home-tiles">' +
                 (hasMock ? '<button class="home-tile' + (homeMockOpen ? ' on' : '') + '" id="home-mock-tile" aria-expanded="' + homeMockOpen + '"><span class="home-tile-icon">📝</span><b>模擬試験</b><small>' + mockLibs().length + '回分</small></button>' : '') +

@@ -3053,3 +3053,13 @@ html.dark { --omk-paper: #ece4d2; --omk-line: #cdbd9b; }
 .home .home-today-text { line-height: 1.5; font-size: 0.82rem; }
 .home .home-today-text .week-bars { max-width: 128px; margin: 3px 0 1px; }
 .home .home-today-meta { gap: 2px 10px; }
+
+/* 続きから / 復習 as small pills along the bottom of the today card */
+.home-pills { flex-basis: 100%; display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--border-light); padding-top: 9px; margin-top: 1px; }
+.home-pill { display: inline-flex; align-items: baseline; gap: 6px; min-width: 0; max-width: 100%; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border-light);
+    background: var(--surface); color: var(--text-main); font: inherit; font-size: 0.82rem; font-weight: bold; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.home-pill small { font-weight: normal; font-size: 0.72rem; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.home-pill.go { flex: 1; background: var(--active-blue); border-color: var(--active-blue); color: #fff; }
+.home-pill.go small { color: rgba(255,255,255,.85); }
+html.dark .home-pill.go { color: #0d1117; }
+html.dark .home-pill.go small { color: rgba(13,17,23,.75); }
