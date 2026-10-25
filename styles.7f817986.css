@@ -658,6 +658,8 @@
         .gfv-bar button[hidden] { display: none; }
         .gfv-title { flex: 1; font-family: var(--mincho); font-weight: 700; letter-spacing: 0.1em; text-shadow: 0 1px 6px rgba(0,0,0,0.6); font-size: 0.95rem; }
         .gd-full .gd-zoom-reset { position: absolute; right: 12px; bottom: 12px; }
+        .gd-full .gfv-scene { left: 0; top: 0; width: 100%; height: 100%; transform: none; }
+        .gfv-bar .gfv-zin, .gfv-bar .gfv-zout { font-size: 1.25rem; line-height: 1; }
         .gd-focus-btn { display: block; width: 100%; margin-top: 14px; padding: 12px; border-radius: 10px; border: 1px solid rgba(233, 185, 143, 0.5); background: rgba(228, 138, 82, 0.14); color: #f5ecdb; font-family: var(--mincho); font-weight: 700; font-size: 1rem; letter-spacing: 0.1em; }
         .gd-focus-btn[hidden] { display: none; }
         .gd-focus { position: fixed; inset: 0; z-index: 3900; background: #0d0c0a; display: none; overflow: hidden; color: #f6eedf; container-type: size; }

@@ -5365,7 +5365,7 @@ function paperPlaceholder(c) {
 function mount(el, opts) {
   opts = opts || {};
   var o = { stage: 0, season: seasonFor(), light: lightFor(), quality: 'card', animate: true, event: null, date: null };
-  function merge(n) { if (!n) return; ['stage', 'season', 'light', 'quality', 'animate', 'onReady', 'event', 'onCue', 'date', 'weather', 'fireworks'].forEach(function (k) { if (n[k] !== undefined) o[k] = n[k]; }); if (n.date !== undefined) dateSetAt = Date.now(); norm(); }
+  function merge(n) { if (!n) return; ['stage', 'season', 'light', 'quality', 'animate', 'onReady', 'event', 'onCue', 'date', 'weather', 'fireworks', 'wide'].forEach(function (k) { if (n[k] !== undefined) o[k] = n[k]; }); if (n.date !== undefined) dateSetAt = Date.now(); norm(); }
   function norm() {
     o.stage = Math.max(0, Math.min(STAGES.length - 1, Math.round(+o.stage || 0)));
     if (SEASON_KEYS.indexOf(o.season) < 0) o.season = seasonFor();
@@ -5407,7 +5407,7 @@ function mount(el, opts) {
   }
   function specFor(q, so) {
     so = so || o;
-    var Wl = REF_W, Hl = Math.round(clamp(REF_W * size.cssH / size.cssW, 200, 600)), bw;
+    var wk = clamp(+o.wide || 1, 1, 1.5), Wl = Math.round(REF_W * wk), Hl = Math.round(clamp(Wl * size.cssH / size.cssW, 200, 600)), bw; // wide: a wider field of view (the full-screen view)
     if (q === 'full') bw = Math.round(clamp(Math.max(size.cssW * size.dpr, 2000), 1200, 2400));
     else if (q === 'preview') bw = Math.round(clamp(size.cssW * Math.min(size.dpr, 2), 320, 1100));
     else bw = Math.round(clamp(size.cssW * Math.min(size.dpr, 2), 240, 1200));
@@ -5415,7 +5415,7 @@ function mount(el, opts) {
     var dq = q === 'full' ? clamp(ks / 2.7, 1, 1.9) : clamp(ks / 2, 0.6, 1.25);
     var qn = q === 'full' ? 'full' : 'card';
     var ev = so.event === undefined ? o.event : so.event, sp = seasonStep(so.date === undefined ? o.date : so.date, so.season), wsign = windVec(windAt(nowDate())).sign, wxs = curWeather();
-    return { key: [VERSION, so.stage, so.season, so.light, ev || '-', sp === null ? '-' : 'p' + sp, wsign > 0 ? 'wR' : 'wL', wxs.wx + (wxs.after ? '+a' : ''), qn, bw + 'x' + bh].join('|'), stage: so.stage, season: so.season, light: so.light, event: ev || null, sp: sp, wsign: wsign, wx: wxs.wx, after: wxs.after, W: Wl, H: Hl, KS: ks, DQ: dq, bw: bw, bh: bh, q: qn };
+    return { key: [VERSION, so.stage, so.season, so.light, ev || '-', sp === null ? '-' : 'p' + sp, wsign > 0 ? 'wR' : 'wL', wxs.wx + (wxs.after ? '+a' : ''), qn, bw + 'x' + bh + (wk > 1 ? '|w' + wk : '')].join('|'), stage: so.stage, season: so.season, light: so.light, event: ev || null, sp: sp, wsign: wsign, wx: wxs.wx, after: wxs.after, W: Wl, H: Hl, KS: ks, DQ: dq, bw: bw, bh: bh, q: qn };
   }
   /* get a painting: cache first, else paint (and cache it) */
   var jobs = {};

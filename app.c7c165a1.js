@@ -4737,15 +4737,14 @@
     // laid out sideways in portrait, so turning the phone shows it the right way up
     function gdLandscape(f, on, isOpen) {
         var el = f.el;
-        var fit = function() { el.classList.toggle('rot', isOpen() && !f.locked && window.innerHeight > window.innerWidth); };
+        var fit = function() { el.classList.toggle('rot', isOpen() && window.innerHeight > window.innerWidth); }; // still upright (no turn, or the turn is pending): lay it sideways
         if (on) {
             f.locked = false;
+            // no browser full screen (it shows its own "how to exit" notice): an installed app may turn sideways by itself;
+            // otherwise the view is laid out sideways while the phone is upright
             try {
-                // the whole page goes full screen (not the overlay itself, which the browser would refuse to rotate)
-                var root = document.documentElement, fs = root.requestFullscreen ? root.requestFullscreen({ navigationUI: 'hide' }) : null;
-                Promise.resolve(fs).then(function() {
-                    return screen.orientation && screen.orientation.lock ? screen.orientation.lock('landscape') : Promise.reject();
-                }).then(function() { f.locked = true; fit(); }).catch(function() { fit(); });
+                Promise.resolve(screen.orientation && screen.orientation.lock ? screen.orientation.lock('landscape') : Promise.reject())
+                    .then(function() { f.locked = true; fit(); setTimeout(fit, 700); }).catch(function() { fit(); });
             } catch (e) {}
             fit();
             if (!f.fitBound) { f.fitBound = true; window.addEventListener('resize', fit); }
@@ -4764,7 +4763,7 @@
             var el = document.createElement('div');
             el.className = 'gd-full';
             el.innerHTML = '<div class="gfv-zoom"><div class="gfv-inner"><div class="gf-scene gfv-scene"></div></div><button class="gd-zoom-reset" hidden>元の大きさ</button></div>' +
-                '<div class="gfv-bar"><button class="gfv-close" aria-label="閉じる">✕</button><span class="gfv-title"></span><button class="gfv-sound" aria-label="音"></button></div>';
+                '<div class="gfv-bar"><button class="gfv-close" aria-label="閉じる">✕</button><span class="gfv-title"></span><button class="gfv-zout" aria-label="縮小">－</button><button class="gfv-zin" aria-label="拡大">＋</button><button class="gfv-sound" aria-label="音"></button></div>';
             document.body.appendChild(el);
             GD.full = { el: el };
             el.querySelector('.gfv-close').addEventListener('click', closeFullView);
@@ -4780,7 +4779,9 @@
                 var nx = el.classList.contains('rot') ? (y - r.top) / r.height : (x - r.left) / r.width;
                 var ny = el.classList.contains('rot') ? 1 - (x - r.left) / r.width : (y - r.top) / r.height;
                 try { c.tap(nx, ny); } catch (e) {}
-            });
+            }, function() { return el.classList.contains('rot'); });
+            el.querySelector('.gfv-zin').addEventListener('click', function() { GD.full.zoomReset.zoomBy(1.5); });
+            el.querySelector('.gfv-zout').addEventListener('click', function() { GD.full.zoomReset.zoomBy(1 / 1.5); });
             // the bar fades away; a touch near the top brings it back
             el.addEventListener('pointerdown', function() { fullWake(); });
         }
@@ -4799,6 +4800,7 @@
             if (name === 'rainbow' && !GD.devMode) skyRecord('rainbow');
             if (window.MogiSound && getSetting('gdSound', true)) MogiSound.cue(gdCueName(name), name === 'thunder' || name === 'firework' ? info && info.delay : info && info.id);
         };
+        o.wide = window.GD_FULL_WIDE || 1.2; // a little more of the garden or town than the card shows
         f.ctrl = gdEngineFor(w).mount(box, o);
         f.el.querySelector('.gfv-title').textContent = gdWorld(w).title + '　' + GD_SEASON[o.season] + '・' + GD_LIGHT[o.light] +
             (o.weather && o.weather !== 'clear' ? '・' + GD_WEATHER[o.weather] : '') + (o.event ? '・' + GD_EVENTS[o.event] : '');
@@ -4842,7 +4844,7 @@
     }
     // two fingers zoom (up to 4×) around the point between them, one finger moves it once zoomed, double-tap zooms in
     // or out; on a computer the wheel zooms and dragging moves
-    function gdPinch(box, el, reset, onTap) {
+    function gdPinch(box, el, reset, onTap, rotated) {
         var s = 1, tx = 0, ty = 0, MAX = 4, pinch = null, pan = null, lastTap = 0, drag = null, touch0 = null, tapTimer = null, mouse0 = null;
         // a single short tap (not a pan, a pinch or the first half of a double-tap) touches the scene: feed the koi…
         var sceneTap = function(x, y) { clearTimeout(tapTimer); tapTimer = setTimeout(function() { (onTap || gdSceneTap)(x, y); }, 280); };
@@ -4857,7 +4859,10 @@
             reset.hidden = s === 1;
         };
         var zoomAt = function(px, py, ns) { tx = px - (px - tx) * ns / s; ty = py - (py - ty) * ns / s; s = ns; };
-        var local = function(t) { var r = box.getBoundingClientRect(); return { x: t.clientX - r.left, y: t.clientY - r.top }; };
+        // rotated: the box is turned 90° clockwise (a sideways view in portrait), so screen x/y become its y/x
+        var isRot = function() { return !!(rotated && rotated()); };
+        var local = function(t) { var r = box.getBoundingClientRect(); return isRot() ? { x: t.clientY - r.top, y: r.right - t.clientX } : { x: t.clientX - r.left, y: t.clientY - r.top }; };
+        var mv = function(x0, y0, x1, y1) { return isRot() ? [y1 - y0, x0 - x1] : [x1 - x0, y1 - y0]; };
         var dist = function(a, b) { return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY); };
         box.addEventListener('touchstart', function(e) {
             if (e.touches.length === 2) {
@@ -4883,7 +4888,8 @@
                 tx = m.x - (pinch.m.x - pinch.tx) * ns / pinch.s; ty = m.y - (pinch.m.y - pinch.ty) * ns / pinch.s; s = ns;
                 apply(false); e.preventDefault();
             } else if (pan && e.touches.length === 1 && s > 1) {
-                tx = pan.tx + e.touches[0].clientX - pan.x; ty = pan.ty + e.touches[0].clientY - pan.y;
+                var dm = mv(pan.x, pan.y, e.touches[0].clientX, e.touches[0].clientY);
+                tx = pan.tx + dm[0]; ty = pan.ty + dm[1];
                 apply(false); e.preventDefault();
             }
         }, { passive: false });
@@ -4901,11 +4907,12 @@
             if (e.target.closest('button') || !mouse0 || (e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents)) return;
             if (Math.hypot(e.clientX - mouse0.x, e.clientY - mouse0.y) < 5) sceneTap(e.clientX, e.clientY);
         });
-        window.addEventListener('mousemove', function(e) { if (drag) { tx = drag.tx + e.clientX - drag.x; ty = drag.ty + e.clientY - drag.y; apply(false); } });
+        window.addEventListener('mousemove', function(e) { if (drag) { var dm = mv(drag.x, drag.y, e.clientX, e.clientY); tx = drag.tx + dm[0]; ty = drag.ty + dm[1]; apply(false); } });
         window.addEventListener('mouseup', function() { drag = null; });
         box.addEventListener('dblclick', function(e) { clearTimeout(tapTimer); var p = local(e); if (s > 1) { s = 1; tx = 0; ty = 0; } else zoomAt(p.x, p.y, 2.5); apply(true); });
         reset.addEventListener('click', function() { s = 1; tx = 0; ty = 0; apply(true); });
         var resetFn = function() { s = 1; tx = 0; ty = 0; apply(false); };
+        resetFn.zoomBy = function(k) { var w = box.clientWidth, h = box.clientHeight; zoomAt(w / 2, h / 2, Math.min(MAX, Math.max(1, s * k))); apply(true); };
         if (!onTap) GD.zoomReset = resetFn;
         return resetFn;
     }

@@ -541,7 +541,8 @@ function cloudSpec(st) {
 }
 /* background: gradient, airglow, skyglow, Milky Way with dust lanes, moon scatter, clouds, and the ground */
 function paintSkyBG(bg, cam, st) {
-  var step = st.dragging ? 5 : (st.light === 'night' && !cloudSpec(st) ? 4 : 2), bw = Math.ceil(cam.W / step) + 1, bh = Math.ceil(cam.H / step) + 1;
+  var CS0 = cloudSpec(st), step = st.dragging ? 6 : (!CS0 && st.light === 'night' ? 4 : CS0 && CS0.over ? 3 : 3), // soft clouds need few samples; they are redrawn as they drift
+    _s = 0, bw = Math.ceil(cam.W / step) + 1, bh = Math.ceil(cam.H / step) + 1;
   if (bg.width !== bw || bg.height !== bh) { bg.width = bw; bg.height = bh; }
   var g = bg.getContext('2d'), img = g.createImageData(bw, bh), D = img.data;
   var pal = st.pal, sun = st.sunDir, sh = nrm3([sun[0], sun[1], 0]), cat = st.cat, town = st.world === 'town', night = st.light === 'night';
@@ -560,8 +561,8 @@ function paintSkyBG(bg, cam, st) {
       var d0 = f[0] + a * r[0] + b * u[0], d1 = f[1] + a * r[1] + b * u[1], d2 = f[2] + a * r[2] + b * u[2];
       var il = 1 / Math.sqrt(d0 * d0 + d1 * d1 + d2 * d2); d0 *= il; d1 *= il; d2 *= il;
       var c0, c1, c2;
-      if (d2 < -0.004) { // ---- the ground plane ----
-        var tg = EYE / -d2, gx = d0 * tg, gy = d1 * tg, gc; gpts = grid[Math.floor(gx / GC) + ',' + Math.floor(gy / GC)] || NONE;
+      if (d2 < (step > 2 ? 0.002 : -0.004)) { // ---- the ground plane ---- (a coarse grid must not leave a bright seam of sky at the horizon)
+        var tg = EYE / Math.max(0.004, -d2), gx = d0 * tg, gy = d1 * tg, gc; gpts = grid[Math.floor(gx / GC) + ',' + Math.floor(gy / GC)] || NONE;
         if (st.world === 'town') {
           var sAl = gx * SA[0] + gy * SA[1], wAc = gx * SNW[0] + gy * SNW[1], rut = Math.exp(-Math.pow((Math.abs(wAc) - 0.75) / 0.18, 2));
           var nn = vnoise(gx * 1.7, gy * 1.7) * 0.6 + vnoise(gx * 7, gy * 7) * 0.4, pud = smooth(0.7, 0.78, vnoise(gx * 0.4 + 3, gy * 0.4));
@@ -2587,7 +2588,7 @@ function mountSky(el, opts) {
   el.appendChild(root);
   cv.setAttribute('role', 'img');
   function mk() { return document.createElement('canvas'); }
-  var snapC = mk(), snapCam = null, lastMoveT = -1e9, bg = mk(), cache = mk(), prevC = mk(), starC = mk(), scene = mk(), folC = mk(), frontC = mk(), nearC = mk(), nearB = mk(), maskS = mk(), tintC = mk(), wrapC = mk(), blurSky = mk(), tmpC = mk(), moonC = mk();
+  var snapC = mk(), extC = mk(), snapCam = null, lastRoughT = -1e9, settleAt = 0, lastMoveT = -1e9, bg = mk(), cache = mk(), prevC = mk(), starC = mk(), scene = mk(), folC = mk(), frontC = mk(), nearC = mk(), nearB = mk(), maskS = mk(), tintC = mk(), wrapC = mk(), blurSky = mk(), tmpC = mk(), moonC = mk();
   var LAYERS = [scene, folC, frontC, nearC, nearB];
   st.cat = cat; st.sprites = makeStarSprites(); st.glowSpr = makeGlowSprites(); st.dust = makeDust(cat); st.faint = makeFaint(cat);
   st.namedIdx = {}; for (var nk in SKY_NAMED) st.namedIdx[SKY_NAMED[nk]] = nk;
@@ -2913,6 +2914,22 @@ function mountSky(el, opts) {
     if (snapC.width !== cv.width || snapC.height !== cv.height) { snapC.width = cv.width; snapC.height = cv.height; }
     var sg = snapC.getContext('2d'); sg.setTransform(1, 0, 0, 1, 0, 0); sg.drawImage(cv, 0, 0);
     snapCam = new Camera(); snapCam.set(cam.yaw, cam.pitch, cam.zoom, W, H);
+    // a small, soft copy whose edges are drawn out on every side (EXT frames of it each way): what a drag uncovers
+    // shows the sky and the trees carried on from the edge, never a flat colour
+    var tw = Math.max(2, Math.ceil(W / 10)), th = Math.max(2, Math.ceil(H / 10)), E = EXT, ew = tw * (2 * E + 1), eh = th * (2 * E + 1), x0 = tw * E, y0 = th * E;
+    if (extC.width !== ew || extC.height !== eh) { extC.width = ew; extC.height = eh; }
+    var eg = extC.getContext('2d'); eg.setTransform(1, 0, 0, 1, 0, 0); eg.imageSmoothingEnabled = true; eg.imageSmoothingQuality = 'medium';
+    eg.drawImage(snapC, 0, 0, snapC.width, snapC.height, x0, y0, tw, th);
+    eg.drawImage(extC, x0, y0, 1, th, 0, y0, x0, th); eg.drawImage(extC, x0 + tw - 1, y0, 1, th, x0 + tw, y0, ew - x0 - tw, th); // left, right
+    eg.drawImage(extC, 0, y0, ew, 1, 0, 0, ew, y0); eg.drawImage(extC, 0, y0 + th - 1, ew, 1, 0, y0 + th, ew, eh - y0 - th); // top, bottom (with corners)
+    lastRoughT = nowS();
+  }
+  var EXT = 2;
+  function snapCover() { // how much of the screen the snapshot still covers (0…1), roughly
+    var a = cam.p(snapCam.ray(W / 2, H / 2)), b = cam.p(snapCam.ray(W / 2 + 100, H / 2)); if (!a || !b) return 0;
+    var sc = Math.hypot(b[0] - a[0], b[1] - a[1]) / 100, hw = W * sc / 2, hh = H * sc / 2;
+    var cw = Math.max(0, Math.min(W, a[0] + hw) - Math.max(0, a[0] - hw)), ch = Math.max(0, Math.min(H, a[1] + hh) - Math.max(0, a[1] - hh));
+    return cw * ch / (W * H);
   }
   function warpFrame() { // exact for the centre, affine elsewhere: the rotation of the view between snapshot and now
     var a = cam.p(snapCam.ray(W / 2, H / 2)), b = cam.p(snapCam.ray(W / 2 + 100, H / 2)), c = cam.p(snapCam.ray(W / 2, H / 2 + 100));
@@ -2920,19 +2937,21 @@ function mountSky(el, opts) {
     var m11 = (b[0] - a[0]) / 100, m12 = (b[1] - a[1]) / 100, m21 = (c[0] - a[0]) / 100, m22 = (c[1] - a[1]) / 100;
     g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = rgbs(st.pal ? mix(st.pal.zen, st.pal.hor, 0.5) : [10, 14, 30]); g.fillRect(0, 0, cv.width, cv.height);
     g.setTransform(m11, m12, m21, m22, (a[0] - (m11 * W / 2 + m21 * H / 2)) * dpr, (a[1] - (m12 * W / 2 + m22 * H / 2)) * dpr);
+    g.imageSmoothingEnabled = true;
+    if (extC.width) g.drawImage(extC, 0, 0, extC.width, extC.height, -EXT * W * dpr, -EXT * H * dpr, (2 * EXT + 1) * W * dpr, (2 * EXT + 1) * H * dpr);
     g.drawImage(snapC, 0, 0, snapC.width, snapC.height, 0, 0, W * dpr, H * dpr);
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     return true;
   }
   function render(dt) {
     var t = st.now; dt = dt || 0;
-    if (st.dragging && snapCam && nowS() - lastMoveT < 0.14 && warpFrame()) { camDirty = false; return; }
+    if (st.dragging && snapCam && nowS() - lastMoveT < 0.14 && !(nowS() - lastRoughT > 0.3 && snapCover() < 0.6) && warpFrame()) { camDirty = false; return; }
     var wind = st.wind || windNow();
     if (!st.reduced && dt > 0) { // the cloud deck drifts with the shared wind
       var wv = windVec(wind), sp = 3 + 9 * Math.min(3, wind.strength); st.cloudOff[0] += wv[0] * sp * dt; st.cloudOff[1] += wv[1] * sp * dt;
     }
     if (computeFrame(false)) cacheKey = '';
-    var cl = cloudSpec(st), every = st.light === 'night' && !cl ? 6 : (cl && cl.over ? 0.6 : 1.2) / Math.max(0.6, Math.min(2.5, wind.strength * 1.6));
+    var cl = cloudSpec(st), every = st.light === 'night' && !cl ? 6 : Math.max(cl && cl.over ? 1.5 : 1.0, (cl && cl.over ? 1.5 : 1.4) / Math.max(0.6, Math.min(2.5, wind.strength * 1.6))); // the drifting deck is redrawn now and then and cross-faded
     if (st.reduced) every = 1e9;
     if (cacheKey !== cam.key) { rebuildCache(false); fadeT = -1e9; }
     else if (t - lastCache > every && !st.dragging) { fadeDur = every; rebuildCache(true); }
@@ -2999,8 +3018,11 @@ function mountSky(el, opts) {
     raf = 0; if (dead || paused || !visible) return;
     var t = nowS(), dt = t - (lastFrame || t);
     if (st.dragging && !camDirty && t - lastMoveT > 0.14 && st.sceneKeyDrag !== cam.key) { camDirty = true; st.sceneKeyDrag = cam.key; }
+    if (st.dragging && settleAt && t >= settleAt && !drag && !pinch) { settleAt = 0; st.dragging = false; cacheKey = ''; st.sceneDue = t + 0.06; camDirty = true; } // the sky first,
+    if (st.sceneDue && t >= st.sceneDue && !st.dragging && cacheKey === cam.key) { st.sceneDue = 0; sceneKey = ''; camDirty = true; }            // the trees a frame later
+    if (st.dragging) st.sceneDue = 0;
     if (t - lastFrame >= 1 / 30 - 0.004 || camDirty) { st.now = t; if (t - lastWind > 0.5) { windNow(); lastWind = t; } stepMeteors(Math.min(dt, 0.5)); try { render(Math.min(dt, 0.25)); } catch (e) { cacheKey = cam.key; sceneKey = cam.key; if (typeof window !== 'undefined' && window.__mogiDebug) console.error(e && e.stack); } lastFrame = t; }
-    if (!st.reduced || camDirty) raf = requestAnimationFrame(tick);
+    if (!st.reduced || camDirty || settleAt || st.sceneDue) raf = requestAnimationFrame(tick);
   }
   function kick() { if (!raf && !dead && !paused && visible) raf = requestAnimationFrame(tick); }
 
@@ -3066,6 +3088,7 @@ function mountSky(el, opts) {
     root.setPointerCapture && root.setPointerCapture(e.pointerId);
     ptrs[e.pointerId] = [e.clientX, e.clientY];
     var ids = Object.keys(ptrs);
+    settleAt = 0;
     if (ids.length === 1) drag = { x: e.clientX, y: e.clientY, yaw: cam.yaw, pitch: cam.pitch, moved: 0, t: Date.now() };
     else if (ids.length === 2) { var a = ptrs[ids[0]], b = ptrs[ids[1]]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), z: cam.zoom }; drag = null; }
     root.style.cursor = 'grabbing';
@@ -3090,7 +3113,7 @@ function mountSky(el, opts) {
       if (wasDrag.moved < 6 && Date.now() - wasDrag.t < 600) { var r = root.getBoundingClientRect(); pick(e.clientX - r.left, e.clientY - r.top); }
       drag = null;
     }
-    if (st.dragging) { st.dragging = false; cacheKey = ''; sceneKey = ''; camDirty = true; kick(); }
+    if (st.dragging && !Object.keys(ptrs).length) { settleAt = nowS() + 0.45; camDirty = true; kick(); } // full detail once the view has rested
     root.style.cursor = '';
   }
   var wheelT = 0;
@@ -3124,7 +3147,7 @@ function mountSky(el, opts) {
       if (root.parentNode) root.parentNode.removeChild(root);
       if (st.posSet) el.style.position = '';
     },
-    _debug: (typeof window === 'undefined' || !window.__mogiDebug) ? undefined : { layers: function () { return { cache: cache, scene: scene, fol: folC, front: frontC, nearB: nearB, starC: starC }; }, st: st, cam: cam, storm: storm, fw: function () { return fw; }, fx: fx, tick: function (n, dt) { for (var i = 0; i < n; i++) { st.now += dt; windNow(); render(dt); } }, pick: function (x, y) { pick(x, y); render(); }, setCam: function (y, p, z) { setCam(y, p, z || 1); render(); }, render: function () { st.now = nowS(); render(0); }, flush: function () { g.getImageData(0, 0, 1, 1); }, parts: function () { var T = {}, t; function f() { g.getImageData(0, 0, 1, 1); cache.getContext('2d').getImageData(0, 0, 1, 1); scene.getContext('2d').getImageData(0, 0, 1, 1); } f(); t = performance.now(); rebuildCache(); f(); T.cache = performance.now() - t; t = performance.now(); rebuildScene(); f(); T.scene = performance.now() - t; t = performance.now(); for (var i = 0; i < 5; i++) { st.now += 0.033; render(); f(); } T.frame = (performance.now() - t) / 5; st.dragging = true; t = performance.now(); rebuildCache(); rebuildScene(); render(); f(); T.drag = performance.now() - t; st.dragging = false; return T; },
+    _debug: (typeof window === 'undefined' || !window.__mogiDebug) ? undefined : { layers: function () { return { cache: cache, scene: scene, fol: folC, front: frontC, nearB: nearB, starC: starC }; }, st: st, cam: cam, storm: storm, fw: function () { return fw; }, fx: fx, tick: function (n, dt) { for (var i = 0; i < n; i++) { st.now += dt; windNow(); render(dt); } }, pick: function (x, y) { pick(x, y); render(); }, setCam: function (y, p, z) { setCam(y, p, z || 1); render(); }, render: function () { st.now = nowS(); render(0); }, flush: function () { g.getImageData(0, 0, 1, 1); }, parts: function () { var T = {}, t; function f() { g.getImageData(0, 0, 1, 1); cache.getContext('2d').getImageData(0, 0, 1, 1); scene.getContext('2d').getImageData(0, 0, 1, 1); } f(); t = performance.now(); rebuildCache(); f(); T.cache = performance.now() - t; t = performance.now(); rebuildScene(); f(); T.scene = performance.now() - t; t = performance.now(); for (var i = 0; i < 5; i++) { st.now += 0.033; render(); f(); } T.frame = (performance.now() - t) / 5; st.dragging = true; t = performance.now(); rebuildCache(); rebuildScene(); render(); f(); T.drag = performance.now() - t; st.dragging = true; t = performance.now(); rebuildCache(); f(); T.dCache = performance.now() - t; t = performance.now(); rebuildScene(); f(); T.dScene = performance.now() - t; t = performance.now(); render(); f(); T.dRender = performance.now() - t; st.dragging = false; return T; },
       starScreen: function (name) { return st.ls && st.ls[SKY_NAMED[name]]; } }
   };
 }
