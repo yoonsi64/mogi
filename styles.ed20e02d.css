@@ -831,9 +831,9 @@
             font-family: var(--gothic, sans-serif); font-size: 0.55em; font-weight: normal; color: var(--text-sub); letter-spacing: -0.02em; text-indent: 0; }
         .ar-page::before { content: attr(data-p); position: absolute; top: -3.6em; right: 0; writing-mode: horizontal-tb; }
         .ar-line { height: var(--ar-len); position: relative; white-space: nowrap; }
-        .ar-spk { display: inline-block; min-inline-size: 4em; font-family: var(--gothic, sans-serif); font-size: 0.82em; font-weight: bold; color: var(--text-sub); letter-spacing: 0.05em; }
+        .ar-spk { display: inline-block; text-indent: 0; min-inline-size: 4em; font-family: var(--gothic, sans-serif); font-size: 0.82em; font-weight: bold; color: var(--text-sub); letter-spacing: 0.05em; }
         .ar-book.ar-v .ar-spk { text-orientation: upright; }
-        .ar-h .ar-spk { min-inline-size: 3.6em; }
+        .ar-h .ar-spk { min-inline-size: 4.39em; }      /* 3.6em of the paragraph's text: the speech lines up with its hanging indent */
         .ar-h p:has(.ar-spk) { padding-inline-start: 3.6em; text-indent: -3.6em; }
         .ar-line[data-n]::after { content: attr(data-n); position: absolute; bottom: -1.45em; left: 50%; transform: translateX(-50%); writing-mode: horizontal-tb; font-family: var(--gothic, sans-serif); font-size: 0.55em; color: var(--text-sub); line-height: 1; }
         .ar-title { font-size: 1.5em; height: calc(var(--ar-len) / 1.5); font-weight: bold; letter-spacing: 0.08em; padding-top: 0.4em; margin-left: 0.6em; white-space: nowrap; }
