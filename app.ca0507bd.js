@@ -4394,6 +4394,10 @@
             });
             GD.view.querySelectorAll('.gd-world button').forEach(function(b) {
                 b.addEventListener('click', function() {
+                    if (GD.devMode) {      // developer view: just look at the other world (nothing about growing changes)
+                        if (b.dataset.w === gdViewWorld() || !gdEngineFor(b.dataset.w)) return;
+                        GD.devWorld = b.dataset.w; GD.dev = null; gdRenderView(); gdMountView(); gdSoundUpdate(); return;
+                    }
                     if (b.dataset.w === worldActive()) return;
                     setSetting('world', b.dataset.w);
                     GD.preview = null;
@@ -4511,8 +4515,8 @@
         GD.view.querySelector('.gd-back button').textContent = 'いまの' + gdWorld(w).k + 'に戻る';
         GD.view.querySelector('.gd-lookup').hidden = !window.MogiSky;
         var ws = GD.view.querySelector('.gd-world');
-        ws.hidden = dev || !window.MogiTown;
-        ws.querySelectorAll('button').forEach(function(b) { b.classList.toggle('active', b.dataset.w === worldActive()); });
+        ws.hidden = !window.MogiTown || !window.MogiGarden;
+        ws.querySelectorAll('button').forEach(function(b) { b.classList.toggle('active', b.dataset.w === (dev ? gdViewWorld() : worldActive())); });
         GD.view.querySelector('.gd-info').innerHTML = gdInfoHtml(s, shown, dev) +
             (dev ? '' : '<div class="gd-today">今日 ' + gdFmt(s.today) + '　問題・読解・模試・単語帳のゲームを開いて手を動かしている時間だけを数えます。' +
             (window.MogiTown ? '育つのは選んでいる方だけです（上の「庭・町」で切り替え。もう一方はそのまま残ります）。' : '') + '</div>');
