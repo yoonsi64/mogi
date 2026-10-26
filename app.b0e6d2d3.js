@@ -18310,7 +18310,23 @@
         if (!sent) return;
         var from = arTtsFromPos(arTts.list, sent);
         var first = null;
-        if (sent.el) { first = book.querySelector(sent.el); if (first) first.classList.add('ar-tts-el'); }
+        if (sent.el) {      // the title or the author: only its words are lit (not the furigana, the note mark or the box)
+            var head = book.querySelector(sent.el), hn = [];
+            if (head) {
+                var hw = document.createTreeWalker(head, NodeFilter.SHOW_TEXT, { acceptNode: function(n) { return n.parentElement.closest('rt, rp, .ar-fn') || !/[^\s　]/.test(n.data) || /[\uac00-\ud7a3]/.test(n.data) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; } }), hx;
+                while ((hx = hw.nextNode())) hn.push(hx);
+                hn.forEach(function(n) {
+                    var d = n.data, a = 0, b = d.length;
+                    while (a < b && /[\s　]/.test(d.charAt(a))) a++;
+                    while (b > a && /[\s　]/.test(d.charAt(b - 1))) b--;
+                    var range = document.createRange(); range.setStart(n, a); range.setEnd(n, b);
+                    if (AR_HL) { arTtsRanges.push(range); if (!first) first = range; return; }
+                    var m = document.createElement('mark'); m.className = 'ar-tts'; range.surroundContents(m);
+                    if (!first) first = m;
+                });
+                if (AR_HL && arTtsRanges.length) arHlDraw(book);
+            }
+        }
         else {
             arPlainText(book).nodes.forEach(function(x) {
                 var a = Math.max(from, x.s), b = Math.min(sent.e, x.s + x.n.data.length), d = x.n.data, blank = /[\s　\u2063]/;
