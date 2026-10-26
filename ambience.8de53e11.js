@@ -1437,8 +1437,8 @@ function dabCrown(S, P, centers, o) {
       var alb = o.cols[(rnd() * o.cols.length) | 0], occ = occOf(ci, q);
       var c = shade(L, alb, q, nn, 0.35, 0.55 + 0.6 * occ);
       if (o.trn && L.key) { var kd = dot3(vsc(nn, -1), L.key.d); if (kd > 0) c = v3(c, o.trn, L.trK * kd * occ * occ * 0.25 * (L.key.c[0])); }
-      var p = S.cam.p(q); if (!p || !S.onScreen(p[0], p[1], 10)) continue;
-      var r = o.r * (0.6 + rnd() * 0.8) * S.cam.F / p[2]; if (r < 0.35) r = 0.35;
+      var rk = rnd(), p = S.cam.p(q); if (!p || !S.onScreen(p[0], p[1], 10)) continue;   // (draw before the cull: the same crown on every cube face)
+      var r = o.r * (0.6 + rk * 0.8) * S.cam.F / p[2]; if (r < 0.35) r = 0.35;
       var k = keyOf(c), B = buckets[k] || (buckets[k] = { c: c, a: [] });
       B.a.push(p[0], p[1], r, rnd());
     }
@@ -1664,7 +1664,8 @@ function bambooClump(S, P, b, h, seed, d) { // 竹林: tall culms leaning out, f
   for (i = 0; i < 9; i++) {
     var o = [b[0] + (rnd() - 0.5) * 3, b[1] + (rnd() - 0.5) * 3, GZ], dir = nrm3([(rnd() - 0.5) * 0.25, (rnd() - 0.5) * 0.25, 1]), H = h * (0.9 + rnd() * 0.5);
     var mid = v3(o, dir, H * 0.6), top = v3(mid, nrm3([dir[0] * 2, dir[1] * 2, 0.8]), H * 0.4);
-    P.limbs(S, { limbs: [{ pts: [o, mid, top], rs: [0.06, 0.05, 0.02] }] }, BARK.bamboo);
+    var tk = clamp(0.9 / (0.06 * S.cam.F / Math.max(1, d)), 1, 3.5);   // far off a culm keeps at least a pixel, so it reads as solid, not a ghost
+    P.limbs(S, { limbs: [{ pts: [o, mid, top], rs: [0.06 * tk, 0.05 * tk, 0.025 * tk] }] }, BARK.bamboo);
     for (var k = 0; k < 6; k++) tops.push(lerp3(mid, top, k / 5));
   }
   dabCrown(S, P, tops, { seed: seed + 1, per: 10, spread: 1.0, r: 0.2, cols: L.season === 'winter' ? [[96, 120, 70], [120, 134, 80]] : [[90, 130, 60], [110, 150, 70], [76, 116, 54]], ci: { c: v3(b, [0, 0, 1], h * 0.8), R: 3 }, z: d - 1, kind: 'needle' });
@@ -1685,6 +1686,8 @@ function hills(S, ranges, se, town) {
     var albF = se === 'autumn' ? [92, 84, 56] : se === 'winter' ? [86, 84, 80] : se === 'spring' ? [84, 104, 64] : [56, 84, 52];
     var top = shade(L, albF, PA(cam.yaw, dist, GZ + R.h0 + R.h1), [0, 0, 1], 0.5, 0.9), bot = shade(L, albF, PA(cam.yaw, dist, GZ), [0, 0, 1], 0.5, 0.75);
     bot = mix(bot, L.haze, 0.25);  // mist pools in the valleys
+    var aer = clamp((dist - 300) / 2400, 0, 0.5), blue = mix(L.haze, [L.haze[0] * 0.82, L.haze[1] * 0.9, Math.min(255, L.haze[2] * 1.06)], 0.6);   // aerial perspective: the near range a deep green, each range behind lighter and bluer
+    if (!L.dark) { top = mix(vsc(top, dist < 600 ? 0.86 : 1), blue, aer); bot = mix(bot, blue, aer * 0.8); }
     var pT = cam.p(PA(cam.yaw, dist, GZ + R.h0 + R.h1 * 1.2)), pB = cam.p(PA(cam.yaw, dist, GZ));
     if (!S.poly(pts, false)) return;
     g.save(); g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
@@ -1696,9 +1699,9 @@ function hills(S, ranges, se, town) {
     [dk, lt].forEach(function (col, pass) {
       g.fillStyle = col; g.beginPath();
       for (i = 0; i < nD; i++) {
-        var az = dz0 + rnd() * (dz1 - dz0), hz = hf(az), z = GZ + hz * Math.pow(rnd(), 0.6), p = cam.p(PA(az, dist, z));
+        var az = dz0 + rnd() * (dz1 - dz0), hz = hf(az), z = GZ + hz * Math.pow(rnd(), 0.6), rk = rnd(), p = cam.p(PA(az, dist, z));   // (all three draws before the cull: the same forest on every cube face)
         if (!p || !S.onScreen(p[0], p[1], 4)) continue;
-        var r = (R.crown * (0.6 + rnd() * 0.7)) * sc; if (r < 0.4) r = 0.4;
+        var r = (R.crown * (0.6 + rk * 0.7)) * sc; if (r < 0.4) r = 0.4;
         g.moveTo(p[0] + r, p[1] - pass * r * 0.3); g.arc(p[0], p[1] - pass * r * 0.3, r * (pass ? 0.6 : 1), 0, TAU);
       }
       g.fill();
@@ -1742,11 +1745,12 @@ function hedgeRing(S, dist, h, se, a0, a1) {
   var bs = cl.map(function () { return []; });
   for (i = 0; i < n; i++) {
     var az = a0 + rnd() * (a1 - a0), tz = topZ(az), hf = Math.pow(rnd(), 0.45), z = GZ + 0.08 + (tz - GZ) * hf, P3 = PA(az, dist - 0.05, z), p2 = cam.p(P3);
+    var q1 = rnd(), q2 = rnd(), q3 = rnd(), q4 = rnd(), q5 = rnd(), q6 = rnd();   // (all before the cull, so every cube face draws the same)
     if (!p2 || !S.onScreen(p2[0], p2[1], 3)) continue;
-    var ci = rnd() < 0.5 ? (hf > 0.75 ? 1 : 0) : 2;
-    if (se === 'spring' && hf > 0.55 && rnd() < 0.3) ci = 3 + (rnd() < 0.5 ? 1 : 0);
-    if (se === 'autumn' && rnd() < 0.08) ci = 3;
-    bs[ci].push(p2[0], p2[1], 0.022 * sc * (0.6 + rnd() * 0.8), rnd() * 3, hf);
+    var ci = q1 < 0.5 ? (hf > 0.75 ? 1 : 0) : 2;
+    if (se === 'spring' && hf > 0.55 && q2 < 0.3) ci = 3 + (q3 < 0.5 ? 1 : 0);
+    if (se === 'autumn' && q4 < 0.08) ci = 3;
+    bs[ci].push(p2[0], p2[1], 0.022 * sc * (0.6 + q5 * 0.8), q6 * 3, hf);
   }
   g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
   bs.forEach(function (arr, k) {
@@ -1767,9 +1771,9 @@ function forestBelt(S, d0, d1, se, seed, spacing) {
     var az = i / n * 360 + (rnd() - 0.5) * 360 / n, d = d0 + rnd() * (d1 - d0), b = PA(az, d, GZ), t = rnd();
     var type = t < 0.22 ? 'sugi' : t < 0.36 ? 'pine' : t < 0.48 ? 'take' : t < 0.6 ? (se === 'autumn' ? 'momiji' : se === 'spring' ? 'sakura' : 'keyaki') : t < 0.8 ? 'keyaki' : 'kusu';
     var h = type === 'sugi' ? 14 + rnd() * 8 : type === 'take' ? 9 + rnd() * 4 : type === 'pine' ? 8 + rnd() * 4 : 9 + rnd() * 6;
-    var pt = cam.p(v3(b, [0, 0, 1], h * 0.6)); if (!pt) continue; var w = h * 0.6 * cam.F / pt[2];
+    var sd = (rnd() * 1e6) | 0, pt = cam.p(v3(b, [0, 0, 1], h * 0.6)); if (!pt) continue; var w = h * 0.6 * cam.F / pt[2];   // (seed drawn before the cull)
     if (!S.onScreen(pt[0], pt[1], w + 20)) continue;
-    list.push({ b: b, d: d, type: type, h: h, seed: (rnd() * 1e6) | 0 });
+    list.push({ b: b, d: d, type: type, h: h, seed: sd });
   }
   list.sort(function (a, b) { return b.d - a.d; });
   var g = S.g; g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
@@ -1782,10 +1786,13 @@ function clumpTree(S, T, g, se, kd) {
     var r = mulberry(T.seed), clumps = [], k, j, sh = T.type;
     // the crown as clumps (centre, radius) in metres around the trunk
     if (sh === 'sugi') { for (k = 0; k < 12; k++) { var zz = T.h * (0.25 + 0.75 * k / 11), rr = (1 - k / 12) * T.h * 0.16 + 0.4; clumps.push([(r() - 0.5) * 0.4, (r() - 0.5) * 0.4, zz, rr, 1]); } }
+    else if (sh === 'bush') { for (k = 0; k < 6; k++) { var ab = r() * TAU, rb = Math.sqrt(r()) * T.h * 0.55; clumps.push([Math.cos(ab) * rb, Math.sin(ab) * rb, T.h * (0.3 + 0.35 * r()), T.h * (0.26 + 0.18 * r()), 1.2]); } T.open = true; }   // a wild shrub: a few loose, uneven clumps on short stems, gaps between
     else if (sh === 'pine') { for (k = 0; k < 7; k++) { var a = r() * TAU, rr2 = 0.6 + r() * 2.2; clumps.push([Math.cos(a) * rr2, Math.sin(a) * rr2, T.h * (0.45 + 0.55 * r()), 0.9 + r() * 0.8, 0.45]); } }
     else if (sh === 'take') { for (k = 0; k < 10; k++) { var a3 = r() * TAU, rr3 = r() * 1.6; clumps.push([Math.cos(a3) * rr3, Math.sin(a3) * rr3, T.h * (0.55 + 0.45 * r()), 0.8 + r() * 0.6, 1.4]); } }
     else { for (k = 0; k < 14; k++) { var a4 = r() * TAU, el = r() * 1.3, rr4 = T.h * 0.3 * Math.cos(el); clumps.push([Math.cos(a4) * rr4, Math.sin(a4) * rr4, T.h * 0.58 + Math.sin(el) * T.h * 0.28, T.h * (0.16 + r() * 0.08), 1]); } }
-    var pal = sh === 'sugi' ? [[22, 40, 28], [40, 64, 40], [70, 96, 58]] : sh === 'pine' ? [[24, 44, 28], [44, 74, 44], [80, 110, 62]] : sh === 'take' ? [[50, 80, 36], [90, 124, 56], [150, 176, 92]]
+    var pal = sh === 'bush' && se === 'autumn' ? [[[54, 60, 30], [96, 98, 46], [146, 140, 72]], [[96, 34, 18], [160, 64, 30], [210, 116, 58]], [[96, 62, 20], [176, 120, 36], [226, 180, 80]], [[40, 60, 30], [70, 94, 44], [112, 130, 66]]][T.seed % 4]   // a mixed hedge turns at its own pace: olive, red, gold, still green
+      : sh === 'bush' && se === 'summer' ? [[[24, 46, 22], [50, 88, 36], [96, 136, 56]], [[30, 52, 30], [60, 96, 50], [110, 140, 76]]][T.seed % 2]
+      : sh === 'sugi' ? [[22, 40, 28], [40, 64, 40], [70, 96, 58]] : sh === 'pine' ? [[24, 44, 28], [44, 74, 44], [80, 110, 62]] : sh === 'take' ? [[50, 80, 36], [90, 124, 56], [150, 176, 92]]
       : sh === 'momiji' ? [[110, 26, 18], [196, 64, 30], [240, 140, 60]] : sh === 'sakura' ? [[170, 120, 140], [232, 190, 206], [252, 232, 238]]
       : se === 'autumn' ? [[96, 62, 20], [176, 120, 36], [226, 180, 80]] : se === 'winter' ? [[70, 64, 58], [104, 96, 86], [140, 132, 120]] : se === 'spring' ? [[46, 80, 30], [96, 140, 54], [170, 200, 100]] : [[24, 46, 22], [50, 88, 36], [96, 136, 56]];
     if (se === 'winter' && (sh === 'keyaki' || sh === 'momiji' || sh === 'sakura')) { // bare crowns: a haze of twigs
@@ -1795,10 +1802,14 @@ function clumpTree(S, T, g, se, kd) {
       g.stroke(); return;
     }
     // the trunk (bamboo: culms), mostly hidden by the crown
-    var p0 = cam.p(T.b), p1 = cam.p(v3(T.b, [0, 0, 1], T.h * (sh === 'sugi' ? 0.4 : 0.4))); if (p0 && p1) {
+    var p0 = cam.p(T.b), p1 = cam.p(v3(T.b, [0, 0, 1], T.h * (sh === 'bush' ? 0.25 : 0.4)));
+    if (T.d < 40 && sh !== 'take' && sh !== 'bush') { var tr = T.h * 0.022 + 0.05; S.limb(T.b, v3(T.b, [0, 0, 1], T.h * 0.62), tr, tr * 0.55, sh === 'sugi' ? { alb: [118, 70, 50], fis: [58, 34, 26], fl: [168, 110, 80], kind: 'furrow' } : BARK.generic);   // close by: a real, tapering trunk with bark, up into the crown
+      [0.45, 0.52, 0.6].forEach(function (f, li) { if (sh === 'sugi') return; var la = r() * TAU, lv = v3(T.b, [0, 0, 1], T.h * f); S.limb(lv, v3(lv, [Math.cos(la) * T.h * 0.16, Math.sin(la) * T.h * 0.16, T.h * 0.12], 1), tr * 0.5, tr * 0.25, BARK.generic); });   // a few limbs into the crown
+      p0 = null; g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); }
+    if (p0 && p1) {
       g.strokeStyle = rgbs(fog(L, shade(L, sh === 'take' ? [120, 130, 80] : [70, 58, 48], T.b, nrm3(vsc(T.b, -1)), 0.5), T.d)); g.lineWidth = Math.max(0.6, (sh === 'take' ? 0.06 : 0.25) * cam.F / p0[2]); g.beginPath(); g.moveTo(p0[0], p0[1]); g.lineTo(p1[0], p1[1]); g.stroke();
     }
-    var dabR = sh === 'sugi' || sh === 'pine' ? 0.17 : sh === 'take' ? 0.15 : 0.22, B = {};
+    var dabR = (sh === 'bush' ? 0.075 : sh === 'sugi' || sh === 'pine' ? 0.17 : sh === 'take' ? 0.15 : 0.22) * clamp(T.d / 45, 0.4, 1), B = {};   // (smaller leaves close by: no big flat discs)
     var aer = clamp((T.d - 12) / 120, 0.06, 0.42) * L.hazeK, dark = mix(fog(L, shade(L, vsc(pal[0], 0.8), T.b, [0, 0, 1], 0.3), T.d), L.haze, aer);   // the shadowed mass inside the crown; aerial perspective
     g.fillStyle = rgbs(dark); g.beginPath();
     clumps.forEach(function (C) { var pc = cam.p([T.b[0] + C[0], T.b[1] + C[1], T.b[2] + C[2] - C[3] * 0.1]); if (!pc) return; var R = C[3] * (T.open ? 0.62 : 0.8) * cam.F / pc[2]; g.moveTo(pc[0] + R * C[4], pc[1]); g.ellipse(pc[0], pc[1], R * C[4], R * (sh === 'pine' ? 0.4 : 0.85), 0, 0, TAU); });
@@ -1815,7 +1826,7 @@ function clumpTree(S, T, g, se, kd) {
         var lit = clamp(dot3(nrm3(nn), kd) * 0.6 + 0.4 + nn[2] * 0.25, 0, 1) * (0.4 + 0.6 * rr5 / C[3]);   // the interior is dark
         var ci = lit < 0.42 ? 0 : lit < 0.72 ? 1 : 2, col = mix(fog(L, shade(L, mix(pal[ci], pal[Math.min(2, ci + 1)], r() * 0.4), P, nrm3(v3(nn, [0, 0, 1], 0.4)), 0.4, 0.85), T.d), L.haze, aer);
         var key = ((col[0] >> 3) << 10) | ((col[1] >> 3) << 5) | (col[2] >> 3), Bk = B[key] || (B[key] = { c: col, a: [] });
-        var p = cam.p(P); if (!p) continue; var pr = Math.max(0.45, dabR * (0.6 + r() * 0.8) * cam.F / p[2]); Bk.a.push(p[0], p[1], pr, r() * 3);
+        var rq1 = r(), rq2 = r(), p = cam.p(P); if (!p) continue; var pr = Math.max(0.45, dabR * (0.6 + rq1 * 0.8) * cam.F / p[2]); Bk.a.push(p[0], p[1], pr, rq2 * 3);
       }
     });
     Object.keys(B).forEach(function (kk) { var Bk = B[kk], a5 = Bk.a; g.fillStyle = rgbs(Bk.c); g.beginPath(); for (var q = 0; q < a5.length; q += 4) { g.moveTo(a5[q] + a5[q + 2], a5[q + 1]); g.ellipse(a5[q], a5[q + 1], a5[q + 2], a5[q + 2] * (sh === 'take' ? 0.45 : 0.75), a5[q + 3], 0, TAU); } g.fill(); });
@@ -1961,7 +1972,7 @@ function teahouseCorner(S, o) {
     g.strokeStyle = 'rgba(50,34,20,0.45)'; g.lineWidth = 0.6; g.beginPath(); cp.forEach(function (c2, ci) { if (!c2) return; if (ci) g.lineTo(c2[0], c2[1]); else g.moveTo(c2[0], c2[1]); }); g.stroke();
     g.restore();
     var rs = mulberry(311 + q[1][0] * 10 | 0); g.strokeStyle = rgbas(shade(L, [214, 186, 120], q[0], [0, 0, 1], 0.4), 0.35); g.lineWidth = 0.6; g.beginPath();
-    for (var fk = 0; fk < 70; fk++) { var fu = rs(), fv = rs(), fp = lerp3(lerp3(q[0], q[1], fu), lerp3(q[3], q[2], fu), fv), pp = S.cam.p(fp); if (!pp) continue; var fl = (0.03 + 0.03 * rs()) * S.cam.F / pp[2], fa = rs() * Math.PI; g.moveTo(pp[0], pp[1]); g.lineTo(pp[0] + Math.cos(fa) * fl, pp[1] + Math.sin(fa) * fl); }
+    for (var fk = 0; fk < 70; fk++) { var fu = rs(), fv = rs(), fq1 = rs(), fq2 = rs(), fp = lerp3(lerp3(q[0], q[1], fu), lerp3(q[3], q[2], fu), fv), pp = S.cam.p(fp); if (!pp) continue; var fl = (0.03 + 0.03 * fq1) * S.cam.F / pp[2], fa = fq2 * Math.PI; g.moveTo(pp[0], pp[1]); g.lineTo(pp[0] + Math.cos(fa) * fl, pp[1] + Math.sin(fa) * fl); }
     g.stroke(); });
   // 下地窓: a small round window on the side wall, reeds showing
   var rc = thP(T, -0.01, V * 0.55, GZ + 1.35), ru = vsc(T.ay, 0.3), rv = [0, 0, 0.3], sh = shapes();
@@ -2144,13 +2155,13 @@ function weeds(S, d, seed, se) { // wild grass on the empty plot: curved, taperi
     var pts = []; for (k = 0; k <= 5; k++) { var t = k / 5; pts.push(v3(v3(base, [0, 0, 1], h * t), dir, lean * t * t * h)); }
     var col = shade(L, mix(alb, [40, 50, 20], rnd() * 0.3), pts[3], nrm3(vsc(pts[3], -1)), 0.6), g = S.ctx(dd);
     g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); g.fillStyle = rgbs(col); g.beginPath();
-    var w0 = 0.006 + rnd() * 0.006, ok = true, sp = pts.map(function (p) { return S.cam.p(p); });
+    var w0 = 0.006 + rnd() * 0.006, head = rnd() < 0.25, ok = true, sp = pts.map(function (p) { return S.cam.p(p); });   // (every random draw before any cull, so each cube face sees the same weeds)
     for (k = 0; k <= 5; k++) if (!sp[k] || sp[k][2] < 0.3) ok = false;
     if (!ok) continue;
     for (k = 0; k <= 5; k++) { var w = w0 * (1 - k / 5.5) * S.cam.F / sp[k][2]; if (k === 0) g.moveTo(sp[k][0] - w, sp[k][1]); else g.lineTo(sp[k][0] - w, sp[k][1]); }
     for (k = 5; k >= 0; k--) { var w2 = w0 * (1 - k / 5.5) * S.cam.F / sp[k][2]; g.lineTo(sp[k][0] + w2, sp[k][1]); }
     g.fill();
-    if (rnd() < 0.25) { var tp = sp[5], r = 0.03 * S.cam.F / tp[2]; g.fillStyle = rgbas(mix(col, [220, 200, 150], 0.35), 0.8); g.beginPath(); g.ellipse(tp[0], tp[1] + r, r * 0.35, r * 1.4, lean, 0, TAU); g.fill(); }
+    if (head) { var tp = sp[5], r = 0.03 * S.cam.F / tp[2]; g.fillStyle = rgbas(mix(col, [220, 200, 150], 0.35), 0.8); g.beginPath(); g.ellipse(tp[0], tp[1] + r, r * 0.35, r * 1.4, lean, 0, TAU); g.fill(); }
   }
 }
 
@@ -2363,7 +2374,7 @@ function shrub3D(S, c, R, H, seed, o) {
     if (bloom && nn[2] > -0.1 && rnd() < 0.5) { a = [[214, 64, 120], [236, 112, 160], [196, 40, 96], [246, 160, 190]][(rnd() * 4) | 0]; fl = true; }
     else if (autumn && rnd() < 0.12) a = [150, 60, 36];
     var col = shade(L, a, P, nrm3(v3(nn, [0, 0, 1], 0.3)), 0.4, fl ? 1.1 : 1), key = ((col[0] >> 4) << 8) | ((col[1] >> 4) << 4) | (col[2] >> 4), b = B[key] || (B[key] = { c: col, a: [] });
-    var p = S.cam.p(P); if (!p) continue; var r = (fl ? 0.03 : 0.022) * S.cam.F / p[2] * (0.7 + rnd() * 0.6); b.a.push(p[0], p[1], Math.max(0.4, r), rnd() * 3);
+    var rq1 = rnd(), rq2 = rnd(), p = S.cam.p(P); if (!p) continue; var r = (fl ? 0.03 : 0.022) * S.cam.F / p[2] * (0.7 + rq1 * 0.6); b.a.push(p[0], p[1], Math.max(0.4, r), rq2 * 3);
   }
   g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
   Object.keys(B).forEach(function (k) { var b = B[k], a = b.a; g.fillStyle = rgbs(b.c); g.beginPath(); for (var t = 0; t < a.length; t += 4) { g.moveTo(a[t] + a[t + 2], a[t + 1]); g.ellipse(a[t], a[t + 1], a[t + 2], a[t + 2] * 0.62, a[t + 3], 0, TAU); } g.fill(); });
@@ -2562,7 +2573,7 @@ function tsukubai3D(S, F) {
   var umi = []; for (var i = 0; i < 16; i++) { var a = i / 16 * TAU; umi.push(gP(t.x + Math.cos(a) * 0.75, 0.005, t.z - 0.15 + Math.sin(a) * 0.5)); }
   S.fillPoly(umi, rgbs(shade(L, L.snow ? [210, 216, 226] : [70, 68, 64], c, [0, 0, 1], 0.4)));
   var pr = mulberry(77), g0 = S.ctx(vlen(c)); g0.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);   // the pebbles of the umi
-  for (var pi = 0; pi < 260 * S.lod; pi++) { var pa = pr() * TAU, prr = Math.sqrt(pr()) * 0.72, pq = gP(t.x + Math.cos(pa) * prr, 0.01, t.z - 0.15 + Math.sin(pa) * prr * 0.68), pp = S.cam.p(pq); if (!pp) continue; var ps = (0.018 + pr() * 0.02) * S.cam.F / pp[2]; g0.fillStyle = rgbs(shade(L, L.snow ? [226, 232, 240] : mix([40, 40, 42], [150, 146, 140], pr()), pq, [0, 0, 1], 0.4)); g0.beginPath(); g0.ellipse(pp[0], pp[1], ps, ps * 0.7, pr() * 3, 0, TAU); g0.fill(); }
+  for (var pi = 0; pi < 260 * S.lod; pi++) { var pa = pr() * TAU, prr = Math.sqrt(pr()) * 0.72, pq = gP(t.x + Math.cos(pa) * prr, 0.01, t.z - 0.15 + Math.sin(pa) * prr * 0.68), pq1 = pr(), pq2 = pr(), pq3 = pr(), pp = S.cam.p(pq); if (!pp) continue; var ps = (0.018 + pq1 * 0.02) * S.cam.F / pp[2]; g0.fillStyle = rgbs(shade(L, L.snow ? [226, 232, 240] : mix([40, 40, 42], [150, 146, 140], pq2), pq, [0, 0, 1], 0.4)); g0.beginPath(); g0.ellipse(pp[0], pp[1], ps, ps * 0.7, pq3 * 3, 0, TAU); g0.fill(); }
   rock3D(S, gP(t.x - 0.75, 0, t.z - 0.35), 0.3, 0.24, 0.16, 611, [140, 134, 124], { moss: F.rockMoss });
   rock3D(S, gP(t.x + 0.62, 0, t.z - 0.12), 0.22, 0.2, 0.2, 612, [132, 128, 120], { moss: F.rockMoss });
   rock3D(S, gP(t.x + 0.05, 0, t.z - 0.62), 0.32, 0.2, 0.08, 613, [150, 146, 138], { moss: F.rockMoss * 0.4, flat: 0.5 });
@@ -2601,10 +2612,21 @@ function gardenItems(o, S0) {
   if (F.smallLanterns && lit) sl.forEach(function (q) { lamp(L, lights, gP(q[0], 0.4, q[1]), [255, 190, 110], 0.6, 0.3, 4, 0.7, 0.1); });
   eventItems(o, items, lights, 'garden', L);
   // far: hills, the pagoda on the hill beyond the teahouse, the woods
-  put(2000, function (S) { hills(S, [{ d: 2200, h0: 60, h1: 220, s: 40, crown: 9 }, { d: 700, h0: 18, h1: 70, s: 24, crown: 6 }], se, false); });
+  put(2000, function (S) { hills(S, [{ d: 2200, h0: 60, h1: 220, s: 40, crown: 9 }, { d: 700, h0: 18, h1: 70, s: 24, crown: 6 }, { d: 420, h0: 14, h1: 42, s: 14, crown: 5 }], se, false); });   // three ranges, each paler with the distance
+  put(170, function (S) { treeRing(S, 160, se, 57, 5.5); });   // trees scattered over the farmland, thinning toward the ridges (as the painting's forest thins into the mist)
   if (F.pagoda) put(330, function (S) { pagoda3D(S, PA(352, 330, GZ + 18), 31, 0.4); });
-  put(60, function (S) { forestBelt(S, 44, 60, se, 17, 3.2); });
-  put(30, function (S) { forestBelt(S, 20, 32, se, 23, 2.6); });
+  // beyond the terrace, at every stage, exactly what the painting has there: three trees (cherries in bloom in spring), a hedge of
+  // mixed shrubs, a tall cedar and a ginkgo. (No ring of woods round you: the painting has none, so an empty lot stays empty.)
+  var kd0 = L.key ? L.key.d : [0.3, -0.5, 0.8];
+  [[730, -3.6, 11.45, 3.4, 0], [731, 4.4, 11.5, 3.8, 1], [732, -8.0, 11.3, 4.2, 2]].forEach(function (a) {
+    var x = GD.LX(a[1]), z = GD.LZ(a[2]);
+    if (se === 'spring') { if (F.namiki && a[4] < 2) return; put(dist(x, z), function (S) { midTree(S, gP(x, 0, z), a[0], 'cherry', se, dist(x, z)); }, { sway: 1 }); return; }
+    put(dist(x, z), function (S) { S.g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); clumpTree(S, { b: gP(x, 0, z), d: dist(x, z), type: 'keyaki', h: a[3], seed: a[0] }, S.g, se, kd0); });
+  });
+  var er = mulberry(500);
+  for (i = 0; i < 19; i++) (function (x, z, R, Hh, k) { put(dist(x, z), function (S) { var b = gP(x, 0, z); groundAO(S, b, R * 1.2, R * 1.1, 0.75); S.g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); clumpTree(S, { b: b, d: dist(x, z), type: 'bush', h: Hh * 1.15, seed: 600 + k }, S.g, se, kd0); }); })(GD.LX(-8.6 + i * 0.95 + (er() - 0.5) * 0.7), GD.LZ(11.0 + er() * 0.6), (er(), 0.55 + er() * 0.55), 0.875 + er() * 1.0, i);
+  put(dist(GD.LX(-6.9), GD.LZ(11.6)), function (S) { sugi3D(S, gP(GD.LX(-6.9), 0, GD.LZ(11.6)), 13, 701, se); });
+  put(dist(GD.LX(7.9), GD.LZ(11.4)), function (S) { S.g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); clumpTree(S, { b: gP(GD.LX(7.9), 0, GD.LZ(11.4)), d: dist(GD.LX(7.9), GD.LZ(11.4)), type: 'keyaki', h: 9, seed: 702 }, S.g, se, kd0); });   // the ginkgo: gold in autumn, bare in winter
   // beyond the fence: the cherry avenue
   if (F.namiki) LAY.namiki.forEach(function (q, k) { put(dist(q[0], q[1] + 0.5), function (S) { midTree(S, gP(q[0], 0, q[1] + 0.5), 77 + k, 'cherry', se, dist(q[0], q[1])); }, { sway: 1 }); });
   // the enclosure
@@ -2669,6 +2691,7 @@ function gardenItems(o, S0) {
   if (F.tsukubai) put(dist(LAY.tsukubai.x, LAY.tsukubai.z), function (S) { tsukubai3D(S, F); });
   if (F.teahouse) put(1.0, function (S) { teahouseCorner(S, o); });
   if (F.weeds) put(1.6, function (S) { weeds(S, 1.7, 33, se); });
+  if (!F.weeds && !F.mossOn) put(9, function (S) { weeds(S, 8.5, 34, se); });   // the weedy margin where the levelled lot meets the rough grass
   return { items: items, lights: lights, F: F };
 }
 /* the top-down map of the ground for the shader: water, raked sand, the marsh, the pebbled shore */
@@ -2689,18 +2712,18 @@ function gardenGroundMap(st, n, R) {
     var w = 0, gr = 0, ms = 0, sh = 0, inG = x > GD.X0 - 0.3 && x < GD.X1 + 0.3 && z > GD.ZS - 0.2 && z < LAY.fenceZ + 0.2;
     if (F.pond) { var d = GD.pondBase(x, z); w = clamp(0.5 - d / 0.12, 0, 1); sh = clamp(1 - Math.abs(d - 0.14) / 0.16, 0, 1) * (w < 0.5 ? 1 : 0); }
     if (F.marsh) { var dm = GD.marshSDF(x, z); ms = clamp(0.5 - dm / 0.15, 0, 1); }
-    if (F.gravel || F.gravelOutline) { var ge = Math.hypot((x - G.cx) / G.rx, (z - G.cz) / G.rz) + (vnoise(x * 2.1, z * 2.1) - 0.5) * 0.04; gr = F.gravel ? clamp((1 - ge) / 0.02, 0, 1) : clamp(1 - Math.abs(ge - 1) / 0.03, 0, 1) * 0.6; }
+    if (F.gravel || F.gravelOutline) { var ge = Math.hypot((x - G.cx) / G.rx, (z - G.cz) / G.rz) + (vnoise(x * 2.1, z * 2.1) - 0.5) * 0.04; gr = F.gravel ? clamp((1 - ge) / 0.02, 0, 1) : 0; }   // (at the outline stage the bed is only marked out: cleared soil, below)
     rocks.forEach(function (r) { if (Math.hypot(x - r.x, z - r.z) < r.r * 0.75) gr = 0; });
-    out[o] = w * 255; out[o + 1] = gr * 255; out[o + 2] = ms * 255; out[o + 3] = inG ? 255 : 0;
+    out[o] = w * 255; out[o + 1] = gr * 255; out[o + 2] = ms * 255; var dR = Math.max(GD.X0 - 0.3 - x, x - GD.X1 - 0.3, GD.ZS - 0.2 - z, z - LAY.fenceZ - 0.2); out[o + 3] = clamp(0.5 - (dR + (vnoise(x * 0.3 + 7, z * 0.3) - 0.5) * 4.0 + (vnoise(x * 1.1, z * 1.1 + 3) - 0.5) * 1.2) / 2.2, 0, 1) * 255;   // the lot's edge, soft and ragged
     // worn earth along the stepping stones, in front of the veranda and round the lantern; soil patches in the moss
     var bare = 0;
     for (k = 0; k < stones.length; k++) { var q = stones[k], dd = Math.hypot((x - q[0]) / (q[2] + 0.28), (z - q[1]) / (q[3] + 0.26)); if (dd < 1.6) bare = Math.max(bare, clamp((1.6 - dd) / 0.7, 0, 1)); }
     if (F.teahouse && x > GD.TH.X0 - 0.3 && x < GD.TH.X1 + 0.3 && z > GD.TH.ZE - 0.9 && z < GD.TH.ZE + 0.6) bare = Math.max(bare, 0.85);
     bare = Math.max(bare, clamp((vnoise(x * 0.9 + 3, z * 0.9) - 0.72) * 4, 0, 0.7));
     bare *= 0.55 + 0.45 * vnoise(x * 4.1, z * 4.1);
+    if (F.gravelOutline) { var go = Math.hypot((x - G.cx) / G.rx, (z - G.cz) / G.rz) + (vnoise(x * 1.7, z * 1.7) - 0.5) * 0.08; bare = Math.max(bare, clamp((1.02 - go) / 0.08, 0, 1) * 0.9); }   // the gravel bed marked out: its ground cleared to soil, as the painting has it
     var shd = 0, lit = 0;
     trees.forEach(function (t) { var dt = Math.hypot(x - t[0], z - t[1]) / t[2]; if (dt < 1.25) { shd = Math.max(shd, t[3] * clamp(1.25 - dt, 0, 1)); if (t[4]) lit = Math.max(lit, clamp(1.4 - dt, 0, 1) * (t[4] === 1 ? 1 : 0.5) + (t[4] === 2 ? 0.5 : 0) * (dt < 1.4 ? 1 : 0)); } });
-    if (inG) lit = Math.max(lit, 0.18);
     out[o2] = bare * 255; out[o2 + 1] = sh * 255; out[o2 + 2] = 0; out[o2 + 3] = lit * 255; out[o + 2] = Math.max(out[o + 2], 0) ; aoArr[j * n + i] = shd;
   }
   return { data: out, rocks: rocks, F: F, ao: aoArr };
@@ -2868,7 +2891,7 @@ function plankBridge3D(S) {
   var B = TWN.BR, ax = B.ax, Ln = 17, w = 2.2, L = S.L, WL = TWN.WL, parts = [], a, i;
   function Lp(a, b, y) { return tP(B.x + ax[0] * a - ax[1] * b, y, B.z + ax[1] * a + ax[0] * b); }
   var aS = Ln / 2 + 1.5;   // where the approach meets the street
-  function yD(a) { var u = Math.abs(a); return u <= Ln / 2 ? 0.55 + 0.35 * Math.cos(a / Ln * Math.PI) : 0.55 - 0.42 * Math.min(1, (u - Ln / 2) / (aS - Ln / 2)); }   // the deck's top, metres above the banks
+  function yD(a) { var u = Math.abs(a); return u <= Ln / 2 ? 0.55 + 0.35 * Math.cos(a / Ln * Math.PI) : 0.55 - 0.5 * Math.min(1, (u - Ln / 2) / (aS - Ln / 2)); }   // the deck's top, metres above the banks (the approach comes right down onto the path)
   function wet(a, b) { return TWN.riverD(B.x + ax[0] * a - ax[1] * b, B.z + ax[1] * a + ax[0] * b) < 0; }
   var side = nrm3(vsub(Lp(0, 1, 0), Lp(0, 0, 0))), along = nrm3(vsub(Lp(1, 0, 0), Lp(0, 0, 0))), snow = L.snow;
   var pileB = { alb: [80, 66, 52], fis: [38, 30, 24], fl: [124, 108, 88], kind: 'grain' }, wetB = { alb: [42, 40, 34], fis: [22, 20, 18], fl: [78, 76, 66], kind: 'smooth' };
@@ -2897,7 +2920,7 @@ function plankBridge3D(S) {
   });
   // the ends: a sill log bedded in the street under the foot of the approach
   [-1, 1].forEach(function (sg) {
-    [[sg * (aS - 0.25), 0.04]].forEach(function (E) {
+    [[sg * (aS - 0.9), 0.0]].forEach(function (E) {   // (half sunk in the path, under the approach)
       parts.push({ d: vlen(Lp(E[0], 0, E[1])) + 0.9, f: function () { S.limb(Lp(E[0], -w / 2 - 0.2, E[1]), Lp(E[0], w / 2 + 0.2, E[1]), 0.1, 0.1, logB); } });
     });
   });
@@ -2941,57 +2964,76 @@ function bankStone(st, x, z, thisSide) {
 }
 /* a natural river bank: an earthen slope, grassed above and wet and dark at the water, a few rough stones at its foot,
    tufts of grass along the lip and, here and there, reeds */
-function naturalBank(S, p0, p1, nl, seed) {
+function naturalBank(S, p0, p1, nl0, nl1, seed) {   // p0, p1 on the water's edge; nl0, nl1 the (mitred) normals toward the land there
   var L = S.L, se = L.season, WL = TWN.WL, snow = L.snow;
-  function at(p, off, y) { return tP(p[0] + nl[0] * off, y, p[1] + nl[1] * off); }
-  var q = [at(p0, 0.55, 0.03), at(p1, 0.55, 0.03), at(p1, -0.35, WL + 0.02), at(p0, -0.35, WL + 0.02)], dist = vlen(lerp3(q[0], q[2], 0.5));
+  function at(u, off, y) { var nx = nl0[0] + (nl1[0] - nl0[0]) * u, nz = nl0[1] + (nl1[1] - nl0[1]) * u; return tP(p0[0] + (p1[0] - p0[0]) * u + nx * off, y, p0[1] + (p1[1] - p0[1]) * u + nz * off); }
+  function nz(p, k) { return vnoise(p[0] * 0.13 + k, p[1] * 0.13 - k); }   // shape varies along the river with position (so neighbouring stretches join seamlessly and nothing repeats)
+  var lip0 = 0.4 + 0.35 * nz(p0, 1.3), lip1 = 0.4 + 0.35 * nz(p1, 1.3), ft0 = 0.25 + 0.25 * nz(p0, 7.1), ft1 = 0.25 + 0.25 * nz(p1, 7.1);
+  var q = [at(0, lip0, 0.03), at(1, lip1, 0.03), at(1, -ft1, WL + 0.02), at(0, -ft0, WL + 0.02)], dist = vlen(lerp3(q[0], q[2], 0.5));
   var n = nrm3(cross3(vsub(q[1], q[0]), vsub(q[3], q[0]))); if (n[2] < 0) n = vsc(n, -1);
   var grass = snow ? [226, 230, 238] : se === 'autumn' ? [134, 120, 76] : se === 'summer' ? [78, 104, 52] : [96, 124, 62], earth = [104, 88, 68];
-  var rs = mulberry(seed * 13 + 101), g = S.g, col = S.facet(q, mix(earth, grass, snow ? 0.75 : 0.4 + 0.3 * hash2(seed, 3)), n, { wrap: 0.35 });
+  var rs = mulberry(seed * 13 + 101), g = S.g, col = S.facet(q, mix(earth, grass, snow ? 0.75 : 0.4 + 0.3 * nz(lerp2(p0, p1, 0.5), 2.2)), n, { wrap: 0.35 });
   if (col) {
-    if (S.poly([lerp3(q[0], q[3], 0.45), lerp3(q[1], q[2], 0.45), q[2], q[3]], false)) {   // bare wet earth toward the water
-      var pA = S.cam.p(lerp3(lerp3(q[0], q[1], 0.5), lerp3(q[3], q[2], 0.5), 0.45)), pW = S.cam.p(lerp3(q[3], q[2], 0.5));
-      if (pA && pW) { var gw = g.createLinearGradient(pA[0], pA[1], pW[0], pW[1]); gw.addColorStop(0, rgbas(shade(L, earth, q[3], n, 0.3), 0)); gw.addColorStop(0.5, rgbas(shade(L, [70, 58, 44], q[3], n, 0.3), 0.6)); gw.addColorStop(1, rgbas(shade(L, [36, 34, 28], q[3], n, 0.3), 0.85)); g.fillStyle = gw; g.fill(); }
+    var wb0 = 0.3 + 0.35 * nz(p0, 4.4), wb1 = 0.3 + 0.35 * nz(p1, 4.4), wb = (wb0 + wb1) / 2;   // how far up the bank stays wet: varies along the river
+    if (S.poly([lerp3(q[0], q[3], wb0), lerp3(q[1], q[2], wb1), q[2], q[3]], false)) {   // bare wet earth toward the water
+      var pA = S.cam.p(lerp3(lerp3(q[0], q[1], 0.5), lerp3(q[3], q[2], 0.5), wb)), pW = S.cam.p(lerp3(q[3], q[2], 0.5));
+      if (pA && pW) { var gw = g.createLinearGradient(0, pA[1], 0, pW[1]); gw.addColorStop(0, rgbas(shade(L, earth, q[3], n, 0.3), 0)); gw.addColorStop(0.55, rgbas(shade(L, [70, 58, 44], q[3], n, 0.3), 0.45)); gw.addColorStop(1, rgbas(shade(L, [36, 34, 28], q[3], n, 0.3), 0.75)); g.fillStyle = gw; g.fill(); }
     }
     if (dist < 40) { g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);   // rough stones at the water's edge
-      for (var k = 0; k < 4; k++) { var u = rs(), c = lerp3(lerp3(q[3], q[2], u), lerp3(q[0], q[1], u), 0.06 + rs() * 0.2), pc = S.cam.p(c); if (!pc) continue; var rr = (0.05 + rs() * 0.09) * S.cam.F / pc[2]; if (rr < 0.4) continue;
-        g.fillStyle = rgbs(shade(L, snow ? [200, 204, 212] : mix([62, 60, 56], [104, 100, 92], rs()), c, nrm3([n[0], n[1], n[2] + 0.6]), 0.4)); g.beginPath(); g.ellipse(pc[0], pc[1], rr, rr * 0.6, (rs() - 0.5) * 0.6, 0, TAU); g.fill(); }
+      for (var k = 0; k < 4; k++) { var u = rs(), c = lerp3(lerp3(q[3], q[2], u), lerp3(q[0], q[1], u), 0.06 + rs() * 0.2), sz = 0.05 + rs() * 0.09, tone = rs(), ang = (rs() - 0.5) * 0.6, pc = S.cam.p(c); if (!pc) continue; var rr = sz * S.cam.F / pc[2]; if (rr < 0.4) continue;
+        g.fillStyle = rgbs(shade(L, snow ? [200, 204, 212] : mix([62, 60, 56], [104, 100, 92], tone), c, nrm3([n[0], n[1], n[2] + 0.6]), 0.4)); g.beginPath(); g.ellipse(pc[0], pc[1], rr, rr * 0.6, ang, 0, TAU); g.fill(); }
     }
   }
   if (dist > 45) return;
-  // grass along the lip (it shows on the near bank too, over the water's edge), reeds on some stretches
-  var nb = Math.round((dist < 15 ? 26 : 12) * S.lod), lean = [-nl[0], -nl[1]], gc = snow ? [180, 170, 140] : grass, pth = [];
+  // grass along the lip (it shows on the near bank too, over the water's edge)
+  var nb = Math.round((dist < 15 ? 26 : 12) * S.lod), gc = snow ? [180, 170, 140] : grass, k2;
   g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); g.lineCap = 'round';
   g.beginPath(); g.lineWidth = Math.max(0.5, 0.012 * S.cam.F / Math.max(1, dist));
-  for (k = 0; k < nb; k++) { var u2 = rs(), off = 0.3 - rs() * 0.4, pb = [p0[0] + (p1[0] - p0[0]) * u2, p0[1] + (p1[1] - p0[1]) * u2], b0 = at(pb, off, 0.02), hgt = (snow ? 0.08 : 0.14) + rs() * 0.2, lk = 0.04 + rs() * 0.1;
-    S.bl(b0, [b0[0] + (TWN.c * lean[0] + TWN.s * lean[1]) * lk + (rs() - 0.5) * 0.05, b0[1] + (-TWN.s * lean[0] + TWN.c * lean[1]) * lk + (rs() - 0.5) * 0.05, b0[2] + hgt], g); }
+  for (k2 = 0; k2 < nb; k2++) { var u2 = rs(), off = 0.3 - rs() * 0.4, b0 = at(u2, off, 0.02), hgt = (snow ? 0.08 : 0.14) + rs() * 0.2, lk = 0.04 + rs() * 0.1, jx = (rs() - 0.5) * 0.05, jy = (rs() - 0.5) * 0.05, tw = at(u2, off - lk, 0.02);
+    S.bl(b0, [tw[0] + jx, tw[1] + jy, b0[2] + hgt], g); }
   g.strokeStyle = rgbs(shade(L, vsc(gc, 0.85), q[0], [0, 0, 1], 0.5)); g.stroke();
-  if (!snow && hash2(seed, 5) < 0.4) {   // 葦: reeds standing at the water's edge
-    var nr = Math.round((dist < 15 ? 22 : 10) * S.lod), rc = se === 'autumn' ? [150, 130, 84] : se === 'winter' ? [150, 136, 104] : [84, 112, 56];
-    g.beginPath(); g.lineWidth = Math.max(0.5, 0.01 * S.cam.F / Math.max(1, dist));
-    var heads = [];
-    for (k = 0; k < nr; k++) { var u3 = rs(), pr = [p0[0] + (p1[0] - p0[0]) * u3, p0[1] + (p1[1] - p0[1]) * u3], r0 = at(pr, -0.25 - rs() * 0.25, WL + 0.02), rh = (se === 'spring' ? 0.5 : 1.0) + rs() * 0.7, bend = (rs() - 0.3) * 0.2;
-      var r1 = [r0[0] + bend, r0[1] + bend * 0.5, r0[2] + rh]; S.bl(r0, r1, g); if (se === 'autumn' || se === 'summer') heads.push(r1); }
-    g.strokeStyle = rgbs(shade(L, rc, q[2], [0, 0, 1], 0.6)); g.stroke();
-    if (se === 'autumn') { g.fillStyle = rgbs(shade(L, [176, 150, 108], q[2], [0, 0, 1], 0.6)); heads.forEach(function (h) { var ph = S.cam.p(h); if (!ph) return; var hr = 0.04 * S.cam.F / ph[2]; if (hr < 0.4) return; g.beginPath(); g.ellipse(ph[0], ph[1] + hr * 1.5, hr * 0.6, hr * 2, 0.2, 0, TAU); g.fill(); }); }   // the plumes
+  if (!snow && hash2(seed, 5) < 0.4) {   // 葦: reeds at the water's edge, each a curved stem with a couple of blades, plumes in summer and autumn
+    var near = !col, y0 = near ? 0.02 : WL + 0.02;   // (on the near bank the water shows at the bank's level, so its reeds stand there)
+    var nr = Math.round((dist < 15 ? 22 : 10) * S.lod), rc = se === 'autumn' ? [150, 130, 84] : se === 'winter' ? [150, 136, 104] : se === 'spring' ? [96, 132, 60] : [74, 104, 48];
+    var stems = [], blades = [], heads = [];
+    for (k2 = 0; k2 < nr; k2++) {
+      var u3 = rs(), r0 = at(u3, near ? -0.05 - rs() * 0.3 : -0.25 - rs() * 0.25, y0), rh = (se === 'spring' ? 0.6 : 1.2) + rs() * 0.8, bx = (rs() - 0.5) * 0.35, by = (rs() - 0.5) * 0.35;
+      var r1 = [r0[0] + bx * 0.4, r0[1] + by * 0.4, r0[2] + rh * 0.55], r2 = [r0[0] + bx, r0[1] + by, r0[2] + rh];
+      stems.push([r0, r1, r2]);
+      for (var bl = 0; bl < 2; bl++) { var f = 0.25 + rs() * 0.35, sp = lerp3(lerp3(r0, r1, f * 1.8 > 1 ? 1 : f * 1.8), r2, Math.max(0, f * 1.8 - 1)), da = rs() * TAU, ll = 0.3 + rs() * 0.25; blades.push([sp, [sp[0] + Math.cos(da) * ll * 0.6, sp[1] + Math.sin(da) * ll * 0.6, sp[2] + ll * 0.35], [sp[0] + Math.cos(da) * ll, sp[1] + Math.sin(da) * ll, sp[2] + ll * 0.05]]); }
+      if (se === 'autumn' || se === 'summer') heads.push(r2);
+    }
+    var curve = function (P3) { var a = S.cam.p(P3[0]), b = S.cam.p(P3[1]), c = S.cam.p(P3[2]); if (!a || !b || !c) return; g.moveTo(a[0], a[1]); g.quadraticCurveTo(b[0], b[1], c[0], c[1]); };
+    var lw = Math.max(0.6, 0.014 * S.cam.F / Math.max(1, dist));
+    g.beginPath(); g.lineWidth = lw; stems.forEach(function (P3) { curve(P3); }); g.strokeStyle = rgbs(shade(L, vsc(rc, 0.85), q[2], [0, 0, 1], 0.6)); g.stroke();
+    g.beginPath(); g.lineWidth = lw * 1.3; blades.forEach(function (P3) { curve(P3); }); g.strokeStyle = rgbs(shade(L, rc, q[2], [0, 0, 1], 0.6)); g.stroke();
+    if (heads.length) { g.fillStyle = rgbs(shade(L, se === 'autumn' ? [184, 160, 118] : [96, 70, 44], q[2], [0, 0, 1], 0.6));   // plumes: pale and feathery in autumn, dark spikes in summer
+      heads.forEach(function (h) { var ph = S.cam.p(h); if (!ph) return; var hr = 0.045 * S.cam.F / ph[2]; if (hr < 0.4) return; g.beginPath(); g.ellipse(ph[0] + hr * 0.4, ph[1] + hr * 1.6, hr * (se === 'autumn' ? 0.8 : 0.4), hr * 2.2, 0.35, 0, TAU); g.fill(); }); }
   }
   g.lineCap = 'butt';
+}
+function lerp2(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]; }
+function bankMiter(R, j, side) { // the unit normal toward the bank at vertex j of the river, mitred (lengthened) so both banks keep their width
+  function nrm(i) { var a = R[i], b = R[i + 1], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz); return [-dz / l * side, dx / l * side]; }
+  var n0 = j > 0 ? nrm(j - 1) : nrm(j), n1 = j < R.length - 1 ? nrm(j) : nrm(j - 1), m = [n0[0] + n1[0], n0[1] + n1[1]], ml = Math.hypot(m[0], m[1]) || 1, c = (m[0] * n1[0] + m[1] * n1[1]) / ml;
+  return [m[0] / ml / Math.max(0.5, c), m[1] / ml / Math.max(0.5, c)];
 }
 function embankments(S, st) {
   var R = TWN.RIVER, i, side, k;
   for (side = -1; side <= 1; side += 2) for (i = 0; i < R.length - 1; i++) {
     var a = R[i], b = R[i + 1], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz), nx = -dz / l * side * TWN.HW, nz = dx / l * side * TWN.HW;
-    var A = [a[0] + nx, a[1] + nz], Bq = [b[0] + nx, b[1] + nz], m = tP((A[0] + Bq[0]) / 2, 0, (A[1] + Bq[1]) / 2); if (Math.hypot(m[0], m[1]) > 140) continue;
+    var nA = bankMiter(R, i, side), nB = bankMiter(R, i + 1, side);   // mitred at the bends, so the bank runs on without notches
+    var A = [a[0] + nA[0] * TWN.HW, a[1] + nA[1] * TWN.HW], Bq = [b[0] + nB[0] * TWN.HW, b[1] + nB[1] * TWN.HW], m = tP((A[0] + Bq[0]) / 2, 0, (A[1] + Bq[1]) / 2); if (Math.hypot(m[0], m[1]) > 140) continue;
     var segs = Math.max(1, Math.round(l / 3));
     for (k = 0; k < segs; k++) {
       var t0 = k / segs, t1 = (k + 1) / segs, p0 = [A[0] + (Bq[0] - A[0]) * t0, A[1] + (Bq[1] - A[1]) * t0], p1 = [A[0] + (Bq[0] - A[0]) * t1, A[1] + (Bq[1] - A[1]) * t1];
-      if (!bankStone(st, (p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2, nz > 0)) { naturalBank(S, p0, p1, [nx / TWN.HW, nz / TWN.HW], i * 31 + k * 7 + side * 3 + 11); continue; }
+      if (!bankStone(st, (p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2, nz > 0)) { naturalBank(S, p0, p1, lerp2(nA, nB, t0), lerp2(nA, nB, t1), i * 31 + k * 7 + side * 3 + 11); continue; }
       var q = [tP(p0[0], 0.05, p0[1]), tP(p1[0], 0.05, p1[1]), tP(p1[0], TWN.WL - 0.1, p1[1]), tP(p0[0], TWN.WL - 0.1, p0[1])], col = S.face(q, mix([132, 126, 114], [150, 144, 130], hash2(i * 7 + k, side)), { wrap: 0.3 });
       if (col && vlen(q[0]) < 30) { speckle(S, q, col, 30);
         var g = S.g, rs = mulberry(i * 131 + k * 7 + side * 3 + 500), rows = 4, r2; g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);   // 石積み: courses of fitted stones, their joints dark
         for (r2 = 0; r2 < rows; r2++) { var v0 = r2 / rows, v1 = (r2 + 1) / rows, u = -rs() * 0.3;
           while (u < 1) { var u1 = Math.min(1, u + 0.2 + rs() * 0.25), ua = Math.max(0, u), sq2 = [lerp3(lerp3(q[0], q[1], ua), lerp3(q[3], q[2], ua), v0), lerp3(lerp3(q[0], q[1], u1), lerp3(q[3], q[2], u1), v0), lerp3(lerp3(q[0], q[1], u1), lerp3(q[3], q[2], u1), v1), lerp3(lerp3(q[0], q[1], ua), lerp3(q[3], q[2], ua), v1)];
-            if (S.poly(sq2, false)) { g.fillStyle = rgbas(mix(col, rs() < 0.5 ? [0, 0, 0] : [255, 250, 236], 0.12 + 0.1 * rs()), 0.6); g.fill(); g.strokeStyle = rgbas(mix(col, [0, 0, 0], 0.55), 0.7); g.lineWidth = 0.8; g.stroke(); }
+            var sv = rs(), sk = rs(); if (S.poly(sq2, false)) { g.fillStyle = rgbas(mix(col, sv < 0.5 ? [40, 38, 34] : [236, 230, 214], 0.04 + 0.07 * sk), 0.55); g.fill(); g.strokeStyle = rgbas(mix(col, [0, 0, 0], 0.5), 0.55); g.lineWidth = 0.7; g.stroke(); }   // fitted stones, each a little different, not a checkerboard
             u = u1; } }
         if (S.poly([lerp3(q[0], q[3], 0.62), lerp3(q[1], q[2], 0.62), q[2], q[3]], false)) { var pA = S.cam.p(lerp3(lerp3(q[0], q[1], 0.5), lerp3(q[3], q[2], 0.5), 0.62)), pW = S.cam.p(lerp3(q[3], q[2], 0.5)); if (pA && pW) { var gw = g.createLinearGradient(pA[0], pA[1], pW[0], pW[1]); gw.addColorStop(0, 'rgba(30,34,24,0)'); gw.addColorStop(0.6, 'rgba(30,34,24,0.35)'); gw.addColorStop(1, 'rgba(20,26,18,0.6)'); g.fillStyle = gw; g.fill(); } }   // wet and mossy toward the water
       }
@@ -3066,40 +3108,40 @@ function vilWalls(S, B, w, d, y0, y1, alb, o) { // four walls of a box in a vill
     if (col && o.face) o.face(k, q, col);
   }
 }
-/* 杉 close by: a straight reddish-brown fibrous trunk and a tall narrow cone of dense, dark blue-green needle sprays that
-   droop in tiers; each spray lit for its own facing, the far ones first */
+/* 杉 close by: a straight reddish-brown fibrous trunk and a tall narrow cone of dense, dark blue-green foliage in drooping
+   tiers. Each tier is a dark mass under a skin of small needle-spray dabs, elongated along the tier and lit for their own
+   facing; dabs on the far side of the cone are left out, so the near side always reads in front */
 function sugi3D(S, b, h, seed, se) {
-  var L = S.L, rs = mulberry(seed), g = S.g, F = S.cam.F, kd = L.key ? L.key.d : [0.3, -0.5, 0.8], z0 = h * 0.28, k, j;
-  S.limb(b, v3(b, [0, 0, 1], h * 0.9), 0.24, 0.05, { alb: [118, 70, 50], fis: [58, 34, 26], fl: [168, 110, 80], kind: 'furrow' });
-  var pal = [[18, 34, 30], [30, 52, 42], [52, 78, 58]], snow = L.snow, sprays = [];
-  for (k = 0; k < 15; k++) {
-    var f = k / 14, zt = z0 + (h - z0) * f, rt = Math.pow(1 - f, 0.85) * h * 0.16 + 0.22, ns = Math.round(7 + rt * 7);
-    for (j = 0; j < ns; j++) { var a = (j + rs() * 0.6) / ns * TAU + k * 0.9, rr = rt * (0.7 + rs() * 0.35);
-      var pro = rs() < 0.22 ? 1.3 + rs() * 0.25 : 1;   // a few sprays reach out past the tier's line
-      sprays.push({ a: a, z: zt + (rs() - 0.5) * 0.3, r: rr * (0.85 + rs() * 0.3) * pro, droop: (0.2 + rt * 0.4) * (0.8 + rs() * 0.4) * pro, w: (0.16 + rt * 0.22) * (0.8 + rs() * 0.4) }); }
-  }
-  sprays.forEach(function (s) { s.tip = v3(b, [Math.cos(s.a) * s.r, Math.sin(s.a) * s.r, s.z - s.droop], 1); s.d = vlen(lerp3(v3(b, [0, 0, s.z], 1), s.tip, 0.6)); });
-  sprays.sort(function (p, q) { return q.d - p.d; });
-  g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); g.lineCap = 'round';
-  sprays.forEach(function (s) {
-    var ca = Math.cos(s.a), sa = Math.sin(s.a), base = v3(b, [ca * 0.1, sa * 0.1, s.z + 0.12], 1), mid = v3(b, [ca * s.r * 0.55, sa * s.r * 0.55, s.z + 0.02], 1), tip = s.tip, side = [-sa * s.w, ca * s.w, 0];
-    var n = nrm3([ca * 0.8, sa * 0.8, 0.6]), lit = clamp(dot3(n, kd) * 0.5 + 0.45 + (rs() - 0.5) * 0.12, 0, 1);
-    var col = shade(L, lit < 0.5 ? mix(pal[0], pal[1], lit * 2) : mix(pal[1], pal[2], lit * 2 - 1), mid, n, 0.6, 0.9);   // colour follows the facing smoothly, so neighbours blend
-    var poly = [base, v3(mid, side, 1), v3(tip, side, 0.25), tip, v3(tip, side, -0.25), v3(mid, side, -1)], pp = poly.map(function (p) { return S.cam.p(p); });
-    if (pp.some(function (p) { return !p; })) return;
-    var dist = vlen(mid);
-    g.fillStyle = rgbs(col); g.beginPath(); pp.forEach(function (p, i) { if (i) g.lineTo(p[0], p[1]); else g.moveTo(p[0], p[1]); }); g.closePath(); g.fill();
-    g.strokeStyle = rgbas(col, 0.35); g.lineWidth = Math.max(1, 0.05 * F / dist); g.lineJoin = 'round'; g.stroke(); g.lineJoin = 'miter';   // a feathered, ragged edge, not a clean triangle
-    if (dist > 40) return;
-    var lw = Math.max(0.4, 0.012 * F / dist); g.lineWidth = lw;   // the needle sprays: fine strokes hanging from the branch, lit along the top
-    g.strokeStyle = rgbas(mix(col, snow ? [236, 240, 246] : [120, 150, 110], snow ? 0.6 : 0.28), 0.7); g.beginPath();
-    for (var t = 0.15; t < 1; t += 0.12) { var c0 = lerp3(mid, tip, t), u = (rs() - 0.5) * 1.6, c1 = v3(c0, side, u * 0.5); S.bl(c1, v3(c1, [0, 0, -1], 0.08 + rs() * 0.1), g); }
-    g.stroke();
-    g.strokeStyle = rgbas(mix(col, [0, 0, 0], 0.4), 0.6); g.beginPath();
-    for (t = 0.1; t < 1; t += 0.15) { var c2 = v3(lerp3(base, tip, t), side, (rs() - 0.5) * 1.2); S.bl(c2, v3(c2, [0, 0, -1], 0.1 + rs() * 0.12), g); }
-    g.stroke();
+  var L = S.L, cam = S.cam, F = cam.F, g = S.g, rs = mulberry(seed), kd = L.key ? L.key.d : [0.3, -0.5, 0.8], z0 = h * 0.3, NT = 16, k, j;
+  var d = vlen(b), aer = clamp((d - 12) / 120, 0.06, 0.42) * L.hazeK, snow = L.snow;
+  S.limb(b, v3(b, [0, 0, 1], h * 0.92), 0.24, 0.05, { alb: [118, 70, 50], fis: [58, 34, 26], fl: [168, 110, 80], kind: 'furrow' });
+  var pal = [[14, 28, 24], [24, 44, 36], [40, 64, 48], [62, 88, 62]];
+  function col(lit, P, n) { var t = clamp(lit, 0, 0.999) * 3, i = Math.floor(t); return mix(fog(L, shade(L, mix(pal[i], pal[i + 1], t - i), P, n, 0.5, 0.9), vlen(P)), L.haze, aer); }
+  var tiers = [];
+  for (k = 0; k < NT; k++) { var f = k / (NT - 1); tiers.push({ z: z0 + (h - z0) * f, r: Math.pow(1 - f, 0.9) * h * 0.15 + 0.25 }); }
+  g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+  g.fillStyle = rgbs(col(0.05, v3(b, [0, 0, 1], h * 0.5), [0, 0, 1])); g.beginPath();   // the dark mass inside each tier
+  tiers.forEach(function (T) { var p = cam.p(v3(b, [0, 0, 1], T.z - T.r * 0.12)); if (!p) return; var R = T.r * 0.86 * F / p[2]; g.moveTo(p[0] + R, p[1]); g.ellipse(p[0], p[1], R, R * 0.42, 0, 0, TAU); });
+  g.fill();
+  var B = {}, vd = nrm3(vsc(b, -1));
+  tiers.forEach(function (T, ti) {
+    var n = Math.round((T.r * T.r * 110 + 24) * S.lod * clamp(30 / d, 0.5, 1.3));
+    for (j = 0; j < n; j++) {
+      var a = rs() * TAU, u = Math.sqrt(rs()), rr = u * T.r * (0.85 + 0.3 * rs()), ca = Math.cos(a), sa = Math.sin(a);
+      if (ca * vd[0] + sa * vd[1] < -0.35 && u > 0.5) continue;   // the far side of the cone
+      var P = v3(b, [ca * rr, sa * rr, T.z - 0.32 * T.r * u * u + (rs() - 0.5) * 0.14 * T.r], 1), nn = nrm3([ca * u, sa * u, 0.6]);
+      var lit = (dot3(nn, kd) * 0.5 + 0.45) * (0.4 + 0.6 * u) + (rs() - 0.5) * 0.1, c = col(lit, P, nn);
+      if (snow && nn[2] > 0.5 && rs() < 0.55 * u) c = mix(c, fog(L, shade(L, [226, 232, 242], P, [0, 0, 1], 0.4), vlen(P)), 0.8);
+      var rq = rs(), p = cam.p(P); if (!p) continue; var q = cam.p(v3(P, [-sa, ca, 0], 0.1)), rot = q ? Math.atan2(q[1] - p[1], q[0] - p[0]) : 0;
+      var r = Math.max(0.45, (0.06 + rq * 0.05) * F / p[2]), key = ((c[0] >> 3) << 10) | ((c[1] >> 3) << 5) | (c[2] >> 3), Bk = B[key] || (B[key] = { c: c, a: [] });
+      Bk.a.push(p[0], p[1], r, rot);
+    }
   });
-  g.lineCap = 'butt';
+  Object.keys(B).sort(function (x, y) { var a = B[x].c, b2 = B[y].c; return (a[0] + a[1] + a[2]) - (b2[0] + b2[1] + b2[2]); }).forEach(function (kk) {   // dark first, the lit tips last
+    var Bk = B[kk], A = Bk.a; g.fillStyle = rgbs(Bk.c); g.beginPath();
+    for (var t = 0; t < A.length; t += 4) { g.moveTo(A[t] + A[t + 2] * 1.6, A[t + 1]); g.ellipse(A[t], A[t + 1], A[t + 2] * 1.6, A[t + 2] * 0.6, A[t + 3], 0, TAU); }
+    g.fill();
+  });
 }
 function vilRoof(S, B, W, D, yE, rise, alb, o) { // a hipped roof (寄棟, or near enough to the painting's 入母屋), thatch or boards, with a thick cut edge
   o = o || {};
@@ -3156,12 +3198,17 @@ function farmhouse3D(S, lit) {
   var wp = B.L(-11.5 / 2 - 0.5, -1.5, 0); prism(S, wp, 0.5, 0.5, GZ, GZ + 1.2, 0.3, [120, 92, 62]);   // firewood stacked at the side
 }
 function teahouse3D(S, lit) {
-  var V = VIL.TEA, B = vilFrame(V.x, V.z, V.u);
+  var V = VIL.TEA, B = vilFrame(V.x, V.z, V.u), pb = B.L(-5.6 / 2 + 0.6, -4.2 / 2 - 2.1, 0);
+  function parasol() { // the red parasol (野点傘) by the bench, out in front of the open side
+    S.limb(pb, v3(pb, [0, 0, 1], 2.3), 0.03, 0.03, BARK.bamboo);
+    var pt = v3(pb, [0, 0, 1], 2.4), rim = []; for (var k = 0; k < 12; k++) { var a = k / 12 * TAU; rim.push([pb[0] + Math.cos(a) * 1.3, pb[1] + Math.sin(a) * 1.3, pt[2] - 0.45]); }
+    for (k = 0; k < 12; k++) S.face([pt, rim[k], rim[(k + 1) % 12]], [190, 44, 36], { wrap: 0.5 });
+  }
+  var behind = vlen(pb) > vlen(B.L(0, 0, 1.2));   // from across the river it stands behind the house: paint it first, so the house hides it
+  if (!S.L.snow && behind) parasol();
   vilWalls(S, B, 5.6, 4.2, 0, 2.5, [176, 150, 112], { frame: [90, 68, 48] });
   vilRoof(S, B, 5.6 / 2 + 0.6, 4.2 / 2 + 0.8, 2.35, 2.4, [150, 124, 82], { thatch: true, seed: 33, thick: 0.38, edge: [120, 98, 66] });
-  if (!S.L.snow) { var pb = B.L(-5.6 / 2 + 0.6, -4.2 / 2 - 2.1, 0); S.limb(pb, v3(pb, [0, 0, 1], 2.3), 0.03, 0.03, BARK.bamboo);   // the red parasol (野点傘) by the bench
-    var pt = v3(pb, [0, 0, 1], 2.4), rim = []; for (var k = 0; k < 12; k++) { var a = k / 12 * TAU; rim.push([pb[0] + Math.cos(a) * 1.3, pb[1] + Math.sin(a) * 1.3, pt[2] - 0.45]); }
-    for (k = 0; k < 12; k++) S.face([pt, rim[k], rim[(k + 1) % 12]], [190, 44, 36], { wrap: 0.5 }); }
+  if (!S.L.snow && !behind) parasol();
 }
 function mill3D(S) {
   var V = VIL.MILL, B = vilFrame(V.x, V.z, V.u), board = [104, 84, 64], WL = TWN.WL, dark = { alb: [76, 60, 46], fis: [38, 30, 24], fl: [124, 104, 80], kind: 'grain' };
@@ -3209,10 +3256,27 @@ function villageItems(o, items, L) { // the early buildings, added in the painti
   if (st >= 4) items.push({ d: dist(V.FARM.x, V.FARM.z), draw: function (S) { farmhouse3D(S, lit); } });
   if (st >= 6) items.push({ d: dist(V.MILL.x, V.MILL.z), draw: function (S) { mill3D(S); } });
   if (st >= 7) items.push({ d: dist(V.SHRINE.x, V.SHRINE.z), draw: function (S) { shrine3D(S, se); } });
+  // the wild groves, each there until the stage that clears its ground; the lone old tree by the road; the signpost; the well
+  var kd = L.key ? L.key.d : [0.3, -0.5, 0.8];
+  [[19, 9.5, 15, 2], [31.5, 10, 11, 1], [16, -9.5, 15, 2], [8.5, 27, 15, 2], [9.5, 45.5, 18, 1], [30, 23, 20, 2], [36, -12, 20, 1], [25, -10, 15, 1]].map(function (g) { var p = V.stPt(g[0], g[1]); return [p[0], p[1], g[2], g[3]]; })
+    .concat([[-2, 101, 99, 1], [25, 101, 99, 1]]).forEach(function (gv, gi) {
+      if (st >= gv[2]) return;
+      var gr = mulberry(900 + gi);
+      for (var n = 0; n < gv[3]; n++) (function (tx, tz, g, k) { var b = tP(tx, 0, tz), d = vlen(b);
+        items.push({ d: d, draw: function (S) { S.g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); clumpTree(S, { b: b, d: d, type: k % 3 === 2 && se === 'autumn' ? 'momiji' : 'keyaki', h: 6.5 * g, seed: 950 + gi * 7 + k }, S.g, se, kd); } }); })(gv[0] + (gr() - 0.5) * 7, gv[1] + (gr() - 0.5) * 5, 1.0 + gr() * 0.3, n);
+    });
+  var t0b = tP(-23.5, 0, 8.6), t0k = Math.min(1, 0.72 + st * 0.02);
+  items.push({ d: vlen(t0b), draw: function (S) { S.g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); clumpTree(S, { b: t0b, d: vlen(t0b), type: 'keyaki', h: 9 * t0k, seed: 31 }, S.g, se, kd); } });
+  if (st >= 1) { var sg = tP(-11.4, 0, 12.6); items.push({ d: vlen(sg), draw: function (S) { prism(S, sg, 0.14, 0.12, GZ, GZ + 1.25, 0.785, [156, 150, 138]); } }); }   // 道標, a stone post (its lettering too small to read from here)
+  if (st >= 3) { var wl = tP(-17.6, 0, 19.5); items.push({ d: vlen(wl), draw: function (S) { prism(S, wl, 0.62, 0.62, GZ, GZ + 0.7, 0, [148, 144, 136]);
+    var B = vilFrame(-17.6, 19.5, [1, 0]); [-0.75, 0.75].forEach(function (a) { S.limb(B.L(a, 0, 0), B.L(a, 0, 2.0), 0.05, 0.045, BARK.wood); }); S.limb(B.L(-0.85, 0, 2.0), B.L(0.85, 0, 2.0), 0.05, 0.05, BARK.wood); } }); }   // 井戸 with its frame and crossbar
 }
 function townGroundMap(n, R, st) {
   var out = new Uint8Array(2 * n * n * 4), i, j, V = VIL;
   var street = st >= 9, roadW = street ? 2.3 : 1.5, trackW = st >= 15 ? 4.8 : street ? 3.4 : st >= 8 ? 1.3 : 0.95, sideW = st >= 7 ? 0.85 : 0.5, rivW = st >= 15 ? 3.6 : 2.6, Ft = clamp((st - 8) / 10, 0, 1);
+  var M = V.MILL, MW = [M.wx, M.wz], up = [M.wx - M.u[0] * 7, M.wz - M.u[1] * 7], dn = [M.wx + M.u[0] * 3.5, M.wz + M.u[1] * 3.5];
+  function toRiver(p) { var R = TWN.RIVER, best = null, bd = 1e9; for (var i2 = 0; i2 < R.length - 1; i2++) { var a = R[i2], b = R[i2 + 1], dx = b[0] - a[0], dz = b[1] - a[1], t = clamp(((p[0] - a[0]) * dx + (p[1] - a[1]) * dz) / (dx * dx + dz * dz), 0, 1), q = [a[0] + dx * t, a[1] + dz * t], dd = Math.hypot(q[0] - p[0], q[1] - p[1]); if (dd < bd) { bd = dd; best = q; } } return best; }
+  var MRACE = [toRiver(up), up, MW, dn, toRiver(dn)];
   var yards = [], paths = [[V.ROAD, roadW], [V.TRACK, trackW]];
   if (st >= 1) paths.push([V.SIDE, sideW]);
   if (st >= 7) paths.push([V.SHR, 0.8]);
@@ -3224,7 +3288,8 @@ function townGroundMap(n, R, st) {
   if (st >= 7) yards.push([V.SHRINE.x, V.SHRINE.z, [1, 0], 5, 5, 1.2, 0.7]);
   for (j = 0; j < n; j++) for (i = 0; i < n; i++) {
     var E = ((i + 0.5) / n * 2 - 1) * R, N = ((j + 0.5) / n * 2 - 1) * R, dx = E * TWN.c - N * TWN.s, dz = E * TWN.s + N * TWN.c, x = dx + TWN.X0, z = dz + TWN.Z0, o = (j * 2 * n + i) * 4, o2 = o + n * 4;
-    var d = TWN.riverD(x, z); out[o] = clamp(0.5 - d / 0.3, 0, 1) * 255; out[o + 2] = 0;
+    var d = TWN.riverD(x, z); if (st >= 6) d = Math.min(d, V.polyD(MRACE, x, z) - 0.6);   // (the mill's race: water led from the river under the wheel and back)
+    out[o] = clamp(0.5 - d / 0.3, 0, 1) * 255; out[o + 2] = 0;
     if (d < 0.3) { out[o + 1] = 0; out[o + 3] = 0; continue; }
     // packed earth: the paths (a ragged worn edge), the yards round the buildings, the town's wear along its streets
     var wob = (vnoise(x * 0.7, z * 0.7) - 0.5) * 0.35, e = 0, pi;
@@ -3279,7 +3344,7 @@ function shadowProxiesTown(st) {
     var B = TWN.BR, ax = B.ax, Lq = function (a, b) { return tP(B.x + ax[0] * a - ax[1] * b, 0, B.z + ax[1] * a + ax[0] * b); };
     [[-8.5, -6.2, 0], [-6.2, 6.2, -TWN.WL], [6.2, 8.5, 0]].forEach(function (s) { P.push({ t: 'q', q: [Lq(s[0], -1.1), Lq(s[1], -1.1), Lq(s[1], 1.1), Lq(s[0], 1.1)], z0: GZ + 0.6 + s[2], z1: GZ + 0.85 + s[2], d: 14 }); });
   }
-  if (st >= 8) [tP(-2.5, 0, 50.5), tP(13.5, 0, 42.5)].forEach(function (b) { P.push({ t: 'e', c: [b[0], b[1], GZ + 4.5], r: [2.8, 2.8, 2.4], d: 1.2, leafy: true }); });
+  if (st >= 9) [tP(-0.3, 0, 48.2), tP(9.97, 0, 43.2)].forEach(function (b) { P.push({ t: 'e', c: [b[0], b[1], GZ + 4.5], r: [2.8, 2.8, 2.4], d: 1.2, leafy: true }); });
   return P;
 }
 function shadowMap(P, sun, n, R, out, stride, off) {
@@ -3339,11 +3404,11 @@ function townItems(o, S0) {
     var c = (h[1] + h[2]) / 2, side = h[0], dark = L.light === 'dusk' ? 0.7 : 1;
     lamp(L, lights, stP(c, side * (HALF_W + 0.6), GZ + 1.3), [255, 182, 110], 2.4, 1.0 * dark, 7, 0.45, 0.03);
     if (h[6]) lamp(L, lights, stP(c - 1.2, side * (HALF_W + 0.5), GZ + 3.6), [255, 196, 130], 1.4, 0.35 * dark, 5, 0.35, 0.03);
-    lamp(L, lights, stP(h[1] + 1.2, side * (HALF_W - 0.7), GZ + 2.25), [255, 128, 72], 0.8, 0.45, 6, 0.8, 0.1);
+    lamp(L, lights, stP(h[1] + 1.2, side * (HALF_W - 0.7), GZ + 2.15), [255, 128, 72], 0.8, 0.45, 6, 0.8, 0.1);
   });
   var fest = st >= 23 && lit;
-  var strings = [-10, -4, 3, 10, 17, 24, 31, 38];
-  if (fest) strings.forEach(function (s) { for (i = 0; i < 7; i++) { var t = (i + 0.5) / 7, w = -HALF_W + 0.5 + t * (2 * HALF_W - 1); lamp(L, lights, stP(s, w, GZ + 4.25 - Math.sin(t * Math.PI) * 0.55), i % 2 ? [255, 120, 70] : [255, 214, 150], 0.7, 0.4, 7, 0.7, 0.12); } });
+  var strings = st >= 23 ? festStrings() : [];
+  if (fest) strings.forEach(function (F) { F.lan.forEach(function (q) { lamp(L, lights, q.c, q.red ? [255, 120, 70] : [255, 214, 150], 0.7, 0.4, 7, 0.7, 0.12); }); });
   eventItems(o, items, lights, 'town', L);
   items.push({ d: 3000, draw: function (S) { hills(S, [{ d: 2600, h0: 90, h1: 260, s: 46, crown: 10 }, { d: 900, h0: 25, h1: 80, s: 28, crown: 7 }], se, true); } });
   items.push({ d: 150, draw: function (S) { treeRing(S, 135, se, 41, 3.2); } });
@@ -3358,14 +3423,14 @@ function townItems(o, S0) {
   if (st >= 12) items.push({ d: tDist(T.TOWER.x, T.TOWER.z), draw: function (S) { fireTower(S, tP(T.TOWER.x, 0, T.TOWER.z)); } });
   items.push({ d: 14, draw: function (S) { embankments(S, st); } });
   items.push({ d: 9, draw: function (S) { if (st >= 8) stoneBridge3D(S); else plankBridge3D(S); } });   // the plank bridge until the stone one is built
-  if (st >= 8) { items.push({ d: 11, sway: 1, draw: function (S) { willow(S, tP(-2.5, 0, 50.5), se, 11); } }); items.push({ d: 9, sway: 1, draw: function (S) { willow(S, tP(13.5, 0, 42.5), se, 9); } }); }
+  if (st >= 9) { items.push({ d: 9.3, sway: 1, draw: function (S) { willow(S, tP(-0.3, 0, 48.2), se, 11); } }); items.push({ d: 9.5, sway: 1, draw: function (S) { willow(S, tP(9.97, 0, 43.2), se, 9); } }); }   // the painting's two willows by the bridge foot, from the 商家 stage (stPt(-4.4, 5.6), stPt(-3.6, -5.8))
   TOWN_HOUSES.forEach(function (h) {
     if (st < h[7] || h[2] < 0) return;   // (nothing stands on the river behind you)
     var mid = stP((h[1] + h[2]) / 2, h[0] * (HALF_W + 0.5), 0);
     items.push({ d: Math.sqrt(mid[0] * mid[0] + mid[1] * mid[1]) + 1, draw: function (S) { townHouse(S, h, o); } });
   });
   if (st >= 16) items.push({ d: 8.5, draw: function (S) { marketStalls(S, o); } });
-  if (st >= 23 && (o.light === 'night' || o.light === 'dusk')) strings.forEach(function (s) { items.push({ d: Math.abs(s) + 2.5, draw: function (S) { lanternString(S, s, lit); } }); });
+  strings.forEach(function (F) { items.push({ d: vlen(F.mid) + 0.5, draw: function (S) { festString(S, F, lit); } }); });   // (by day too, unlit, as the painting has them)
   return { items: items, lights: lights };
 }
 
@@ -3381,7 +3446,7 @@ function eaveUnder(S, h, s0, s1, wWall, wEdge, zWall, zEdge, o) {
       var gr = g.createLinearGradient(pa[0], pa[1], pb[0], pb[1]), n = 8;
       for (i = 0; i <= n; i++) { var t = i / n; gr.addColorStop(t, rgbs(shade(L, o.board, stP(s0 + (s1 - s0) * t, (wWall + wEdge) / 2, (zWall + zEdge) / 2), nSof, 0.2))); }
       g.fillStyle = gr; g.fill();
-    }
+    } else { g.fillStyle = rgbs(shade(L, o.board, lerp3(q[0], q[2], 0.5), nSof, 0.2)); g.fill(); }   // (an end behind this cube face's camera: still board it over, flat, so no sky shows through)
   }
   // rafters
   var rk = { alb: o.rafter, fis: mix(o.rafter, [0, 0, 0], 0.5), fl: mix(o.rafter, [255, 255, 255], 0.3), kind: 'grain' };
@@ -3527,7 +3592,7 @@ function townHouse(S, h, o) {
   }
   for (s = s0; s <= s1 + 0.01; s += (s1 - s0) / Math.round((s1 - s0) / 1.82)) S.limb(stP(s, F0 - side * 0.03, zG), stP(s, F0 - side * 0.03, zTop), 0.06, 0.06, BARK.wood);
   if (hash2(Math.round(s0 * 5), side + 9) < 0.3 && kind !== 'kura') engidai(S, s0 + 2.2 + hash2(s0 | 0, 3), side * (HALF_W - 0.55), out, side);   // 縁台 out front
-  if (kind === 'kura') { chochin(S, stP(s0 + 1.2, side * (HALF_W - 0.7), GZ + 2.25), 0.16, 0.34, [214, 70, 48], lit, 'shop', '御神灯', out); return; }
+  if (kind === 'kura') { shopLantern(S, s0, side, lit, '御神灯', out); return; }
   // noren at the door (rolled up on some shops)
   var nd = s0 + 0.9, noren = [56, 70, 112];
   noren = [[56, 70, 112], [40, 44, 52], [120, 52, 44], [70, 84, 64]][Math.abs(s0 * 3 | 0) % 4];
@@ -3546,7 +3611,7 @@ function townHouse(S, h, o) {
   }
   // the shop lantern by the door
   var lw = KANBAN_WORDS[Math.abs(s0 * 5 | 0) % KANBAN_WORDS.length];   // the lantern says what the sign says, or 御神灯
-  chochin(S, stP(s0 + 1.2, side * (HALF_W - 0.7), GZ + 2.25), 0.16, 0.34, [214, 70, 48], lit, 'shop', lw.length <= 2 ? lw : '御神灯', out);
+  shopLantern(S, s0, side, lit, lw.length <= 2 ? lw : '御神灯', out);
 }
 /* an open shop front: the shutters taken down, a raised floor (店の間) and the goods out on it in the shade inside */
 function shopFront(S, h, s0, s1, F0, side, zG, zTop, out, lit, dpt) {
@@ -3667,9 +3732,9 @@ function gableRoofRidge(S, a, b, out) {
 /* a lit (or dark) paper / lattice pane on a facade: warm gradient centred low, like a lamp inside */
 function glowPane(S, q, lit, out, low) {
   var L = S.L, g = S.g; if (!S.poly(q, false)) return;
-  var c = lerp3(q[0], q[2], 0.5), p = S.cam.p(lerp3(lerp3(q[0], q[1], 0.5), c, low ? 0.4 : 0.7)), pc = S.cam.p(c);
+  var c = lerp3(q[0], q[2], 0.5), p = S.cam.p(lerp3(lerp3(q[0], q[1], 0.5), c, low ? 0.4 : 0.85)), pc = S.cam.p(c);   // (the lamp low in the room: a soft glow, no hot spot at the top edge)
   if (lit && p && pc) {
-    var R = 1.6 * S.cam.F / pc[2], gr = g.createRadialGradient(p[0], p[1], 0, p[0], p[1], R);
+    var R = (low ? 1.6 : 2.2) * S.cam.F / pc[2], gr = g.createRadialGradient(p[0], p[1], 0, p[0], p[1], R);
     var k = L.light === 'dusk' ? 0.8 : 1;
     gr.addColorStop(0, rgbs([255 * k, 222 * k, 160 * k])); gr.addColorStop(0.5, rgbs([240 * k, 160 * k, 84 * k])); gr.addColorStop(1, rgbs([150 * k, 80 * k, 36 * k]));
     g.fillStyle = gr;
@@ -3685,11 +3750,11 @@ function townFar(S, st) {
     // keep the street and the river clear
     var s = dot3(c, SA), w = dot3(c, SNW);
     var keep = Math.abs(w) < HALF_W + 7.5 && s > -16 && s < 60, river = s < -4 && s > -40;
-    var big = rnd(), rot = ST_AZ + (rnd() < 0.7 ? 0 : 90) + (rnd() - 0.5) * 6;
+    var big = rnd(), rot = ST_AZ + (rnd() < 0.7 ? 0 : 90) + (rnd() - 0.5) * 6, D2 = 4 + rnd() * 3, he2 = rnd() < 0.4 ? 4.4 : 3.0, wl2 = rnd() < 0.4 ? [222, 216, 200] : [96, 70, 52];   // (all drawn before the cull: the same houses on every cube face)
     if (keep || river) continue;
     var p = cam.p(v3(c, [0, 0, 1], 6)), m = 30 * cam.F / d;
     if (!p || !S.onScreen(p[0], p[1], m)) continue;
-    list.push({ c: c, d: d, rot: rot, L: 5 + big * 6, D: 4 + rnd() * 3, he: rnd() < 0.4 ? 4.4 : 3.0, wall: rnd() < 0.4 ? [222, 216, 200] : [96, 70, 52], seed: i });
+    list.push({ c: c, d: d, rot: rot, L: 5 + big * 6, D: D2, he: he2, wall: wl2, seed: i });
   }
   list.sort(function (a, b) { return b.d - a.d; });
   list.forEach(function (H) {
@@ -4127,24 +4192,36 @@ function kura(S, b) { // white storehouse, namako tiles below
   if (nc) { var g = S.g; g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); g.strokeStyle = rgbas(shade(S.L, [230, 230, 224], q[0], fw, 0.3), 0.8); g.lineWidth = 0.9; g.beginPath(); for (var t = -1; t <= 1.05; t += 0.07) { S.bl(lerp3(lerp3(nq[0], nq[1], clamp(t, 0, 1)), lerp3(nq[3], nq[2], clamp(t, 0, 1)), 0), lerp3(lerp3(nq[0], nq[1], clamp(t + 0.28, 0, 1)), lerp3(nq[3], nq[2], clamp(t + 0.28, 0, 1)), 1), g); S.bl(lerp3(nq[0], nq[1], clamp(t + 0.28, 0, 1)), lerp3(nq[3], nq[2], clamp(t, 0, 1)), g); } g.stroke(); }
   gableRoof(S, v3(b, up, 5), rt, fw, 4.2, 3.3, 1.8, { gable: [236, 232, 222] });
 }
-function willow(S, b, se, d) { // 柳 by the river: hanging whips with narrow leaves
+function willow(S, b, se, d) { // 柳 by the river: a short, gnarled, leaning trunk, a few arching boughs, the whips hanging from them
   var rnd = mulberry(Math.round(b[0] * 13)), L = S.L, P = new Prims(), i, k;
-  var T = { limbs: [{ pts: [b, v3(b, [0.3, 0, 1], 3.0), v3(b, [0.4, 0.1, 1], 5.2)], rs: [0.3, 0.22, 0.12] }], tips: [] };
-  P.limbs(S, T, BARK.willow, { snow: L.snow });
-  var top = v3(b, [0.4, 0.1, 1], 5.2), col = se === 'winter' ? [150, 140, 90] : se === 'autumn' ? [186, 170, 80] : se === 'spring' ? [150, 190, 80] : [96, 140, 60];
+  var lean = [0.35 + (rnd() - 0.5) * 0.2, (rnd() - 0.5) * 0.3, 1], t1 = v3(b, [lean[0] * 0.5, lean[1] * 0.5, 1], 1.4), t2 = v3(t1, [lean[0] * 0.9 + 0.15, lean[1] - 0.1, 1], 1.5), top = v3(t2, [lean[0] * 0.6, lean[1] + 0.12, 1], 1.0);
+  var limbs = [{ pts: [b, t1, t2, top], rs: [0.34, 0.27, 0.22, 0.15] }], boughs = [];
+  var nb = 6;
+  for (i = 0; i < nb; i++) {   // boughs rise from the crown of the trunk and arch over
+    var a = (i + rnd() * 0.6) / nb * TAU, base = lerp3(t2, top, 0.3 + rnd() * 0.7), reach = 1.6 + rnd() * 1.4, rise = 0.6 + rnd() * 0.7;
+    var m = v3(base, [Math.cos(a) * reach * 0.5, Math.sin(a) * reach * 0.5, rise], 1), e = v3(base, [Math.cos(a) * reach, Math.sin(a) * reach, rise * 0.55], 1);
+    limbs.push({ pts: [base, m, e], rs: [0.1, 0.06, 0.025] }); boughs.push([base, m, e]);
+  }
+  P.limbs(S, { limbs: limbs, tips: [] }, BARK.willow, { snow: L.snow });
+  var col = se === 'winter' ? [150, 140, 90] : se === 'autumn' ? [186, 170, 80] : se === 'spring' ? [150, 190, 80] : [96, 140, 60];
   var buckets = [[], [], []], cs = [0.4, 0.7, 1].map(function (o) { return rgbs(leafShade(L, col, trnOf(col), top, [0, 0, 1], o)); }), wc = rgbs(shade(L, [90, 84, 60], top, [0, 0, -1], 0.4));
   var whips = [];
-  for (i = 0; i < (se === 'winter' ? 28 : 80); i++) {
-    var a = rnd() * TAU, r = Math.sqrt(rnd()) * 2.8, p0 = [top[0] + Math.cos(a) * r, top[1] + Math.sin(a) * r, top[2] - r * 0.3 + rnd() * 0.6], len = 2.4 + rnd() * 2.6, pts = [p0];
-    for (k = 1; k <= 8; k++) { var tk = k / 8; pts.push([p0[0] + Math.cos(a) * (0.6 * (1 - Math.exp(-5 * tk))), p0[1] + Math.sin(a) * (0.6 * (1 - Math.exp(-5 * tk))), p0[2] + 0.25 * Math.sin(Math.min(1, tk * 3) * Math.PI / 2) - len * Math.pow(tk, 1.6)]); }
-    whips.push(pts);
-    if (se !== 'winter' || rnd() < 0.3) for (k = 1; k < pts.length; k++) for (var j = 0; j < 3; j++) { var q = v3(pts[k], [(rnd() - 0.5) * 0.15, (rnd() - 0.5) * 0.15, 0], 1), dd = nrm3([(rnd() - 0.5), (rnd() - 0.5), -1.2]); buckets[(rnd() * 3) | 0].push(q, v3(q, dd, 0.09)); }
-  }
+  function onBough(B, t) { return t < 0.5 ? lerp3(B[0], B[1], t * 2) : lerp3(B[1], B[2], t * 2 - 1); }
+  boughs.forEach(function (B) {
+    var nw = se === 'winter' ? 5 : 11;
+    for (i = 0; i < nw; i++) {
+      var p0 = onBough(B, 0.25 + rnd() * 0.75), len = Math.min(p0[2] - (b[2] + 0.45), 1.6 + rnd() * 2.4), dx = (rnd() - 0.5) * 0.3, dy = (rnd() - 0.5) * 0.3, pts = [p0];   // each whip hangs from its bough, stopping short of the ground
+      if (len < 0.4) continue;
+      for (k = 1; k <= 8; k++) { var tk = k / 8; pts.push([p0[0] + dx * tk, p0[1] + dy * tk, p0[2] - len * Math.pow(tk, 1.2)]); }
+      whips.push(pts);
+      if (se !== 'winter' || rnd() < 0.3) for (k = 1; k < pts.length; k++) for (var j = 0; j < 3; j++) { var q = v3(pts[k], [(rnd() - 0.5) * 0.12, (rnd() - 0.5) * 0.12, 0], 1), dd = nrm3([(rnd() - 0.5), (rnd() - 0.5), -1.2]); buckets[(rnd() * 3) | 0].push(q, v3(q, dd, 0.09)); }
+    }
+  });
   P.add(d, function () {
-    var g = S.ctx(d); g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); g.lineCap = 'round'; g.globalAlpha = se === 'winter' ? 0.55 : 1;
+    var g = S.ctx(d); g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); g.lineCap = 'round';
     g.strokeStyle = wc; g.lineWidth = Math.max(0.5, 0.01 * S.cam.F / d); g.beginPath(); whips.forEach(function (w) { for (var t = 0; t < w.length - 1; t++) S.bl(w[t], w[t + 1], g); }); g.stroke();
     buckets.forEach(function (arr, bi) { g.strokeStyle = cs[bi]; g.lineWidth = Math.max(0.6, 0.014 * S.cam.F / d); g.beginPath(); for (var t = 0; t < arr.length; t += 2) S.bl(arr[t], arr[t + 1], g); g.stroke(); });
-    g.globalAlpha = 1;
+    g.lineCap = 'butt';
   });
   P.draw();
 }
@@ -4159,17 +4236,36 @@ function marketStalls(S, o) { // awnings of the market at the bridge foot, lit f
     S.limb(stP(s0, w0 - 2.3, z - 0.45), stP(s0, w0 - 2.3, GZ), 0.03, 0.03, BARK.wood);
   }
 }
-/* ---- festival: ropes across the street hung with paper lanterns ---- */
-function lanternString(S, s, lit) {
-  var i, n = 7, pts = [], L = S.L;
-  for (i = 0; i <= 20; i++) { var t = i / 20, w = -HALF_W + 0.1 + t * (2 * HALF_W - 0.2); pts.push(stP(s, w, GZ + 4.5 - Math.sin(t * Math.PI) * 0.55)); }
-  var rc = rgbs(shade(L, [70, 60, 50], pts[10], [0, 0, -1], 0.5));
-  for (i = 0; i < pts.length - 1; i++) S.line(pts[i], pts[i + 1], 0.008, rc, S.ctx(vlen(pts[i])));
-  for (i = 0; i < n; i++) {
-    var t2 = (i + 0.5) / n, w2 = -HALF_W + 0.5 + t2 * (2 * HALF_W - 1), c = stP(s, w2, GZ + 4.25 - Math.sin(t2 * Math.PI) * 0.55);
-    S.line(v3(c, [0, 0, 1], 0.15), v3(c, [0, 0, 1], 0.25), 0.006, rc, S.ctx(vlen(c)));
-    chochin(S, c, 0.16, 0.3, i % 2 ? [220, 64, 46] : [244, 226, 190], lit, 'fest', i % 2 ? '祭' : '献灯', SA);
-  }
+/* the shop's lantern by the door, hung from a wooden arm (腕木) out of the front post, under the eave or the pent roof */
+function shopLantern(S, s0, side, lit, word, out) {
+  var c = stP(s0 + 1.2, side * (HALF_W - 0.7), GZ + 2.15);
+  S.limb(stP(s0 + 1.2, side * (HALF_W + 0.02), GZ + 2.47), stP(s0 + 1.2, side * (HALF_W - 0.78), GZ + 2.47), 0.03, 0.025, BARK.wood);
+  chochin(S, c, 0.16, 0.34, [214, 70, 48], lit, 'shop', word, out);
+}
+/* ---- festival (stage 23): as the town painting strings them, lines of paper lanterns run ALONG the street under the
+   eaves, 8 m to a rope, tied to the eave at each end (never across the open street or over the bridge) ---- */
+function festStrings() {
+  var out = [];
+  function house(side, s) { for (var i = 0; i < TOWN_HOUSES.length; i++) { var h = TOWN_HOUSES[i]; if (h[0] === side && s >= h[1] - 0.05 && s <= h[2] + 0.05) return h; } return null; }
+  [[1, 14, 37], [-1, 6, 32]].forEach(function (R) {
+    var side = R[0];
+    for (var a = R[1]; a < R[2] - 0.5; a += 8) {
+      var b = Math.min(R[2], a + 8), ha = house(side, a + 0.3), hb = house(side, b - 0.3); if (!ha || !hb) continue;
+      var anchor = function (h, s) { var eave = GZ + h[4] - 0.05, z = h[6] ? Math.min(eave - 0.6, GZ + 3.9) : eave - 0.25; return { p: stP(s, side * (HALF_W - 0.75), z), eave: stP(s, side * (HALF_W - 0.75), eave) }; };
+      var A = anchor(ha, a + 0.3), B = anchor(hb, b - 0.3), pts = [], lan = [], k;
+      for (k = 0; k <= 20; k++) { var t = k / 20; pts.push(v3(lerp3(A.p, B.p, t), [0, 0, 1], -0.45 * 4 * t * (1 - t))); }
+      for (k = 0; k < 7; k++) { var t2 = (k + 0.5) / 7, rp = v3(lerp3(A.p, B.p, t2), [0, 0, 1], -0.45 * 4 * t2 * (1 - t2)); lan.push({ c: v3(rp, [0, 0, 1], -0.22), red: (k + (a | 0)) % 2 === 1 }); }
+      out.push({ side: side, A: A, B: B, pts: pts, lan: lan, mid: lerp3(A.p, B.p, 0.5) });
+    }
+  });
+  return out;
+}
+function festString(S, F, lit) {
+  var L = S.L, rc = rgbs(shade(L, [128, 104, 72], F.mid, [0, 0, -1], 0.6)), face = [SNW[0] * -F.side, SNW[1] * -F.side, 0], i;
+  F.lan.forEach(function (q) { chochin(S, q.c, 0.16, 0.3, q.red ? [220, 64, 46] : [244, 226, 190], lit, 'fest', q.red ? '祭' : '献灯', face); });
+  // then the straw rope over their hooks (above the lanterns, so it never crosses one) and its ties up to the eaves, drawn over the glow
+  [F.A, F.B].forEach(function (E) { if (E.eave[2] - E.p[2] > 0.05) S.line(E.eave, E.p, 0.01, rc, S.ctx(vlen(E.p))); });
+  for (i = 0; i < F.pts.length - 1; i++) S.line(F.pts[i], F.pts[i + 1], 0.012, rc, S.ctx(vlen(F.pts[i])));
 }
 /* 提灯: a paper lantern as a real solid of revolution. Its profile (a long barrel for the shop lanterns, rounder for the
    festival ones, slim for the bon lanterns) is swept round the axis in rings at the bamboo ribs, which crowd together
@@ -4313,9 +4409,23 @@ function eventItems(o, items, lights, world, L) {
     var b = world === 'town' ? stP(-1.5, -HALF_W + 0.5, GZ) : PA(122, 1.5, GZ);
     items.push({ d: 1.2, sway: 1, draw: function (S) { sasa(S, b, world === 'town' ? 7 : 4.2); } });
   } else if (ev === 'obon') {
-    var spots = world === 'town' ? [stP(4, HALF_W - 0.6, GZ + 2.4), stP(-4, -HALF_W + 0.6, GZ + 2.4), stP(12, HALF_W - 0.6, GZ + 2.4), stP(16, -HALF_W + 0.6, GZ + 2.4)] : [PA(150, 2.8, GZ + 2.1), PA(182, 3.0, GZ + 2.3), PA(212, 2.9, GZ + 2.1)];
-    if (lit) spots.forEach(function (p) { lamp(L, lights, p, [255, 214, 160], 0.9, 0.35, 5, 0.8, 0.1); });
-    items.push({ d: 2.5, draw: function (S) { spots.forEach(function (p) { S.line([p[0], p[1], p[2] + 0.18], [p[0], p[1], p[2] + 1.6], 0.006, rgbs(shade(S.L, [40, 34, 30], p, [0, 0, -1], 0.5))); chochin(S, p, 0.15, 0.38, [244, 238, 220], lit, 'bon'); }); } });
+    // as the paintings have them: in the town, a pair hung from the lintel either side of each door near you; in the garden,
+    // two on black lacquer stands at the entrance (EV_POS.entL / entR), each from a short arm
+    var spots = [];
+    if (world === 'town') TOWN_HOUSES.forEach(function (h) {
+      var side = h[0], s0 = h[1], hk = hash2(Math.round(s0 * 3) + 17, side + 5), kind = hk < 0.36 ? 'open' : hk < 0.5 ? 'kura' : 'lattice';
+      if (h[8] === 'plaster' && hk < 0.62 && kind !== 'open') kind = 'kura';
+      if (kind === 'kura' || s0 < -0.5 || s0 > 20 || o.stage < h[7]) return;
+      var zTop = GZ + (h[6] ? 2.7 : h[4] - 0.15), nd = s0 + 0.9;
+      [nd - 0.22, nd + 1.26].forEach(function (sd) { var c = stP(sd, side * (HALF_W - 0.25), zTop - 0.45); spots.push({ c: c, top: [c[0], c[1], zTop] }); });
+    });
+    else [[GD.LX(0.12) - 0.1, GD.LZ(-0.12) + 0.15], [GD.LX(1.58) + 0.1, GD.LZ(-0.12) + 0.15]].forEach(function (q) { spots.push({ c: gP(q[0] + 0.2, 0.79, q[1]), stand: gP(q[0], 0, q[1]), arm: [gP(q[0], 1.0, q[1]), gP(q[0] + 0.2, 1.05, q[1])] }); });
+    if (lit) spots.forEach(function (q) { lamp(L, lights, q.c, [255, 214, 160], 0.9, 0.35, 5, 0.8, 0.1); });
+    items.push({ d: 2.5, draw: function (S) { var lac = { alb: [30, 26, 24], fis: [16, 14, 12], fl: [90, 84, 80], kind: 'smooth' };
+      spots.forEach(function (q) {
+        if (q.stand) { prism(S, q.stand, 0.16, 0.16, q.stand[2], q.stand[2] + 0.04, 0.3, [30, 26, 24]); S.limb(q.stand, q.arm[0], 0.02, 0.018, lac); S.limb(q.arm[0], q.arm[1], 0.012, 0.012, lac); }
+        else S.line(v3(q.c, [0, 0, 1], 0.22), q.top, 0.006, rgbs(shade(S.L, [40, 34, 30], q.c, [0, 0, -1], 0.5)));   // up to the lintel
+        chochin(S, q.c, 0.15, 0.38, [244, 238, 220], lit, 'bon'); }); } });
   } else if (ev === 'tsukimi') {
     var sb = world === 'town' ? stP(1.5, HALF_W - 0.9, GZ) : PA(176, 1.5, GZ);
     items.push({ d: 1.0, sway: 1, draw: function (S) { susuki(S, sb); } });
@@ -4659,6 +4769,7 @@ var GLSL_MAIN = GLSL_P + GLSL_COMMON + '\n' + GLSL_DOME + '\n' + [
   'uniform vec3 uMoonDir, uMoonN, uMoonS; uniform vec4 uMoon; uniform vec3 uMoonC; uniform vec2 uMoonH; uniform float uMoonG;',
   'uniform float uRb; uniform vec4 uFlash; uniform vec3 uFlashDir; uniform vec4 uOver;',
   'uniform vec4 uG; uniform vec3 uAmb, uHaze; uniform vec2 uHz; uniform sampler2D uLM; uniform vec2 uLMR;',
+  'uniform vec4 uRv[10]; uniform vec2 uRvK;',   // the town's river as segments (eye metres), for the land beyond the ground map
   'uniform sampler2D uGM; uniform vec2 uGMR; uniform vec4 uRk[4]; uniform vec4 uGS; uniform vec4 uKoi[6]; uniform vec3 uMoss0, uMoss1, uMoss2; uniform vec3 uKeyK;',
   'uniform samplerCube uCS, uCW, uCF; uniform vec3 uFA, uFB; uniform vec3 uSway; uniform vec3 uFgFlash; uniform float uWrap; uniform float uFgOn;',
   'uniform sampler2D uBack; uniform float uBackOn;',
@@ -4775,12 +4886,26 @@ var GLSL_MAIN = GLSL_P + GLSL_COMMON + '\n' + GLSL_DOME + '\n' + [
   '             mod(fi, 3.0) < 1.5 ? mix(mix(vec3(0.08, 0.07, 0.07), vec3(0.85, 0.22, 0.08), step(0.45, pat)), vec3(0.94, 0.92, 0.86), step(0.62, pat2)) : vec3(0.95, 0.68, 0.18);',
   '    o = vec4(c, a); }',
   '  return o; }',
+  'vec3 farFields(vec2 P, vec3 gc, float k) {',   // fields laid out in strips on a slightly turned grid, each its own crop and tone, hedgerows and banks at their edges
+  '  float r = length(P), w = k * smoothstep(12.0, 30.0, r); if (w <= 0.0) return gc;',
+  '  vec2 q = mat2(0.94, -0.34, 0.34, 0.94) * P + vec2(vn2(P * 0.02), vn2(P * 0.02 + 9.0)) * 18.0; vec2 cs = vec2(30.0, 14.0), c = floor(q / cs), f = fract(q / cs);',
+  '  float h = hash12(c), h2 = hash12(c + 3.7), e = min(min(f.x, 1.0 - f.x) * cs.x, min(f.y, 1.0 - f.y) * cs.y);',
+  '  bool spr = uGS.w > 1.5, aut = uGS.w > 0.5 && uGS.w < 1.5;',
+  '  vec3 crop = h < 0.32 ? (aut ? vec3(206., 168., 72.) : spr ? vec3(96., 150., 60.) : vec3(58., 124., 36.)) : h < 0.52 ? vec3(124., 100., 72.) * (0.88 + 0.2 * h2) : h < 0.7 ? gc * 255.0 * (0.8 + 0.3 * h2) : h < 0.86 ? (aut ? vec3(176., 148., 92.) : spr ? vec3(170., 176., 92.) : vec3(110., 140., 54.)) : vec3(150., 128., 84.);',   // green rice, bare soil, rough grass, stubble or rape, fallow
+  '  crop *= 0.92 + 0.16 * vn2(q * 0.25) ; if (h < 0.3) crop *= 0.9 + 0.1 * sin(q.x * 3.2);',   // rows in the crops
+  '  if (uG.y > 0.5) crop = vec3(222., 226., 234.) * (0.9 + 0.08 * h2);',
+  '  vec3 hedge = (uG.y > 0.5 ? vec3(150., 156., 160.) : aut ? vec3(92., 76., 40.) : vec3(40., 64., 30.)) * (0.8 + 0.3 * vn2(q * 0.7));',
+  '  vec3 o = mix(crop / 255.0, hedge / 255.0, smoothstep(1.4, 0.3, e) * step(0.35, hash12(c + floor(f * 2.0) + 1.1)));',
+  '  return mix(gc, o, w); }',
   'vec3 groundD(vec3 d, out float tg) {',  // in display units, like the painted world
   '  float dz = min(d.z, -1e-4); tg = 1.55 / -dz; vec2 P = d.xy * tg;',
   '  float foot = tg * uPix / max(-dz, 0.015);',
   '  vec3 gc; float wetK = uG.z; vec4 gm = vec4(0.0), gm2 = vec4(0.0), mir = vec4(0.0);',
   '#ifdef F_GM',
   '  { vec2 uv = P / (2.0 * uGMR.x) + 0.5; if (uv.x > 0.0 && uv.y > 0.0 && uv.x < 1.0 && uv.y < 1.0) { uv.x = clamp(uv.x, 0.004, 0.996) * 0.5; gm = texture2D(uGM, uv); gm2 = texture2D(uGM, uv + vec2(0.5, 0.0)); } }',
+  '  if (uRvK.y > 0.5 && max(abs(P.x), abs(P.y)) > uGMR.x * 0.95) {',   // past the map's edge the river runs on to the horizon
+  '    float rd = 1e9; for (int i = 0; i < 10; i++) { vec4 sg = uRv[i]; vec2 ab = sg.zw - sg.xy; float t = clamp(dot(P - sg.xy, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0); rd = min(rd, length(P - sg.xy - ab * t)); }',
+  '    gm.r = max(gm.r * (1.0 - smoothstep(uGMR.x * 0.95, uGMR.x, max(abs(P.x), abs(P.y)))), clamp(0.5 - (rd - uRvK.x) / max(0.3, foot * 3.0), 0.0, 1.0)); }',
   '#endif',
   '  if (uG.x < 0.5) {',
   '    float mn = vn2(P * 1.3) * 0.55 + mix(vn2(P * 6.0), 0.5, smoothstep(0.05, 0.2, foot)) * 0.45;',
@@ -4795,6 +4920,7 @@ var GLSL_MAIN = GLSL_P + GLSL_COMMON + '\n' + GLSL_DOME + '\n' + [
   '      gc = mix(vec3(52., 84., 30.), vec3(104., 132., 52.), mn * 0.6 + tuf * 0.25 + bl * 0.15) / 255.0 * (0.74 + 0.5 * fine * bl);',
   '      gc = mix(gc, vec3(30., 58., 22.) / 255.0 * (0.8 + 0.4 * bl), lush * 0.55); gc = mix(gc, vec3(142., 132., 76.) / 255.0 * (0.8 + 0.4 * bl), dry * 0.55);',
   '      gc *= 0.8 + 0.3 * clump + 0.12 * (bl - 0.5);',
+  '      gc = farFields(P, gc, 1.0 - inG);',   // past the lot: the neighbours' land, fields and hedgerows, not a lawn to the hills
   '      if (uGS.x > 0.5 && inG > 0.5) {',   // 苔庭: cushions of moss in the painting's ramp, hollows dark, tops catching the sky
   '        float c1 = vn2(P * 1.7 + 3.0), c2 = vn2(P * 5.5 + 11.0), c3 = mix(vn2(P * 23.0), 0.5, smoothstep(0.01, 0.04, foot)), cu = clamp(c1 * 0.5 + c2 * 0.35 + c3 * 0.25 - 0.05, 0.0, 1.0);',
   '        vec3 mc = cu < 0.5 ? mix(uMoss0, uMoss1, cu * 2.0) : mix(uMoss1, uMoss2, cu * 2.0 - 1.0);',
@@ -4809,7 +4935,14 @@ var GLSL_MAIN = GLSL_P + GLSL_COMMON + '\n' + GLSL_DOME + '\n' + [
   '          vec2 o0 = (vec2(h1, hash12(bc + 8.1)) - 0.5) * 0.4; float t = clamp(dot(bf - o0, bd) + 0.4, 0.0, 0.8), w = 0.075 * (1.0 - t / 0.85), sd = dot(bf - o0, bn) - 0.06 * t * t * (h1 - 0.5) * 4.0;',
   '          float bm = smoothstep(w, w * 0.4, abs(sd)) * step(0.0, dot(bf - o0, bd) + 0.4) * step(dot(bf - o0, bd) + 0.4, 0.8) * step(0.25, h1);',
   '          gc = mix(gc, gc * (sd > 0.0 ? 1.35 : 0.62) * (0.8 + 0.45 * t), bm * nk * 0.9); } } }',
-  '      if (uGS.y > 0.5 && inG > 0.5) gc = mix(vec3(118., 98., 74.) / 255.0 * (0.8 + 0.4 * mn) * (0.85 + 0.3 * fine), gc, smoothstep(0.62, 0.8, vn2(P * 3.0 + 9.0)) * 0.7);',
+  '      if (uGS.y > 0.5) { float lev = smoothstep(0.3, 0.7, gm.a + (vn2(P * 0.9 + 4.0) - 0.5) * 0.7 + (vn2(P * 3.3) - 0.5) * 0.25);',   // the levelled lot, its edge ragged where the cleared earth gives way to the grass
+  '        vec3 soil = vec3(118., 98., 74.) / 255.0 * (0.82 + 0.36 * mn) * (0.85 + 0.3 * fine) * (0.92 + 0.16 * vn2(P * 0.7 + 3.0));',   // levelled earth: dry and damp patches, no green blobs
+  '        { vec2 tq = P * 5.0 + vec2(vn2(P * 1.3), vn2(P * 1.3 + 7.0)) * 1.5, tc = floor(tq); vec2 tf = fract(tq) - 0.5 - (vec2(hash12(tc + 1.3), hash12(tc + 2.7)) - 0.5) * 0.6; float th = hash12(tc);',   // a few low weeds and grass tufts
+  '          float tr = length(tf), ta = atan(tf.y, tf.x), tz = step(0.86 - 0.08 * smoothstep(0.2, 0.0, gm.a - 0.5), th) * smoothstep(0.2 + 0.1 * hash12(tc + 4.4), 0.04, tr * (0.8 + 0.4 * (0.5 + 0.5 * cos(ta * 7.0 + th * 30.0))));',
+  '          soil = mix(soil, gc * (0.75 + 0.35 * (0.5 + 0.5 * cos(ta * 9.0 + th * 40.0))), tz * (1.0 - smoothstep(0.02, 0.06, foot)) + tz * 0.25 * smoothstep(0.02, 0.06, foot)); }',
+  '        { vec2 pc = floor(P * 11.0); vec2 pf = fract(P * 11.0) - 0.5 - (vec2(hash12(pc + 5.0), hash12(pc + 6.0)) - 0.5) * 0.5; float pb = step(0.9, hash12(pc + 8.0)) * smoothstep(0.17, 0.09, length(pf * vec2(1.0, 1.3))) * (1.0 - smoothstep(0.01, 0.04, foot));',   // scattered pebbles
+  '          soil = mix(soil, mix(vec3(96., 92., 86.), vec3(160., 154., 142.), hash12(pc + 9.0)) / 255.0, pb * 0.85); }',
+  '        gc = mix(gc, soil, lev); }',
   '    }',
   '    float bare = gm2.r * inG * (1.0 - uG.y);',   // worn earth by the paths: packed soil, a few pebbles, moss creeping in at the edges
   '    if (bare > 0.01) { vec3 soil = mix(vec3(96., 80., 62.), vec3(136., 116., 90.), mn) / 255.0 * (0.82 + 0.3 * fine);',
@@ -4824,8 +4957,10 @@ var GLSL_MAIN = GLSL_P + GLSL_COMMON + '\n' + GLSL_DOME + '\n' + [
   '      float pb = mix(smoothstep(0.48, 0.3, length(pf)) * (0.5 + 0.5 * ph), 0.6, smoothstep(0.01, 0.04, foot));',
   '      gc = mix(gc, mix(vec3(90., 86., 80.), vec3(176., 170., 158.), ph) / 255.0 * (0.6 + 0.4 * pb), shore * 0.85); }',
   '    float lit2 = gm2.a * (1.0 - uG.y);',   // litter: momiji leaves in autumn, petals in spring
-  '    if (lit2 > 0.01 && (uGS.w > 0.5)) { vec2 lc = floor(P * 18.0); float lh = hash12(lc), lh2 = hash12(lc + 7.3); vec2 lp = fract(P * 18.0) - 0.5 - (vec2(lh, lh2) - 0.5) * 0.5;',
-  '      float lm = smoothstep(0.24, 0.12, length(lp * vec2(1.0, 1.6))) * step(1.0 - lit2 * 0.9, lh2);',
+  '    if (lit2 > 0.01 && (uGS.w > 0.5)) { vec2 lq = P * 14.0 + vec2(vn2(P * 1.7), vn2(P * 1.7 + 4.0)) * 1.4, lc = floor(lq); float lh = hash12(lc), lh2 = hash12(lc + 7.3), la = hash12(lc + 2.9) * 6.2832, ls = 0.75 + 0.5 * hash12(lc + 5.5);',   // fallen leaves and petals: each its own size and turn, off any grid
+  '      vec2 lp = fract(lq) - 0.5 - (vec2(lh, lh2) - 0.5) * 0.6; lp = mat2(cos(la), -sin(la), sin(la), cos(la)) * lp / ls; float an = atan(lp.y, lp.x);',
+  '      float lr = uGS.w > 1.5 ? 0.11 * (1.0 - 0.35 * smoothstep(0.85, 1.0, abs(cos(an * 0.5)))) / max(0.35, length(vec2(1.0, 1.9) * normalize(lp + 1e-4))) : 0.15 * (0.62 + 0.38 * pow(abs(cos(an * 2.5)), 0.6));',   // a notched petal; a five-lobed momiji
+  '      float lm = smoothstep(lr + 0.02, lr - 0.02, length(lp)) * step(1.0 - lit2 * 0.9, lh2);',
   '      lm = mix(lm, lit2 * 0.25, smoothstep(0.01, 0.05, foot));',
   '      vec3 lcol = uGS.w > 1.5 ? mix(vec3(236., 196., 208.), vec3(252., 240., 244.), lh) / 255.0 : mix(vec3(150., 30., 20.), vec3(232., 124., 48.), lh) / 255.0;',
   '      gc = mix(gc, lcol, lm * 0.9); }',
@@ -4840,7 +4975,7 @@ var GLSL_MAIN = GLSL_P + GLSL_COMMON + '\n' + GLSL_DOME + '\n' + [
   '      if (uG.y > 0.5) sand = mix(sand, gc, 0.6);',
   '      gc = mix(gc, sand, gm.g); }',
   '    if (gm.b > 0.01) { gc = mix(gc, vec3(64., 60., 44.) / 255.0 * (0.8 + 0.4 * mn), gm.b * 0.8); wetK = max(wetK, gm.b * 0.6); }',
-  '    if (uG.w > 0.5) { vec2 cell = floor(P * 14.0); float lf = step(0.86, hash12(cell)); vec2 fp = fract(P * 14.0) - 0.5;',
+  '    if (uG.w > 0.5 && gm2.a > 0.03) { vec2 cell = floor(P * 14.0); float lf = step(0.86, hash12(cell)) * smoothstep(0.03, 0.3, gm2.a); vec2 fp = fract(P * 14.0) - 0.5;',   // (autumn leaves only under trees that drop them)
   '      lf *= smoothstep(0.5, 0.25, length(fp)); float lfa = mix(lf, 0.1, smoothstep(0.02, 0.08, foot));',
   '      gc = mix(gc, mix(vec3(180., 60., 30.), vec3(214., 120., 40.), hash12(cell + 3.0)) / 255., lfa); }',
   '  } else {',
@@ -4893,6 +5028,7 @@ var GLSL_MAIN = GLSL_P + GLSL_COMMON + '\n' + GLSL_DOME + '\n' + [
   '        float fk = hash12(fc + 2.0); vec3 fcol = spr ? (fk < 0.4 ? vec3(236., 214., 92.) : fk < 0.75 ? vec3(244., 240., 226.) : vec3(226., 170., 196.)) : aut ? (fk < 0.4 ? vec3(236., 226., 200.) : fk < 0.75 ? vec3(214., 120., 60.) : vec3(196., 176., 120.)) : (fk < 0.4 ? vec3(236., 240., 246.) : fk < 0.75 ? vec3(150., 150., 220.) : vec3(240., 220., 120.));',
   '        gg = mix(gg, fcol / 255.0, fl * 0.85); }',
   '      if (uG.y > 0.5) gg = snowC * (0.97 + 0.06 * fn2) * mix(1.0, 0.9, smoothstep(0.6, 0.9, tf2));',   // (tufts of grass push through it a little)
+  '      gg = farFields(P, gg, 1.0);',
   '      vec3 fld = gg;',
   '      if (pdw > 0.01) {',   // 田んぼ: flooded and mirroring the sky in spring, green rice in summer, gold in autumn, stubble in winter
   '        vec2 pu = vec2(dot(P, vec2(0.9205, -0.3907)), dot(P, vec2(0.3907, 0.9205))) / 0.3; vec2 hf = fract(pu) - 0.5; float hill = smoothstep(0.24, 0.08, length(hf)) * (1.0 - smoothstep(0.01, 0.04, foot)), rowv = 0.5 + 0.5 * cos(pu.y * 6.2832);',
@@ -5961,7 +6097,7 @@ function mountSky(el, opts) {
     U.uG = [town ? 1 : 0, st.season === 'winter' ? 1 : 0, Lg.wet ? 1 : 0, town ? (st.stage >= 9 ? 1 : 0) : st.season === 'autumn' ? 1 : 0];   // (w: autumn leaves in the garden; a built street in the town)
     U.uLMR = [30, GS.lmOn ? 1 : 0];
     var gF = GS.gm && GS.gm.F;
-    U.uGMR = [GS.gm ? GS.gm.R : 1, GS.gm ? 1 : 0]; U.uRk = GS.gm ? [].concat.apply([], GS.gm.rk) : new Array(16).fill(0);
+    U.uGMR = [GS.gm ? GS.gm.R : 1, GS.gm ? 1 : 0]; U.uRvK = [TWN.HW, town && GS.gm ? 1 : 0]; U.uRv = GS.rv || (GS.rv = (function () { var R = TWN.RIVER, pts = R.map(function (q) { return tP(q[0], 0, q[1]); }), n = pts.length, a = pts[0], b = pts[1], c = pts[n - 2], e = pts[n - 1], la = Math.hypot(a[0] - b[0], a[1] - b[1]), le = Math.hypot(e[0] - c[0], e[1] - c[1]); pts[0] = [a[0] + (a[0] - b[0]) / la * 3000, a[1] + (a[1] - b[1]) / la * 3000]; pts[n - 1] = [e[0] + (e[0] - c[0]) / le * 3000, e[1] + (e[1] - c[1]) / le * 3000]; var o = []; for (var i = 0; i < 10; i++) o.push(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1]); return o; })()); U.uRk = GS.gm ? [].concat.apply([], GS.gm.rk) : new Array(16).fill(0);
     U.uGS = [gF && gF.mossOn ? 1 : 0, gF && gF.leveled && !gF.mossOn ? 1 : 0, GS.koi ? 1 : 0, st.season === 'autumn' ? 1 : st.season === 'spring' ? 2 : 0];
     var MOSS = { spring: [[30, 50, 20], [82, 116, 40], [170, 184, 92]], summer: [[18, 40, 16], [60, 98, 34], [140, 160, 70]], autumn: [[26, 42, 20], [64, 90, 36], [130, 140, 66]], winter: [[24, 38, 22], [56, 78, 40], [112, 124, 76]] }[st.season] || [[18, 40, 16], [60, 98, 34], [140, 160, 70]];
     U.uMoss0 = vsc(MOSS[0], 1 / 255); U.uMoss1 = vsc(MOSS[1], 1 / 255); U.uMoss2 = vsc(MOSS[2], 1 / 255);

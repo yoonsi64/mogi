@@ -467,7 +467,7 @@ function drawBranches(ctx, segs, bark, wmul, snowK) {
     var off = passes[q][0], wf = passes[q][1]; ctx.fillStyle = passes[q][2]; ctx.beginPath();
     for (var i = 0; i < pr.length; i++) {
       var a = pr[i].a, b = pr[i].b, s = pr[i].s;
-      var w0 = Math.max(0.3, s.r0 * a.k * wmul), w1 = Math.max(0.22, s.r1 * b.k * wmul);
+      var w0 = Math.max(MODE === 's' ? 0.8 : 0.3, s.r0 * a.k * wmul), w1 = Math.max(MODE === 's' ? 0.6 : 0.22, s.r1 * b.k * wmul);   // (a thin trunk's shadow kept wide enough to survive the half-res soft pass, so the crown's shadow stays tied to its foot)
       var dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
       if (nx * LS[0] + ny * LS[1] < 0) { nx = -nx; ny = -ny; }
       var ax = a.x + nx * w0 * off, ay = a.y + ny * w0 * off, bx = b.x + nx * w1 * off, by = b.y + ny * w1 * off, h0 = w0 * wf, h1 = w1 * wf;
@@ -766,7 +766,7 @@ function domeClusters(x, z, R, Hh, rng, by, n) {
 }
 function makeShrub(seed, x, z, R, Hh, pal, o) { o = o || {}; var rng = mulberry32(seed); var cl = domeClusters(x, z, R, Hh, rng, o.by || 0); return { cl: cl, center: [x, (o.by || 0) + Hh * 0.45, z], R: Math.max(R, Hh), pal: pal, seed: seed, x: x, z: z, Rr: R, o: o }; }
 function drawShrub(ctx, sh) {
-  paintFoliage(ctx, sh.cl, { pal: sh.pal, center: sh.center, R: sh.R, kind: sh.o.kind || 'oval', dab: sh.o.dab || 0.055, density: sh.o.density || 1.3, max: 220, seed: sh.seed, accent: sh.o.accent, litBoost: sh.o.litBoost || 0, snow: SEA.snow ? (sh.o.snow === undefined ? 0.8 : sh.o.snow) : 0, tint: LIT.foliageTint, sparse: sh.o.sparse });
+  paintFoliage(ctx, sh.cl, { pal: sh.pal, center: sh.center, R: sh.R, kind: sh.o.kind || 'oval', dab: sh.o.dab || 0.055, density: sh.o.density || 1.3, max: 220, seed: sh.seed, accent: sh.o.accent, litBoost: sh.o.litBoost || 0, snow: SEA.snow ? (sh.o.snow === undefined ? 0.8 : sh.o.snow) : 0, tint: LIT.foliageTint, sparse: sh.o.sparse, moonK: sh.o.moonK });
 }
 function shrubAO(ctx, sh) { var p = P(sh.x, sh.o.by || 0, sh.z); ctx.beginPath(); ctx.ellipse(p.x, p.y, sh.Rr * p.k * 0.95, sh.Rr * p.k * CAM.s * 0.9, 0, 0, TAU); ctx.fill(); }
 function makeTallTree(seed, x, z, Hh, R, pal, kind) {
@@ -2341,11 +2341,11 @@ function groundRows(D, M, PW, y0, y1, S) {
       if (outlineOn && ge < 1.0) { a = (1 - sstep(0.97, 1.0, ge)) * 0.8; var of = 0.6 + nn2 * 0.3, ok = 0.98 + gr * 0.06; r += ((s0[0] + (s1[0] - s0[0]) * of) * ok - r) * a; g += ((s0[1] + (s1[1] - s0[1]) * of) * ok - g) * a; bl += ((s0[2] + (s1[2] - s0[2]) * of) * ok - bl) * a; }
       if ((gravelOn || outlineOn) && ge > 0.96 && ge < 1.04) {
         var eb = sstep(0.965, 0.985, ge) * (1 - sstep(1.02, 1.04, ge));
-        if (eb > 0) { var pb = hash2(px >> 1, (py >> 1) + 7), em = 0.9 + gr * 0.2, er = (78 + 50 * pb) * em, eg = (74 + 48 * pb) * em, ebb = (68 + 44 * pb) * em; if (outlineOn) { er = er * 0.5 + 45; eg = eg * 0.5 + 36; ebb = ebb * 0.5 + 26; } a = eb * 0.9; r += (er - r) * a; g += (eg - g) * a; bl += (ebb - bl) * a; }
+        if (eb > 0) { var pb = hash2(px >> 1, (py >> 1) + 7), em = 0.9 + gr * 0.2, er = (78 + 50 * pb) * em, eg = (74 + 48 * pb) * em, ebb = (68 + 44 * pb) * em; if (outlineOn) { er = er * 0.5 + 45; eg = eg * 0.5 + 36; ebb = ebb * 0.5 + 26; } a = eb * (outlineOn ? 0.3 : 0.9); r += (er - r) * a; g += (eg - g) * a; bl += (ebb - bl) * a; }
       }
       // snow cover
       if (snow && gA < 1) {
-        var snA = sstep(0.28, 0.4, Gsnow[i00] * w00 + Gsnow[i10] * w10 + Gsnow[i01] * w01 + Gsnow[i11] * w11 + 0.12);
+        var snA = sstep(0.21, 0.37, Gsnow[i00] * w00 + Gsnow[i10] * w10 + Gsnow[i01] * w01 + Gsnow[i11] * w11 + 0.12);   // bare patches few and soft-edged (melt holes, not smudges)
         if (mapleSnow) { var dmp = Math.sqrt((x - mx) * (x - mx) + (z - mz) * (z - mz) * 1.44); snA *= sstep(0.3, 1.4, dmp); }
         if (teahouse && x > thX0 - 0.5 && x < thX1 + 0.5 && z > thZE - 0.35 && z < thZE + 0.6) snA *= 0.3;
         var sf = clamp(0.55 + (n2(x * 4, z * 4) - 0.5) * 0.6 + gr * 0.1); a = snA * (1 - gA);
@@ -2384,12 +2384,11 @@ function groundRows(D, M, PW, y0, y1, S) {
       // the ground's gentle relief, lit from the sun's side: small mounds and hollows in the lawn and the moss (not the raked gravel, not the water)
       if (gA < 0.5 && w < 0.5) {
         var hc, hdx, hdz, relK = 3.2;
-        if (snow) {   // on the bare white of snow a single axis-aligned lattice reads as a quilt: two rotated lattices, softer
-          var ua = x * 2.25 + z * 1.3 + 5, va = z * 2.25 - x * 1.3, ub = x * 1.24 - z * 3.06 + 13, vb = z * 1.24 + x * 3.06;
-          hc = n2(ua, va) * 0.6 + n2(ub, vb) * 0.4;
-          hdx = n2(ua + 0.18, va - 0.104) * 0.6 + n2(ub + 0.0992, vb + 0.2448) * 0.4 - hc;
-          hdz = n2(ua + 0.104, va + 0.18) * 0.6 + n2(ub - 0.2448, vb + 0.0992) * 0.4 - hc; relK = 1.7;
-        } else { hc = n2(x * 3.4 + 5, z * 3.4); hdx = n2(x * 3.4 + 5.08, z * 3.4) - hc; hdz = n2(x * 3.4 + 5, z * 3.4 + 0.08) - hc; }
+        // a single axis-aligned value-noise lattice reads as a quilt on bare snow or soil: two rotated lattices instead (softer on snow)
+        var ua = x * 2.25 + z * 1.3 + 5, va = z * 2.25 - x * 1.3, ub = x * 1.24 - z * 3.06 + 13, vb = z * 1.24 + x * 3.06;
+        hc = n2(ua, va) * 0.6 + n2(ub, vb) * 0.4;
+        hdx = n2(ua + 0.18, va - 0.104) * 0.6 + n2(ub + 0.0992, vb + 0.2448) * 0.4 - hc;
+        hdz = n2(ua + 0.104, va + 0.18) * 0.6 + n2(ub - 0.2448, vb + 0.0992) * 0.4 - hc; relK = snow ? 1.7 : 2.6;
         var rel = 1 + (hdx * Lhx + hdz * Lhz) * relK * (1 - gA * 2) * (1 - w * 2); r *= rel; g *= rel; bl *= rel;
       }
       var ed = 1 - 0.35 * sstep(edgeZ - 0.9, edgeZ, z);
@@ -2464,6 +2463,21 @@ function buildScene() {
   var gx = LX(7.9), gz = LZ(11.4), ginkgo = makeLayered(702, gx, gz, 9, 2.5, { maxl: 5, spray: 1.15 }), gp = SEA.ginkgo;
   put(gx, gz, { bend: 0.5, sway: { flex: 0.55 }, draw: function (c) { drawLayered(c, ginkgo, { pal: gp, alt: warmAlt(gp), altK: 0.35, dab: 0.1, cap: 55, density: 1.0, snow: 0.5, bark: [[60, 52, 44], [100, 90, 76], [140, 128, 108]] }); }, noRefl: true });
   // rocks
+  if (F.gravelOutline) { // 縄張り: the bed laid out with little stakes and a taut string between them, as a garden is set out on the ground
+    var GO = gravelInfo(F), NS = 16, stk = [], srg = mulberry32(131);
+    for (var si = 0; si < NS; si++) { var sa = si / NS * TAU + 0.12; stk.push([GO.cx + Math.cos(sa) * GO.rx * 1.005, GO.cz + Math.sin(sa) * GO.rz * 1.005, 0.3 + srg() * 0.07, (srg() - 0.5) * 0.08]); }
+    stk.forEach(function (q, si) {
+      var nq = stk[(si + 1) % NS];
+      put(q[0], q[1], { draw: function (c) {
+        var S = sil(), wood = [150, 118, 82], top = [206, 180, 140];
+        if (S) { var b0 = P(q[0], 0, q[1]), t0 = P(q[0] + q[3] * 0.3, q[2], q[1]); c.strokeStyle = '#000'; c.lineWidth = Math.max(0.6, 0.05 * b0.k); c.beginPath(); c.moveTo(b0.x, b0.y); c.lineTo(t0.x, t0.y); c.stroke(); return; }
+        prism(c, q[0], q[1], -0.04, q[2], 0.024, 0.02, 5, q[3] * 9, wood, { tex: 0.4, snow: 0.6 });
+        var tp = P(q[0], q[2], q[1]); c.fillStyle = rgb(shade(top, [0, 1, 0])); c.beginPath(); c.ellipse(tp.x, tp.y, Math.max(0.4, 0.022 * tp.k), Math.max(0.2, 0.011 * tp.k), 0, 0, TAU); c.fill();   // the fresh-cut top
+        var h = q[2] - 0.1, a = P(q[0], h, q[1]), b = P(nq[0], nq[2] - 0.1, nq[1]), m = P((q[0] + nq[0]) / 2, Math.min(h, nq[2] - 0.1) - 0.02, (q[1] + nq[1]) / 2);
+        c.strokeStyle = rgb(mulc([236, 230, 212], lightTint(1)), 0.9); c.lineWidth = Math.max(0.35, 0.006 * a.k); c.beginPath(); c.moveTo(a.x, a.y); c.quadraticCurveTo(2 * m.x - (a.x + b.x) / 2, 2 * m.y - (a.y + b.y) / 2, b.x, b.y); c.stroke();   // the string, just sagging
+      } });
+    });
+  }
   if (F.rock1) { var rk = makeRock(101, LAY.rock1.x, LAY.rock1.z, 0.62, 0.55, 0.48, { alb: [146, 140, 128], moss: F.rockMoss, flat: 0.72, amp: 0.3 }); put(LAY.rock1.x, LAY.rock1.z, { draw: function (c) { drawRock(c, rk); }, ao: function (c) { rockAO(c, rk); } }); }
   if (F.lantern) { var rk2 = makeRock(104, LX(-1.62), LZ(2.3), 0.28, 0.2, 0.24, { alb: [140, 136, 126], moss: F.rockMoss, flat: 0.5 }); put(LX(-1.62), LZ(2.3), { draw: function (c) { drawRock(c, rk2); }, ao: function (c) { rockAO(c, rk2); } }); }
   if (F.kare) [[110, LX(-3.75), LZ(1.0), 0.34, 1.12, 0.3], [111, LX(-4.55), LZ(2.05), 0.46, 0.7, 0.38], [112, LX(-1.2), LZ(0.7), 0.5, 0.3, 0.4], [113, LX(-3.15), LZ(0.5), 0.24, 0.3, 0.2]].forEach(function (a) {
@@ -2506,7 +2520,7 @@ function buildScene() {
     if (bloom) acc = { p: bloom.p * (0.6 + 0.4 * sc), pal: bloom.pal, kind: 'circle', s: 0.9 };
     else if (sname === 'autumn') acc = { p: 0.12, pal: [[84, 30, 20], [118, 46, 26], [150, 70, 36]] };
     else if (sname === 'summer') acc = { p: 0.05, pal: [[150, 40, 70], [200, 80, 110], [230, 130, 150]], kind: 'circle', s: 0.8 };
-    var sh = makeShrub(400 + ii, a[0], a[1], a[2] * sc, a[3] * sc, SEA.shrub, { accent: acc, dab: 0.045 });
+    var sh = makeShrub(400 + ii, a[0], a[1], a[2] * sc, a[3] * sc, SEA.shrub, { accent: acc, dab: 0.045, moonK: 0.4 });   // (moonK: at night the low, flat-topped bushes would all catch the moon)
     put(a[0], a[1], { draw: function (c) { drawShrub(c, sh); }, ao: function (c) { shrubAO(c, sh); }, bend: 0.5, sway: { flex: 0.6, shrub: true } });
   });
   if (F.pine > 0) { var pt = genPine(23, LAY.pine.x, LAY.pine.z, F.pine); pt.yuki = true; put(LAY.pine.x, LAY.pine.z, { bend: 0.3, sway: { flex: 0.35, tag: 'pine' }, draw: function (c) { drawPine(c, pt); }, ao: function (c) { var p = Pa(pt.base); c.beginPath(); c.ellipse(p.x, p.y, 0.4 * p.k * pt.S + 1, 0.15 * p.k * pt.S + 0.6, 0, 0, TAU); c.fill(); } }); }
@@ -4042,7 +4056,7 @@ function zGrid(R) {
       for (m = 0; m < ob.B.length; m++) { var b = ob.B[m]; if (x > b[0] && x < b[1] && z > b[2] && z < b[3]) { k = 1; break; } }
     }
     K[j * nx + i] = k; SD[j * nx + i] = sd;
-    if (GV) { var gx = (x - GV.cx) / GV.rx, gz = (z - GV.cz) / GV.rz, gr = gx * gx + gz * gz; if (gr < 1.05) CO[j * nx + i] = 5; }   // raked gravel: walked round, not across
+    if (GV) { var gx = (x - GV.cx) / GV.rx, gz = (z - GV.cz) / GV.rz, gr = gx * gx + gz * gz; if (gr < 1.05) { CO[j * nx + i] = 5; if (k === 0 && gr < 0.9) K[j * nx + i] = 5; } }   // raked gravel: its raked middle never walked on (so the walkers' clearance keeps their bodies off it), its edging only where there is no other way
   }
   R.grid = { cs: cs, x0: xl, z0: z0, nx: nx, nz: nz, K: K, SD: SD, CO: CO, cl: {}, R: R };
   return R.grid;
@@ -4051,7 +4065,7 @@ function zOk(cls, k) { return cls === 'wade' ? k === 3 || k === 4 || k === 0 : c
 function zClear(G, cls) { // distance (m) from each cell centre to the nearest cell this class may not use (two-pass chamfer)
   if (G.cl[cls]) return G.cl[cls];
   var nx = G.nx, nz = G.nz, D = new Float32Array(nx * nz), a = G.cs, b = G.cs * 1.4142, i, j, k, v;
-  for (k = 0; k < D.length; k++) D[k] = zOk(cls, G.K[k]) ? 1e6 : 0;
+  for (k = 0; k < D.length; k++) D[k] = zOk(cls, G.K[k]) ? 1e6 : G.K[k] === 5 ? 0.1 : 0;   // the raked gravel counts a little softer than a wall, so a walker may pass near (not on) its edging where the way is narrow
   for (j = 0; j < nz; j++) for (i = 0; i < nx; i++) { k = j * nx + i; v = D[k]; if (!v) continue; if (i === 0 || j === 0 || i === nx - 1) { D[k] = Math.min(v, a); continue; } v = Math.min(v, D[k - 1] + a, D[k - nx] + a, D[k - nx - 1] + b, D[k - nx + 1] + b); D[k] = v; }
   for (j = nz - 1; j >= 0; j--) for (i = nx - 1; i >= 0; i--) { k = j * nx + i; v = D[k]; if (!v) continue; if (j === nz - 1 || i === nx - 1 || i === 0) { D[k] = Math.min(v, a); continue; } v = Math.min(v, D[k + 1] + a, D[k + nx] + a, D[k + nx + 1] + b, D[k + nx - 1] + b); D[k] = v; }
   G.cl[cls] = D; return D;
@@ -4082,11 +4096,28 @@ function zMemo(G, name, key, pref, make) {
   return v;
 }
 function zKey(cls, rad, a, b) { return cls + '|' + rad + '|' + a[0].toFixed(4) + ',' + a[1].toFixed(4) + (b ? '|' + b[0].toFixed(4) + ',' + b[1].toFixed(4) : ''); }
+function zMemoHas(G, name, key, pref) { var L = G[name] || []; for (var i = 0; i < L.length; i++) if (L[i].k === key && L[i].pref === pref) return true; return false; }
+/* a planning step that gets an A* answer (or a distance map) into the memo in slices of a few ms; it hands itself back until done */
+function zAstarStep(G, cls, rad, a, b, pref, then) {
+  var key = zKey(cls, rad, a, b), J = null;
+  return function step() {
+    if (!zMemoHas(G, 'mA', key, pref || null)) { J = J || zAstarJob(G, cls, rad, a, b, pref); if (!J.run(ZSLICE)) return [step]; var out = J.out; zMemo(G, 'mA', key, pref || null, function () { return out; }); }
+    if (then) then(zAstar(G, cls, rad, a, b, pref));
+  };
+}
+function zDistStep(G, cls, rad, p) {
+  var key = zKey(cls, rad, p), J = null;
+  return function step() { if (zMemoHas(G, 'mD', key, null)) return; J = J || zDistJob(G, cls, rad, p); if (!J.run(ZSLICE)) return [step]; var out = J.out; zMemo(G, 'mD', key, null, function () { return out; }); };
+}
+var ZSLICE = 5;   // ms of search per slice (about 20 ms on a slow phone)
 function zAstar(G, cls, rad, a, b, pref) { return zMemo(G, 'mA', zKey(cls, rad, a, b), pref || null, function () { return zAstar0(G, cls, rad, a, b, pref); }).slice(); }
-function zAstar0(G, cls, rad, a, b, pref) {
+function zAstar0(G, cls, rad, a, b, pref) { var J = zAstarJob(G, cls, rad, a, b, pref); J.run(1e9); return J.out; }
+/* the A* search as a job that can stop when its time is up and carry on later (run(ms) is true once it has its answer in .out) */
+function zAstarJob(G, cls, rad, a, b, pref) {
+  var J = { out: null, run: function () { return true; } };
   var C = zClear(G, cls), nx = G.nx, nz = G.nz, N = nx * nz, cs = G.cs;
   var A = zSnap(G, C, rad, a), Bp = zSnap(G, C, rad, b), s = zIdx(G, A[0], A[1]), e = zIdx(G, Bp[0], Bp[1]);
-  if (s < 0 || e < 0) return [a, b];
+  if (s < 0 || e < 0) { J.out = [a, b]; return J; }
   var gS = new Float32Array(N), came = new Int32Array(N), done = new Uint8Array(N), hp = [], hf = [], i;
   for (i = 0; i < N; i++) { gS[i] = 1e9; came[i] = -1; }
   function push(k, f) { hp.push(k); hf.push(f); var n = hp.length - 1; while (n > 0) { var q = (n - 1) >> 1; if (hf[q] <= hf[n]) break; var t1 = hp[q]; hp[q] = hp[n]; hp[n] = t1; var t2 = hf[q]; hf[q] = hf[n]; hf[n] = t2; n = q; } }
@@ -4095,7 +4126,9 @@ function zAstar0(G, cls, rad, a, b, pref) {
   function h(k) { var dx = Math.abs(k % nx - ex), dz = Math.abs(((k / nx) | 0) - ez); return cs * (Math.max(dx, dz) + 0.4142 * Math.min(dx, dz)); }
   gS[s] = 0; push(s, h(s));
   var NB = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [1, 1, 1.4142], [1, -1, 1.4142], [-1, 1, 1.4142], [-1, -1, 1.4142]], it = 0;
+  J.run = function (ms) { if (J.out) return true; var tEnd = now() + ms, n = 0;
   while (hp.length && it++ < 60000) {
+    if ((++n & 255) === 0 && now() > tEnd) return false;
     var k = pop(); if (done[k]) continue; done[k] = 1; if (k === e) break;
     var ki = k % nx, kj = (k / nx) | 0;
     for (var m = 0; m < 8; m++) {
@@ -4106,6 +4139,11 @@ function zAstar0(G, cls, rad, a, b, pref) {
       if (ng < gS[q]) { gS[q] = ng; came[q] = k; push(q, ng + h(q)); }
     }
   }
+  J.out = zAstarPath(G, C, rad, s, e, came, A, Bp, nx, cs); return true; };
+  return J;
+}
+function zAstarPath(G, C, rad, s, e, came, A, Bp, nx, cs) {
+  var i;
   if (came[e] < 0 && e !== s) return [A, A];   // no way there: it stays where it is (callers pick reachable goals)
   var out = [], c = e; while (c >= 0) { out.push([G.x0 + (c % nx + 0.5) * cs, G.z0 + (((c / nx) | 0) + 0.5) * cs]); if (c === s) break; c = came[c]; }
   out.reverse(); out[0] = A; out[out.length - 1] = Bp;
@@ -4251,20 +4289,24 @@ function zPickStop(G, R, cls, rad, rng, score, avoid, ht, reach) {   // reach: a
 function zEdge(R, z, side, out) { return [R.edgeX(z, side) + side * (out || 1.6), z]; }
 /* the walking distance from p to every cell this class may use (Dijkstra on the 8-neighbour grid) */
 function zDistFrom(G, cls, rad, p) { return zMemo(G, 'mD', zKey(cls, rad, p), null, function () { return zDistFrom0(G, cls, rad, p); }); }
-function zDistFrom0(G, cls, rad, p) {
-  var C = zClear(G, cls), nx = G.nx, nz = G.nz, N = nx * nz, cs = G.cs, D = new Float64Array(N), i;
+function zDistFrom0(G, cls, rad, p) { var J = zDistJob(G, cls, rad, p); J.run(1e9); return J.out; }
+function zDistJob(G, cls, rad, p) {   // the walking-distance map as a job (as zAstarJob)
+  var C = zClear(G, cls), nx = G.nx, nz = G.nz, N = nx * nz, cs = G.cs, D = new Float64Array(N), i, J = { out: null, run: function () { return true; } };
   for (i = 0; i < N; i++) D[i] = 1e9;
-  var A = zSnap(G, C, rad, p), s = zIdx(G, A[0], A[1]); if (s < 0) return D;
+  var A = zSnap(G, C, rad, p), s = zIdx(G, A[0], A[1]); if (s < 0) { J.out = D; return J; }
   var hp = [s], hf = [0]; D[s] = 0;
   function push(k, f) { hp.push(k); hf.push(f); var n = hp.length - 1; while (n > 0) { var q = (n - 1) >> 1; if (hf[q] <= hf[n]) break; var t1 = hp[q]; hp[q] = hp[n]; hp[n] = t1; var t2 = hf[q]; hf[q] = hf[n]; hf[n] = t2; n = q; } }
   function pop() { var top = hp[0], lk = hp.pop(), lf = hf.pop(); if (hp.length) { hp[0] = lk; hf[0] = lf; var n = 0; for (;;) { var l = 2 * n + 1, r = l + 1, m = n; if (l < hp.length && hf[l] < hf[m]) m = l; if (r < hp.length && hf[r] < hf[m]) m = r; if (m === n) break; var t1 = hp[m]; hp[m] = hp[n]; hp[n] = t1; var t2 = hf[m]; hf[m] = hf[n]; hf[n] = t2; n = m; } } return top; }
   var NB = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [1, 1, 1.4142], [1, -1, 1.4142], [-1, 1, 1.4142], [-1, -1, 1.4142]];
+  J.run = function (ms) { if (J.out) return true; var tEnd = now() + ms, n = 0;
   while (hp.length) {
+    if ((++n & 255) === 0 && now() > tEnd) return false;
     var f0 = hf[0], k = pop(); if (f0 > D[k]) continue;
     var ki = k % nx, kj = (k / nx) | 0;
     for (var m = 0; m < 8; m++) { var ii = ki + NB[m][0], jj = kj + NB[m][1]; if (ii < 0 || jj < 0 || ii >= nx || jj >= nz) continue; var q = jj * nx + ii; if (C[q] - cs * 0.5 < rad) continue; var nd = D[k] + cs * NB[m][2]; if (nd < D[q]) { D[q] = nd; push(q, nd); } }
   }
-  return D;
+  J.out = D; return true; };
+  return J;
 }
 /* the best way off the frame from p: an off-screen cell it can reach, by walking distance plus a preference (side: +1 / -1 to
    favour a side, zPref a depth); returns [x, z] or null if it is walled in */
@@ -6618,56 +6660,81 @@ RV.usagi = {
    (the rutting stag's long whistle), stands and looks, and walks back the way he came. Startled he freezes, the white rump
    flared, stamps, and bounds away ---- */
 RV.shika = {
-  start: function (a, g, R, rng) {
-    var G = zGeoReady(R), mx = R.maple[0], mz = R.maple[1], su = g.season;
-    // who comes: in autumn a stag, a hind, or a stag with a hind following; otherwise a stag or a hind
-    var r0 = rng(), who = su === 'autumn' ? (r0 < 0.5 ? ['stag'] : r0 < 0.65 ? ['hind'] : ['stag', 'hind']) : (r0 < 0.6 ? ['stag'] : ['hind']);
-    var s1 = zPickStop(G, R, 'land', 0.38, rng, function (x, z, p) { return -Math.hypot(x - mx - 1.5, (z - mz) * 1.2) * 0.8 - (p.y > g.H * 0.85 ? 3 : 0); }, null, 1.2) || [mx + 1.7, mz + 0.8];
-    var D1 = zDistFrom(G, 'land', 0.38, s1);
-    var s2 = zPickStop(G, R, 'land', 0.38, rng, function (x, z) { return -Math.abs(Math.hypot(x - s1[0], z - s1[1]) - 1.6); }, null, 1.2, D1) || [s1[0] + 1.2, s1[1] - 0.5];
-    var A = zExitPick(G, R, 'land', 0.36, s1, 0) || zEdge(R, mz, -1, 1.5);
-    var B = zExitPick(G, R, 'land', 0.36, s2, A[0] < s1[0] ? -1 : 1, A[1]) || A;
-    var coat = su === 'summer' ? 0.05 : su === 'winter' ? 1 : su === 'spring' ? 0.75 : 0.7;   // autumn: the winter coat coming through, the spots fading
-    a.deer = [];
-    var avoid = function (x, z) { var dd = Math.min(Math.hypot(x - s1[0], z - s1[1]), Math.hypot(x - s2[0], z - s2[1])); return dd < 1.3 ? (1.3 - dd) * 1.8 : 0; };   // the follower keeps clear of where he stands (gently: walking round the raked gravel still matters more)
-    who.forEach(function (kind, ii) {
-      var d = { kind: kind, seed: a.seed + ii * 17, face: undefined, t: 0 }, hind = kind === 'hind';
-      if (ii === 0) {
+  /* planned in steps (each one of the planner's big questions, a few ms each), so a visit can be planned across several idle moments;
+     start() runs them all at once. A step may hand back further steps, run next */
+  steps: function (a, g, R, rng) {
+    var G, mx, mz, su = g.season, who, s1, D1, s2, A, B, coat, avoid, dS, dH, best, sp, tNear, tFar, leaveS, walkFar, offPath, gapOf;
+    function legs(start, tos, pref) { // the walk's A* questions in the order zWalkPlan will ask them (the answers are kept), each searched in slices
+      var at = start; return tos.map(function (to) { return function () { return [zAstarStep(G, 'land', 0.34, at, to, pref, function (seg) { at = seg[seg.length - 1]; })]; }; });
+    }
+    function deer(kind, ii) { var hind = kind === 'hind'; return { kind: kind, seed: a.seed + ii * 17, face: undefined, t: 0, mag: hind ? 0.98 : 1.06, o: { coatK: coat, hind: hind, velvet: su === 'summer', antler: hind || su === 'spring' ? 0 : 1, rut: hind ? 0 : su === 'autumn' ? 1 : su === 'winter' ? 0.4 : 0 } }; }   // a stag about 0.9 m at the shoulder, a hind a little smaller
+    function finish() {
+      a.deer.forEach(function (d) { delete d.plan; });
+      a.T = Math.max.apply(null, a.deer.map(function (d) { return d.T; })); a.ext = 2.0 * (a.deer.length > 1 ? 1.8 : 1); a.refl = true;
+    }
+    return [
+      function () { G = zGeoReady(R); mx = R.maple[0]; mz = R.maple[1]; return [zDistStep(G, 'land', 0.38, zEdge(R, mz, -1, 1.5))]; },
+      function () {
+        // who comes: in autumn a stag, a hind, or a stag with a hind following; otherwise a stag or a hind
+        var r0 = rng(); who = su === 'autumn' ? (r0 < 0.5 ? ['stag'] : r0 < 0.65 ? ['hind'] : ['stag', 'hind']) : (r0 < 0.6 ? ['stag'] : ['hind']);
+        var DE = zDistFrom(G, 'land', 0.38, zEdge(R, mz, -1, 1.5));   // only a place it can walk to from the side of the garden (never a pocket walled in by the pond and the gravel)
+        s1 = zPickStop(G, R, 'land', 0.38, rng, function (x, z, p) { return -Math.hypot(x - mx - 1.5, (z - mz) * 1.2) * 0.8 - (p.y > g.H * 0.85 ? 3 : 0); }, null, 1.2, DE) || [mx + 1.7, mz + 0.8];
+      },
+      function () { return [zDistStep(G, 'land', 0.38, s1), function () { D1 = zDistFrom(G, 'land', 0.38, s1); }]; },
+      function () { s2 = zPickStop(G, R, 'land', 0.38, rng, function (x, z) { var kk = zIdx(G, x, z), wd = kk >= 0 ? D1[kk] : 9; return -Math.abs(Math.hypot(x - s1[0], z - s1[1]) - 1.6) - Math.max(0, wd - 2.4) * 1.5; }, null, 1.2, D1) || [s1[0] + 1.2, s1[1] - 0.5];
+        var k2 = zIdx(G, s2[0], s2[1]); if (k2 < 0 || D1[k2] > 4.5) s2 = s1; },   // a short walk on, not round the far side of the gravel (in a tight corner he calls where he browsed)
+      function () { return [zDistStep(G, 'land', 0.36, s1), function () { A = zExitPick(G, R, 'land', 0.36, s1, 0) || zEdge(R, mz, -1, 1.5); }, zDistStep(G, 'land', 0.36, s2)]; },
+      function () {
+        B = zExitPick(G, R, 'land', 0.36, s2, A[0] < s1[0] ? -1 : 1, A[1]) || A;
+        coat = su === 'summer' ? 0.05 : su === 'winter' ? 1 : su === 'spring' ? 0.75 : 0.7;   // autumn: the winter coat coming through, the spots fading
+        a.deer = [];
+        avoid = function (x, z) { var dd = Math.min(Math.hypot(x - s1[0], z - s1[1]), Math.hypot(x - s2[0], z - s2[1])); return dd < 1.3 ? (1.3 - dd) * 1.8 : 0; };   // the follower keeps clear of where he stands (gently: walking round the raked gravel still matters more)
+        return legs(A, [s1, s2, B], null);
+      },
+      function () { // the first comer
+        var d = deer(who[0], 0), hind = d.o.hind;
         d.plan = function (lag, out) { return zWalkPlan(G, 'land', 0.34, A, [
           { to: s1, gait: 'walk', v: hind ? 0.7 : 0.75, stride: hind ? 0.76 : 0.82, act: 'browse', dur: 6.5, ra: 1.2 },
           { to: s2, gait: 'walk', v: 0.65, stride: hind ? 0.75 : 0.8, act: hind ? 'look' : 'call', dur: 6.0, ra: 1.0 },
           { to: out || B, gait: 'walk', v: 0.85, stride: hind ? 0.78 : 0.85, ra: 1.0 }], null, lag, false); };
-      } else {   // the follower: a few seconds behind him, she browses in one place of her own a couple of metres off his way, and leaves after he has gone
-        var SW = a.deer[0].W, sp = []; for (var u = 0; u <= SW.pa.len; u += 0.3) sp.push(zPathAt(SW.pa, u));
-        var walkFar = function (x, z, lim) { var kk = zIdx(G, x, z), wd = kk >= 0 ? D1[kk] : 1e9; if (wd > 1e8) return 50; for (var uu = 0.1; uu < 1; uu += 0.1) { var kq = zIdx(G, lerp(s1[0], x, uu), lerp(s1[1], z, uu)); if (kq >= 0 && G.CO[kq] > 0) return 8; } return Math.max(0, wd - lim) * 2.5; };   // a place a short walk from his, on his side of the raked gravel
-        var offPath = function (x, z) { var m = 9; for (var k = 0; k < sp.length; k++) m = Math.min(m, Math.hypot(x - sp[k][0], z - sp[k][1])); return m; };
-        var tNear = zPickStop(G, R, 'land', 0.34, rng, function (x, z) { var dd = Math.hypot(x - s1[0], z - s1[1]), np = offPath(x, z); return -Math.abs(dd - 2.0) * 1.5 - (np < 1.0 ? (1.0 - np) * 3 : 0) - Math.max(0, s1[1] - z) * 0.4 - walkFar(x, z, 2.6); }, [], 1.0, D1) || s1;
-        var tFar = zPickStop(G, R, 'land', 0.34, rng, function (x, z) { var dd = Math.hypot(x - s1[0], z - s1[1]), np = offPath(x, z); return -Math.abs(dd - 2.2) - (np < 1.4 ? (1.4 - np) * 6 : 0) - walkFar(x, z, 3.4); }, [], 1.0, D1) || tNear;   // a second choice well off his way
-        var leaveS = SW.sched.length > 4 ? SW.sched[4].t0 : SW.T * 0.75;   // when he sets off from his second stop
-        d.plan = function (lag, out, far) {
-          var t1 = far ? tFar : tNear, legs = function (dur) { return [{ to: t1, gait: 'walk', v: 0.7, stride: 0.76, act: 'browse', dur: dur, ra: 1.2 }, { to: out || B, gait: 'walk', v: 0.85, stride: 0.78, ra: 1.0 }]; };
-          var W0 = zWalkPlan(G, 'land', 0.34, A, legs(8), avoid, lag, false), arr = W0.sched[0].t1;
-          return zWalkPlan(G, 'land', 0.34, A, legs(clamp(leaveS + 2.5 - arr, 5, 24)), avoid, lag, false);
-        };
+        d.W = d.plan(0); d.T = d.W.T; a.deer.push(d);
+        if (who.length < 2) return [finish];
+        // the follower: a few seconds behind him, she browses in one place of her own a couple of metres off his way, and leaves after he has gone
+        var SW = d.W; sp = []; for (var u = 0; u <= SW.pa.len; u += 0.3) sp.push(zPathAt(SW.pa, u));
+        walkFar = function (x, z, lim) { var kk = zIdx(G, x, z), wd = kk >= 0 ? D1[kk] : 1e9; if (wd > 1e8) return 50; for (var uu = 0.1; uu < 1; uu += 0.1) { var kq = zIdx(G, lerp(s1[0], x, uu), lerp(s1[1], z, uu)); if (kq >= 0 && G.CO[kq] > 0) return 8; } return Math.max(0, wd - lim) * 2.5; };   // a place a short walk from his, on his side of the raked gravel
+        offPath = function (x, z) { var m = 9; for (var k = 0; k < sp.length; k++) m = Math.min(m, Math.hypot(x - sp[k][0], z - sp[k][1])); return m; };
+        leaveS = SW.sched.length > 4 ? SW.sched[4].t0 : SW.T * 0.75;   // when he sets off from his second stop
+        return [
+          function () { tNear = zPickStop(G, R, 'land', 0.34, rng, function (x, z) { var dd = Math.hypot(x - s1[0], z - s1[1]), np = offPath(x, z); return -Math.abs(dd - 2.0) * 1.5 - (np < 1.0 ? (1.0 - np) * 3 : 0) - Math.max(0, s1[1] - z) * 0.4 - walkFar(x, z, 2.6); }, [], 1.0, D1) || s1; },
+          function () { tFar = zPickStop(G, R, 'land', 0.34, rng, function (x, z) { var dd = Math.hypot(x - s1[0], z - s1[1]), np = offPath(x, z); return -Math.abs(dd - 2.2) - (np < 1.4 ? (1.4 - np) * 6 : 0) - walkFar(x, z, 3.4); }, [], 1.0, D1) || tNear; },   // a second choice well off his way
+          function () { return legs(A, [tNear, B], avoid); },
+          function () {
+            dH = deer(who[1], 1); dS = a.deer[0];
+            dH.plan = function (lag, out, far) {
+              var t1 = far ? tFar : tNear, lg = function (dur) { return [{ to: t1, gait: 'walk', v: 0.7, stride: 0.76, act: 'browse', dur: dur, ra: 1.2 }, { to: out || B, gait: 'walk', v: 0.85, stride: 0.78, ra: 1.0 }]; };
+              var W0 = zWalkPlan(G, 'land', 0.34, A, lg(8), avoid, lag, false), arr = W0.sched[0].t1;
+              return zWalkPlan(G, 'land', 0.34, A, lg(clamp(leaveS + 2.5 - arr, 5, 24)), avoid, lag, false);
+            };
+            dH.W = dH.plan(4.5); dH.T = dH.W.T; a.deer.push(dH);
+            // and never through him: if their ways still cross, try later starts, the other way out and her other place; failing all, he comes alone
+            gapOf = function (WS, WH) { var lo = Math.max(WS.sched[0].t0, WH.sched[0].t0), hi = Math.min(WS.T, WH.T), m = 9; for (var tt = lo; tt <= hi; tt += 0.1) { var q1 = zWalkAt(WS, tt), q2 = zWalkAt(WH, tt), p1 = P(q1.x, 0, q1.z), p2 = P(q2.x, 0, q2.z); if (p1.x > -20 && p1.x < W + 20 && p1.y < H + 20 && p2.x > -20 && p2.x < W + 20 && p2.y < H + 20) { var kg = zIdx(G, q2.x, q2.z); if (kg >= 0 && G.CO[kg] > 0) return -1; m = Math.min(m, Math.hypot(q1.x - q2.x, q1.z - q2.z)); } } return m; };   // (her way across the raked gravel counts as no way)
+            best = { S: dS.W, W: dH.W, m: gapOf(dS.W, dH.W) };
+            return [[7, null], [4.5, A], [10, null], [7.5, A], [4.5, null, 1], [7, null, 1], [4.5, A, 1], [10, null, 1], [13, null], [12, A, 1]].map(function (c) {
+              return function () {
+                if (best.m >= 0.9) return null;
+                return legs(A, [c[2] ? tFar : tNear, c[1] || B], avoid).concat([function () { var W2 = dH.plan(c[0], c[1], c[2]), m = gapOf(dS.W, W2); if (m > best.m) best = { S: dS.W, W: W2, m: m }; }]);
+              };
+            }).concat([function () {
+              dS.W = best.S; dS.T = best.S.T; dH.W = best.W; dH.T = best.W.T;
+              if (best.m < 0.8) a.deer.length = 1;
+              finish();
+            }]);
+          }
+        ];
       }
-      d.W = d.plan(ii * 4.5); d.T = d.W.T; d.mag = hind ? 0.98 : 1.06;   // a stag about 0.9 m at the shoulder, a hind a little smaller
-      d.o = { coatK: coat, hind: hind, velvet: su === 'summer', antler: hind || su === 'spring' ? 0 : 1, rut: hind ? 0 : su === 'autumn' ? 1 : su === 'winter' ? 0.4 : 0 };
-      a.deer.push(d);
-    });
-    if (a.deer.length > 1) {   // and never through him: if their ways still cross, try later starts, the other way out and her other place; failing all, he comes alone
-      var dS = a.deer[0], dH = a.deer[1], gapOf = function (WS, WH) { var lo = Math.max(WS.sched[0].t0, WH.sched[0].t0), hi = Math.min(WS.T, WH.T), m = 9; for (var tt = lo; tt <= hi; tt += 0.1) { var q1 = zWalkAt(WS, tt), q2 = zWalkAt(WH, tt), p1 = P(q1.x, 0, q1.z), p2 = P(q2.x, 0, q2.z); if (p1.x > -20 && p1.x < W + 20 && p1.y < H + 20 && p2.x > -20 && p2.x < W + 20 && p2.y < H + 20) { var kg = zIdx(G, q2.x, q2.z); if (kg >= 0 && G.CO[kg] > 0) return -1; m = Math.min(m, Math.hypot(q1.x - q2.x, q1.z - q2.z)); } } return m; };   // (her way across the raked gravel counts as no way)
-      var best = { S: dS.W, W: dH.W, m: gapOf(dS.W, dH.W) };
-      [[7, null], [4.5, A], [10, null], [7.5, A], [4.5, null, 1], [7, null, 1], [4.5, A, 1], [10, null, 1], [13, null], [12, A, 1]].some(function (c) {
-        if (best.m >= 0.9) return true;
-        var W2 = dH.plan(c[0], c[1], c[2]), m = gapOf(dS.W, W2);
-        if (m > best.m) best = { S: dS.W, W: W2, m: m }; return false;
-      });
-      dS.W = best.S; dS.T = best.S.T; dH.W = best.W; dH.T = best.W.T;
-      if (best.m < 0.8) a.deer.length = 1;
-    }
-    a.deer.forEach(function (d) { delete d.plan; });
-    a.T = Math.max.apply(null, a.deer.map(function (d) { return d.T; })); a.ext = 2.0 * (a.deer.length > 1 ? 1.8 : 1); a.refl = true;
+    ];
   },
+  start: function (a, g, R, rng) { zRunSteps(this.steps(a, g, R, rng)); },
   startle: function (a, g) {
     a.deer.forEach(function (d, ii) { d.t = a.t; zFlee(d, g, 'bound', 4.2 - ii * 0.2, 1.9, 'land', 0.34, 0.9 + ii * 0.35); });
     a.T = Math.max.apply(null, a.deer.map(function (d) { return d.T; }));
@@ -7137,6 +7204,7 @@ RV.hotaru = {
 /* ---- the scripted visits: each returns false when finished ---- */
 function easeIO(u) { u = clamp(u); return u * u * (3 - 2 * u); }
 function arcPos(a, b, u, lift) { return [lerp(a[0], b[0], u), lerp(a[1], b[1], u) + Math.sin(u * Math.PI) * (lift || 0), lerp(a[2], b[2], u)]; }
+function zRunSteps(q) { q = q.slice(); while (q.length) { var more = q.shift()(); if (more && more.length) q = more.concat(q); } }
 function startRare(id, g, rng) {
   var R = g.rp, a = { id: id, t: 0, seed: (rng() * 1e6) | 0, dir: 1 };
   if (RV[id]) RV[id].start(a, g, R, rng); else a.T = 0;
@@ -8193,7 +8261,7 @@ function rareStudy(canvas, name, o) {
 
 /* ---- 09_runtime.js ---- */
 /* ================= public API & controller ================= */
-var VERSION = '1.3.5';   // (bumped: the painting changed, and the cache now carries the grass for the sway)
+var VERSION = '1.3.6';   // (bumped: the painting changed, and the cache now carries the grass for the sway)
 var SEASON_KEYS = ['spring', 'summer', 'autumn', 'winter'], LIGHT_KEYS = ['morning', 'day', 'dusk', 'night'];
 function withScene(o, fn) {
   var st = saveState();
@@ -8468,9 +8536,9 @@ function mount(el, opts) {
   function scheduleWalkWarm() { // the visitors' walk grid and its clearance maps, ready before anyone comes (else the first visit builds them in a frame);
     // then a rehearsal of each visitor that could come to this garden: planned with a throwaway random stream and drawn on a scrap canvas,
     // so the planner, the painters' lazy caches and the compiled code are all warm when the real one is let in
-    var c = cur; if (c.walkWarm) return; c.walkWarm = true;
+    var c = cur; if (c.walkWarm) return; c.walkWarm = true; c.warmed = {};
     var steps = [function (g) { zGeoReady(g.rp); }, function (g) { zClear(g.rp.grid, 'land'); }, function (g) { zClear(g.rp.grid, 'wet'); }], k = 0;
-    RARE.forEach(function (r, ri) { steps.push(function (g) { if (!rare && rareOk(r, g)) warmRare(startRare(r.id, g, mulberry32(4001 + ri)), g); }); });
+    RARE.forEach(function (r, ri) { steps.push(function (g) { if (!rare && rareOk(r, g)) { warmRare(startRare(r.id, g, mulberry32(4001 + ri)), g); c.warmed[r.id] = 1; } }); });
     function next() { idle(function () { if (dead || cur !== c) return; if (hidden) { setTimeout(next, 3000); return; } try { inGeo(c.geo, function () { steps[k](c.geo); }); } catch (e) { c.walkDone = true; return; } if (++k < steps.length) setTimeout(next, 150); else c.walkDone = true; }, 4000); }
     setTimeout(next, 1500);
   }
@@ -8706,27 +8774,48 @@ function mount(el, opts) {
     var pr = pending = { id: id };
     return new Promise(function (done) {
       function drop() { if (pending === pr) pending = null; done(false); }
-      idle(function () {
-        if (dead || cur !== c || rare || pending !== pr) return drop();
-        var g = c.geo, a;
-        try { a = inGeo(g, function () { return startRare(id, g, frng); }); } catch (e) { return drop(); }
-        idle(function () {
+      var g = c.geo, a = null, q = null;
+      pr.maxStep = 0; pr.nSteps = 0;
+      function letIn() {
+        var parts = null; pr.warm = 0;
+        idle(function warm() {
           if (dead || cur !== c || rare || pending !== pr) return drop();
-          warmRare(a, g); pending = null; rare = a; cue('rare', { id: r.id, name: r.name }); done(true);
+          if (!parts) parts = c.warmed && c.warmed[id] ? [] : warmParts(a, g);   // (already rehearsed: its painters are warm)
+          if (!rl) rl = mkCanvas(2, 2); sizeCanvas(rl, fv.width, fv.height);
+          if (parts.length) { var t0 = now(); parts.shift()(); pr.warm = Math.max(pr.warm, now() - t0); if (parts.length) { idle(warm, 1500); return; } }
+          pending = null; rare = a; cue('rare', { id: r.id, name: r.name }); done({ steps: pr.nSteps, maxStep: Math.round(pr.maxStep * 10) / 10, warm: Math.round(pr.warm * 10) / 10, times: pr.times || [] });
         }, 1500);
-      }, 1500);
+      }
+      function pump(dl) {   // a visitor planned in steps takes them a few at a time, as long as each moment allows
+        if (dead || cur !== c || rare || pending !== pr) return drop();
+        var t0 = now();
+        try {
+          if (!q) { q = []; a = inGeo(g, function () { var a0 = { id: id, t: 0, seed: (frng() * 1e6) | 0, dir: 1 }; if (RV[id] && RV[id].steps) q = RV[id].steps(a0, g, g.rp, frng).slice(); else if (RV[id]) RV[id].start(a0, g, g.rp, frng); else a0.T = 0; return a0; }); }
+          else do {
+            var ts = now(), more = inGeo(g, q.shift()); if (more && more.length) q = more.concat(q);
+            var dts = now() - ts; pr.maxStep = Math.max(pr.maxStep, dts); pr.nSteps++; (pr.times || (pr.times = [])).push(Math.round(dts));
+          } while (q.length && now() - t0 < 6 && dl && dl.timeRemaining && dl.timeRemaining() > 25);
+        } catch (e) { return drop(); }
+        if (q.length) idle(pump, 1500); else letIn();
+      }
+      idle(pump, 1500);
     });
   }
-  function warmRare(a, g) { // its first frame drawn where no one sees it: the painters' lazy caches and the layer it is drawn on get made now
-    if (!rl) rl = mkCanvas(2, 2); sizeCanvas(rl, fv.width, fv.height);
-    try {
-      inGeo(g, function () {
-        if (!scrap) scrap = mkCanvas(4, 4); var x = scrap.getContext('2d'), sc = fv.width / g.W, t0 = a.t;
-        x.setTransform(sc, 0, 0, sc, 0, 0); drawRare(x, a, g);
-        if (a.refl) { var md = MODE; MODE = 'm'; drawRare(x, a, g); MODE = md; }
-        a.t = t0; a.scr = undefined; RARE_LAST = null;
-      });
-    } catch (e) { /* only a warm-up */ }
+  function warmRare(a, g) { warmParts(a, g).forEach(function (f) { f(); }); }
+  function warmParts(a, g) { // its first frame drawn where no one sees it: the painters' lazy caches and the layer it is drawn on get made now.
+    // In parts (each deer of a pair on its own, the reflection apart), so the warm-up too fits in short idle moments
+    var subs = a.deer && a.deer.length > 1 ? a.deer.map(function (d) { var b = {}; for (var k in a) b[k] = a[k]; b.deer = [d]; return b; }) : [a], parts = [];
+    (a.refl ? ['n', 'm'] : ['n']).forEach(function (mode) { subs.forEach(function (b) { parts.push(function () {
+      if (!rl) rl = mkCanvas(2, 2); sizeCanvas(rl, fv.width, fv.height);
+      try {
+        inGeo(g, function () {
+          if (!scrap) scrap = mkCanvas(4, 4); var x = scrap.getContext('2d'), sc = fv.width / g.W, t0 = a.t, md = MODE;
+          x.setTransform(sc, 0, 0, sc, 0, 0); MODE = mode; drawRare(x, b, g); MODE = md;
+          a.t = t0; b.t = t0; a.scr = undefined; RARE_LAST = null;
+        });
+      } catch (e) { /* only a warm-up */ }
+    }); }); });
+    return parts;
   }
   /* ---- touch: hit-test the tap and answer it ---- */
   var waterHit = null;
