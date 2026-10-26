@@ -15317,12 +15317,13 @@
         title: '朝鮮とその芸術・序',
         author: '柳宗悦',
         authorHtml: '<ruby>柳<rt>やなぎ</rt></ruby>　<ruby>宗<rt>むね</rt>悦<rt>よし</rt></ruby>',
+        titleNote: 1,
         tabs: [['text', '本文'], ['kanji', '読み方'], ['bunkei', '文型'], ['bio', '作者']],
         pages: [
             { p: 171, lines: [
                 '　{r|私|わたし}は{r|最初|さいしょ}この{r|書|しょ}の{r|表題|ひょうだい}に「{r|朝鮮|ちょうせん}を{r|想|おも}う」と{r|題|だい}したのである。{r|之|これ}が{r|私|わたし}',
                 'の{r|心持|こころも}ちを{r|現|あら}わすのに{r|最|もっと}も{r|応|ふさ}わしい{r|題|だい}だったのである。{r|然|しか}し{r|書肆|しょし}の',
-                '{r|所望|しょもう}によって{n1|「{r|朝鮮|ちょうせん}とその{r|芸術|げいじゅつ}」}と{r|改題|かいだい}した。それは{r|朝鮮|ちょうせん}の{r|芸術|げいじゅつ}を取',
+                '{r|所望|しょもう}によって「{r|朝鮮|ちょうせん}とその{r|芸術|げいじゅつ}」と{r|改題|かいだい}した。それは{r|朝鮮|ちょうせん}の{r|芸術|げいじゅつ}を取',
                 'り扱った{r|部分|ぶぶん}が{r|多|おお}いからである。{r|然|しか}しかく{r|題|だい}する{r|時|とき}、それによって',
                 '{r|聯想|れんそう}される{r|誤解|ごかい}を{r|避|さ}ける{r|為|ため}に、{r|多少|たしょう}の{r|注意|ちゅうい}を{r|添|そ}えようかと{r|思|おも}う。表',
                 '{r|題|だい}は{r|一見|いっけん}すると{r|朝鮮|ちょうせん}{r|美術史|びじゅつし}の{r|研究|けんきゅう}を{r|示|しめ}す{r|様|よう}にとれる。{r|然|しか}しかかる歴',
@@ -17935,7 +17936,7 @@
         var zoomed = function(f) { return 'calc(' + f + ' * var(--ar-zoom, 1))'; };
         return '<div class="ar-book ar-v" style="--ar-len:' + (maxLen + 0.6) + 'em; --ar-fs:' + zoomed(fit) + '; --ar-fs:' + zoomed(fit.replace('100vh', '100dvh')) + '; font-size: var(--ar-fs)">' + pages.map(function(pg, pi) {
             return '<section class="ar-page" data-p="' + pg.p + '">' +
-                (pi === 0 ? '<div class="ar-title">' + arTateLatin(escapeHtml(r.title)) + '</div><div class="ar-author">' + r.authorHtml + '</div>' : '') +
+                (pi === 0 ? '<div class="ar-title">' + arTitleHtml(r, arTateLatin(escapeHtml(r.title))) + '</div><div class="ar-author">' + r.authorHtml + '</div>' : '') +
                 pg.lines.map(function(line, i) { var n = i + 1, aside = /^\{<\}/.test(line), next = pg.lines[i + 1]; return '<div class="ar-line' + (aside ? ' ar-aside-line' + (next != null && !/^\{<\}/.test(next) ? ' ar-aside-end' : '') : '') + '"' + (n % 5 === 0 ? ' data-n="' + n + '"' : '') + '>' + arTateLatin(arMarkup(line)) + '</div>'; }).join('') +
                 '</section>';
         }).join('') + '</div>';
@@ -18290,7 +18291,7 @@
         var hint = '<div class="ar-hint-row"><div class="ar-hint"><span class="nowrap">タップ：<span class="ar-mark-demo"></span>問い・下線・＊</span>　<span class="nowrap">' + (window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches ? 'なぞる・長押し' : '長押し') + '：単語帳</span>　<span class="nowrap">ピンチ：文字の大きさ</span></div>' + toggle + '</div>';
         body.innerHTML = pagebar + (mode === 'v'
             ? arBookHtml(r)
-            : '<div class="ar-book ar-h"><h2 class="ar-h-title">' + escapeHtml(r.title) + '</h2><div class="ar-h-author">' + r.authorHtml + '</div>' + (r.intro ? arIntroHtml(r) : '') + arParagraphsHtml(r) + '</div>') + hint;
+            : '<div class="ar-book ar-h"><h2 class="ar-h-title">' + arTitleHtml(r, escapeHtml(r.title)) + '</h2><div class="ar-h-author">' + r.authorHtml + '</div>' + (r.intro ? arIntroHtml(r) : '') + arParagraphsHtml(r) + '</div>') + hint;
         var book = body.querySelector('.ar-book');
         book.classList.toggle('no-marks', !marksOn);
         if (mode === 'h') arPlacePageBadges(book);
@@ -18311,6 +18312,18 @@
         book.addEventListener('click', function(e) {
             if (!arTtsActive() || e.target.closest('.ar-mark, .ar-fn, .ar-goku, .ar-pgbadge, .ar-pganchor, button, a')) return;
             if (arTtsSeekAt(e.clientX, e.clientY, book)) hideFootnote();
+        });
+        // title and author: with the reader on (▶), tap to hear them (names are read by their furigana)
+        var arSayHead = function(el) {
+            var c = el.cloneNode(true);
+            c.querySelectorAll('ruby').forEach(function(rb) { var t = ''; rb.querySelectorAll('rt').forEach(function(rt) { t += rt.textContent; }); rb.replaceWith(document.createTextNode(t)); });
+            var t = c.textContent.replace(/\s+/g, '');
+            if (t && !/[\uac00-\ud7a3]/.test(t)) speakText(escapeHtml(arTtsKana(t)));      // a Korean subtitle (다락원) is not read
+        };
+        book.querySelectorAll('.ar-title, .ar-author, .ar-h-title, .ar-h-author').forEach(function(el) {
+            if (/[\uac00-\ud7a3]/.test(el.textContent)) return;
+            el.addEventListener('click', function(e) { if (!arTtsActive() || e.target.closest('.ar-fn')) return; e.stopPropagation(); hideFootnote(); arSayHead(el); });
+            el.querySelectorAll('.ar-fn').forEach(function(fn) { fn.addEventListener('click', function() { if (arTtsActive()) arSayHead(el); }); });
         });
         book.querySelectorAll('.ar-fn').forEach(function(el) { arBindTap(el, function() {
             var nt = r.notes[el.dataset.n];
@@ -18728,6 +18741,8 @@
             if (it) speakText(escapeHtml(arTtsKana(arKjSentence(it))));
         });
     }
+    // a 注 printed on the title itself (r.titleNote = its number)
+    function arTitleHtml(r, t) { return r.titleNote ? '<span class="ar-fn" data-n="' + r.titleNote + '" role="button" tabindex="0">' + t + '</span>' : t; }
     function arIntroHtml(r) { return '<div class="ar-pre"><span class="ar-pre-k">読む前に</span><p lang="ko">' + escapeHtml(r.intro) + '</p></div>'; }
     function arPlainLine(t) { return String(t).replace(/\{s\|[^{}]+\}|\{i\}|\{□_\}|\{\^\}|\{<\}/g, '').replace(/\{>\|((?:[^{}]|\{[^{}]*\})+)\}/g, '$1').replace(/\{□\|([^{}]+)\}/g, '$1').replace(/\{r\|([^|{}]+)\|[^{}]+\}/g, '$1').replace(/<[^>]+>/g, '').replace(/\[(\d+)\]/g, '（　）'); }
     // 単語: the book's word list with its Korean meanings. Tap a word to hear it; ＋ puts it in the 単語帳.
