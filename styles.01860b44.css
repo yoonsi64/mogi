@@ -841,6 +841,9 @@
         .ar-boxch { display: inline-block; border: 1.5px solid currentColor; line-height: 1.15; padding: 0.08em 0.1em; margin-inline-end: 0.25em; }
         .ar-h p:has(> .ar-boxch:first-child), .ar-h p:has(> .ar-pganchor:first-child + .ar-boxch) { text-indent: 0; }
         .ar-right { display: block; text-align: end; }
+        .ar-bio-note { font-size: 0.78rem; color: var(--text-sub); border-top: 1px dashed var(--border-light); margin-top: 8px; padding-top: 6px; }
+        .ar-bio-work { font-size: 0.8rem; color: var(--text-sub); margin-bottom: 2px; }
+        .ar-bio + .ar-bio { margin-top: 12px; }
         .ar-boxsp { display: none; }
         /* 縦: the boxed letter stays inside its own line, a little larger than the text, so it never touches its neighbours */
         .ar-v .ar-boxch { position: relative; display: inline; border: none; padding: 0; margin: 0; margin-inline-start: -0.75em; margin-inline-end: 0.3em; }
@@ -885,6 +888,8 @@
         .ar-h-title { font-size: 1.35em; margin: 4px 0 0; line-height: 1.6; }
         .ar-h-author { text-align: right; margin-bottom: 12px; }
         .ar-h p { text-indent: 1em; margin: 0 0 0.5em; }
+        .ar-h p.ar-vl { text-indent: 0; margin: 0; }
+        .ar-h p.ar-vgap { margin: 0; height: 1em; }
         /* 横書き: page numbers sit in the right margin, level with the line where the page begins */
         .ar-book.ar-h { position: relative; padding-right: 2.1em; }
         .ar-pganchor::before { content: '\200b'; }
