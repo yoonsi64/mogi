@@ -10268,7 +10268,8 @@
         // a word given only as its reading (a card, a match): when it starts with は or へ the voice takes that for the particle
         // (はいちょう → わいちょう), so it is spoken from katakana, which is always read as written
         var w = t.trim();
-        if (/^[ぁ-ゖー]+$/.test(w) && /^[はへ]/.test(w)) t = w.replace(/[ぁ-ゖ]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) + 0x60); });
+        // (only that first kana: a は or へ later on, or one standing alone, is still read as the particle)
+        if (w.length > 1 && /^[ぁ-ゖー]+$/.test(w) && /^[はへ]/.test(w)) t = String.fromCharCode(w.charCodeAt(0) + 0x60) + w.slice(1);
         return t;
     }
     function buildSpeechChunks(htmlText) {
