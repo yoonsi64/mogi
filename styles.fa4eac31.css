@@ -889,6 +889,10 @@
         .ar-h-author { text-align: right; margin-bottom: 12px; }
         .ar-h p { text-indent: 1em; margin: 0 0 0.5em; }
         .ar-h p.ar-vl { text-indent: 0; margin: 0; }
+        .ar-h p.ar-noind { text-indent: 0; }
+        .ar-h p.ar-aside { margin: 0.4em 0 1.4em; padding: 0.1em 0 0.1em 0.9em; border-left: 3px solid var(--border-light); }
+        .ar-v .ar-aside-line { box-sizing: border-box; padding-inline-start: 0.9em; background: linear-gradient(to bottom, var(--border-light) 0 3px, transparent 3px) no-repeat; }
+        .ar-v .ar-aside-end { margin-block-end: 1.6em; }
         .ar-h p.ar-vgap { margin: 0; height: 1em; }
         /* 横書き: page numbers sit in the right margin, level with the line where the page begins */
         .ar-book.ar-h { position: relative; padding-right: 2.1em; }
