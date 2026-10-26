@@ -8276,6 +8276,17 @@
     function taClock(ms) { return wqClock(Math.ceil(Math.max(0, ms) / 1000) * 1000); }
     function wqMissedEntries(ids) { return ids.map(function(mid) { return wordList.find(function(w) { return String(w.id) === String(mid); }); }).filter(Boolean); }
     // +5秒 / −3秒: a small pill that pops out above the clock and drifts up
+    // the クリア stamp: pressed over the card on a layer of its own, so the next round (dealt at once in time attack) doesn't wipe it;
+    // it stays a moment, then lifts away
+    function wqStampClear() {
+        var v = document.getElementById('flash-view'), card = v && v.querySelector('.wq-card');
+        if (!card) return;
+        var r = card.getBoundingClientRect(), f = document.createElement('div');
+        f.className = 'wq-clear wq-clear-float'; f.innerHTML = '<span>クリア</span>';
+        f.style.left = (r.left + r.width / 2) + 'px'; f.style.top = (r.top + Math.min(r.height * 0.42, 220)) + 'px';
+        v.appendChild(f);
+        setTimeout(function() { f.classList.add('out'); setTimeout(function() { if (f.parentNode) f.parentNode.removeChild(f); }, 450); }, 1000);
+    }
     function wqTimeShift(sec) {
         var c = document.getElementById('wq-clock');
         if (!c) return;
@@ -8444,7 +8455,7 @@
                         if (wq.ta) { wq.cleared++; wq.deadline += 5000; wq.rounds.push(wqTake(wq, wq.pool, wq.opts.pairs)); }
                         setTimeout(function() {
                             var card = document.querySelector('#flash-view .wq-card');
-                            if (card && !last && wq && !wq.over) { var st = document.createElement('div'); st.className = 'wq-clear'; st.innerHTML = '<span>クリア</span>'; card.appendChild(st); wqChime(); if (wq.ta) wqTimeShift(5); }
+                            if (card && !last && wq && !wq.over) { wqStampClear(); wqChime(); if (wq.ta) wqTimeShift(5); }
                         }, 260);
                         if (!last) { wq.round++; setTimeout(function() { if (wq && wq.kind === 'match') newMatchRound(); }, wq.ta ? 750 : 1000); }
                         else {
@@ -8623,7 +8634,7 @@
                         setTimeout(function() {
                             if (wq !== snapB || wq.over) return;
                             var card = document.querySelector('#flash-view .wq-card');
-                            if (card) { var stp = document.createElement('div'); stp.className = 'wq-clear'; stp.innerHTML = '<span>クリア</span>'; card.appendChild(stp); }
+                            if (card) wqStampClear();
                             wqChime(); wqTimeShift(10);
                         }, 420);
                         setTimeout(function() { if (wq === snapB) memDeal(); }, 1400);
@@ -10255,6 +10266,9 @@
 
     var speechSession = 0;
 
+    // words the speech voices misread everywhere (拝聴 comes out as わいちょう): spoken in kana in every mode
+    var TTS_KANA_ALL = { '拝聴': 'はいちょう' };
+    function ttsKanaAll(t) { Object.keys(TTS_KANA_ALL).forEach(function(k) { if (t.indexOf(k) > -1) t = t.split(k).join(TTS_KANA_ALL[k]); }); return t; }
     function buildSpeechChunks(htmlText) {
         var t = htmlText;
         // Markers: ⟦S⟧ speaker, ⟦P⟧ paragraph, ⟦E⟧ sentence end, ⟦G⟧ grammar pause
@@ -10263,6 +10277,7 @@
         t = t.replace(/(<br\s*\/?>\s*)+/gi, '⟦P⟧');
         t = t.replace(/<span class="blank-number[^"]*">\d+(-[ab])?<\/span>/g, '');
         t = t.replace(/<[^>]*>?/gm, '');
+        t = ttsKanaAll(t);
         t = t.replace(/&nbsp;/g, ' ').replace(/\[\s*\]|\(\s*\)/g, '').replace(/\s+/g, ' ');
         // Web and e-mail addresses are not read out: letter by letter they are long and meaningless to hear
         // (with its label, e.g. From：, e-mail：, 宛先：, so the label is not left on its own)
@@ -18138,7 +18153,7 @@
     function arTtsKana(t) {
         var m = ar && ar.r && ar.r.ttsKana;
         if (m) Object.keys(m).sort(function(a, b) { return b.length - a.length; }).forEach(function(k) { t = t.split(k).join(m[k]); });
-        return t;
+        return ttsKanaAll(t);
     }
     function arSentenceList() {
         var r = ar.r, out = [{ text: r.title, el: '.ar-title, .ar-h-title' }, { text: r.author, el: '.ar-author, .ar-h-author' }];
