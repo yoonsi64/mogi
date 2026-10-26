@@ -12428,7 +12428,7 @@
                 'に、鬼からよけいにこぶをもらうので、{r|気|き}の{r|毒|どく}に思われます。',
                 '『{n1|{r|宇治拾遺物語|う/じ/しゅう/い/もの/がたり}}』の話ですが、世界的に広い{r|分布|ぶん/ぷ}をもっていて、ドイツやアイルランド',
                 'に{r|類似|るい/じ}の話があります。',
-                '　　　　　　　　　　　　　　１',
+                '　　　　　　　　　　　　　　１\u2063',
                 '　{□|昔}あるところに、{r|右|みぎ}のほおに大きなこぶのある、おじいさんがい',
                 '{□_}ました。',
                 '　『この、じゃまなこぶが取れたら、どんなに、せいせいするだろ',
@@ -12576,7 +12576,7 @@
                 '　「よくもまあ、鬼につかまって、とって食べられなかったものだね',
                 'え。」',
                 '　おばあさんはびっくりしたり、{r|喜|よろこ}んだりしました。',
-                '　　　　　　　　　　　　　　２',
+                '　　　　　　　　　　　　　　２\u2063',
                 '　さて、このおじいさんの隣の家にも、やっぱりこぶのある、おじ',
                 'いさんがいました。隣のおじいさんのこぶは、{r|左|ひだり}のほおに、ぶらさ',
                 'がっていました。次の日、おじいさんどうしは、{r|裏|うら}の道で{r|出会|で/あ}いま',
@@ -13331,7 +13331,7 @@
                 '<b>{r|小景異情|しょうけいいじょう}</b>',
                 '{>|{r|室生犀星|むろうさいせい}}',
                 '',
-                'その二',
+                '\u2063その二\u2063',
                 '',
                 'ふるさとは{n12|{r|遠|とお}きにありて}{r|思|おも}ふもの',
                 'そして{r|悲|かな}しくうたふもの',
@@ -13344,7 +13344,7 @@
                 '{r|遠|とお}きみやこに{n18|かへらばや}',
                 '{r|遠|とお}きみやこにかへらばや',
                 '',
-                'その三',
+                '\u2063その三\u2063',
                 '',
                 '{r|銀|ぎん}の{r|時計|とけい}をうしなへる',
                 'こころかなしや',
@@ -13352,7 +13352,7 @@
                 '{r|橋|はし}にもたれて{r|泣|な}いてをり'
             ] },
             { p: 88, lines: [
-                'その五',
+                '\u2063その五\u2063',
                 '',
                 'なににこがれて{r|書|か}くうたぞ',
                 '{r|一時|いちじ}にひらくうめ{n19|すもも}',
@@ -14401,7 +14401,7 @@
         tabs: [['text', '本文'], ['kanji', '読み方'], ['bunkei', '文型']],
         pages: [
             { p: 131, lines: [
-                '　　　　　　　　　　　　　　１',
+                '　　　　　　　　　　　　　　１\u2063',
                 '　　　うたた{r|寝|ね}の{r|顔|かお}へ{r|一冊|いっさつ}{r|屋根|やね}にふき',
                 '　{r|夏|なつ}の{r|午後|ごご}、{r|横|よこ}になって{r|本|ほん}を{r|読|よ}んでいるうちに、いつのまにかうた',
                 'た寝をしてしまったという{r|経験|けいけん}が、だれにでもあるだろう。{r|顔|かお}をお',
@@ -14438,7 +14438,7 @@
                 '　{r|民衆|みんしゅう}はこのように{r|笑|わら}いによって{r|自由|じゆう}な{r|世界|せかい}を{r|作|つく}り、{r|感情|かんじょう}の{r|解放|かいほう}を',
                 '{r|求|もと}めてきたのである。',
                 '',
-                '　　　　　　　　　　　　　　２',
+                '　　　　　　　　　　　　　　２\u2063',
                 '{^}い　{r|犬|いぬ}も{r|歩|ある}けば{r|棒|ぼう}に{r|当|あ}たる',
                 '{^}ろ　{r|論|ろん}より{r|証拠|しょうこ}',
                 '{^}は　{r|花|はな}よりだんご',
@@ -14478,7 +14478,7 @@
                 'の{r|術|すべ}として、{r|人々|ひとびと}の{r|間|あいだ}に{r|親|した}しまれ、{r|生|い}きてきたのである。'
             ] },
             { p: 134, lines: [
-                '　　　　　　　　　　　　　　３',
+                '　　　　　　　　　　　　　　３\u2063',
                 '　ことわざに{r|似|に}たものに{r|格言|かくげん}や{r|故事成語|こじせいご}がある。',
                 '　{r|格言|かくげん}は{r|短|みじか}い{r|文句|もんく}で{r|人生|じんせい}の{r|真実|しんじつ}や{r|処世|しょせい}の{r|訓戒|くんかい}を{r|述|の}べたもので、{r|金言|きんげん}、',
                 'あるいは{r|警句|けいく}とも{r|呼|よ}ばれる。{r|多|おお}くは、いろいろの{r|書物|しょもつ}や{r|経典|きょうてん}などか',
@@ -18159,6 +18159,7 @@
         if (m) Object.keys(m).sort(function(a, b) { return b.length - a.length; }).forEach(function(k) { t = t.split(k).join(m[k]); });
         return ttsKanaAll(t);
     }
+    var AR_SECTION_NO = /^(第|その|其の)?[0-9０-９一二三四五六七八九十百〇ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]+(章|節|話|部|回|幕|場)?$/;
     function arSentenceList() {
         var r = ar.r, out = [{ text: r.title, el: '.ar-title, .ar-h-title' }, { text: r.author, say: arRubyReading(r.authorHtml) || r.author, el: '.ar-author, .ar-h-author' }];
         var book = document.querySelector('#ar-view .ar-book'), text = arPlainText(book).text;
@@ -18178,6 +18179,8 @@
         if (start < text.length && text.slice(start).replace(/[\s　]/g, '')) out.push({ s: start, e: text.length, text: text.slice(start).replace(/[\s　]/g, '') });
         // read Japanese only: the Korean subtitle (일본의 국기) and anything else in Hangul is skipped
         out = out.filter(function(x) { return x.text && !/[\uac00-\ud7af\u1100-\u11ff\u3130-\u318f]/.test(x.text); });
+        // A section / chapter number (1, １, その二, 第三章 …) is followed by a pause of two sentences
+        out.forEach(function(x) { if (!x.el && AR_SECTION_NO.test(x.text)) x.sec = true; });
         out.text = text;
         return out;
     }
@@ -18398,7 +18401,7 @@
                 done = true;
                 arTts.idx++; arTts.fromK = 0; arTts.heard = (arTts.heard || 0) + 1;
                 advState(arTts.id).ttsIdx = arTts.idx; advState(arTts.id).ttsFrom = 0; saveAdv();
-                setTimeout(next, 120);
+                setTimeout(next, sent.sec ? SPEECH_PAUSE.sentence * 2 : 120);
             };
             u.onend = go; u.onerror = go;
             window.speechSynthesis.speak(u);
