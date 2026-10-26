@@ -10263,7 +10263,14 @@
 
     // words the speech voices misread everywhere (拝聴 comes out as わいちょう): spoken in kana in every mode
     var TTS_KANA_ALL = { '拝聴': 'ハイチョウ' };   // (in katakana: a は on its own is read as the particle わ)
-    function ttsKanaAll(t) { Object.keys(TTS_KANA_ALL).forEach(function(k) { if (t.indexOf(k) > -1) t = t.split(k).join(TTS_KANA_ALL[k]); }); return t; }
+    function ttsKanaAll(t) {
+        Object.keys(TTS_KANA_ALL).forEach(function(k) { if (t.indexOf(k) > -1) t = t.split(k).join(TTS_KANA_ALL[k]); });
+        // a word given only as its reading (a card, a match): when it starts with は or へ the voice takes that for the particle
+        // (はいちょう → わいちょう), so it is spoken from katakana, which is always read as written
+        var w = t.trim();
+        if (/^[ぁ-ゖー]+$/.test(w) && /^[はへ]/.test(w)) t = w.replace(/[ぁ-ゖ]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) + 0x60); });
+        return t;
+    }
     function buildSpeechChunks(htmlText) {
         var t = htmlText;
         // Markers: ⟦S⟧ speaker, ⟦P⟧ paragraph, ⟦E⟧ sentence end, ⟦G⟧ grammar pause
