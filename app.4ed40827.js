@@ -4366,12 +4366,39 @@
     // The full view. From the home card it shows your own world: only the stages you have reached can be looked at.
     // From the 開発者メニュー (devMode) everything is open: either world, any stage, season, time of day and 行事.
     function gdViewWorld() { return GD.devMode && GD.devWorld && gdEngineFor(GD.devWorld) ? GD.devWorld : worldActive(); }
-    function gdMountView() {
+    /* seamless changes of view: the picture as it shows now is kept over the frame while the next one is painted underneath,
+       then it dissolves away */
+    function gdSnapScene(frame, src) { // every canvas layer of src as it shows inside frame, as one canvas (null if nothing shows)
+        var r = frame.getBoundingClientRect(); if (!r.width || !r.height) return null;
+        var dpr = Math.min(2, window.devicePixelRatio || 1), c = document.createElement('canvas'), n = 0;
+        c.width = Math.round(r.width * dpr); c.height = Math.round(r.height * dpr);
+        var g = c.getContext('2d'); g.fillStyle = '#0c0b09'; g.fillRect(0, 0, c.width, c.height);
+        src.querySelectorAll('canvas').forEach(function(cv) {
+            var q = cv.getBoundingClientRect(), cs = getComputedStyle(cv), a = +cs.opacity;
+            if (!q.width || !q.height || cs.display === 'none' || cs.visibility === 'hidden' || !(a > 0)) return;
+            try { g.globalAlpha = a; g.drawImage(cv, (q.left - r.left) * dpr, (q.top - r.top) * dpr, q.width * dpr, q.height * dpr); n++; } catch (e) {}
+        });
+        return n ? c : null;
+    }
+    function gdXfOn(frame, snap) {
+        if (!snap) return null;
+        snap.className = 'gd-xf'; frame.appendChild(snap);
+        var x = { el: snap, done: false }; x.t = setTimeout(function() { gdXfOff(x, 0); }, 9000);   // (never stays up for good)
+        return x;
+    }
+    function gdXfOff(x, delay) {
+        if (!x || x.done) return; x.done = true; clearTimeout(x.t);
+        setTimeout(function() { x.el.style.opacity = '0'; setTimeout(function() { if (x.el.parentNode) x.el.parentNode.removeChild(x.el); }, 700); }, delay || 0);
+    }
+    function gdMountView(xfade) {
+        var zoom = GD.view.querySelector('.gd-zoom'), box = GD.view.querySelector('.gd-scene-full');
+        var xf = xfade && GD.vctrl && !gdSkyOpen() ? gdXfOn(zoom, gdSnapScene(zoom, box)) : null;
         if (GD.vctrl) { GD.vctrl.destroy(); GD.vctrl = null; }
-        var box = GD.view.querySelector('.gd-scene-full'); box.innerHTML = '';
+        box.innerHTML = '';
         GD.zoomReset && GD.zoomReset();
         var E = gdEngineFor(gdViewWorld());
-        if (E) GD.vctrl = E.mount(box, gdViewOpts(gdState(gdViewWorld())));
+        if (E) { var o = gdViewOpts(gdState(gdViewWorld())); if (xf) o.onReady = function() { gdXfOff(xf, 650); }; GD.vctrl = E.mount(box, o); }
+        else gdXfOff(xf, 0);
         gdSoundUpdate();
     }
     function openGarden(devMode) {
@@ -4404,13 +4431,13 @@
                 b.addEventListener('click', function() {
                     if (GD.devMode) {      // developer view: just look at the other world (nothing about growing changes)
                         if (b.dataset.w === gdViewWorld() || !gdEngineFor(b.dataset.w)) return;
-                        GD.devWorld = b.dataset.w; GD.dev = null; gdRenderView(); gdMountView(); gdSoundUpdate(); return;
+                        GD.devWorld = b.dataset.w; GD.dev = null; gdRenderView(); gdMountView(true); gdSkySwitch(); gdSoundUpdate(); return;
                     }
                     if (b.dataset.w === worldActive()) return;
                     setSetting('world', b.dataset.w);
                     GD.preview = null;
                     if (!localStorage.getItem(gdWorld().seen)) localStorage.setItem(gdWorld().seen, String(gdState().stage));
-                    gdMountView(); gdRenderView();
+                    gdMountView(true); gdRenderView(); gdSkySwitch();
                     showToast('これからの学習時間で' + gdWorld().title.slice(2) + 'が育ちます');
                 });
             });
@@ -4509,6 +4536,13 @@
         gdSoundUpdate();
         syncNavHistory();
     }
+    function gdSkySwitch() { // the sky view follows a change of world without closing: the same sky, the other world dissolving in
+        if (!gdSkyOpen() || !GD.sky) return;
+        if (GD.vctrl) GD.vctrl.pause();          // (the painting underneath waits until the sky is put away)
+        var w = gdViewWorld(), o = gdViewOpts(gdState(w));
+        GD.sky.update({ world: w, stage: o.stage, light: o.light, season: o.season, event: o.event, weather: o.weather, fireworks: o.fireworks, transition: true });
+        gdSoundUpdate();
+    }
     function gdCloseSky(quiet) {
         if (!GD.view || !gdSkyOpen()) return;
         GD.view.classList.remove('sky');
@@ -4557,7 +4591,7 @@
             '<button data-k="up">段階アップを見る</button><button data-k="reset">いまに戻す</button>';
         devBox.querySelectorAll('select').forEach(function(x) {
             x.addEventListener('change', function() {
-                if (x.dataset.k === 'world') { GD.devWorld = x.value; GD.dev = null; gdRenderView(); gdMountView(); return; }
+                if (x.dataset.k === 'world') { GD.devWorld = x.value; GD.dev = null; gdRenderView(); gdMountView(true); return; }
                 GD.dev = GD.dev || {};
                 GD.dev[x.dataset.k] = x.dataset.k === 'stage' ? +x.value : x.value;
                 if (GD.vctrl) GD.vctrl.update(gdViewOpts(gdState(gdViewWorld())));
@@ -4800,8 +4834,12 @@
             el.addEventListener('pointerdown', function() { fullWake(); });
         }
         var f = GD.full, s = gdState(w), o = gdViewOpts(s);
+        if (f.leaving) f.finishLeave();
+        var zoom0 = GD.view && GD.view.querySelector('.gd-zoom'), snap = zoom0 && !gdSkyOpen() ? gdSnapScene(zoom0, GD.view.querySelector('.gd-scene-full')) : null;
         f.world = w;
         f.el.classList.add('active');
+        if (f.xf) { gdXfOff(f.xf, 0); f.xf = null; }
+        f.xf = gdXfOn(f.el.querySelector('.gfv-zoom'), snap);
         document.body.classList.add('gd-on');
         gdLandscape(f, true, fullOpen);
         f.zoomReset && f.zoomReset();
@@ -4815,6 +4853,7 @@
             if (window.MogiSound && getSetting('gdSound', true)) MogiSound.cue(gdCueName(name), name === 'thunder' || name === 'firework' ? info && info.delay : info && info.id);
         };
         o.wide = window.GD_FULL_WIDE || 1.2; // a little more of the garden or town than the card shows
+        var fxf = f.xf; o.onReady = function() { gdXfOff(fxf, 650); };
         f.ctrl = gdEngineFor(w).mount(box, o);
         f.el.querySelector('.gfv-title').textContent = gdWorld(w).title + '　' + GD_SEASON[o.season] + '・' + GD_LIGHT[o.light] +
             (o.weather && o.weather !== 'clear' ? '・' + GD_WEATHER[o.weather] : '') + (o.event ? '・' + GD_EVENTS[o.event] : '');
@@ -4831,14 +4870,20 @@
         clearTimeout(f.quietT); f.quietT = setTimeout(function() { f.el.classList.add('quiet'); }, 3500);
     }
     function closeFullView() {
-        var f = GD.full; if (!f || !fullOpen()) return;
-        gdLandscape(f, false, fullOpen);
-        if (f.ctrl) { f.ctrl.destroy(); f.ctrl = null; }
-        f.el.querySelector('.gfv-scene').innerHTML = '';
-        f.el.classList.remove('active');
-        if (GD.vctrl) GD.vctrl.resume();
-        if (!gardenOpen()) document.body.classList.remove('gd-on');
-        syncNavHistory();
+        var f = GD.full; if (!f || !fullOpen() || f.leaving) return;
+        if (GD.vctrl) GD.vctrl.resume();          // the normal view is there underneath, still showing its picture
+        f.leaving = true; f.el.classList.add('leaving');
+        f.finishLeave = function() {
+            clearTimeout(f.leaveT); if (!f.leaving) return; f.leaving = false; f.el.classList.remove('leaving');
+            gdLandscape(f, false, fullOpen);
+            if (f.ctrl) { f.ctrl.destroy(); f.ctrl = null; }
+            if (f.xf) { gdXfOff(f.xf, 0); f.xf = null; }
+            f.el.querySelector('.gfv-scene').innerHTML = '';
+            f.el.classList.remove('active');
+            if (!gardenOpen()) document.body.classList.remove('gd-on');
+            syncNavHistory();
+        };
+        f.leaveT = setTimeout(f.finishLeave, 300);
     }
     function closeFocus() {
         var f = GD.focus; if (!f || !focusOpen()) return;

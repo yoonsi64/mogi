@@ -6061,7 +6061,7 @@ function mountSky(el, opts) {
     glAtmos();
     if (GS.cubeKey !== cubeKeyNow()) glCubeStart();
     var busy = st.dragging || drag || pinch || GS.inert;
-    glPaintStep(GS.faceReady.indexOf(0) >= 0 && !busy ? 40 : busy ? 6 : 14);
+    glPaintStep(xf && xf.wait ? 200 : xfLock ? 90 : GS.faceReady.indexOf(0) >= 0 && !busy ? 40 : busy ? 6 : 14);
     // the cloud dome: a first one quickly; the drifting refresh in thin strips, thinner still while the view moves
     if (!busy || GS.domeFresh && GS.domeRow >= 0 || GS.domeFade >= 0) glDomeWork(t, GS.domeFresh && GS.domeRow >= 0 ? GLR.DS / 6 : GLR.DS / 48 * GS.q * GS.q);
     if (fw && fw.siteAz !== null && !userCam && GS.fwCam !== fw.occVer) { GS.fwCam = fw.occVer; cam.set(fw.siteAz, 31, cam.zoom, W, H); camDirty = true; } // face the open sky over the launch site
@@ -6295,12 +6295,13 @@ function mountSky(el, opts) {
     if (glOn()) {
       st.now = t; if (t - lastWind > 0.5) { windNow(); lastWind = t; } stepMeteors(Math.min(dt, 0.5));
       try { render(Math.min(dt, 0.25)); glAdapt(dt); } catch (e) { if (typeof window !== 'undefined' && window.__mogiDebug) console.error(e && e.stack); }
-      lastFrame = t;
-      if (!st.reduced || camDirty || glBusy()) raf = requestAnimationFrame(tick);
+      lastFrame = t; if (xf) xfCheck(); if (xfLock && (glReady() || t - xfLockT > 10)) xfLock = false;
+      if (!st.reduced || camDirty || glBusy() || xf && xf.wait || xfLock) raf = requestAnimationFrame(tick);
       return;
     }
     if (t - lastFrame >= 1 / 30 - 0.004 || camDirty) { st.now = t; if (t - lastWind > 0.5) { windNow(); lastWind = t; } stepMeteors(Math.min(dt, 0.5)); try { render(Math.min(dt, 0.25)); } catch (e) { cacheKey = cam.key; sceneKey = cam.key; if (typeof window !== 'undefined' && window.__mogiDebug) console.error(e && e.stack); } lastFrame = t; }
-    if (!st.reduced || camDirty || settleAt || st.sceneDue) raf = requestAnimationFrame(tick);
+    if (xf) xfCheck();
+    if (!st.reduced || camDirty || settleAt || st.sceneDue || xf && xf.wait) raf = requestAnimationFrame(tick);
   }
   function kick() { if (!raf && !dead && !paused && visible) raf = requestAnimationFrame(tick); }
 
@@ -6363,6 +6364,7 @@ function mountSky(el, opts) {
   var ptrs = {}, drag = null, pinch = null;
   function onDown(e) {
     if (e.target === xb) return;
+    if (xf && xf.wait || xfLock) return;
     root.setPointerCapture && root.setPointerCapture(e.pointerId);
     ptrs[e.pointerId] = [e.clientX, e.clientY];
     var ids = Object.keys(ptrs);
@@ -6406,6 +6408,7 @@ function mountSky(el, opts) {
   var wheelT = 0;
   function onWheel(e) {
     e.preventDefault();
+    if (xf && xf.wait || xfLock) return;
     if (glOn()) { setCam(cam.yaw, cam.pitch, clamp(cam.zoom * Math.exp(-e.deltaY * 0.0015), 1, 3)); return; }
     if (!st.dragging) snapshot(); st.dragging = true; lastMoveT = nowS();
     setCam(cam.yaw, cam.pitch, clamp(cam.zoom * Math.exp(-e.deltaY * 0.0015), 1, 3));
@@ -6423,15 +6426,58 @@ function mountSky(el, opts) {
   if (typeof IntersectionObserver === 'function') { io = new IntersectionObserver(function (en) { visible = en[0].isIntersecting; if (visible) { camDirty = true; kick(); } }); io.observe(el); }
   if (typeof ResizeObserver === 'function') { ro = new ResizeObserver(function () { resize(); }); ro.observe(el); }
 
+  /* ---- a seamless change of world (garden <-> town): the frame as it stands stays over the view, the camera keeps its
+     direction, the other world is painted underneath at full speed, then the old frame dissolves away ---- */
+  var xf = null;
+  function xfSnap() {
+    var c = mk(); c.width = cv.width; c.height = cv.height; var x = c.getContext('2d');
+    try { if (glOn()) { st.now = nowS(); render(0); x.drawImage(glc, 0, 0, c.width, c.height); } } catch (e) { }   // (read in the same task as the draw)
+    x.drawImage(cv, 0, 0);
+    return c;
+  }
+  var xfLock = false, xfLockT = 0;
+  function xfSeenReady() {
+    if (!GS.newFaces || GS.painting && GS.painting.f !== undefined && seenFaces().indexOf(GS.painting.f) >= 0) return false;
+    var sf = seenFaces(); for (var i = 0; i < sf.length; i++) if (!GS.newFaces[sf[i]]) return false;
+    return true;
+  }
+  function seenFaces() { var seen = {}, out = [], pts = [[0.5, 0.5], [0, 0], [1, 0], [0, 1], [1, 1], [0.5, 0], [0.5, 1], [0, 0.5], [1, 0.5]];
+    pts.forEach(function (p) { var f = cubeFaceOf(cam.ray(p[0] * W, p[1] * H)); if (!seen[f]) { seen[f] = 1; out.push(f); } }); return out; }
+  function xfEnd() { if (!xf) return; clearTimeout(xf.timer); if (xf.el.parentNode) xf.el.parentNode.removeChild(xf.el); xf = null; }
+  function xfStart(n) {
+    xfEnd();
+    var snap = xfSnap(); snap.className = 'mogisky-xf'; snap.style.cssText = 'pointer-events:none;opacity:1';
+    root.insertBefore(snap, lab);
+    var keep = userCam, y = cam.yaw, p = cam.pitch, z = cam.zoom;
+    if (!n.date) n.date = new Date(simMs());   // the clock runs on: the same Sun, stars and clouds
+    userCam = true; apply(n); cam.set(y, p, z, W, H); userCam = keep;
+    if (lab.classList.contains('on')) hideLabel();
+    xf = { el: snap, t0: nowS(), wait: true, frames: 0, timer: 0 }; xfLock = !!glOn(); xfLockT = nowS();
+    camDirty = true; kick();
+  }
+  function xfCheck() {
+    if (!xf || !xf.wait) return;
+    xf.frames++;
+    var ready = glOn() ? xfSeenReady() : sceneKey === cam.key && cacheKey === cam.key;   // the faces in view are enough to show;
+    if (xf.frames < 3 || !ready && nowS() - xf.t0 < 8) return;                            // the rest are painted before a drag is let in
+    xf.wait = false; var me = xf, el = xf.el, dur = st.reduced ? 0.25 : 1.2;
+    el.style.transition = 'opacity ' + dur + 's ease-in-out'; void el.offsetWidth; el.style.opacity = '0';
+    me.timer = setTimeout(function () { if (xf === me) xfEnd(); }, dur * 1000 + 80);
+  }
   txtInit(function () { if (dead) return; sceneKey = ''; cacheKey = ''; camDirty = true; kick(); });   // repaint the signs once the glyph atlas is in
   resize(); apply(opts || {});
   st.now = nowS(); windNow(); try { render(0); } catch (e) { if (typeof window !== 'undefined' && window.__mogiDebug) throw e; }
   return {
-    update: function (n) { if (dead) return; if (n && (n.world && n.world !== o.world)) userCam = false; apply(n || {}); },
+    update: function (n) {
+      if (dead) return; n = n || {};
+      var other = n.world && (n.world === 'town' ? 'town' : 'garden') !== st.world, tr = n.transition; delete n.transition;
+      if (other && tr) { xfStart(n); return; }
+      if (other) userCam = false; apply(n);
+    },
     pause: function () { paused = true; if (raf) cancelAnimationFrame(raf); raf = 0; },
     resume: function () { if (dead) return; paused = false; lastFrame = 0; camDirty = true; kick(); },
     destroy: function () {
-      dead = true; if (raf) cancelAnimationFrame(raf); raf = 0; clearTimeout(labTimer); if (GLR) GLR.destroy(); GLR = null;
+      dead = true; xfEnd(); if (raf) cancelAnimationFrame(raf); raf = 0; clearTimeout(labTimer); if (GLR) GLR.destroy(); GLR = null;
       if (io) io.disconnect(); if (ro) ro.disconnect();
       document.removeEventListener('visibilitychange', onVis); document.removeEventListener('keydown', onKey);
       if (root.parentNode) root.parentNode.removeChild(root);
