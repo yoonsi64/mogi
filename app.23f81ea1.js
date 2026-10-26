@@ -18160,7 +18160,7 @@
         return ttsKanaAll(t);
     }
     function arSentenceList() {
-        var r = ar.r, out = [{ text: r.title, el: '.ar-title, .ar-h-title' }, { text: r.author, el: '.ar-author, .ar-h-author' }];
+        var r = ar.r, out = [{ text: r.title, el: '.ar-title, .ar-h-title' }, { text: r.author, say: arRubyReading(r.authorHtml) || r.author, el: '.ar-author, .ar-h-author' }];
         var book = document.querySelector('#ar-view .ar-book'), text = arPlainText(book).text;
         if (!book) {      // not on the 本文 tab: build the same text from the data
             text = '';
@@ -18189,7 +18189,7 @@
         while (i < sent.e && /[\s　]/.test(t[i])) i++;
         return i;
     }
-    function arTtsActive() { return !!(arTts && ar && arTts.id === ar.id && (arTts.playing || arTts.idx > 0 || arTts.fromK)); }
+    function arTtsActive() { return !!(arTts && ar && arTts.id === ar.id && (arTts.playing || arTts.idx > 0 || arTts.fromK || arTts.head)); }
     // 読み上げ中: tap a word → reading continues from that word (earlier or later). Paused: the start point moves there.
     function arTtsSeekAt(x, y, book) {
         var pt = arPlainText(book), text = pt.text;
@@ -18204,12 +18204,28 @@
             if (sn.el || idx < sn.s || idx >= sn.e) continue;
             var k = 0;
             for (var j = sn.s; j < idx; j++) if (!/[\s　]/.test(text[j])) k++;
-            arTts.idx = i; arTts.fromK = k;
+            arTts.idx = i; arTts.fromK = k; arTts.head = false;
             var st = advState(arTts.id); st.ttsIdx = i; st.ttsFrom = k; saveAdv();
             if (arTts.playing) arTtsPlay(); else arTtsShow();
             return true;
         }
         return false;
+    }
+    // a name with furigana is read by its furigana (三木清 → みききよし)
+    function arRubyReading(html) {
+        if (!html || html.indexOf('<rt') < 0) return '';
+        var d = document.createElement('div'); d.innerHTML = html;
+        d.querySelectorAll('ruby').forEach(function(rb) { var t = ''; rb.querySelectorAll('rt').forEach(function(rt) { t += rt.textContent; }); rb.replaceWith(document.createTextNode(t)); });
+        return d.textContent.replace(/\s+/g, '');
+    }
+    // a tap on the title or the author: the reader goes back there (highlighted), and reads on from it when playing
+    function arTtsSeekHead(which) {
+        if (!arTts || arTts.id !== ar.id) arTts = { id: ar.id, idx: 0, fromK: 0, session: 0 };
+        var list = arSentenceList(), sel = which === 'author' ? '.ar-author, .ar-h-author' : '.ar-title, .ar-h-title', i = 0;
+        for (var k = 0; k < list.length; k++) if (list[k].el === sel) { i = k; break; }
+        arTts.idx = i; arTts.fromK = 0; arTts.head = true;
+        var st = advState(arTts.id); st.ttsIdx = arTts.idx; st.ttsFrom = 0; saveAdv();
+        if (arTts.playing) arTtsPlay(); else arTtsShow();
     }
     // The book's words in order (no furigana, title, author or page numbers), with each text node's position
     function arPlainText(book) {
@@ -18286,7 +18302,7 @@
     // highlight the current sentence (if the text is on screen) and bring it into view
     function arTtsShow() {
         arTtsClearMark();
-        if (!arTts || !ar || arTts.id !== ar.id || (!arTts.playing && !arTts.idx)) return;
+        if (!arTts || !ar || arTts.id !== ar.id || (!arTts.playing && !arTts.idx && !arTts.head)) return;
         var book = document.querySelector('#ar-view .ar-book');
         if (!book) return;
         arTts.list = arSentenceList();          // positions differ between 縦 and 横; the sentences are the same
@@ -18356,7 +18372,7 @@
             if (arTts.idx >= arTts.list.length) { if ((arTts.heard || 0) >= arTts.list.length * 0.8) advState(arTts.id).heardAll = true; arTts.heard = 0; arTts.playing = false; arTts.idx = 0; arTts.fromK = 0; advState(arTts.id).ttsIdx = 0; advState(arTts.id).ttsFrom = 0; saveAdv(); arTtsShow(); arRefreshTools(); return; }
             arTtsShow();
             var sent = arTts.list[arTts.idx], from = arTtsFromPos(arTts.list, sent);
-            var u = new SpeechSynthesisUtterance(arTtsKana(from > sent.s ? arTts.list.text.slice(from, sent.e).replace(/[\s　]/g, '') || sent.text : sent.text));
+            var u = new SpeechSynthesisUtterance(arTtsKana(from > sent.s ? arTts.list.text.slice(from, sent.e).replace(/[\s　]/g, '') || sent.text : sent.say || sent.text));
             u.lang = 'ja-JP';
             u.rate = arRate();
             applyVoice(u);
@@ -18386,7 +18402,7 @@
         if (!arTts) return;
         arTts.session++; arTts.playing = false;
         if (window.speechSynthesis) window.speechSynthesis.cancel();
-        if (toStart) { arTts.idx = 0; arTts.fromK = 0; advState(arTts.id).ttsIdx = 0; advState(arTts.id).ttsFrom = 0; saveAdv(); }
+        if (toStart) { arTts.idx = 0; arTts.fromK = 0; arTts.head = false; advState(arTts.id).ttsIdx = 0; advState(arTts.id).ttsFrom = 0; saveAdv(); }
         arTtsClearMark();
     }
 
@@ -18439,17 +18455,12 @@
             if (!arTtsActive() || e.target.closest('.ar-mark, .ar-fn, .ar-goku, .ar-pgbadge, .ar-pganchor, button, a')) return;
             if (arTtsSeekAt(e.clientX, e.clientY, book)) hideFootnote();
         });
-        // title and author: with the reader on (▶), tap to hear them (names are read by their furigana)
-        var arSayHead = function(el) {
-            var c = el.cloneNode(true);
-            c.querySelectorAll('ruby').forEach(function(rb) { var t = ''; rb.querySelectorAll('rt').forEach(function(rt) { t += rt.textContent; }); rb.replaceWith(document.createTextNode(t)); });
-            var t = c.textContent.replace(/\s+/g, '');
-            if (t && !/[\uac00-\ud7a3]/.test(t)) speakText(escapeHtml(arTtsKana(t)));      // a Korean subtitle (다락원) is not read
-        };
+        // title and author: with the reader on (▶), tap to go back there; reading carries on from it (names are read by their furigana)
         book.querySelectorAll('.ar-title, .ar-author, .ar-h-title, .ar-h-author').forEach(function(el) {
             if (/[\uac00-\ud7a3]/.test(el.textContent)) return;
-            el.addEventListener('click', function(e) { if (!arTtsActive() || e.target.closest('.ar-fn')) return; e.stopPropagation(); hideFootnote(); arSayHead(el); });
-            el.querySelectorAll('.ar-fn').forEach(function(fn) { fn.addEventListener('click', function() { if (arTtsActive()) arSayHead(el); }); });
+            var which = el.matches('.ar-author, .ar-h-author') ? 'author' : 'title';
+            el.addEventListener('click', function(e) { if (!arTtsActive() || e.target.closest('.ar-fn')) return; e.stopPropagation(); hideFootnote(); arTtsSeekHead(which); });
+            el.querySelectorAll('.ar-fn').forEach(function(fn) { fn.addEventListener('click', function() { if (arTtsActive()) arTtsSeekHead(which); }); });
         });
         book.querySelectorAll('.ar-fn').forEach(function(el) { arBindTap(el, function() {
             var nt = r.notes[el.dataset.n];
