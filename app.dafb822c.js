@@ -7625,7 +7625,7 @@
             '<div class="flash-actions">' + (flash.revealed ? srsButtonsHtml(e) : '<button class="flash-reveal">答えを見る</button>') + '</div>';
         if (flash.revealed) {
             body.querySelectorAll('.srs-btn').forEach(function(b) { b.addEventListener('click', function() { gradeCard(+b.dataset.g); }); });
-            body.querySelector('.flash-speak').addEventListener('click', function() { speakText(escapeHtml(e.reading || e.word)); });
+            body.querySelector('.flash-speak').addEventListener('click', function() { speakText(escapeHtml(ttsWord(e.word, e.reading))); });
         } else {
             var reveal = function() { flash.revealed = true; renderFlash(); };
             body.querySelector('.flash-reveal').addEventListener('click', reveal);
@@ -7703,7 +7703,7 @@
             '<div class="flash-actions">' + srsButtonsHtml(e, right ? [2, 3, 4] : null) + '</div>' +
             (toWord && !right ? '<div class="write-override">合っていたなら「難しい」〜「簡単」を選んでください</div>' : '');
         body.querySelectorAll('.srs-btn').forEach(function(b) { b.addEventListener('click', function() { gradeCard(+b.dataset.g); }); });
-        body.querySelector('.flash-speak').addEventListener('click', function() { speakText(escapeHtml(e.reading || e.word)); });
+        body.querySelector('.flash-speak').addEventListener('click', function() { speakText(escapeHtml(ttsWord(e.word, e.reading))); });
     }
     function srsTomorrowNote() {
         var m = srsMode(), k = srsK(m), t = dateKey(addDays(new Date(), 1)), n = wordList.filter(function(e) { return e[k.srs] && !srsIsNew(e, m) && e[k.due] === t; }).length;
@@ -8143,7 +8143,7 @@
             res.addEventListener('click', function(ev) { if (ev.target === res) openArt(); });
         }
         body.querySelectorAll('.wq-miss').forEach(function(b) {
-            b.addEventListener('click', function() { var e = wordList.find(function(w) { return String(w.id) === b.dataset.id; }); if (e) speakText(escapeHtml(e.reading || e.word)); });
+            b.addEventListener('click', function() { var e = wordList.find(function(w) { return String(w.id) === b.dataset.id; }); if (e) speakText(escapeHtml(ttsWord(e.word, e.reading))); });
         });
         // the ring fills and the number counts up
         var fg = body.querySelector('.wq-ring-fg'), num = document.getElementById('wq-count'), target = r.big != null ? r.big : pct;
@@ -8252,7 +8252,7 @@
                 var i = +b.dataset.i, right = it.opts[i].id === e.id;
                 wq.answered = i;
                 if (right) { wq.ok++; wq.streak++; wq.bestStreak = Math.max(wq.bestStreak, wq.streak); } else { wq.missed.push(e); wq.streak = 0; }
-                speakText(escapeHtml(e.reading || e.word));          // say the word once you've answered
+                speakText(escapeHtml(ttsWord(e.word, e.reading)));          // say the word once you've answered
                 if (navigator.vibrate && getSetting('vibrate', true)) { try { navigator.vibrate(right ? 12 : [20, 30, 20]); } catch (err) {} }
                 renderWordMC();
             });
@@ -8443,7 +8443,7 @@
                     var sparkC = wq.combo >= 5 ? ['#d4a017', '#f6c94c', '#fff3c4'] : wq.combo >= 3 ? ['#b8312f', '#e07a5f', '#f6c94c'] : ['#2e9e5b', '#7fd39b', '#ffffff'];
                     if (wq.combo >= 2) wqFloat(b, 'コンボ ×' + wq.combo, wq.combo >= 5 ? 'gold' : wq.combo >= 3 ? 'hot' : '');
                     var hit = wq.left.find(function(x) { return String(x.id) === String(id); });
-                    if (hit) speakText(escapeHtml(hit.reading || hit.word));         // say the word once it's matched
+                    if (hit) speakText(escapeHtml(ttsWord(hit.word, hit.reading)));         // say the word once it's matched
                     if (navigator.vibrate && getSetting('vibrate', true)) { try { navigator.vibrate(12); } catch (err) {} }
                     if (Object.keys(wq.done).length === wq.left.length) {
                         var last = !wq.ta && wq.round + 1 >= wq.rounds.length;
@@ -8620,7 +8620,7 @@
                         if (wq && wq.combo >= 2) wqFloat(eb, 'コンボ ×' + wq.combo, wq.combo >= 4 ? 'gold' : 'hot');
                         setTimeout(function() { ea.classList.add('done'); eb.classList.add('done', 'late'); }, 520);
                     }, 380);
-                    speakText(escapeHtml(ca.e.reading || ca.e.word));
+                    speakText(escapeHtml(ttsWord(ca.e.word, ca.e.reading)));
                     if (navigator.vibrate && getSetting('vibrate', true)) { try { navigator.vibrate(12); } catch (err) {} }
                     if (wq.found === wq.cards.length / 2 && wq.ta) {
                         // board cleared: stop the clock, +10 seconds, deal the next board
@@ -8852,7 +8852,7 @@
         var answer = function(right, extra) {
             wq.answered = Object.assign({ right: right }, extra);
             if (right) { wq.ok++; wq.streak++; wq.bestStreak = Math.max(wq.bestStreak, wq.streak); } else { wq.missed.push(e); wq.streak = 0; }
-            speakText(escapeHtml(e.reading || e.word));
+            speakText(escapeHtml(ttsWord(e.word, e.reading)));
             if (navigator.vibrate && getSetting('vibrate', true)) { try { navigator.vibrate(right ? 12 : [20, 30, 20]); } catch (err) {} }
             renderWordCloze();
             if (right) { var m = document.querySelector('.cloze-fill'); if (m) wqBurst(m, ['#2e9e5b', '#7fd39b', '#f6c94c'], 12); }
@@ -9031,7 +9031,7 @@
             btn.addEventListener('click', function(ev) {
                 ev.stopPropagation();
                 var entry = wordList.find(function(w) { return w.id === btn.closest('.word-item').dataset.id; });
-                if (entry) speakText(escapeHtml(entry.reading || entry.word));
+                if (entry) speakText(escapeHtml(ttsWord(entry.word, entry.reading)));
             });
         });
         content.querySelectorAll('.word-item-dicts .dict-btn').forEach(function(btn) {
@@ -10263,14 +10263,15 @@
 
     // words the speech voices misread everywhere (拝聴 comes out as わいちょう): spoken in kana in every mode
     var TTS_KANA_ALL = { '拝聴': 'ハイチョウ' };   // (in katakana: a は on its own is read as the particle わ)
-    function ttsKanaAll(t) {
-        Object.keys(TTS_KANA_ALL).forEach(function(k) { if (t.indexOf(k) > -1) t = t.split(k).join(TTS_KANA_ALL[k]); });
-        // a word given only as its reading (a card, a match): when it starts with は or へ the voice takes that for the particle
-        // (はいちょう → わいちょう), so it is spoken from katakana, which is always read as written
-        var w = t.trim();
-        // (only that first kana: a は or へ later on, or one standing alone, is still read as the particle)
-        if (w.length > 1 && /^[ぁ-ゖー]+$/.test(w) && /^[はへ]/.test(w)) t = String.fromCharCode(w.charCodeAt(0) + 0x60) + w.slice(1);
-        return t;
+    function ttsKanaAll(t) { Object.keys(TTS_KANA_ALL).forEach(function(k) { if (t.indexOf(k) > -1) t = t.split(k).join(TTS_KANA_ALL[k]); }); return t; }
+    // a word spoken from its reading (cards, matches, quizzes): when a word written with kanji reads with は or へ first, the voice
+    // takes that kana for the particle (拝聴 → はいちょう → わいちょう), so that one kana is given in katakana; words without kanji
+    // (grammar such as はおろか, へと) are spoken just as written
+    function ttsWord(word, reading) {
+        var r = String(reading || ''), w = String(word || '');
+        if (!r) return w;
+        if (r.length > 1 && /^[はへ]/.test(r) && /[\u3400-\u9fff々]/.test(w)) r = String.fromCharCode(r.charCodeAt(0) + 0x60) + r.slice(1);
+        return r;
     }
     function buildSpeechChunks(htmlText) {
         var t = htmlText;
@@ -18917,7 +18918,7 @@
         body.innerHTML = html;
         body.scrollTop = 0;
         body.querySelectorAll('.aw-say').forEach(function(b) {
-            b.addEventListener('click', function() { var w = r.words[b.dataset.s].list[b.dataset.i]; speakText(escapeHtml(w[1] || w[0])); });
+            b.addEventListener('click', function() { var w = r.words[b.dataset.s].list[b.dataset.i]; speakText(escapeHtml(ttsWord(w[0], w[1]))); });
         });
         body.querySelectorAll('.aw-add').forEach(function(b) {
             b.addEventListener('click', function() {
