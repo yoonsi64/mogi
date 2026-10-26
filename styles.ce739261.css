@@ -1441,9 +1441,6 @@
         /* the stamps sit on a small sheet of paper, so they read on any print or pattern behind them */
         .wq-clear { position: absolute; left: 50%; top: 42%; z-index: 3; width: max-content; max-width: none; white-space: nowrap; transform: translate(-50%, -50%) rotate(-8deg); padding: 7px; border-radius: 6px; background: color-mix(in srgb, #fbf7ee 93%, transparent); box-shadow: 0 6px 22px rgba(20, 12, 4, 0.32), 0 0 0 1px rgba(20, 12, 4, 0.08); animation: wqStamp 0.4s cubic-bezier(.2, .9, .3, 1.3) both; pointer-events: none; }
         .wq-clear > span { display: block; white-space: nowrap; word-break: keep-all; padding: 4px 18px 2px; border: 4px solid #c8372d; border-radius: 4px; color: #c8372d; font-family: var(--mincho); font-size: 2.2rem; font-weight: 900; letter-spacing: 0.15em; text-indent: 0.15em; line-height: 1.3; mix-blend-mode: multiply; filter: url(#wq-hanko); }
-        .wq-clear-float { position: fixed; z-index: 30; }
-        .wq-clear-float.out { animation: wqStampOut 0.5s ease forwards; }
-        @keyframes wqStampOut { from { opacity: 1; transform: translate(-50%, -50%) rotate(-8deg) scale(1); } to { opacity: 0; transform: translate(-50%, -50%) rotate(-8deg) scale(1); } }
         @keyframes wqStamp { from { opacity: 0; transform: translate(-50%, -50%) rotate(-8deg) scale(2.2); } to { opacity: 1; transform: translate(-50%, -50%) rotate(-8deg) scale(1); } }
         /* petals on the results: each one falls (outer), sways side to side (middle) and flips over as it goes (inner) */
         .wq-fallpiece { position: fixed; top: -28px; width: 14px; height: 14px; animation: wqFall linear forwards; }

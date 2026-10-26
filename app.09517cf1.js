@@ -8276,16 +8276,11 @@
     function taClock(ms) { return wqClock(Math.ceil(Math.max(0, ms) / 1000) * 1000); }
     function wqMissedEntries(ids) { return ids.map(function(mid) { return wordList.find(function(w) { return String(w.id) === String(mid); }); }).filter(Boolean); }
     // +5秒 / −3秒: a small pill that pops out above the clock and drifts up
-    // the クリア stamp: pressed over the card on a layer of its own, so the next round (dealt at once in time attack) doesn't wipe it;
-    // it stays a moment, then lifts away
+    // the クリア stamp, pressed on the card; the next round replaces it
     function wqStampClear() {
-        var v = document.getElementById('flash-view'), card = v && v.querySelector('.wq-card');
+        var card = document.querySelector('#flash-view .wq-card');
         if (!card) return;
-        var r = card.getBoundingClientRect(), f = document.createElement('div');
-        f.className = 'wq-clear wq-clear-float'; f.innerHTML = '<span>クリア</span>';
-        f.style.left = (r.left + r.width / 2) + 'px'; f.style.top = (r.top + Math.min(r.height * 0.42, 220)) + 'px';
-        v.appendChild(f);
-        setTimeout(function() { f.classList.add('out'); setTimeout(function() { if (f.parentNode) f.parentNode.removeChild(f); }, 450); }, 1000);
+        var st = document.createElement('div'); st.className = 'wq-clear'; st.innerHTML = '<span>クリア</span>'; card.appendChild(st);
     }
     function wqTimeShift(sec) {
         var c = document.getElementById('wq-clock');
