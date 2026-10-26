@@ -564,10 +564,17 @@ function paintSkyBG(bg, cam, st) {
       if (d2 < (step > 2 ? 0.002 : -0.004)) { // ---- the ground plane ---- (a coarse grid must not leave a bright seam of sky at the horizon)
         var tg = EYE / Math.max(0.004, -d2), gx = d0 * tg, gy = d1 * tg, gc; gpts = grid[Math.floor(gx / GC) + ',' + Math.floor(gy / GC)] || NONE;
         if (st.world === 'town') {
-          var sAl = gx * SA[0] + gy * SA[1], wAc = gx * SNW[0] + gy * SNW[1], rut = Math.exp(-Math.pow((Math.abs(wAc) - 0.75) / 0.18, 2));
+          var sAl = gx * SA[0] + gy * SA[1], wAc = gx * SNW[0] + gy * SNW[1], rut = Math.exp(-Math.pow((Math.abs(wAc) - 0.72) / 0.06, 2)) * smooth(0.3, 0.7, vnoise(sAl * 0.35, wAc * 2)) * 0.75;
           var nn = vnoise(gx * 1.7, gy * 1.7) * 0.6 + vnoise(gx * 7, gy * 7) * 0.4, pud = smooth(0.7, 0.78, vnoise(gx * 0.4 + 3, gy * 0.4));
           gc = se === 'winter' ? [214 - rut * 50, 218 - rut * 46, 226 - rut * 36] : [132 + nn * 34 - rut * 26 - pud * 40, 112 + nn * 28 - rut * 22 - pud * 34, 88 + nn * 22 - rut * 16 - pud * 24];
-          if (Math.abs(wAc) > HALF_W - 0.3 && Math.abs(wAc) < HALF_W) gc = [90, 92, 96];
+          if (st.stage >= 9 && sAl > -3 && Math.abs(wAc) > HALF_W - 0.3 && Math.abs(wAc) < HALF_W) gc = [90, 92, 96];
+          var FM = st.fbMap; if (!FM || FM.key !== st.stage) FM = st.fbMap = { key: st.stage, n: 160, R: 80, d: townGroundMap(160, 80, st.stage) };   // the same map as the WebGL ground, coarse: river, paths, grass, paddies
+          var mi = Math.floor((gx / FM.R + 1) / 2 * FM.n), mj = Math.floor((gy / FM.R + 1) / 2 * FM.n);
+          if (mi >= 0 && mj >= 0 && mi < FM.n && mj < FM.n) { var mo = (mj * 2 * FM.n + mi) * 4, mw = FM.d[mo] / 255, me = FM.d[mo + 1] / 255, mp = FM.d[mo + 3] / 255, wint = se === 'winter';
+            if (me < 0.99) { var gr0 = wint ? [214 + nn * 14, 218 + nn * 12, 226 + nn * 10] : se === 'spring' ? [92 + nn * 40, 124 + nn * 36, 50 + nn * 20] : se === 'autumn' ? [118 + nn * 36, 112 + nn * 30, 62 + nn * 20] : [60 + nn * 34, 94 + nn * 34, 36 + nn * 18];
+              if (mp > 0.01) gr0 = mix(gr0, wint ? [170, 156, 130] : se === 'spring' ? mix(pal.hor, [70, 64, 48], 0.35) : se === 'autumn' ? [196, 160, 74] : [62, 110, 40], mp);
+              gc = mix(gr0, gc, me); }
+            if (mw > 0.01) gc = mix(gc, mix(pal.hor, [52, 70, 72], 0.6), mw); }
         } else {
           var mn = vnoise(gx * 1.3, gy * 1.3) * 0.55 + vnoise(gx * 6, gy * 6) * 0.45;
           gc = se === 'winter' ? [222 + mn * 16, 226 + mn * 14, 234 + mn * 10] : [58 + mn * 40, 86 + mn * 40, 44 + mn * 22];
@@ -2837,7 +2844,7 @@ function stoneBridge3D(S) {
   // the deck: boards laid across, each its own weathered tone, a shadowed riser where one steps above the next, grain along them
   var deckIt = [];   // the boards join the railing's far-to-near painting, so the crest hides the rails beyond it
   for (i = 0; i < N; i++) (function (i) { var am = -Ln / 2 + Ln * (i + 0.5) / N; deckIt.push({ d: vlen(Lp(am, 0, deckH(am))), f: function () {
-    var a0 = -Ln / 2 + Ln * i / N, a1 = -Ln / 2 + Ln * (i + 1) / N, ht = hash2(i, 7), alb = vsc(mix(mix([150, 128, 100], [108, 92, 74], ht), [126, 122, 114], hash2(i, 11) * 0.5), 0.84 + 0.2 * hash2(i, 13)); if (L.snow) alb = mix(alb, [236, 240, 246], 0.85);
+    var a0 = -Ln / 2 + Ln * i / N, a1 = -Ln / 2 + Ln * (i + 1) / N, ht = hash2(i, 7), alb = vsc(mix(mix([150, 128, 100], [108, 92, 74], ht), [126, 122, 114], hash2(i, 11) * 0.5), 0.84 + 0.2 * hash2(i, 13)); if (L.snow) alb = mix(alb, [192, 198, 212], 0.66);
     var wi = w / 2 - 0.14, dq = [Lp(a0, -wi, deckH(a0)), Lp(a1, -wi, deckH(a1)), Lp(a1, wi, deckH(a1)), Lp(a0, wi, deckH(a0))], dn = nrm3(cross3(vsub(dq[1], dq[0]), vsub(dq[3], dq[0]))); if (dn[2] < 0) dn = vsc(dn, -1);
     dn = nrm3(v3(dn, side, (hash2(i, 17) - 0.5) * 0.25)); dn = nrm3(v3(dn, [ax[0], ax[1], 0], (hash2(i, 19) - 0.5) * 0.2));   // boards not quite level: each catches the light a little differently
     var dc = S.facet(dq, alb, dn, { wrap: 0.35, both: true }), dist = vlen(dq[0]);
@@ -2854,8 +2861,123 @@ function stoneBridge3D(S) {
   koran(S, { items: deckIt, P: function (t, sd, y) { var a = -Ln / 2 + Ln * t; return Lp(a, sd * (w / 2 - 0.07), deckH(a) + y); }, t0: 0.012, t1: 0.988, n: 12, k: 1,
     alb: L.snow ? [128, 112, 94] : [112, 92, 72] });
 }
+/* the plank bridge of the early village, before the stone bridge, as the town painting has it: 17 m of weathered planks
+   laid across with gaps between, on two log stringers, round wooden piles standing in pairs in the river every 3 m, a
+   gentle hump, no railing; at each end the planks run on down to a sill log bedded in the street, so you could walk onto it */
+function plankBridge3D(S) {
+  var B = TWN.BR, ax = B.ax, Ln = 17, w = 2.2, L = S.L, WL = TWN.WL, parts = [], a, i;
+  function Lp(a, b, y) { return tP(B.x + ax[0] * a - ax[1] * b, y, B.z + ax[1] * a + ax[0] * b); }
+  var aS = Ln / 2 + 1.5;   // where the approach meets the street
+  function yD(a) { var u = Math.abs(a); return u <= Ln / 2 ? 0.55 + 0.35 * Math.cos(a / Ln * Math.PI) : 0.55 - 0.42 * Math.min(1, (u - Ln / 2) / (aS - Ln / 2)); }   // the deck's top, metres above the banks
+  function wet(a, b) { return TWN.riverD(B.x + ax[0] * a - ax[1] * b, B.z + ax[1] * a + ax[0] * b) < 0; }
+  var side = nrm3(vsub(Lp(0, 1, 0), Lp(0, 0, 0))), along = nrm3(vsub(Lp(1, 0, 0), Lp(0, 0, 0))), snow = L.snow;
+  var pileB = { alb: [80, 66, 52], fis: [38, 30, 24], fl: [124, 108, 88], kind: 'grain' }, wetB = { alb: [42, 40, 34], fis: [22, 20, 18], fl: [78, 76, 66], kind: 'smooth' };
+  var logB = { alb: snow ? [112, 100, 86] : [94, 78, 60], fis: [46, 36, 28], fl: [146, 126, 98], kind: 'grain' };
+  var rS = 0.1, bS = w / 2 - 0.22, dT = 0.05;
+  function sY(a) { return yD(a) - dT - rS; }   // the stringers' axis, just under the planks
+  // the piles, in pairs, with a tie log across under the stringers
+  [-8.4, -6, -3, 0, 3, 6, 8.4].forEach(function (a) {   // (the end pairs stand on the banks)
+    var top = sY(a) + rS * 0.2;
+    [-1, 1].forEach(function (sg) {
+      var b = sg * (w / 2 - 0.15), inW = wet(a, b), foot = inW ? WL - 0.06 : -0.04;
+      parts.push({ d: vlen(Lp(a, b, (top + foot) / 2)) + 1.5, f: function () {
+        S.limb(Lp(a, b, foot), Lp(a, b, top), 0.09, 0.08, pileB);
+        if (inW) S.limb(Lp(a, b, foot), Lp(a, b, WL + 0.2), 0.092, 0.09, wetB);   // dark and wet at the water line
+      } });
+    });
+    parts.push({ d: vlen(Lp(a, 0, top - rS)) + 1.3, f: function () { S.limb(Lp(a, -w / 2 - 0.08, top - rS - 0.04), Lp(a, w / 2 + 0.08, top - rS - 0.04), 0.07, 0.07, pileB); } });
+  });
+  // the two log stringers, following the hump
+  var NS = 26;
+  [-bS, bS].forEach(function (b) {
+    for (i = 0; i < NS; i++) (function (i) {
+      var a0 = -aS + 0.1 + (aS * 2 - 0.2) * i / NS, a1 = -aS + 0.1 + (aS * 2 - 0.2) * (i + 1) / NS;
+      parts.push({ d: vlen(Lp((a0 + a1) / 2, b, sY(a0))) + 0.7, f: function () { S.limb(Lp(a0 - 0.04, b, sY(a0 - 0.04)), Lp(a1 + 0.04, b, sY(a1 + 0.04)), rS, rS, logB); } });
+    })(i);
+  });
+  // the ends: a sill log bedded in the street under the foot of the approach
+  [-1, 1].forEach(function (sg) {
+    [[sg * (aS - 0.25), 0.04]].forEach(function (E) {
+      parts.push({ d: vlen(Lp(E[0], 0, E[1])) + 0.9, f: function () { S.limb(Lp(E[0], -w / 2 - 0.2, E[1]), Lp(E[0], w / 2 + 0.2, E[1]), 0.1, 0.1, logB); } });
+    });
+  });
+  // the planks: laid across, each its own weathered grey-brown, a little uneven at the ends, with real gaps between
+  var pw = 0.24, gap = 0.028, NP = Math.floor(aS * 2 / (pw + gap)), a00 = -NP * (pw + gap) / 2 + gap / 2;
+  for (i = 0; i < NP; i++) (function (i) {
+    var a0 = a00 + i * (pw + gap), a1 = a0 + pw, am = (a0 + a1) / 2;
+    parts.push({ d: vlen(Lp(am, 0, yD(am))), f: function () {
+      var h1 = hash2(i, 31), h2 = hash2(i, 37), bl = -w / 2 - 0.02 + (h1 - 0.5) * 0.12, br = w / 2 + 0.02 + (h2 - 0.5) * 0.12, sk = (hash2(i, 41) - 0.5) * 0.04;
+      var alb = vsc(mix(mix([138, 120, 98], [104, 92, 78], hash2(i, 7)), [130, 126, 118], hash2(i, 11) * 0.6), 0.82 + 0.24 * hash2(i, 13));
+      var y0 = yD(a0), y1 = yD(a1), q = [Lp(a0 + sk, bl, y0), Lp(a1 + sk, bl, y1), Lp(a1 - sk, br, y1), Lp(a0 - sk, br, y0)];
+      var n = nrm3(cross3(vsub(q[1], q[0]), vsub(q[3], q[0]))); if (n[2] < 0) n = vsc(n, -1);
+      n = nrm3(v3(v3(n, side, (hash2(i, 17) - 0.5) * 0.22), along, (hash2(i, 19) - 0.5) * 0.18));   // no two quite level
+      var qd = q.map(function (p) { return v3(p, [0, 0, 1], -dT); });
+      S.facet([q[0], q[3], qd[3], qd[0]], vsc(alb, 0.7), vsc(along, -1), { wrap: 0.3 });   // the edges, toward and away from you
+      S.facet([q[1], q[2], qd[2], qd[1]], vsc(alb, 0.7), along, { wrap: 0.3 });
+      S.facet([q[0], q[1], qd[1], qd[0]], vsc(alb, 0.62), vsc(side, -1), { wrap: 0.3 });
+      S.facet([q[3], q[2], qd[2], qd[3]], vsc(alb, 0.62), side, { wrap: 0.3 });
+      var top = snow ? mix(alb, [192, 198, 212], 0.66) : alb, dc = S.facet(q, top, n, { wrap: 0.35 }), dist = vlen(q[0]);
+      if (!dc || snow || dist > 14) return;
+      var g = S.g; g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+      var lw = Math.max(0.4, 0.006 * S.cam.F / Math.max(1, dist)), rs = mulberry(700 + i);   // grain along the plank, a knot or two, the worn edge
+      g.lineWidth = lw; g.beginPath();
+      for (var k = 0; k < (dist < 7 ? 7 : 3); k++) { var f = 0.12 + 0.76 * rs(), u0 = rs() * 0.4, u1 = u0 + 0.3 + rs() * 0.3; S.bl(lerp3(lerp3(q[0], q[1], f), lerp3(q[3], q[2], f), u0), lerp3(lerp3(q[0], q[1], f), lerp3(q[3], q[2], f), Math.min(1, u1)), g); }
+      g.strokeStyle = rgbas(mix(dc, [30, 22, 14], 0.4), 0.5); g.stroke();
+      g.strokeStyle = rgbas(mix(dc, [255, 246, 226], 0.3), 0.45); g.lineWidth = Math.max(0.5, lw * 1.4); g.beginPath(); S.bl(lerp3(q[0], q[1], 0.9), lerp3(q[3], q[2], 0.9), g); g.stroke();
+      if (rs() < 0.3) { var kp = S.cam.p(lerp3(lerp3(q[0], q[1], 0.5), lerp3(q[3], q[2], 0.5), 0.2 + 0.6 * rs())); if (kp) { var kr = 0.03 * S.cam.F / kp[2]; g.fillStyle = rgbas(mix(dc, [40, 26, 16], 0.5), 0.55); g.beginPath(); g.ellipse(kp[0], kp[1], kr * 1.5, kr * 0.5, 0, 0, TAU); g.fill(); } }
+    } });
+  })(i);
+  parts.sort(function (p, q) { return q.d - p.d; });
+  parts.forEach(function (p) { p.f(); });
+}
 /* the river's stone embankments (石積み護岸) */
-function embankments(S) {
+/* where the town painting has a stone revetment (護岸): the riverside street's bank upstream from stage 10 and the 蔵 bank
+   downstream from stage 13, both on this side of the river; everywhere else the banks stay natural */
+function bankStone(st, x, z, thisSide) {
+  if (!thisSide) return false;
+  if (st >= 10 && x >= -52 && x <= -3) return true;
+  var s = (x - TWN.BR.x) * TWN.BR.ax[1] - (z - TWN.BR.z) * TWN.BR.ax[0];
+  return st >= 13 && s >= 5 && s <= 34;
+}
+/* a natural river bank: an earthen slope, grassed above and wet and dark at the water, a few rough stones at its foot,
+   tufts of grass along the lip and, here and there, reeds */
+function naturalBank(S, p0, p1, nl, seed) {
+  var L = S.L, se = L.season, WL = TWN.WL, snow = L.snow;
+  function at(p, off, y) { return tP(p[0] + nl[0] * off, y, p[1] + nl[1] * off); }
+  var q = [at(p0, 0.55, 0.03), at(p1, 0.55, 0.03), at(p1, -0.35, WL + 0.02), at(p0, -0.35, WL + 0.02)], dist = vlen(lerp3(q[0], q[2], 0.5));
+  var n = nrm3(cross3(vsub(q[1], q[0]), vsub(q[3], q[0]))); if (n[2] < 0) n = vsc(n, -1);
+  var grass = snow ? [226, 230, 238] : se === 'autumn' ? [134, 120, 76] : se === 'summer' ? [78, 104, 52] : [96, 124, 62], earth = [104, 88, 68];
+  var rs = mulberry(seed * 13 + 101), g = S.g, col = S.facet(q, mix(earth, grass, snow ? 0.75 : 0.4 + 0.3 * hash2(seed, 3)), n, { wrap: 0.35 });
+  if (col) {
+    if (S.poly([lerp3(q[0], q[3], 0.45), lerp3(q[1], q[2], 0.45), q[2], q[3]], false)) {   // bare wet earth toward the water
+      var pA = S.cam.p(lerp3(lerp3(q[0], q[1], 0.5), lerp3(q[3], q[2], 0.5), 0.45)), pW = S.cam.p(lerp3(q[3], q[2], 0.5));
+      if (pA && pW) { var gw = g.createLinearGradient(pA[0], pA[1], pW[0], pW[1]); gw.addColorStop(0, rgbas(shade(L, earth, q[3], n, 0.3), 0)); gw.addColorStop(0.5, rgbas(shade(L, [70, 58, 44], q[3], n, 0.3), 0.6)); gw.addColorStop(1, rgbas(shade(L, [36, 34, 28], q[3], n, 0.3), 0.85)); g.fillStyle = gw; g.fill(); }
+    }
+    if (dist < 40) { g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);   // rough stones at the water's edge
+      for (var k = 0; k < 4; k++) { var u = rs(), c = lerp3(lerp3(q[3], q[2], u), lerp3(q[0], q[1], u), 0.06 + rs() * 0.2), pc = S.cam.p(c); if (!pc) continue; var rr = (0.05 + rs() * 0.09) * S.cam.F / pc[2]; if (rr < 0.4) continue;
+        g.fillStyle = rgbs(shade(L, snow ? [200, 204, 212] : mix([62, 60, 56], [104, 100, 92], rs()), c, nrm3([n[0], n[1], n[2] + 0.6]), 0.4)); g.beginPath(); g.ellipse(pc[0], pc[1], rr, rr * 0.6, (rs() - 0.5) * 0.6, 0, TAU); g.fill(); }
+    }
+  }
+  if (dist > 45) return;
+  // grass along the lip (it shows on the near bank too, over the water's edge), reeds on some stretches
+  var nb = Math.round((dist < 15 ? 26 : 12) * S.lod), lean = [-nl[0], -nl[1]], gc = snow ? [180, 170, 140] : grass, pth = [];
+  g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); g.lineCap = 'round';
+  g.beginPath(); g.lineWidth = Math.max(0.5, 0.012 * S.cam.F / Math.max(1, dist));
+  for (k = 0; k < nb; k++) { var u2 = rs(), off = 0.3 - rs() * 0.4, pb = [p0[0] + (p1[0] - p0[0]) * u2, p0[1] + (p1[1] - p0[1]) * u2], b0 = at(pb, off, 0.02), hgt = (snow ? 0.08 : 0.14) + rs() * 0.2, lk = 0.04 + rs() * 0.1;
+    S.bl(b0, [b0[0] + (TWN.c * lean[0] + TWN.s * lean[1]) * lk + (rs() - 0.5) * 0.05, b0[1] + (-TWN.s * lean[0] + TWN.c * lean[1]) * lk + (rs() - 0.5) * 0.05, b0[2] + hgt], g); }
+  g.strokeStyle = rgbs(shade(L, vsc(gc, 0.85), q[0], [0, 0, 1], 0.5)); g.stroke();
+  if (!snow && hash2(seed, 5) < 0.4) {   // 葦: reeds standing at the water's edge
+    var nr = Math.round((dist < 15 ? 22 : 10) * S.lod), rc = se === 'autumn' ? [150, 130, 84] : se === 'winter' ? [150, 136, 104] : [84, 112, 56];
+    g.beginPath(); g.lineWidth = Math.max(0.5, 0.01 * S.cam.F / Math.max(1, dist));
+    var heads = [];
+    for (k = 0; k < nr; k++) { var u3 = rs(), pr = [p0[0] + (p1[0] - p0[0]) * u3, p0[1] + (p1[1] - p0[1]) * u3], r0 = at(pr, -0.25 - rs() * 0.25, WL + 0.02), rh = (se === 'spring' ? 0.5 : 1.0) + rs() * 0.7, bend = (rs() - 0.3) * 0.2;
+      var r1 = [r0[0] + bend, r0[1] + bend * 0.5, r0[2] + rh]; S.bl(r0, r1, g); if (se === 'autumn' || se === 'summer') heads.push(r1); }
+    g.strokeStyle = rgbs(shade(L, rc, q[2], [0, 0, 1], 0.6)); g.stroke();
+    if (se === 'autumn') { g.fillStyle = rgbs(shade(L, [176, 150, 108], q[2], [0, 0, 1], 0.6)); heads.forEach(function (h) { var ph = S.cam.p(h); if (!ph) return; var hr = 0.04 * S.cam.F / ph[2]; if (hr < 0.4) return; g.beginPath(); g.ellipse(ph[0], ph[1] + hr * 1.5, hr * 0.6, hr * 2, 0.2, 0, TAU); g.fill(); }); }   // the plumes
+  }
+  g.lineCap = 'butt';
+}
+function embankments(S, st) {
   var R = TWN.RIVER, i, side, k;
   for (side = -1; side <= 1; side += 2) for (i = 0; i < R.length - 1; i++) {
     var a = R[i], b = R[i + 1], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz), nx = -dz / l * side * TWN.HW, nz = dx / l * side * TWN.HW;
@@ -2863,6 +2985,7 @@ function embankments(S) {
     var segs = Math.max(1, Math.round(l / 3));
     for (k = 0; k < segs; k++) {
       var t0 = k / segs, t1 = (k + 1) / segs, p0 = [A[0] + (Bq[0] - A[0]) * t0, A[1] + (Bq[1] - A[1]) * t0], p1 = [A[0] + (Bq[0] - A[0]) * t1, A[1] + (Bq[1] - A[1]) * t1];
+      if (!bankStone(st, (p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2, nz > 0)) { naturalBank(S, p0, p1, [nx / TWN.HW, nz / TWN.HW], i * 31 + k * 7 + side * 3 + 11); continue; }
       var q = [tP(p0[0], 0.05, p0[1]), tP(p1[0], 0.05, p1[1]), tP(p1[0], TWN.WL - 0.1, p1[1]), tP(p0[0], TWN.WL - 0.1, p0[1])], col = S.face(q, mix([132, 126, 114], [150, 144, 130], hash2(i * 7 + k, side)), { wrap: 0.3 });
       if (col && vlen(q[0]) < 30) { speckle(S, q, col, 30);
         var g = S.g, rs = mulberry(i * 131 + k * 7 + side * 3 + 500), rows = 4, r2; g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);   // 石積み: courses of fitted stones, their joints dark
@@ -2892,11 +3015,229 @@ function scaledS(S, b, k) {
   return S2;
 }
 /* the town's ground map: the river */
-function townGroundMap(n, R) {
-  var out = new Uint8Array(2 * n * n * 4), i, j;
+/* ---- the village before the town, laid out as the town painting has it (its own x, z metres): the road over the fields
+   to the bridge, the track that becomes the main street, the paths to the farm and the shrine, the paddies, and the
+   houses of the early stages. The ground map and the 3D village below both read from here. ---- */
+var VIL = (function () {
+  var ax = [0.5, 0.8660254], NEAR = [2 - ax[0] * 9.5, 41 - ax[1] * 9.5], FAR = [2 + ax[0] * 9.5, 41 + ax[1] * 9.5], SW = [-ax[1], ax[0]];
+  function stPt(t, w) { w = w || 0; return [FAR[0] + ax[0] * t + SW[0] * w, FAR[1] + ax[1] * t + SW[1] * w]; }
+  function smoothPoly(pts, n) { // catmull-rom, as the painting resamples its paths
+    var out = [], N = pts.length, i, k;
+    for (i = 0; i < N - 1; i++) { var p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(N - 1, i + 2)];
+      for (k = 0; k < n; k++) { var t = k / n, t2 = t * t, t3 = t2 * t; out.push([0, 1].map(function (c) { return 0.5 * (2 * p1[c] + (-p0[c] + p2[c]) * t + (2 * p0[c] - 5 * p1[c] + 4 * p2[c] - p3[c]) * t2 + (-p0[c] + 3 * p1[c] - 3 * p2[c] + p3[c]) * t3); })); } }
+    out.push(pts[N - 1]); return out;
+  }
+  function polyD(P, x, z) { var best = 1e9; for (var i = 0; i < P.length - 1; i++) { var a = P[i], b = P[i + 1], dx = b[0] - a[0], dz = b[1] - a[1], t = clamp(((x - a[0]) * dx + (z - a[1]) * dz) / (dx * dx + dz * dz || 1), 0, 1), ex = a[0] + dx * t - x, ez = a[1] + dz * t - z; best = Math.min(best, ex * ex + ez * ez); } return Math.sqrt(best); }
+  function n2(v) { var l = Math.hypot(v[0], v[1]) || 1; return [v[0] / l, v[1] / l]; }
+  var TRACK = [FAR, stPt(12), stPt(24), stPt(36), stPt(40.5)], RIVST = [stPt(0.2, 0), stPt(0.3, 14), stPt(-0.1, 28), stPt(0.3, 42), stPt(0.4, 47)];
+  return {
+    stPt: stPt, polyD: polyD, TRACK0: TRACK, RIVST0: RIVST,
+    ROAD: smoothPoly([[-17, -4], [-13, 6], [-8.8, 15.5], [-5.4, 24], [-3.6, 29], NEAR], 6), TRACK: smoothPoly(TRACK, 6), RIVST: smoothPoly(RIVST, 6),
+    SIDE: smoothPoly([[-9.6, 13], [-15, 16.5], [-19.5, 20.5], [-20.8, 23.6]], 6), SHR: smoothPoly([[-4.6, 25.4], [-1.0, 24.6], [2.6, 23.8], [3.2, 27.6]], 4),
+    PADDY: [{ x0: -52, x1: -20.5, z0: -4, z1: 22, rot: -0.04, cw: 7.8, cd: 5.6 }, { x0: 14, x1: 60, z0: -3, z1: 17.6, rot: 0.06, cw: 8.6, cd: 5.6 }],
+    TEA: { x: -12.6, z: 23, u: n2([0.9, 0.42]) }, FARM: { x: -28.6, z: 30, u: n2([1, 0.08]) }, MILL: { x: -16.5, z: 39.2, u: n2([0.866, -0.5]), wx: -21.2, wz: 43.3, wr: 2.2 },
+    SHRINE: { x: 3.8, z: 29.6, u: n2([1, -0.1]) }, TORII: { x: 2.6, z: 25.6, u: n2([1, 0.12]) }, MARKET: (function () { var p = stPt(0.6, -10.2); return { x: p[0], z: p[1], rx: 6.2, rz: 4.0 }; })(),
+    CEDARS: [[4.0, 1.4, 10.5, 701], [5.4, -1.8, 9, 702], [6.6, 1.2, 9.5, 703], [2.4, 2.8, 10, 704]]
+  };
+})();
+/* a frame in the painting's coordinates, as its BF(): a along u, b across, y up; L gives sky (eye) coordinates */
+function vilFrame(x, z, u) {
+  var v = [-u[1], u[0]];
+  return { L: function (a, b, y) { return tP(x + u[0] * a + v[0] * b, y, z + u[1] * a + v[1] * b); },
+    N: function (na, nb, ny) { var dx = u[0] * na + v[0] * nb, dz = u[1] * na + v[1] * nb; return nrm3([dx * TWN.c + dz * TWN.s, -dx * TWN.s + dz * TWN.c, ny]); } };
+}
+function paddyCell(P0, x, z) { // the painting's paddyAt: distance to the nearest 畦 inside the field, or -1 outside it
+  var c = Math.cos(P0.rot), s = Math.sin(P0.rot), dx = x - P0.x0, dz = z - P0.z0, u = dx * c + dz * s, v = -dx * s + dz * c;
+  if (u < 0 || v < 0 || u > P0.x1 - P0.x0 || v > P0.z1 - P0.z0) return -1;
+  var fu = u - Math.floor(u / P0.cw) * P0.cw, fv = v - Math.floor(v / P0.cd) * P0.cd;
+  return Math.min(fu, P0.cw - fu, fv, P0.cd - fv);
+}
+/* the town's ground map: [river, packed earth (paths, yards, the town's wear), -, paddy water] and [畦, -, (shadow), -] */
+/* ---- the early village in 3D, where the painting puts it: the teahouse (stage 2), the farmhouse (4), the water mill (6),
+   the shrine in its cedars with the torii (7). All across the river from where you stand, so mostly their backs. ---- */
+function vilWalls(S, B, w, d, y0, y1, alb, o) { // four walls of a box in a village frame; o.front(F) paints the front (b = -d/2)
+  o = o || {};
+  var C = [[-w / 2, -d / 2], [w / 2, -d / 2], [w / 2, d / 2], [-w / 2, d / 2]], N = [[0, -1], [1, 0], [0, 1], [-1, 0]];
+  for (var k = 0; k < 4; k++) {
+    var a = C[k], b = C[(k + 1) % 4], q = [B.L(a[0], a[1], y0), B.L(b[0], b[1], y0), B.L(b[0], b[1], y1), B.L(a[0], a[1], y1)];
+    var col = S.facet(q, vsc(alb, k % 2 ? 0.94 : 1), B.N(N[k][0], N[k][1], 0), { wrap: 0.25 });
+    if (col && o.frame) { var g = S.g; g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); g.strokeStyle = rgbas(shade(S.L, o.frame, q[0], B.N(N[k][0], N[k][1], 0), 0.3), 0.85); g.lineWidth = Math.max(0.5, 0.12 * S.cam.F / vlen(q[0])); g.beginPath();
+      for (var f = 0; f <= 1.001; f += 0.5) S.bl(lerp3(q[0], q[1], f), lerp3(q[3], q[2], f), g); S.bl(lerp3(q[0], q[3], 0.82), lerp3(q[1], q[2], 0.82), g); g.stroke(); }
+    if (col && o.face) o.face(k, q, col);
+  }
+}
+/* 杉 close by: a straight reddish-brown fibrous trunk and a tall narrow cone of dense, dark blue-green needle sprays that
+   droop in tiers; each spray lit for its own facing, the far ones first */
+function sugi3D(S, b, h, seed, se) {
+  var L = S.L, rs = mulberry(seed), g = S.g, F = S.cam.F, kd = L.key ? L.key.d : [0.3, -0.5, 0.8], z0 = h * 0.28, k, j;
+  S.limb(b, v3(b, [0, 0, 1], h * 0.9), 0.24, 0.05, { alb: [118, 70, 50], fis: [58, 34, 26], fl: [168, 110, 80], kind: 'furrow' });
+  var pal = [[18, 34, 30], [30, 52, 42], [52, 78, 58]], snow = L.snow, sprays = [];
+  for (k = 0; k < 15; k++) {
+    var f = k / 14, zt = z0 + (h - z0) * f, rt = Math.pow(1 - f, 0.85) * h * 0.16 + 0.22, ns = Math.round(7 + rt * 7);
+    for (j = 0; j < ns; j++) { var a = (j + rs() * 0.6) / ns * TAU + k * 0.9, rr = rt * (0.7 + rs() * 0.35);
+      var pro = rs() < 0.22 ? 1.3 + rs() * 0.25 : 1;   // a few sprays reach out past the tier's line
+      sprays.push({ a: a, z: zt + (rs() - 0.5) * 0.3, r: rr * (0.85 + rs() * 0.3) * pro, droop: (0.2 + rt * 0.4) * (0.8 + rs() * 0.4) * pro, w: (0.16 + rt * 0.22) * (0.8 + rs() * 0.4) }); }
+  }
+  sprays.forEach(function (s) { s.tip = v3(b, [Math.cos(s.a) * s.r, Math.sin(s.a) * s.r, s.z - s.droop], 1); s.d = vlen(lerp3(v3(b, [0, 0, s.z], 1), s.tip, 0.6)); });
+  sprays.sort(function (p, q) { return q.d - p.d; });
+  g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); g.lineCap = 'round';
+  sprays.forEach(function (s) {
+    var ca = Math.cos(s.a), sa = Math.sin(s.a), base = v3(b, [ca * 0.1, sa * 0.1, s.z + 0.12], 1), mid = v3(b, [ca * s.r * 0.55, sa * s.r * 0.55, s.z + 0.02], 1), tip = s.tip, side = [-sa * s.w, ca * s.w, 0];
+    var n = nrm3([ca * 0.8, sa * 0.8, 0.6]), lit = clamp(dot3(n, kd) * 0.5 + 0.45 + (rs() - 0.5) * 0.12, 0, 1);
+    var col = shade(L, lit < 0.5 ? mix(pal[0], pal[1], lit * 2) : mix(pal[1], pal[2], lit * 2 - 1), mid, n, 0.6, 0.9);   // colour follows the facing smoothly, so neighbours blend
+    var poly = [base, v3(mid, side, 1), v3(tip, side, 0.25), tip, v3(tip, side, -0.25), v3(mid, side, -1)], pp = poly.map(function (p) { return S.cam.p(p); });
+    if (pp.some(function (p) { return !p; })) return;
+    var dist = vlen(mid);
+    g.fillStyle = rgbs(col); g.beginPath(); pp.forEach(function (p, i) { if (i) g.lineTo(p[0], p[1]); else g.moveTo(p[0], p[1]); }); g.closePath(); g.fill();
+    g.strokeStyle = rgbas(col, 0.35); g.lineWidth = Math.max(1, 0.05 * F / dist); g.lineJoin = 'round'; g.stroke(); g.lineJoin = 'miter';   // a feathered, ragged edge, not a clean triangle
+    if (dist > 40) return;
+    var lw = Math.max(0.4, 0.012 * F / dist); g.lineWidth = lw;   // the needle sprays: fine strokes hanging from the branch, lit along the top
+    g.strokeStyle = rgbas(mix(col, snow ? [236, 240, 246] : [120, 150, 110], snow ? 0.6 : 0.28), 0.7); g.beginPath();
+    for (var t = 0.15; t < 1; t += 0.12) { var c0 = lerp3(mid, tip, t), u = (rs() - 0.5) * 1.6, c1 = v3(c0, side, u * 0.5); S.bl(c1, v3(c1, [0, 0, -1], 0.08 + rs() * 0.1), g); }
+    g.stroke();
+    g.strokeStyle = rgbas(mix(col, [0, 0, 0], 0.4), 0.6); g.beginPath();
+    for (t = 0.1; t < 1; t += 0.15) { var c2 = v3(lerp3(base, tip, t), side, (rs() - 0.5) * 1.2); S.bl(c2, v3(c2, [0, 0, -1], 0.1 + rs() * 0.12), g); }
+    g.stroke();
+  });
+  g.lineCap = 'butt';
+}
+function vilRoof(S, B, W, D, yE, rise, alb, o) { // a hipped roof (寄棟, or near enough to the painting's 入母屋), thatch or boards, with a thick cut edge
+  o = o || {};
+  var L = S.L, hr = Math.max(0.3, W - D * 0.8), e = [B.L(-W, -D, yE), B.L(W, -D, yE), B.L(W, D, yE), B.L(-W, D, yE)], r0 = B.L(-hr, 0, yE + rise), r1 = B.L(hr, 0, yE + rise);
+  var top = L.snow ? [214, 220, 230] : alb, th = o.thick || 0.3, seed = o.seed || 9;
+  // the eave's cut edge first (seen below the slopes): straw ends in layered courses; then the slopes
+  var eb = e.map(function (p) { return v3(p, [0, 0, 1], -th); });
+  for (var k = 0; k < 4; k++) { var eq = [eb[k], eb[(k + 1) % 4], e[(k + 1) % 4], e[k]], ec = S.facet(eq, vsc(o.edge || alb, 0.7), B.N([0, 1, 0, -1][k], [-1, 0, 1, 0][k], 0), { wrap: 0.3 }); if (ec && o.thatch) thatchEdge(S, eq, ec, seed + k); }
+  S.facet([eb[0], eb[1], eb[2], eb[3]], vsc(alb, 0.45), [0, 0, -1], { wrap: 0.3 });
+  var sl = [[e[0], e[1], r1, r0], [e[2], e[3], r0, r1], [e[1], e[2], r1], [e[3], e[0], r0]];
+  sl.forEach(function (q, qi) { var n = nrm3(cross3(vsub(q[1], q[0]), vsub(q[q.length - 1], q[0]))); if (n[2] < 0) n = vsc(n, -1); var c = S.facet(q, top, n, { wrap: 0.35 });
+    if (c && o.thatch) thatchSlope(S, q, c, seed * 7 + qi, L.snow); });
+  S.limb(v3(lerp3(r0, r1, -0.04), [0, 0, 1], 0.02), v3(lerp3(r0, r1, 1.04), [0, 0, 1], 0.02), o.ridgeR || 0.14, o.ridgeR || 0.14, { alb: o.ridge || [70, 60, 48], fis: [34, 30, 24], fl: [120, 104, 80], kind: 'grain' }, { snow: L.snow });   // the ridge (棟)
+}
+/* 茅葺き on a slope (q: eave edge first, the ridge last; v = 0 at the eave, 1 at the ridge): weathered patches, moss toward the
+   ridge, straw lying down the slope in light and dark strokes, the stepped courses near the eave */
+function thatchSlope(S, q, c, seed, snow) {
+  var dist = vlen(lerp3(q[0], q[q.length - 1], 0.5)); if (dist > 75) return;
+  var g = S.g, F = S.cam.F, rs = mulberry(seed), k;
+  function P(u, v) { return q.length === 4 ? lerp3(lerp3(q[0], q[1], u), lerp3(q[3], q[2], u), v) : lerp3(lerp3(q[0], q[1], u), q[2], v); }
+  g.save(); if (!S.poly(q, false)) { g.restore(); return; } g.clip();
+  function dab(p, r, col, a) { var pp = S.cam.p(p); if (!pp) return; var rr = r * F / pp[2]; if (rr < 0.5) return; var gr = g.createRadialGradient(pp[0], pp[1], 0, pp[0], pp[1], rr); gr.addColorStop(0, rgbas(col, a)); gr.addColorStop(1, rgbas(col, 0)); g.fillStyle = gr; g.fillRect(pp[0] - rr, pp[1] - rr, rr * 2, rr * 2); }
+  for (k = 0; k < 9; k++) dab(P(rs(), 0.15 + rs() * 0.8), 0.6 + rs() * 0.9, mix(c, [52, 44, 32], 0.45), snow ? 0.12 : 0.32);   // weathered, darker patches
+  if (!snow) for (k = 0; k < 7; k++) dab(P(rs(), 0.68 + rs() * 0.28), 0.3 + rs() * 0.5, mix(c, [70, 92, 46], 0.7), 0.4);   // moss toward the ridge
+  var n = Math.round(clamp(2600 / Math.max(8, dist), 40, 320) * S.lod), lw = Math.max(0.45, 0.02 * F / dist), lt = mix(c, snow ? [250, 252, 255] : [236, 214, 160], 0.3), dk = mix(c, [40, 32, 22], 0.4);
+  g.lineCap = 'round';
+  [[lt, 0.55], [dk, 0.5]].forEach(function (S2, si) {
+    g.strokeStyle = rgbas(S2[0], S2[1]); g.lineWidth = lw * (si ? 0.9 : 1.1); g.beginPath();
+    for (var j = 0; j < n; j++) { var u = rs(), v = rs(), dv = 0.03 + rs() * 0.05, du = (rs() - 0.5) * 0.006; S.bl(P(u, v), P(u + du, Math.min(1, v + dv)), g); }
+    g.stroke();
+  });
+  g.strokeStyle = rgbas(mix(c, [30, 24, 16], 0.5), 0.45); g.lineWidth = lw * 1.4; g.beginPath();   // the courses stepping up from the eave
+  [0.05, 0.11, 0.18].forEach(function (v) { var m = 10; for (var j = 0; j < m; j++) S.bl(P(j / m, v + (rs() - 0.5) * 0.01), P((j + 1) / m, v + (rs() - 0.5) * 0.01), g); });
+  g.stroke(); g.lineCap = 'butt'; g.restore();
+}
+/* the thick cut edge of thatch at the eave: the straw's ends in layered bands, lighter at the top, a dark line between */
+function thatchEdge(S, q, c, seed) {
+  var dist = vlen(q[0]); if (dist > 60) return;
+  var g = S.g, rs = mulberry(seed + 500), F = S.cam.F;
+  g.save(); if (!S.poly(q, false)) { g.restore(); return; } g.clip();
+  function E(u, v) { return lerp3(lerp3(q[0], q[1], u), lerp3(q[3], q[2], u), v); }   // v = 0 at the bottom of the edge, 1 at the top
+  [[0.0, 0.35, 0.85], [0.35, 0.7, 1.0], [0.7, 1.0, 1.18]].forEach(function (Bd) {
+    var a = E(0, Bd[0]), b = E(1, Bd[0]), cc = E(1, Bd[1]), d = E(0, Bd[1]); S.fillPoly([a, b, cc, d], rgbs(vsc(c, Bd[2])));
+  });
+  var n = Math.round(clamp(1800 / Math.max(8, dist), 30, 260) * S.lod); g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+  g.fillStyle = rgbas(mix(c, [24, 18, 12], 0.5), 0.5);
+  for (var j = 0; j < n; j++) { var p = S.cam.p(E(rs(), rs())); if (!p) continue; var r = Math.max(0.4, 0.012 * F / p[2]); g.fillRect(p[0] - r / 2, p[1] - r, r, r * 2); }   // the cut ends
+  g.restore();
+}
+function farmhouse3D(S, lit) {
+  var V = VIL.FARM, B = vilFrame(V.x, V.z, V.u), earth = [170, 146, 110];
+  vilWalls(S, B, 11.5, 7.6, 0, 2.7, earth, { frame: [78, 58, 42], face: function (k, q) { if (k !== 2 || !lit) return; [[0.25, 0.4], [0.6, 0.75]].forEach(function (w) { S.fillPoly([lerp3(lerp3(q[0], q[1], w[0]), lerp3(q[3], q[2], w[0]), 0.2), lerp3(lerp3(q[0], q[1], w[1]), lerp3(q[3], q[2], w[1]), 0.2), lerp3(lerp3(q[0], q[1], w[1]), lerp3(q[3], q[2], w[1]), 0.72), lerp3(lerp3(q[0], q[1], w[0]), lerp3(q[3], q[2], w[0]), 0.72)], 'rgb(232,170,96)'); }); } });   // shoji glowing at the back too
+  vilRoof(S, B, 11.5 / 2 + 1.1, 7.6 / 2 + 1.1, 2.5, 3.6, [150, 124, 82], { thatch: true, seed: 44, thick: 0.45, edge: [120, 98, 66] });
+  var wp = B.L(-11.5 / 2 - 0.5, -1.5, 0); prism(S, wp, 0.5, 0.5, GZ, GZ + 1.2, 0.3, [120, 92, 62]);   // firewood stacked at the side
+}
+function teahouse3D(S, lit) {
+  var V = VIL.TEA, B = vilFrame(V.x, V.z, V.u);
+  vilWalls(S, B, 5.6, 4.2, 0, 2.5, [176, 150, 112], { frame: [90, 68, 48] });
+  vilRoof(S, B, 5.6 / 2 + 0.6, 4.2 / 2 + 0.8, 2.35, 2.4, [150, 124, 82], { thatch: true, seed: 33, thick: 0.38, edge: [120, 98, 66] });
+  if (!S.L.snow) { var pb = B.L(-5.6 / 2 + 0.6, -4.2 / 2 - 2.1, 0); S.limb(pb, v3(pb, [0, 0, 1], 2.3), 0.03, 0.03, BARK.bamboo);   // the red parasol (野点傘) by the bench
+    var pt = v3(pb, [0, 0, 1], 2.4), rim = []; for (var k = 0; k < 12; k++) { var a = k / 12 * TAU; rim.push([pb[0] + Math.cos(a) * 1.3, pb[1] + Math.sin(a) * 1.3, pt[2] - 0.45]); }
+    for (k = 0; k < 12; k++) S.face([pt, rim[k], rim[(k + 1) % 12]], [190, 44, 36], { wrap: 0.5 }); }
+}
+function mill3D(S) {
+  var V = VIL.MILL, B = vilFrame(V.x, V.z, V.u), board = [104, 84, 64], WL = TWN.WL, dark = { alb: [76, 60, 46], fis: [38, 30, 24], fl: [124, 104, 80], kind: 'grain' };
+  vilWalls(S, B, 5, 4.4, 0, 2.5, board, { face: function (k, q, col) { var g = S.g; g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); g.strokeStyle = rgbas(mix(col, [0, 0, 0], 0.4), 0.5); g.lineWidth = 0.5; g.beginPath(); for (var f = 0.05; f < 1; f += 0.05) S.bl(lerp3(q[0], q[1], f), lerp3(q[3], q[2], f), g); g.stroke(); } });   // boards
+  [[-1, 1], [1, -1]].forEach(function (sd) {   // a board gable roof
+    var e0 = B.L(-2.9, sd[0] * 2.8, 2.3), e1 = B.L(2.9, sd[0] * 2.8, 2.3), r0 = B.L(-2.9, 0, 3.4), r1 = B.L(2.9, 0, 3.4), q = sd[0] < 0 ? [e0, e1, r1, r0] : [e1, e0, r0, r1], n = nrm3(cross3(vsub(q[1], q[0]), vsub(q[3], q[0]))); if (n[2] < 0) n = vsc(n, -1);
+    S.facet(q, S.L.snow ? [232, 236, 242] : [96, 82, 66], n, { wrap: 0.3 }); });
+  [-1, 1].forEach(function (sg) { S.facet([B.L(sg * 2.5, -2.2, 2.5), B.L(sg * 2.5, 2.2, 2.5), B.L(sg * 2.5, 0, 3.4)], board, B.N(sg, 0, 0), { wrap: 0.3 }); });
+  // the wheel, its axle housing, and the flume on trestles bringing water from upstream
+  var Bw = vilFrame(V.wx, V.wz, V.u), R = V.wr, cy = R - 0.55, NW = 24, k;
+  [-0.55, 0.55].forEach(function (b) { S.limb(Bw.L(0, b, WL - 0.3), Bw.L(0, b, cy + 0.15), 0.09, 0.09, dark); });
+  [-0.35, 0.35].forEach(function (b) { for (k = 0; k < NW; k++) { var a0 = k / NW * TAU, a1 = (k + 1) / NW * TAU; S.limb(Bw.L(Math.cos(a0) * R, b, cy + Math.sin(a0) * R), Bw.L(Math.cos(a1) * R, b, cy + Math.sin(a1) * R), 0.05, 0.05, dark); } });
+  for (k = 0; k < 8; k++) { var a = k / 8 * TAU; S.limb(Bw.L(0, 0, cy), Bw.L(Math.cos(a) * R, 0, cy + Math.sin(a) * R), 0.035, 0.035, dark); }
+  for (k = 0; k < 16; k++) { var ap = k / 16 * TAU, ca = Math.cos(ap), sa = Math.sin(ap); S.face([Bw.L(ca * R, -0.36, cy + sa * R), Bw.L(ca * R, 0.36, cy + sa * R), Bw.L(ca * (R + 0.28), 0.36, cy + sa * (R + 0.28)), Bw.L(ca * (R + 0.28), -0.36, cy + sa * (R + 0.28))], [92, 74, 56], { wrap: 0.3 }); }   // the paddles
+  S.limb(Bw.L(0, -0.7, cy), Bw.L(0, 0.7, cy), 0.12, 0.12, dark);
+  var fy = cy + R + 0.15; [-2.2, 0.2, 2.2].forEach(function (a2) { var p = Bw.L(-3.85 + a2, -0.2, 0); S.limb([p[0], p[1], WL - 0.3 + GZ], [p[0], p[1], fy + 0.2 + GZ], 0.06, 0.06, dark); });
+  var f0 = -6.5, f1 = -1.2, q0 = [Bw.L(f0, -0.5, fy + 0.3), Bw.L(f1, -0.5, fy), Bw.L(f1, 0.1, fy), Bw.L(f0, 0.1, fy + 0.3)];
+  S.face(q0.map(function (p) { return v3(p, [0, 0, 1], 0.4); }), S.L.snow ? [232, 236, 242] : [90, 110, 120], { wrap: 0.4 });   // the water in it
+  S.facet([q0[0], q0[1], v3(q0[1], [0, 0, 1], 0.4), v3(q0[0], [0, 0, 1], 0.4)], [100, 80, 60], Bw.N(0, -1, 0), { wrap: 0.3 }); S.facet([q0[3], q0[2], v3(q0[2], [0, 0, 1], 0.4), v3(q0[3], [0, 0, 1], 0.4)], [100, 80, 60], Bw.N(0, 1, 0), { wrap: 0.3 });
+  S.facet(q0, [70, 56, 42], [0, 0, -1], { wrap: 0.3 });
+}
+function shrine3D(S, se) {
+  var V = VIL.SHRINE, B = vilFrame(V.x, V.z, V.u), stone = [138, 134, 124];
+  S.g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+  VIL.CEDARS.forEach(function (a) { var b = tP(V.x + a[0], 0, V.z + a[1]); sugi3D(S, b, a[2], a[3], se); });   // the cedar grove round it
+  vilWalls(S, B, 3, 3, 0, 0.55, stone); vilWalls(S, B, 2.2, 2.2, 0.55, 0.8, vsc(stone, 0.94));
+  S.facet([B.L(-1.1, -1.1, 0.8), B.L(1.1, -1.1, 0.8), B.L(1.1, 1.1, 0.8), B.L(-1.1, 1.1, 0.8)], stone, [0, 0, 1], { wrap: 0.3 });
+  vilWalls(S, B, 1.6, 1.5, 0.8, 2.1, [120, 84, 58]);
+  [[-1, 1], [1, -1]].forEach(function (sd) { var e0 = B.L(-1.35, sd[0] * 1.4, 2.0), e1 = B.L(1.35, sd[0] * 1.4, 2.0), r0 = B.L(-1.35, 0, 2.75), r1 = B.L(1.35, 0, 2.75), q = [e0, e1, r1, r0], n = nrm3(cross3(vsub(q[1], q[0]), vsub(q[3], q[0]))); if (n[2] < 0) n = vsc(n, -1); S.facet(q, S.L.snow ? [232, 236, 242] : [86, 140, 118], n, { wrap: 0.35, both: true }); });   // copper roof, green with age
+  [-1, 1].forEach(function (sg) { S.limb(B.L(sg * 1.3, -0.15, 2.7), B.L(sg * 1.45, -0.35, 3.25), 0.035, 0.035, BARK.wood); S.limb(B.L(sg * 1.3, 0.15, 2.7), B.L(sg * 1.45, 0.35, 3.25), 0.035, 0.035, BARK.wood); });   // 千木
+  // the torii, vermilion, facing the path
+  var T = vilFrame(VIL.TORII.x, VIL.TORII.z, VIL.TORII.u), vm = { alb: [204, 62, 36], fis: [120, 36, 20], fl: [236, 120, 90], kind: 'smooth' }, bk = { alb: [36, 30, 30], fis: [20, 16, 16], fl: [90, 84, 84], kind: 'smooth' }, sp = 1.45, h = 3.5;
+  [-sp, sp].forEach(function (a) { S.limb(T.L(a, 0, 0), T.L(a, 0, 0.25), 0.26, 0.24, bk); S.limb(T.L(a, 0, 0.25), T.L(a, 0, h), 0.17, 0.15, vm); });
+  S.limb(T.L(-sp - 0.55, -0.05, h - 0.84), T.L(sp + 0.55, -0.05, h - 0.84), 0.1, 0.1, vm);   // 貫
+  S.limb(T.L(0, -0.08, h - 0.72), T.L(0, -0.08, h - 0.18), 0.1, 0.1, vm);
+  var NK = 8, k;
+  for (k = 0; k < NK; k++) { var f0 = k / NK, f1 = (k + 1) / NK, l0 = 0.22 * Math.pow(Math.abs(f0 * 2 - 1), 2.4), l1 = 0.22 * Math.pow(Math.abs(f1 * 2 - 1), 2.4), m0 = 0.36 * Math.pow(Math.abs(f0 * 2 - 1), 2.4), m1 = 0.36 * Math.pow(Math.abs(f1 * 2 - 1), 2.4), x0 = -sp - 0.85 + f0 * (2 * sp + 1.7), x1 = -sp - 0.85 + f1 * (2 * sp + 1.7);
+    S.limb(T.L(x0, -0.1, h - 0.03 + l0), T.L(x1, -0.1, h - 0.03 + l1), 0.14, 0.14, vm);   // 島木
+    S.limb(T.L(x0 * 1.04, -0.12, h + 0.24 + m0), T.L(x1 * 1.04, -0.12, h + 0.24 + m1), 0.13, 0.13, bk, { snow: S.L.snow }); }   // 笠木, black, upswept
+}
+function villageItems(o, items, L) { // the early buildings, added in the painting's stages (they stay, at the far side of the river, into the town years)
+  var st = o.stage, se = o.season, lit = L.lit, V = VIL;
+  function dist(x, z) { return vlen(tP(x, 0, z)); }
+  if (st >= 2) items.push({ d: dist(V.TEA.x, V.TEA.z), draw: function (S) { teahouse3D(S, lit); } });
+  if (st >= 4) items.push({ d: dist(V.FARM.x, V.FARM.z), draw: function (S) { farmhouse3D(S, lit); } });
+  if (st >= 6) items.push({ d: dist(V.MILL.x, V.MILL.z), draw: function (S) { mill3D(S); } });
+  if (st >= 7) items.push({ d: dist(V.SHRINE.x, V.SHRINE.z), draw: function (S) { shrine3D(S, se); } });
+}
+function townGroundMap(n, R, st) {
+  var out = new Uint8Array(2 * n * n * 4), i, j, V = VIL;
+  var street = st >= 9, roadW = street ? 2.3 : 1.5, trackW = st >= 15 ? 4.8 : street ? 3.4 : st >= 8 ? 1.3 : 0.95, sideW = st >= 7 ? 0.85 : 0.5, rivW = st >= 15 ? 3.6 : 2.6, Ft = clamp((st - 8) / 10, 0, 1);
+  var yards = [], paths = [[V.ROAD, roadW], [V.TRACK, trackW]];
+  if (st >= 1) paths.push([V.SIDE, sideW]);
+  if (st >= 7) paths.push([V.SHR, 0.8]);
+  if (st >= 10) paths.push([V.RIVST, rivW]);
+  paths.forEach(function (PP) { var m = PP[1] + 1.2, xs = PP[0].map(function (p) { return p[0]; }), zs = PP[0].map(function (p) { return p[1]; }); PP.push(Math.min.apply(null, xs) - m, Math.max.apply(null, xs) + m, Math.min.apply(null, zs) - m, Math.max.apply(null, zs) + m); });   // bounding boxes
+  if (st >= 2) yards.push([V.TEA.x, V.TEA.z - 1, V.TEA.u, 8, 9, 1.5, 0.7]);
+  if (st >= 4) yards.push([V.FARM.x, V.FARM.z - 2, V.FARM.u, 16, 13, 2, 0.8]);
+  if (st >= 6) yards.push([V.MILL.x, V.MILL.z, V.MILL.u, 7, 7, 1.5, 0.6]);
+  if (st >= 7) yards.push([V.SHRINE.x, V.SHRINE.z, [1, 0], 5, 5, 1.2, 0.7]);
   for (j = 0; j < n; j++) for (i = 0; i < n; i++) {
-    var E = ((i + 0.5) / n * 2 - 1) * R, N = ((j + 0.5) / n * 2 - 1) * R, dx = E * TWN.c - N * TWN.s, dz = E * TWN.s + N * TWN.c, x = dx + TWN.X0, z = dz + TWN.Z0, o = (j * 2 * n + i) * 4;
-    var d = TWN.riverD(x, z); out[o] = clamp(0.5 - d / 0.3, 0, 1) * 255; out[o + 1] = 0; out[o + 2] = 0; out[o + 3] = 0;
+    var E = ((i + 0.5) / n * 2 - 1) * R, N = ((j + 0.5) / n * 2 - 1) * R, dx = E * TWN.c - N * TWN.s, dz = E * TWN.s + N * TWN.c, x = dx + TWN.X0, z = dz + TWN.Z0, o = (j * 2 * n + i) * 4, o2 = o + n * 4;
+    var d = TWN.riverD(x, z); out[o] = clamp(0.5 - d / 0.3, 0, 1) * 255; out[o + 2] = 0;
+    if (d < 0.3) { out[o + 1] = 0; out[o + 3] = 0; continue; }
+    // packed earth: the paths (a ragged worn edge), the yards round the buildings, the town's wear along its streets
+    var wob = (vnoise(x * 0.7, z * 0.7) - 0.5) * 0.35, e = 0, pi;
+    for (pi = 0; pi < paths.length; pi++) { var PP = paths[pi]; if (x < PP[2] || x > PP[3] || z < PP[4] || z > PP[5]) continue; var qd = V.polyD(PP[0], x, z) - PP[1] + wob; if (qd < 0.6) e = Math.max(e, 1 - smooth(-0.3, 0.3, qd)); }
+    yards.forEach(function (Y) { var ux = Y[2][0], uz = Y[2][1], a = Math.abs((x - Y[0]) * ux + (z - Y[1]) * uz) - Y[3] / 2, b = Math.abs(-(x - Y[0]) * uz + (z - Y[1]) * ux) - Y[4] / 2; e = Math.max(e, (1 - smooth(0, Y[5], Math.max(a, b) + wob)) * Y[6]); });
+    if (Ft > 0 && z > 40) { var side = (x - 2) * 0.5 + (z - 41) * 0.8660254;
+      if (side >= 6) { var dd2 = Math.min(V.polyD(V.TRACK0, x, z), st >= 10 ? V.polyD(V.RIVST0, x, z) : 99) + (vnoise(x * 0.25, z * 0.25 + 70) - 0.5) * 6; e = Math.max(e, Ft * (1 - smooth(6, 6 + 16 * Ft, dd2 + 7 - Math.min(7, (side - 6) * 1.2))) * 0.85); } }
+    if (st >= 16) { var ex = (x - V.MARKET.x) / V.MARKET.rx, ez = (z - V.MARKET.z) / V.MARKET.rz; e = Math.max(e, 1 - smooth(0.85, 1.15, Math.sqrt(ex * ex + ez * ez))); }
+    out[o + 1] = e * 255;
+    // the paddies, from stage 5: water (or rice) in the cells, grassy 畦 between them
+    var pw = 0, dk = 0;
+    if (st >= 5) V.PADDY.forEach(function (P0) { var c = paddyCell(P0, x, z); if (c < 0) return; var k = smooth(0.2, 0.45, c); pw = Math.max(pw, k); dk = Math.max(dk, 1 - k); });
+    out[o + 3] = pw * (1 - e) * 255; out[o2] = dk * (1 - e) * 255;
   }
   return out;
 }
@@ -2934,6 +3275,10 @@ function shadowProxiesTown(st) {
     P.push({ t: 'q', q: c, z0: GZ, z1: GZ + H, d: 80 });
     P.push({ t: 'q', q: [stP(h[1], side * HALF_W * 0.55, GZ), stP(h[2], side * HALF_W * 0.55, GZ), stP(h[2], wa, GZ), stP(h[1], wa, GZ)], z0: GZ + h[4] - 0.25, z1: GZ + h[4] + 0.15, d: 60 });   // the eave
   });
+  if (st < 8) { // the plank bridge's deck: over the river it is lifted by the water's depth, so its shadow lands on the water, not the bank
+    var B = TWN.BR, ax = B.ax, Lq = function (a, b) { return tP(B.x + ax[0] * a - ax[1] * b, 0, B.z + ax[1] * a + ax[0] * b); };
+    [[-8.5, -6.2, 0], [-6.2, 6.2, -TWN.WL], [6.2, 8.5, 0]].forEach(function (s) { P.push({ t: 'q', q: [Lq(s[0], -1.1), Lq(s[1], -1.1), Lq(s[1], 1.1), Lq(s[0], 1.1)], z0: GZ + 0.6 + s[2], z1: GZ + 0.85 + s[2], d: 14 }); });
+  }
   if (st >= 8) [tP(-2.5, 0, 50.5), tP(13.5, 0, 42.5)].forEach(function (b) { P.push({ t: 'e', c: [b[0], b[1], GZ + 4.5], r: [2.8, 2.8, 2.4], d: 1.2, leafy: true }); });
   return P;
 }
@@ -3003,6 +3348,7 @@ function townItems(o, S0) {
   items.push({ d: 3000, draw: function (S) { hills(S, [{ d: 2600, h0: 90, h1: 260, s: 46, crown: 10 }, { d: 900, h0: 25, h1: 80, s: 28, crown: 7 }], se, true); } });
   items.push({ d: 150, draw: function (S) { treeRing(S, 135, se, 41, 3.2); } });
   items.push({ d: 100, draw: function (S) { townFar(S, st); } });
+  villageItems(o, items, L);
   var T = TWN, cA = tAz(T.CASTLE.x, T.CASTLE.z);
   if (st >= 14) { items.push({ d: tDist(T.TEMPLE.x, T.TEMPLE.z), draw: function (S) { templeHall(S, tP(T.TEMPLE.x, 0.5, T.TEMPLE.z)); } }); items.push({ d: tDist(T.BELL.x, T.BELL.z), draw: function (S) { belfry3D(S, tP(T.BELL.x, 0.3, T.BELL.z)); } }); }
   if (st >= 19) items.push({ d: tDist(T.PAGODA.x, T.PAGODA.z), draw: function (S) { pagoda3D(S, tP(T.PAGODA.x, 0.9, T.PAGODA.z), 31, 1); } });
@@ -3010,8 +3356,8 @@ function townItems(o, S0) {
   if (st >= 18) items.push({ d: 46, draw: function (S) { nobori(S, 335, 46, o); } });
   if (st >= 13) items.push({ d: tDist(T.KURA.x, T.KURA.z), draw: function (S) { kura(S, tP(T.KURA.x, 0, T.KURA.z)); } });
   if (st >= 12) items.push({ d: tDist(T.TOWER.x, T.TOWER.z), draw: function (S) { fireTower(S, tP(T.TOWER.x, 0, T.TOWER.z)); } });
-  items.push({ d: 14, draw: function (S) { embankments(S); } });
-  if (st >= 8) items.push({ d: 9, draw: function (S) { stoneBridge3D(S); } });
+  items.push({ d: 14, draw: function (S) { embankments(S, st); } });
+  items.push({ d: 9, draw: function (S) { if (st >= 8) stoneBridge3D(S); else plankBridge3D(S); } });   // the plank bridge until the stone one is built
   if (st >= 8) { items.push({ d: 11, sway: 1, draw: function (S) { willow(S, tP(-2.5, 0, 50.5), se, 11); } }); items.push({ d: 9, sway: 1, draw: function (S) { willow(S, tP(13.5, 0, 42.5), se, 9); } }); }
   TOWN_HOUSES.forEach(function (h) {
     if (st < h[7] || h[2] < 0) return;   // (nothing stands on the river behind you)
@@ -3181,7 +3527,7 @@ function townHouse(S, h, o) {
   }
   for (s = s0; s <= s1 + 0.01; s += (s1 - s0) / Math.round((s1 - s0) / 1.82)) S.limb(stP(s, F0 - side * 0.03, zG), stP(s, F0 - side * 0.03, zTop), 0.06, 0.06, BARK.wood);
   if (hash2(Math.round(s0 * 5), side + 9) < 0.3 && kind !== 'kura') engidai(S, s0 + 2.2 + hash2(s0 | 0, 3), side * (HALF_W - 0.55), out, side);   // 縁台 out front
-  if (kind === 'kura') { chochin(S, stP(s0 + 1.2, side * (HALF_W - 0.7), GZ + 2.25), 0.16, 0.34, [214, 70, 48], lit, 'shop'); return; }
+  if (kind === 'kura') { chochin(S, stP(s0 + 1.2, side * (HALF_W - 0.7), GZ + 2.25), 0.16, 0.34, [214, 70, 48], lit, 'shop', '御神灯', out); return; }
   // noren at the door (rolled up on some shops)
   var nd = s0 + 0.9, noren = [56, 70, 112];
   noren = [[56, 70, 112], [40, 44, 52], [120, 52, 44], [70, 84, 64]][Math.abs(s0 * 3 | 0) % 4];
@@ -3199,7 +3545,8 @@ function townHouse(S, h, o) {
     eaveUnder(S, h, s0 - 0.1, s1 + 0.1, F0, pe, zP, pz, { board: [110, 86, 62], rafter: [92, 66, 48], pitch: 0.36, beam: false });
   }
   // the shop lantern by the door
-  chochin(S, stP(s0 + 1.2, side * (HALF_W - 0.7), GZ + 2.25), 0.16, 0.34, [214, 70, 48], lit, 'shop');
+  var lw = KANBAN_WORDS[Math.abs(s0 * 5 | 0) % KANBAN_WORDS.length];   // the lantern says what the sign says, or 御神灯
+  chochin(S, stP(s0 + 1.2, side * (HALF_W - 0.7), GZ + 2.25), 0.16, 0.34, [214, 70, 48], lit, 'shop', lw.length <= 2 ? lw : '御神灯', out);
 }
 /* an open shop front: the shutters taken down, a raised floor (店の間) and the goods out on it in the shade inside */
 function shopFront(S, h, s0, s1, F0, side, zG, zTop, out, lit, dpt) {
@@ -3257,19 +3604,37 @@ function weatherBoards(S, q, c, wM, hM, h) {
   var gr = g.createLinearGradient(pB[0], pB[1], pT[0], pT[1]); gr.addColorStop(0, 'rgba(24,16,10,0.45)'); gr.addColorStop(0.12, 'rgba(24,16,10,0)'); gr.addColorStop(0.75, 'rgba(255,236,200,0)'); gr.addColorStop(1, 'rgba(255,236,200,0.1)');
   g.fillStyle = gr; g.fill();
 }
-/* 看板: a framed board of dark wood with the shop's name in pale, worn paint: always a real word (learners will read it);
-   a blank board where no CJK font is available */
+/* 看板: a framed board of dark wood with the shop's name in pale, worn paint: always a real word (learners will read it),
+   horizontal and read right to left as in Edo; a blank board until the glyph atlas is ready */
 var KANBAN_WORDS = ['越後屋', '伊勢屋', '松屋', '大黒屋', '万屋', '丸屋', '呉服', '酒', '米', '茶', '薬', '蕎麦', '団子', '油', '両替', '宿'];
-var KANBAN_FONT = '"Hiragino Mincho ProN","Yu Mincho","Noto Serif CJK JP",serif', KANBAN_OK = null;
-function kanbanFontOK() { // does the mincho stack really have these glyphs? (a missing glyph draws the same box as an unassigned code point)
-  if (KANBAN_OK !== null) return KANBAN_OK;
-  try {
-    var cv = document.createElement('canvas'); cv.width = 40; cv.height = 20; var g = cv.getContext('2d');
-    function img(t) { g.clearRect(0, 0, 40, 20); g.fillStyle = '#000'; g.font = '16px ' + KANBAN_FONT; g.textBaseline = 'top'; g.fillText(t, 2, 2); var d = g.getImageData(0, 0, 40, 20).data, h = 0, n = 0; for (var i = 3; i < d.length; i += 4) { h = (h * 31 + d[i]) | 0; n += d[i] > 0 ? 1 : 0; } return [h, n]; }
-    var a = img('屋'), b = img('￿'), c = img('͸');
-    KANBAN_OK = a[1] > 8 && !(a[0] === b[0] && a[1] === b[1]) && !(a[0] === c[0] && a[1] === c[1]);
-  } catch (e) { KANBAN_OK = false; }
-  return KANBAN_OK;
+/* lettering on signs and lanterns comes from the pre-rendered glyph atlas (glyphs.js, window.MogiGlyphs), never from the
+   device's fonts, so it looks the same everywhere. A word is baked once into a white-ink texture after the atlas is ready,
+   then tinted per paint colour (colours quantised, so a scene needs only a handful). */
+var TXT = { ready: false, ver: 0, tex: {}, tint: {}, nt: 0, E: 84 };
+function txtInit(cb) { // true when lettering can be drawn now; otherwise cb runs once it can
+  var G = typeof window !== 'undefined' && window.MogiGlyphs;
+  if (TXT.ready) return true;
+  if (!G || !G.whenReady) return false;
+  if (G.ready) { TXT.ready = true; TXT.ver++; return true; }
+  G.whenReady.then(function () { if (!TXT.ready && G.ready) { TXT.ready = true; TXT.ver++; } if (TXT.ready && cb) cb(); });
+  return false;
+}
+function txtOK(word) { return TXT.ready && !!word && window.MogiGlyphs.has(word); }
+function txtTex(word, vertical) {
+  var key = (vertical ? 'v' : 'h') + word, T = TXT.tex[key]; if (T) return T;
+  var G = window.MogiGlyphs, E = TXT.E, m = G.measure(word, E, vertical), pad = 6, cv = document.createElement('canvas');
+  cv.width = Math.ceil(m.w + pad * 2); cv.height = Math.ceil(m.h + pad * 2);
+  G.draw(cv.getContext('2d'), word, { x: cv.width / 2, y: cv.height / 2, size: E, vertical: !!vertical, rtl: true, color: '#fff' });
+  T = TXT.tex[key] = { key: key, cv: cv, w: cv.width, h: cv.height, n: Array.from ? Array.from(word).length : word.length };
+  return T;
+}
+function txtTint(T, c) {
+  var q = [clamp(Math.round(c[0] / 6) * 6, 0, 255), clamp(Math.round(c[1] / 6) * 6, 0, 255), clamp(Math.round(c[2] / 6) * 6, 0, 255)], key = T.key + '|' + q.join(','), t = TXT.tint[key];
+  if (t) return t;
+  if (TXT.nt > 300) { TXT.tint = {}; TXT.nt = 0; }
+  t = document.createElement('canvas'); t.width = T.w; t.height = T.h;
+  var g = t.getContext('2d'); g.drawImage(T.cv, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = rgbs(q); g.fillRect(0, 0, T.w, T.h);
+  TXT.tint[key] = t; TXT.nt++; return t;
 }
 function kanban(S, c, ax, out, seed) {
   var L = S.L, g = S.g, word = KANBAN_WORDS[seed % KANBAN_WORDS.length], w = 0.2 + 0.17 * word.length, hh = 0.2, up = [0, 0, 1];
@@ -3279,16 +3644,15 @@ function kanban(S, c, ax, out, seed) {
   g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
   var fr = q.map(function (p) { return v3(p, out, 0.005); });
   g.strokeStyle = rgbas(shade(L, [120, 90, 60], c, out, 0.4), 0.9); g.lineWidth = px; g.beginPath(); for (var k = 0; k < 4; k++) S.bl(fr[k], fr[(k + 1) % 4], g); g.stroke();
-  if (px < 0.8 || !kanbanFontOK()) return;   // too small to read, or no font: a plain board
+  if (px < 0.8 || !txtOK(word)) return;   // too small to read, or the glyphs not loaded yet: a plain board
   // map a text box (x right, y down, units = board height) onto the board with the local affine of the projection
   var tl = S.cam.p(v3(q[3], out, 0.006)), tr = S.cam.p(v3(q[2], out, 0.006)), bl = S.cam.p(v3(q[0], out, 0.006)); if (!tl || !tr || !bl) return;
   if ((tr[0] - tl[0]) * (bl[1] - tl[1]) - (tr[1] - tl[1]) * (bl[0] - tl[0]) < 0) { tl = S.cam.p(v3(q[2], out, 0.006)); tr = S.cam.p(v3(q[3], out, 0.006)); bl = S.cam.p(v3(q[1], out, 0.006)); }   // read from the street, never mirrored
   var W = w * 2 / (hh * 2), ux = [(tr[0] - tl[0]) / W, (tr[1] - tl[1]) / W], vy = [bl[0] - tl[0], bl[1] - tl[1]];
   g.save(); g.setTransform(S.dpr * ux[0] / 100, S.dpr * ux[1] / 100, S.dpr * vy[0] / 100, S.dpr * vy[1] / 100, S.dpr * tl[0], S.dpr * tl[1]);
   var paint = shade(L, L.lit ? [236, 214, 160] : [226, 212, 182], c, out, 0.5);
-  g.fillStyle = rgbas(paint, 0.88); g.font = '700 72px ' + KANBAN_FONT; g.textAlign = 'center'; g.textBaseline = 'middle';
-  var tw = g.measureText(word).width, sx = Math.min(1, (W * 100 - 30) / Math.max(1, tw));
-  g.save(); g.translate(W * 50, 52); g.scale(sx, 1); g.fillText(word, 0, 0); g.restore();
+  var T = txtTex(word, false), em = 70, tw = em * T.w / TXT.E, th = em * T.h / TXT.E, sx = Math.min(1, (W * 100 - 22) / tw);   // right to left, as in Edo
+  g.globalAlpha = 0.88; g.drawImage(txtTint(T, paint), W * 50 - tw * sx / 2, 52 - th / 2, tw * sx, th); g.globalAlpha = 1;
   var rs = mulberry(seed * 17 + 3); g.fillStyle = rgbas(shade(L, [58, 40, 28], c, out, 0.35), 0.75);   // the paint worn through in flecks
   for (var f = 0; f < 60; f++) { var fx = rs() * W * 100, fy = 12 + rs() * 76, fr2 = 1 + rs() * 3; g.fillRect(fx, fy, fr2 * 1.6, fr2); }
   g.restore();
@@ -3315,7 +3679,7 @@ function glowPane(S, q, lit, out, low) {
 
 /* ---- the rest of town: real little houses with tiled gable roofs, ridges and onigawara ---- */
 function townFar(S, st) {
-  var n = st >= 9 ? 70 : st >= 4 ? 22 : 0, i, list = [], cam = S.cam, rnd = mulberry(404);
+  var n = st >= 9 ? 70 : 0, i, list = [], cam = S.cam, rnd = mulberry(404);   // (before the town there is only the village the painting has)
   for (i = 0; i < n; i++) {
     var az = rnd() * 360, d = 16 + Math.pow(rnd(), 0.8) * 120, c = PA(az, d, GZ);
     // keep the street and the river clear
@@ -3804,30 +4168,142 @@ function lanternString(S, s, lit) {
   for (i = 0; i < n; i++) {
     var t2 = (i + 0.5) / n, w2 = -HALF_W + 0.5 + t2 * (2 * HALF_W - 1), c = stP(s, w2, GZ + 4.25 - Math.sin(t2 * Math.PI) * 0.55);
     S.line(v3(c, [0, 0, 1], 0.15), v3(c, [0, 0, 1], 0.25), 0.006, rc, S.ctx(vlen(c)));
-    chochin(S, c, 0.16, 0.3, i % 2 ? [220, 64, 46] : [244, 226, 190], lit, 'fest');
+    chochin(S, c, 0.16, 0.3, i % 2 ? [220, 64, 46] : [244, 226, 190], lit, 'fest', i % 2 ? '祭' : '献灯', SA);
   }
 }
-function chochin(S, c, r, h, col, lit, kind) { // round paper lantern: glowing gradient, bamboo ribs, black caps
+/* 提灯: a paper lantern as a real solid of revolution. Its profile (a long barrel for the shop lanterns, rounder for the
+   festival ones, slim for the bon lanterns) is swept round the axis in rings at the bamboo ribs, which crowd together
+   toward the caps, so the outline changes truly with the angle you see it from, and from below you look up at the bottom
+   cap. Each facet is lit for its own normal: a lit side, a core shadow, light bounced into the rim, the soft sheen of
+   oiled paper by day, the paper bulging a little between the ribs; lit, it glows brightest through the middle with the
+   ribs as dark lines. Lacquered caps top and bottom and the hook above. Lettering, from the glyph atlas, is painted on two
+   opposite sides (facing `face` and away from it), so it is never seen mirrored. */
+var CHO_SHAPE = { shop: [0.62, 12, 0.58], fest: [0.88, 10, 0.5], bon: [0.5, 14, 0.55] };   // [profile exponent, bamboo bands, cap / waist]
+function chochin(S, c, r, h, col, lit, kind, word, face) {
   var p = S.cam.p(c); if (!p) return;
-  var k = S.cam.F / p[2], g = S.ctx(p[2]), rx = r * k, ry = h / 2 * k, L = S.L;
-  if (rx < 0.5 || !S.onScreen(p[0], p[1], rx * 2)) return;
-  g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
-  var gr = g.createRadialGradient(p[0] - rx * 0.15, p[1] - ry * 0.1, 0, p[0], p[1], Math.max(rx, ry) * 1.05);
-  if (lit) { var warm = mix(col, [255, 226, 170], 0.5); gr.addColorStop(0, 'rgb(255,248,226)'); gr.addColorStop(0.35, rgbs(warm)); gr.addColorStop(0.85, rgbs(col)); gr.addColorStop(1, rgbs(mix(col, [80, 24, 10], 0.45))); }
-  else { var cc = shade(L, col, c, nrm3(vsc(c, -1)), 0.5, 1.1); gr.addColorStop(0, rgbs(mix(cc, [255, 255, 255], 0.12))); gr.addColorStop(1, rgbs(mix(cc, [0, 0, 0], 0.35))); }
-  if (lit) { var hr = Math.max(rx, ry) * 2.6, hg = g.createRadialGradient(p[0], p[1], Math.max(rx, ry) * 0.6, p[0], p[1], hr); hg.addColorStop(0, rgbas(mix(col, [255, 210, 150], 0.6), 0.28)); hg.addColorStop(1, rgbas(col, 0)); g.fillStyle = hg; g.fillRect(p[0] - hr, p[1] - hr, hr * 2, hr * 2); }   // a soft halo round a lit lantern
-  g.fillStyle = gr; g.beginPath(); g.ellipse(p[0], p[1], rx, ry, 0, 0, TAU); g.fill();
-  if (rx > 4) { g.save(); g.beginPath(); g.ellipse(p[0], p[1], rx, ry, 0, 0, TAU); g.clip();   // the paper bulges between the ribs: a light and a dark band in each
-    for (var bi = -4; bi < 4; bi++) { var y0 = p[1] + (bi / 4.5) * ry, bh = ry / 4.5; var bg = g.createLinearGradient(0, y0, 0, y0 + bh); bg.addColorStop(0, lit ? 'rgba(255,240,200,0.12)' : 'rgba(255,255,255,0.1)'); bg.addColorStop(0.6, 'rgba(0,0,0,0)'); bg.addColorStop(1, lit ? 'rgba(120,40,10,0.14)' : 'rgba(0,0,0,0.12)'); g.fillStyle = bg; g.fillRect(p[0] - rx, y0, rx * 2, bh); }
-    if (!lit && L.key) { var sh = g.createRadialGradient(p[0] - rx * 0.4, p[1] - ry * 0.3, 0, p[0] - rx * 0.4, p[1] - ry * 0.3, rx * 0.7); sh.addColorStop(0, 'rgba(255,250,240,0.22)'); sh.addColorStop(1, 'rgba(255,250,240,0)'); g.fillStyle = sh; g.fillRect(p[0] - rx * 1.2, p[1] - ry, rx * 1.6, ry * 1.4); }   // the sheen of the oiled paper
-    g.restore(); }
-  if (rx > 1.5) { g.strokeStyle = rgbs(shade(L, [30, 26, 24], c, [0, 0, -1], 0.5)); g.lineWidth = Math.max(0.5, rx * 0.05); g.beginPath(); g.moveTo(p[0], p[1] - ry - rx * 0.1); g.lineTo(p[0], p[1] - ry - rx * 0.55); g.stroke(); }   // the hook it hangs from
-  if (rx > 2.5) {
-    g.strokeStyle = lit ? 'rgba(140,50,20,0.28)' : 'rgba(0,0,0,0.2)'; g.lineWidth = Math.max(0.4, rx * 0.04);
-    for (var i = -3; i <= 3; i++) { var yy = i / 4; g.beginPath(); g.ellipse(p[0], p[1] + yy * ry, rx * Math.sqrt(1 - yy * yy), rx * 0.1, 0, 0, Math.PI); g.stroke(); }
-    if (kind === 'shop' || kind === 'fest') { g.fillStyle = lit ? 'rgba(40,14,8,0.55)' : 'rgba(20,10,8,0.4)'; g.font = '700 ' + (ry * 0.62).toFixed(1) + 'px "Hiragino Mincho ProN","Yu Mincho","Noto Serif CJK JP",serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(kind === 'shop' ? '御' : '祭', p[0], p[1] + ry * 0.05); }
+  var L = S.L, F = S.cam.F, rx = r * F / p[2], ry = h / 2 * F / p[2], g = S.ctx(p[2]), dpr = S.dpr, i, j, q;
+  if (rx < 0.5 || !S.onScreen(p[0], p[1], Math.max(rx, ry) * 3 + 2)) return;
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  var glowK = lit ? (L.light === 'dusk' ? 0.85 : 1) : 0, hot = mix(col, [255, 200, 128], 0.32), key = L.key;
+  if (lit) { var hr = Math.max(rx, ry) * 2.8, hg = g.createRadialGradient(p[0], p[1], Math.max(rx, ry) * 0.5, p[0], p[1], hr); hg.addColorStop(0, rgbas(mix(col, [255, 210, 150], 0.6), 0.3 * glowK)); hg.addColorStop(0.45, rgbas(mix(col, [255, 200, 140], 0.4), 0.09 * glowK)); hg.addColorStop(1, rgbas(col, 0)); g.fillStyle = hg; g.fillRect(p[0] - hr, p[1] - hr, hr * 2, hr * 2); }   // the halo
+  var lac = [28, 22, 20];
+  if (rx < 2.2) { // a few pixels across: a dab of paper and its caps
+    g.fillStyle = rgbs(lit ? hot : shade(L, col, c, nrm3(vsc(c, -1)), 0.5)); g.beginPath(); g.ellipse(p[0], p[1], rx, ry, 0, 0, TAU); g.fill();
+    g.fillStyle = rgbs(shade(L, lac, c, [0, 0, -1], 0.5)); g.fillRect(p[0] - rx * 0.62, p[1] - ry - rx * 0.1, rx * 1.24, rx * 0.22); g.fillRect(p[0] - rx * 0.62, p[1] + ry - rx * 0.12, rx * 1.24, rx * 0.22);
+    return;
   }
-  g.fillStyle = rgbs(shade(L, [26, 22, 20], c, [0, 0, -1], 0.5)); g.fillRect(p[0] - rx * 0.62, p[1] - ry - rx * 0.1, rx * 1.24, rx * 0.22); g.fillRect(p[0] - rx * 0.62, p[1] + ry - rx * 0.12, rx * 1.24, rx * 0.22);
+  var sh = CHO_SHAPE[kind] || CHO_SHAPE.shop, ex = sh[0], th0 = Math.asin(Math.pow(sh[2], 1 / ex)), cth = Math.cos(th0), hz = h / 2;
+  var NB = rx > 9 ? sh[1] : Math.max(5, Math.round(sh[1] * 0.6)), sub = rx > 6 ? 2 : 1, NV = NB * sub, NK = Math.max(10, Math.min(40, Math.round(rx * 1.1))) & ~1;
+  function prof(t) { var th = th0 + t * (Math.PI - 2 * th0), s = Math.sin(th); return [r * Math.pow(s, ex), hz * Math.cos(th) / cth, th]; }
+  function pnrm(th, cq, sq) { var s = Math.sin(th), a = hz * s / cth, b = r * ex * Math.pow(s, ex - 1) * Math.cos(th); return nrm3([a * cq, a * sq, b]); }   // the outward normal of the profile
+  var cs = [], sn = [], R = [], Pp = [], TH = [];
+  for (q = 0; q <= NK; q++) { cs.push(Math.cos(q / NK * TAU)); sn.push(Math.sin(q / NK * TAU)); }
+  for (j = 0; j <= NV; j++) {
+    var pr = prof(j / NV), rr = pr[0] * (sub > 1 && j % 2 ? 1.022 : 1), row = [], prow = [];   // the paper bulges between the ribs
+    for (q = 0; q <= NK; q++) { var P = [c[0] + rr * cs[q], c[1] + rr * sn[q], c[2] + pr[1]], pp = S.cam.p(P); if (!pp) return; row.push(P); prow.push(pp); }
+    R.push(row); Pp.push(prow); TH.push(pr[2]);
+  }
+  function sky(n) { var hs = 0.5 + 0.5 * n[2]; return [L.amb[0] * hs + L.gnd[0] * (1 - hs), L.amb[1] * hs + L.gnd[1] * (1 - hs), L.amb[2] * hs + L.gnd[2] * (1 - hs)]; }
+  function paper(M, n, zr) {
+    var dm = vlen(M), V = [-M[0] / dm, -M[1] / dm, -M[2] / dm], nv = Math.max(0, dot3(n, V)), a = sky(n), o;
+    var kd = key ? dot3(n, key.d) : 0, core = key ? 1 - 0.3 * Math.exp(-(kd + 0.06) * (kd + 0.06) / 0.035) : 1, kl = key ? Math.max(0, (kd + 0.1) / 1.1) : 0;
+    o = [col[0] * (a[0] + (key ? key.c[0] * kl : 0)) * core, col[1] * (a[1] + (key ? key.c[1] * kl : 0)) * core, col[2] * (a[2] + (key ? key.c[2] * kl : 0)) * core];
+    var rim = Math.pow(1 - nv, 2.2) * 0.28; o = v3(o, [col[0] * a[0], col[1] * a[1], col[2] * a[2]], rim);   // light bounced into the rim
+    if (key) {
+      var H = nrm3([key.d[0] + V[0], key.d[1] + V[1], key.d[2] + V[2]]), sp = Math.pow(Math.max(0, dot3(n, H)), 26) * 0.3 * (1 - glowK * 0.6);
+      o = v3(o, key.c, 255 * sp);   // the sheen of the oiled paper
+      var tr = Math.max(0, -kd) * Math.pow(Math.max(0, -dot3(V, key.d)), 1.5) * 0.32; o = v3(o, [col[0] * key.c[0], col[1] * key.c[1], col[2] * key.c[2]], tr);   // sun through the paper
+    } else { var Rz = 2 * nv * n[2] - V[2]; if (Rz > 0) o = v3(o, L.amb, 255 * 0.13 * Math.pow(Rz, 3) * (1 - glowK * 0.6)); }   // the grey sky in it
+    if (L.wet) { o = vsc(o, 0.82); var ws = wetSpec(L, M, n); o = [o[0] + ws[0], o[1] + ws[1], o[2] + ws[2]]; }
+    if (glowK > 0) {   // lit from within: brightest through the middle, where you look straight through the paper at the flame
+      var b = (0.18 + 0.82 * Math.pow(nv, 1.1)) * (0.35 + 0.65 * (1 - zr * zr)), e = mix(vsc(col, 0.32), hot, b), hs2 = Math.pow(nv, 4) * Math.pow(Math.max(0, 1 - zr * zr), 2) * 0.5;
+      e = mix(e, [255, 226, 168], hs2 * 0.8);
+      o = v3(vsc(o, L.light === 'dusk' ? 0.4 : 0.15), e, glowK);
+    }
+    return fog(L, o, dm);
+  }
+  function lacq(M, n, glow) {
+    var dm = vlen(M), V = [-M[0] / dm, -M[1] / dm, -M[2] / dm], a = sky(n), kd = key ? Math.max(0, dot3(n, key.d)) : 0;
+    var o = [lac[0] * (a[0] + (key ? key.c[0] * kd : 0)), lac[1] * (a[1] + (key ? key.c[1] * kd : 0)), lac[2] * (a[2] + (key ? key.c[2] * kd : 0))];
+    if (key) { var H = nrm3([key.d[0] + V[0], key.d[1] + V[1], key.d[2] + V[2]]); o = v3(o, key.c, 255 * 0.45 * Math.pow(Math.max(0, dot3(n, H)), 40)); }
+    else { var Rz = 2 * dot3(n, V) * n[2] - V[2]; if (Rz > 0) o = v3(o, L.amb, 255 * 0.18 * Math.pow(Rz, 4)); }
+    if (glowK > 0) o = v3(o, hot, 0.06 * glowK * (glow || 1));
+    return fog(L, o, dm);
+  }
+  function quad(a, b, cc, d, style) { // a screen quad grown by half a pixel, so neighbours close without seams
+    var mx = (a[0] + b[0] + cc[0] + d[0]) / 4, my = (a[1] + b[1] + cc[1] + d[1]) / 4;
+    g.beginPath(); [a, b, cc, d].forEach(function (s, k) { var dx = s[0] - mx, dy = s[1] - my, l = Math.sqrt(dx * dx + dy * dy) || 1, x = s[0] + dx / l * 0.45, y = s[1] + dy / l * 0.45; if (k) g.lineTo(x, y); else g.moveTo(x, y); });
+    g.fillStyle = style; g.fill();
+  }
+  var rc = r * Math.pow(Math.sin(th0), ex) * 1.07, ch = h * 0.085, NC = Math.max(8, NK >> 1);
+  function cap(bottom) {
+    var z0 = bottom ? -hz - ch * 0.65 : hz - ch * 0.35, z1 = bottom ? -hz + ch * 0.35 : hz + ch * 0.65, A = [], B = [], PA = [], PB = [], k2;
+    for (k2 = 0; k2 <= NC; k2++) { var ca = Math.cos(k2 / NC * TAU), sa = Math.sin(k2 / NC * TAU), a = [c[0] + rc * ca, c[1] + rc * sa, c[2] + z0], b = [c[0] + rc * ca, c[1] + rc * sa, c[2] + z1], pa = S.cam.p(a), pb = S.cam.p(b); if (!pa || !pb) return; A.push(a); B.push(b); PA.push(pa); PB.push(pb); }
+    for (k2 = 0; k2 < NC; k2++) { var am = (k2 + 0.5) / NC * TAU, n = [Math.cos(am), Math.sin(am), 0], M = lerp3(lerp3(A[k2], A[k2 + 1], 0.5), lerp3(B[k2], B[k2 + 1], 0.5), 0.5); if (dot3(n, M) >= 0) continue; quad(PA[k2], PA[k2 + 1], PB[k2 + 1], PB[k2], rgbs(lacq(M, n))); }
+    var zd = bottom ? z0 : z1, D = bottom ? PA : PB, dc = [c[0], c[1], c[2] + zd];
+    if (bottom ? dc[2] > 0 : dc[2] < 0) {   // the flat of the cap, seen from below (or above)
+      g.beginPath(); for (k2 = 0; k2 < NC; k2++) { if (k2) g.lineTo(D[k2][0], D[k2][1]); else g.moveTo(D[k2][0], D[k2][1]); } g.closePath(); g.fillStyle = rgbs(lacq(dc, [0, 0, bottom ? -1 : 1], 2)); g.fill();
+      if (bottom) { // the opening in the bottom: the candle's light, or the dark inside
+        g.beginPath(); for (k2 = 0; k2 <= NC; k2++) { var ao = k2 / NC * TAU, po = S.cam.p([c[0] + rc * 0.38 * Math.cos(ao), c[1] + rc * 0.38 * Math.sin(ao), dc[2] + 0.001]); if (!po) return; if (k2) g.lineTo(po[0], po[1]); else g.moveTo(po[0], po[1]); }
+        var pc0 = S.cam.p(dc), ro = Math.max(0.5, rc * 0.38 * F / Math.max(0.1, pc0 ? pc0[2] : 1));
+        if (glowK > 0 && pc0) { var og = g.createRadialGradient(pc0[0], pc0[1], 0, pc0[0], pc0[1], ro * 1.1); og.addColorStop(0, rgbs(fog(L, mix(vsc(col, 0.3), hot, 0.3 * glowK), vlen(dc)))); og.addColorStop(1, rgbs(fog(L, mix(vsc(col, 0.4), hot, 0.75 * glowK), vlen(dc)))); g.fillStyle = og; }
+        else g.fillStyle = rgbs(shade(L, mix(col, [20, 14, 10], 0.75), dc, [0, 0, -1], 0.3));
+        g.fill();
+        if (pc0 && ro > 2.5) { g.fillStyle = rgbs(lacq(dc, [0, 0, -1])); g.beginPath(); g.arc(pc0[0], pc0[1], ro * 0.32, 0, TAU); g.fill(); }   // the candle's stand
+      }
+    }
+  }
+  function body() {
+    for (j = 0; j < NV; j++) for (q = 0; q < NK; q++) {
+      var A = R[j][q], B = R[j][q + 1], C = R[j + 1][q + 1], D = R[j + 1][q];
+      var M = [(A[0] + B[0] + C[0] + D[0]) / 4, (A[1] + B[1] + C[1] + D[1]) / 4, (A[2] + B[2] + C[2] + D[2]) / 4], n = nrm3(cross3(vsub(D, A), vsub(B, A)));
+      if (n[0] * (M[0] - c[0]) + n[1] * (M[1] - c[1]) < 0 && Math.abs(n[2]) < 0.99) n = vsc(n, -1);
+      if (dot3(n, M) >= 0) continue;   // the far side
+      var zr = (M[2] - c[2]) / hz;
+      if (rx < 8) { quad(Pp[j][q], Pp[j][q + 1], Pp[j + 1][q + 1], Pp[j + 1][q], rgbs(paper(M, n, zr))); continue; }
+      // close up: shade both edges of the facet and blend across it, so the paper is smooth, not fluted
+      var hd = Math.PI / NK, ch0 = Math.cos(hd), sh0 = Math.sin(hd);
+      var nl = [n[0] * ch0 + n[1] * sh0, -n[0] * sh0 + n[1] * ch0, n[2]], nr2 = [n[0] * ch0 - n[1] * sh0, n[0] * sh0 + n[1] * ch0, n[2]];
+      var cl = paper(lerp3(A, D, 0.5), nl, zr), cr = paper(lerp3(B, C, 0.5), nr2, zr);
+      var sl = [(Pp[j][q][0] + Pp[j + 1][q][0]) / 2, (Pp[j][q][1] + Pp[j + 1][q][1]) / 2], sr = [(Pp[j][q + 1][0] + Pp[j + 1][q + 1][0]) / 2, (Pp[j][q + 1][1] + Pp[j + 1][q + 1][1]) / 2];
+      if (Math.abs(sr[0] - sl[0]) + Math.abs(sr[1] - sl[1]) < 0.6) { quad(Pp[j][q], Pp[j][q + 1], Pp[j + 1][q + 1], Pp[j + 1][q], rgbs(mix(cl, cr, 0.5))); continue; }
+      var lg = g.createLinearGradient(sl[0], sl[1], sr[0], sr[1]); lg.addColorStop(0, rgbs(cl)); lg.addColorStop(1, rgbs(cr));
+      quad(Pp[j][q], Pp[j][q + 1], Pp[j + 1][q + 1], Pp[j + 1][q], lg);
+    }
+    // the bamboo ribs: rings curving with the surface, crowding toward the caps
+    g.beginPath(); g.lineCap = 'round';
+    for (j = sub; j < NV; j += sub) for (q = 0; q < NK; q++) {
+      var na = pnrm(TH[j], cs[q], sn[q]), nb = pnrm(TH[j], cs[q + 1], sn[q + 1]);
+      if (dot3(na, R[j][q]) >= 0 || dot3(nb, R[j][q + 1]) >= 0) continue;
+      g.moveTo(Pp[j][q][0], Pp[j][q][1]); g.lineTo(Pp[j][q + 1][0], Pp[j][q + 1][1]);
+    }
+    g.strokeStyle = glowK > 0 ? rgbas(fog(L, mix(col, [56, 14, 4], 0.78), vlen(c)), 0.6) : rgbas(shade(L, mix(col, [10, 6, 4], 0.6), c, nrm3(vsc(c, -1)), 0.4), 0.42);
+    g.lineWidth = Math.max(0.45, rx * (glowK > 0 ? 0.034 : 0.026)); g.stroke(); g.lineCap = 'butt';
+    if (word && face && rx > 5 && txtOK(word)) lettering();
+  }
+  function lettering() { // vertical, top to bottom, wrapped round the paper in small patches (each a local affine of the projection)
+    var T = txtTex(word, true), em = Math.min(r * 1.12, 0.76 * h * TXT.E / T.h), Ht = em * T.h / TXT.E, Wt = em * T.w / TXT.E, al = Wt / 2 / r;
+    var ink = glowK > 0 ? fog(L, mix(col, [34, 8, 2], 0.84), vlen(c)) : shade(L, [22, 16, 12], c, nrm3(vsc(c, -1)), 0.5), tex = txtTint(T, ink);
+    var NU = 6, NVt = 4 * T.n, f0 = Math.atan2(face[1], face[0]);
+    function W(fc, u, v) { var z = (0.5 - v) * Ht - h * 0.02, th = Math.acos(clamp(z * cth / hz, -1, 1)), rr = r * Math.pow(Math.sin(th), ex) * 1.012, f = fc + (u - 0.5) * 2 * al; return [c[0] + rr * Math.cos(f), c[1] + rr * Math.sin(f), c[2] + z]; }
+    [f0, f0 + Math.PI].forEach(function (fc) {
+      for (var iv = 0; iv < NVt; iv++) for (var iu = 0; iu < NU; iu++) {
+        var u0 = iu / NU, u1 = (iu + 1) / NU, v0 = iv / NVt, v1 = (iv + 1) / NVt, Mw = W(fc, (u0 + u1) / 2, (v0 + v1) / 2), zm = Mw[2] - c[2];
+        var thm = Math.acos(clamp(zm * cth / hz, -1, 1)), fm = fc + ((u0 + u1) / 2 - 0.5) * 2 * al, nm = pnrm(thm, Math.cos(fm), Math.sin(fm)), dm = vlen(Mw), nv = -dot3(nm, Mw) / dm;
+        if (nv < 0.06) continue;
+        var A = S.cam.p(W(fc, u0, v0)), B = S.cam.p(W(fc, u1, v0)), C = S.cam.p(W(fc, u0, v1)); if (!A || !B || !C) continue;
+        g.setTransform(dpr * (B[0] - A[0]), dpr * (B[1] - A[1]), dpr * (C[0] - A[0]), dpr * (C[1] - A[1]), dpr * A[0], dpr * A[1]);
+        g.globalAlpha = (glowK > 0 ? 0.82 : 0.9) * smooth(0.06, 0.32, nv);
+        g.drawImage(tex, u0 * T.w, v0 * T.h, (u1 - u0) * T.w, (v1 - v0) * T.h, 0, 0, 1.04, 1.04);
+      }
+    });
+    g.globalAlpha = 1; g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  // near things over far: the cap away from you, the paper, then the cap toward you
+  var below = c[2] > 0;
+  cap(!below); body(); cap(below);
+  var tp = [c[0], c[1], c[2] + hz + ch * 0.65];   // the hook it hangs from
+  S.line(tp, v3(tp, [0, 0, 1], kind === 'shop' ? 0.11 : 0.06), 0.005, rgbs(shade(L, [30, 26, 24], tp, [0, 0, -1], 0.5)), g);
 }
 
 /* ================= events ================= */
@@ -4302,7 +4778,7 @@ var GLSL_MAIN = GLSL_P + GLSL_COMMON + '\n' + GLSL_DOME + '\n' + [
   'vec3 groundD(vec3 d, out float tg) {',  // in display units, like the painted world
   '  float dz = min(d.z, -1e-4); tg = 1.55 / -dz; vec2 P = d.xy * tg;',
   '  float foot = tg * uPix / max(-dz, 0.015);',
-  '  vec3 gc; float wetK = uG.z; vec4 gm = vec4(0.0), gm2 = vec4(0.0);',
+  '  vec3 gc; float wetK = uG.z; vec4 gm = vec4(0.0), gm2 = vec4(0.0), mir = vec4(0.0);',
   '#ifdef F_GM',
   '  { vec2 uv = P / (2.0 * uGMR.x) + 0.5; if (uv.x > 0.0 && uv.y > 0.0 && uv.x < 1.0 && uv.y < 1.0) { uv.x = clamp(uv.x, 0.004, 0.996) * 0.5; gm = texture2D(uGM, uv); gm2 = texture2D(uGM, uv + vec2(0.5, 0.0)); } }',
   '#endif',
@@ -4368,21 +4844,71 @@ var GLSL_MAIN = GLSL_P + GLSL_COMMON + '\n' + GLSL_DOME + '\n' + [
   '      lf *= smoothstep(0.5, 0.25, length(fp)); float lfa = mix(lf, 0.1, smoothstep(0.02, 0.08, foot));',
   '      gc = mix(gc, mix(vec3(180., 60., 30.), vec3(214., 120., 40.), hash12(cell + 3.0)) / 255., lfa); }',
   '  } else {',
-  '    float wAc = dot(P, vec2(-0.6018, 0.7986)), sA0 = dot(P, vec2(0.7986, 0.6018)), wq = wAc + 0.12 * sin(sA0 * 0.21) + 0.05 * sin(sA0 * 0.9), rut = exp(-pow((abs(wq) - 0.72) / 0.11, 2.0)) * (0.7 + 0.3 * vn2(vec2(sA0 * 0.5, wAc)));',
+  '    float ekE = 1.0;',
+  '#ifdef F_GM',
+  '    ekE = gm.g;',
+  '#endif',
+  '    float wAc = dot(P, vec2(-0.6018, 0.7986)), sA0 = dot(P, vec2(0.7986, 0.6018)), wq = wAc + 0.12 * sin(sA0 * 0.21) + 0.05 * sin(sA0 * 0.9), rut = exp(-pow((abs(wq) - 0.72) / 0.06, 2.0)) * smoothstep(0.3, 0.7, vn2(vec2(sA0 * 0.35, wAc * 2.0)) * 0.7 + vn2(P * 2.3) * 0.3) * 0.75;',   // wheel ruts: narrow, broken, worn into the dust
   '    float nn = vn2(P * 1.7) * 0.6 + mix(vn2(P * 7.0), 0.5, smoothstep(0.04, 0.15, foot)) * 0.4, pn = vn2(P * 0.45 + 3.0) + 0.15 * vn2(P * 3.0), pud = smoothstep(0.66, 0.76, pn), ring = smoothstep(0.6, 0.65, pn) * (1.0 - smoothstep(0.65, 0.7, pn));',
   '    float grit = mix(vn2(P * 40.0) * 0.5 + vn2(P * 110.0) * 0.5, 0.5, smoothstep(0.008, 0.03, foot));',
-  '    if (uG.y > 0.5) gc = vec3(214.0 - rut * 50.0, 218.0 - rut * 46.0, 226.0 - rut * 36.0) / 255.0 * (0.95 + 0.08 * grit);',
+  '    vec3 snowC = vec3(0.0);',
+  '    if (uG.y > 0.5) {',   // snow: gentle drifts, lit on the sun's side and blue in their lee, never a flat white
+  '      float sr = vn2(P * 0.35) * 0.6 + vn2(P * 1.1 + 7.0) * 0.4, ks = clamp(dot(uKeyK, vec3(0.33)) * 1.6, 0.0, 1.0);',
+  '      vec2 q1 = mat2(0.8, -0.6, 0.6, 0.8) * P * 0.35, q2 = mat2(0.28, 0.96, -0.96, 0.28) * P * 0.8 + 5.0;',   // two rotated lattices, so the drifts have no grain to line up in
+  '      vec2 sg = vec2(vn2(q1 + vec2(0.06, 0.0)) - vn2(q1 - vec2(0.06, 0.0)), vn2(q1 + vec2(0.0, 0.06)) - vn2(q1 - vec2(0.0, 0.06))) * 7.0 * mat2(0.8, -0.6, 0.6, 0.8)',
+  '              + vec2(vn2(q2 + vec2(0.06, 0.0)) - vn2(q2 - vec2(0.06, 0.0)), vn2(q2 + vec2(0.0, 0.06)) - vn2(q2 - vec2(0.0, 0.06))) * 3.5 * mat2(0.28, 0.96, -0.96, 0.28);',
+  '      float rel = mix(1.0, 0.08, smoothstep(0.005, 0.035, foot));',   // far off, the relief flattens (at a grazing angle it would only band)
+  '      float lam = clamp(0.74 + ((dot(sg, uSunH) * 1.4) * ks + (sr - 0.5) * 0.3) * rel, 0.3, 1.0);',
+  '      snowC = mix(vec3(160., 178., 210.), vec3(234., 237., 243.), lam) / 255.0 * (0.94 + 0.06 * grit) * 0.72; }',
+  '    if (uG.y > 0.5) gc = snowC * mix(vec3(1.0), vec3(0.78, 0.8, 0.86), rut * 0.8 + smoothstep(1.4, 0.2, abs(wAc)) * 0.12);',   // trodden greyer along the street
+  '    else if (ekE < 0.004) gc = vec3(0.5, 0.43, 0.34);',   // (no street here: the meadow below replaces it, so skip the street's detail)
   '    else { gc = vec3(132.0 + nn * 40.0 - rut * 52.0 - pud * 36.0 - ring * 26.0, 112.0 + nn * 32.0 - rut * 46.0 - pud * 32.0 - ring * 22.0, 88.0 + nn * 24.0 - rut * 34.0 - pud * 22.0 - ring * 14.0) / 255.0 * (0.74 + 0.52 * grit);',
-  '      float sAl = dot(P, vec2(0.7986, 0.6018)), dust = vn2(vec2(sAl * 0.25, wAc * 1.2) + 5.0) * 0.6 + vn2(P * 0.6) * 0.4;',   // dust swept along the street, darker where feet and wheels pass
-  '      gc *= 0.8 + 0.4 * dust; gc = mix(gc, gc * vec3(0.84, 0.82, 0.8), smoothstep(1.4, 0.2, abs(wAc)) * 0.35); gc = mix(gc, vec3(196., 178., 148.) / 255. * (0.9 + 0.2 * grit), smoothstep(2.0, 3.0, abs(wAc)) * (0.25 + 0.35 * vn2(P * 1.3 + 9.0)));',
+  '      float sAl = dot(P, vec2(0.7986, 0.6018)), dust = vn2(vec2(sAl * 0.45, wAc * 0.8) + 5.0) * 0.5 + vn2(P * 0.6) * 0.5;',   // dust swept along the street, darker where feet and wheels pass
+  '      gc *= 0.88 + 0.24 * dust; gc = mix(gc, gc * vec3(0.86, 0.84, 0.82), smoothstep(1.4, 0.2, abs(wAc)) * 0.25); gc = mix(gc, vec3(196., 178., 148.) / 255. * (0.9 + 0.2 * grit), smoothstep(2.0, 3.0, abs(wAc)) * (0.25 + 0.35 * vn2(P * 1.3 + 9.0)));',
   '      vec2 pc2 = floor(P * 26.0); vec2 pf = fract(P * 26.0) - 0.5; float peb = step(0.8, hash12(pc2)) * smoothstep(0.3, 0.18, length(pf)) * (1.0 - smoothstep(0.004, 0.012, foot)); gc = mix(gc, vec3(150., 142., 128.) / 255. * (0.8 + 0.5 * hash12(pc2 + 1.7)), peb * 0.7);',
   '      vec2 sc = floor(P * 9.0); float sh0 = hash12(sc); vec2 sf = fract(P * 9.0) - 0.5 - (vec2(sh0, hash12(sc + 3.1)) - 0.5) * 0.4;',   // stones worked into the road
   '      float stn = smoothstep(0.22, 0.13, length(sf * vec2(1.0, 1.3))) * step(0.76, sh0) * (1.0 - smoothstep(0.01, 0.04, foot)); float sts = smoothstep(0.26, 0.16, length((sf - vec2(0.05, -0.05)) * vec2(1.0, 1.3))) * step(0.76, sh0) * (1.0 - stn); gc *= 1.0 - sts * 0.3;',
   '      gc = mix(gc, mix(vec3(120., 114., 104.), vec3(168., 160., 146.), hash12(sc + 9.0)) / 255.0, stn * 0.85);',
   '      float ft = step(0.7, hash12(floor(P * 33.0))) * (1.0 - smoothstep(0.004, 0.012, foot)); gc *= 1.0 - ft * 0.12; }',
-  '    float aw = abs(wAc); if (aw > 3.1 && aw < 3.4) gc = vec3(90., 92., 96.) / 255. * (0.85 + 0.3 * grit);',
-  '    if (aw > 3.4) gc *= 0.8;',
-  '    wetK = max(wetK, pud * 0.3 * (1.0 - uG.y));',
+  '    float aw = abs(wAc), inSt = uG.w * smoothstep(-3.2, -2.6, sA0);',   // the gutters and the eaves' shade belong to the street (from stage 9, this side of the bridge)
+  '    if (aw > 3.1 && aw < 3.4) gc = mix(gc, vec3(90., 92., 96.) / 255. * (0.85 + 0.3 * grit), inSt);',
+  '    if (aw > 3.4) gc *= 1.0 - 0.2 * inSt;',
+  '    float ek = 1.0;',
+  '#ifdef F_GM',
+  '    ek = gm.g;',   // packed earth only on the paths, the yards and the streets; grass and the fields everywhere else
+  '    float pdw = gm.a, dke = gm2.r;',
+  '    if (ek < 0.995) {',
+  '      bool spr = uGS.w > 1.5, aut = uGS.w > 0.5 && uGS.w < 1.5;',
+  '      vec3 g0 = spr ? vec3(84., 116., 44.) : aut ? vec3(100., 108., 56.) : vec3(52., 86., 30.), g1 = spr ? vec3(146., 170., 74.) : aut ? vec3(162., 154., 92.) : vec3(104., 134., 52.);',
+  '      float mn2 = vn2(P * 1.3) * 0.55 + mix(vn2(P * 6.0), 0.5, smoothstep(0.05, 0.2, foot)) * 0.45, fn2 = 0.5, tf2 = 0.5, bl2 = 0.5;',
+  '      if (foot < 0.05) {',   // the fine detail only where a pixel can show it (past this it has faded to its mean)
+  '        fn2 = mix(vn2(P * 31.0) * 0.6 + vn2(P * 83.0) * 0.4, 0.5, smoothstep(0.01, 0.04, foot)); tf2 = mix(vn2(P * 14.0) * 0.6 + vn2(P * 41.0) * 0.4, 0.5, smoothstep(0.015, 0.05, foot));',
+  '        if (foot < 0.02) { vec2 bq2 = vec2(P.x * 46.0 + vn2(P * 3.0) * 4.0, P.y * 46.0); bl2 = mix(vn2(bq2 * vec2(1.0, 0.35)) * 0.6 + vn2(P * 120.0) * 0.4, 0.5, smoothstep(0.006, 0.02, foot)); } }',
+  '      float dry2 = smoothstep(0.55, 0.8, vn2(P * 0.45 + 21.0) * 0.7 + vn2(P * 2.1 + 4.0) * 0.3), lush2 = smoothstep(0.6, 0.85, vn2(P * 0.7 - 7.0));',
+  '      vec3 gg = mix(g0, g1, mn2 * 0.6 + tf2 * 0.25 + bl2 * 0.15) / 255.0 * (0.74 + 0.5 * fn2 * bl2);',
+  '      gg = mix(gg, g0 * 0.62 / 255.0 * (0.8 + 0.4 * bl2), lush2 * 0.5); gg = mix(gg, vec3(142., 132., 76.) / 255.0 * (0.8 + 0.4 * bl2), dry2 * 0.45);',
+  '      gg *= 0.8 + 0.3 * smoothstep(0.55, 0.85, tf2) + 0.12 * (bl2 - 0.5);',
+  '      { vec2 fq = P * 4.0 + vec2(vn2(P * 0.9), vn2(P * 0.9 + 3.0)) * 2.0, fc = floor(fq); vec2 ff = fract(fq) - 0.5 - (vec2(hash12(fc + 5.1), hash12(fc + 8.3)) - 0.5) * 0.5; float fh = hash12(fc);',   // weeds and wildflowers
+  '        float fl = step(0.86, fh) * smoothstep(0.13, 0.04, length(ff)) * mix(1.0, 0.25, smoothstep(0.01, 0.05, foot)) * smoothstep(0.35, 0.6, vn2(P * 0.35 + 40.0));',
+  '        float fk = hash12(fc + 2.0); vec3 fcol = spr ? (fk < 0.4 ? vec3(236., 214., 92.) : fk < 0.75 ? vec3(244., 240., 226.) : vec3(226., 170., 196.)) : aut ? (fk < 0.4 ? vec3(236., 226., 200.) : fk < 0.75 ? vec3(214., 120., 60.) : vec3(196., 176., 120.)) : (fk < 0.4 ? vec3(236., 240., 246.) : fk < 0.75 ? vec3(150., 150., 220.) : vec3(240., 220., 120.));',
+  '        gg = mix(gg, fcol / 255.0, fl * 0.85); }',
+  '      if (uG.y > 0.5) gg = snowC * (0.97 + 0.06 * fn2) * mix(1.0, 0.9, smoothstep(0.6, 0.9, tf2));',   // (tufts of grass push through it a little)
+  '      vec3 fld = gg;',
+  '      if (pdw > 0.01) {',   // 田んぼ: flooded and mirroring the sky in spring, green rice in summer, gold in autumn, stubble in winter
+  '        vec2 pu = vec2(dot(P, vec2(0.9205, -0.3907)), dot(P, vec2(0.3907, 0.9205))) / 0.3; vec2 hf = fract(pu) - 0.5; float hill = smoothstep(0.24, 0.08, length(hf)) * (1.0 - smoothstep(0.01, 0.04, foot)), rowv = 0.5 + 0.5 * cos(pu.y * 6.2832);',
+  '        float far2 = smoothstep(0.01, 0.05, foot), pn2 = vn2(P * 0.6 + 13.0);',
+  '        vec3 pc;',
+  '        if (uG.y > 0.5) pc = mix(vec3(214., 218., 226.), vec3(150., 132., 104.), (hill * 0.5 + 0.08) * (1.0 - far2 * 0.5)) / 255.0;',
+  '        else if (spr) { pc = mix(vec3(70., 64., 48.), vec3(110., 150., 64.), hill * 0.8 + far2 * 0.12) / 255.0;',
+  '          vec3 rd = vec3(d.xy, -d.z), rcm = vec3(rd.x, rd.z, rd.y); vec4 frm = uFgOn > 0.5 ? textureCube(uCS, rcm) * faceA(rcm) : vec4(0.0);',
+  '          float fres2 = 0.35 + 0.6 * pow(1.0 - min(-dz, 1.0), 4.0); mir = vec4((tone(skyLin(rd)) * (1.0 - frm.a) + frm.rgb) * 0.78, pdw * fres2 * (1.0 - hill * 0.75) * (0.85 + 0.15 * pn2)); }',
+  '        else if (aut) pc = mix(vec3(150., 118., 50.), vec3(214., 178., 86.), mix(rowv * 0.5 + hill * 0.5, 0.5, far2) * 0.7 + pn2 * 0.3) / 255.0;',
+  '        else pc = mix(vec3(40., 84., 28.), vec3(88., 136., 46.), mix(rowv * 0.5 + hill * 0.5, 0.5, far2) * 0.7 + pn2 * 0.3) / 255.0;',
+  '        fld = mix(fld, pc, pdw); }',
+  '      if (dke > 0.01) fld = mix(fld, gg * 0.92, dke);',   // the 畦 between the paddies: narrow grassy banks
+  '      gc = mix(fld, gc, ek); }',
+  '#endif',
+  '    wetK = max(wetK, pud * 0.3 * (1.0 - uG.y) * ek);',
   '  }',
   '  vec3 l = uAmb;',
   '#ifdef F_GM',
@@ -4392,11 +4918,12 @@ var GLSL_MAIN = GLSL_P + GLSL_COMMON + '\n' + GLSL_DOME + '\n' + [
   '  { vec2 uv = P / (2.0 * uLMR.x) + 0.5; if (uv.x > 0.0 && uv.y > 0.0 && uv.x < 1.0 && uv.y < 1.0) l += dec(texture2D(uLM, uv).rgb); }',
   '#endif',
   '  vec3 c = gc * l;',
+  '  c = mix(c, mir.rgb, mir.a);',   // the flooded paddies mirror the sky
   '  if (uG.y > 0.5) { vec2 sc2 = floor(P * 60.0); float sp = step(0.993, hash12(sc2 + floor(d.xy * 260.0) * 0.37)) * smoothstep(-0.02, -0.25, d.z);',   // snow crystals glinting as the eye moves
   '    c += sp * (uKeyK * 1.6 + uAmb * 0.4); }',
   '#ifdef F_WET',
   '  if (wetK > 0.0) {',
-  '    float pdl = smoothstep(0.63, 0.72, vn2(P * 0.5 + vec2(11.0, -4.0))) * 0.85 * (uG.z > 0.5 ? 1.0 : 0.5);',
+  '    float pdl = smoothstep(0.63, 0.72, vn2(P * 0.5 + vec2(11.0, -4.0))) * 0.85 * (uG.z > 0.5 ? 1.0 : 0.16);',   // (in dry weather only a damp sheen, not standing water)
   '    c *= mix(1.0, 0.72, uG.z);',
   '    vec3 rd = vec3(d.xy, -d.z), rc = vec3(rd.x, rd.z, rd.y);',
   '    vec4 fr = uFgOn > 0.5 ? textureCube(uCS, rc) : vec4(0.0);',
@@ -5243,7 +5770,7 @@ function mountSky(el, opts) {
   function cubeKeyNow() {
     var sd = st.sunDir, md = st.moonDir;
     return [st.world, st.light, st.season, st.stage, st.event, st.weather, st.fireworks ? 1 : 0, Math.round(Math.atan2(sd[0], sd[1]) * R2D / 4), Math.round(sd[2] * 30),
-      st.light === 'night' && st.moonUp ? Math.round(md[2] * 10) + ',' + Math.round(st.moonIllum * 10) : ''].join('|');
+      st.light === 'night' && st.moonUp ? Math.round(md[2] * 10) + ',' + Math.round(st.moonIllum * 10) : '', TXT.ver].join('|');
   }
   function faceCanvases() {
     if (GS.cv) return GS.cv;
@@ -5269,7 +5796,7 @@ function mountSky(el, opts) {
     var lm = groundLightMap(L, 30, 128); GLR.lightMap(lm, 128); GS.lmOn = !!lm;
     // the ground's own map (water, sand, moss), and the koi
     GS.gm = null; GS.koi = null;
-    if (st.world === 'town') { var tgm = townGroundMap(512, 60); if (L.key) shadowMap(shadowProxiesTown(st.stage), L.key.d, 512, 60, tgm, 1024, 512 * 4 + 2); GLR.groundMap(tgm, 1024, 512); GS.gm = { R: 60, F: null, rk: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]] }; }
+    if (st.world === 'town') { var tgm = townGroundMap(512, 80, st.stage); if (L.key) shadowMap(shadowProxiesTown(st.stage), L.key.d, 512, 80, tgm, 1024, 512 * 4 + 2); GLR.groundMap(tgm, 1024, 512); GS.gm = { R: 80, F: null, rk: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]] }; }
     if (st.world === 'garden') {
       var gmm = gardenGroundMap(st.stage, 256, 22);
       if (L.key) shadowMap(shadowProxiesGarden(gmm.F), L.key.d, 256, 22, gmm.data, 512, 256 * 4 + 2);
@@ -5431,7 +5958,7 @@ function mountSky(el, opts) {
     var Lg = GS.L || sceneLight(st), kz = Lg.key && Lg.key.d[2] > 0 ? Lg.key.d[2] : 0;
     U.uAmb = Lg.key ? v3(Lg.amb, Lg.key.c, kz) : Lg.amb; U.uKeyK = Lg.key ? vsc(Lg.key.c, kz * 0.92) : [0, 0, 0];
     U.uHaze = vsc(Lg.haze, 1 / 255); U.uHz = [Lg.hazeD, Lg.hazeK];
-    U.uG = [town ? 1 : 0, st.season === 'winter' ? 1 : 0, Lg.wet ? 1 : 0, !town && st.season === 'autumn' ? 1 : 0];
+    U.uG = [town ? 1 : 0, st.season === 'winter' ? 1 : 0, Lg.wet ? 1 : 0, town ? (st.stage >= 9 ? 1 : 0) : st.season === 'autumn' ? 1 : 0];   // (w: autumn leaves in the garden; a built street in the town)
     U.uLMR = [30, GS.lmOn ? 1 : 0];
     var gF = GS.gm && GS.gm.F;
     U.uGMR = [GS.gm ? GS.gm.R : 1, GS.gm ? 1 : 0]; U.uRk = GS.gm ? [].concat.apply([], GS.gm.rk) : new Array(16).fill(0);
@@ -5760,6 +6287,7 @@ function mountSky(el, opts) {
   if (typeof IntersectionObserver === 'function') { io = new IntersectionObserver(function (en) { visible = en[0].isIntersecting; if (visible) { camDirty = true; kick(); } }); io.observe(el); }
   if (typeof ResizeObserver === 'function') { ro = new ResizeObserver(function () { resize(); }); ro.observe(el); }
 
+  txtInit(function () { if (dead) return; sceneKey = ''; cacheKey = ''; camDirty = true; kick(); });   // repaint the signs once the glyph atlas is in
   resize(); apply(opts || {});
   st.now = nowS(); windNow(); try { render(0); } catch (e) { if (typeof window !== 'undefined' && window.__mogiDebug) throw e; }
   return {
@@ -5894,8 +6422,11 @@ Fx.prototype.draw = function (g, cam, st) {
     for (i = 0; i < this.p.length; i++) {
       var e = this.p[i]; if (!e.v) continue;
       var tumble = e.t * (3 + e.s * 2) + e.ph, N = nrm3([Math.sin(tumble), Math.cos(tumble * 0.7), Math.cos(tumble)]), U = nrm3(cross3(N, [0.3, 0.2, 1])), V = cross3(N, U);
-      var alb = k === 'petal' ? [252, 214, 228] : st.world === 'town' ? [214, 170, 60] : (e.c < 0.6 ? [200, 46, 28] : [226, 120, 40]);
-      var col = rgbs(L ? mix(leafShade(L, alb, [255, 236, 244], e.p, N, 1, 1.25), alb, 0.35) : alb), sz = k === 'petal' ? 0.016 : 0.032;
+      var ed = vlen(e.p); if (k !== 'petal' && ed < 1.5) continue;   // (a leaf brushing the lens would be a huge flat cut-out)
+      var alb = k === 'petal' ? [252, 214, 228] : e.c < 0.45 ? [196, 44, 26] : e.c < 0.8 ? [224, 110, 36] : [222, 176, 58];   // momiji: reds, oranges, a few yellow
+      var back = k !== 'petal' && dot3(N, e.p) > 0;   // the paler, duller underside as it turns over
+      if (back) alb = mix(alb, [176, 132, 92], 0.35);
+      var col = rgbs(L ? mix(leafShade(L, alb, [255, 236, 244], e.p, N, 1, 1.25), alb, k === 'petal' ? 0.35 : 0.15) : alb), sz = k === 'petal' ? 0.016 : 0.032;
       var S = { cam: cam, dpr: 1, g: g, gn: g, onScreen: SceneCtx.prototype.onScreen, ctx: function () { return g; }, jac: SceneCtx.prototype.jac, shape: SceneCtx.prototype.shape };
       S.dpr = st.dprNow || 1;
       if (k === 'petal') {
@@ -5905,7 +6436,9 @@ Fx.prototype.draw = function (g, cam, st) {
         g.beginPath(); g.ellipse(pp[0], pp[1], Math.max(0.6, rr * 0.8), Math.max(0.35, rr * (0.18 + 0.4 * Math.abs(Math.sin(tumble)))), tumble, 0, TAU); g.fill();
         g.shadowBlur = 0; g.globalAlpha = 1;
       }
-      else S.shape(sh.momiji, e.p, vsc(U, sz), vsc(V, sz), col, g);
+      else { var pl = cam.p(e.p); if (!pl) continue; var lk = Math.min(1, 12 / Math.max(1e-3, sz * F / pl[2])), cu = 0.82 + 0.18 * Math.cos(tumble * 1.3);   // a cap on the size, and a slight curl
+        S.shape(sh.momiji, e.p, vsc(U, sz * lk), vsc(V, sz * lk * cu), col, g);
+        var m0 = cam.p(v3(e.p, V, -sz * lk * 0.7)), m1 = cam.p(v3(e.p, V, sz * lk * 0.5)); if (m0 && m1 && sz * lk * F / pl[2] > 3) { g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); g.strokeStyle = rgbas(mix(alb, [60, 20, 10], 0.5), 0.5); g.lineWidth = 0.6; g.beginPath(); g.moveTo(m0[0], m0[1]); g.lineTo(m1[0], m1[1]); g.stroke(); } }   // the midrib
     }
     g.setTransform(st.dprNow || 1, 0, 0, st.dprNow || 1, 0, 0);
   }
