@@ -1,8 +1,9 @@
 /*! MogiGarden — 学びの庭: a painterly Japanese garden that grows with study time.
  * Self-contained, framework-free (ES2017). Canvas-2D procedural painter + light rAF overlays.
  * API: window.MogiGarden = { VERSION, STAGES, EVENTS, RARE, WEATHERS, stageFor, seasonFor, lightFor, windAt, weatherAt, fireworksAt, mount }
- *   mount(el, {stage, season, light, quality, animate, onReady, event, onCue, date, weather, fireworks})
- *   -> controller { update, playStageUp, pause, resume, destroy, tap(nx, ny), _summon(id), stats }
+ *   mount(el, {stage, season, light, quality, animate, onReady, event, onCue, date, weather, fireworks, wide, weeds, onWeed})
+ *     weeds: [{id, seed, age 0..1}] (a live overlay, never baked); onWeed(id): once, when one is pulled (cue 'weed' too)
+ *   -> controller { update, playStageUp, pause, resume, destroy, tap(nx, ny) (-> {hit: 'weed', id} first), _summon(id), stats }
  */
 (function () {
 'use strict';
@@ -8259,6 +8260,425 @@ function rareStudy(canvas, name, o) {
   } finally { restoreState(st); }
 }
 
+/* ---- 08w_weeds.js ---- */
+/* ================= weeds to pull (just for fun) =================
+   The app hands over a list [{id, seed, age}]. Each weed's place comes from its seed: a spot on the lawn or the moss, by a
+   stepping stone, along the edge of a bed or a rock, or at the foot of the fence; from there the nearest good spot is
+   searched out: open ground on the walk grid, clear of the stones, the edging, the water, the raked gravel, the hill and
+   the buildings, on screen and in plain view (the depth image the visitors use). Its kind comes from its seed and the
+   season, its size from its age. Each is a small sprite cached per look and size and drawn on the live overlay (never baked
+   into the painting), swaying with the grass, cut wherever something stands in front of it. Pulled, it gives a tug and a
+   wiggle, comes up with its root tuft and a clod, throws a puff of crumbs, arcs away and fades; a patch of disturbed soil
+   is left, fading over a few seconds. */
+var WEED_POOL = {
+  spring: [['hakobe', 3], ['nazuna', 3], ['katabami', 2], ['sugina', 2], ['dokudami', 1]],
+  summer: [['dokudami', 3], ['hishiba', 3], ['katabami', 2], ['sugina', 2], ['enokoro', 2]],
+  autumn: [['enokoro', 4], ['hishiba', 2], ['katabami', 2], ['sugina', 1]],
+  winter: [['nazuna', 3], ['hakobe', 2], ['katabami', 2]]
+};
+var WEED_VIS = 2.2;   // drawn larger than life (a game element: it must read at a glance, and be found and tapped); the designs are life size. The least scale:
+var WEED_KK = { sugina: 1, dokudami: 1, hakobe: 1.4, nazuna: 1.15, katabami: 1.45, hishiba: 1, enokoro: 0.95 };   // the low mats a little more, so every kind reads about as tall
+/* the display scale for this view: a grown weed in the middle of where they grow stands about 3.5% of the view's height, and never under
+   about 14 CSS px (cssPx: logical px per CSS px); between 2.2x and 6x life size */
+function weedVisFor(Fd, cssPx) {
+  var y = lerp(Fd.front, Fd.fr[2], 0.5), q = groundAt(W / 2, y); if (!q) return WEED_VIS;
+  var a = P(q.x, 0, q.z), b = P(q.x, 0.1, q.z), kv = Math.abs(a.y - b.y) * 10, Ht = Math.max(0.035 * H, 14 * (cssPx || 1));
+  return clamp(Ht / (0.2 * kv), WEED_VIS, 6);
+}
+var WEED_KINDS = ['sugina', 'dokudami', 'hakobe', 'nazuna', 'katabami', 'hishiba', 'enokoro'];
+var WEED_H = { sugina: 0.24, dokudami: 0.23, hakobe: 0.11, nazuna: 0.24, katabami: 0.1, hishiba: 0.25, enokoro: 0.26 };   // full-grown height (m)
+var WEED_FLEX = { sugina: 0.5, dokudami: 0.4, hakobe: 0.22, nazuna: 0.75, katabami: 0.3, hishiba: 0.95, enokoro: 1.05 };
+/* the look of one weed: its kind (by seed and season), the variety, whether it is in flower, its size */
+function weedLook(seed, age, season, date, force) {
+  var r = mulberry32((seed ^ 0x2f6b) + 7 * (SEASON_KEYS.indexOf(season) + 1)), pool = WEED_POOL[season] || WEED_POOL.summer, sw = 0, i, kind = pool[0][0];
+  var mo = date ? date.getMonth() : -1, day = date ? date.getDate() : 15;
+  pool = pool.filter(function (p) { return !(p[0] === 'enokoro' && season === 'summer' && mo >= 0 && mo < 7); });   // the foxtails head in late summer
+  pool.forEach(function (p) { sw += p[1]; });
+  var x = r() * sw; for (i = 0; i < pool.length; i++) { x -= pool[i][1]; if (x <= 0) { kind = pool[i][0]; break; } }
+  if (force && WEED_KINDS.indexOf(force) >= 0) kind = force;
+  var wint = season === 'winter', a = clamp(+age || 0);
+  var L = { kind: kind, seed: seed >>> 0, age: a, season: season, dormant: wint, sub: r() < 0.5 ? 0 : 1, var: r(), flower: false };
+  L.s = (0.45 + 0.55 * Math.pow(a, 0.75)) * (0.9 + 0.22 * r()) * (wint ? 0.55 : 1);
+  if (kind === 'dokudami') L.flower = season === 'summer' && a > 0.5 && (mo < 0 || mo === 5 || (mo === 6 && day < 12));   // its white flowers: June
+  else if (kind === 'hakobe' || kind === 'nazuna') L.flower = season === 'spring' && a > 0.4;
+  else if (kind === 'katabami') L.flower = !wint && a > 0.5 && L.var < 0.75;
+  else if (kind === 'hishiba' || kind === 'enokoro') L.flower = !wint && a > 0.5;
+  if (kind === 'katabami') L.sub = L.var < 0.22 ? 1 : 0;   // アカカタバミ: the purple-leaved one
+  return L;
+}
+/* the painting's post pass (post(): the light's wash, the grade, the vignette) as a colour transfer at one point of the frame,
+   so a weed drawn on the live overlay sits in the painting as if it had been painted with it */
+function weedRgba(s) { var m = /rgba?\(([^)]+)\)/.exec(s || ''); if (!m) return [255, 255, 255, 0]; var v = m[1].split(',').map(parseFloat); return [v[0], v[1], v[2], v.length > 3 ? v[3] : 1]; }
+function weedPost(x, y) {
+  var L = LIT, yo = CAM.cy - 204, M = Math.max(W, H);
+  var sx = W * (L.sunX < 0.5 ? L.sunX - 0.08 : L.sunX + 0.08), sy = yo - H * 0.05 + L.sunY * 120, u = clamp(Math.hypot(x - sx, y - sy) / (W * 1.1));
+  var w0 = weedRgba(L.wash[0]), w1 = weedRgba(L.wash[1]), w2 = [255, 200, 140, 0], wc = u < 0.55 ? [0, 1, 2, 3].map(function (i) { return lerp(w0[i], w1[i], u / 0.55); }) : [0, 1, 2, 3].map(function (i) { return lerp(w1[i], w2[i], (u - 0.55) / 0.45); });
+  var gr = null;
+  if (L.grade) { var m = L.gradeMid ? clamp((L.gradeMid * 300 + yo) / H) : 0.45, v = clamp(y / H); gr = v < m ? mixc(L.grade[0], L.grade[1], v / m) : mixc(L.grade[1], L.grade[2], (v - m) / Math.max(0.01, 1 - m)); }
+  var vt = clamp((Math.hypot(x - 0.52 * W, y - 0.52 * H) - 0.3 * M) / (0.48 * M)), vg = mixc([255, 255, 255], L.vig, vt);
+  var ga = L.id === 'night' ? 0.25 : 0.45, ft = L.foliageTint || null;
+  return function (c, leafy) {
+    var out = [0, 0, 0];
+    for (var i = 0; i < 3; i++) {
+      var cb = clamp((leafy && ft ? c[i] * ft[i] : c[i]) / 255), cs = wc[i] / 255, a = wc[3], B;
+      if (cs <= 0.5) B = cb - (1 - 2 * cs) * cb * (1 - cb); else { var D = cb <= 0.25 ? ((16 * cb - 12) * cb + 4) * cb : Math.sqrt(cb); B = cb + (2 * cs - 1) * (D - cb); }   // soft-light
+      cb += (B - cb) * a;
+      cb += (cs - cb * cs) * a * ga;   // screen
+      if (gr) cb *= gr[i] / 255;
+      cb *= vg[i] / 255;
+      out[i] = cb * 255;
+    }
+    return out;
+  };
+}
+/* how deep the snow lies at a point of the lawn (as the ground painter has it) */
+function weedSnow(x, z) {
+  if (!SEA.snow) return 0;
+  var s = sstep(0.21, 0.37, NZ.fbm(x * 0.8 + 3, z * 0.8 - 2, 2) + 0.12);
+  if (F.maple > 0.4) s *= sstep(0.3, 1.4, Math.sqrt((x - LAY.maple.x) * (x - LAY.maple.x) + (z - LAY.maple.z) * (z - LAY.maple.z) * 1.44));
+  if (F.teahouse && x > TH.X0 - 0.5 && x < TH.X1 + 0.5 && z > TH.ZE - 0.35 && z < TH.ZE + 0.6) s *= 0.3;
+  return s;
+}
+/* ---- where weeds can grow ---- */
+function weedField(R) {   // computed once per painting, under its scene globals
+  var G = zGeoReady(R), C = zClear(G, 'land'), stones = [], GV = F.gravel || F.gravelOutline ? gravelInfo(F) : null;
+  if (F.path) stones = stones.concat(PATH_MAIN.slice(0, F.bridge ? 9 : 8));
+  if (F.teaPath) stones = stones.concat(PATH_TEA);
+  if (F.gate) stones = stones.concat(PATH_GATE);
+  var yp = F.marsh ? yatsuPieces() : [];
+  var bx = []; // boxes no weed grows in: under the wisteria, the bridge's ends, the teahouse and its veranda, the shishi-odoshi
+  if (F.wisteria) bx.push([LAY.wis.x0 - 0.35, LAY.wis.x1 + 0.35, LAY.wis.z0 - 0.4, LAY.wis.z1 + 0.3]);
+  if (F.bridge) bx.push([BRIDGE.x0 - 0.35, BRIDGE.x1 + 0.35, BRIDGE.zc - 0.85, BRIDGE.zc + 0.85]);
+  if (F.teahouse) bx.push([TH.X0 - 0.4, TH.X1 + 0.4, TH.ZE - 0.45, TH.ZB + 0.2]);
+  if (F.shishi) { var s = LAY.shishi; bx.push([s.x - 1.3, s.x + 0.6, s.z - 0.45, s.z + 0.45]); }
+  var cam0 = makeCam(REF_W, REF_H), dx = CAM.cx - cam0.cx, dy = CAM.cy - cam0.cy;   // the 4:3 card's frame in this view (the camera is the same; only the frame moves)
+  var shade = []; try { hitTargets({ F: F }).forEach(function (h) { if (h.id !== 'tree' || !h.c) return; var gy = Math.max(0, h.c[1] - h.R * 0.3); shade.push([h.c[0], h.c[2], h.R * 1.05]); shade.push([h.c[0] + gy * SX, h.c[2] + gy * SZ, h.R * 0.95]); }); } catch (e) { /* no shade discs */ }   // under each crown, and its cast shadow
+  var hz = P(0, 0, LAY.fenceZ).y, bot = dy + REF_H * 0.94;
+  return { G: G, C: C, stones: stones, GV: GV, yp: yp, bx: bx, R: R, shade: shade, fr: [dx + REF_W * 0.07, dx + REF_W * 0.93, bot], horizon: hz, front: lerp(hz, bot, 0.3), zMax: Math.min(F.fence ? LAY.fenceZ - 0.32 : EDGE - 1.1, EDGE - 1.1) };
+}
+/* is (x, z) a good spot: ground a weed grows in, a body's width from anything else, on screen in this view and the card's, in view */
+function weedOk(Fd, x, z, Z, placed, gap) {
+  var G = Fd.G, k = zIdx(G, x, z), i;
+  if (k < 0 || G.K[k] !== 0 || Fd.C[k] - G.cs * 0.5 < 0.1 || z > Fd.zMax) return false;
+  if (F.pond && pondSDF(x, z) < 0.3) return false;
+  if (F.hill && hillH(x, z) > 0.002) return false;
+  if (Fd.GV) { var ge = Math.hypot((x - Fd.GV.cx) / Fd.GV.rx, (z - Fd.GV.cz) / Fd.GV.rz); if (ge < 1.11) return false; }
+  if (F.tsukubai) { var t = LAY.tsukubai, ux = (x - t.x) / 0.9, uz = (z - t.z + 0.15) / 0.62; if (ux * ux + uz * uz < 1) return false; }
+  for (i = 0; i < Fd.bx.length; i++) { var b = Fd.bx[i]; if (x > b[0] && x < b[1] && z > b[2] && z < b[3]) return false; }
+  var V = (Fd.vis || WEED_VIS) * 1.15;
+  for (i = 0; i < Fd.stones.length; i++) { var q = Fd.stones[i], ddz = z - q[1], m = 0.05 * V + (ddz < 0 ? 0.17 * V * clamp(-ddz / q[3]) : 0.06 * V * clamp(ddz / q[3])), ex = (x - q[0]) / (q[2] * 1.08 + m), ez = ddz / (q[3] * 1.08 + m); if (ex * ex + ez * ez < 1) return false; }   // (in front of a stone more room, so the plant does not stand over it; behind, a little: its rim stands up in front)
+  for (i = 0; i < Fd.yp.length; i++) if (Math.hypot(x - Fd.yp[i].x, z - Fd.yp[i].z) < 0.5) return false;
+  var OC = Fd.R.obs ? Fd.R.obs.C : [];
+  for (i = 0; i < OC.length; i++) { var oc = OC[i], dzo = z - oc[1], rm = oc[2] * 1.15 + 0.05 * V + (dzo < 0 ? 0.1 * V * clamp(-dzo / oc[2]) : 0); if ((x - oc[0]) * (x - oc[0]) + dzo * dzo < rm * rm) return false; }   // a rock's painted bulk reaches past its walking circle; in front, room so it does not stand on its face
+  if (placed) for (i = 0; i < placed.length; i++) if (Math.hypot(x - placed[i].x, z - placed[i].z) < gap) return false;
+  for (i = 0; i < Fd.shade.length; i++) { var sh = Fd.shade[i]; if ((x - sh[0]) * (x - sh[0]) + (z - sh[1]) * (z - sh[1]) * 1.4 < sh[2] * sh[2]) return false; }   // out of the dappled shade under the trees
+  var p = P(x, 0, z);
+  if (p.x < Math.max(W * 0.07, Fd.fr[0]) || p.x > Math.min(W * 0.93, Fd.fr[1]) || p.y > Math.min(H * 0.92, Fd.fr[2] - 4) || p.y < Fd.front) return false;   // the front of the garden, where they are seen and tapped
+  // in view: nothing upright stands in front of the plant (the depth image; else the tree crowns as discs)
+  var d = p.d - 0.06, hid = 0;
+  for (var a = -1; a <= 1; a++) for (var bb = 0; bb < 3; bb++) {
+    var q2 = P(x + a * 0.06 * V, 0.01 + bb * 0.07 * V, z), h = false;
+    if (Z) { var ix = Math.floor(q2.x * Z.ms), iy = Math.floor(q2.y * Z.ms); if (ix >= 0 && iy >= 0 && ix < Z.w && iy < Z.h) { var kk = iy * Z.w + ix, th = 1 + (d - Z.d0) / (Z.d1 - Z.d0) * 253; h = Z.A[kk] > 90 && Z.D[kk] < th - 0.5; } }
+    else for (var m2 = 0; m2 < (Fd.R.crowns || []).length; m2++) { var c = Fd.R.crowns[m2]; if (c.d < d && Math.hypot(q2.x - c.x, q2.y - c.y) < c.r) { h = true; break; } }
+    if (h) { if (bb === 0) return false; hid++; }
+  }
+  return hid <= 1;
+}
+/* a weed's spot from its seed: a target in one of the places weeds come up, then the nearest good spot to it */
+function weedSpot(Fd, seed, Z, placed, gap) {
+  var r = mulberry32((seed * 2654435761) ^ 0x9e37), tries = 0;
+  if (!Fd.R.crowns && !Z) zSeen(Fd.R, 0, 5, 0.3);   // (makes the crown discs)
+  while (tries++ < 4) {
+    var tgt = null, h = r();
+    if (h < 0.18 && Fd.stones.length) {   // beside a stepping stone
+      var st = Fd.stones[(r() * Fd.stones.length) | 0], a = r() * TAU, e = 1.08 + 0.35 + r() * 0.5;
+      tgt = [st[0] + Math.cos(a) * st[2] * e, st[1] + Math.sin(a) * st[3] * e];
+    } else if (h < 0.3 && Fd.GV) {   // along the gravel bed's edging
+      var a2 = r() * TAU, e2 = 1.13 + r() * 0.12; tgt = [Fd.GV.cx + Math.cos(a2) * Fd.GV.rx * e2, Fd.GV.cz + Math.sin(a2) * Fd.GV.rz * e2];
+    } else if (h < 0.4 && Fd.R.obs && Fd.R.obs.C.length) {   // at the foot of a rock, a lantern, a bush, a tree
+      var oc = Fd.R.obs.C[(r() * Fd.R.obs.C.length) | 0], a3 = -Math.PI * r(); tgt = [oc[0] + Math.cos(a3) * (oc[2] + 0.2 + r() * 0.2), oc[1] + Math.sin(a3) * (oc[2] + 0.2 + r() * 0.2)];
+    }
+    if (!tgt) {   // the open lawn and the moss: anywhere in the card's frame, more of them near than far
+      var g2 = groundAt(lerp(Fd.fr[0] + 10, Fd.fr[1] - 10, r()), lerp(Fd.front, Fd.fr[2] - 6, Math.pow(r(), 0.7))); tgt = g2 ? [g2.x, g2.z] : [LX(1.6), LZ(1.6)];
+    }
+    // the nearest good spot: rings outward, 5 cm apart, starting at a seeded angle
+    var ph = r() * TAU;
+    for (var rr = 0; rr <= 2.6; rr += 0.05) {
+      var n = rr ? Math.max(6, Math.ceil(TAU * rr / 0.05)) : 1;
+      for (var j = 0; j < n; j++) { var an = ph + j / n * TAU, x = tgt[0] + Math.cos(an) * rr, z = tgt[1] + Math.sin(an) * rr; if (weedOk(Fd, x, z, Z, placed, gap)) return [x, z]; }
+    }
+  }
+  return null;
+}
+
+/* ---- the plant: a model of small primitives in its own frame (metres; x right, y up, z away), projected at its spot ---- */
+function weedBasis(x, z, vis) {
+  var b = P(x, 0, z), ax = P(x + 0.05, 0, z), ay = P(x, 0.05, z), az = P(x, 0, z + 0.05);
+  vis = vis || WEED_VIS; var v = 20 * vis;
+  return { x: b.x, y: b.y, k: b.k * vis, vis: vis, d: b.d, e: [(ax.x - b.x) * v, (ax.y - b.y) * v, (ay.x - b.x) * v, (ay.y - b.y) * v, (az.x - b.x) * v, (az.y - b.y) * v] };
+}
+function wq(B, p) { var e = B.e; return [B.x + p[0] * e[0] + p[1] * e[2] + p[2] * e[4], B.y + p[0] * e[1] + p[1] * e[3] + p[2] * e[5]]; }
+function wShape(sh, t) {
+  if (sh === 'lance') return Math.pow(1 - t, 0.85) * Math.min(1, t * 9 + 0.35);
+  if (sh === 'lobed') return Math.pow(Math.sin(Math.PI * t), 0.6) * (0.5 + 0.5 * Math.abs(Math.sin(t * Math.PI * 4.5))) * (1.1 - 0.4 * t);
+  if (sh === 'needle') return 1 - t * 0.8;
+  return Math.pow(Math.sin(Math.PI * t), 0.75) * (1.05 - 0.35 * t);   // ovate
+}
+/* the model under construction: M.p primitives with a depth key (larger: farther, drawn first), M.lc lights a colour by a normal */
+function wLeaf(M, b, d, s, len, wid, sh, alb, o) {
+  o = o || {};
+  var dr = o.droop || 0, pts = [], i, n = o.n || 8, hw, mn = M.minW * 0.5 / M.k;
+  function at(along, side) { return [b[0] + d[0] * along + s[0] * side, b[1] + d[1] * along + s[1] * side - dr * along * along / Math.max(1e-6, len), b[2] + d[2] * along + s[2] * side]; }
+  if (sh === 'heart' || sh === 'obcord') {   // the heart curve: x = sin^3, y = (13cos - 5cos2 - 2cos3 - cos4)/16; the notch at the stalk (heart) or at the tip (obcord)
+    for (i = 0; i <= 20; i++) {
+      var th = i / 20 * TAU, hx = Math.pow(Math.sin(th), 3), hy = (13 * Math.cos(th) - 5 * Math.cos(2 * th) - 2 * Math.cos(3 * th) - Math.cos(4 * th)) / 16, al;
+      if (sh === 'heart') { al = (0.3125 - hy) / 1.375; if (al < 0) al *= 0.45; } else { al = (hy + 1.0625) / 1.375; if (al > 1) al = 1 + (al - 1) * 0.5; }
+      pts.push(at(al * len, hx * wid));
+    }
+  } else {
+    var L = [], R = [];
+    for (i = 0; i <= n; i++) { var t = i / n; hw = Math.max(wid * wShape(sh, t), i === n ? 0 : mn); L.push(at(t * len, -hw)); R.push(at(t * len, hw)); }
+    pts = L.concat(R.reverse());
+  }
+  var nv = norm(cross(s, d)); if (nv[1] < 0) nv = mul(nv, -1);
+  var tilt = o.tilt === undefined ? 0 : o.tilt; if (tilt) nv = norm(add(mul(nv, 1 - tilt * 0.6), [0, 0.75 * tilt, -0.6 * tilt]));   // (a blade seen edge-on: lit as a soft sheaf, not as a dark plate)
+  M.p.push({ t: 'f', pts: pts, c: M.lc(alb, nv, o.k), key: b[2] + d[2] * len * 0.5, rib: o.rib && len * M.k * M.sc > 7 ? [b, at(len * 0.85, 0)] : null, ribC: o.rib ? M.lc(mixc(alb, [220, 230, 170], 0.25), nv, (o.k || 1) * 1.05) : null, edge: o.edge ? M.lc(o.edge, nv) : null });
+}
+function wLine(M, pts, wd, alb, o) {
+  o = o || {};
+  var lw = wd * M.k, a = 1; if (lw < M.minW) { a = Math.max(0.6, lw / M.minW); lw = M.minW; }
+  var key = 0; pts.forEach(function (p) { key += p[2]; });
+  M.p.push({ t: 'l', pts: pts, lw: lw, c: M.lc(alb, o.n || M.stemN, o.k), a: a * (o.a || 1), key: key / pts.length + (o.dk || 0), cap: o.cap });
+}
+function wDot(M, p, r, alb, o) {
+  o = o || {};
+  var rr = r * M.k, a = 1; if (rr < M.minW * 0.6) { a = Math.max(0.4, rr / (M.minW * 0.6)); rr = M.minW * 0.6; }
+  M.p.push({ t: 'd', p: p, r: rr, c: M.lc(alb, o.n || [0, 1, 0], o.k), a: a * (o.a || 1), key: p[2] - 0.001 });
+}
+function wAz(a, up) { var c = Math.cos(up); return [Math.cos(a) * c, Math.sin(up), Math.sin(a) * c]; }
+function wSide(d) { var s = cross([0, 1, 0], d); var l = Math.hypot(s[0], s[1], s[2]); return l < 1e-4 ? [1, 0, 0] : [s[0] / l, s[1] / l, s[2] / l]; }
+function wDormant(c, k) { return mixc(c, [128, 98, 70], k); }
+function weedModel(M, L) {
+  var r = mulberry32(L.seed * 31 + 5), s = L.s, A = L.age, i, j, kind = L.kind, ss = L.season, dk = L.dormant ? 0.55 : 0;
+  var fresh = ss === 'spring' ? 1 : ss === 'autumn' ? -1 : 0;
+  function G(c) { return dk ? wDormant(c, dk) : c; }
+  if (kind === 'sugina') {   // スギナ: green jointed shoots with whorls of fine branches, a little fir tree each
+    var cS = G(ss === 'autumn' ? [132, 132, 66] : fresh > 0 ? [96, 146, 54] : [70, 120, 44]), cB = G(ss === 'autumn' ? [138, 128, 66] : fresh > 0 ? [76, 130, 46] : [52, 100, 38]);
+    var ns = 1 + Math.round(A * (M.k * M.sc < 160 ? 2.5 : 4) + r() * 1.2);
+    for (i = 0; i < ns; i++) {
+      var ox = (r() - 0.5) * 0.07 * s, oz = (r() - 0.5) * 0.05 * s, h = WEED_H.sugina * s * (0.55 + 0.45 * r()), lean = (r() - 0.5) * 0.25, la = r() * TAU;
+      var top = [ox + Math.cos(la) * lean * h, h, oz + Math.sin(la) * lean * h];
+      wLine(M, [[ox, 0, oz], [lerp(ox, top[0], 0.5), h * 0.5, lerp(oz, top[2], 0.5)], top], 0.0026, cS, { k: 0.95 });
+      var px = M.k * M.sc, nn = Math.max(2, Math.round(h / Math.max(0.017, 4 / px))), ph = r() * TAU, mw = px < 300 ? 4 : 6;   // (small on screen: fewer, crisper whorls, never a haze of hairlines)
+      for (j = 1; j < nn; j++) {
+        var u = j / nn, y = h * u, cx = lerp(ox, top[0], u), cz = lerp(oz, top[2], u), bl = (0.042 * Math.pow(1 - u, 0.8) + 0.006) * s, m = u > 0.8 ? Math.min(4, mw) : mw, bet = 0.45 + 0.5 * u;
+        for (var q = 0; q < m; q++) { var dd = wAz(ph + j * 0.6 + q / m * TAU, bet); wLine(M, [[cx, y, cz], [cx + dd[0] * bl * 0.6, y + dd[1] * bl * 0.6, cz + dd[2] * bl * 0.6], [cx + dd[0] * bl, y + dd[1] * bl - bl * 0.18, cz + dd[2] * bl]], 0.0017, cB, { k: 1.0 }); }
+      }
+    }
+  } else if (kind === 'dokudami') {   // ドクダミ: reddish stems, heart-shaped leaves, in June four white bracts round a pale spike
+    var cL = G([44, 82, 42]), cL2 = G([60, 98, 48]), cSt = G([132, 66, 58]), cEdge = G([126, 52, 48]);
+    var nst = 1 + Math.round(A * 2.6 + r());
+    for (i = 0; i < nst; i++) {
+      var sx = (r() - 0.5) * 0.08 * s, sz = (r() - 0.5) * 0.06 * s, hh = WEED_H.dokudami * s * (0.5 + 0.5 * r()) * (i ? 0.85 : 1), az = r() * TAU, lt = (r() - 0.5) * 0.2;
+      var tp = [sx + Math.cos(az) * lt * hh, hh, sz + Math.sin(az) * lt * hh];
+      wLine(M, [[sx, 0, sz], [lerp(sx, tp[0], 0.5) + 0.004, hh * 0.5, lerp(sz, tp[2], 0.5)], tp], 0.0028, cSt);
+      var nl = 2 + Math.round(A * 2), a0 = r() * TAU;
+      for (j = 0; j < nl; j++) {
+        var u2 = 0.35 + 0.6 * j / Math.max(1, nl - 1), pb = [lerp(sx, tp[0], u2), hh * u2, lerp(sz, tp[2], u2)], aa = a0 + j * 2.4, d2 = wAz(aa, -0.12 - r() * 0.25), len = (0.042 + 0.02 * r()) * s * (1.15 - 0.35 * u2);
+        var pe = [pb[0] + d2[0] * 0.012 * s, pb[1] + 0.004, pb[2] + d2[2] * 0.012 * s];
+        wLine(M, [pb, pe], 0.0016, cSt);
+        wLeaf(M, pe, d2, wSide(d2), len, len * 0.42, 'heart', j % 2 ? cL : cL2, { droop: 0.15, rib: true, edge: cEdge });
+      }
+      if (L.flower && i < 2) {   // the flower: four bracts in a plane tipped toward the sky, the spike standing up from them
+        var fb = [tp[0], tp[1] + 0.006, tp[2]], fa = r() * TAU;
+        for (j = 0; j < 4; j++) { var d3 = wAz(fa + j * TAU / 4, 0.28); wLeaf(M, fb, d3, wSide(d3), 0.012 * Math.max(0.8, s), 0.0042 * Math.max(0.8, s), 'ovate', [244, 244, 236], { k: 1.08 }); }
+        wLine(M, [fb, [fb[0], fb[1] + 0.014, fb[2] - 0.001]], 0.0034, [226, 214, 128], { dk: -0.02, k: 1.05, cap: 'round' });
+      }
+    }
+    for (j = 0; j < 2; j++) { var d4 = wAz(r() * TAU, -0.05); wLeaf(M, [0, 0.004, 0], d4, wSide(d4), 0.035 * s, 0.015 * s, 'heart', cL, { droop: 0.08, rib: true, edge: cEdge }); }
+  } else if (kind === 'hakobe') {   // ハコベ: a soft low mound of weak stems with pairs of small oval leaves; tiny white stars in spring
+    var cH = G(fresh > 0 ? [102, 158, 58] : [88, 132, 52]), cH2 = G(fresh > 0 ? [132, 180, 74] : [110, 148, 62]), cHs = G([110, 140, 70]);
+    var nh = 4 + Math.round(A * 6 + r());
+    for (i = 0; i < nh; i++) {
+      var ha = i / nh * TAU + r() * 0.7, Ls = (0.07 + 0.06 * r()) * s, hy = (0.025 + 0.04 * r()) * s, dh = [Math.cos(ha), 0, Math.sin(ha)];
+      var p0 = [0, 0.004, 0], p1 = [dh[0] * Ls * 0.5, hy, dh[2] * Ls * 0.5], p2 = [dh[0] * Ls, hy * 0.6, dh[2] * Ls];
+      wLine(M, [p0, p1, p2], 0.0012, cHs);
+      var np = 2 + Math.round(A * 2);
+      for (j = 0; j < np; j++) {
+        var u3 = (j + 1) / (np + 0.5), pc = [lerp(p0[0], p2[0], u3), lerp(p0[1], p1[1], Math.sin(u3 * Math.PI)) + 0.002, lerp(p0[2], p2[2], u3)], sd = wSide(dh), ll = (0.011 + 0.006 * r()) * Math.max(0.7, s);
+        [1, -1].forEach(function (sg) { var dl = norm([sd[0] * sg + dh[0] * 0.5, 0.35, sd[2] * sg + dh[2] * 0.5]); wLeaf(M, pc, dl, wSide(dl), ll, ll * 0.32, 'ovate', (j + (sg > 0 ? 1 : 0)) % 2 ? cH : cH2, { droop: 0.2 }); });
+      }
+      if (L.flower && r() < 0.6) { var fp = [p2[0], p2[1] + 0.006, p2[2]]; for (j = 0; j < 5; j++) { var a5 = j / 5 * TAU; wDot(M, [fp[0] + Math.cos(a5) * 0.0034, fp[1], fp[2] + Math.sin(a5) * 0.0034], 0.0024, [250, 250, 246], { k: 1.08 }); } wDot(M, fp, 0.0014, [214, 214, 150]); }
+    }
+  } else if (kind === 'nazuna') {   // ナズナ: a flat rosette of toothed leaves; in spring a thin stem with heart-shaped pods and white flowers at the top
+    var cN = G(fresh > 0 ? [74, 116, 46] : [70, 104, 44]), cN2 = L.dormant ? [112, 72, 58] : [92, 132, 56], cNs = G([104, 136, 62]);
+    var nr = 4 + Math.round(A * 6), ra = r() * TAU;
+    for (i = 0; i < nr; i++) { var d5 = wAz(ra + i * 2.4, 0.1 + r() * 0.15), ln = (0.035 + 0.035 * r()) * s; wLeaf(M, [0, 0.002, 0], d5, wSide(d5), ln, ln * 0.15, 'lobed', i % 3 ? cN : cN2, { droop: -0.02, n: 12, rib: true }); }
+    if (L.flower) {
+      var ns2 = r() < 0.45 ? 2 : 1;
+      for (i = 0; i < ns2; i++) {
+        var hn = WEED_H.nazuna * s * sstep(0.35, 1, A) * (i ? 0.75 : 1), wa = r() * TAU, tx = Math.cos(wa) * 0.02 * s, tz = Math.sin(wa) * 0.015 * s;
+        if (hn < 0.03) continue;
+        var tN = [tx, hn, tz];
+        wLine(M, [[0, 0, 0], [tx * 0.3 + 0.003, hn * 0.5, tz * 0.3], tN], 0.0013, cNs);
+        var npd = Math.round(4 + 6 * A), pa = r() * TAU;
+        for (j = 0; j < npd; j++) {
+          var u4 = 0.45 + 0.5 * j / npd, pp = [tx * u4, hn * u4, tz * u4], d6 = wAz(pa + j * 2.2, 0.5), pq = [pp[0] + d6[0] * 0.009, pp[1] + d6[1] * 0.009, pp[2] + d6[2] * 0.009];
+          wLine(M, [pp, pq], 0.0007, cNs, { a: 0.9 });
+          wLeaf(M, pq, norm([d6[0], 0.6, d6[2]]), wSide(d6), 0.0055, 0.003, 'obcord', [128, 160, 70], { k: 1.04 });
+        }
+        for (j = 0; j < 4; j++) { var a6 = j / 4 * TAU + 0.4; wDot(M, [tN[0] + Math.cos(a6) * 0.003, tN[1] + 0.002, tN[2] + Math.sin(a6) * 0.003], 0.0021, [248, 248, 244], { k: 1.08 }); }
+      }
+    }
+  } else if (kind === 'katabami') {   // カタバミ: three heart-shaped leaflets on thin stalks, and small yellow flowers; アカカタバミ purple-leaved
+    var cK = L.sub ? [118, 62, 60] : G([82, 130, 48]), cK2 = L.sub ? [96, 52, 58] : G([102, 148, 58]), cKs = L.sub ? [130, 70, 60] : G([116, 120, 60]);
+    if (L.dormant) { cK = wDormant(L.sub ? cK : [120, 74, 56], 0.35); cK2 = wDormant([104, 70, 56], 0.3); }
+    var nk = 4 + Math.round(A * 10);
+    for (i = 0; i < 2; i++) { var ra2 = r() * TAU, rl = (0.04 + 0.04 * r()) * s; wLine(M, [[0, 0.002, 0], [Math.cos(ra2) * rl * 0.5, 0.004, Math.sin(ra2) * rl * 0.5], [Math.cos(ra2) * rl, 0.002, Math.sin(ra2) * rl]], 0.0011, cKs, { a: 0.8 }); }
+    for (i = 0; i < nk; i++) {
+      var ka = r() * TAU, kr = (0.01 + r() * 0.055) * s, hp = (0.015 + 0.04 * r()) * s * (L.dormant ? 0.5 : 1), bk = [Math.cos(ka) * kr * 0.4, 0, Math.sin(ka) * kr * 0.4], tk = [Math.cos(ka) * kr, hp, Math.sin(ka) * kr];
+      wLine(M, [bk, [lerp(bk[0], tk[0], 0.5), hp * 0.6, lerp(bk[2], tk[2], 0.5)], tk], 0.0009, cKs);
+      var ta = r() * TAU, lfl = (0.014 + 0.006 * r()) * Math.max(0.85, s);
+      for (j = 0; j < 3; j++) { var d7 = wAz(ta + j * TAU / 3, -0.18); wLeaf(M, tk, d7, wSide(d7), lfl, lfl * 0.5, 'obcord', j % 2 ? cK : cK2, { droop: 0.05 }); }
+    }
+    if (L.flower) {
+      var nf = 1 + Math.round(r() * 2 * A);
+      for (i = 0; i < nf; i++) {
+        var fa2 = r() * TAU, fr = 0.02 * s, fh = (0.06 + 0.03 * r()) * s, ft = [Math.cos(fa2) * fr, fh, Math.sin(fa2) * fr];
+        wLine(M, [[0, 0, 0], [ft[0] * 0.5, fh * 0.6, ft[2] * 0.5], ft], 0.0007, cKs);
+        for (j = 0; j < 5; j++) { var a7 = j / 5 * TAU; wDot(M, [ft[0] + Math.cos(a7) * 0.003, ft[1] + 0.001, ft[2] + Math.sin(a7) * 0.003], 0.0026, [240, 204, 44], { k: 1.06 }); }
+        wDot(M, [ft[0], ft[1] + 0.0015, ft[2]], 0.0014, [196, 150, 30]);
+      }
+    }
+  } else if (kind === 'hishiba' || kind === 'enokoro') {   // メヒシバ / オヒシバ / エノコログサ: a clump of arching blades; finger spikes, or nodding foxtail heads
+    var fox = kind === 'enokoro', ohi = !fox && L.sub === 1, au = ss === 'autumn';
+    var cG = G(au ? (fox ? [164, 148, 86] : [150, 132, 82]) : fox ? [76, 122, 48] : ohi ? [70, 112, 46] : [78, 118, 46]), cG2 = G(au ? [186, 164, 100] : fox ? [104, 144, 60] : [100, 138, 58]);
+    var nb = 5 + Math.round(A * 10 + r() * 2), ba = r() * TAU;
+    for (i = 0; i < nb; i++) {
+      var d8 = wAz(ba + i * 2.4 + r() * 0.4, (ohi ? 0.8 : 0.95) + r() * 0.45), bl2 = (fox ? 0.15 : 0.13) * s * (0.7 + 0.5 * r());
+      wLeaf(M, [d8[0] * 0.006, 0, d8[2] * 0.006], d8, wSide(d8), bl2, (fox ? 0.0055 : 0.0045) * Math.max(0.8, s), 'lance', i % 2 ? cG : cG2, { droop: 0.2 + 0.45 * r() * r(), n: 7, tilt: 0.6 });
+    }
+    if (L.flower) {
+      var nst2 = 1 + Math.round(A * (fox ? 2.4 : 1.6) * r() + (fox ? 0.6 : 0.3));
+      for (i = 0; i < nst2; i++) {
+        var hs2 = WEED_H[kind] * s * (fox ? 0.8 + 0.25 * r() : 0.62 + 0.2 * r()) * sstep(0.4, 0.9, A), sa2 = r() * TAU, lean2 = (0.08 + 0.18 * r()) * hs2, tS = [Math.cos(sa2) * lean2, hs2, Math.sin(sa2) * lean2];
+        if (hs2 < 0.04) continue;
+        var cStalk = G(au ? [170, 150, 92] : [96, 128, 58]);
+        if (fox) {   // the nodding head: a fuzzy cylinder along the top of the curved stalk, bristles catching the light
+          var nod = 0.45 + 0.35 * r(), hl = (0.035 + 0.02 * r()) * Math.max(0.8, s), hd = [Math.cos(sa2) * Math.sin(nod), Math.cos(nod), Math.sin(sa2) * Math.sin(nod)];
+          var hb = [tS[0] - hd[0] * hl * 0.2, tS[1] - hl * 0.25, tS[2] - hd[2] * hl * 0.2];
+          wLine(M, [[0, 0, 0], [tS[0] * 0.3, hs2 * 0.55, tS[2] * 0.3], hb], 0.0016, cStalk);
+          var hpts = [], nh2 = 6; for (j = 0; j <= nh2; j++) { var u5 = j / nh2, bend = u5 * u5 * 0.6; hpts.push([hb[0] + (hd[0] * (1 - bend) + Math.cos(sa2) * bend) * hl * u5, hb[1] + (hd[1] * (1 - bend) - bend * 0.9) * hl * u5, hb[2] + (hd[2] * (1 - bend) + Math.sin(sa2) * bend) * hl * u5]); }
+          var cHd = au ? [184, 156, 96] : [116, 148, 64], cBr = au ? [236, 214, 160] : [176, 196, 112];
+          wLine(M, hpts, 0.0085 * Math.max(0.8, s), cHd, { cap: 'round', k: 0.95 });
+          wLine(M, hpts.map(function (p) { return [p[0] + 0.0012, p[1] + 0.0022, p[2] - 0.001]; }), 0.0042 * Math.max(0.8, s), cBr, { cap: 'round', k: 1.05, a: 0.55, dk: -0.001 });
+          for (j = 0; j < 18; j++) { var hp2 = hpts[1 + (j % (nh2 - 1))], ba3 = r() * TAU, bL = 0.0075; wLine(M, [hp2, [hp2[0] + Math.cos(ba3) * bL, hp2[1] + Math.sin(ba3) * bL * 0.8 + 0.002, hp2[2] + Math.sin(ba3 * 1.7) * bL * 0.5]], 0.0005, cBr, { a: 0.85, dk: -0.002 }); }
+        } else {   // the fingers: thin spikes splayed from the top (メヒシバ), or fewer and stouter, held up (オヒシバ)
+          wLine(M, [[0, 0, 0], [tS[0] * 0.35, hs2 * 0.55, tS[2] * 0.35], tS], ohi ? 0.0018 : 0.0012, cStalk);
+          var nfi = ohi ? 2 + Math.round(r() * 3) : 3 + Math.round(r() * 3), fa3 = r() * TAU, cF = G(au ? [150, 110, 88] : ohi ? [92, 112, 60] : [106, 92, 86]);
+          for (j = 0; j < nfi; j++) { var d9 = wAz(fa3 + j / nfi * TAU, ohi ? 0.95 : 0.5), fl2 = (ohi ? 0.055 : 0.07) * Math.max(0.8, s) * (0.8 + 0.3 * r()); wLine(M, [tS, [tS[0] + d9[0] * fl2 * 0.5, tS[1] + d9[1] * fl2 * 0.5, tS[2] + d9[2] * fl2 * 0.5], [tS[0] + d9[0] * fl2, tS[1] + d9[1] * fl2 - fl2 * (ohi ? 0.1 : 0.3), tS[2] + d9[2] * fl2]], ohi ? 0.0032 : 0.0016, cF, { k: 1.02 }); }
+        }
+      }
+    }
+  }
+  M.spread = { sugina: 0.05, dokudami: 0.07, hakobe: 0.1, nazuna: 0.07, katabami: 0.07, hishiba: 0.09, enokoro: 0.1 }[kind] * s + 0.01;
+  M.hgt = WEED_H[kind] * s * (L.flower || kind === 'sugina' || kind === 'dokudami' ? 1 : kind === 'hishiba' || kind === 'enokoro' ? 0.6 : 0.5);
+}
+/* the root tuft and the clod of soil it comes up with */
+function weedRoots(M, L, soil) {
+  var r = mulberry32(L.seed * 17 + 3), s = Math.max(0.7, L.s), cw = (0.03 + 0.012 * r()) * s, i;
+  var cR = [204, 180, 138], nR = 9 + Math.round(6 * r());
+  for (i = 0; i < nR; i++) { var a = r() * TAU, L2 = (0.04 + 0.045 * r()) * s, w = (r() - 0.5) * 0.016; wLine(M, [[Math.cos(a) * cw * 0.4, -0.004, Math.sin(a) * cw * 0.3], [Math.cos(a) * cw * 0.5 + w, -L2 * 0.5, Math.sin(a) * cw * 0.4], [Math.cos(a) * cw * 0.8 - w, -L2, Math.sin(a) * cw * 0.5]], 0.0011, cR, { a: 0.9, dk: 0.05 }); }
+  var pts = [], n = 11; for (i = 0; i < n; i++) { var t = i / n * TAU, rr = cw * (0.8 + 0.35 * r()); pts.push([Math.cos(t) * rr, -0.012 + Math.sin(t) * rr * 0.75 - (Math.sin(t) > 0 ? 0 : 0.006), -0.002]); }
+  M.p.push({ t: 'f', pts: pts, c: M.lc(soil, [0.3, 0.6, -0.7]), key: 0.03 });
+  M.p.push({ t: 'f', pts: pts.map(function (p) { return [p[0] * 0.75 - cw * 0.12, p[1] * 0.6 + 0.002, p[2] - 0.001]; }), c: M.lc(mixc(soil, [150, 124, 92], 0.35), [0.3, 0.8, -0.5]), key: 0.029 });
+  for (i = 0; i < 5; i++) wDot(M, [(r() - 0.5) * cw * 1.6, -0.014 - r() * 0.02 * s, -0.003], 0.003, soil, { n: [0.3, 0.7, -0.6] });
+}
+/* the patch of disturbed soil it leaves */
+function weedPatch(M, L, soil, leaf) {
+  var r = mulberry32(L.seed * 13 + 1), R = Math.max(0.035, M.spread * 0.55), i;
+  for (i = 0; i < 4; i++) {
+    var cx = (r() - 0.5) * R * 0.7, cz = (r() - 0.5) * R * 0.5, rx = R * (0.55 + 0.4 * r()), rz = rx * (0.6 + 0.3 * r()), pts = [];
+    for (var j = 0; j < 12; j++) { var t = j / 12 * TAU, w = 0.8 + 0.35 * r(); pts.push([cx + Math.cos(t) * rx * w, 0.001, cz + Math.sin(t) * rz * w]); }
+    M.p.push({ t: 'f', pts: pts, c: M.lc(i ? mixc(soil, [40, 30, 24], 0.25) : soil, [0, 1, 0]), key: 1 - i * 0.01, a: i ? 0.75 : 0.55 });
+  }
+  for (i = 0; i < 9; i++) { var a = r() * TAU, d = R * (0.9 + 0.8 * r()); wDot(M, [Math.cos(a) * d, 0.002, Math.sin(a) * d * 0.7], 0.0028 + 0.002 * r(), i % 3 ? soil : mixc(soil, [150, 126, 96], 0.4)); }
+  if (leaf) for (i = 0; i < 2; i++) { var d2 = wAz(r() * TAU, 0); wLeaf(M, [(r() - 0.5) * R, 0.002, (r() - 0.5) * R * 0.6], d2, wSide(d2), 0.008, 0.004, 'ovate', leaf); }
+}
+function weedSoil(F0) { var s = SEA.soil[0]; return [s[0] * 0.5, s[1] * 0.46, s[2] * 0.42]; }
+/* a model drawn into a sprite canvas: logical box [bx, by, bw, bh] at sc0 device px per logical px */
+function weedNewModel(B, sc0, PP) {
+  var stemN = norm([SUN[0] * 0.35, 0.45, -0.8]);
+  return { p: [], k: B.k, sc: sc0, minW: 0.75 / sc0, stemN: stemN, lc: function (alb, n, k) { var c = shade(alb, n || [0, 1, 0]); if (k) c = scl(c, k); c = [c[0] * 1.1, c[1] * 1.1, c[2] * 0.9]; return PP(c, true); } };   // (a touch lighter and yellower than the lawn, so it stands out from it)
+}
+function weedSprite(M, B, sc0, edge) {
+  var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, i, j;
+  M.p.forEach(function (o) {
+    var pad = o.t === 'l' ? o.lw : o.t === 'd' ? o.r : 0.3;
+    if (o.t === 'd') { o.s = wq(B, o.p); x0 = Math.min(x0, o.s[0] - pad); x1 = Math.max(x1, o.s[0] + pad); y0 = Math.min(y0, o.s[1] - pad); y1 = Math.max(y1, o.s[1] + pad); return; }
+    o.s = o.pts.map(function (p) { return wq(B, p); });
+    o.s.forEach(function (q) { x0 = Math.min(x0, q[0] - pad); x1 = Math.max(x1, q[0] + pad); y0 = Math.min(y0, q[1] - pad); y1 = Math.max(y1, q[1] + pad); });
+    if (o.rib) o.rs = o.rib.map(function (p) { return wq(B, p); });
+  });
+  if (!(x1 > x0)) return null;
+  x0 = Math.floor(x0 - 1); y0 = Math.floor(y0 - 1); x1 = Math.ceil(x1 + 1); y1 = Math.ceil(y1 + 1);
+  var c = mkCanvas(Math.ceil((x1 - x0) * sc0), Math.ceil((y1 - y0) * sc0)), x = c.getContext('2d');
+  x.setTransform(sc0, 0, 0, sc0, -x0 * sc0, -y0 * sc0); x.lineJoin = 'round';
+  M.p.sort(function (a, b) { return b.key - a.key; });
+  for (i = 0; i < M.p.length; i++) {
+    var o = M.p[i];
+    if (o.t === 'f') {
+      var s = o.s; x.beginPath(); x.moveTo((s[0][0] + s[1][0]) / 2, (s[0][1] + s[1][1]) / 2);
+      for (j = 1; j <= s.length; j++) { var a = s[j % s.length], b = s[(j + 1) % s.length]; x.quadraticCurveTo(a[0], a[1], (a[0] + b[0]) / 2, (a[1] + b[1]) / 2); }
+      x.closePath(); x.fillStyle = rgb(o.c, o.a === undefined ? 1 : o.a); x.fill();
+      if (o.edge) { x.strokeStyle = rgb(o.edge, 0.45); x.lineWidth = Math.max(0.35 / sc0, 0.0015 * M.k); x.stroke(); }
+      if (o.rs) { x.strokeStyle = rgb(o.ribC, 0.55); x.lineWidth = Math.max(0.3 / sc0, 0.001 * M.k); x.beginPath(); x.moveTo(o.rs[0][0], o.rs[0][1]); x.lineTo(o.rs[1][0], o.rs[1][1]); x.stroke(); }
+    } else if (o.t === 'l') {
+      x.strokeStyle = rgb(o.c, o.a); x.lineWidth = o.lw; x.lineCap = o.cap || 'round'; x.beginPath(); x.moveTo(o.s[0][0], o.s[0][1]);
+      if (o.s.length === 3) x.quadraticCurveTo(o.s[1][0], o.s[1][1], o.s[2][0], o.s[2][1]);
+      else for (j = 1; j < o.s.length; j++) x.lineTo(o.s[j][0], o.s[j][1]);
+      x.stroke();
+    } else { x.fillStyle = rgb(o.c, o.a); x.beginPath(); x.arc(o.s[0], o.s[1], o.r, 0, TAU); x.fill(); }
+  }
+  if (edge) {   // a crisp silhouette: a thin dark edge under it, lower and to the sides, so it reads against the mottled lawn
+    var c2 = mkCanvas(c.width, c.height), y = c2.getContext('2d'), o2 = Math.max(0.6, sc0 * 0.28);
+    [[0, o2], [o2 * 0.7, o2 * 0.5], [-o2 * 0.7, o2 * 0.5], [0, -o2 * 0.4]].forEach(function (q) { y.drawImage(c, q[0], q[1]); });
+    y.globalCompositeOperation = 'source-in'; y.fillStyle = rgb(edge, 0.55); y.fillRect(0, 0, c2.width, c2.height);
+    y.globalCompositeOperation = 'source-over'; y.drawImage(c, 0, 0); c.width = c.height = 0; c = c2;
+  }
+  return { c: c, bx: x0, by: y0, bw: x1 - x0, bh: y1 - y0 };
+}
+/* its contact shadow and the short soft shadow it casts, on its own sprite (it stays put while the plant sways) */
+function weedShadow(g, x, z, M, sc0, V) {
+  V = V || WEED_VIS; var B = P(x, 0, z), ht = Math.max(0.03, M.hgt * 0.6 * V), tp = P(x + ht * SX, 0, z + ht * SZ), R = M.spread * V * B.k * 1.6 + 2;
+  var x0 = Math.floor(Math.min(B.x, tp.x) - R - 2), x1 = Math.ceil(Math.max(B.x, tp.x) + R + 2), y0 = Math.floor(Math.min(B.y, tp.y) - R - 2), y1 = Math.ceil(Math.max(B.y, tp.y) + R + 2);
+  var c = mkCanvas(Math.ceil((x1 - x0) * sc0), Math.ceil((y1 - y0) * sc0)), cx = c.getContext('2d');
+  cx.setTransform(sc0, 0, 0, sc0, -x0 * sc0, -y0 * sc0);
+  zShadow(cx, g, x, z, 0, M.spread * V * 2.0, M.spread * V * 2.0, ht, 1.0);
+  var sa = clamp(g.lum * 1.1, 0.35, 1) * (g.LIT.weather === 'cloudy' || g.wet ? 0.7 : 1), rx = M.spread * V * B.k * 0.75;   // a darker core right at its foot: it stands on the ground
+  cx.save(); cx.translate(B.x, B.y + 0.2); cx.scale(1, 0.42); var gr = cx.createRadialGradient(0, 0, 0, 0, 0, rx); gr.addColorStop(0, 'rgba(16,14,18,' + (0.5 * sa) + ')'); gr.addColorStop(1, 'rgba(16,14,18,0)'); cx.fillStyle = gr; cx.beginPath(); cx.arc(0, 0, rx, 0, TAU); cx.fill(); cx.restore();
+  return { c: c, bx: x0, by: y0, bw: x1 - x0, bh: y1 - y0 };
+}
+
+/* a field-guide plate of one weed (hidden debug: MogiGarden._dbg.weedStudy): drawn large on a plain ground, in the scene's light */
+function weedStudy(canvas, o) {
+  o = o || {}; var st = saveState();
+  try {
+    LIT = LIGHTS[o.light || 'day']; setLight(LIT); MODE = 'n'; SEA = SEASONS[o.season || 'summer']; F = features(12);
+    var ctx = canvas.getContext('2d'), K = o.k || canvas.height * 2.6, gx = canvas.width / 2, gy = canvas.height * 0.82, sc0 = 1;
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = o.bg || '#6f7a52'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    var B = { x: gx, y: gy, k: K, d: 10, e: [K, 0, 0, -K * 0.87, 0, -K * 0.49] }, tint = lightTint(1);
+    var PP = o.post === false ? function (c) { return c; } : function (c, leafy) { var ft = leafy && LIT.foliageTint ? LIT.foliageTint : [1, 1, 1]; return [c[0] * ft[0], c[1] * ft[1], c[2] * ft[2]]; };
+    var L = weedLook(o.seed || 1, o.age === undefined ? 1 : o.age, o.season || 'summer', o.date ? new Date(o.date) : null, o.kind);
+    if (o.flower !== undefined) L.flower = o.flower;
+    var M = weedNewModel(B, sc0, PP); weedModel(M, L); if (o.roots) weedRoots(M, L, weedSoil());
+    ctx.fillStyle = 'rgba(18,16,22,0.3)'; ctx.beginPath(); ctx.ellipse(gx, gy, M.spread * K * 1.2, M.spread * K * 0.5, 0, 0, TAU); ctx.fill();
+    var S = weedSprite(M, B, sc0); if (S) ctx.drawImage(S.c, S.bx, S.by, S.bw, S.bh);
+    if (o.label !== false) { ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.font = Math.round(canvas.height * 0.06) + 'px sans-serif'; ctx.fillText(L.kind + (L.sub ? '*' : '') + (L.flower ? ' (fl)' : '') + ' a' + (+L.age).toFixed(2), 6, canvas.height * 0.08); }
+    return L;
+  } finally { restoreState(st); }
+}
+
 /* ---- 09_runtime.js ---- */
 /* ================= public API & controller ================= */
 var VERSION = '1.3.6';   // (bumped: the painting changed, and the cache now carries the grass for the sway)
@@ -8379,7 +8799,7 @@ function paperPlaceholder(c) {
 function mount(el, opts) {
   opts = opts || {};
   var o = { stage: 0, season: seasonFor(), light: lightFor(), quality: 'card', animate: true, event: null };
-  function merge(n) { if (!n) return; ['stage', 'season', 'light', 'quality', 'animate', 'onReady', 'event', 'onCue', 'date', 'weather', 'fireworks', 'wide'].forEach(function (k) { if (n[k] !== undefined) o[k] = n[k]; }); norm(); }
+  function merge(n) { if (!n) return; ['stage', 'season', 'light', 'quality', 'animate', 'onReady', 'event', 'onCue', 'date', 'weather', 'fireworks', 'wide', 'weeds', 'onWeed'].forEach(function (k) { if (n[k] !== undefined) o[k] = n[k]; }); norm(); }
   function norm() {
     o.stage = Math.max(0, Math.min(STAGES.length - 1, Math.round(+o.stage || 0)));
     if (SEASON_KEYS.indexOf(o.season) < 0) o.season = seasonFor();
@@ -8528,7 +8948,7 @@ function mount(el, opts) {
     var c = cur; if (c.depth || c.depthTried) return; c.depthTried = true;
     setTimeout(function () {
       if (dead || cur !== c) return;
-      enqueue(function () { if (dead || cur !== c) return null; return depthJob(jobFor(c.spec, { get cancelled() { return dead || cur !== c; } })); }).then(function (r) { if (!dead && cur === c && r) { c.depth = r; if (c.geo && c.geo.rp) c.geo.rp.Z = r; } if (!dead && cur === c && c.geo && c.geo.rp && !c.geo.rp.grid) setTimeout(function () { if (!dead && cur === c && !rare) try { inGeo(c.geo, function () { zGeoReady(c.geo.rp); zClear(c.geo.rp.grid, 'land'); }); } catch (e) { /* built on demand instead */ } }, 400); }).catch(function (e) { if (e !== CANCEL && window.console) console.warn('garden: depth', e); });
+      enqueue(function () { if (dead || cur !== c) return null; return depthJob(jobFor(c.spec, { get cancelled() { return dead || cur !== c; } })); }).then(function (r) { if (!dead && cur === c && r) { c.depth = r; if (c.geo && c.geo.rp) c.geo.rp.Z = r; WDS.dirty = true; if (!running() && !reveal) drawFrame(true); } if (!dead && cur === c && c.geo && c.geo.rp && !c.geo.rp.grid) setTimeout(function () { if (!dead && cur === c && !rare) try { inGeo(c.geo, function () { zGeoReady(c.geo.rp); zClear(c.geo.rp.grid, 'land'); }); } catch (e) { /* built on demand instead */ } }, 400); }).catch(function (e) { if (e !== CANCEL && window.console) console.warn('garden: depth', e); });
     }, 900);
   }
   /* work for later done while the page is idle (requestIdleCallback where there is one), never inside an animation frame */
@@ -8722,6 +9142,7 @@ function mount(el, opts) {
         drawMist(ctx, g, t);
         drawFlicker(ctx, g, t);
         drawGrassSway(ctx, g, t);
+        drawWeeds(ctx, g, sc, false, 1);
         drawFlies(ctx, g, t);
         drawFallers(ctx, fallers, g);
         if (leafs) drawLeafGust(ctx, leafs, g);
@@ -8729,10 +9150,11 @@ function mount(el, opts) {
         if (dragons) drawDragons(ctx, dragons, g, t);
         if (flutters) drawButterflies(ctx, flutters, g, t);
         if (rare) drawRareLayer(ctx, g, sc);
+        drawWeeds(ctx, g, sc, false, 2);
         if (g.birds && bird && bird.cur) drawBird(ctx, g, bird.cur, t);
         if (taps && taps.length) drawTaps(ctx, taps, g, clock);
         if (wfx) { drawWeatherFx(ctx, wfx, g); drawGaleFx(ctx, wfx, g); drawFlash(ctx, wfx, g); }
-      }
+      } else drawWeeds(ctx, g, sc, true, 0);
       if (reveal) drawReveal(ctx, g);
       if (motion) perf.fresh = true;
     } catch (e) { if (window.console) console.error(e); }
@@ -8843,11 +9265,210 @@ function mount(el, opts) {
       });
     } catch (e) { return null; }
   }
+  /* ---- weeds to pull (08w_weeds.js): a live overlay, never baked into the painting ---- */
+  var WDS = { list: [], pulled: {}, memo: {}, cur: null, placed: [], dirty: true, pulls: [], raf: 0, tFix: null, force: null, layer: null, field: null };
+  function wclock() { return WDS.tFix !== null ? WDS.tFix : now() / 1000; }
+  function weedsOn(g) { return !!(g && g.F && g.F.path); }   // from 飛び石 on: the lawn is fully grown and there is a garden to keep tidy (before, the lot's own weeds are in the painting)
+  function weedDate(g) { var d = hasDate() ? toDate(o.date) : seasonFor() === g.season ? new Date() : null; return d && !isNaN(d.getTime()) ? d : null; }
+  function setWeeds(L) {
+    var out = [], seen = {};
+    if (Array.isArray(L)) L.forEach(function (w) {
+      if (!w || w.id === undefined || w.id === null) return; var id = String(w.id); if (seen[id]) return; seen[id] = 1;
+      out.push({ id: id, seed: (Math.round(+w.seed) || 0) >>> 0, age: clamp(+w.age || 0) });
+    });
+    Object.keys(WDS.pulled).forEach(function (id) { if (!seen[id]) delete WDS.pulled[id]; });   // pulled: ignored until a list comes without it
+    WDS.list = out; WDS.dirty = true;
+    if (cur && !dead && !running() && !reveal) drawFrame(true);
+  }
+  setWeeds(o.weeds);
+  /* where each weed grows: its spot kept while it stays good (in this painting or the last), else found from its seed */
+  function weedsPlace() {
+    var c = cur; if (!c) return;
+    WDS.dirty = false;
+    if (WDS.cur !== c) { WDS.cur = c; WDS.field = null; }
+    var g = c.geo, L = WDS.list;
+    if (!L.length || !weedsOn(g)) { WDS.placed = []; return; }
+    if (!c.weedT0) c.weedT0 = now();
+    var Z = c.depth || null, wait = !Z && now() - c.weedT0 < 9000;   // a new spot needs the depth image (worked out just after the painting shows); old spots are kept meanwhile
+    if (wait) WDS.dirty = true;
+    inGeo(g, function () {
+      if (!WDS.field) { WDS.field = weedField(g.rp); WDS.field.vis = weedVisFor(WDS.field, g.W / Math.max(1, size ? size.cssW : g.W)); }
+      var Fd = WDS.field, old = {}, out = [];
+      WDS.placed.forEach(function (e) { if (e.cur === c) old[e.id] = e; });
+      L.slice().sort(function (a, b) { return b.age - a.age || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0); }).slice(0, 40).forEach(function (w) {
+        var e = old[w.id], m = WDS.memo[w.id], pos = null;
+        if (e && e.seed === w.seed && weedOk(Fd, e.x, e.z, Z, out, 0.85)) pos = [e.x, e.z];
+        else if (m && m.seed === w.seed && m.stage === g.stage && weedOk(Fd, m.x, m.z, Z, out, 0.85)) pos = [m.x, m.z];
+        else if (!wait) pos = weedSpot(Fd, w.seed, Z, out, 0.85);
+        if (!pos) return;
+        WDS.memo[w.id] = { seed: w.seed, x: pos[0], z: pos[1], stage: g.stage };
+        if (!e || e.seed !== w.seed || e.x !== pos[0] || e.z !== pos[1]) e = { id: w.id, seed: w.seed, x: pos[0], z: pos[1], cur: c, t0: null, pk: '' };
+        e.age = w.age; out.push(e);
+      });
+      WDS.placed = out;
+    });
+  }
+  /* a weed's sprites for its look and size (made again only when its age moves a step, or the painting or its size changes) */
+  function weedPrep(e, g, sc0, pk, date) {
+    var aq = Math.round(e.age * 12) / 12, look0 = weedLook(e.seed, aq, g.season, date, WDS.force);
+    e.pk = pk; e.look = look0; e.spr = e.sh = e.mask = e.box = null;
+    inGeo(g, function () {
+      e.hidden = weedSnow(e.x, e.z) > 0.35;   // under the snow: not seen, not pulled
+      if (e.hidden) return;
+      var B = weedBasis(e.x, e.z, (WDS.field && WDS.field.vis || WEED_VIS) * (WEED_KK[look0.kind] || 1)), PP = weedPost(B.x, B.y), M = weedNewModel(B, sc0, PP);
+      weedModel(M, look0);
+      e.B = B; e.PP = PP; e.spread = M.spread; e.hgt = Math.max(2, M.hgt * Math.hypot(B.e[2], B.e[3])); e.flex = WEED_FLEX[look0.kind]; e.ph = (e.seed % 997) / 158.7;
+      e.edge = PP([22, 28, 16]); e.spr = weedSprite(M, B, sc0, e.edge); if (!e.spr) return;
+      e.sh = weedShadow(g, e.x, e.z, M, sc0, B.vis);
+      var Z = cur.depth;
+      if (Z) { var m = e.hgt * 0.5, bx = Math.min(e.spr.bx, e.sh.bx) - m, by = Math.min(e.spr.by, e.sh.by) - 1, bx1 = Math.max(e.spr.bx + e.spr.bw, e.sh.bx + e.sh.bw) + m, by1 = Math.max(e.spr.by + e.spr.bh, e.sh.by + e.sh.bh) + 1; e.box = [bx, by, bx1 - bx, by1 - by]; e.mask = depthMask(Z, B.d - 0.05, bx, by, bx1 - bx, by1 - by, {}); }
+      if (e.mask) [e.spr, e.sh].forEach(function (S) {   // what stands in front is cut out of the sprites once (it is still; at the foot, where it stands, the sway moves next to nothing)
+        var x = S.c.getContext('2d'), m = e.mask; x.setTransform(sc0, 0, 0, sc0, -S.bx * sc0, -S.by * sc0); x.globalCompositeOperation = 'destination-out'; x.drawImage(m.c, m.sx, m.sy, m.sw, m.sh, m.x, m.y, m.w, m.h); x.globalCompositeOperation = 'source-over'; x.setTransform(1, 0, 0, 1, 0, 0);
+      });
+    });
+  }
+  /* draw into the layer canvas and cut what stands in front (the depth image's mask), then put it over the overlay */
+  function weedCut(ctx, sc, box, mask, fn) {
+    if (!mask) { fn(ctx); return; }
+    if (!WDS.layer) WDS.layer = mkCanvas(2, 2); sizeCanvas(WDS.layer, fv.width, fv.height);
+    var lx = WDS.layer.getContext('2d'), b = [Math.max(0, Math.floor(box[0] * sc) - 1), Math.max(0, Math.floor(box[1] * sc) - 1), 0, 0];
+    b[2] = Math.min(fv.width, Math.ceil((box[0] + box[2]) * sc) + 1) - b[0]; b[3] = Math.min(fv.height, Math.ceil((box[1] + box[3]) * sc) + 1) - b[1]; if (b[2] <= 0 || b[3] <= 0) return;
+    lx.setTransform(1, 0, 0, 1, 0, 0); lx.globalAlpha = 1; lx.globalCompositeOperation = 'source-over'; lx.clearRect(b[0], b[1], b[2], b[3]);
+    lx.save(); lx.beginPath(); lx.rect(b[0], b[1], b[2], b[3]); lx.clip(); lx.setTransform(sc, 0, 0, sc, 0, 0); fn(lx); lx.restore();
+    lx.setTransform(sc, 0, 0, sc, 0, 0); lx.globalAlpha = 1; lx.globalCompositeOperation = 'destination-out'; lx.drawImage(mask.c, mask.sx, mask.sy, mask.sw, mask.sh, mask.x, mask.y, mask.w, mask.h); lx.globalCompositeOperation = 'source-over';
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.drawImage(WDS.layer, b[0], b[1], b[2], b[3], b[0], b[1], b[2], b[3]); ctx.restore();
+  }
+  function weedSway(g, t, e) {   // as the grass (drawGrassSway): a lean downwind and a sway that grows with the gusts
+    var w = g.wind || { x: 0, s: 0 }, ws = clamp(w.s || 0, 0, 1.6);
+    return (w.x || 0) * ws * 0.35 + Math.sin(t * (1.1 + ws * 1.4) + e.ph) * (0.05 + 0.28 * ws) + Math.sin(t * 3.1 + e.ph * 2) * 0.025 * (1 + ws);
+  }
+  /* pass 0: all (a still frame); 1: those farther than the visitor; 2: those nearer, and the ones being pulled */
+  function drawWeeds(ctx, g, sc, still, pass) {
+    if (reveal || !cur) return;
+    if (WDS.dirty && pass < 2) weedsPlace();
+    var tw = wclock(), sc0 = ovW() / g.W, dOcc = rare && rare.scr && rare.dOcc !== undefined ? rare.dOcc : null, budget = still ? 99 : 4, i;
+    // a gentle hint, so they are found: every 8 s one of them (in turn) shivers and catches a faint glint, only while nothing else is going on
+    var hintId = null, hintU = clock % 8;
+    if (!still && hintU < 1.4 && !rare && !(taps && taps.length) && !WDS.pulls.length && !(bird && bird.cur)) { var vis0 = WDS.placed.filter(function (e) { return e.spr && !e.hidden && !WDS.pulled[e.id] && e.cur === cur && e.t0 !== null && tw - e.t0 > 1; }); if (vis0.length) hintId = vis0[Math.floor(clock / 8) % vis0.length].id; }
+    if (WDS.placed.length && weedsOn(g)) {
+      var date = weedDate(g), pk0 = [sc0.toFixed(3), cur.spec.key, WDS.force || '', date ? date.getMonth() * 2 + (date.getDate() < 12 ? 0 : 1) : -1].join('|');
+      for (i = 0; i < WDS.placed.length; i++) {
+      var e = WDS.placed[i]; if (WDS.pulled[e.id] || e.cur !== cur) continue;
+      if (pass === 1 && dOcc !== null && e.B && e.B.d < dOcc) continue;
+      if (pass === 2 && (dOcc === null || !e.B || e.B.d >= dOcc)) continue;
+      var pk = Math.round(e.age * 12) + '|' + pk0;
+      if (e.pk !== pk) { if (budget-- <= 0) continue; try { weedPrep(e, g, sc0, pk, date); } catch (er) { e.spr = null; if (window.console) console.error(er); } }
+      if (e.hidden || !e.spr) continue;
+      if (e.t0 === null) e.t0 = tw;
+      var fa = running() ? clamp((tw - e.t0) / 0.6) : 1; e.shown = fa > 0.5;
+      var shear = still ? 0 : -Math.sin(weedSway(g, clock, e)) * e.flex, hint = 0;
+      if (hintId === e.id) { hint = Math.sin(hintU / 1.4 * Math.PI); shear += Math.sin(hintU * 8) * 0.2 * hint; }   // the hint: now and then one weed gives a little shiver
+      (function (e, shear, fa) { weedCut(ctx, sc, null, null, function (x) {
+        var S = e.sh, R = e.spr; x.globalAlpha = fa; x.drawImage(S.c, S.bx, S.by, S.bw, S.bh);
+        if (shear) { x.save(); x.transform(1, 0, shear, 1, -shear * e.B.y, 0); x.drawImage(R.c, R.bx, R.by, R.bw, R.bh); x.restore(); } else x.drawImage(R.c, R.bx, R.by, R.bw, R.bh);
+        x.globalAlpha = 1;
+      }); })(e, shear, fa);
+      if (hint > 0.02) { var gl = g.light === 'night' ? 0.16 : 0.3, tx = e.B.x - shear * e.hgt * 0.8, ty = e.B.y - e.hgt * 0.8; ctx.globalCompositeOperation = 'lighter'; stamp(ctx, sprite('spark'), tx, ty, Math.max(2.2, e.hgt * 0.35), 0, gl * hint); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; }
+      }
+    }
+    if (pass !== 1 && WDS.pulls.length) drawPulls(ctx, g, sc, tw);
+  }
+  /* ---- the pull ---- */
+  function pullWeed(e, g) {
+    WDS.pulled[e.id] = 1;
+    var rm = reducedMotion(), sc0 = ovW() / g.W, p = null;
+    try {
+      p = inGeo(g, function () {
+        var B = e.B, PP = e.PP, look = e.look, soil = weedSoil(), r = mulberry32(e.seed * 7 + 11), wet = g.wet || g.LIT.weather === 'snow' || !!g.SEA.snow;
+        var M = weedNewModel(B, sc0, PP); weedModel(M, look); weedRoots(M, look, soil);
+        var M2 = weedNewModel(B, sc0, PP), lc = look.kind === 'katabami' && look.sub ? [118, 62, 60] : [76, 120, 46]; M2.spread = e.spread; weedPatch(M2, look, soil, look.dormant ? null : lc);
+        var q = { e: e, B: B, t0: wclock(), side: r() < 0.5 ? -1 : 1, rm: rm, tp: rm ? 0 : 0.3, dur: rm ? 0.4 : 1.05, spr: weedSprite(M, B, sc0, e.edge), patch: weedSprite(M2, B, sc0), sh: e.sh, hgt: e.hgt, eyl: Math.hypot(B.e[2], B.e[3]), crumbs: [], dust: !wet, dustC: PP(shade(mixc(soil, [176, 150, 116], 0.5), [0, 1, 0])), soilC: [PP(shade(soil, [0.3, 0.8, -0.5])), PP(shade(mixc(soil, [150, 124, 92], 0.4), [0, 1, 0]))] };
+        if (!rm) for (var i = 0; i < 22; i++) { var a = r() * TAU, v = 0.08 + r() * 0.26; q.crumbs.push({ x: (r() - 0.5) * 0.02, z: (r() - 0.5) * 0.015, vx: Math.cos(a) * v + q.side * 0.05, vz: Math.sin(a) * v * 0.6, vy: 0.25 + r() * 0.45, d: r() * 0.08, r: 0.0035 + r() * 0.005, c: i % 3 ? 0 : 1 }); }
+        var k = B.k, bx = B.x - 0.8 * k, by = B.y - 0.9 * k, bw = 1.6 * k, bh = 1.02 * k; q.box = [bx, by, bw, bh];
+        q.mask = cur.depth ? depthMask(cur.depth, B.d - 0.05, bx, by, bw, bh, {}) : null;
+        return q;
+      });
+    } catch (er) { if (window.console) console.error(er); }
+    if (p && p.spr) WDS.pulls.push(p);
+    if (typeof o.onWeed === 'function') { try { o.onWeed(e.id); } catch (er2) { if (window.console) console.error(er2); } }
+    cue('weed', { id: e.id });
+    if (running()) loopCheck(); else weedKick();
+  }
+  function weedKick() {   // no animation loop (reduced motion, paused, animate off): the pull still plays, a still frame at a time
+    if (WDS.raf || dead) return;
+    WDS.raf = requestAnimationFrame(function f() { WDS.raf = 0; if (dead || running()) return; drawFrame(true); if (WDS.pulls.length) WDS.raf = requestAnimationFrame(f); });
+  }
+  function drawPulls(ctx, g, sc, tw) {
+    for (var i = WDS.pulls.length - 1; i >= 0; i--) {
+      var p = WDS.pulls[i], u = tw - p.t0, end = p.rm ? 2.4 : p.tp + 4.4;
+      if (u > end || u < -1 || p.e.cur !== cur) { WDS.pulls.splice(i, 1); continue; }
+      (function (p, u) { weedCut(ctx, sc, p.box, p.mask, function (x) { drawPull(x, g, sc, p, u); }); })(p, u);
+    }
+  }
+  function drawPull(x, g, sc, p, u) {
+    var B = p.B, k = B.k, tp = p.tp, R = p.spr, S = p.sh, ey = p.eyl, j;
+    // the patch of disturbed soil, from the moment it comes up; fading over a few seconds
+    var pa = p.rm ? (1 - sstep(0.6, 2.2, u)) * sstep(0, 0.1, u) : sstep(tp * 0.7, tp + 0.08, u) * (1 - sstep(tp + 1.2, tp + 4.3, u));
+    if (pa > 0.004 && p.patch) { x.globalAlpha = pa; x.drawImage(p.patch.c, p.patch.bx, p.patch.by, p.patch.bw, p.patch.bh); }
+    // its shadow stays on the ground a moment, then goes as it lifts
+    var sa = u < tp ? 1 : 1 - sstep(tp, tp + 0.25, u); if (p.rm) sa = 1 - clamp(u / 0.3);
+    if (sa > 0.01 && S) { x.globalAlpha = sa; x.drawImage(S.c, S.bx, S.by, S.bw, S.bh); }
+    var e = p.e, E = e.spr;
+    if (!p.rm && u < tp) {   // the tug: three quick shakes, a stretch, a first lift
+      var q = clamp(u / tp), wig = Math.sin(q * 3 * TAU) * 0.2 * (1 - 0.3 * q), st = 1 + 0.22 * q * q;   // (pulled at: it stretches up and thins, then lets go)
+      x.globalAlpha = 1; x.save(); x.translate(B.x, B.y - q * q * 0.012 * ey); x.rotate(wig); x.scale(1 - 0.08 * q * q, st); x.translate(-B.x, -B.y);
+      x.drawImage(E.c, E.bx, E.by, E.bw, E.bh); x.restore();
+    } else {
+      var v = clamp((u - tp) / (p.dur - tp)), X, Y, rot, al, sc2;
+      if (p.rm) { X = 0; Y = 0.05 * v; rot = 0; al = 1 - v; sc2 = 1; }
+      else { var sn = 1 + 0.12 * Math.exp(-v * 9) * Math.cos(v * 40); X = p.side * 0.42 * (1 - Math.pow(1 - v, 1.4)); Y = 0.5 * (1 - (1 - v) * (1 - v)) - 0.1 * v * v * v; rot = p.side * (0.1 + 1.9 * Math.pow(v, 1.3)); al = 1 - sstep(0.62, 1, v); sc2 = (1 - 0.15 * v) * sn; }   // (a little spring as it lets go)
+      if (al > 0.01 && v < 1) {
+        x.save(); x.globalAlpha = al;
+        if (v < 0.3) { x.beginPath(); x.rect(B.x - 2 * k, B.y - 2 * k, 4 * k, 2 * k + 0.004 * ey); x.clip(); }   // the root still in the ground is not seen
+        var pv = p.hgt * 0.35;
+        x.translate(B.x + X * k, B.y - Y * ey - pv); x.rotate(rot); x.scale(sc2, sc2); x.translate(-B.x, -B.y + pv);
+        x.drawImage(R.c, R.bx, R.by, R.bw, R.bh); x.restore();
+      }
+    }
+    // the puff: crumbs thrown up and out, landing about the hole; a breath of dust where it is dry
+    if (!p.rm && u >= tp) {
+      var gk = 3.2;
+      for (j = 0; j < p.crumbs.length; j++) {
+        var c = p.crumbs[j], tau = u - tp - c.d; if (tau < 0) continue;
+        var tl = 2 * c.vy / gk, tt = Math.min(tau, tl), y = Math.max(0, c.vy * tt - 0.5 * gk * tt * tt), cp = wq(B, [c.x + c.vx * tt, y, c.z + c.vz * tt]);
+        var ca = tau < tl ? 1 : pa; if (ca <= 0.01) continue;
+        x.globalAlpha = ca; x.fillStyle = rgb(p.soilC[c.c]); x.beginPath(); x.arc(cp[0], cp[1], Math.max(0.45 / sc, c.r * k), 0, TAU); x.fill();
+      }
+      if (p.dust && u < tp + 0.8) { var dv = (u - tp) / 0.8, rx = (0.04 + 0.12 * dv) * k; stamp(x, tintedSprite(p.dustC.map(function (v2) { return Math.round(clamp(v2, 0, 255)); })), B.x + p.side * 0.03 * k * dv, B.y - (0.015 + 0.04 * dv) * ey, rx, rx * 0.55, 0.32 * (1 - dv) * (1 - dv)); }
+    }
+    x.globalAlpha = 1;
+  }
+  function weedDbg() {   // (testing) where the weeds are, the pull clock, and a kind forced for close-ups
+    var g = cur && cur.geo;
+    return {
+      list: function () { if (!g) return []; if (WDS.dirty) { var st = saveState(); try { weedsPlace(); } finally { restoreState(st); } } return WDS.placed.filter(function (e) { return e.cur === cur; }).map(function (e) { return { id: e.id, kind: e.look ? e.look.kind : null, flower: e.look ? e.look.flower : null, x: e.x, z: e.z, hidden: !!e.hidden, drawn: !!e.spr && e.t0 !== null, pulled: !!WDS.pulled[e.id], nx: e.B ? e.B.x / g.W : null, ny: e.B ? (e.B.y - e.hgt * 0.4) / g.H : null, bx: e.B ? e.B.x : null, by: e.B ? e.B.y : null, hgt: e.hgt || 0, masked: !!e.mask, vis: e.B ? e.B.vis : null, gW: g.W, gH: g.H }; }); },
+      time: function (t) { WDS.tFix = t === undefined || t === null ? null : t; }, force: function (k) { WDS.force = k || null; WDS.placed.forEach(function (e) { e.pk = ''; }); },
+      pulls: WDS.pulls.length, pulled: Object.keys(WDS.pulled), place: function () { WDS.dirty = true; }
+    };
+  }
+  /* the weed under the finger: generous (at least about 22 CSS px), for a small target */
+  function weedHit(x, y) {
+    if (!cur || reveal) return null;
+    if (WDS.dirty) { var st = saveState(); try { weedsPlace(); } finally { restoreState(st); } }
+    var g = cur.geo, r0 = 22 * g.W / Math.max(1, size ? size.cssW : g.W), best = null, bd = 1e9;
+    WDS.placed.forEach(function (e) {
+      if (WDS.pulled[e.id] || e.hidden || !e.spr || !e.B || e.cur !== cur || e.t0 === null) return;
+      var hx = e.B.x, hy = e.B.y - e.hgt * 0.4, d = Math.hypot(x - hx, y - hy), rr = Math.max(r0, e.hgt * 0.75);
+      if (d < rr && d < bd) { bd = d; best = e; }
+    });
+    return best;
+  }
   function tap(nx, ny) {
     if (!cur || dead || !(nx >= 0 && nx <= 1 && ny >= 0 && ny <= 1)) return null;
     var g = cur.geo, x = nx * g.W, y = ny * g.H, best = null, slop = 10;
     if (waterHit && waterHit.img !== cur.mask) waterHit = null;
-    // a visitor on screen comes first
+    // a weed comes first (a small target: a generous reach), then a visitor on screen
+    var wh = weedHit(x, y); if (wh) { pullWeed(wh, g); return { hit: 'weed', id: wh.id }; }
     if (rare && rare.scr) { var rd = rarePixels(); if (rd ? rd.near(x, y, slop) : Math.hypot(x - rare.scr.x, y - (rare.scr.y - rare.scr.k * 0.3)) < Math.max(16, rare.scr.k * 0.7) + slop) best = { id: 'rare' }; }
     if (!best) {
       var T = inGeo(g, function () { return hitTargets(g); }), sc = 1e9, md = cur.swayData && cur.swayData.hits ? cur.swayData : null, waterFirst;
@@ -9046,6 +9667,7 @@ function mount(el, opts) {
     if (dead) return api;
     var before = { stage: o.stage, season: o.season, light: o.light, quality: o.quality, event: o.event, date: o.date, tag: size ? conditions().tag : '' };
     merge(n);
+    if (n && n.weeds !== undefined) setWeeds(o.weeds);   // the weeds: a live overlay, nothing to paint again
     clearTimeout(pendingTimer); pendingTimer = null;
     var same = before.season === o.season && before.light === o.light && before.quality === o.quality && before.event === o.event && (!size || before.tag === conditions().tag);
     if (cur && fxSignature() !== fxSig) setupFx(); else if (before.date !== o.date) setupDragons();   // the weather, the fireworks or the calendar moved on
@@ -9139,7 +9761,7 @@ function mount(el, opts) {
     destroy: function () {
       if (dead) return;
       dead = true; cancelOthers([]); clearTimeout(pendingTimer); clearTimeout(rsTimer);
-      if (raf) cancelAnimationFrame(raf); raf = 0;
+      if (raf) cancelAnimationFrame(raf); raf = 0; if (WDS.raf) cancelAnimationFrame(WDS.raf); WDS.raf = 0; WDS.pulls = []; WDS.placed = [];
       document.removeEventListener('visibilitychange', onVis);
       try { if (io) io.disconnect(); if (ro) ro.disconnect(); if (rmq) { if (rmq.removeEventListener) rmq.removeEventListener('change', onRM); else if (rmq.removeListener) rmq.removeListener(onRM); } } catch (e) { /* ignore */ }
       [cv, tv, fv].forEach(function (c) { if (c.parentNode) c.parentNode.removeChild(c); c.width = c.height = 0; });
@@ -9149,7 +9771,7 @@ function mount(el, opts) {
     _summon: function (id) { var ok = summon(id); loopCheck(); return ok; },
     tap: tap,
     _visit: function (id) { return visit(id); },
-    get _dbg() { return { fv: fv, cv: cv, tv: tv, cur: cur, wl: wl, ol: ol, petals: petals, leafs: leafs, wfx: wfx, fws: fws, taps: taps, sway: sway, fallers: fallers, dragons: dragons, flutters: flutters, rare: rare, clock: clock, conditions: conditions, targets: function () { if (!cur) return []; var g = cur.geo; return inGeo(g, function () { var T = hitTargets(g).map(function (h) { return { id: h.id, kind: h.kind, tag: h.tag, nx: h.x / g.W, ny: h.y / g.H, r: h.r / g.W, pri: h.pri }; }); if (g.F.pond) { var pc = P(LAY.pondA[0] + 0.3, WL, LAY.pondA[1] - 0.2); T.push({ id: 'pond', nx: pc.x / g.W, ny: pc.y / g.H }); } return T; }); }, frame: function () { clock += 1 / 30; tickFx(1 / 30); drawFrame(false); }, rarePixels: rarePixels, perf: perf, setLevel: setLevel, QL: QL }; },
+    get _dbg() { return { fv: fv, cv: cv, tv: tv, cur: cur, wl: wl, ol: ol, petals: petals, leafs: leafs, wfx: wfx, fws: fws, taps: taps, sway: sway, fallers: fallers, dragons: dragons, flutters: flutters, rare: rare, clock: clock, conditions: conditions, targets: function () { if (!cur) return []; var g = cur.geo; return inGeo(g, function () { var T = hitTargets(g).map(function (h) { return { id: h.id, kind: h.kind, tag: h.tag, nx: h.x / g.W, ny: h.y / g.H, r: h.r / g.W, pri: h.pri }; }); if (g.F.pond) { var pc = P(LAY.pondA[0] + 0.3, WL, LAY.pondA[1] - 0.2); T.push({ id: 'pond', nx: pc.x / g.W, ny: pc.y / g.H }); } return T; }); }, frame: function () { clock += 1 / 30; tickFx(1 / 30); drawFrame(false); }, rarePixels: rarePixels, perf: perf, setLevel: setLevel, QL: QL, weeds: weedDbg() }; },
     get stats() { return { source: stats.source, ms: stats.ms, history: stats.history.slice(), running: running() }; }
   };
   if (size) lastReq = refresh(false);
@@ -9172,7 +9794,7 @@ var API = {
   lightFor: lightFor,
   mount: mount
 };
-try { Object.defineProperty(API, '_dbg', { value: { study: rareStudy, renderStatic: renderStatic, LAY: LAY, BRIDGE: BRIDGE, makeCam: makeCam, focusFor: focusFor, idbOpen: idbOpen }, enumerable: false }); } catch (e) { /* ignore */ }
+try { Object.defineProperty(API, '_dbg', { value: { study: rareStudy, renderStatic: renderStatic, weedStudy: weedStudy, LAY: LAY, BRIDGE: BRIDGE, makeCam: makeCam, focusFor: focusFor, idbOpen: idbOpen }, enumerable: false }); } catch (e) { /* ignore */ }
 window.MogiGarden = API;
 
 })();

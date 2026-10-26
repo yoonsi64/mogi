@@ -7507,6 +7507,13 @@ function sndCue(E, name, arg, focus, at) {
     case 'paddy': if (E.rnd() < 0.5) { snPlink(E, t, out(0.12, R(-0.4, 0.4), 2500), R(300, 420), 1, 0.08); snNoise(E, t, out(0.06, 0, 2000), { kind: 'pink', type: 'lowpass', f: 1500, dec: 0.08 }); }
       else { for (var b = 0; b < 8; b++) snNoise(E, t + b * 0.05, out(0.05, R(-0.6, 0.6)), { f: R(600, 1000), q: 1, dec: 0.03 }); BIRD.suzume(E, t + 0.3, out(0.08, R(-0.6, 0.6))); } return;
     case 'person': snVoice(E, t, out(0.1, R(-0.4, 0.4), 2200), 1, R(0.7, 1.1), R(140, 220)); return;
+    case 'weed': // a weed pulled: the leaves rustle in the tug, the roots tear out of the soil, a soft thump, crumbs falling
+      var pw = R(-0.4, 0.4), ow = out(0.1, pw, 7000), rw;
+      snNoise(E, t, out(0.05, pw), { kind: 'pink', type: 'bandpass', f: R(3800, 5200), q: 0.7, att: 0.04, hold: 0.12, dec: 0.18 });
+      for (rw = 0; rw < 9; rw++) snNoise(E, t + 0.28 + rw * R(0.014, 0.026), ow, { f: R(1500, 3200) * (1 + rw * 0.04), q: R(4, 9), dec: 0.012, peak: 0.5 + 0.5 * E.rnd() });
+      snNoise(E, t + 0.3, out(0.16, pw, 600), { kind: 'brown', type: 'lowpass', f: 320, q: 0.7, att: 0.004, dec: 0.09 });
+      for (rw = 0; rw < 6; rw++) snNoise(E, t + 0.5 + rw * R(0.03, 0.09), out(0.035, pw + R(-0.2, 0.2), 4000), { kind: 'pink', f: R(1200, 2600), q: 2, dec: 0.015 });
+      return;
     case 'lantern': snNoise(E, t, out(0.07, R(-0.2, 0.2), 1200), { kind: 'brown', type: 'lowpass', f: 500, q: 0.6, att: 0.1, hold: 0.4, dec: 0.4 }); return;
     case 'focus-start': snRin(E, t, out(0.22 / k, 0), 1180, 1); return;
     case 'focus-end': for (var s3 = 0; s3 < 3; s3++) snBonsho(E, t + s3 * 4.5, out(0.18 / k, 0, 2400), 196, 0.8, 12); return;

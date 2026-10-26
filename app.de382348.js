@@ -4318,7 +4318,7 @@
         GD.el.querySelector('.gd-info').innerHTML = gdCardInfoHtml(s);
         if (onHomeNow()) skyRecordState(s);
         GD.el.querySelector('.gd-tag').textContent = GD_SEASON[s.season] + '・' + GD_LIGHT[s.light] + (s.weather && s.weather !== 'clear' ? '・' + GD_WEATHER[s.weather] : '') + (s.event ? '・' + GD_EVENTS[s.event] : '') + (s.fireworks ? '・花火' : '');
-        var o = { stage: s.stage, season: s.season, light: s.light, event: s.event, weather: s.weather, fireworks: s.fireworks, date: new Date(), quality: 'card', animate: true,
+        var o = { stage: s.stage, season: s.season, light: s.light, event: s.event, weather: s.weather, fireworks: s.fireworks, date: new Date(), quality: 'card', animate: true, weeds: gdWeeds(),
                   onCue: function(name, info) { if (name === 'rare' && GD.el && GD.el.isConnected && onHomeNow()) rareRecord(GD.ctrlWorld || worldActive(), info, false); } };
         if (!GD.ctrl) {
             o.onReady = gdCheckStageUp;
@@ -4326,6 +4326,7 @@
             GD.ctrlWorld = worldActive();
         } else {
             if (GD.shown !== s.stage + s.season + s.light + s.event + s.weather && !GD.revealing) GD.ctrl.update(o);
+            else GD.ctrl.update({ weeds: o.weeds });
             GD.ctrl.resume();
             gdCheckStageUp();
         }
@@ -4487,6 +4488,7 @@
                  fireworks: d.fireworks !== undefined ? d.fireworks === 'on' : s.fireworks,
                  date: d.season && d.season !== s.season ? ({ spring: new Date(new Date().getFullYear(), 3, 20), summer: new Date(new Date().getFullYear(), 6, 20), autumn: new Date(new Date().getFullYear(), 9, 25), winter: new Date(new Date().getFullYear(), 0, 20) })[d.season] : new Date(),
                  quality: 'full', animate: true,
+                 weeds: gdWeeds(), onWeed: weedPulled,
                  onCue: function(name, info) {
                      if (!gardenOpen() || fullOpen()) return;
                      if (name === 'rare' && !GD.devMode) rareRecord(gdViewWorld(), info, true);
@@ -4618,6 +4620,39 @@
             if (GD.vctrl) GD.vctrl.update(gdViewOpts(gdState(gdViewWorld())));
             gdRenderView(); gdSoundUpdate();
         });
+    }
+    // ---------- 雑草: a few weeds come up in the garden over time; tap one to pull it out (just for fun) ----------
+    var WEED_KEY = 'jlptGardenWeeds', WEED_EVERY = 5 * 3600000, WEED_MAX = 6, WEED_GROW = 24 * 3600000;
+    function weedSave(st) { try { localStorage.setItem(WEED_KEY, JSON.stringify(st)); } catch (e) {} }
+    function weedSeed() { return Math.floor(Math.random() * 1e9); }
+    function weedState() {
+        var st = loadJSON(WEED_KEY, {}), now = Date.now(), changed = false;
+        if (!Array.isArray(st.list)) {   // the first look: two are already up, so there is something to find
+            st = { list: [], last: now, pulled: 0, n: 0 };
+            for (var i = 0; i < 2; i++) st.list.push({ id: 'w' + (++st.n), seed: weedSeed(), t: now - WEED_GROW });
+            changed = true;
+        }
+        if (!(st.last <= now)) { st.last = now; changed = true; }
+        var due = Math.floor((now - st.last) / WEED_EVERY);
+        if (due > 0) {
+            for (var k = 0; k < due && st.list.length < WEED_MAX; k++) st.list.push({ id: 'w' + (++st.n), seed: weedSeed(), t: st.last + (k + 1) * WEED_EVERY });
+            st.last += due * WEED_EVERY; changed = true;
+        }
+        if (changed) weedSave(st);
+        return st;
+    }
+    function gdWeeds() {
+        var now = Date.now();
+        return weedState().list.map(function(w) { return { id: w.id, seed: w.seed, age: Math.max(0, Math.min(1, (now - w.t) / WEED_GROW)) }; });
+    }
+    function weedPulled(id) {
+        var st = weedState(), i = st.list.findIndex(function(w) { return w.id === id; });
+        if (i < 0) return;
+        st.list.splice(i, 1); st.pulled = (st.pulled || 0) + 1;
+        if (st.list.length === WEED_MAX - 1) st.last = Date.now();     // a full plot starts its next weed from now
+        weedSave(st);
+        var ws = gdWeeds();
+        [GD.ctrl, GD.vctrl, GD.full && GD.full.ctrl].forEach(function(c) { if (c && c.update) try { c.update({ weeds: ws }); } catch (e) {} });
     }
     var GD_CUE_ALIAS = { bees: 'fuji', startle: 'birdtap' };   // birdtap: a bird you touched (always answers, whatever the weather)       // painter cue names that share a sound
     function gdCueName(n) { return GD_CUE_ALIAS[n] || n; }
@@ -20809,6 +20844,7 @@
             { id: 'gdsky', cat: gardenLive() ? 'garden' : 'off', icon: '🌈', name: '空の記録', value: Object.keys(skySeen()).length, unit: 'つ', tiers: [{ n: 1, label: '1つ' }, { n: 3, label: '3つ' }, { n: 5, label: '5つ' }, { n: 7, label: '7つ' }, { n: SKY_SIGHTS.length, label: 'すべて' }], hint: '庭や町で見た空模様（雨・雷雨・雪・虹・花火・流れ星・流星群・台風・吹雪）の数' },
             { id: 'gdtyphoon', cat: gardenLive() ? 'garden' : 'off', icon: '🌀', name: '嵐の日', secret: true, ok: !!skySeen().typhoon, hint: '庭や町で、めったにない台風に出会う' },
             { id: 'gdblizzard', cat: gardenLive() ? 'garden' : 'off', icon: '❄️', name: '吹雪の日', secret: true, ok: !!skySeen().blizzard, hint: '庭や町で、めったにない吹雪に出会う' },
+            { id: 'gdweeds', cat: gardenLive() ? 'garden' : 'off', icon: '🌿', name: '草むしり', value: weedState().pulled || 0, unit: '本', tiers: tiers([1, 10, 50, 100, 300], '本'), hint: '庭に生えた雑草を抜いた数（雑草をタップ）' },
             { id: 'gdmeteor', cat: gardenLive() ? 'garden' : 'off', icon: '🌠', name: '星に願いを', ok: !!skySeen().meteor, hint: '流星群の夜に、見上げた空で流れ星を見る' },
             // 誤答と復習
             { id: 'notezero', cat: 'review', icon: '🧹', name: '誤答ゼロ', value: nb.zero.length, unit: '回', tiers: tiers([1, 3, 10, 20, 50], '回'), hint: '誤答ノートの問題をすべて解き直して、ノートを空にした回数' },
