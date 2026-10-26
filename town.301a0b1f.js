@@ -1042,7 +1042,18 @@ function lattice(ctx, W, s0, s1, y0, y1, o) {
     for (i = 0; i <= n; i++) { s = lerp(s0, s1, i / n); wline(ctx, W, s, y0, s, y1, out + 0.01); }
     ctx.stroke();
   }
+  if (o.pat && MODE === 'n' && px > 30) {   // the lattice's own pattern: 子持ち (a heavy bar every third), 切子 (short slats doubled in the top third, over a rail), 糸屋 (fine slats between heavy posts)
+    var pc = rgb(lit(mixc(col, [255, 230, 200], 0.15), W.n, { amb: 1.1 })), yk = lerp(y0, y1, 0.7);
+    if (o.pat === 'komochi') { ctx.strokeStyle = pc; ctx.lineWidth = slw * 1.9; ctx.beginPath(); for (i = 0; i <= n; i += 3) { s = lerp(s0, s1, i / n); wline(ctx, W, s, y0, s, y1, out + 0.012); } ctx.stroke(); }
+    else if (o.pat === 'kiriko') { ctx.strokeStyle = pc; ctx.lineWidth = slw * 0.7; ctx.beginPath(); for (i = 0; i < n; i++) { s = lerp(s0, s1, (i + 0.5) / n); wline(ctx, W, s, yk, s, y1, out + 0.012); } ctx.stroke(); ctx.lineWidth = slw * 1.4; ctx.beginPath(); wline(ctx, W, s0, yk, s1, yk, out + 0.013); ctx.stroke(); }
+    else if (o.pat === 'itoya') { ctx.strokeStyle = rgb(scl(lit(col, W.n), 0.85)); ctx.lineWidth = slw * 2.2; ctx.beginPath(); for (i = 0; i <= n; i += 4) { s = lerp(s0, s1, i / n); wline(ctx, W, s, y0, s, y1, out + 0.012); } ctx.stroke(); }
+  }
   ctx.strokeStyle = rgb(lit(col, W.n)); ctx.lineWidth = 0.7; ctx.beginPath(); wline(ctx, W, s0, y1, s1, y1, out + 0.01); wline(ctx, W, s0, y0 + 0.05, s1, y0 + 0.05, out + 0.01); if (o.mid) wline(ctx, W, s0, (y0 + y1) * 0.5 + 0.2, s1, (y0 + y1) * 0.5 + 0.2, out + 0.01); ctx.stroke();
+  if (MODE === 'n' && px > 30) {   // weathering: the foot darkened by splash-back, the upper slats bleached grey by the sun
+    var q0 = Pa(W.at((s0 + s1) / 2, y0, out)), q1 = Pa(W.at((s0 + s1) / 2, y1, out)), wg = ctx.createLinearGradient(0, q0.y, 0, q1.y);
+    wg.addColorStop(0, 'rgba(30,26,24,0.32)'); wg.addColorStop(0.22, 'rgba(30,26,24,0)'); wg.addColorStop(0.62, 'rgba(200,196,184,0)'); wg.addColorStop(1, 'rgba(200,196,184,0.16)');
+    ctx.fillStyle = wg; poly(ctx, [W.at(s0, y0, out + 0.014), W.at(s1, y0, out + 0.014), W.at(s1, y1, out + 0.014), W.at(s0, y1, out + 0.014)].map(Pa)); ctx.fill();
+  }
 }
 /* paper screens: at night some glow */
 function shoji(ctx, W, s0, s1, y0, y1, o) {
@@ -1196,6 +1207,10 @@ function roofPlane(ctx, pl, R, rng, snow) {
       // a few lighter, newer tiles
       for (i = 0; i < Le * Lg * 0.25 * dq; i++) { var q = at(rng() * Le, rng() * Lg); ctx.fillStyle = rng() < 0.5 ? rgb(scl(base, 1.18), 0.5) : rgb(scl(base, 0.8), 0.5); ctx.fillRect(q.x, q.y, Math.max(0.5, step * k0 * 0.6), Math.max(0.4, step * k0 * 0.3)); }
       if (mat === 'kawara') roofWeather(ctx, R, rng, base, n, at, Le, Lg, k0, step, dq);
+      else if (k0 * Math.min(Le, Lg) > 5) {   // copper: the patina uneven, paler where rain runs, the old brown showing near the ridge
+        ctx.lineCap = 'round'; ctx.lineWidth = Math.max(0.4, step * k0 * 0.5); ctx.strokeStyle = rgb(mixc(base, [196, 226, 206], 0.35), 0.25); ctx.beginPath(); for (i = 0; i < Le * 3 * dq; i++) { var cu = rng() * Le, cv0 = Lg * (0.4 + rng() * 0.6), p0c = at(cu, cv0), p1c = at(cu, cv0 - Lg * (0.2 + rng() * 0.4)); ctx.moveTo(p0c.x, p0c.y); ctx.lineTo(p1c.x, p1c.y); } ctx.stroke(); ctx.lineCap = 'butt';
+        var gr0 = at(Le / 2, Lg), gr1 = at(Le / 2, Lg * 0.75), cg = ctx.createLinearGradient(gr0.x, gr0.y, gr1.x, gr1.y); cg.addColorStop(0, 'rgba(120,80,50,0.35)'); cg.addColorStop(1, 'rgba(120,80,50,0)'); ctx.fillStyle = cg; ctx.fillRect(0, 0, W, H);
+      }
     }
     ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = 0.4; ctx.fillStyle = GRAINPAT; ctx.fillRect(0, 0, W, H); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     if (F.wet && !snow) { // rain-glossed tiles: darker, with the sky caught along the rolls
@@ -1438,8 +1453,9 @@ function drawMachiya(ctx, sp) {
       var dw = sp.doorW || 1.7, dl = sp.doorLeft ? 0.25 : w - dw - 0.25, on = winOn(sp.seed);
       // ground floor: posts, lattice, doorway
       wquad(ctx, f, 0, w, 0, y1, lit(scl(latC, 0.8), f.n), 0.01);
-      if (sp.doorLeft) lattice(ctx, f, dw + 0.45, w - 0.2, 0.35, y1 - 0.15, { col: latC, out: 0.12, depth: true, lit: on });
-      else lattice(ctx, f, 0.2, dl - 0.2, 0.35, y1 - 0.15, { col: latC, out: 0.12, depth: true, lit: on });
+      var lpat = ['plain', 'komochi', 'kiriko', 'itoya'][(hash2(sp.seed, 13) * 4) | 0];
+      if (sp.doorLeft) lattice(ctx, f, dw + 0.45, w - 0.2, 0.35, y1 - 0.15, { col: latC, out: 0.12, depth: true, lit: on, pat: lpat });
+      else lattice(ctx, f, 0.2, dl - 0.2, 0.35, y1 - 0.15, { col: latC, out: 0.12, depth: true, lit: on, pat: lpat });
       doorway(ctx, f, dl, dl + dw, 0, y1 - 0.35, winOn(sp.seed + 3));
       boards(ctx, f, 0.2, w - 0.2, 0, 0.35, [70, 56, 46]);
       frameWall(ctx, f, [0.08, w - 0.08], [y1], MAT.woodD, 0.16);
@@ -1449,10 +1465,8 @@ function drawMachiya(ctx, sp) {
       else if (up === 'koshi') { lattice(ctx, f, 0.5, w - 0.5, y1 + 0.65, yE - 0.5, { col: latC, out: 0.05, sp: 0.09, lit: winOn(sp.seed + 5) }); }
       else if (up === 'shoji') { shoji(ctx, f, 0.4, w - 0.4, y1 + 0.6, yE - 0.4, { lit: winOn(sp.seed + 5) }); }
       if (!sp.low && r() < 0.7) inuyarai(ctx, f, sp.doorLeft ? dw + 0.45 : 0.2, sp.doorLeft ? w - 0.2 : dl - 0.2);
-      if (sp.sign) { // a hanging shop sign beside the door
-        var sx = sp.doorLeft ? dw + 0.55 : dl - 0.35; wquad(ctx, f, sx - 0.18, sx + 0.18, 1.2, 2.5, lit([40, 30, 24], f.n), 0.5);
-        var c0 = Pa(f.at(sx, 2.25, 0.52)), c1 = Pa(f.at(sx, 1.45, 0.52)); ctx.strokeStyle = rgb(lit([214, 196, 150], f.n)); ctx.lineWidth = Math.max(0.3, 0.06 * c0.k); ctx.beginPath(); ctx.moveTo(c0.x, c0.y); ctx.lineTo(c1.x, c1.y); ctx.stroke();
-      }
+      if (sp.sign) shopKanban(ctx, f, sp.doorLeft ? dw + 0.55 : dl - 0.35, y1, sp.seed);   // a hanging 看板 beside the door
+      if (!sp.low && hash2(sp.seed, 29) < 0.55) shopAndon(ctx, f, sp.doorLeft ? dw + 0.75 : dl - 0.5, sp.seed);   // a standing 行灯看板 by the door
     }
     if (!sp.low) pentRoof(ctx, f, -0.05, w + 0.05, y1 + 0.55, 0.95, { mat: 'kawara', s: 0.42 });
     if (!sp.low && !S) { var dw2 = sp.doorW || 1.7, dl2 = sp.doorLeft ? 0.25 : w - dw2 - 0.25; eaveSign(ctx, f, sp.doorLeft ? 0.35 : dl2 - 0.2, sp.doorLeft ? dw2 + 0.15 : w - 0.35, y1 + 0.62, sp.seed + 9); }
@@ -1468,9 +1482,39 @@ function drawMachiya(ctx, sp) {
     ctx.strokeStyle = rgb(lit([60, 48, 40], f.n)); ctx.lineWidth = 0.4; ctx.beginPath(); for (var sh = 0.1 + 0.9; sh < w - 0.1; sh += 0.9) wline(ctx, f, sh, 0.15, sh, y1 - 0.1, 0.17); ctx.stroke();
     if (!sp.low) wquad(ctx, f, 0.4, w - 0.4, y1 + 0.65, y1 + 1.5, lit([104, 86, 68], f.n), 0.06);
   }
-  if (sp.udatsu && !S) udatsu(ctx, B, w, d, y1, yE);
+  if (f.vis && !S && MODE === 'n') {   // rain stains run down the woodwork from under the pent roof and the eaves
+    var rr2 = mulberry32(sp.seed + 61); ctx.lineCap = 'round';
+    for (var rs = 0; rs < w * 1.6; rs++) { var sx2 = 0.15 + rr2() * (w - 0.3), top2 = (rr2() < 0.6 ? y1 + 0.5 : y1 - 0.12), len2 = 0.3 + rr2() * 0.9, a0 = Pa(f.at(sx2, top2, 0.13)), a1 = Pa(f.at(sx2 + (rr2() - 0.5) * 0.04, top2 - len2, 0.13)), sg2 = ctx.createLinearGradient(a0.x, a0.y, a1.x, a1.y);
+      sg2.addColorStop(0, 'rgba(26,22,22,0.28)'); sg2.addColorStop(1, 'rgba(26,22,22,0)'); ctx.strokeStyle = sg2; ctx.lineWidth = Math.max(0.4, 0.07 * a0.k); ctx.beginPath(); ctx.moveTo(a0.x, a0.y); ctx.lineTo(a1.x, a1.y); ctx.stroke(); }
+    ctx.lineCap = 'butt';
+  }
+  if ((sp.udatsu || (!sp.low && hash2(sp.seed, 41) < 0.3)) && !S) udatsu(ctx, B, w, d, y1, yE);
   drawRoof(ctx, B, { W: w / 2 + 0.25, D: d / 2 + 0.85, yE: yE - 0.45, s: 0.5, type: 'gable', mat: 'kawara', seed: sp.seed, noOni: sp.joinL && sp.joinR, col: sp.roofCol });
   if (sp.roofSign && !S) roofSign(ctx, B, w, d, yE);
+}
+/* 看板: a shop's hanging signboard, framed, its 屋号 brushed in two or three characters down it, under a little tiled cap on some */
+function shopKanban(ctx, f, sx, y1, seed) {
+  var r = mulberry32(seed + 7), dark = r() < 0.55, board = dark ? [50, 36, 28] : [206, 186, 140], ink = dark ? [230, 204, 130] : [34, 26, 24], frame = dark ? [96, 70, 46] : [80, 56, 40], hb = 0.2, y0 = 1.15, yt = y1 - 0.1, out = 0.5, nC = 2 + (r() < 0.5 ? 1 : 0);
+  wquad(ctx, f, sx - hb - 0.04, sx + hb + 0.04, y0 - 0.04, yt + 0.04, lit(frame, f.n), out);
+  wquad(ctx, f, sx - hb, sx + hb, y0, yt, lit(board, f.n, { amb: 1.12 }), out + 0.005);
+  var k = Pa(f.at(sx, (y0 + yt) / 2, out)).k, word = pickWord(SIGN_YAGO, seed + 3), nn = Array.from(word).length, th = Math.min(yt - y0 - 0.12, nn * hb * 2 * 0.9), ty = (y0 + yt) / 2 + th / 2; void nC;   // the name down the board, one character a line
+  if (k * hb >= 1.2) signText(ctx, word, function (u, v) { return Pa(f.at(sx - hb * 0.85 + u * hb * 1.7, ty - v * th, out + 0.01)); }, true, rgb(lit(ink, f.n, { amb: 1.25 })));
+  if (r() < 0.5) { var c0 = f.at(sx - hb - 0.1, yt + 0.04, out - 0.05), c1 = f.at(sx + hb + 0.1, yt + 0.04, out - 0.05), c2 = f.at(sx + hb + 0.06, yt + 0.16, out + 0.12), c3 = f.at(sx - hb - 0.06, yt + 0.16, out + 0.12); fillPts(ctx, [c0, c1, c2, c3], shade([66, 70, 78], norm(add(f.n, [0, 1.4, 0]))), 0.3); }   // the little tiled cap
+}
+/* 行灯看板: a standing lantern-sign at the shopfront: a wooden frame on four legs, paper sides brushed with the shop's name, lit from
+   within at dusk and night (its glow, and a warm pool on the street) */
+function shopAndon(ctx, f, sa, seed) {
+  var r = mulberry32(seed + 19), B = BF(f.at(sa, 0, 1.15)[0], f.at(sa, 0, 1.15)[2], [f.at(1, 0, 0)[0] - f.at(0, 0, 0)[0], f.at(1, 0, 0)[2] - f.at(0, 0, 0)[2]], 0), hw = 0.17, y0 = 0.4, y1 = 1.25, on = LIT.lit, S = sil();
+  [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (q) { postIn(ctx, B, q[0] * hw, q[1] * hw, 0, y0 + 0.05, 0.02, [70, 52, 38]); });
+  var paper = on ? [255, 222, 160] : [232, 224, 204], nF = B.N(0, -1, 0), nS = B.N(1, 0, 0);
+  boxIn(ctx, B, -hw, hw, -hw, hw, y0, y1, on ? paper : paper, on ? [120, 80, 50] : [90, 70, 52]);
+  if (S) return;
+  var fr = [70, 52, 38], k = Pa(B.L(0, 0, (y0 + y1) / 2)).k;
+  ctx.strokeStyle = rgb(on ? [120, 70, 36] : lit(fr, nF)); ctx.lineWidth = Math.max(0.35, 0.03 * k); ctx.beginPath();
+  [[-hw, -hw], [hw, -hw]].forEach(function (q) { var a = Pa(B.L(q[0], q[1] - 0.002, y0)), b = Pa(B.L(q[0], q[1] - 0.002, y1)); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); });
+  [y0, y1].forEach(function (yy) { var a = Pa(B.L(-hw, -hw - 0.002, yy)), b = Pa(B.L(hw, -hw - 0.002, yy)); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); }); ctx.stroke();
+  if (k * hw > 1.2) { var aw = pickWord(SIGN_ANDON, seed), an = Array.from(aw).length, ah = Math.min(y1 - y0 - 0.1, an * hw * 2 * 0.95), ay0 = (y0 + y1) / 2 + ah / 2; signText(ctx, aw, function (u, v) { return Pa(B.L(-hw * 0.9 + u * hw * 1.8, -hw - 0.004, ay0 - v * ah)); }, true, rgb(on ? [60, 30, 20] : lit([30, 24, 22], nF))); }
+  if (on) { var c = Pa(B.L(0, -hw, (y0 + y1) / 2)); addGlow(c, 4, 0.42, true); addPool(B.L(0, 0, 0), 1.6, 0.5); }
 }
 /* udatsu: raised plaster firewalls at the ends of the upper storey, each with a small tiled cap */
 function udatsu(ctx, B, w, d, y1, yE) {
@@ -1601,15 +1645,53 @@ function inuyarai(ctx, W0, s0, s1) {
   ctx.stroke();
 }
 /* a shop sign board standing on the pent roof, three brushed characters */
+/* real words on signs and banners, set in a Mincho face with a little ink spread (fillText under the sign's own perspective).
+   Fixed, period-appropriate lists, picked by the house's seed. If the browser has no Japanese font, plain ink strokes stand in:
+   never invented characters (this is a study app; whatever a learner can see must be real) */
+var JP_FONT = '"Yu Mincho", "YuMincho", "Hiragino Mincho ProN", "Noto Serif JP", "Noto Serif CJK JP", "Noto Sans CJK JP", serif';
+var SIGN_YAGO = ['越後屋', '伊勢屋', '松屋', '大黒屋', '万屋', '丸屋', '呉服', '酒', '米', '茶', '薬', '蕎麦', '団子', '油', '両替', '宿'];
+var SIGN_ANDON = ['そば', 'うどん', '御休処', '御茶漬', '酒', '御宿'];
+var NOBORI_SHRINE = ['奉納', '正一位稲荷大明神'], NOBORI_STREET = ['大売出し', '名物団子', '商売繁盛'], NOBORI_THEATRE = ['大入', '芝居', '千秋楽', '歌舞伎'];
+var CJK_OK = null;
+function cjkOK() {   // does the canvas draw a real glyph for a kanji (not nothing, not the missing-glyph box)?
+  if (CJK_OK !== null) return CJK_OK;
+  try {
+    var c = mkCanvas(40, 40), x = c.getContext('2d', { willReadFrequently: true });
+    function img(ch) { x.clearRect(0, 0, 40, 40); x.fillStyle = '#000'; x.font = '32px ' + JP_FONT; x.textBaseline = 'middle'; x.textAlign = 'center'; x.fillText(ch, 20, 20); var d = x.getImageData(0, 0, 40, 40).data, s = '', n = 0; for (var i = 3; i < d.length; i += 16) { s += d[i] > 100 ? '1' : '0'; if (d[i] > 100) n++; } return { s: s, n: n }; }
+    var a = img('越'), b = img('͸'), c2 = img('屋');
+    CJK_OK = a.n > 8 && c2.n > 8 && a.s !== b.s && a.s !== c2.s;
+  } catch (e) { CJK_OK = false; }
+  return CJK_OK;
+}
+function pickWord(list, seed) { return list[((hash2(seed | 0, 97) * list.length) | 0) % list.length]; }
+/* write a word into a sign's face. M(u, v): the face's unit square (u across, v down) to the screen. Vertical: one character a
+   cell, top to bottom; else left to right. Each character kept square on the face. ink: colour; o.fill (0..1) of the cell */
+function signText(ctx, word, M, vertical, ink, o) {
+  if (sil()) return;
+  o = o || {}; var ch = Array.from ? Array.from(word) : word.split(''), n = ch.length, fill = o.fill || 0.82, i;
+  var tot = Math.hypot(M(1, 0).x - M(0, 0).x, M(1, 0).y - M(0, 0).y) * Math.hypot(M(0, 1).x - M(0, 0).x, M(0, 1).y - M(0, 0).y); if (tot < 6) return;
+  ctx.fillStyle = ink; ctx.strokeStyle = ink; var f0 = ctx.font, ta = ctx.textAlign, tb = ctx.textBaseline; ctx.font = (o.bold ? '700 ' : '600 ') + '100px ' + JP_FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';   // (the font set once per word: parsing it is not free)
+  for (i = 0; i < n; i++) {
+    var u0 = vertical ? 0 : i / n, u1 = vertical ? 1 : (i + 1) / n, v0 = vertical ? i / n : 0, v1 = vertical ? (i + 1) / n : 1, uc = (u0 + u1) / 2, vc = (v0 + v1) / 2;
+    var c = M(uc, vc), au = M(u1, vc), av = M(uc, v1), ax = [(au.x - c.x) * 2, (au.y - c.y) * 2], ay = [(av.x - c.x) * 2, (av.y - c.y) * 2], la = Math.hypot(ax[0], ax[1]) || 1, lb = Math.hypot(ay[0], ay[1]) || 1, sz = Math.min(la, lb) * fill;
+    if (ax[0] * ay[1] - ax[1] * ay[0] < 0) ax = [-ax[0], -ax[1]];   // (a face seen from its far side, or a cloth streaming the other way: never a mirrored character)
+    if (sz < 1.1) continue;
+    if (!cjkOK()) {   // no Japanese font: a plain brush mark in the cell, no character
+      ctx.lineWidth = Math.max(0.3, sz * 0.12); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(c.x - ay[0] / lb * sz * 0.35, c.y - ay[1] / lb * sz * 0.35); ctx.lineTo(c.x + ay[0] / lb * sz * 0.35, c.y + ay[1] / lb * sz * 0.35); ctx.stroke(); ctx.lineCap = 'butt'; continue;
+    }
+    ctx.save(); ctx.transform(ax[0] / la * sz / 100, ax[1] / la * sz / 100, ay[0] / lb * sz / 100, ay[1] / lb * sz / 100, c.x, c.y);
+    ctx.fillText(ch[i], 0, 4); ctx.lineWidth = 3.5; ctx.globalAlpha *= 0.55; ctx.strokeText(ch[i], 0, 4);   // a little ink spread
+    ctx.restore();
+  }
+  ctx.font = f0; ctx.textAlign = ta; ctx.textBaseline = tb;
+}
 function eaveSign(ctx, W0, s0, s1, y, seed) {
   if (!W0.vis || sil()) return;
   var r = mulberry32(seed), dark = r() < 0.6, board = dark ? [52, 38, 30] : [214, 196, 150], ink = dark ? [226, 196, 120] : [40, 30, 26];
   wquad(ctx, W0, s0 - 0.06, s1 + 0.06, y - 0.06, y + 0.62, lit([40, 30, 24], W0.n), 0.62);
   wquad(ctx, W0, s0, s1, y, y + 0.56, lit(board, W0.n, { amb: 1.1 }), 0.64);
-  var c = Pa(W0.at((s0 + s1) / 2, y + 0.28, 0.66)), k = c.k, n = 3, w = (s1 - s0) / n;
-  ctx.strokeStyle = rgb(lit(ink, W0.n, { amb: 1.25 })); ctx.lineWidth = Math.max(0.3, 0.05 * k); ctx.lineCap = 'round'; ctx.beginPath();
-  for (var i = 0; i < n; i++) { var sm = s0 + (i + 0.5) * w; wline(ctx, W0, sm - w * 0.25, y + 0.42, sm + w * 0.22, y + 0.4, 0.665); wline(ctx, W0, sm, y + 0.47, sm - w * 0.05, y + 0.1, 0.665); if (r() < 0.6) wline(ctx, W0, sm - w * 0.22, y + 0.22, sm + w * 0.25, y + 0.15, 0.665); }
-  ctx.stroke(); ctx.lineCap = 'butt';
+  var word = pickWord(SIGN_YAGO, seed), n = Array.from(word).length, wd = Math.min(s1 - s0 - 0.1, 0.5 * n), m0 = (s0 + s1) / 2 - wd / 2;   // the 屋号 across the board, left to right
+  signText(ctx, word, function (u, v) { return Pa(W0.at(m0 + u * wd, y + 0.5 - v * 0.44, 0.665)); }, false, rgb(lit(ink, W0.n, { amb: 1.25 })));
 }
 /* 提灯: a paper lantern hanging under the eaves (lit at dusk and night) */
 function chochin(ctx, p3, col, k0) {
@@ -1902,8 +1984,11 @@ function drawMill(ctx) {
 /* 祠 and 鳥居: a small shrine in a cedar grove, a vermilion torii facing the path */
 function drawHokora(ctx) {
   var B = BF(SHRINE.x, SHRINE.z, [1, -0.1], 0), S = sil();
-  boxIn(ctx, B, -1.5, 1.5, -1.5, 1.5, 0, 0.55, [150, 146, 136]);
-  boxIn(ctx, B, -1.1, 1.1, -1.1, 1.1, 0.55, 0.8, [140, 136, 126]);
+  boxIn(ctx, B, -1.5, 1.5, -1.5, 1.5, 0, 0.55, [138, 134, 124]);
+  boxIn(ctx, B, -1.1, 1.1, -1.1, 1.1, 0.55, 0.8, [128, 124, 114]);
+  if (!S) {   // the plinth's dressed blocks, their joints, moss along the foot
+    var pf = boxWalls(B, 3, 3, 0, 0.55).f; if (pf.vis) { ctx.strokeStyle = rgb(scl(lit([138, 134, 124], pf.n), 0.6)); ctx.lineWidth = 0.35; ctx.beginPath(); for (var bj = 1; bj < 4; bj++) wline(ctx, pf, bj * 0.75, 0, bj * 0.75 + (bj % 2 ? 0.1 : -0.1), 0.55, 0.01); wline(ctx, pf, 0, 0.28, 3, 0.28, 0.01); ctx.stroke(); mossDabs(ctx, [pf.at(0, 0.02, 0.02), pf.at(3, 0.02, 0.02), pf.at(3, 0.22, 0.02), pf.at(0, 0.22, 0.02)], 26, mulberry32(9), 0.6); }
+  }
   var Wl = boxWalls(B, 1.6, 1.5, 0.8, 2.1);
   [Wl.f, Wl.l, Wl.r].forEach(function (q) { if (!q.vis) return; paintWall(ctx, q, [120, 84, 58], { grime: 0, eave: 0.3, tex: 0.4 }); if (!S && q === Wl.f) { lattice(ctx, q, 0.2, 1.4, 1.0, 1.9, { col: [150, 50, 34], out: 0.03, sp: 0.1 }); wquad(ctx, q, 0.7, 0.9, 1.1, 1.6, [236, 232, 220], 0.06); } });
   drawRoof(ctx, B, { W: 1.35, D: 1.4, yE: 2.0, s: 0.75, type: 'gable', mat: SEA.snow ? 'bark' : 'copper', seed: 7, ridgeH: 0.16, noOni: true, col: [86, 140, 118] });
@@ -1914,9 +1999,27 @@ function drawHokora(ctx) {
   }
 }
 function toriiFrame() { return BF(TORII.x, TORII.z, [1, 0.12], 0); }
+/* weathered vermilion (丹塗り) over a screen quad: the sun-faced side bleached toward orange, soft faded patches, the paint
+   darkened and dirtied toward the foot, a few streaks where rain runs down. pp: the quad's screen points (top-left first) */
+function vermWeather(ctx, pp, seed, lx) {
+  if (sil() || MODE !== 'n') return;
+  var w = Math.hypot(pp[1].x - pp[0].x, pp[1].y - pp[0].y), h = Math.hypot(pp[3].x - pp[0].x, pp[3].y - pp[0].y); if (w * h < 4) return;
+  var r = mulberry32(seed | 0), i;
+  ctx.save(); poly(ctx, pp); ctx.clip();
+  var a = pp[0], b = pp[1], gx = ctx.createLinearGradient(a.x, a.y, b.x, b.y), sd = lx >= 0;   // across: the round of a pillar, lit on the sun's side
+  gx.addColorStop(0, sd ? 'rgba(20,10,10,0.3)' : 'rgba(255,190,140,0.22)'); gx.addColorStop(0.45, 'rgba(0,0,0,0)'); gx.addColorStop(0.7, sd ? 'rgba(255,196,150,0.25)' : 'rgba(0,0,0,0)'); gx.addColorStop(1, sd ? 'rgba(255,190,140,0.12)' : 'rgba(20,10,10,0.3)');
+  ctx.fillStyle = gx; ctx.fillRect(Math.min(a.x, b.x, pp[2].x, pp[3].x) - 2, Math.min(a.y, b.y, pp[2].y, pp[3].y) - 2, w + h + 4, w + h + 4);
+  var t0 = pp[0], f0 = pp[3], gy = ctx.createLinearGradient(t0.x, t0.y, f0.x, f0.y);   // down: the foot dirtied
+  gy.addColorStop(0, 'rgba(0,0,0,0)'); gy.addColorStop(0.75, 'rgba(40,24,20,0)'); gy.addColorStop(1, 'rgba(40,24,20,0.35)'); ctx.fillStyle = gy; ctx.fillRect(Math.min(t0.x, f0.x) - w - 2, Math.min(t0.y, f0.y) - 2, w * 3 + 4, h + 4);
+  for (i = 0; i < 4; i++) { var u = r(), v = r(), px = lerp(lerp(pp[0].x, pp[1].x, u), lerp(pp[3].x, pp[2].x, u), v), py = lerp(lerp(pp[0].y, pp[1].y, u), lerp(pp[3].y, pp[2].y, u), v), rr = Math.max(1, Math.min(w, h) * (0.4 + r() * 0.5)), rg = ctx.createRadialGradient(px, py, 0, px, py, rr);
+    rg.addColorStop(0, 'rgba(236,150,100,0.2)'); rg.addColorStop(1, 'rgba(236,150,100,0)'); ctx.fillStyle = rg; ctx.fillRect(px - rr, py - rr, rr * 2, rr * 2); }   // where the paint has faded thin
+  if (h > 8) { ctx.strokeStyle = 'rgba(50,26,22,0.18)'; ctx.lineWidth = Math.max(0.4, w * 0.08); ctx.beginPath(); for (i = 0; i < 3; i++) { var u2 = 0.15 + r() * 0.7, s0 = r() * 0.3; ctx.moveTo(lerp(pp[0].x, pp[1].x, u2), lerp(pp[0].y, pp[1].y, u2) + h * s0); ctx.lineTo(lerp(pp[3].x, pp[2].x, u2), lerp(pp[0].y, pp[1].y, u2) + h * (s0 + 0.25 + r() * 0.3)); } ctx.stroke(); }
+  ctx.restore();
+}
+function pillarQuad(x, z, y0, y1, r0, r1) { var b = P(x, y0, z), t = P(x, y1, z); return [{ x: t.x - r1 * t.k, y: t.y }, { x: t.x + r1 * t.k, y: t.y }, { x: b.x + r0 * b.k, y: b.y }, { x: b.x - r0 * b.k, y: b.y }]; }
 function drawTorii(ctx) {
   var B = toriiFrame(), S = sil(), vm = [204, 62, 36], bk = [36, 30, 30], span = 1.45, h = 3.5;
-  [-span, span].forEach(function (a) { var p = B.L(a, 0, 0); prism(ctx, p[0], p[2], 0, 0.25, 0.26, 0.24, 10, 0, bk, { snow: 0 }); prism(ctx, p[0], p[2], 0.25, h, 0.17, 0.15, 12, 0, vm, { snow: 0, tex: 0.3 }); });
+  [-span, span].forEach(function (a, ai) { var p = B.L(a, 0, 0); prism(ctx, p[0], p[2], 0, 0.25, 0.26, 0.24, 10, 0, bk, { snow: 0 }); prism(ctx, p[0], p[2], 0.25, h, 0.17, 0.15, 12, 0, vm, { snow: 0, tex: 0.3 }); vermWeather(ctx, pillarQuad(p[0], p[2], 0.25, h - 0.2, 0.17, 0.15), 31 + ai, LS[0]); });
   function beam(a0, a1, y0, y1, b, col, curve) {
     var N = 10, top = [], bot = [];
     for (var i = 0; i <= N; i++) { var f = i / N, a = lerp(a0, a1, f), lift = curve ? curve * Math.pow(Math.abs(f * 2 - 1), 2.4) : 0; top.push(B.L(a, b, y1 + lift)); bot.push(B.L(a, b, y0 + lift * 0.8)); }
@@ -1926,7 +2029,13 @@ function drawTorii(ctx) {
   beam(-span - 0.55, span + 0.55, h - 0.95, h - 0.72, -0.05, vm);                        // nuki
   beam(-0.12, 0.12, h - 0.72, h - 0.18, -0.08, vm);                                         // gakuzuka
   beam(-span - 0.75, span + 0.75, h - 0.18, h + 0.12, -0.1, vm, 0.22);                    // shimaki
+  if (!S) { var sh0 = []; for (var si = 0; si <= 10; si++) { var sf = si / 10, sa = lerp(-span - 0.75, span + 0.75, sf), sl = 0.22 * Math.pow(Math.abs(sf * 2 - 1), 2.4); sh0.push(Pa(B.L(sa, -0.1, h + 0.12 + sl))); } var sh1 = []; for (si = 10; si >= 0; si--) { var sf2 = si / 10, sa2 = lerp(-span - 0.75, span + 0.75, sf2), sl2 = 0.22 * Math.pow(Math.abs(sf2 * 2 - 1), 2.4) * 0.8; sh1.push(Pa(B.L(sa2, -0.1, h - 0.18 + sl2))); } vermWeather(ctx, [sh0[0], sh0[10], sh1[0], sh1[10]], 37, LS[0]); }
   var top = beam(-span - 0.95, span + 0.95, h + 0.12, h + 0.36, -0.12, bk, 0.36);         // kasagi
+  if (!S) {   // the plaque (額) on the gakuzuka, its gilt border; the kasagi's lit upper edge
+    var g0 = Pa(B.L(-0.2, -0.13, h - 0.7)), g1 = Pa(B.L(0.2, -0.13, h - 0.2)); ctx.fillStyle = rgb(shade([34, 28, 26], B.N(0, -1, 0))); ctx.fillRect(Math.min(g0.x, g1.x), Math.min(g0.y, g1.y), Math.abs(g1.x - g0.x), Math.abs(g1.y - g0.y));
+    ctx.strokeStyle = rgb(shade([196, 160, 80], B.N(0, -1, 0), { amb: 1.2 })); ctx.lineWidth = Math.max(0.3, 0.03 * g0.k); ctx.strokeRect(Math.min(g0.x, g1.x), Math.min(g0.y, g1.y), Math.abs(g1.x - g0.x), Math.abs(g1.y - g0.y));
+    ctx.strokeStyle = rgb(shade([120, 110, 110], [0, 1, 0]), 0.7); ctx.lineWidth = Math.max(0.4, 0.04 * g0.k); ctx.beginPath(); top.forEach(function (q, i) { var pq = Pa(q); if (i) ctx.lineTo(pq.x, pq.y + 0.3); else ctx.moveTo(pq.x, pq.y + 0.3); }); ctx.stroke();
+  }
   if (!S) { // top surface of the kasagi, and snow on it
     var back = []; for (var i = 0; i <= 10; i++) { var f = i / 10, a = lerp(-span - 0.95, span + 0.95, f), lift = 0.36 * Math.pow(Math.abs(f * 2 - 1), 2.4); back.push(B.L(a, 0.18, h + 0.36 + lift)); }
     fillPts(ctx, top.slice().concat(back.reverse()), SEA.snow ? shade(SNOW, [0, 1, 0]) : shade(bk, [0, 1, 0]), 0.3);
@@ -2052,14 +2161,19 @@ function drawPagoda(ctx) {
     var hw = half * (1 - t * 0.075), hh = t === 0 ? 2.6 : 1.55, Wl = boxWalls(B, hw * 2, hw * 2, y, y + hh);
     [Wl.f, Wl.r, Wl.l].forEach(function (q) {
       if (!q.vis) return;
-      paintWall(ctx, q, [222, 214, 198], { grime: 0.05, tex: 0.3, eave: 0.6 });
+      paintWall(ctx, q, [222, 214, 198], { grime: 0.05, tex: 0.3, eave: 0.9, eaveK: 1.8 });
       if (S) return;
       wquad(ctx, q, q.len * 0.36, q.len * 0.64, q.y0 + 0.1, q.y1 - 0.25, lit([128, 46, 34], q.n), 0.02);
       frameWall(ctx, q, [0.12, q.len * 0.33, q.len * 0.67, q.len - 0.12], [q.y1 - 0.2], [150, 52, 36], 0.22);
+      [0.12, q.len * 0.33, q.len * 0.67, q.len - 0.12].forEach(function (ps, pi) { var pq = [q.at(ps - 0.11, q.y1 - 0.1, 0.03), q.at(ps + 0.11, q.y1 - 0.1, 0.03), q.at(ps + 0.11, q.y0, 0.03), q.at(ps - 0.11, q.y0, 0.03)].map(Pa); vermWeather(ctx, pq, t * 17 + pi, LS[0] * (q.na || 1)); });
+      // the bracket sets (組物) under the eave: a dark band, the blocks in it catching the light, the white-painted rafter ends over them
+      var by0 = q.y1 - 0.02, by1 = q.y1 + 0.42; wquad(ctx, q, -0.05, q.len + 0.05, by0, by1, lit([40, 26, 22], q.n), 0.18);
+      var nb = Math.round(q.len / 0.55), kq = Pa(q.c).k; if (kq * 0.15 > 0.8) for (var bi = 0; bi <= nb; bi++) { var bs = bi / nb * q.len; wquad(ctx, q, bs - 0.12, bs + 0.12, by0 + 0.12, by0 + 0.3, lit([150, 58, 40], q.n, { amb: 1.1 }), 0.26, 0); }
+      if (kq * 0.1 > 0.8) { ctx.fillStyle = rgb(lit([222, 210, 180], q.n)); for (var ri = 0; ri < nb * 2; ri++) { var rp = Pa(q.at((ri + 0.5) / (nb * 2) * q.len, by1 + 0.02, 0.5)); ctx.fillRect(rp.x - 0.04 * kq, rp.y - 0.03 * kq, 0.08 * kq, 0.06 * kq); } }
     });
     y += hh;
-    drawRoof(ctx, B, { W: hw + 1.9, D: hw + 1.9, yE: y + 0.1, s: 0.42, type: 'hip', mat: 'kawara', seed: 70 + t, sori: 0.55, ridgeH: 0.18, noRidge: t < 4, noOni: true });
-    y += 0.9;
+    drawRoof(ctx, B, { W: hw + 1.9, D: hw + 1.9, yE: y + 0.5, s: 0.42, type: 'hip', mat: 'kawara', seed: 70 + t, sori: 0.65, ridgeH: 0.18, noRidge: t < 4, noOni: true, hon: true, age: 0.5 });
+    y += 1.25;
   }
   // sōrin: the spire with its nine rings
   var c = B.L(0, 0, 0), top = y + 0.2;
@@ -2389,22 +2503,58 @@ function drawLanding(ctx) {
   var G = landingGeom(), B = G.B, S = sil(), st = [156, 150, 138];
   for (var i = 0; i < 5; i++) { var b0 = -0.3 - i * 0.55; boxIn(ctx, B, -2.4, 2.4, b0 - 0.55, b0, WL - 0.2, 0.05 - i * 0.2, st, [168, 162, 150]); }
   [[-2.8, -1.8], [2.8, -1.8], [-1.5, -3.6], [3.4, -3.4]].forEach(function (q) { postIn(ctx, B, q[0], q[1], WL - 0.4, 1.1, 0.1, [88, 70, 52]); });
-  drawBoat(ctx, B.L(-4.8, -4.2, 0), [KR_DIR[0], KR_DIR[1]], 0, false);
+  drawBoat(ctx, B.L(-4.8, -4.2, 0), [KR_DIR[0], KR_DIR[1]], 0, false, { cargo: 'toma' });
 }
-/* a flat-bottomed river boat (also used by the animation) */
-function drawBoat(ctx, p, dir, bob, man) {
-  var B = BF(p[0], p[2] === undefined ? p[1] : p[2], dir, 0), L = 4.2, Wd = 0.75, y0 = WL - 0.05 + (bob || 0), S = sil();
-  var hull = [], top = [], N = 12, k;
-  for (k = 0; k <= N; k++) { var f = k / N, a = -L / 2 + L * f, taper = 1 - Math.pow(Math.abs(f * 2 - 1), 2.6) * 0.75, rise = f > 0.7 ? Math.pow((f - 0.7) / 0.3, 2) * 0.35 : 0; top.push(B.L(a, -Wd * taper, y0 + 0.42 + rise)); hull.push(B.L(a, -Wd * taper * 0.8, y0)); }
-  var pp = top.map(Pa).concat(hull.map(Pa).reverse()); poly(ctx, pp); ctx.fillStyle = S ? '#000' : rgb(shade([96, 72, 52], B.N(0, -1, 0.2))); ctx.fill();
-  if (S) return;
-  var inner = []; for (k = 0; k <= N; k++) { var f2 = k / N, a2 = -L / 2 + L * f2, t2 = 1 - Math.pow(Math.abs(f2 * 2 - 1), 2.6) * 0.75, r2 = f2 > 0.7 ? Math.pow((f2 - 0.7) / 0.3, 2) * 0.35 : 0; inner.push(B.L(a2, Wd * t2, y0 + 0.42 + r2)); }
-  poly(ctx, top.map(Pa).concat(inner.map(Pa).reverse())); ctx.fillStyle = rgb(shade(SEA.snow ? SNOW : [124, 98, 72], [0, 1, 0])); ctx.fill();
-  ctx.strokeStyle = rgb(shade([150, 120, 90], B.N(0, -1, 0.5))); ctx.lineWidth = 0.4; ctx.beginPath(); top.forEach(function (q, i) { var pq = Pa(q); if (i) ctx.lineTo(pq.x, pq.y); else ctx.moveTo(pq.x, pq.y); }); ctx.stroke();
-  // cargo: straw bales
-  var c = Pa(B.L(-0.3, 0, y0 + 0.6)); ctx.fillStyle = rgb(shade([196, 170, 110], [0.3, 1, -0.3])); ctx.beginPath(); ctx.ellipse(c.x, c.y, 0.5 * c.k, 0.3 * c.k, 0, 0, TAU); ctx.fill();
+/* 高瀬舟: a flat-bottomed river boat of planks (also used by the animation): the sides built up of three strakes, a flat transom
+   at the stern where the boatman stands, the bow rising and narrowing to a tall stem; amidships its load, straw-wrapped 俵 bales
+   or a covered cargo under an arched 苫 of rush mats. o: { cargo 'tawara' | 'toma' | null, refl (drawn in the water) } */
+function drawBoat(ctx, p, dir, bob, man, o) {
+  o = o || {};
+  var B = BF(p[0], p[2] === undefined ? p[1] : p[2], dir, 0), L = 4.6, Wd = 0.72, y0 = WL - 0.06 + (bob || 0), S = sil(), N = 16, k, snow = SEA.snow && !o.refl;
+  var wood = [104, 80, 58], woodL = [138, 110, 80], dark = [56, 42, 32];
+  function hw(f) { var w = Wd * (f < 0.08 ? 0.86 + f * 1.4 : 1); if (f > 0.55) w *= 1 - Math.pow((f - 0.55) / 0.45, 1.5) * 0.9; return w; }   // the half beam: a flat transom, the bow drawn in
+  function gun(f) { return y0 + 0.44 + (f > 0.55 ? Math.pow((f - 0.55) / 0.45, 2) * 0.62 : 0) + (f < 0.06 ? 0.04 : 0); }   // the sheer: rising to the bow
+  function chine(f) { return y0 - 0.02 + (f > 0.7 ? Math.pow((f - 0.7) / 0.3, 1.6) * 0.42 : 0); }   // the bottom sweeping up at the bow
+  function at(f, sd, y) { return B.L(-L / 2 + L * f, sd, y); }
+  var near = faceVisible(at(0.5, -Wd, y0 + 0.2), B.N(0, -1, 0)) || MODE === 'm' ? -1 : 1, far = -near;
+  var gN = [], gF = [], cN = [];
+  for (k = 0; k <= N; k++) { var f = k / N; gN.push(at(f, near * hw(f), gun(f))); gF.push(at(f, far * hw(f), gun(f))); cN.push(at(f, near * hw(f) * 0.8, chine(f))); }
+  // the inside: the far side's planking seen over the near gunwale, then the floor boards
+  var fl = []; for (k = 0; k <= N; k++) { var f2 = k / N; fl.push(at(f2, far * hw(f2) * 0.84, y0 + 0.1)); }
+  fillPts(ctx, gF.concat(fl.slice().reverse()), S ? [0, 0, 0] : shade(scl(wood, 0.78), B.N(0, near, 0.3)), 0.3);
+  var fln = []; for (k = 0; k <= N; k++) { var f3 = k / N; fln.push(at(f3, near * hw(f3) * 0.84, y0 + 0.1)); }
+  fillPts(ctx, fl.concat(fln.slice().reverse()), S ? [0, 0, 0] : shade(snow ? SNOW : [116, 92, 66], [0, 1, 0]), 0.3);
+  if (!S && !snow) { ctx.strokeStyle = rgb(shade(scl(wood, 0.6), [0, 1, 0]), 0.6); ctx.lineWidth = 0.3; ctx.beginPath(); for (k = 1; k < 9; k++) { var q0 = Pa(at(0.04 + k * 0.07, far * Wd * 0.8, y0 + 0.1)), q1 = Pa(at(0.04 + k * 0.07, near * Wd * 0.8, y0 + 0.1)); ctx.moveTo(q0.x, q0.y); ctx.lineTo(q1.x, q1.y); } ctx.stroke(); }   // the thwarts and floor-board joints
+  // the cargo amidships
+  if (o.cargo === 'tawara') {
+    for (var bi = 0; bi < 6; bi++) {   // straw bales, two rows of three, a third row of two on top
+      var row = bi < 3 ? 0 : bi < 5 ? 1 : 2, fx = 0.28 + (row === 2 ? 0.16 : (bi % 3) * 0.13 + (row ? 0.06 : 0)), sd = row === 0 ? far * 0.28 : row === 1 ? near * 0.26 : 0, yy = y0 + 0.36 + (row === 2 ? 0.32 : 0);
+      var c = Pa(at(fx, sd, yy)), kk = c.k, rx = 0.32 * kk, ry = 0.22 * kk, col = S ? [0, 0, 0] : shade(snow ? mixc([190, 166, 112], SNOW, 0.7) : mixc([168, 150, 112], [146, 128, 94], hash2(bi, 3)), [0.3, 1, -0.4]);
+      ctx.fillStyle = rgb(col); ctx.beginPath(); ctx.ellipse(c.x, c.y, rx, ry, 0, 0, TAU); ctx.fill();
+      if (!S && rx > 1.2) { ctx.strokeStyle = rgb(scl(col, 0.45), 0.9); ctx.lineWidth = Math.max(0.35, rx * 0.08); ctx.beginPath(); [-0.55, 0, 0.55].forEach(function (u) { ctx.moveTo(c.x + u * rx, c.y - ry * Math.sqrt(1 - u * u)); ctx.lineTo(c.x + u * rx, c.y + ry * Math.sqrt(1 - u * u)); }); ctx.stroke(); ctx.fillStyle = rgb(scl(col, 0.75)); ctx.beginPath(); ctx.ellipse(c.x - rx * 0.92, c.y, rx * 0.14, ry * 0.8, 0, 0, TAU); ctx.fill(); }   // the bands of rope and the bale's end
+    }
+  } else if (o.cargo === 'toma') {   // an arched cover of rush mats over the load
+    var A = [], Bq = [], M = 10;
+    for (k = 0; k <= M; k++) { var th = Math.PI * k / M, sdd = Math.cos(th) * Wd * 0.88, hh = y0 + 0.44 + Math.sin(th) * 0.55; A.push(at(0.3, sdd, hh)); Bq.push(at(0.66, sdd, hh)); }
+    for (k = 0; k < M; k++) { var nn = norm(add(B.N(0, Math.cos(Math.PI * (k + 0.5) / M), 0), [0, Math.sin(Math.PI * (k + 0.5) / M) * 1.2, 0])); if (!faceVisible(centroid([A[k], A[k + 1], Bq[k + 1], Bq[k]]), nn) && MODE === 'n') continue; fillPts(ctx, [A[k], A[k + 1], Bq[k + 1], Bq[k]], S ? [0, 0, 0] : shade(snow ? SNOW : mixc([170, 150, 104], [150, 130, 90], k % 2), nn), 0.3); }
+    if (!S && !snow) { ctx.strokeStyle = rgb(shade([110, 92, 60], [0, 1, 0]), 0.6); ctx.lineWidth = 0.3; ctx.beginPath(); for (k = 1; k < 4; k++) { var ff = 0.3 + 0.36 * k / 4; for (var m2 = 0; m2 <= M; m2++) { var th2 = Math.PI * m2 / M, q3 = Pa(at(ff, Math.cos(th2) * Wd * 0.89, y0 + 0.44 + Math.sin(th2) * 0.56)); if (m2) ctx.lineTo(q3.x, q3.y); else ctx.moveTo(q3.x, q3.y); } } ctx.stroke(); }   // the mats' seams
+  }
+  // the near side, three strakes; the gunwale's rail, lit along its top
+  var sideN = B.N(0, near, 0.1), base = S ? [0, 0, 0] : shade(snow ? scl(wood, 1.1) : scl(wood, 1.15), sideN, { amb: 1.15 });
+  fillPts(ctx, gN.concat(cN.slice().reverse()), base, 0.35);
+  if (!S) {
+    ctx.lineWidth = 0.35; ctx.strokeStyle = rgb(scl(base, 0.62), 0.9); ctx.beginPath();
+    [0.36, 0.68].forEach(function (u) { for (var j = 0; j <= N; j++) { var a3 = Pa(mixc(gN[j], cN[j], u)); if (j) ctx.lineTo(a3.x, a3.y); else ctx.moveTo(a3.x, a3.y); } }); ctx.stroke();   // the strake seams
+    ctx.strokeStyle = rgb(scl(base, 1.2), 0.35); ctx.beginPath(); [0.42, 0.74].forEach(function (u) { for (var j = 0; j <= N; j++) { var a4 = Pa(mixc(gN[j], cN[j], u)); if (j) ctx.lineTo(a4.x, a4.y + 0.3); else ctx.moveTo(a4.x, a4.y + 0.3); } }); ctx.stroke();
+    var wl0 = [], wl1 = []; for (k = 0; k <= N; k++) { wl0.push(Pa(mixc(gN[k], cN[k], 0.86))); wl1.push(Pa(cN[k])); }   // dark and wet along the waterline
+    ctx.fillStyle = rgb(scl(base, 0.55), 0.6); poly(ctx, wl0.concat(wl1.slice().reverse())); ctx.fill();
+    ctx.strokeStyle = rgb(shade(snow ? SNOW : woodL, [0, 1, 0])); ctx.lineWidth = Math.max(0.5, 0.06 * Pa(gN[N / 2]).k); ctx.beginPath(); gN.forEach(function (q, i) { var a5 = Pa(q); if (i) ctx.lineTo(a5.x, a5.y); else ctx.moveTo(a5.x, a5.y); }); ctx.stroke();
+  }
+  // the transom at the stern (if it faces us) and the stem post at the bow
+  var tn = B.N(-1, 0, 0);
+  if (faceVisible(at(0, 0, y0 + 0.2), tn) || MODE !== 'n') fillPts(ctx, [at(0, -hw(0), gun(0)), at(0, hw(0), gun(0)), at(0, hw(0) * 0.8, chine(0)), at(0, -hw(0) * 0.8, chine(0))], S ? [0, 0, 0] : shade(scl(wood, 0.9), tn), 0.3);
+  var st0 = Pa(at(1, 0, chine(1))), st1 = Pa(at(1.015, 0, gun(1) + 0.14)); ctx.strokeStyle = S ? '#000' : rgb(shade(dark, B.N(1, 0, 0))); ctx.lineWidth = Math.max(0.6, 0.09 * st1.k); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(st0.x, st0.y); ctx.quadraticCurveTo(st1.x - (st1.x - st0.x) * 0.3, st0.y, st1.x, st1.y); ctx.stroke(); ctx.lineCap = 'butt';
 }
-
 /* ---- 04f_events.js ---- */
 /* ================= seasonal events: decorations on whatever stands at this stage ================= */
 /* the visible entrances: { W: wall, s0, s1: door span (m along the wall), top: door head height } */
@@ -2804,20 +2954,20 @@ function groundRows(D, M, PW, y0, y1, S) {
             var pr, pg, pb, lr = 1 - clamp(fp / 0.32);
             var rowp = Math.sin(pc.fu * 18.5) * 0.5 + 0.5;
             if (pmode === 'flood') {
-              var wv = fbm(x * 0.3 + 4, z * 1.2, 2), ref = clamp(0.48 + 0.25 * clamp((z + 10) / 40) + (wv - 0.5) * 0.25);
-              pr = 64 + (skyP[0] - 64) * ref; pg = 76 + (skyP[1] - 76) * ref; pb = 70 + (skyP[2] - 70) * ref;
+              var wv = fbm(x * 0.3 + 4, z * 1.2, 2), ruf = n2(x * 0.9 + hv * 5, z * 2.6), ref = clamp(0.56 + 0.3 * clamp((z + 10) / 40) + (wv - 0.5) * 0.2 - (ruf > 0.62 ? (ruf - 0.62) * 0.8 : 0));
+              pr = 52 + (sky[0] - 52) * ref; pg = 64 + (sky[1] - 64) * ref; pb = 66 + (sky[2] - 66) * ref;   // the still water gives back the sky; a cat's-paw of wind dulls it here and there
               var sd = ((rowp > 0.72 ? 1 : 0) * lr * 0.55 + (1 - lr) * 0.12) * (SEA.seedlings === undefined ? 1 : SEA.seedlings);
               pr += (110 - pr) * sd; pg += (156 - pg) * sd; pb += (64 - pb) * sd;
-              pw = inP * 0.9;
+              pw = inP * 0.9 * (1 - sd * 0.6);
             } else if (pmode === 'green') {
               var gv = n2(x * 0.8 + hv * 9, z * 0.8), wl = clamp((0.35 - rowp) * 2) * lr * 0.5 * clamp(1 - gv);
-              pr = 46 + 30 * gv + 20 * rowp; pg = 92 + 40 * gv + 26 * rowp; pb = 34 + 16 * gv;
+              var tuf = lr > 0.2 ? n2(x * 6.5 + hv * 3, z * 14) : 0.5; pr = 46 + 30 * gv + 20 * rowp + (tuf - 0.5) * 18 * lr; pg = 92 + 40 * gv + 26 * rowp + (tuf - 0.5) * 26 * lr; pb = 34 + 16 * gv;
               pr += (sky[0] * 0.75 - pr) * wl; pg += (sky[1] * 0.78 - pg) * wl; pb += (sky[2] * 0.8 - pb) * wl;
               pw = inP * wl;
             } else if (pmode === 'gold') {
               var cutF = F.prog === undefined ? 0.32 : F.prog < 0.125 ? 0.05 : F.prog < 0.375 ? 0.32 : F.prog < 0.625 ? 0.8 : 1.01, harvested = hv < cutF, gv2 = n2(x * 0.9 + hv * 7, z * 0.9);
               if (harvested) { var st2 = rowp > 0.6 && hash2(px >> 1, py) > 0.4 ? 0.75 : 1; pr = (150 + 30 * gv2) * st2; pg = (126 + 24 * gv2) * st2; pb = (80 + 16 * gv2) * st2; }
-              else { var hd = rowp * lr * 0.25; pr = 196 + 36 * gv2 - 50 * hd; pg = 154 + 34 * gv2 - 46 * hd; pb = 58 + 20 * gv2 - 20 * hd; }
+              else { var hd = rowp * lr * 0.25, ear = lr > 0.15 ? n2(x * 7 + hv * 9, z * 15) : 0.5, lodg = n2(x * 0.7 + hv * 4, z * 0.7) > 0.7 ? 0.12 : 0; pr = 196 + 36 * gv2 - 50 * hd + (ear - 0.5) * 40 * lr - lodg * 120; pg = 154 + 34 * gv2 - 46 * hd + (ear - 0.5) * 30 * lr - lodg * 110; pb = 58 + 20 * gv2 - 20 * hd - lodg * 30; }   // the heavy ears, a patch laid flat by the wind
             } else {
               var st3 = (rowp > 0.7 && hash2(px, py >> 1) > 0.3) ? 0.7 : 1; pr = 116 * st3 + gr * 16; pg = 100 * st3 + gr * 12; pb = 80 * st3 + gr * 10;
             }
@@ -2921,6 +3071,10 @@ function groundRows(D, M, PW, y0, y1, S) {
         var rip = Math.pow(Math.sin(x * 0.9 + z * 0.35 + (Gsoil[i00] - 0.5) * 12) * 0.5 + 0.5, 3) * (1 - clamp(fp / 0.4)), hol = (Gpatch[i00] - 0.5) * 1.2, sR = 206 + 38 * sf - 40 * tr2 - 22 * rip - 16 * hol, sG = 216 + 31 * sf - 36 * tr2 - 16 * rip - 11 * hol, sB = 232 + 20 * sf - 26 * tr2 - 4 * rip;
         if (tr2 > 0.25) { var sl2 = (tr2 - 0.25) * 0.5 * n2(x * 2.6, z * 1.1); sR -= 46 * sl2; sG -= 46 * sl2; sB -= 40 * sl2; }   // slush in the tracks
         if (street && pd < 0.3) { var bnk2 = 1 - sstep(0.35, 1.0, -pd), lip = bnk2 * (1 - bnk2) * 4 * (0.6 + 0.4 * n2(x * 3, z * 3)); sR -= 30 * lip; sG -= 24 * lip; sB -= 6 * lip; if (gr > 0.93 && trod > 0.4) { sR -= 30; sG -= 30; sB -= 24; } }   // the bank's blue-shadowed lip; footprints
+        if (paddyOn && pc && inP > 0.5 && pmode === 'stubble') {
+          if (pc.e > 0.35) { var rws = Math.sin(pc.fu * 18.5) * 0.5 + 0.5, hill = rws > 0.78 && Math.sin(pc.fv * 22) > 0.2 ? 1 : 0, bury = clamp(snow * 0.8 + (n2(x * 0.6, z * 0.6) - 0.5) * 0.6); if (hill && fp < 0.3 && hash2(px, py >> 1) > bury * 0.85) snA *= 0.35; }   // the rows of rice stubble poking through
+          else { var lvS = 1 - pc.e / 0.35; sR -= 22 * lvS * (pc.fv < 0.5 ? -0.4 : 1); sG -= 18 * lvS * (pc.fv < 0.5 ? -0.4 : 1); sB -= 6 * lvS; }   // the levees: soft ridges under the snow
+        }
         r += (sR - r) * snA; g += (sG - g) * snA; bl += (sB - bl) * snA;
       }
       // the river and the mill race
@@ -2974,7 +3128,7 @@ function groundRows(D, M, PW, y0, y1, S) {
       r *= gi[0]; g *= gi[1]; bl *= gi[2];
       if (hz > 0) { r += (haze[0] - r) * hz; g += (haze[1] - g) * hz; bl += (haze[2] - bl) * hz; }
       D[k] = r; D[k + 1] = g; D[k + 2] = bl; D[k + 3] = alphaRow;
-      if (M) { var mw = Math.max(w * (bliz ? 1 - iceA : snow ? clamp((-wd - 0.9) * 2) : 1), puddle * 0.9); if (mw > 0) M[k + 3] = 255 * mw; }
+      if (M) { var mw = Math.max(w * (bliz ? 1 - iceA : snow ? clamp((-wd - 0.9) * 2) : 1), puddle * 0.9, pmode === 'flood' && !snow ? pw * 0.8 : 0); if (mw > 0) M[k + 3] = 255 * mw; }   // (the flooded paddies mirror what stands by them)
       iceA = 0;
     }
   }
@@ -4215,12 +4369,14 @@ function norenList() {
 }
 function noboriList() {
   var out = [];
-  if (F.teahouse && !F.festival) { var tb = teaFrame(), p = tb.L(5.6 / 2 + 0.9, -4.2 / 2 - 1.2, 0); out.push({ x: p[0], z: p[2], h: 3.6, side: tb.u, col: [238, 232, 216], edge: [184, 46, 36], ph: 0.4, band: 0, mark: true }); }
-  if (F.theatre) { var th = theatreFrame(), cols = [[198, 54, 40], [42, 70, 140], [226, 180, 50], [60, 120, 80], [150, 60, 130], [198, 54, 40]]; for (var i = 0; i < 6; i++) { var q = th.L(-4.4 + i * 1.75, -6.4, 0); out.push({ x: q[0], z: q[2], h: 4.6, side: th.u, col: cols[i], edge: [240, 236, 226], ph: i * 1.3, band: 2, mark: true }); } }
+  if (F.shrine && !F.festival) { var tf = toriiFrame(); [[-2.6, NOBORI_SHRINE[1]], [2.6, NOBORI_SHRINE[0]]].forEach(function (q, qi) { var p = tf.L(q[0], -0.8, 0); out.push({ x: p[0], z: p[2], h: 3.4, side: tf.u, col: [198, 52, 38], edge: [244, 240, 230], ph: 1.1 + qi, band: 0, mark: true, text: q[1] }); }); }   // 奉納 のぼり at the torii
+  if (F.teahouse && !F.festival) { var tb = teaFrame(), p = tb.L(5.6 / 2 + 0.9, -4.2 / 2 - 1.2, 0); out.push({ x: p[0], z: p[2], h: 3.6, side: tb.u, col: [238, 232, 216], edge: [184, 46, 36], ph: 0.4, band: 0, mark: true, text: '名物団子' }); }
+  if (F.theatre) { var th = theatreFrame(), cols = [[198, 54, 40], [42, 70, 140], [226, 180, 50], [60, 120, 80], [150, 60, 130], [198, 54, 40]]; for (var i = 0; i < 6; i++) { var q = th.L(-4.4 + i * 1.75, -6.4, 0); out.push({ x: q[0], z: q[2], h: 4.6, side: th.u, col: cols[i], edge: [240, 236, 226], ph: i * 1.3, band: 2, mark: true, text: NOBORI_THEATRE[i % 4] }); } }
   if (F.festival) {
     for (var s = 15; s <= 40; s += 8.3) { var r = rvPt(s, -2.8); out.push({ x: r[0], z: r[1], h: 4.4, side: [-RV_DIR[0], -RV_DIR[1]], col: [236, 232, 220], edge: [196, 52, 40], ph: s, band: 2, mark: true }); }
     for (var t2 = 5; t2 <= 35; t2 += 7.5) { var m = stPt(t2, -(STREET_HW - 0.9)); out.push({ x: m[0], z: m[1], h: 4.4, side: STREET_DIR, col: [196, 52, 40], edge: [236, 232, 220], ph: t2 * 0.7, band: 2, mark: true }); }
   }
+  if (F.machiya && !F.festival) { var sm = stPt(21, -(STREET_HW - 0.9)); out.push({ x: sm[0], z: sm[1], h: 3.8, side: STREET_DIR, col: [236, 232, 220], edge: [40, 60, 110], ph: 2.3, band: 2, mark: true, text: '商売繁盛' }); }   // a shop's banner
   return out;
 }
 function stringList() {
@@ -4303,9 +4459,16 @@ function animGeo(o) {
       g.piers.push({ x: q[0], z: q[2], fx: (m1[0] - m0[0]) / fl, fz: (m1[1] - m0[1]) / fl, ph: j * 0.37, r: F.stoneBridge ? 0.35 : 0.12 });
     });
   })();
+  // the bridge-foot willows: a few of their hanging fronds redrawn swaying in the wind (the gales sway the whole tree instead)
+  g.willows = [];
+  if (F.shoka && SEA.willow && !swayWanted(g.wx)) [[stPt(-4.4, 5.6), 61], [stPt(-3.6, -5.8), 62]].forEach(function (a) {
+    var wl = genWillow(a[1], a[0][0], a[0][1], 1.9), r = mulberry32(a[1] * 17), cd = Pa(wl.center).d, ss = [];
+    wl.strands.forEach(function (st) { var m = Pa(strandPt(st, 0.6)); if (m.d < cd + 0.4 && r() < 0.5) ss.push({ st: st, ph: r() * TAU, f: 0.7 + r() * 0.6, tone: r() }); });
+    if (ss.length) g.willows.push({ ss: ss.slice(0, 40), d: cd, pal: SEA.willow });
+  });
   // walkers
   g.paths = walkPaths();
-  var wxK = { clear: 1, cloudy: 0.95, rain: 0.5, storm: 0.3, snow: 0.7, typhoon: 0, blizzard: 0 }[g.wx], nw = Math.round((1 + o.stage * 1.05 + (F.festival ? 8 : 0)) * (wxK === undefined ? 1 : wxK)), tw = 0;
+  var wxK = { clear: 1, cloudy: 0.95, rain: 0.5, storm: 0.3, snow: 0.7, typhoon: 0, blizzard: 0 }[g.wx], nw = Math.round((1 + o.stage * 1.05 + (F.festival ? 8 : 0)) * (wxK === undefined ? 1 : wxK) * (o.light === 'night' ? 0.45 : o.light === 'dusk' ? 0.85 : 1))   /* (fewer out late at night) */, tw = 0;
   if (g.wx === 'blizzard') nw = 1; g.paths.forEach(function (q) { tw += q.w; });
   g.walkers = [];
   for (i = 0; i < nw; i++) {
@@ -4313,6 +4476,7 @@ function animGeo(o) {
     if (o.stage === 0) pi = 0;
     g.walkers.push(makeWalker(g, pi, rng, i));
   }
+  var kagoSeen = false; g.walkers.forEach(function (w) { if (w.kago) { if (kagoSeen) { w.kago = false; w.sp = 0.75 + rng() * 0.6; } kagoSeen = true; } });   // one 駕籠 at most
   if (g.walkers.length > 1 && !wxWet(g.wx) && g.wx !== 'blizzard') { var pw = g.walkers[1]; pw.load = 'pole'; pw.woman = false; pw.child = false; pw.umb = null; }   // a peddler with his shoulder pole
   // smoke from kitchens and hearths
   g.smoke = smokeSources(o);
@@ -4383,11 +4547,12 @@ var EDO_COL = {
   ai: [[42, 62, 98], [32, 38, 64], [50, 90, 106], [70, 98, 136], [52, 66, 90]],                              // 藍 紺 納戸 縹 鉄紺
   accent: [[172, 56, 46], [196, 98, 58], [196, 156, 70], [150, 72, 92]],                                    // 紅 朱 山吹 蘇芳
   child: [[184, 64, 52], [204, 118, 60], [198, 160, 72], [92, 146, 156], [172, 94, 118]],
+  iro: [[76, 108, 62], [42, 74, 74], [148, 86, 54], [128, 44, 56], [70, 140, 150], [160, 124, 60]],   // 萌葱 鉄色 柿渋 臙脂 浅葱 黄土
   straw: [184, 156, 102], skin: [226, 188, 152], hair: [28, 24, 24], grey: [158, 154, 148]
 };
 var FOLK_SC = 2;   // device pixels per scene unit in the frame being drawn (detail is added only where it can be seen)
 function pickc(r, a) { return a[(r() * a.length) | 0]; }
-function mutedCol(r) { var x = r(); return pickc(r, x < 0.38 ? EDO_COL.cha : x < 0.7 ? EDO_COL.nezu : EDO_COL.ai); }
+function mutedCol(r) { var x = r(); return pickc(r, x < 0.34 ? EDO_COL.cha : x < 0.62 ? EDO_COL.nezu : x < 0.88 ? EDO_COL.ai : EDO_COL.iro); }
 function folkEnv(g, country) {
   var wet = wxWet(g.wx), sn = wxSnowy(g.wx);
   return { season: g.season, wet: wet, snow: sn || !!(g.SEA && g.SEA.snow), cold: g.season === 'winter' || sn, fest: g.season === 'summer' && (g.light === 'dusk' || g.light === 'night') && !wet, dark: g.light === 'night' || g.light === 'dusk', stage: g.stage, country: !!country };
@@ -4591,11 +4756,12 @@ function makeWalker(g, pi, rng, i) {
   if (q.still) { var sw0 = { pi: pi, s: rng() * q.pa.len, dir: 1, sp: 0, lat: (rng() - 0.5) * q.spread * 2, ph: rng() * TAU, col: [[40, 60, 120], [180, 70, 90], [230, 226, 214], [60, 110, 140], [120, 60, 120]][(rng() * 5) | 0], col2: [[200, 60, 50], [240, 200, 90], [60, 60, 80]][(rng() * 3) | 0], pause: 1e9, still: true }; sw0.woman = rng() < 0.5; sw0.child = rng() < 0.2; return sw0; }
   var w = { pi: pi, s: rng() * q.pa.len, dir: rng() < 0.5 ? 1 : -1, sp: 0.75 + rng() * 0.6, lat: (rng() - 0.5) * q.spread * 2, ph: rng() * TAU, col: WALK_COL[(rng() * WALK_COL.length) | 0], col2: WALK_COL[(rng() * WALK_COL.length) | 0], pause: 0 };
   w.load = kind < 0.2 ? 'pole' : kind < 0.34 ? 'pack' : kind < 0.42 ? 'basket' : null;
+  if (!q.still && i % 13 === 5 && rng() < 0.6 && !wxWet(g.wx) && g.wx !== 'blizzard' && q.pa.len > 25) { w.kago = true; w.load = null; w.sp = 1.05; }   // a 駕籠 now and then
   w.hat = pi === 0 || rng() < 0.25 ? 'kasa' : null;
   w.woman = !w.load && rng() < 0.45;
   w.child = !w.load && rng() < 0.12;
   w.parasol = w.woman && g.season === 'summer' && g.light === 'day' && rng() < 0.5;
-  w.lantern = (g.light === 'night' || g.light === 'dusk') && rng() < 0.55;
+  w.lantern = (g.light === 'night' && rng() < 0.8) || (g.light === 'dusk' && rng() < 0.45);   // after dark nearly everyone out carries a chōchin
   if (g.SEA.snow) { w.hat = 'kasa'; w.mino = rng() < 0.5; }
   if (wxWet(g.wx)) { w.umb = UMB_COLS[(rng() * UMB_COLS.length) | 0]; w.parasol = false; w.load = rng() < 0.3 ? w.load : null; }
   else if (g.wx === 'snow') { if (rng() < 0.5) w.umb = UMB_COLS[(rng() * UMB_COLS.length) | 0]; else w.mino = true; }
@@ -4606,7 +4772,7 @@ function stepWalkers(g, dt, rng) {
   for (var i = 0; i < g.walkers.length; i++) {
     var w = g.walkers[i], q = g.paths[w.pi];
     if (w.pause > 0) { w.pause -= dt; continue; }
-    w.s += w.dir * w.sp * dt * (w.child ? 0.8 : 1);
+    var ds = w.sp * dt * (w.child ? 0.8 : 1); w.s += w.dir * ds; w.dist = (w.dist || 0) + ds;   // (the gait is read from the distance walked, so the feet do not slide)
     if (w.s > q.pa.len || w.s < 0) { w.dir = -w.dir; w.s = clamp(w.s, 0, q.pa.len); w.pause = 1 + rng() * 4; w.lat = (rng() - 0.5) * q.spread * 2; }
     else if (rng() < dt * 0.02) w.pause = 1.5 + rng() * 3;   // stops to talk or look
   }
@@ -4614,6 +4780,34 @@ function stepWalkers(g, dt, rng) {
 function walkerPos(g, w) {
   var q = g.paths[w.pi], a = polyAt(q.pa, w.s), x = a.x - a.dz * w.lat, z = a.z + a.dx * w.lat;
   return { x: x, z: z, y: bridgeY(x, z), dx: a.dx * w.dir, dz: a.dz * w.dir };
+}
+/* 駕籠: a palanquin of woven bamboo hung from a pole, carried by two bearers at a short jogging step, the pole on their shoulders */
+function drawKago(ctx, g, w, t) {
+  var q = g.paths[w.pi], tint = g.tint, moving = w.pause <= 0, ends = [], i;
+  for (i = 0; i < 2; i++) {   // the rear bearer first (he is farther along the way back), then the front
+    var ss = clamp(w.s + w.dir * (i ? 0.95 : -0.95), 0, q.pa.len), a = polyAt(q.pa, ss), x = a.x - a.dz * w.lat, z = a.z + a.dx * w.lat;
+    ends.push({ x: x, z: z, y: bridgeY(x, z), dx: a.dx * w.dir, dz: a.dz * w.dir });
+  }
+  ends.sort(function (A, B) { return P(B.x, 0, B.z).d - P(A.x, 0, A.z).d; });
+  var mid = { x: (ends[0].x + ends[1].x) / 2, z: (ends[0].z + ends[1].z) / 2, y: (ends[0].y + ends[1].y) / 2 }, f0 = P(ends[0].x, ends[0].y, ends[0].z), f1 = P(ends[1].x, ends[1].y, ends[1].z);
+  var face = P(mid.x + ends[0].dx, 0, mid.z + ends[0].dz).x >= P(mid.x, 0, mid.z).x ? 1 : -1, cyc = moving ? (w.dist || 0) / 0.3 * Math.PI + w.ph : 0;
+  function bearer(e, fp, k2) {
+    var h = P(e.x, e.y + 1.58, e.z).y; h = fp.y - h; if (h < 1.2) return null;
+    if (!w['D' + k2]) { var r = mulberry32(((w.ph * 1e5) | 0) + 31 * k2); w['D' + k2] = dressFor({}, { load: 'pole' }, r); w['D' + k2].legs = 'skin'; w['D' + k2].len = 'tuck'; w['D' + k2].head = 'band'; }
+    ctx.fillStyle = 'rgba(16,12,20,' + (0.5 * clamp(g.lum * 1.1, 0.35, 1)) + ')'; ctx.beginPath(); ctx.ellipse(fp.x, fp.y + h * 0.004, h * 0.085, h * 0.026, 0, 0, TAU); ctx.fill();
+    var bob = moving ? Math.abs(Math.cos(cyc + k2 * 1.3)) * h * 0.03 : 0;
+    return { R: paintFolk(ctx, fp.x, fp.y - bob, h, w['D' + k2], { face: face, moving: moving, cyc: cyc + k2 * 1.3, tint: tint, t: t, hold: 'pole' }), h: h, bob: bob };
+  }
+  var b0 = bearer(ends[0], f0, 0);
+  // the pole and the box hung under it, swaying a little
+  var sh0 = P(ends[0].x, ends[0].y + 1.34, ends[0].z), sh1 = P(ends[1].x, ends[1].y + 1.34, ends[1].z), kk = P(mid.x, mid.y, mid.z).k, sway = moving ? Math.sin(cyc * 0.5) * 0.03 * kk : 0;
+  var bt = P(mid.x, mid.y + 1.12, mid.z), bb = P(mid.x, mid.y + 0.38, mid.z), hw = 0.42 * kk;
+  ctx.fillStyle = rgb(mulc([118, 96, 60], tint)); ctx.beginPath(); ctx.moveTo(bt.x - hw + sway, bt.y); ctx.lineTo(bt.x + hw + sway, bt.y); ctx.lineTo(bb.x + hw * 0.9 + sway, bb.y); ctx.lineTo(bb.x - hw * 0.9 + sway, bb.y); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = rgb(mulc([40, 32, 28], tint)); ctx.fillRect(bt.x - hw * 0.55 + sway, bt.y + (bb.y - bt.y) * 0.2, hw * 1.1, (bb.y - bt.y) * 0.5);   // the opening, a passenger in its shadow
+  ctx.strokeStyle = rgb(mulc([84, 66, 40], tint), 0.7); ctx.lineWidth = Math.max(0.3, 0.02 * kk); ctx.beginPath(); for (i = 1; i < 5; i++) { var yy = lerp(bt.y, bb.y, i / 5); ctx.moveTo(bt.x - hw + sway, yy); ctx.lineTo(bt.x + hw + sway, yy); } ctx.stroke();   // the woven bamboo
+  ctx.fillStyle = rgb(mulc([70, 56, 40], tint)); ctx.beginPath(); ctx.moveTo(bt.x - hw * 1.15 + sway, bt.y); ctx.quadraticCurveTo(bt.x + sway, bt.y - 0.22 * kk, bt.x + hw * 1.15 + sway, bt.y); ctx.closePath(); ctx.fill();   // its little curved roof
+  ctx.strokeStyle = rgb(mulc([96, 72, 46], tint)); ctx.lineWidth = Math.max(0.4, 0.06 * kk); ctx.beginPath(); ctx.moveTo(sh0.x, sh0.y - (b0 ? b0.bob : 0)); ctx.lineTo(sh1.x, sh1.y); ctx.stroke();
+  bearer(ends[1], f1, 1);
 }
 /* a small townsperson in Edo dress (paintFolk), with whatever they carry */
 function folkDress(g, w) {   // dressed once, from the walker's own seed: role, colours, the weather's gear
@@ -4626,9 +4820,10 @@ function folkDress(g, w) {   // dressed once, from the walker's own seed: role, 
   return w.D;
 }
 function drawPerson(ctx, g, w, t) {
+  if (w.kago) return drawKago(ctx, g, w, t);
   var p3 = walkerPos(g, w), feet = P(p3.x, p3.y, p3.z), sc = w.child ? 0.72 : 1, head = P(p3.x, p3.y + 1.58 * sc, p3.z), h = feet.y - head.y;
   if (h < 1.2) return;
-  var D = folkDress(g, w), tint = g.tint, moving = w.pause <= 0 && !w.still, cyc = moving ? t * 6.2 * w.sp + w.ph : 0, bob = moving ? Math.abs(Math.cos(cyc)) * h * 0.022 : 0;
+  var D = folkDress(g, w), tint = g.tint, moving = w.pause <= 0 && !w.still, cyc = moving ? (w.dist || 0) / (0.33 * sc) * Math.PI + w.ph : 0, bob = moving ? Math.abs(Math.cos(cyc)) * h * 0.022 : 0;
   var sx = P(p3.x + p3.dx, p3.y, p3.z + p3.dz).x - feet.x, face = w.still ? (Math.sin(w.ph * 3) >= 0 ? 1 : -1) : sx >= 0 ? 1 : -1, fx = feet.x, fy = feet.y;
   var tl = (t || 0) - (w.react ? w.react.t0 : 0), env = w.react ? Math.sin(clamp(tl / 2.6) * Math.PI) : 0;
   // the shadow, soft and thrown away from the light
@@ -4639,6 +4834,9 @@ function drawPerson(ctx, g, w, t) {
     ctx.fillStyle = sg; ctx.beginPath(); ctx.ellipse(cx0, fy + h * 0.004, h * (0.17 + 0.12 * Math.abs(ls[0])), h * 0.045, -ls[0] * 0.08, 0, TAU); ctx.fill();
   }
   ctx.fillStyle = 'rgba(16,12,20,' + ((sunny ? 0.62 : 0.5) * cl) + ')'; ctx.beginPath(); ctx.ellipse(fx, fy + h * 0.004, h * 0.085, h * 0.026, 0, 0, TAU); ctx.fill();   // the contact where the feet press the ground
+  if (w.lantern && !w.umb && !w.parasol && !w.load && g.LIT.lit) {   // the lantern's warm pool on the ground round the feet, swaying with the step
+    var lsw = moving ? Math.sin(cyc) * h * 0.02 : 0; ctx.globalCompositeOperation = 'lighter'; stamp(ctx, sprite('warm'), fx + face * h * 0.12 + lsw, fy + h * 0.01, h * 1.1, h * 0.32, g.light === 'night' ? 0.6 : 0.35); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+  }
   if (wxWet(g.wx) && !g.SEA.snow) { var rg = ctx.createLinearGradient(0, fy, 0, fy + h * 0.35); rg.addColorStop(0, 'rgba(30,26,34,0.22)'); rg.addColorStop(1, 'rgba(30,26,34,0)'); ctx.fillStyle = rg; ctx.fillRect(fx - h * 0.07, fy, h * 0.14, h * 0.35); }   // on the wet street, the figure's dark reflection
   var hold = w.load === 'pole' ? 'pole' : w.load === 'pack' ? 'pack' : w.load === 'basket' ? 'head' : w.umb || w.parasol ? 'umb' : w.lantern ? 'lantern' : null, arms = null;
   if (w.react && w.react.kind !== 'bow') { var wv = Math.sin(tl * 9) * 0.35; arms = [[Math.PI / 2 + face * 0.2, -1], [face > 0 ? -1.2 - wv * 0.4 - env * 0.3 : -Math.PI + 1.2 + wv * 0.4 + env * 0.3, 1]]; }
@@ -4660,6 +4858,7 @@ function drawPerson(ctx, g, w, t) {
     var hd = R.hand, lx = hd[0] + face * h * 0.08, ly = hd[1] + h * 0.1 + Math.sin(cyc) * h * 0.015;
     ctx.strokeStyle = rgb(mulc([80, 60, 40], tint)); ctx.lineWidth = Math.max(0.2, h * 0.012); ctx.beginPath(); ctx.moveTo(hd[0], hd[1]); ctx.lineTo(lx, ly - h * 0.06); ctx.stroke();
     ctx.fillStyle = 'rgb(255,214,150)'; ctx.beginPath(); ctx.ellipse(lx, ly, h * 0.045, h * 0.06, 0, 0, TAU); ctx.fill();
+    if (h > 14) { ctx.strokeStyle = 'rgba(160,90,40,0.55)'; ctx.lineWidth = Math.max(0.2, h * 0.006); ctx.beginPath(); for (var lr = -1; lr <= 1; lr++) { ctx.moveTo(lx - h * 0.045 * Math.sqrt(1 - lr * lr * 0.2), ly + lr * h * 0.02); ctx.lineTo(lx + h * 0.045 * Math.sqrt(1 - lr * lr * 0.2), ly + lr * h * 0.02); } ctx.stroke(); ctx.fillStyle = rgb(mulc([40, 32, 28], tint)); ctx.fillRect(lx - h * 0.03, ly - h * 0.066, h * 0.06, h * 0.012); ctx.fillRect(lx - h * 0.03, ly + h * 0.055, h * 0.06, h * 0.012); }   // the paper's ribs, the lid and the base
     ctx.globalCompositeOperation = 'lighter'; stamp(ctx, sprite('warm'), lx, ly, h * 0.55, h * 0.55, 0.55); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
   }
   ctx.lineCap = 'butt';
@@ -4676,7 +4875,7 @@ function drawNoren(ctx, g, n, t) {
   var r0 = Pa(W0.at(n.s0 - 0.1, n.top + 0.04, 0.2)), r1 = Pa(W0.at(n.s1 + 0.1, n.top + 0.04, 0.2));
   ctx.strokeStyle = rgb(mulc([70, 54, 40], tint)); ctx.lineWidth = Math.max(0.4, 0.05 * k); ctx.beginPath(); ctx.moveTo(r0.x, r0.y); ctx.lineTo(r1.x, r1.y); ctx.stroke();
   for (var i = 0; i < panels; i++) {
-    var a0 = n.s0 + i * pw + gap, a1 = n.s0 + (i + 1) * pw - gap, ph = i * 0.7, sway = (wind * 0.09 + Math.sin(t * 1.7 + n.ph + ph) * 0.03);
+    var a0 = n.s0 + i * pw + gap, a1 = n.s0 + (i + 1) * pw - gap, ph = i * 0.7, sway = (wind * 0.15 + Math.sin(t * (1.7 + Wd.s * 1.4) + n.ph + ph) * (0.03 + Wd.s * 0.04));   // a steady lean on the wind and a flutter that quickens as it blows harder
     var t0 = Pa(W0.at(a0, n.top, 0.2)), t1 = Pa(W0.at(a1, n.top, 0.2)), b0 = Pa(W0.at(a0 + sway, n.top - n.len, 0.2 + Math.abs(sway) * 1.5)), b1 = Pa(W0.at(a1 + sway, n.top - n.len, 0.2 + Math.abs(sway) * 1.5));
     ctx.fillStyle = i % 2 ? col2 : col; ctx.beginPath(); ctx.moveTo(t0.x, t0.y); ctx.lineTo(t1.x, t1.y); ctx.quadraticCurveTo((t1.x + b1.x) / 2 + (b1.x - t1.x) * 0.3, (t1.y + b1.y) / 2, b1.x, b1.y); ctx.lineTo(b0.x, b0.y); ctx.quadraticCurveTo((t0.x + b0.x) / 2 + (b0.x - t0.x) * 0.3, (t0.y + b0.y) / 2, t0.x, t0.y); ctx.fill();
     if (Math.abs(t1.x - t0.x) > 2.2) {   // the cloth: soft vertical folds across the panel (a crease, a lit ridge), a little shade under the rod and along the hem
@@ -4702,10 +4901,9 @@ function drawNobori(ctx, g, q, t) {
   ctx.fillStyle = rgb(mulc(q.col, tint)); ctx.beginPath(); front.forEach(function (p, i) { if (i) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y); }); for (i = N; i >= 0; i--) ctx.lineTo(back[i].x, back[i].y); ctx.closePath(); ctx.fill();
   ctx.strokeStyle = rgb(mulc(q.edge, tint)); ctx.lineWidth = Math.max(0.3, 0.06 * k); ctx.beginPath(); back.forEach(function (p, i) { if (i) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y); }); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(front[0].x, front[0].y); ctx.lineTo(back[0].x, back[0].y); ctx.stroke();
-  if (q.mark) { // brush strokes of a few large characters
-    ctx.strokeStyle = rgb(mulc(q.edge[0] > 200 && q.col[0] > 200 ? [40, 34, 32] : q.edge, tint)); ctx.lineWidth = Math.max(0.3, 0.07 * k); ctx.beginPath();
-    for (var c = 0; c < 3; c++) { var a = front[1 + c * 2], b = back[1 + c * 2], a2 = front[2 + c * 2], b2 = back[2 + c * 2]; ctx.moveTo(lerp(a.x, b.x, 0.3), lerp(a.y, b.y, 0.3)); ctx.lineTo(lerp(a.x, b.x, 0.7), lerp(a.y, b.y, 0.7)); ctx.moveTo(lerp(a.x, b.x, 0.5), lerp(a.y, b.y, 0.5)); ctx.lineTo(lerp(a2.x, b2.x, 0.45), lerp(a2.y, b2.y, 0.45)); }
-    ctx.stroke();
+  if (q.mark) { // the banner's words, down the cloth one character a line
+    var nw = q.text || pickWord(NOBORI_STREET, (q.x * 131 + q.z * 17) | 0), nwc = Array.from(nw).length, vspan = Math.min(0.92, nwc * 0.135), v0 = 0.04;
+    signText(ctx, nw, function (u, v) { var fi = (v0 + v * vspan) * N, ii = Math.min(N - 1, Math.floor(fi)), ff = fi - ii, a = front[ii], b = back[ii], a2 = front[ii + 1], b2 = back[ii + 1], uu = 0.12 + u * 0.76; return { x: lerp(lerp(a.x, b.x, uu), lerp(a2.x, b2.x, uu), ff), y: lerp(lerp(a.y, b.y, uu), lerp(a2.y, b2.y, uu), ff) }; }, true, rgb(mulc(q.edge[0] > 200 && q.col[0] > 200 ? [40, 34, 32] : q.edge, tint)), { fill: 0.9 });
   }
 }
 function drawString(ctx, g, q, t) {
@@ -4751,21 +4949,24 @@ function boatState(g, t) { var b = g.boat, L = b.pa.len, s = ((t * b.sp + b.off)
 function drawBoatAnim(ctx, g, t) {
   var st = boatState(g, t); if (!st) return;
   st.x += gWind(g).h * 0.5;
-  var bob = Math.sin(t * 1.3) * 0.04, fade = clamp(Math.min(st.s, st.L - st.s) / 6);
+  var bob = Math.sin(t * 1.3) * 0.04, fade = clamp(Math.min(st.s, st.L - st.s) / 6), tint = g.tint;
   ctx.globalAlpha = fade;
-  var mode = MODE; drawBoat(ctx, [st.x, 0, st.z], [st.dx, st.dz], bob, true);
-  // the boatman at the stern poling, and a passenger under a hat
-  var B = BF(st.x, st.z, [st.dx, st.dz], 0), stern = B.L(-1.6, 0, WL + 0.4 + bob), head = B.L(-1.6, 0, WL + 2.0 + bob), k = P(st.x, 0, st.z).k, tint = g.tint;
-  var sp = Pa(stern), hp = Pa(head), push = Math.sin(t * 0.7) * 0.4;
-  ctx.fillStyle = rgb(mulc([50, 62, 96], tint)); ctx.beginPath(); ctx.moveTo(sp.x - 0.2 * k, sp.y); ctx.lineTo(sp.x + 0.2 * k, sp.y); ctx.lineTo(hp.x + 0.16 * k, hp.y + 0.3 * k); ctx.lineTo(hp.x - 0.16 * k, hp.y + 0.3 * k); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = rgb(mulc([196, 168, 110], tint)); ctx.beginPath(); ctx.moveTo(hp.x - 0.38 * k, hp.y + 0.12 * k); ctx.quadraticCurveTo(hp.x, hp.y - 0.35 * k, hp.x + 0.38 * k, hp.y + 0.12 * k); ctx.closePath(); ctx.fill();
-  // the pole: from the boatman's hands down and back into the river; below the surface only a faint refracted ghost, a ring where it enters
-  var top3 = B.L(-1.3, 0, WL + 2.3 + bob), bot3 = B.L(-2.8 - push, 0.3, WL - 0.7), fe = (top3[1] - WL) / (top3[1] - bot3[1]), ent3 = mixc(top3, bot3, fe), pt0 = Pa(top3), pe = Pa(ent3), pt1 = Pa(bot3);
-  ctx.strokeStyle = rgb(mulc([150, 130, 90], tint)); ctx.lineWidth = Math.max(0.3, 0.05 * k); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(pt0.x, pt0.y); ctx.lineTo(pe.x, pe.y); ctx.stroke(); ctx.lineCap = 'butt';
-  ctx.globalAlpha = fade * 0.28; ctx.beginPath(); ctx.moveTo(pe.x, pe.y); ctx.lineTo(pe.x + (pt1.x - pe.x) * 0.7, pe.y + (pt1.y - pe.y) * 0.45); ctx.stroke(); ctx.globalAlpha = fade;
-  ctx.strokeStyle = rgb(mulc([220, 230, 238], tint), 0.55); ctx.lineWidth = Math.max(0.25, 0.03 * k); ctx.beginPath(); ctx.ellipse(pe.x, pe.y, (0.2 + 0.08 * Math.sin(t * 3)) * k, 0.06 * k, 0, 0, TAU); ctx.stroke();
-  var pa = Pa(B.L(0.6, 0, WL + 0.5 + bob)); ctx.fillStyle = rgb(mulc([120, 60, 44], tint)); ctx.beginPath(); ctx.ellipse(pa.x, pa.y - 0.3 * k, 0.2 * k, 0.3 * k, 0, 0, TAU); ctx.fill(); ctx.fillStyle = rgb(mulc([200, 176, 120], tint)); ctx.beginPath(); ctx.ellipse(pa.x, pa.y - 0.62 * k, 0.32 * k, 0.1 * k, 0, 0, TAU); ctx.fill();
-  if (g.LIT.lit) { var lp = Pa(B.L(1.7, 0, WL + 1.1 + bob)); ctx.fillStyle = 'rgb(255,206,140)'; ctx.beginPath(); ctx.ellipse(lp.x, lp.y, 0.13 * k, 0.17 * k, 0, 0, TAU); ctx.fill(); ctx.globalCompositeOperation = 'lighter'; stamp(ctx, sprite('warm'), lp.x, lp.y, 1.8 * k, 1.8 * k, 0.6 * fade); ctx.globalCompositeOperation = 'source-over'; }
+  drawBoat(ctx, [st.x, 0, st.z], [st.dx, st.dz], bob, true, { cargo: 'tawara' });
+  // the boatman on the stern deck, in a sedge hat, an indigo 半纏 and 股引, working the long 竿: he plants it forward, walks it
+  // back pushing with his whole weight bent over it, then draws it up and swings it forward again (one stroke about 4.5 s)
+  var B = BF(st.x, st.z, [st.dx, st.dz], 0), ft = B.L(-1.75, 0, WL - 0.06 + bob + 0.36), fp = Pa(ft), hd = P(ft[0], ft[1] + 1.58, ft[2]), h = fp.y - hd.y;
+  var face = P(st.x + st.dx, 0, st.z + st.dz).x >= P(st.x, 0, st.z).x ? 1 : -1, u = ((t / 4.5) % 1 + 1) % 1, push = u < 0.62 ? u / 0.62 : 0, back = u >= 0.62 ? (u - 0.62) / 0.38 : 0;
+  if (!g.boatman) { var r = mulberry32(4242); g.boatman = dressFor({}, { load: 'pole' }, r); var D = g.boatman; D.role = 'craft'; D.len = 'short'; D.jacket = { col: [40, 56, 92], len: 0.44, crest: [232, 228, 216], eri: [26, 24, 26] }; D.col = D.jacket.col; D.legs = [36, 44, 70]; D.hat = 'suge'; D.head = 'band'; D.cloth = [228, 226, 216]; D.sleeve = 0.05; }
+  // the pole's top in his hands, its foot on the river bed behind and below
+  var lean = push > 0 ? 0.15 + 0.35 * Math.sin(push * Math.PI * 0.5) : 0.15 * (1 - back), hx = lerp(0.35, -0.25, push) + back * 0.6, hy = lerp(1.5, 1.05, push) + back * 0.45;
+  var top3 = B.L(-1.75 + hx, 0.05, ft[1] + hy), bot3 = B.L(-1.75 + hx - (push > 0 ? lerp(0.4, 2.4, push) : lerp(2.4, 0.3, back)) - 0.4, 0.25, push > 0 ? WL - 1.2 : lerp(WL - 1.2, WL + 0.5, Math.sin(back * Math.PI))), up3 = [top3[0] + (top3[0] - bot3[0]) * 0.35, top3[1] + (top3[1] - bot3[1]) * 0.35, top3[2] + (top3[2] - bot3[2]) * 0.35];
+  var pt0 = Pa(up3), pt1 = Pa(bot3), wet = bot3[1] < WL, fe = wet ? (up3[1] - WL) / (up3[1] - bot3[1]) : 1, pe = Pa(mixc(up3, bot3, fe)), k = P(st.x, 0, st.z).k;
+  ctx.strokeStyle = rgb(mulc([164, 140, 96], tint)); ctx.lineWidth = Math.max(0.35, 0.05 * k); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(pt0.x, pt0.y); ctx.lineTo(pe.x, pe.y); ctx.stroke();
+  if (wet) { ctx.globalAlpha = fade * 0.25; ctx.beginPath(); ctx.moveTo(pe.x, pe.y); ctx.lineTo(pe.x + (pt1.x - pe.x) * 0.6, pe.y + (pt1.y - pe.y) * 0.4); ctx.stroke(); ctx.globalAlpha = fade; }   // below the surface, only a faint bent ghost
+  ctx.lineCap = 'butt'; g.poleIn = wet ? mixc(up3, bot3, fe) : null;
+  var hp = Pa(top3), sh = [fp.x, fp.y - h * 0.8], ang = Math.atan2(hp.y - sh[1], hp.x - sh[0]);
+  paintFolk(ctx, fp.x, fp.y, h, g.boatman, { face: face, tint: tint, t: t, bend: lean, arms: [[ang - 0.12, -1], [ang + 0.08, 1]] });
+  if (g.LIT.lit) { var lp = Pa(B.L(2.0, 0, WL + 1.1 + bob)); ctx.fillStyle = 'rgb(255,206,140)'; ctx.beginPath(); ctx.ellipse(lp.x, lp.y, 0.13 * k, 0.17 * k, 0, 0, TAU); ctx.fill(); ctx.globalCompositeOperation = 'lighter'; stamp(ctx, sprite('warm'), lp.x, lp.y, 1.8 * k, 1.8 * k, 0.6 * fade); ctx.globalCompositeOperation = 'source-over'; }
   ctx.globalAlpha = 1;
 }
 /* ---------- the water: shimmer, the boat's reflection and wake, the moon's path ---------- */
@@ -4809,14 +5010,48 @@ function drawWaterLayer(ctx, g, t) {
   }
   if (g.boat) {
     var st = boatState(g, t);
-    if (st) { // reflection and wake
-      var B = BF(st.x, st.z, [st.dx, st.dz], 0), c = P(st.x, WL, st.z), k = c.k;
-      ctx.fillStyle = rgb(mulc([40, 32, 26], g.tint), 0.35); ctx.beginPath(); ctx.ellipse(c.x, c.y + 0.6 * k, 2.0 * k, 0.4 * k, Math.atan2(Pa(B.L(1, 0, WL)).y - c.y, Pa(B.L(1, 0, WL)).x - c.x), 0, TAU); ctx.fill();
-      ctx.strokeStyle = rgb(gc, 0.35); ctx.lineWidth = 0.5;
-      for (i = 1; i < 4; i++) { var a0 = Pa(B.L(-2.2 - i * 1.4, -0.9 - i * 0.5, WL)), a1 = Pa(B.L(-2.2 - i * 1.4, 0.9 + i * 0.5, WL)), m0 = Pa(B.L(-2.4 - i * 1.4, 0, WL)); ctx.globalAlpha = 0.5 / i; ctx.beginPath(); ctx.moveTo(a0.x, a0.y); ctx.quadraticCurveTo(m0.x, m0.y, a1.x, a1.y); ctx.stroke(); }
+    if (st) { // the boat's reflection, the wake (two thin bright lines spreading back from the bow, soft ripples between), rings at the pole
+      var B = BF(st.x, st.z, [st.dx, st.dz], 0), c = P(st.x, WL, st.z), k = c.k, fade = clamp(Math.min(st.s, st.L - st.s) / 6), bob = Math.sin(t * 1.3) * 0.04;
+      var m0 = MODE; MODE = 'm'; ctx.globalAlpha = 0.38 * fade; drawBoat(ctx, [st.x + gWind(g).h * 0.5, 0, st.z], [st.dx, st.dz], bob, false, { cargo: 'tawara', refl: true }); MODE = m0;
+      ctx.globalAlpha = 0.3 * fade; ctx.fillStyle = 'rgb(14,18,22)'; var sh0 = Pa(B.L(-2.3, 0, WL)), sh1 = Pa(B.L(2.3, 0, WL)); ctx.beginPath(); ctx.ellipse((sh0.x + sh1.x) / 2, (sh0.y + sh1.y) / 2 + 0.15 * k, Math.abs(sh1.x - sh0.x) / 2 + 0.3 * k, 0.28 * k, Math.atan2(sh1.y - sh0.y, sh1.x - sh0.x), 0, TAU); ctx.fill();   // the waterline shadow
+      ctx.strokeStyle = rgb(mixc(gc, [255, 255, 255], 0.35)); ctx.lineCap = 'round';
+      var bowx = 2.35, th = 0.34, segN = 14;
+      [-1, 1].forEach(function (sg) {   // the two arms of the V: a thin continuous bright line from the bow, spreading and fading behind
+        var NN = 20, Lw = 11;
+        for (var j = 0; j < NN; j++) { var d0 = j / NN * Lw, d1 = (j + 1) / NN * Lw, fade2 = Math.pow(1 - d0 / Lw, 1.3), shim = 0.75 + 0.25 * Math.sin(d0 * 2.2 - t * 3.5), a0 = Pa(B.L(bowx - d0, sg * (0.25 + d0 * th), WL)), a1 = Pa(B.L(bowx - d1, sg * (0.25 + d1 * th), WL));
+          ctx.globalAlpha = fade * fade2 * shim * 0.85; ctx.lineWidth = Math.max(0.5, 0.035 * k * (0.6 + fade2)); ctx.beginPath(); ctx.moveTo(a0.x, a0.y); ctx.lineTo(a1.x, a1.y); ctx.stroke(); }
+      });
+      for (i = 0; i < 5; i++) {   // the soft transverse ripples in the boat's track
+        var age = ((t * 0.5) % 1 + i) / 5, back2 = 2.6 + age * 7, wd2 = 0.5 + age * 1.6, r0 = Pa(B.L(-back2, -wd2, WL)), r1 = Pa(B.L(-back2 - 0.3, 0, WL)), r2 = Pa(B.L(-back2, wd2, WL));
+        ctx.globalAlpha = (1 - age) * 0.3 * fade; ctx.lineWidth = 0.4; ctx.beginPath(); ctx.moveTo(r0.x, r0.y); ctx.quadraticCurveTo(r1.x, r1.y, r2.x, r2.y); ctx.stroke();
+      }
+      ctx.lineWidth = 0.45; ctx.strokeStyle = rgb(gc);
+      if (g.poleIn) { var pc = Pa(g.poleIn); for (i = 0; i < 2; i++) { var u2 = ((t * 0.8) % 1 + i * 0.5) % 1, rr = (0.06 + u2 * 0.6) * k; ctx.globalAlpha = (1 - u2) * 0.5 * fade; ctx.beginPath(); ctx.ellipse(pc.x, pc.y, rr, rr * CAM.s * 0.9, 0, 0, TAU); ctx.stroke(); } }   // only where the pole goes in
+      ctx.lineCap = 'butt';
       ctx.globalAlpha = 1;
     }
   }
+}
+function drawWillowSway(ctx, g, t) {
+  if (!g.willows || !g.willows.length) return;
+  var Wd = gWind(g), push = Wd.h * 0.35, amp = 0.05 + Wd.s * 0.12;
+  g.willows.forEach(function (w) {
+    var b = null; w.ss.forEach(function (q) { [0, 1].forEach(function (u) { var p = Pa(strandPt(q.st, u)); b = b ? [Math.min(b[0], p.x - 3), Math.min(b[1], p.y - 3), Math.max(b[2], p.x + 3), Math.max(b[3], p.y + 3)] : [p.x - 3, p.y - 3, p.x + 3, p.y + 3]; }); });
+    drawCut(ctx, g, b, w.d + 0.3, function (c) {
+      c.lineCap = 'round';
+      w.ss.forEach(function (q) {
+        var col = mulc(ramp(w.pal, 0.35 + 0.45 * q.tone), g.tint), N = 7, prev = null, sw = Math.sin(t * q.f + q.ph) * amp + Math.sin(t * q.f * 2.3 + q.ph * 3) * amp * 0.3;
+        c.strokeStyle = rgb(col, 0.7);
+        for (var k = 0; k <= N; k++) {
+          var u = k / N, base = strandPt(q.st, u), hang = Math.pow(u, 1.4) * q.st.drop, off = (push + sw) * hang * 0.5, pt = Pa([base[0] + off * (Wd.sign >= 0 ? 1 : 1), base[1], base[2]]);
+          if (prev) { c.lineWidth = Math.max(0.3, 0.032 * pt.k * (1 - u * 0.5)); c.beginPath(); c.moveTo(prev.x, prev.y); c.lineTo(pt.x, pt.y); c.stroke(); }
+          if (k > 2 && k % 2 === 0) { c.fillStyle = rgb(scl(col, 0.95 + 0.25 * ((k * 7 + q.tone * 10) % 3) / 2), 0.8); c.beginPath(); c.ellipse(pt.x, pt.y, Math.max(0.4, 0.07 * pt.k), Math.max(0.3, 0.035 * pt.k), 1.2, 0, TAU); c.fill(); }
+          prev = pt;
+        }
+      });
+      c.lineCap = 'butt';
+    });
+  });
 }
 function drawSmoke(ctx, g, t) {
   if (!g.smoke || !g.smoke.length) return;
@@ -4844,7 +5079,7 @@ function bandItems(g, band) {
   if (band === 1 && g.fwOn) it.push({ d: 1e5 - 1, k: 'yakata' });
   if (g.rareNow && g.rareNow.band === band) it.push({ d: g.rareNow.key, k: 'rare' });
   if (g.life) for (i = 0; i < g.life.length; i++) if (g.life[i].band === band) it.push({ d: g.life[i].d, k: 'life', o: g.life[i] });
-  if (g.FA) { if (g.FA.sp && g.FA.sp.band === band) it.push({ d: P(g.FA.sp.hx, 0, g.FA.sp.hz).d - 0.2, k: 'fauna' }); else if (g.FA.heron && g.FA.heron.band === band) it.push({ d: P(g.FA.heron.hx, 0, g.FA.heron.hz).d - 0.2, k: 'fauna' }); if (band === 1 && g.FA.sw) it.push({ d: 1e5 - 2, k: 'swallows' }); }
+  if (g.FA) { if (g.FA.sp && g.FA.sp.band === band) it.push({ d: P(g.FA.sp.hx, 0, g.FA.sp.hz).d - 0.2, k: 'fauna' }); else if (g.FA.heron && g.FA.heron.band === band) it.push({ d: P(g.FA.heron.hx, 0, g.FA.heron.hz).d - 0.2, k: 'fauna' }); if (g.FA.pg && g.FA.pg.band === band) it.push({ d: P(g.FA.pg.x, 0, g.FA.pg.z).d - 0.2, k: 'fauna' }); if (band === 1 && g.FA.sw) it.push({ d: 1e5 - 2, k: 'swallows' }); }
   if (g.I && g.I.taikoP && band === 2) it.push({ d: P(g.I.taikoW.x, 0, g.I.taikoW.z).d, k: 'taiko' });
   if (g.I && g.I.catP && band === (P(g.I.catW.x, 0, g.I.catW.z).d < P(0, 0, 36).d ? 0 : 2)) it.push({ d: P(g.I.catW.x, 0, g.I.catW.z).d, k: 'tcat' });
   it.sort(function (a, b) { return b.d - a.d; });
@@ -5789,7 +6024,7 @@ var SIKA = null;
    when alarmed, a springy bound close to a stott: all four feet leave the ground nearly together, the body carried up between */
 var SIKA_G = {
   walk: { beta: 0.68, off: [0, 0.5, 0.2, 0.7], lift: 0.24, bob: 0.01, bobN: 2, roll: 0.012 },
-  bound: { beta: 0.2, off: [0, 0.03, 0.08, 0.11], lift: 0.08, bob: 0.0, bobN: 1, roll: 0, pitchA: 0.05, pitchP: 0.6, rise: 0.36, riseP: 0.75, riseW: 0.7, fold: 0.3 }   // the legs held nearly straight under it in the air
+  bound: { beta: 0.2, off: [0, 0.03, 0.08, 0.11], lift: 0.08, bob: 0.0, bobN: 1, roll: 0, pitchA: 0.05, pitchP: 0.6, rise: 0.36, riseP: 0.75, riseW: 0.7, fold: 0.3, archA: 0.6, stott: true }   // the legs held nearly straight under it in the air
 };
 var SIKA_LEG = 0.8, SIKA_Y0 = -0.6;   // the legs below the brisket are drawn at this fraction of the design (shorter, so the chest is as deep as the legs are long)
 function sikaMp(p) { var y = p[1], d = -SIKA_Y0 * (1 - SIKA_LEG); return [p[0], y <= SIKA_Y0 ? y + d : SIKA_Y0 + d + (y - SIKA_Y0) * SIKA_LEG]; }
@@ -5883,7 +6118,10 @@ function sikaPose(R, o) {
   function loc(b, p) { var c = Math.cos(-b.th), s = Math.sin(-b.th), dx = p[0] - b.a[0], dy = p[1] - b.a[1]; return [dx * c - dy * s, dx * s + dy * c]; }
   function glob(b, l) { var c = Math.cos(b.th), s = Math.sin(b.th); return [b.a[0] + l[0] * c - l[1] * s, b.a[1] + l[0] * s + l[1] * c]; }
   var roll = Math.sin(ph * TAU * (G.rollN || 2)) * (G.roll === undefined ? 0.018 : G.roll) * amp;   // the pelvis rocks a little with each hind step, the shoulders with each fore step
-  var pel = { a: TB(J.P0), th: B0[0].th + pitchB + roll }, tho = { a: TB(J.M), th: B0[1].th + pitchB - roll * 0.6 };
+  // the arch of the back (a stott: the spine bowed up, the rump tucked under and the shoulders dropped, at the top of each leap)
+  var arch = (o.arch || 0) + (G.archA && G.rise ? G.archA * rz / G.rise : 0), Mp = TB(J.M), Pp = TB(J.P0), ca = Math.cos(-arch), sa = Math.sin(-arch);
+  var Pq = [Mp[0] + (Pp[0] - Mp[0]) * ca - (Pp[1] - Mp[1]) * sa, Mp[1] + (Pp[0] - Mp[0]) * sa + (Pp[1] - Mp[1]) * ca - arch * 0.12];
+  var pel = { a: Pq, th: B0[0].th + pitchB + roll - arch }, tho = { a: [Mp[0], Mp[1] - arch * 0.12], th: B0[1].th + pitchB - roll * 0.6 + arch * 0.8 };
   var B = []; B[0] = pel; B[1] = tho;
   // neck and head
   var hd = o.head || {}, aN = hd.neck === undefined ? -1.0 : hd.neck, bend = hd.bend || 0, aH = hd.ang === undefined ? 0.55 : hd.ang;
@@ -5893,12 +6131,14 @@ function sikaPose(R, o) {
   var out = { far: [] };
   function foot(i) {
     var u = (((ph + G.off[i]) % 1) + 1) % 1, sw = stride * G.beta * amp, lf = G.lift * stride * 0.5 * Math.min(1, amp * 1.6);
+    if (G.stott) { var air = G.rise ? clamp(rz / (G.rise * Math.max(0.01, amp))) : 0, bunch = (i < 2 ? 0.07 : -0.06) * air * amp; return { dx: bunch, up: rz * 0.86, f: 0, st: -1, stott: true }; }   // (the feet rise a little less than the body: the legs straighten in the air)   // the stott: all four feet leave together, the legs held straight and close under the body
     if (u < G.beta) return { dx: sw * (0.5 - u / G.beta), up: rz, f: 0, st: u / G.beta };
     var v = (u - G.beta) / (1 - G.beta), e = v * v * (3 - 2 * v); return { dx: sw * (-0.5 + e), up: Math.sin(v * Math.PI) * lf + rz, f: gFold(G, v) * Math.min(1, amp * 1.6), st: -1 };
   }
   function hind(i, far) {
     var ft = foot(i), dxf = far ? 0.03 : 0, hip = glob(pel, loc(B0[0], J.Hj)); hip = [hip[0] + dxf, hip[1]];
     if (o.tuck) ft = { dx: -0.25, up: 0.35, f: 1 };
+    if (ft.stott) ft.dx += hip[0] - dxf - J.Hj[0];   // the stott: each foot straight under its posed hip, so the leg stands vertical
     var T = [J.HHf[0] + ft.dx + dxf + (o.splayH || 0), -ft.up], aP = Math.atan2(J.HHf[1] - J.HFt[1], J.HHf[0] - J.HFt[0]) + ft.f * 0.8;
     var Fl = [T[0] - Math.cos(aP) * B0[8].len, T[1] - Math.sin(aP) * B0[8].len], aC0 = B0[7].th, aC = aC0 - ft.f * 0.25 - (ft.st >= 0 ? (ft.dx / Math.max(0.2, stride)) * 0.5 : 0);
     var lc = B0[7].len, reach = (B0[5].len + B0[6].len) * 0.985, Hk;
@@ -5915,6 +6155,7 @@ function sikaPose(R, o) {
   function fore(i, far) {
     var ft = foot(i), dxf = far ? 0.035 : 0, sp = glob(tho, loc(B0[1], J.Sp)); sp = [sp[0] + dxf, sp[1]];
     if (o.tuck) ft = { dx: 0.15, up: 0.3, f: 1 };
+    if (ft.stott) ft.dx += sp[0] - dxf - J.Sp[0];
     // in the swing the knee (carpus) comes forward and up, the cannon hangs down and back from it, the pastern and hoof hang from that, tip down
     var T = [J.FHf[0] + ft.dx + dxf + (o.splayF || 0), -ft.up], aC = B0[11].th + ft.f * 0.95 - (ft.st >= 0 ? (ft.dx / Math.max(0.2, stride)) * 0.35 : 0), aP0 = Math.atan2(J.FHf[1] - J.FFt[1], J.FHf[0] - J.FFt[0]), aP = lerp(aP0, aC, ft.f);
     var Fl = [T[0] - Math.cos(aP) * B0[12].len, T[1] - Math.sin(aP) * B0[12].len];
@@ -6045,7 +6286,7 @@ function sikaFarLeg(ctx, R, PB, Bf, hindLeg, cols, key) {
   var m = pLm(), idx = hindLeg ? [5, 6, 7, 8] : [9, 10, 11, 12];
   var lb = sikaLegTube(R, Bf, hindLeg), pts = [lb.at(0.9, 0), lb.at(1, 0)];
   var e0 = lb.at(0, 0), e1 = lb.at(1, 0), gf = ctx.createLinearGradient(e0[0], e0[1], e1[0], e1[1]); gf.addColorStop(0, zc(scl(cols.coat || cols.leg, 0.62))); gf.addColorStop(0.45, zc(scl(cols.leg, 0.6))); gf.addColorStop(1, zc(scl(mixc(cols.leg, [40, 34, 40], 0.3), 0.55))); ctx.fillStyle = gf; ctx.fill(pPath(lb.out));   // the far leg: the same pelt, in the body's shadow
-  var set = pSet({ c: pPal(scl(cols.leg, 0.78)) }), n = MODE === 'm' ? 0 : Math.min(420, pCount(lb.len * 0.07, 420)), Rr = pRand(key, Math.max(1, n));
+  var set = pSet({ c: pPal(scl(cols.leg, 0.78)) }), n = MODE === 'm' ? 0 : Math.min(420, pCount(lb.len * 0.07, RL.k < 320 ? 180 : 420)), Rr = pRand(key, Math.max(1, n));
   ctx.save(); ctx.clip(pPath(lb.out));
   for (var k = 0; k < n; k++) { var u = Rr[k * 4], v = Rr[k * 4 + 1] * 2 - 1, q = lb.at(u, v); pStroke(set, 'c', pTi(0.35 + v * 0.15 * RL.lx + (1 - u) * 0.1, (Rr[k * 4 + 2] - 0.5) * 1.4), q[0], q[1], q[2] + (Rr[k * 4 + 3] - 0.5) * 0.3, m.l * 0.7); }
   pSetFlush(ctx, set, m.w * 0.9);
@@ -6122,10 +6363,14 @@ function sikaPaint(ctx, o) {
   // the spots: crisp white dabs in rows in summer, a ghost of them in the winter coat
   var spA = clamp((0.62 - wk) * 1.9) * 0.85 + 0.12 * (1 - wk) + 0.07;
   var spC = mixc([236, 226, 198], coat, 0.12 + 0.2 * (1 - lit));
-  if (spA > 0.04) R.SP.forEach(function (p) { var q = sikaPt(B, p.L, ns), turn = rigTurn(B, B0, p.L), r = 0.0105 * p.s, an = p.ha + turn + Math.PI + p.rot, a1 = spA * p.al;
+  if (spA > 0.04 && MODE !== 'm' && RL.k < 320) {   // at garden size: the spots as two batched soft fills (an edge, a core), not a gradient each
+    var spE = new Path2D(), spK = new Path2D();
+    R.SP.forEach(function (p) { var q = sikaPt(B, p.L, ns), turn = rigTurn(B, B0, p.L), r = 0.0105 * p.s, an = p.ha + turn + Math.PI + p.rot; spE.ellipse(q[0], q[1], r * 1.5, r * 1.5 * p.asp, an, 0, TAU); spK.ellipse(q[0], q[1], r * 0.95, r * 0.95 * p.asp, an, 0, TAU); spE.closePath(); spK.closePath(); spE.moveTo(q[0], q[1]); spK.moveTo(q[0], q[1]); });
+    ctx.fillStyle = zc(spC, 1, Math.min(1, spA * 0.45)); ctx.fill(spE); ctx.fillStyle = zc(spC, 1, Math.min(1, spA * 0.75)); ctx.fill(spK);
+  } else if (spA > 0.04 && MODE !== 'm') R.SP.forEach(function (p) { var q = sikaPt(B, p.L, ns), turn = rigTurn(B, B0, p.L), r = 0.0105 * p.s, an = p.ha + turn + Math.PI + p.rot, a1 = spA * p.al;
     zsoft(ctx, q[0], q[1], r * 1.7, r * 1.7 * p.asp, spC, Math.min(1, a1 * 1.15), 1, an); });   // each a soft dab of cream, its edge lost in the coat
   // 2. the coat: a light texture of short strokes along the lie of the hair, close in tone to the paint beneath
-  var lo = MODE === 'm', n = lo ? 0 : pCount(R.area, 2000), S = sikaSamples(R, n);   // (in the pond's reflection: the paint only, no brushwork)
+  var lo = MODE === 'm', mid = RL.k < 320, n = lo ? 0 : pCount(R.area, mid ? 1100 : 2000), S = sikaSamples(R, n);   // mid: a deer of ordinary size in the garden (under ~1 m in 320 device px): fewer, larger-scale strokes read the same   // (in the pond's reflection: the paint only, no brushwork)
   var soft = function (c) { var P0 = pPal(c); return [P0[2], P0[3], P0[3], P0[4], P0[4], P0[5], P0[5], P0[6]]; };
   var set = pSet({ coat: soft(coat), leg: soft(leg), bel: soft(bel), mane: soft(C.mane) });
   for (var i = 0; i < n; i++) {
@@ -6135,8 +6380,8 @@ function sikaPaint(ctx, o) {
     var tn = pTone(nr[0], nr[1], nr[2], nr[3], -turn * 0.6);
     pStroke(set, cls, pTi(tn, pMot(x0, y0, 1) * 0.6 + (sm.r2 - 0.5) * 0.5), q[0], q[1], sm.ha + turn + (sm.r1 - 0.5) * 0.3, m.l * (0.55 + sm.r2 * 0.4) * (cls === 'leg' ? 0.6 : 1));
   }
-  [[hl, 'sikahl', 0.08], [fl, 'sikafl', 0.06]].forEach(function (L3) { var lb = L3[0], nl = lo ? 0 : pCount(lb.len * L3[2], 400), LR = pRand(L3[1], Math.max(1, nl)); for (var k3 = 0; k3 < nl; k3++) { var u3 = 0.15 + LR[k3 * 4] * 0.85, v3 = LR[k3 * 4 + 1] * 2 - 1, q3 = lb.at(u3, v3), nm3 = q3[3]; pStroke(set, 'leg', pTi(pTone(nm3[0] * v3, nm3[1] * v3, Math.sqrt(Math.max(0, 1 - v3 * v3)), 0) * 0.95, (LR[k3 * 4 + 2] - 0.5) * 0.8), q3[0], q3[1], q3[2] + (LR[k3 * 4 + 3] - 0.5) * 0.3, m.l * 0.55); } });
-  var nn2 = lo ? 0 : pCount(nk.len * 0.17, 500), NR = pRand('sikaneck', Math.max(1, nn2));
+  [[hl, 'sikahl', 0.08], [fl, 'sikafl', 0.06]].forEach(function (L3) { var lb = L3[0], nl = lo ? 0 : pCount(lb.len * L3[2], mid ? 200 : 400), LR = pRand(L3[1], Math.max(1, nl)); for (var k3 = 0; k3 < nl; k3++) { var u3 = 0.15 + LR[k3 * 4] * 0.85, v3 = LR[k3 * 4 + 1] * 2 - 1, q3 = lb.at(u3, v3), nm3 = q3[3]; pStroke(set, 'leg', pTi(pTone(nm3[0] * v3, nm3[1] * v3, Math.sqrt(Math.max(0, 1 - v3 * v3)), 0) * 0.95, (LR[k3 * 4 + 2] - 0.5) * 0.8), q3[0], q3[1], q3[2] + (LR[k3 * 4 + 3] - 0.5) * 0.3, m.l * 0.55); } });
+  var nn2 = lo ? 0 : pCount(nk.len * 0.17, mid ? 260 : 500), NR = pRand('sikaneck', Math.max(1, nn2));
   for (i = 0; i < nn2; i++) {
     var u = 0.12 + NR[i * 4] * 0.88, v = NR[i * 4 + 1] * 2 - 1, qn = nk.at(u, v), nm = qn[3], cz = Math.sqrt(Math.max(0, 1 - v * v)), cn = rut > 0.3 && v < -0.2 ? 'mane' : 'coat';
     pStroke(set, cn, pTi(pTone(nm[0] * v, nm[1] * v, cz, 0) * (cn === 'mane' ? 0.8 : 1), (NR[i * 4 + 2] - 0.5) * 0.8), qn[0], qn[1], qn[2] + Math.PI + (NR[i * 4 + 3] - 0.5) * 0.35 + (cn === 'mane' ? 0.3 : 0), m.l * (0.55 + NR[i * 4 + 3] * 0.4) * (cn === 'mane' ? 1.5 : 1));
@@ -6146,7 +6391,7 @@ function sikaPaint(ctx, o) {
   var rp = [[-0.522, -0.895], [-0.548, -0.905], [-0.572, -0.885], [-0.598, -0.9], [-0.614, -0.87], [-0.618, -0.79], [-0.605, -0.71], [-0.585, -0.655], [-0.56, -0.7], [-0.535, -0.77], [-0.518, -0.84]].map(function (q) { var cx = -0.577, cy = -0.79, k = 0.8 + fla * 0.42; return P2(cx + (q[0] - cx) * k - fla * 0.014, cy + (q[1] - cy) * k); });   // (seen from the side, a soft crescent at the back of the haunch; flared, it spreads)
   var rps = pSmooth(rp, true, 5), rbx = pBox(rps);
   var grr = ctx.createLinearGradient(0, rbx[1], 0, rbx[3]); grr.addColorStop(0, zc(C.white, 1.02)); grr.addColorStop(0.6, zc(C.white, 0.94)); grr.addColorStop(1, zc(mixc(C.white, [130, 134, 156], 0.25), 0.82));
-  ctx.fillStyle = grr; [[0.018, 0.1], [0.011, 0.16], [0.005, 0.26], [-0.001, 0.4], [-0.007, 0.6], [-0.014, 0.9]].forEach(function (q) { ctx.globalAlpha = q[1]; ctx.fill(pPath(pOffset(rps, q[0]))); }); ctx.globalAlpha = 1;   // the fur edge feathered well into the coat   // soft-edged: the white fades into the coat
+  ctx.fillStyle = grr; (mid ? [[0.014, 0.16], [0.002, 0.36], [-0.012, 0.9]] : [[0.018, 0.1], [0.011, 0.16], [0.005, 0.26], [-0.001, 0.4], [-0.007, 0.6], [-0.014, 0.9]]).forEach(function (q) { ctx.globalAlpha = q[1]; ctx.fill(pPath(pOffset(rps, q[0]))); }); ctx.globalAlpha = 1;   // the fur edge feathered well into the coat   // soft-edged: the white fades into the coat
   var re = pSmooth([rp[9], rp[10], rp[0], rp[1], rp[2]], false, 5), rb = new Path2D(); re.forEach(function (q, ii) { if (ii) rb.lineTo(q[0], q[1]); else rb.moveTo(q[0], q[1]); });
   ctx.save(); ctx.translate(0.014, -0.006); ctx.strokeStyle = zc(mixc(C.blk, coat, 0.35), 1, 0.12); ctx.lineWidth = 0.03; ctx.stroke(rb); ctx.strokeStyle = zc(mixc(C.blk, coat, 0.3), 1, 0.22); ctx.lineWidth = 0.014; ctx.stroke(rb); ctx.restore();   // the dark line round its top and front, soft
   ctx.restore();
@@ -6407,12 +6652,19 @@ function foxHead2(ctx, o, coat) {
   }
   earP(-1);
   // the head as one shape
+  if (sn > 0.3 && MODE !== 'm') {   // turned to us, the cheek ruff: fur flaring a little wider than the head behind the cheeks, its edge broken into short tufts; coat-coloured, white only down the throat's middle
+    var fy = sstep(0.3, 0.9, sn), hc0 = PJ([0.0, 0.03, 0]), rw = 0.07 * (0.6 + 0.4 * fy), rh = 0.052, ruffD = [];
+    for (var rk = 0; rk < 30; rk++) { var ra = rk / 30 * TAU, tuft = rk % 2 ? 1.0 : 1.12 + 0.05 * Math.sin(rk * 2.3), lowr = Math.sin(ra) > 0 ? 1 + 0.25 * Math.sin(ra) : 0.8; ruffD.push([hc0[0] + Math.cos(ra) * rw * tuft, hc0[1] + Math.sin(ra) * rh * tuft * lowr]); }
+    var rp2 = pPath(pSmooth(ruffD, true, 1)), gR = ctx.createLinearGradient(hc0[0], hc0[1] - rh, hc0[0], hc0[1] + rh * 1.2); gR.addColorStop(0, zc(coat, 1.0)); gR.addColorStop(0.7, zc(mixc(coat, [60, 46, 56], 0.15), 0.94)); gR.addColorStop(1, zc(mixc(coat, [60, 46, 56], 0.3), 0.85));
+    ctx.fillStyle = gR; ctx.fill(rp2);
+    ctx.save(); ctx.clip(rp2); zsoft(ctx, hc0[0], hc0[1] + rh * 0.6, rw * 0.3, rh * 0.7, WH, 0.95 * fy); zsoft(ctx, hc0[0] + rw * 0.6 * RL.lx, hc0[1], rw * 0.45, rh, [50, 38, 46], 0.25); ctx.restore();
+  }
   // the head as one shape: the crown and muzzle as their ellipses; the cheeks, jaw, chin and throat as one convex hull, so the jaw's
   // underline is one clean curve from the chin to the throat
   var hp = new Path2D(), lowP = [];
   ell.forEach(function (e, i) { if (i < 6) { hp.ellipse(e.x, e.y, e.r1, e.r2, e.an, 0, TAU); return; } var c = Math.cos(e.an), s2 = Math.sin(e.an); for (var k = 0; k < 20; k++) { var a = k / 20 * TAU, px = Math.cos(a) * e.r1, py = Math.sin(a) * e.r2; lowP.push([e.x + px * c - py * s2, e.y + px * s2 + py * c]); } });
   pPath(pSmooth(pHull(lowP), true, 2), hp);
-  if (!lod) qFuzz(ctx, hp, coat, WH, -0.06, 0.06, m.w * 1.1);   // a soft edge (the fill covers its inner half)
+  if (!lod) qFuzz(ctx, hp, coat, coat, -0.06, 0.06, m.w * (1.1 - 0.6 * sn));   // a soft edge in the coat's own colour (no light halo)
   var gh = ctx.createLinearGradient(0, -0.06, 0, 0.05); gh.addColorStop(0, zc(mixc(coat, [255, 236, 200], 0.12), 1.04)); gh.addColorStop(0.55, zc(coat, 0.96)); gh.addColorStop(1, zc(mixc(coat, [60, 46, 50], 0.2), 0.9)); ctx.fillStyle = gh; ctx.fill(hp);
   ctx.save(); ctx.clip(hp);
   // the white, painted on the head inside its outline: the upper lip, the lower jaw, the chin, the lower cheek and the throat, as
@@ -6485,7 +6737,7 @@ function foxTail(ctx, R, B, o, coat, fl) {   // the brush: from the root, curvin
   return lb;
 }
 function foxPaint2(ctx, o) {
-  var R = qRig(FOXS), C = FOXK, m, wn = o.winter ? 1 : 0, fl = 1 + wn * 0.12;
+  var R = qRig(FOXS), C = FOXK, m, wn = o.winter ? 1 : 0, fl = 1 + wn * 0.12; var lod0 = MODE === 'm';
   RL.k = pScale(ctx); m = pLm();
   var coat = mixc(C.coat, C.winter, wn), W2 = RL.night ? mixc(C.white, [255, 214, 160], 0.45) : C.white, bel = RL.night ? mixc(C.cream, [255, 214, 160], 0.35) : C.cream;   // (at night the whites a dim warm white, as on the head)
   // the head's carriage from the old parameters: pitch (down +) and yaw
@@ -6555,6 +6807,7 @@ function foxPaint2(ctx, o) {
   [[B[8], 8], [B[12], 12]].forEach(function (q) { var e = qEnd(q[0], B0[q[1]].len), a = q[0].a; ctx.fillStyle = zc(C.blk, 0.9); ctx.beginPath(); ctx.ellipse(lerp(a[0], e[0], 0.6), lerp(a[1], e[1], 0.6) - 0.004, 0.026, 0.012, q[0].th, 0, TAU); ctx.fill(); });
   // the head
   var hb = B[4], nE = nk.at(1, -0.6);
+  // turned to the viewer: the neck seen from the front is a full furry ruff, white at the throat, the coat round its sides, shaded round
   // turned to the viewer, the head's tilt is no longer a turn in the picture (that would roll it sideways): it goes into the head's own nose-down pitch
   var hth = Math.atan2(Math.sin(hb.th), Math.cos(hb.th) * SX), hsn = Math.sin(sstep(0, 1, clamp(hd.yaw || 0)) * 1.52);
   ctx.save(); ctx.setTransform(M0); ctx.translate(lerp(hb.a[0], nE[0], 0.5) * SX, lerp(hb.a[1], nE[1], 0.5)); ctx.rotate(hth * (1 - hsn)); ctx.scale(fl * 0.97, fl * 0.97);
@@ -7327,17 +7580,18 @@ function harePaint2(ctx, o) {
   function hindTube(far) {
     var dx = far ? 0.015 : 0, tf = [hf[0] + dx, hf[1] + lift * 0], heel = [tf[0] - lerp(0.14, -0.11, th), tf[1] - lerp(0.0, 0.05, th)];
     var h0 = [hip[0] + dx, hip[1] + 0.02], k = zik2(h0, heel, 0.12, 0.11, -1);
-    var toe = [tf[0] + lerp(0.03, 0.012, th), tf[1] - 0.004];
-    return pLimb([[hip[0] + dx + 0.02, hip[1] - 0.02], h0, k[0], k[1], tf, toe], [0.06, 0.07, 0.042, 0.02, 0.016, 0.008], [0.06, 0.065, 0.032, 0.012, 0.01, 0.006], 5);
+    var toe = [tf[0] + lerp(0.05, 0.02, th), tf[1] - 0.003];   // the long flat foot, furred to the toes
+    var lb = pLimb([[hip[0] + dx + 0.02, hip[1] - 0.02], h0, k[0], k[1], tf, toe], [0.07, 0.085, 0.06, 0.036, 0.032, 0.022], [0.07, 0.08, 0.05, 0.022, 0.016, 0.012], 5);   // a thick thigh; the long furry foot, deep above and flat beneath
+    lb.knee = k[0]; lb.heel = k[1]; lb.h0 = h0; return lb;
   }
   function foreTube(far) {
     var dx = far ? 0.018 : 0, tf = [ff[0] + dx, ff[1]], el = [lerp(sh[0], tf[0], 0.5) - 0.02 - fx * 0.03, lerp(sh[1], tf[1], 0.5) + fx * 0.02];
-    return pLimb([[sh[0] + dx, sh[1] - 0.01], el, [tf[0] - 0.01, tf[1] - 0.012], tf], [0.035, 0.018, 0.012, 0.012], [0.035, 0.017, 0.012, 0.011], 5);
+    return pLimb([[sh[0] + dx, sh[1] - 0.01], el, [tf[0] - 0.01, tf[1] - 0.012], tf], [0.04, 0.024, 0.017, 0.015], [0.04, 0.023, 0.016, 0.014], 5);   // slim but furred
   }
-  var shadeF = mixc(C.coat, C.shade, 0.55);
+  var shadeF = mixc(mixc(C.coat, C.shade, 0.42), C.warm, 0.1);   // (the far legs a shade darker: depth)
   [hindTube(true), foreTube(true)].forEach(function (lb, li) {   // the far legs: the same fur, in the body's shadow
     var a0 = lb.at(0, 0), a1 = lb.at(1, 0), lp = pPath(lb.out), g = ctx.createLinearGradient(a0[0], a0[1] - 0.03, a1[0], a1[1]); g.addColorStop(0, zc(shadeF, 0.9)); g.addColorStop(1, zc(mixc(shadeF, C.shade, 0.4), 0.8)); ctx.fillStyle = g; ctx.fill(lp);
-    if (!lod) { ctx.save(); ctx.clip(lp); var fs = pSet({ c: qSoft(shadeF) }), RF = pRand('harefar' + li, 90); for (var k1 = 0; k1 < 90; k1++) { var q1 = lb.at(0.1 + RF[k1 * 4] * 0.9, RF[k1 * 4 + 1] * 2 - 1); pCurve(fs, 'c', pTi(0.5 + (RF[k1 * 4 + 2] - 0.5) * 0.3, 0), q1[0], q1[1], q1[2] + (RF[k1 * 4 + 3] - 0.5) * 0.4, m.l * 0.5, 0.15); } ctx.globalAlpha = 0.35; pSetFlush(ctx, fs, m.w * 0.8); ctx.globalAlpha = 1; ctx.restore(); qFuzz(ctx, lp, shadeF, shadeF, a0[1], a1[1], m.w * 0.8); }
+    if (!lod) { ctx.save(); ctx.clip(lp); var fs = pSet({ c: qSoft(shadeF) }), nF = Math.min(300, pCount(lb.len * 0.05, 300)), RF = pRand('harefar' + li, nF); for (var k1 = 0; k1 < nF; k1++) { var q1 = lb.at(0.1 + RF[k1 * 4] * 0.9, RF[k1 * 4 + 1] * 2 - 1); pCurve(fs, 'c', pTi(0.5 + (RF[k1 * 4 + 2] - 0.5) * 0.3, 0), q1[0], q1[1], q1[2] + (RF[k1 * 4 + 3] - 0.5) * 0.4, m.l * 0.5, 0.15); } ctx.globalAlpha = 0.35; pSetFlush(ctx, fs, m.w * 0.8); ctx.globalAlpha = 1; ctx.restore(); qFuzz(ctx, lp, shadeF, shadeF, a0[1], a1[1], m.w * 0.8); }
   });
   // the scut, white, held up as it runs
   var sc = [base[1][0] + 0.002, base[1][1] - 0.008 - e * 0.02]; zsoft(ctx, sc[0], sc[1], 0.036, 0.03, C.belly, 1); zsoft(ctx, sc[0] - 0.006, sc[1] - 0.012, 0.026, 0.014, o.brown ? mixc(C.coat, C.tip, 0.5) : mixc(C.coat, C.back, 0.4), 0.8);   // the scut: short and fluffy, white beneath, darker on top
@@ -7345,10 +7599,20 @@ function harePaint2(ctx, o) {
   var hd = o.head || {}, hp = hd.pitch || 0, yaw = clamp(hd.yaw || 0), Hc = [lerp(lerp(0.15, 0.12, up), 0.25, e), lerp(lerp(-0.25, -0.36, up), -0.31, e) + br];
   var bodyO = pWind(pSmooth(base, true, 6), true), hl = hindTube(false), fl = foreTube(false), hOut = pWind(hl.out, true), fOut = pWind(fl.out, true);
   var nk = pLimb([[sh[0] - 0.05, sh[1] + 0.01], [lerp(sh[0], Hc[0], 0.5) - 0.01, lerp(sh[1], Hc[1], 0.5)], [Hc[0] - 0.01, Hc[1] + 0.005]], [0.07, 0.065, 0.045], [0.075, 0.06, 0.04], 5), nOut = pWind(nk.out, true);
-  var all = [bodyO, hOut, fOut, nOut], path = new Path2D(); all.forEach(function (d) { pPath(d, path); });
+  // the haunch: a full round mass over the hip and the thigh, so the hind leg grows out of it (never a stick)
+  var hq = hl.h0, kq = hl.knee, hA = Math.atan2(kq[1] - hq[1], kq[0] - hq[0]), hcx = lerp(hq[0], kq[0], 0.35), hcy = lerp(hq[1], kq[1], 0.35), haunch = [];
+  for (var hk = 0; hk < 20; hk++) { var ha2 = hk / 20 * TAU, hx2 = Math.cos(ha2) * 0.085, hy2 = Math.sin(ha2) * 0.062; haunch.push([hcx + hx2 * Math.cos(hA) - hy2 * Math.sin(hA), hcy + hx2 * Math.sin(hA) + hy2 * Math.cos(hA)]); }
+  haunch = pWind(haunch, true);
+  var all = [bodyO, hOut, fOut, nOut, haunch], path = new Path2D(); all.forEach(function (d) { pPath(d, path); });
   ctx.save(); ctx.clip(path);
   var g1 = ctx.createLinearGradient(0, -0.38, 0, 0); g1.addColorStop(0, zc(C.coat, 1.04)); g1.addColorStop(0.5, zc(C.coat, 0.97)); g1.addColorStop(0.85, zc(mixc(C.coat, C.shade, 0.55), 0.95)); g1.addColorStop(1, zc(mixc(C.coat, C.shade, 0.7), 0.9));
   ctx.fillStyle = g1; ctx.fill(path);
+  [hl, fl].forEach(function (lb) {   // the near legs in the coat's own colour, shaded round along their length (not the cold shade of the ground)
+    // the coat's own warm white, only lightly shaded: faded in from the haunch and shoulder (no seam where the leg leaves the body)
+    var a0 = lb.at(0.25, 0), a1 = lb.at(0.55, 0), gl = ctx.createLinearGradient(a0[0], a0[1], a1[0], a1[1]); gl.addColorStop(0, zc(C.coat, 1.0, 0)); gl.addColorStop(1, zc(mixc(C.coat, C.light, 0.1), 1.0, 0.85));
+    ctx.fillStyle = gl; ctx.fill(pPath(lb.out));
+    var b0 = lb.at(0.7, -1), b1 = lb.at(0.7, 1), gs2 = ctx.createLinearGradient(b0[0], b0[1], b1[0], b1[1]); gs2.addColorStop(0, 'rgba(0,0,0,0)'); gs2.addColorStop(0.6, 'rgba(0,0,0,0)'); gs2.addColorStop(1, zc(C.shade, 1, 0.18)); ctx.fillStyle = gs2; ctx.fill(pPath(lb.out));   // a soft round of shade on its lower side
+  });
   var lit = 0.5 + 0.5 * clamp(-pL()[1]), loC = mixc(C.coat, C.shade, 0.85);
   zsoft(ctx, hip[0] + 0.0, hip[1] + 0.06, 0.06, 0.06, loC, 0.5);              // under the haunch
   zsoft(ctx, hip[0] - 0.01, hip[1] - 0.035, 0.08, 0.05, C.light, (o.brown ? 0.3 : 0.6) * lit); // the lit round of the haunch
@@ -7362,13 +7626,14 @@ function harePaint2(ctx, o) {
     var set = pSet({ c: qSoft(C.coat) }), R2 = pRand('hare2', 700), b = pBox(bodyO), n = Math.min(700, pCount(0.06, 700));
     set.s = { pal: qSoft(mixc(C.coat, C.shade, 0.6)), b: pBatch() }; set.w = { pal: qSoft(mixc(C.coat, C.light, 0.5)), b: pBatch() };
     for (var k = 0; k < n; k++) { var x = lerp(b[0], b[2], R2[k * 4]), y = lerp(b[1], b[3], R2[k * 4 + 1]); if (!pInside(bodyO, x, y)) continue; var yy = (y - b[1]) / (b[3] - b[1]); pCurve(set, yy > 0.62 ? 's' : yy < 0.3 ? 'w' : 'c', pTi(0.8 - yy * 0.4 + (R2[k * 4 + 2] - 0.5) * 0.2, 0), x, y, Math.PI + 0.25 + yy * 0.6 + (R2[k * 4 + 3] - 0.5) * 0.4, m.l * 0.6, (R2[k * 4 + 3] - 0.5) * 0.4 + 0.12); }   // soft curved locks: warm light above, cool blue-grey shadow below
-    [hl, fl, nk].forEach(function (lb, li) { var R3 = pRand('hare3' + li, 110); for (var k2 = 0; k2 < 110; k2++) { var uu = 0.1 + R3[k2 * 4] * 0.9, vv = R3[k2 * 4 + 1] * 2 - 1, q = lb.at(uu, vv); pCurve(set, vv > 0.3 && li === 0 ? 's' : 'c', pTi(0.7 - R3[k2 * 4] * 0.3, 0), q[0], q[1], q[2] + (li === 2 ? Math.PI : 0) + (R3[k2 * 4 + 2] - 0.5) * 0.4, m.l * 0.5, 0.15); } });
+    [hl, fl, nk].forEach(function (lb, li) { var nL3 = Math.min(500, pCount(lb.len * 0.07, 500)), R3 = pRand('hare3' + li, nL3); for (var k2 = 0; k2 < nL3; k2++) { var uu = 0.1 + R3[k2 * 4] * 0.9, vv = R3[k2 * 4 + 1] * 2 - 1, q = lb.at(uu, vv); pCurve(set, R3[k2 * 4 + 3] < 0.35 ? 's' : R3[k2 * 4 + 3] > 0.8 ? 'w' : 'c', pTi(0.7 - R3[k2 * 4] * 0.3, 0), q[0], q[1], q[2] + (li === 2 ? Math.PI : 0) + (R3[k2 * 4 + 2] - 0.5) * 0.4, m.l * 0.5, 0.15); } });
     ctx.globalAlpha = 0.32; pSetFlush(ctx, set, m.w * 0.8, ['s', 'c', 'w']); ctx.globalAlpha = 1;
     // the long hind foot: furry, a soft pale underside along the sole
     var so = new Path2D(); for (var k4 = 0; k4 <= 8; k4++) { var qs = hl.at(0.62 + k4 / 8 * 0.38, -0.75); if (k4) so.lineTo(qs[0], qs[1]); else so.moveTo(qs[0], qs[1]); } ctx.strokeStyle = zc(o.brown ? mixc(C.coat, C.belly, 0.5) : mixc(C.coat, C.warm, 0.2), 1, 0.35); ctx.lineWidth = 0.006; ctx.lineCap = 'round'; ctx.stroke(so);
   }
   ctx.restore();
   // soft broken edge where the fur stands off it (the belly, the chest, the back of the haunch); the rim along the top
+  if (!lod) { [hl, fl].forEach(function (lb) { qFuzz(ctx, pPath(lb.out), C.coat, mixc(C.coat, C.shade, 0.2), lb.at(0, 0)[1], lb.at(1, 0)[1], m.w * 1.2); }); qFuzz(ctx, pPath(haunch), C.coat, C.coat, 0, 0, m.w * 1.2); }   // the legs' soft furred edge, as the body's
   if (!lod) qEdge(ctx, all, function (oi, ii, a0, nx, ny) { if (oi !== 0 && oi !== 3) return null; if (ny > 0.4 && a0[1] > -0.2 && a0[1] < -0.03) return ii % 3 === 0 ? ['s', 0.5, 0.3, 0.2, 0.6] : null; if (nx > 0.5 && oi === 3) return ii % 3 === 0 ? ['c', 0.45, 0.3, 0.2, 0.8] : null; return null; }, { c: qSoft(C.coat), s: qSoft(mixc(C.coat, C.shade, 0.5)) });
   // the head
   ctx.save(); ctx.translate(Hc[0], Hc[1]); ctx.rotate(hp);
@@ -7397,6 +7662,77 @@ function harePaint2(ctx, o) {
   ctx.restore();
 }
 
+/* ================= the town's own birds in the garden's painted style (the b3 kit): the tree sparrow, the feral pigeon, the
+   swallow and the grey heron. Their species data and markings are added here (the garden's blocks stay as they are), and the
+   town's old painters hand these species over to them. ================= */
+var BIRD_G = null;   // the scene being animated (its light), set each frame
+function birdG() { return BIRD_G && BIRD_G.LIT === LIT ? BIRD_G : { light: LIT.name, lum: 1, SEA: SEA, tint: lightTint(1), LIT: LIT }; }   // (in the still painting, the painter's own light)
+SB3.suzume = { L: 0.14, rx: 0.2, ry: 0.13, hr: 0.11, tail: 0.32, bill: 0.07, billD: 0.04, tars: 0.12, pitch: -0.3, tipX: 0.25, split: 0.1,
+  up: [124, 92, 62], under: [214, 206, 192], wing: [118, 86, 58], flight: [78, 62, 50], tailC: [104, 82, 62], billC: [40, 34, 32], legs: [176, 140, 112], eye: [20, 16, 14] };
+SB3.hato = { L: 0.32, rx: 0.24, ry: 0.13, hr: 0.085, tail: 0.3, bill: 0.055, billD: 0.022, tars: 0.08, pitch: -0.12, tipX: 0.3, split: 0.1,
+  up: [132, 138, 152], under: [150, 154, 168], wing: [146, 150, 164], flight: [58, 60, 72], tailC: [110, 114, 128], billC: [52, 48, 52], legs: [160, 96, 96], eye: [220, 120, 40] };
+SB3.tsubame = { L: 0.17, rx: 0.2, ry: 0.105, hr: 0.1, tail: 0.32, bill: 0.035, billD: 0.03, tars: 0.05, pitch: -0.25, tipX: 0.75, split: 0.12,
+  up: [22, 30, 62], under: [240, 236, 228], wing: [20, 26, 52], flight: [16, 18, 34], tailC: [20, 26, 54], billC: [20, 18, 20], legs: [44, 36, 36], eye: [16, 12, 12] };
+WADE.aosagi = { L: 0.93, legH: 0.5, body: 0.14, neck: 0.6, head: 0.045, bill: 0.12, white: [156, 164, 176], shade: [104, 112, 128], billC: [214, 178, 76], legs: [150, 126, 86], feet: [150, 126, 86], lore: [210, 190, 110], eye: [226, 200, 60] };
+WD3.aosagi = { rx: 0.16, ry: 0.075, nL: 0.44, nw0: 0.045, nw1: 0.02, hr: 0.034, bill: 0.12, billD: 0.017, legH: 0.48, pitch: -0.3, wChord: 0.24, wSpan: 0.85 };
+var b3MarksG = b3Marks;
+b3Marks = function (ctx, kind, B, H, rx, ry, hr, S, turn) {
+  function bp(pts) { return pts.map(function (q) { return B(rx * q[0], ry * q[1]); }); }
+  function hp(pts) { return pts.map(function (q) { return H(q[0], q[1]); }); }
+  if (kind === 'suzume') {
+    b3Patch(ctx, hp([[0.9, -0.3], [0.4, -0.95], [-0.5, -0.85], [-0.9, -0.2], [-0.4, -0.35], [0.4, -0.45]]), [134, 70, 40], 1);   // the chestnut cap
+    b3Patch(ctx, hp([[0.7, -0.05], [0.2, -0.25], [-0.55, -0.05], [-0.5, 0.55], [0.3, 0.65], [0.75, 0.35]]), [240, 236, 226], 1);   // the white cheek
+    b3Patch(ctx, hp([[-0.12, 0.05], [-0.42, 0.0], [-0.42, 0.32], [-0.12, 0.32]]), [24, 22, 22], 1, [[1, 1]]);   // the black cheek spot
+    b3Patch(ctx, hp([[1.0, 0.1], [0.75, 0.3], [0.55, 0.9], [0.85, 1.0]]).concat(bp([[0.95, 0.1]])), [26, 22, 22], 1);   // the black bib under the bill
+    var R = mulberry32(19); ctx.fillStyle = zc([46, 34, 26], 1, 0.55); for (var i = 0; i < 14; i++) { var q = B(rx * (-0.7 + R() * 1.1), -ry * (0.35 + R() * 0.55)); ctx.beginPath(); ctx.ellipse(q[0], q[1], rx * 0.09, ry * 0.05, 0.3, 0, TAU); ctx.fill(); }   // the streaked back
+  } else if (kind === 'hato') {
+    b3Patch(ctx, [H(0.6, 0.6), H(-0.6, 0.5), B(rx * 0.55, -ry * 0.55), B(rx * 0.95, ry * 0.1), B(rx * 0.75, ry * 0.55)], [96, 136, 112], 0.8);   // the green and violet sheen on the neck
+    b3Patch(ctx, [B(rx * 0.85, -ry * 0.2), B(rx * 0.95, ry * 0.25), B(rx * 0.65, ry * 0.35), B(rx * 0.6, -ry * 0.1)], [146, 104, 150], 0.6);
+    b3Patch(ctx, hp([[0.9, -0.2], [0.3, -0.9], [-0.6, -0.7], [-0.8, 0.3], [0.2, 0.7], [0.9, 0.3]]), [104, 110, 126], 0.9);   // the darker slate head
+  } else if (kind === 'tsubame') {
+    b3Patch(ctx, hp([[1.0, -0.2], [0.75, -0.45], [0.55, -0.1], [0.75, 0.2]]), [170, 50, 40], 1);   // the red forehead
+    b3Patch(ctx, hp([[0.95, 0.15], [0.45, 0.25], [0.05, 0.7], [0.35, 1.0], [0.9, 0.75]]), [176, 56, 44], 1);   // the red throat
+    b3Patch(ctx, bp([[0.95, -0.2], [0.55, -0.45], [0.35, -0.1], [0.6, 0.05], [0.95, 0.05]]), [24, 32, 70], 1);   // the dark breast band
+    b3Patch(ctx, bp([[-0.9, -0.6], [-0.2, -0.95], [0.6, -0.85], [0.4, -0.5], [-0.6, -0.4]]), [44, 64, 130], 0.5);   // the blue gloss
+  } else b3MarksG(ctx, kind, B, H, rx, ry, hr, S, turn);
+};
+var B3_TOWN = { sparrow: 'suzume', pigeon: 'hato', swallow: 'tsubame' };
+function townBirdXf(ctx, x, y, k, spName, face, sp3) {   // place a b3 bird at screen (x, y): life size times the town's boost, never under its minimum
+  var g = birdG(), vis = BIRD_VIS[spName] || 1, kk = birdScale(spName, k) * vis, mag = kk / BIRDV;
+  zrl(g, face); RL.lum = g.lum;
+  ctx.save(); ctx.transform(face * kk / BIRDV, 0, 0, kk / BIRDV, x, y); return mag;
+}
+function townPerched(ctx, x, y, k, spName, o) {
+  var kind = B3_TOWN[spName], f = o.face || 1, GA = ctx.globalAlpha;
+  if (o.shadow !== false) { var gy = o.gy === undefined ? y : o.gy, L = SB3[kind].L * birdScale(spName, k) * (BIRD_VIS[spName] || 1); ctx.fillStyle = 'rgba(20,16,24,' + (0.3 * (o.lum || 1)) + ')'; ctx.beginPath(); ctx.ellipse(x, gy, L * 0.32, L * 0.08, 0, 0, TAU); ctx.fill(); }
+  if (o.alpha !== undefined) ctx.globalAlpha = o.alpha;
+  townBirdXf(ctx, x, y - (o.air ? SB3[kind].L * birdScale(spName, k) * 0.25 : 0), k, spName, f);
+  var bo = { t: o.t || 0, fluff: o.fluff, crouch: o.crouch || 0, flick: o.flick || 0, wings: o.wings || 0, blink: o.blink === undefined ? 1 : o.blink, head: { pitch: (o.peck || 0) * 1.1 + (o.bob || 0) * 0.5, yaw: o.look ? 0.6 : 0 }, pitch: (o.peck || 0) * 0.5 };
+  sb3Paint(ctx, kind, bo); ctx.restore(); ctx.globalAlpha = GA;
+}
+function townFlyer(ctx, x, y, k, spName, o) {
+  var kind = B3_TOWN[spName], f = Math.cos(o.psi || 0) >= 0 ? 1 : -1, GA = ctx.globalAlpha, th = o.th || 0, ph = o.glide ? Math.PI / 2 : Math.atan2(-(o.dth || 0), (th - 0.05) / 0.8);
+  if (o.alpha !== undefined) ctx.globalAlpha = o.alpha;
+  townBirdXf(ctx, x, y, k, spName, f);
+  var S = SB3[kind], L = S.L * BIRDV;
+  if (kind === 'tsubame') { var rx = L * S.rx * 1.05, ry = L * S.ry * 0.85, r0 = [-rx * 0.85, ry * 0.05]; [-0.08, 0.1].forEach(function (a) { b3Feather(ctx, r0, Math.PI + a + (o.bank || 0) * 0.1, L * 0.62, L * 0.035, 0.2, S.tailC, scl(S.tailC, 0.7), null, 0); }); }   // the long outer tail streamers
+  sb3Fly(ctx, kind, { ph: ph, fold: o.fold || 0, pitch: clamp(o.pitch || 0, -0.5, 0.5) });
+  ctx.restore(); ctx.globalAlpha = GA;
+}
+function townHeron(ctx, x, y, k, o, fly) {
+  var f = fly ? (Math.cos(o.psi || 0) >= 0 ? 1 : -1) : (o.face || 1), GA = ctx.globalAlpha, g = birdG();
+  if (o.alpha !== undefined) ctx.globalAlpha = o.alpha;
+  var wet = !fly && o.inWater, wy = y, dy = wet ? 0.14 * k : 0;   // (the river is painted on the ground's plane: its surface is at the ground point)   // standing in the shallows: its feet on the bed, the water up its shanks
+  if (!fly && !wet && o.shadow !== false) { ctx.fillStyle = 'rgba(20,16,24,' + (0.24 * (o.lum || 1)) + ')'; ctx.beginPath(); ctx.ellipse(x, y, 0.3 * k, 0.06 * k, 0, 0, TAU); ctx.fill(); }
+  zrl(g, f); RL.lum = g.lum;
+  if (wet) { ctx.save(); ctx.beginPath(); ctx.rect(x - 2 * k, y - 3 * k, 4 * k, wy - y + 3 * k); ctx.clip(); }   // (below the surface it is hidden)
+  ctx.save(); ctx.transform(f * k, 0, 0, k, x, y + dy);
+  if (fly) { var th = o.th || 0, ph = o.glide ? 0 : Math.atan2(-(o.dth || 0), (th - 0.05) / 0.8); wd3Fly(ctx, 'aosagi', { ph: ph, glide: !!o.glide, pitch: 0 }); }
+  else wd3Paint(ctx, 'aosagi', { t: o.t || (BIRD_G ? BIRD_G.tNow || 0 : 0), ext: o.ext === undefined ? 0.5 : o.ext, strike: o.strike || 0, step: o.step === undefined ? null : o.step, blink: 1 });
+  ctx.restore();
+  if (wet) { ctx.restore(); var tt = BIRD_G ? BIRD_G.tNow || 0 : 0; ctx.strokeStyle = 'rgba(232,240,246,0.45)'; ctx.lineWidth = Math.max(0.4, 0.012 * k); for (var r = 0; r < 2; r++) { var u = ((tt * 0.6 + r * 0.5) % 1), rr = (0.05 + u * 0.25) * k; ctx.globalAlpha = GA * (1 - u); ctx.beginPath(); ctx.ellipse(x, wy, rr, rr * 0.3, 0, 0, TAU); ctx.stroke(); } }   // rings round the legs
+  ctx.globalAlpha = GA;
+}
 /* a garden painter in the town: in the world (zPlace) at (wx, wz), or on a plate at screen x, y with k px/m */
 function townGarden(paint, ctx, x, y, k, o, g, wx, wz, fs, mag) {
   var face = o.face || 1; zrl(g, face); RL.lum = g.lum;
@@ -8196,7 +8532,7 @@ var RARE_DEFS = [
       var S1 = F.pagoda ? [[-27.5, 67.2], [-25.5, 68.4], [-29, 66.6]][n % 3] : [[-31.5, 79.5], [-30, 81], [-32.5, 80.6]][n % 3], A = F.pagoda ? [-46, 68.6 + (n % 3) * 0.4] : [-47, 81 + (n % 3) * 0.6], Ex = F.pagoda ? [-46.5, 70.4] : [-47.5, 83 - (n % 3) * 0.4];
       var deer = who.map(function (kind, ii) {
         var hind = kind === 'hind', s1 = ii ? [S1[0] - 1.6, S1[1] + 1.2] : S1, s2 = [s1[0] + 1.6, s1[1] - 0.3];
-        var pl = landPlan(A, (ii ? [{ wait: 4.5, act: 'hidden', fill: false }] : []).concat([{ go: s1, v: hind ? 0.95 : 1.0 }, { wait: 8, act: 'browse' }, { go: s2, v: 0.7 }, { wait: 7, act: hind ? 'look' : su === 'autumn' ? 'call' : 'look' }, { go: Ex, v: 1.1 }]), 52);
+        var pl = landPlan(A, (ii ? [{ wait: 4.5, act: 'hidden', fill: false }] : []).concat([{ go: s1, v: hind ? 0.95 : 1.0 }, { wait: 8, act: 'browse' }, { go: s2, v: 0.7 }, { wait: 7, act: hind ? 'look' : su === 'autumn' ? 'call' : 'look' }, { wait: 0.6, act: 'alarm', fill: false }, { go: Ex, v: 4.2, gait: 'bound' }]), 52);   // (something startles it: the white rump flares and it bounds away)
         pl.hind = hind; pl.seed = n * 7 + ii * 17; pl.mag = hind ? 0.98 : 1.06; return pl;
       });
       return { deer: deer, p0: [A[0], 0, A[1]], p1: [S1[0], 0, S1[1]] };
@@ -8207,11 +8543,13 @@ var RARE_DEFS = [
       list.forEach(function (d) {
         landLoose(ctx, g, d, u, function (c, x, y, k, face, S) {
           if (S.act === 'hidden') return;
-          var time = u * d.T, o = { face: face, t: t, hind: d.hind, season: g.season, gait: S.gait === 'trot' ? 'trot' : 'walk', blink: zblink(t, d.seed % 79) };
+          var time = u * d.T, o = { face: face, t: t, hind: d.hind, season: g.season, gait: S.gait === 'bound' ? 'bound' : S.gait === 'trot' ? 'trot' : 'walk', blink: zblink(t, d.seed % 79) }; if (S.gait === 'bound') o.stride = 1.9;
           var into = S.walk ? Math.min(S.f * S.e.len, (1 - S.f) * S.e.len) : 0; o.amp = S.walk ? clamp(into / 0.45 + 0.15) : 0; sikaSeason(o, g.season); o.ph = S.dist / o.stride;
           var au = S.f * (S.e.t1 - S.e.t0), ad = S.e.t1 - S.e.t0;
           if (S.act === 'browse') { var dn = sstep(0.3, 1.4, au) * (1 - sstep(ad - 1.3, ad - 0.3, au)), lk = Math.max(0, Math.sin(au * 0.9 - 1.5 + d.seed)) > 0.85 ? 1 : 0, dd = dn * (1 - lk * 0.8); o.head = { neck: lerp(-1.0, 0.9, dd), bend: 0.15 * dd, ang: lerp(0.55, 1.7, dd) + Math.sin(t * 4) * 0.03 * dd, yaw: 0 }; o.bodyPitch = 0.05 * dd; o.mouth = dd > 0.8 ? Math.max(0, Math.sin(t * 7)) * 0.4 : 0; }
           else if (S.act === 'call') { var cl = sstep(0.6, 1.4, au) * (1 - sstep(3.2, 3.8, au)), lk2 = sstep(3.6, 4.2, au) * (1 - sstep(ad - 0.8, ad - 0.2, au)); o.head = { neck: lerp(-1.0, -0.75, cl), bend: -0.15 * cl, ang: lerp(0.55, -0.15, cl), yaw: lk2 * 0.85 }; o.mouth = cl * sstep(1.2, 1.5, au); o.ears = -0.3 * cl; }
+          else if (S.walk && S.gait === 'bound') { o.flare = 1; o.head = { neck: -0.85, ang: 0.4, yaw: 0 }; o.ears = 0.4; }
+          else if (S.act === 'alarm') { o.flare = sstep(0, 0.3, au); o.head = { neck: -1.15, ang: 0.45, yaw: 0.3 }; o.ears = 0.5; }
           else if (S.act === 'look') { var v2 = au / ad, lk3 = sstep(0.1, 0.3, v2) * (1 - sstep(0.8, 0.95, v2)); o.head = { neck: -1.1, ang: 0.5, yaw: lk3 * 0.8 }; o.ears = 0.2 * Math.sin(t * 1.7) * lk3; }
           else o.head = { neck: -0.95 + 0.03 * Math.sin(o.ph * TAU * 2), ang: 0.6 + 0.04 * Math.sin(o.ph * TAU * 2), yaw: 0 };
           var q = P(S.x, S.y || 0, S.z), q2 = P(S.x + S.dx * 0.2, S.y || 0, S.z + S.dz * 0.2), fs = 0.42 + 0.58 * Math.min(1, Math.abs(q2.x - q.x) / (q.k * 0.2));
@@ -8564,7 +8902,13 @@ function windAt(date) {
 function windVec(w, k) { var a = w.dir * Math.PI / 180, kk = k || 1; return { h: Math.cos(a) * w.strength * kk, z: Math.sin(a) * w.strength * kk, s: w.strength * kk, sign: Math.cos(a) >= 0 ? 1 : -1, dir: w.dir, k: kk }; }
 var WIND_LEAN = 0;   // static paintings: which way the day's wind bends willows (+1 toward screen right)
 var CALM = { h: 0.6, z: 0, s: 0.6, sign: 1, dir: 0, k: 1 };
-function gWind(g) { return g.wind || CALM; }
+var WX_WIND = { clear: [0, 1], cloudy: [0.35, 1.05], rain: [0.5, 1.15], snow: [0.35, 1.0], storm: [0.75, 1.3], typhoon: [0.95, 1.5], blizzard: [0.9, 1.4] };   // the weather shown sets a floor and a boost on the wind
+function gWind(g) {
+  var w = g.wind || CALM, f = WX_WIND[g.wx] || WX_WIND.clear; if (!f[0] && f[1] === 1) return w;
+  if (g.windWx && g.windWx.src === w) return g.windWx.v;
+  var sN = Math.max(w.s * f[1], f[0] * (w.k || 1)), m = w.s > 1e-6 ? sN / w.s : 1, v = { h: (w.s > 1e-6 ? w.h * m : sN * (w.sign || 1)), z: w.z * m, s: sN, sign: w.sign, dir: w.dir, k: w.k };
+  g.windWx = { src: w, v: v }; return v;
+}
 /* a gust's strength factor at time t: a swell and fall (sin^2), or for a blizzard burst a roar up over ~1 s, a hold, then easing off */
 /* a gust's travel along its way: eased in, but leaving at full speed (so what it carries is still moving when it lets go) */
 function gustTravel(u) { u = clamp(u); return (u < 0.25 ? 2 * u * u : u - 0.125) / 0.875; }
@@ -8767,14 +9111,22 @@ function drawWeatherFx(ctx, g, X, t, dt) {
 /* rain on water: rings everywhere; in a typhoon, whitecaps */
 function drawWaterRain(ctx, g, X, t) {
   if (!X || !wxWet(X.wx) || !g.water) return;
-  var n = X.wx === 'rain' ? 70 : 110, base = g.LIT.name === 'night' ? [170, 186, 220] : [226, 234, 242];
-  ctx.strokeStyle = rgb(base, 0.32); ctx.lineWidth = 0.35; ctx.beginPath();
-  for (var i = 0; i < n; i++) {
-    var ph = (t * 1.3 + i * 0.6180339) % 1, cyc = Math.floor(t * 1.3 + i * 0.6180339), hx = hash2(i, cyc), hy = hash2(i + 999, cyc), x = hx * g.W, y = g.horizonY + hy * (g.H - g.horizonY);
-    if (!waterAt(g, x, y)) continue;
-    var r = 0.3 + ph * 2.2 * (0.6 + (y - g.horizonY) / g.H); ctx.moveTo(x + r, y); ctx.ellipse(x, y, r, r * 0.4, 0, 0, TAU);
+  var n = X.wx === 'rain' ? 220 : 320, base = g.LIT.name === 'night' ? [180, 196, 230] : [236, 242, 248], i;
+  // each drop: a bright splash point, then a ring spreading and fading, a second fainter ring inside it for the bigger drops
+  ctx.lineWidth = 0.8;
+  for (var pass = 0; pass < 3; pass++) {
+    ctx.strokeStyle = rgb(base, [0.75, 0.5, 0.26][pass]); ctx.beginPath();
+    for (i = 0; i < n; i++) {
+      var rate = 1.1 + hash2(i, 77) * 0.7, ph = (t * rate + i * 0.6180339) % 1, cyc = Math.floor(t * rate + i * 0.6180339), hx = hash2(i, cyc), hy = hash2(i + 999, cyc), x = hx * g.W, y = g.horizonY + hy * (g.H - g.horizonY);
+      if ((pass === 0 && ph > 0.4) || (pass === 1 && (ph <= 0.4 || ph > 0.75)) || (pass === 2 && ph <= 0.75)) continue;
+      if (!waterAt(g, x, y)) continue;
+      var dk = 0.7 + (y - g.horizonY) / g.H * 1.5, r = (0.3 + ph * 3.0) * dk; ctx.moveTo(x + r, y); ctx.ellipse(x, y, r, r * 0.38, 0, 0, TAU);
+      if (hash2(i, cyc + 5) > 0.6 && ph > 0.25) { var r2 = r * 0.55; ctx.moveTo(x + r2, y); ctx.ellipse(x, y, r2, r2 * 0.38, 0, 0, TAU); }
+    }
+    ctx.stroke();
   }
-  ctx.stroke();
+  ctx.fillStyle = rgb(base, 0.6);   // the splash points
+  for (i = 0; i < n; i++) { var rt = 1.1 + hash2(i, 77) * 0.7, p0 = (t * rt + i * 0.6180339) % 1; if (p0 > 0.08) continue; var cy0 = Math.floor(t * rt + i * 0.6180339), x0 = hash2(i, cy0) * g.W, y0 = g.horizonY + hash2(i + 999, cy0) * (g.H - g.horizonY); if (!waterAt(g, x0, y0)) continue; ctx.fillRect(x0 - 0.3, y0 - 0.6, 0.6, 0.6); }
   if (X.wx === 'typhoon') {
     var Wd = gWind(g); ctx.strokeStyle = 'rgba(236,232,220,0.55)'; ctx.lineWidth = 0.6; ctx.beginPath();
     for (i = 0; i < 60; i++) { var x2 = ((hash2(i, 3) * g.W + t * 9 * Wd.sign * (0.6 + hash2(i, 4))) % g.W + g.W) % g.W, y2 = g.horizonY + hash2(i, 5) * (g.H - g.horizonY), lf = (t * 0.7 + hash2(i, 6)) % 1; if (!waterAt(g, x2, y2) || lf > 0.6) continue; ctx.moveTo(x2 - 1.4, y2); ctx.quadraticCurveTo(x2, y2 - 0.7, x2 + 1.4, y2 + 0.1); }
@@ -9254,6 +9606,8 @@ function lifeSites() {   // every place an activity might happen at this stage (
   if (F.shrine) add(SHRINE.x - 0.4, SHRINE.z - 3.0, 3);
   if (F.temple) { var tf = templeFrame().L(0, -8.6, 0); add(tf[0], tf[2], 4); }
   if (F.farm) { var ff = farmFrame().L(2.5, -9.6, 0); add(ff[0], ff[2], 2.2); }
+  if (F.market) [[-0.5, -3.2], [7.6, -1.0]].forEach(function (q) { add(MARKET.x + q[0], MARKET.z + q[1], 1.6); });   // the benches
+  if (F.teahouse) { var tb = teaFrame().L(0.2, -4.1, 0); add(tb[0], tb[2], 1.6); }
   return out;
 }
 function lifeFronts() {   // in front of a few shops: where water is sprinkled and snow swept
@@ -9284,10 +9638,17 @@ function lifeScenes(g, date, rng) {
     if (m === 11 && daytime) { if (g.SEA.snow && F0.machiya) lifeFronts().forEach(function (q) { L.push({ kind: 'sweep', x: q[0], z: q[2], folk: people(1) }); }); if (day >= 25 && F0.farm) { var ff = farmFrame().L(2.5, -9.6, 0); L.push({ kind: 'mochi', x: ff[0], z: ff[2], folk: people(2) }); } }
     // 初詣: the first visits of the year
     if (m === 0 && day <= 7 && light !== 'night') { if (F0.shrine) L.push({ kind: 'pray', x: SHRINE.x - 0.4, z: SHRINE.z - 3.0, folk: people(5) }); if (F0.temple) { var tf = templeFrame().L(0, -8.6, 0); L.push({ kind: 'pray', x: tf[0], z: tf[2], folk: people(8) }); } }
+    // most mornings: a shopkeeper sweeping the street in front of the shop
+    if (light === 'morning' && F0.machiya && !g.SEA.snow) lifeFronts().slice(0, 1).forEach(function (q) { L.push({ kind: 'sweep', x: q[0], z: q[2], folk: people(1), dust: true }); });
+    // by day: people resting on the 縁台 at the market and the tea house
+    if (daytime && g.season !== 'winter') {
+      if (F0.market) [[-0.5, -3.2], [7.6, -1.0]].forEach(function (q, qi) { if (rng() < 0.7) L.push({ kind: 'bench', x: MARKET.x + q[0], z: MARKET.z + q[1], u: [1, 0], folk: people(1 + (rng() < 0.5 ? 1 : 0)) }); });
+      if (F0.teahouse && rng() < 0.6) { var tb2 = teaFrame(), bp = tb2.L(0.2, -2.1 - 2.0, 0); L.push({ kind: 'bench', x: bp[0], z: bp[2], u: TEA.u, folk: people(1 + (rng() < 0.6 ? 1 : 0)) }); }
+    }
     // any day: children at play
     if (daytime && g.season !== 'winter') { var kp = F0.street ? stPt(10, 0.5) : [TEA.x + 3, TEA.z - 4]; L.push({ kind: 'play', x: kp[0], z: kp[1], folk: people(3).map(function (f) { f.child = true; return f; }) }); }
   }
-  L.forEach(function (a) { a.band = P(a.x, 0, a.z).d < P(0, 0, 36).d ? 0 : 2; a.d = P(a.x, 0, a.z).d; });
+  L.forEach(function (a) { a.band = P(a.x, 0, a.z).d < P(0, 0, 36).d ? 0 : 2; a.d = P(a.x, 0, a.z).d - (a.kind === 'bench' ? 0.9 : 0); });   // (the sitters are in front of the bench they sit on)
   return L;
 }
 /* a tiny figure: feet at (x, y), height h px; pose: stand, sit, bend, with arm angles */
@@ -9338,7 +9699,7 @@ function drawLife(ctx, g, a, t) {
   } else if (a.kind === 'sweep') {
     f = a.folk[0]; var sw2 = Math.sin(t * 2.2 + f.ph); figure(ctx, c.x, c.y, h, f, tint, { bend: 0.25, arms: [[1.2 + sw2 * 0.5, 1]] });
     ctx.strokeStyle = rgb(mulc([150, 120, 70], tint)); ctx.lineWidth = Math.max(0.3, 0.05 * k); ctx.beginPath(); ctx.moveTo(c.x + 0.1 * k, c.y - 1.0 * k); ctx.lineTo(c.x + (0.5 + sw2 * 0.5) * k, c.y); ctx.stroke();
-    ctx.fillStyle = 'rgba(244,248,252,0.6)'; for (i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc(c.x + (0.6 + sw2 * 0.5 + i * 0.1) * k, c.y - (0.1 + (i % 3) * 0.08) * k, 0.06 * k + 0.2, 0, TAU); ctx.fill(); }
+    ctx.fillStyle = a.dust ? rgb(mulc([196, 178, 140], tint), 0.35) : 'rgba(244,248,252,0.6)'; for (i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc(c.x + (0.6 + sw2 * 0.5 + i * 0.1) * k, c.y - (0.1 + (i % 3) * 0.08 + (a.dust ? Math.max(0, sw2) * 0.1 : 0)) * k, (a.dust ? 0.1 : 0.06) * k + 0.2, 0, TAU); ctx.fill(); }
   } else if (a.kind === 'mochi') {
     // the usu (mortar), one pounding with the kine, one turning the rice
     ctx.fillStyle = rgb(mulc([120, 90, 60], tint)); ctx.beginPath(); ctx.ellipse(c.x, c.y - 0.3 * k, 0.4 * k, 0.3 * k, 0, 0, TAU); ctx.fill(); ctx.fillStyle = rgb(mulc([246, 244, 236], tint)); ctx.beginPath(); ctx.ellipse(c.x, c.y - 0.55 * k, 0.28 * k, 0.1 * k, 0, 0, TAU); ctx.fill();
@@ -9348,6 +9709,9 @@ function drawLife(ctx, g, a, t) {
     figure(ctx, p2.x, p2.y, h, a.folk[1], tint, { pose: 'sit', arms: [[2.6 - up * 0.4, -1]] });
   } else if (a.kind === 'pray') {
     for (i = 0; i < a.folk.length; i++) { f = a.folk[i]; var col = i % 3, row = (i / 3) | 0, q2 = P(a.x + (col - 1) * 0.9 + row * 0.3, 0, a.z - row * 1.1); figure(ctx, q2.x, q2.y, h, f, tint, { bend: 0.12 + 0.08 * Math.sin(t * 0.5 + f.ph), arms: [[-1.2, 0.2], [-1.25, -0.2]] }); }
+  } else if (a.kind === 'bench') {   // sitting on the bench: a cup of tea, a fan, a word to the neighbour
+    var ua = norm2(a.u || [1, 0]);
+    for (i = 0; i < a.folk.length; i++) { f = a.folk[i]; var off = (i - (a.folk.length - 1) / 2) * 0.75, bq = P(a.x + ua[0] * off, 0.47, a.z + ua[1] * off), talk = Math.sin(t * 0.8 + f.ph) > 0.4; f.face = a.folk.length > 1 ? (i ? -1 : 1) : (f.ph % 2 > 1 ? 1 : -1); figure(ctx, bq.x, bq.y, h, f, tint, { pose: 'sit', arms: talk ? [[-0.9 + 0.3 * Math.sin(t * 3 + f.ph), 0.3]] : [[0.9, 0.3]] }); }
   } else if (a.kind === 'play') {
     for (i = 0; i < a.folk.length; i++) { f = a.folk[i]; var an2 = t * 1.1 + i * TAU / a.folk.length, px2 = a.x + Math.cos(an2) * 1.6, pz2 = a.z + Math.sin(an2) * 1.1, p3 = P(px2, Math.abs(Math.sin(t * 7 + i)) * 0.12, pz2); figure(ctx, p3.x, p3.y, h, f, tint, { arms: [[-0.6 + Math.sin(t * 7 + i) * 0.8, 1], [-2.5 - Math.sin(t * 7 + i) * 0.8, -1]] }); }
   }
@@ -9517,6 +9881,8 @@ function linGrad(ctx, a, b, c0, c1) { var g = ctx.createLinearGradient(a[0], a[1
 /* a flying bird: x, y body centre on screen; k px per metre. o: psi heading (0 screen right), th/flex/spread/fold from wingBeat,
    bank (radians, + right wing down), view (how much of the ground plane shows: 0.4 low and side-on, 0.65 seen from below), sky (backlit) */
 function drawFlyer(ctx, x, y, k, spName, o) {
+  if (B3_TOWN[spName] && o.sky === undefined && !o.old) return townFlyer(ctx, x, y, k, spName, o);
+  if (spName === 'heron' && o.sky === undefined && !o.old) return townHeron(ctx, x, y, k, o, true);
   var S = BIRD_SP[spName]; k = birdScale(spName, k) * (BIRD_VIS[spName] || 1);
   var L = S.L * k, tint = o.tint, sky0 = o.sky || 0, sky = Math.max(sky0, S.white ? 0 : clamp((14 - S.L * k) / 10) * 0.3), psi = o.psi || 0, view = o.view || 0.45, bank = o.bank || 0;
   var pr = birdProj(x, y, psi, view, bank, 0.92), th = o.th || 0, flex = o.flex === undefined ? Math.max(0, o.dth || 0) * 0.7 : o.flex, spread = o.spread === undefined ? 1 - flex : o.spread, fold = o.fold || 0, gl = !!o.glide || (o.dth === 0 && !fold);
@@ -9621,6 +9987,7 @@ function drawFlyer(ctx, x, y, k, spName, o) {
    posture per species: pitch of the body, how far the folded wingtips reach past the rump */
 var PERCH_POSE = { sparrow: { pitch: -0.38, tip: 0.1, tailA: 0.12 }, swallow: { pitch: -0.42, tip: 0.3, tailA: -0.05 }, kingfisher: { pitch: -0.85, tip: 0.06, tailA: -0.1 } };
 function drawPerched(ctx, x, y, k, spName, o) {
+  if (B3_TOWN[spName] && !o.old) return townPerched(ctx, x, y, k, spName, o);
   var S = BIRD_SP[spName], PP = PERCH_POSE[spName] || PERCH_POSE.sparrow, L = S.L * birdScale(spName, k) * (BIRD_VIS[spName] || 1), f = o.face || 1, tint = o.tint, fl = o.fluff ? 1.14 : 1, pk = clamp(o.peck || 0), cr = clamp(o.crouch || 0);
   var bodyL = L * (1 - S.tail * (spName === 'swallow' ? 0.8 : 1) - S.bill * 0.6 - 0.04), rx = bodyL * 0.5, bodyR = S.body * L * fl * (spName === 'swallow' ? 1.25 : 1);
   ctx.globalAlpha = o.alpha === undefined ? 1 : o.alpha;
@@ -9675,6 +10042,7 @@ function drawPerched(ctx, x, y, k, spName, o) {
 }
 /* ---- a wading bird standing, side-on. o: face, ext (neck 0 hunched .. 1 stretched), strike 0..1, step (gait phase or null), dance, inWater ---- */
 function drawWader(ctx, x, y, k, spName, o) {
+  if (spName === 'heron' && !o.old) return townHeron(ctx, x, y, k, o, false);
   var S = BIRD_SP[spName], L = S.L * k, f = o.face || 1, tint = o.tint, col = mulc(S.back, tint), under = mulc(S.under, tint), dark = mulc(S.flight, tint), neckC = mulc(S.neckC, tint), legC = rgb(mulc(S.legs, tint));
   ctx.globalAlpha = o.alpha === undefined ? 1 : o.alpha;
   var legH = (S.tars + S.tibia) * L * (spName === 'crane' ? 1.1 : 1), hip = [x - f * L * 0.02, y - legH], st = o.step === null || o.step === undefined ? null : o.step;
@@ -9828,8 +10196,10 @@ function initFauna(g, rng) {
     var spot = heronSpot();
     if (spot && g.stage >= 1 && g.wx !== 'snow') FA.heron = { x: spot[0], z: spot[1], hx: spot[0], hz: spot[1], y: 0, face: spot[2], ext: 0.1, act: 'stand', timer: 6 + rng() * 8, strike: 0, step: null, fly: null, gone: 0, band: P(spot[0], 0, spot[1]).d < P(0, 0, 36).d ? 0 : 1 };
   }
+  // pigeons on the shrine's forecourt (dry days)
+  if (F.shrine && dry && g.light !== 'night' && g.stage >= 7) { FA.pg = { x: SHRINE.x - 0.6, z: SHRINE.z - 4.6, birds: [], band: P(SHRINE.x, 0, SHRINE.z - 4.6).d < P(0, 0, 36).d ? 0 : 2 }; for (var pj = 0; pj < 3 + ((rng() * 2) | 0); pj++) FA.pg.birds.push({ x: FA.pg.x + (rng() - 0.5) * 2.4, z: FA.pg.z + (rng() - 0.5) * 1.2, face: rng() < 0.5 ? 1 : -1, act: 'walk', at: rng() * 2, ph: rng() * TAU, st: 0 }); }
   // swallows over the river on summer days
-  if (g.season === 'summer' && g.light !== 'night' && dry) { FA.sw = []; for (var j = 0; j < 3; j++) FA.sw.push({ s: 0.2 + rng() * 0.6, off: (rng() - 0.5) * 6, h: 1 + rng() * 2, v: (rng() < 0.5 ? 1 : -1) * (0.035 + rng() * 0.02), ph: rng() * TAU, burst: rng() }); }
+  if ((g.season === 'summer' || g.season === 'spring') && g.light !== 'night' && dry) { FA.sw = []; for (var j = 0; j < 4; j++) FA.sw.push({ s: 0.2 + rng() * 0.6, off: (rng() - 0.5) * 6, h: 1 + rng() * 2, v: (rng() < 0.5 ? 1 : -1) * (0.045 + rng() * 0.025), ph: rng() * TAU, burst: rng(), paddy: F.paddy && j % 2 === 1 }); }
   return FA;
 }
 function faunaTrees() { var t = [[TREE0.x, TREE0.z]]; if (F.riverCherry > 0) RIVER_CHERRY.forEach(function (c) { t.push([c[0], c[1]]); }); if (F.shoka) t.push(stPt(-4.4, 5.6), stPt(-3.6, -5.8)); if (F.shrine) t.push([SHRINE.x + 4.5, SHRINE.z + 0.5]); return t; }
@@ -9861,6 +10231,7 @@ function heronSpot() {   // a shallow by the near bank, clear of the bridge and 
 function faunaAnchors() {   // where the birds on the ground stand (for the occluder masks)
   var out = [], hs = heronSpot();
   var sh = sparrowHome(); if (sh) { var hx = sh[0], hz = sh[1]; out.push({ id: 'sparrows', band: P(hx, 0, hz).d < P(0, 0, 36).d ? 0 : 2, key: P(hx, 0, hz - 2).d - 0.3, bb: screenBox([[hx - 3, 0, hz - 2], [hx + 3, 1.2, hz + 2]], 4) }); }
+  if (F.shrine) { var pgx = SHRINE.x - 0.6, pgz = SHRINE.z - 4.6; out.push({ id: 'pigeons', band: P(pgx, 0, pgz).d < P(0, 0, 36).d ? 0 : 2, key: P(pgx, 0, pgz - 1).d - 0.3, bb: screenBox([[pgx - 3, 0, pgz - 1.5], [pgx + 3, 1, pgz + 1.5]], 4) }); }
   if (hs) out.push({ id: 'heron', band: P(hs[0], 0, hs[1]).d < P(0, 0, 36).d ? 0 : 1, key: P(hs[0], 0, hs[1]).d - 0.3, bb: screenBox([[hs[0] - 3, -1, hs[1] - 2], [hs[0] + 3, 2.2, hs[1] + 2]], 4) });
   return out;
 }
@@ -9913,12 +10284,18 @@ function stepFauna(FA, g, dt, t, rng, walkers) {
     } else if (S.state === 'return' && FA.t > Math.max.apply(null, S.birds.map(function (b) { return b.t0 + b.dur; }))) { S.state = 'ground'; S.timer = 20 + rng() * 25; S.birds.forEach(function (b) { b.x = b.to[0]; b.z = b.to[2]; }); }
     if (S.state === 'ground') S.birds.forEach(function (b) {
       b.at -= dt;
-      if (b.at <= 0) { var r = rng(); if (r < 0.45) { b.act = 'peck'; b.at = b.ad = 0.25 + rng() * 0.3; } else if (r < 0.75) { b.act = 'look'; b.at = 0.4 + rng() * 0.8; if (rng() < 0.5) b.face = -b.face; } else { b.act = 'hop'; b.at = 0.38; b.hx0 = b.x; b.hz0 = b.z; var a = rng() * TAU; b.hx1 = clamp(b.x + Math.cos(a) * 0.25, S.hx - 1.6, S.hx + 1.6); b.hz1 = clamp(b.z + Math.sin(a) * 0.15, S.hz - 1, S.hz + 1); b.face = b.hx1 > b.x ? 1 : -1; } }
+      if (b.at <= 0) { var r = rng(); if (r > 0.93 && !g.SEA.snow && !wxWet(g.wx)) { b.act = 'dust'; b.at = b.ad = 2.2 + rng() * 1.6; } else if (r < 0.45) { b.act = 'peck'; b.at = b.ad = 0.25 + rng() * 0.3; } else if (r < 0.75) { b.act = 'look'; b.at = 0.4 + rng() * 0.8; if (rng() < 0.5) b.face = -b.face; } else { b.act = 'hop'; b.at = 0.38; b.hx0 = b.x; b.hz0 = b.z; var a = rng() * TAU; b.hx1 = clamp(b.x + Math.cos(a) * 0.25, S.hx - 1.6, S.hx + 1.6); b.hz1 = clamp(b.z + Math.sin(a) * 0.15, S.hz - 1, S.hz + 1); b.face = b.hx1 > b.x ? 1 : -1; } }
       if (b.act === 'hop') { var u = 1 - b.at / 0.38, ua = clamp((u - 0.2) / 0.58); b.x = lerp(b.hx0, b.hx1, sstep(0, 1, ua)); b.z = lerp(b.hz0, b.hz1, sstep(0, 1, ua)); b.y = Math.sin(ua * Math.PI) * 0.09;
         b.cr = u < 0.2 ? Math.sin(u / 0.2 * Math.PI * 0.5) : u > 0.78 ? Math.sin((u - 0.78) / 0.22 * Math.PI) * 0.8 : 0; b.air = ua > 0.05 && ua < 0.95; b.bob = u > 0.78 ? Math.sin((u - 0.78) / 0.22 * Math.PI) : 0; b.flick = u > 0.7 ? Math.sin((u - 0.7) / 0.3 * Math.PI) : 0; }
+      else if (b.act === 'dust') { b.y = 0; b.air = false; b.cr = 0.95; b.bob = 0.6 + 0.4 * Math.sin(FA.t * 9 + b.ph); b.flick = Math.abs(Math.sin(FA.t * 14 + b.ph)) * 0.6; }   // pressed into a scrape, wings and tail shuffling the dust over its back
       else { b.y = 0; b.cr = 0; b.air = false; b.bob = 0; b.flick = b.act === 'look' ? Math.max(0, Math.sin(FA.t * 3 + b.ph)) * 0.4 : 0; }
     });
   }
+  // the pigeons: a few short walks with the head nodding at each step, pecks, a turn
+  if (FA.pg) FA.pg.birds.forEach(function (b) {
+    b.at -= dt; if (b.at <= 0) { var r3 = rng(); b.act = r3 < 0.5 ? 'walk' : r3 < 0.85 ? 'peck' : 'stand'; b.at = b.act === 'walk' ? 1.2 + rng() * 1.8 : 0.6 + rng() * 1.2; if (rng() < 0.35) b.face = -b.face; }
+    if (b.act === 'walk') { b.st += dt * 3.4; var nx2 = b.x + b.face * dt * 0.32 * (0.6 + 0.4 * Math.abs(Math.sin(b.st * Math.PI))); if (Math.abs(nx2 - FA.pg.x) < 1.8) b.x = nx2; else b.face = -b.face; }
+  });
   // the heron: stands a long time hunched, stretches up, takes a slow step, strikes; now and then flies off and comes back
   var Hn = FA.heron;
   if (Hn) {
@@ -9930,16 +10307,20 @@ function stepFauna(FA, g, dt, t, rng, walkers) {
       var r2 = rng();
       if (Hn.act === 'walk' || Hn.act === 'strike') { Hn.act = 'stand'; Hn.timer = 4 + rng() * 8; Hn.strike = 0; Hn.step = null; }
       else if (r2 < 0.06) { Hn.act = 'takeoff'; Hn.t0 = FA.t; Hn.dur = 5; Hn.to = [Hn.x + Hn.face * 30, 10, Hn.z + 14]; }
-      else if (r2 < 0.4) { Hn.act = 'walk'; Hn.timer = 2.4 + rng() * 2; Hn.step = 0; if (rng() < 0.3) Hn.face = -Hn.face; }
+      else if (r2 < 0.4) { Hn.act = 'walk'; Hn.timer = 3.5 + rng() * 3; Hn.step = 0; if (rng() < 0.3) Hn.face = -Hn.face; }
       else if (r2 < 0.65) { Hn.act = 'strike'; Hn.timer = 1.4; Hn.t0 = FA.t; }
       else { Hn.act = 'stand'; Hn.timer = 3 + rng() * 7; Hn.tExt = rng() < 0.5 ? 0.1 : 0.85; }
     }
     if (Hn.act === 'stand') Hn.ext += ((Hn.tExt === undefined ? 0.15 : Hn.tExt) - Hn.ext) * Math.min(1, dt * 1.5);
-    if (Hn.act === 'walk') { Hn.ext += (0.55 - Hn.ext) * Math.min(1, dt * 2); Hn.step += dt * 3.2; var nx = Hn.x + Hn.face * dt * 0.22; if (Math.abs(nx - Hn.hx) < 1.6) Hn.x = nx; else Hn.face = -Hn.face; }
+    if (Hn.act === 'walk') { Hn.ext += (0.35 - Hn.ext) * Math.min(1, dt * 1.5); var sp0 = Math.sin(Hn.step * 0.5) > -0.3 ? 1 : 0; Hn.step += dt * 1.8 * sp0; var nx = Hn.x + Hn.face * dt * 0.12 * sp0; /* a slow stalk, the neck drawn in, each step held a moment */ if (Math.abs(nx - Hn.hx) < 1.6) Hn.x = nx; else Hn.face = -Hn.face; }
     if (Hn.act === 'strike') { var a2 = FA.t - Hn.t0; Hn.ext = 0.7; Hn.strike = a2 < 0.5 ? 0 : a2 < 0.62 ? (a2 - 0.5) / 0.12 : a2 < 0.95 ? 1 : Math.max(0, 1 - (a2 - 0.95) / 0.3); }
   }
 }
 function swallowPos(b, t) {   // a swallow hawking over the river: long swoops low over the water, rising turns at the ends
+  if (b.paddy) {   // over the paddies: long fast arcs a hand's breadth over the rice, a climbing turn at each end, a skim across
+    var a1 = t * b.v * 26 + b.ph, cx = 30 + b.off, cz = 15.2, X = cx + Math.sin(a1) * 13, Z = cz + Math.sin(a1 * 2 + 0.7) * 1.6, Y = 0.35 + 1.4 * Math.pow(Math.abs(Math.cos(a1)), 3) + 0.2 * Math.sin(a1 * 3.3);
+    return [X, Y, Z];
+  }
   var n = RIVER_S.length, s = b.s + Math.sin(t * b.v * 9 + b.ph) * 0.12, i = clamp(Math.floor(s * (n - 1)), 0, n - 2), f = s * (n - 1) - i, a = RIVER_S[i], c = RIVER_S[i + 1];
   var x = lerp(a[0], c[0], f), z = lerp(a[1], c[1], f), dx = c[0] - a[0], dz = c[1] - a[1], l = Math.hypot(dx, dz) || 1;
   var lat = Math.sin(t * 1.3 + b.ph * 2) * 3.5 + b.off * 0.5, y = WL + 0.35 + b.h * (0.5 + 0.5 * Math.sin(t * 2.1 + b.ph)) * (0.6 + 0.4 * Math.abs(Math.cos(t * b.v * 9 + b.ph)));
@@ -9972,6 +10353,11 @@ function drawFaunaGround(ctx, g, FA, band, t) {
   if (S && S.band === band) {
     var winter = g.season === 'winter';
     S.birds.forEach(function (b) {
+      if (S.state === 'ground' && b.act === 'dust') {   // dust-bathing: crouched low, fluffed, wings flicking; little puffs of dust
+        var pd = P(b.x, 0, b.z), du = 1 - b.at / (b.ad || 2.5); drawPerched(ctx, pd.x, pd.y, pd.k, 'sparrow', { face: b.face, crouch: 1, fluff: true, wings: 0.25 + 0.25 * Math.abs(Math.sin(t * 16 + b.ph)), flick: b.flick, tint: g.tint, lum: g.lum });
+        var dc = mulc([196, 176, 138], g.tint); for (var di = 0; di < 4; di++) { var dph = ((t * 2.2 + di * 0.25 + b.ph) % 1), dr = (0.03 + dph * 0.12) * pd.k; ctx.fillStyle = rgb(dc, 0.35 * (1 - dph) * Math.sin(du * Math.PI)); ctx.beginPath(); ctx.arc(pd.x + (di - 1.5) * 0.05 * pd.k, pd.y - dph * 0.12 * pd.k, Math.max(0.4, dr), 0, TAU); ctx.fill(); }
+        return;
+      }
       if (S.state === 'ground') { var p = P(b.x, b.y, b.z), pg = b.y ? P(b.x, 0, b.z) : p; drawPerched(ctx, p.x, p.y, p.k, 'sparrow', { face: b.face, gy: pg.y, crouch: b.cr || 0, air: !!b.air, bob: b.bob || 0, flick: b.flick || 0, peck: b.act === 'peck' ? Math.sin(clamp(1 - b.at / (b.ad || 0.35)) * Math.PI) : 0, look: b.act === 'look' && Math.sin(t * 5 + b.ph) > 0.6, tint: g.tint, lum: g.lum, fluff: winter }); return; }
       var u = clamp((FA.t - b.t0) / b.dur);
       if (S.state === 'perched' || (S.state === 'flight' && u >= 1)) { var pp = Pa(b.to); drawPerched(ctx, pp.x, pp.y, pp.k, 'sparrow', { face: b.to[0] >= b.from[0] ? 1 : -1, look: Math.sin(t * 1.7 + b.ph) > 0.5, tint: g.tint, shadow: false, fluff: winter }); return; }
@@ -9983,17 +10369,22 @@ function drawFaunaGround(ctx, g, FA, band, t) {
       drawFlyer(ctx, q.x, q.y, q.k, 'sparrow', { psi: b.to[0] >= b.from[0] ? -0.2 : Math.PI + 0.2, th: wb.th, dth: wb.dth, fold: wb.fold, flex: wb.flex, spread: wb.spread, glide: wb.glide, tint: g.tint });
     });
   }
+  var PG = FA.pg;
+  if (PG && PG.band === band) PG.birds.forEach(function (b) {
+    var p = P(b.x, 0, b.z), nod = b.act === 'walk' ? (((b.st % 1) + 1) % 1 < 0.5 ? -0.35 : 0.2) : 0, pk = b.act === 'peck' ? Math.max(0, Math.sin((b.at * 4 + b.ph) % Math.PI)) : 0;   // the head thrust forward, then held while the body catches up
+    drawPerched(ctx, p.x, p.y, p.k, 'pigeon', { face: b.face, peck: pk, bob: nod, tint: g.tint, lum: g.lum, fluff: g.season === 'winter' });
+  });
   var Hn = FA.heron;
   if (Hn && Hn.band === band && (Hn.act !== 'gone')) {
     if (Hn.act === 'takeoff' || Hn.act === 'land') {
       var u2 = clamp((FA.t - Hn.t0) / Hn.dur), up = Hn.act === 'takeoff', a = up ? [Hn.x, 0, Hn.z] : Hn.from, b2 = up ? Hn.to : [Hn.hx, 0, Hn.hz], v = up ? u2 * u2 : 1 - (1 - u2) * (1 - u2), pos = [lerp(a[0], b2[0], v), lerp(a[1], b2[1], up ? Math.pow(u2, 1.6) : 1 - Math.pow(1 - u2, 0.7)), lerp(a[2], b2[2], v)], q2 = Pa(pos);
-      if ((up && u2 < 0.08) || (!up && u2 > 0.94)) { var qq = P(up ? Hn.x : Hn.hx, 0, up ? Hn.z : Hn.hz); drawWader(ctx, qq.x, qq.y, qq.k, 'heron', { face: Hn.face, ext: 0.5, tint: g.tint, lum: g.lum, inWater: true }); return; }
+      if ((up && u2 < 0.08) || (!up && u2 > 0.94)) { var qq = P(up ? Hn.x : Hn.hx, 0, up ? Hn.z : Hn.hz); drawWader(ctx, qq.x, qq.y, qq.k, 'heron', { face: Hn.face, ext: 0.5, tint: g.tint, lum: g.lum, inWater: true, wy: P(up ? Hn.x : Hn.hx, WL, up ? Hn.z : Hn.hz).y }); return; }
       var wb2 = wingBeat('heron', FA.t, 0.3, !up && u2 > 0.5 && u2 < 0.85 ? 'glide' : 'flap');
       drawFlyer(ctx, q2.x, q2.y, q2.k, 'heron', { psi: (b2[0] > a[0] ? 0 : Math.PI) + (up ? -0.3 : 0.3) * (b2[0] > a[0] ? 1 : -1), th: wb2.th, dth: wb2.dth, flex: wb2.flex, spread: wb2.spread, glide: wb2.glide, tint: g.tint, alpha: up ? clamp((1 - u2) * 5) : clamp(u2 * 5) });
       return;
     }
     var hq = P(Hn.x, 0, Hn.z);
-    drawWader(ctx, hq.x, hq.y, hq.k, 'heron', { face: Hn.face, ext: Hn.ext, strike: Hn.strike, step: Hn.act === 'walk' ? Hn.step : null, tint: g.tint, lum: g.lum, inWater: true });
+    drawWader(ctx, hq.x, hq.y, hq.k, 'heron', { face: Hn.face, ext: Hn.ext, strike: Hn.strike, step: Hn.act === 'walk' ? Hn.step : null, tint: g.tint, lum: g.lum, inWater: true, wy: P(Hn.x, WL, Hn.z).y });
     if (Hn.act === 'strike' && Hn.strike > 0.9) { ctx.strokeStyle = 'rgba(232,240,246,0.5)'; ctx.lineWidth = 0.4; var rp = P(Hn.x + Hn.face * 0.55, WL, Hn.z); ctx.beginPath(); ctx.ellipse(rp.x, rp.y, 0.25 * rp.k, 0.06 * rp.k, 0, 0, TAU); ctx.stroke(); }
   }
 }
@@ -10001,7 +10392,7 @@ function drawFaunaGround(ctx, g, FA, band, t) {
 
 /* ---- 09_runtime.js ---- */
 /* ================= public API & controller ================= */
-var VERSION = '1.2.2';
+var VERSION = '1.2.6';
 var SEASON_KEYS = ['spring', 'summer', 'autumn', 'winter'], LIGHT_KEYS = ['morning', 'day', 'dusk', 'night'];
 var WEATHERS = ['clear', 'cloudy', 'rain', 'storm', 'snow', 'typhoon', 'blizzard'];
 var EVENTS = ['shogatsu', 'setsubun', 'hinamatsuri', 'kodomo', 'tanabata', 'obon', 'tsukimi'];
@@ -10356,7 +10747,7 @@ function mount(el, opts) {
     var g = cur.geo, t = clock, ctx = fv.getContext('2d'), sc = fv.width / g.W;
     var st = saveState();
     try {
-      W = g.W; H = g.H; CAM = g.cam; KS = g.KS; MODE = 'n'; F = g.F; SEA = g.SEA; LIT = g.LIT; setLight(LIT); FOLK_SC = sc;
+      W = g.W; H = g.H; CAM = g.cam; KS = g.KS; MODE = 'n'; F = g.F; SEA = g.SEA; LIT = g.LIT; setLight(LIT); FOLK_SC = sc; BIRD_G = g; g.tNow = t;
       ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.clearRect(0, 0, fv.width, fv.height);
       var motion = !still;
       if (dbgSwayOnly) { if (swayFx && motion) { if (swayFx.dirty) drawSwayLayer(swayFx); swayBase(true); } return; }
@@ -10389,6 +10780,7 @@ function mount(el, opts) {
       ctx.setTransform(sc, 0, 0, sc, 0, 0);
       if (motion) drawLoose(ctx, g, t, rare);   // the boat and the rare animals: cut per pixel by whatever stands nearer
       if (motion) {
+        drawWillowSway(ctx, g, t);
         drawSmoke(ctx, g, t);
         drawMist(ctx, g, t);
         drawFlicker(ctx, g, t);
