@@ -590,6 +590,53 @@
         .df-detail li.ok { color: var(--correct-color); font-weight: bold; }
         .df-detail .df-pass { max-height: 40vh; overflow: auto; font-size: 0.8rem; color: var(--text-sub); border: 1px solid var(--border-light); border-radius: 6px; padding: 6px 10px; margin-bottom: 6px; }
         .df-detail .df-pass p { margin: 0 0 0.5em; }
+        /* 解説リーダー (開発者メニュー): the question and its 解説 side by side; stacked on a phone */
+        .exr-view .exr-bar { padding: 10px var(--rp-side) 8px; border-bottom: 1px solid var(--border-light); display: flex; flex-direction: column; gap: 6px; }
+        .exr-view .exr-bar .df-filters { margin: 0; }
+        .exr-row { display: flex; gap: 8px; align-items: center; }
+        .exr-row input { flex: 1; min-width: 0; padding: 8px; border: 1px solid var(--border-light); border-radius: 8px; background: var(--surface); color: var(--text-main); font: inherit; font-size: 0.85rem; }
+        .exr-row .dev-btn { padding: 7px 14px; }
+        .exr-miss { flex: 0 0 auto; display: flex; align-items: center; gap: 4px; font-size: 0.8rem; color: var(--text-sub); white-space: nowrap; }
+        .exr-miss input { flex: none; width: auto; }
+        .exr-pane { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+        @media (min-width: 760px) {
+            .rp-view.exr-view { --rp-side: max(16px, calc((100% - 1240px) / 2)); }
+            .exr-pane { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+            .exr-q { position: sticky; top: 0; max-height: calc(100vh - 230px); overflow: auto; }
+        }
+        .exr-q { border: 1px solid var(--border-light); border-radius: 8px; background: var(--surface); padding: 12px 14px; }
+        .exr-sent { font-size: calc(1.05rem * var(--rs, 1)); line-height: 1.9; margin: 6px 0 8px; }
+        .exr-gap { color: var(--text-sub); }
+        .exr-slot { display: inline-block; min-width: 2.6em; margin: 0 2px; border-bottom: 1px solid var(--text-sub); text-align: center; }
+        .exr-frag { padding: 0 3px; margin: 0 1px; border-radius: 4px; background: var(--surface-2); }
+        .exr-frag.star { color: var(--active-blue); font-weight: bold; }
+        .exr-opts { list-style: none; margin: 4px 0 0; padding: 0; }
+        .exr-opts li { display: flex; gap: 8px; align-items: baseline; padding: 6px 8px; border-left: 3px solid transparent; border-radius: 0 6px 6px 0; line-height: 1.6; font-family: var(--option-font); }
+        .exr-opts li.ok { border-left-color: var(--correct-color); background: var(--surface-2); font-weight: bold; }
+        .exr-n { flex: 0 0 auto; }
+        .exr-ok { flex: 0 0 auto; margin-left: auto; padding: 0 6px; border: 1px solid var(--correct-color); border-radius: 8px; color: var(--correct-color); font-size: 0.7rem; }
+        .exr-passage { max-height: 38vh; overflow: auto; margin: 6px 0 8px; padding: 8px 10px; border: 1px solid var(--border-light); border-radius: 6px; font-size: 0.88rem; line-height: 1.9; }
+        .exr-blank { display: inline-block; min-width: 1.6em; padding: 0 4px; border: 1px solid var(--border-light); border-radius: 4px; color: var(--text-sub); font-size: 0.8em; line-height: 1.5; text-align: center; }
+        .exr-blank.cur { border-color: var(--active-blue); background: var(--active-blue); color: var(--bg-paper); font-weight: bold; }
+        .exr-a .explain-card { margin-top: 0; }
+        .exr-src { margin-top: 6px; }
+        .exr-none, .exr-empty { padding: 24px 12px; border: 1px dashed var(--border-light); border-radius: 8px; color: var(--text-sub); text-align: center; }
+        .exr-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px var(--rp-side) calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border-light); }
+        .exr-pos { font-size: 0.85rem; color: var(--text-sub); }
+        .exr-foot .dev-btn:disabled { opacity: 0.4; }
+        /* 解説: 文の組み立て (the correct order) and 文章の文法 (one row per blank) */
+        .explain-card.mx .mx-order { margin: 2px 0 4px; line-height: 2; }
+        .explain-card.mx .mx-order span, .explain-card.mx .mx-order b { padding: 1px 5px; border: 1px solid var(--border-light); border-radius: 4px; background: var(--surface); white-space: nowrap; }
+        .explain-card.mx .mx-order b.mx-star { color: var(--active-blue); border-color: var(--active-blue); }
+        .mx-sep { margin: 0 3px; color: var(--text-sub); font-size: 0.85em; font-style: normal; }
+        .rationale-content.explain-card { margin-top: 8px; padding: 8px 0 0; border-left: none; border-radius: 0; background: none; }
+        .rationale-box.no-explain .rationale-title { margin-bottom: 0; }
+        .mx-blank { padding: 2px 0; border-top: 1px dashed var(--border-light); }
+        .mx-blank:first-of-type { border-top: none; }
+        .mx-blank > summary { padding: 5px 0; font-weight: bold; cursor: pointer; }
+        .blank-popup { max-height: 88vh; overflow-y: auto; }        /* an answered blank shows its 解説 below the choices */
+        #blank-popup-content .explain-card { margin-top: 4px; }
+        .mx-bn { display: inline-block; min-width: 1.5em; margin-right: 6px; border: 1px solid var(--active-blue); border-radius: 4px; color: var(--active-blue); font-size: 0.8em; text-align: center; }
         .gallery-view { position: fixed; inset: 0; z-index: 3850; background: #171513; color: #f1ebe0; display: none; flex-direction: column; }
         .gallery-view.active { display: flex; }
         .gal-head { display: flex; align-items: center; gap: 10px; padding: 12px 16px 6px; }
