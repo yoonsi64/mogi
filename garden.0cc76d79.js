@@ -316,7 +316,8 @@ var LIGHTS = {
     id: 'morning', sun: norm([-0.74, 0.46, -0.3]), sunc: [0.98, 0.92, 0.84], amb: [0.6, 0.66, 0.78], ls: [-0.74, -0.62],
     skyTop: [176, 196, 218], skyHor: [232, 230, 224], haze: [214, 220, 226], sunX: 0.08, sunY: -0.04, sunGlow: 'rgba(255,244,222,0.85)',
     shadow: [70, 86, 124], shadowA: 0.42, hazeK: 1.35, lit: false, wash: ['rgba(230,240,255,0.30)', 'rgba(220,232,250,0.08)'],
-    grade: [[236, 242, 252], [226, 232, 240], [200, 204, 214]], bloom: 0.24, vig: [200, 202, 206], mist: 0.55
+    grade: [[236, 242, 252], [226, 232, 240], [200, 204, 214]], bloom: 0.24, vig: [200, 202, 206], mist: 0.55,
+    folShade: [0.9, 0.96, 1.06], folLit: [1.05, 1.0, 0.86]   // (the early hour on leaves: their shade cool and dewy, the low sun's side a pale gold; it read as plain midday)
   },
   day: {
     id: 'day', sun: norm([0.80, 0.56, -0.22]), sunc: [1.0, 0.86, 0.66], amb: [0.52, 0.57, 0.70], ls: [0.76, -0.65],
@@ -433,7 +434,7 @@ function paintFoliage(ctx, cl, o, filter) {
     if (!o.sparse) { ctx.fillStyle = rgb(tc(ramp(o.pal, lit * 0.24 + 0.02), tint)); blob(ctx, p.x, p.y + rs * 0.1, rs * (o.mass === undefined ? 0.8 : o.mass), rng, 9, 0.3, fl * 1.02); ctx.fill(); }
     var cnt = Math.min((o.max || 260) * DQ, Math.max(o.sparse ? 4 : 10, rs * rs * (o.density || 1.25) * DQ));
     var paths = []; for (b = 0; b < NB; b++) paths.push(new Path2D());
-    var acc = o.accent ? [new Path2D(), new Path2D(), new Path2D()] : null;
+    var acc = o.accent ? [new Path2D(), new Path2D(), new Path2D()] : null, accT = new Path2D();
     var snowP = o.snow ? new Path2D() : null;
     var ds = o.dab * p.k / dq;
     for (var k = 0; k < cnt; k++) {
@@ -442,8 +443,10 @@ function paintFoliage(ctx, cl, o, filter) {
       var sz = ds * (0.65 + rng() * 0.7);
       if (snowP && oy < -0.05 && rng() < o.snow * (0.4 - oy)) { leafAdd(snowP, p.x + ox * rs, p.y + oy * rs, sz * 1.2, rng() * TAU, 'oval'); continue; }
       if (acc && rng() < o.accent.p * (o.accent.kind === 'circle' ? 0.45 + 0.9 * local : 1) * (o.accent.clump ? 0.15 + 1.7 * sstep(0.38, 0.6, NZ.n2((c.x + ox * c.r) * 6.5 + 3, (c.y - oy * c.r) * 6.5 + c.z * 2.5)) : 1)) {   /* (clump: the flowers in trusses, the dark leaves showing between them) */   /* blooms crowd the lit top and sunward side; near to, each a five-lobed flower, not a disc */
-        var ak = o.accent.kind || o.kind, as = sz * (o.accent.s || 1); if (ak === 'circle' && as * KS > 3.2) { ak = 'flower'; as *= 1.1; }
-        leafAdd(acc[Math.min(2, (local * 3) | 0)], p.x + ox * rs, p.y + oy * rs, as, rng() * TAU, ak); continue;
+        var ak = o.accent.kind || o.kind, as = sz * (o.accent.s || 1), fa0 = rng() * TAU; if (ak === 'circle' && as * KS > 3.2) { ak = 'flower'; as *= 1.1; }
+        leafAdd(acc[Math.min(2, (local * 3) | 0)], p.x + ox * rs, p.y + oy * rs, as, fa0, ak);
+        if (ak === 'flower' && as * KS > 4.4) { var tx0 = p.x + ox * rs, ty0 = p.y + oy * rs, bx0 = tx0 + Math.cos(fa0) * as * 0.42, by0 = ty0 + Math.sin(fa0) * as * 0.3; accT.moveTo(tx0 + as * 0.16, ty0); accT.arc(tx0, ty0, as * 0.16, 0, TAU); accT.moveTo(bx0 + as * 0.14, by0); accT.ellipse(bx0, by0, as * 0.14, as * 0.1, fa0, 0, TAU); }   // near to: the deeper throat, and the freckled blotch on the upper petal
+        continue;
       }
       leafAdd(paths[Math.min(NB - 1, Math.round(local * (NB - 1)))], p.x + ox * rs, p.y + oy * rs, sz, rng() * TAU, o.kind);
     }
@@ -454,6 +457,7 @@ function paintFoliage(ctx, cl, o, filter) {
       if (o.kind === 'needle') { ctx.strokeStyle = rgb(col); ctx.lineWidth = Math.max(0.35, ds * 0.5); ctx.stroke(paths[b]); } else { ctx.fillStyle = rgb(col); ctx.fill(paths[b]); }
     }
     if (acc) for (b = 0; b < 3; b++) { ctx.fillStyle = rgb(folK(tc(ramp(o.accent.pal, (b + 0.5) / 3), tint), (b + 0.5) / 3)); ctx.fill(acc[b]); }
+    if (acc) { ctx.fillStyle = rgb(folK(tc(scl(ramp(o.accent.pal, 0), 0.72), tint), 0.4), 0.55); ctx.fill(accT); }
     // translucency: where the light comes through the edge of the canopy (strongest with a low sun), the leaves glow a warm yellow-green
     if (o.kind !== 'needle' && !o.snow && LIT && LIT.id !== 'night' && rs > 3) {
       var tl = (LIT.id === 'day' ? 0.22 : LIT.id === 'dusk' ? 0.2 : 0.3) * (o.transK === undefined ? 1 : o.transK) * (LIT.weather && LIT.weather !== 'clear' ? 0.45 : 1), gp = new Path2D(), nT = Math.min(60, cnt * 0.12);   // (low sun: a rim of light through the edge, not a yellow lamp; under cloud it mostly goes)
@@ -461,21 +465,29 @@ function paintFoliage(ctx, cl, o, filter) {
       var top = ramp(o.pal, 1), glow = [Math.min(255, top[0] * 0.75 + 255 * SUNC[0] * 0.35), Math.min(255, top[1] * 0.75 + 240 * SUNC[1] * 0.35), Math.min(255, top[2] * 0.6 + 120 * SUNC[2] * 0.3)];
       ctx.globalAlpha = tl; ctx.fillStyle = rgb(folK(tc(glow, tint), 1)); ctx.fill(gp); ctx.globalAlpha = 1;   // (graded like the lit leaves: at dusk the warm rim, not a yellow-green of its own)
     }
-    if (snowP) { ctx.fillStyle = rgb(mulc(SNOW, lightTint(0.9))); ctx.fill(snowP); }
+    if (snowP) snowLumps(ctx, snowP, ds);
   }
 }
 function tc(c, t) { return t ? [c[0] * t[0], c[1] * t[1], c[2] * t[2]] : c; }
+/* snow lying on leaves: its own soft shadow on the foliage just under it, each lump's underside in the sky's blue shade and only
+   its top in the light (one flat white fill read as cotton wool stuck on the bush) */
+function snowLumps(ctx, path, ds) {
+  var sc = mulc(SNOW, lightTint(0.9)), sh = mixc(scl(sc, 0.78), mulc([150, 168, 204], lightTint(0.7)), 0.4), d = Math.max(0.3, ds * 0.32);
+  ctx.save(); ctx.translate(0, d * 1.1); ctx.fillStyle = 'rgba(16,26,30,0.22)'; ctx.fill(path); ctx.restore();
+  ctx.fillStyle = rgb(sh); ctx.fill(path);
+  ctx.save(); ctx.clip(path); ctx.translate(-d * 0.3 * (Math.sign(LS[0]) || 1), -d); ctx.fillStyle = rgb(sc); ctx.fill(path); ctx.restore();
+}
 /* the hour's light on leaves (dusk): the shaded tones take the sky's cool ambient, only the sun-side tones (f near 1) the warm rim; under cloud the rim mostly goes */
 function folK(c, f, kk) {
   var L = LIT; if (!L || !L.folShade) return c;
   var w = Math.pow(clamp(f), 1.4), s = L.folShade, l = L.weather && L.weather !== 'clear' ? mixc(L.folLit, s, 0.6) : L.folLit, q = kk === undefined ? 1 : kk;
   var o = [c[0] * (1 + (s[0] + (l[0] - s[0]) * w - 1) * q), c[1] * (1 + (s[1] + (l[1] - s[1]) * w - 1) * q), c[2] * (1 + (s[2] + (l[2] - s[2]) * w - 1) * q)];
-  if (L.folDesat) { var lu = o[0] * 0.3 + o[1] * 0.59 + o[2] * 0.11, dk = L.folDesat * q; o = [o[0] + (lu - o[0]) * dk, o[1] + (lu - o[1]) * dk, o[2] + (lu - o[2]) * dk]; }   /* (by moonlight colour drains away: the leaves go grey-green) */
+  if (L.folDesat) { var wm = clamp((o[0] - o[2]) / 160) * (0.4 * q), lu = (o[0] * 0.3 + o[1] * 0.59 + o[2] * 0.11) * (1 - wm), dk = L.folDesat * q; o = [(o[0] + (lu - o[0]) * dk) * (1 - wm), (o[1] + (lu - o[1]) * dk) * (1 - wm * 0.8), o[2] + (lu - o[2]) * dk]; }   // (and the warm colours go dark first, as the eye sees by moonlight: yellow ginkgo and autumn crowns glowed cream at night)   /* (by moonlight colour drains away: the leaves go grey-green) */
   return o;
 }
 function drawBranches(ctx, segs, bark, wmul, snowK) {
   wmul = wmul || 1;
-  var passes = sil() ? [[0, 1, '#000']] : [[0, 1, rgb(bark[0])], [0.22, 0.62, rgb(bark[1])], [0.42, 0.26, rgb(bark[2])]];
+  var passes = sil() ? [[0, 1, '#000']] : [[0, 1, rgb(folK(bark[0], 0.1))], [0.22, 0.62, rgb(folK(bark[1], 0.45))], [0.42, 0.26, rgb(folK(bark[2], 0.9))]];   // (the bark takes the hour's light as the leaves do: at dusk the limbs stood out pale and lilac against the shaded crown)
   var pr = segs.map(function (s) { return { a: Pa(s.a), b: Pa(s.b), s: s }; });
   for (var q = 0; q < passes.length; q++) {
     var off = passes[q][0], wf = passes[q][1]; ctx.fillStyle = passes[q][2]; ctx.beginPath();
@@ -485,10 +497,27 @@ function drawBranches(ctx, segs, bark, wmul, snowK) {
       var dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
       if (nx * LS[0] + ny * LS[1] < 0) { nx = -nx; ny = -ny; }
       var ax = a.x + nx * w0 * off, ay = a.y + ny * w0 * off, bx = b.x + nx * w1 * off, by = b.y + ny * w1 * off, h0 = w0 * wf, h1 = w1 * wf;
-      ctx.moveTo(ax + nx * h0, ay + ny * h0); ctx.lineTo(bx + nx * h1, by + ny * h1); ctx.lineTo(bx - nx * h1, by - ny * h1); ctx.lineTo(ax - nx * h0, ay - ny * h0); ctx.closePath();
+      if (dx * ny - dy * nx > 0) { ctx.moveTo(ax - nx * h0, ay - ny * h0); ctx.lineTo(bx - nx * h1, by - ny * h1); ctx.lineTo(bx + nx * h1, by + ny * h1); ctx.lineTo(ax + nx * h0, ay + ny * h0); }
+      else { ctx.moveTo(ax + nx * h0, ay + ny * h0); ctx.lineTo(bx + nx * h1, by + ny * h1); ctx.lineTo(bx - nx * h1, by - ny * h1); ctx.lineTo(ax - nx * h0, ay - ny * h0); }
+      ctx.closePath();   // (every quad wound the same way as the joint discs: wound the other way, the overlaps cancelled under the nonzero rule and left a dark notch at each joint)
       ctx.moveTo(bx + h1, by); ctx.arc(bx, by, h1, 0, TAU);
     }
     ctx.fill();
+  }
+  if (!sil() && MODE === 'n') {   // bark on the thicker limbs: a few fine fissures along the limb in its shaded half, and the odd pale fleck of lichen (a smooth tube read as plastic)
+    var bkD = new Path2D(), bkL = new Path2D(), nb = 0;
+    for (var i2 = 0; i2 < pr.length; i2++) {
+      var A2 = pr[i2].a, B2 = pr[i2].b, S2 = pr[i2].s, ww = S2.r0 * A2.k * wmul, ww1 = S2.r1 * B2.k * wmul; if (ww * KS < 4) continue;
+      var ex = B2.x - A2.x, ey = B2.y - A2.y, EL = Math.hypot(ex, ey) || 1, enx = -ey / EL, eny = ex / EL; if (enx * LS[0] + eny * LS[1] > 0) { enx = -enx; eny = -eny; }
+      var hs0 = hash2((A2.x * 7) | 0, (A2.y * 7) | 0);
+      for (var fk = 0; fk < 3; fk++) {
+        var fo = (0.15 + 0.5 * hash2(fk * 13 + 1, (hs0 * 1e4) | 0)) * (fk === 2 ? -0.6 : 1), f0 = hash2(fk + 5, (hs0 * 7e3) | 0) * 0.4, f1 = f0 + 0.3 + 0.3 * hash2(fk + 9, (hs0 * 3e3) | 0);
+        var px0 = A2.x + ex * f0, py0 = A2.y + ey * f0, px1 = A2.x + ex * Math.min(1, f1), py1 = A2.y + ey * Math.min(1, f1), w0f = lerp(ww, ww1, f0) * fo, w1f = lerp(ww, ww1, Math.min(1, f1)) * fo;
+        bkD.moveTo(px0 + enx * w0f, py0 + eny * w0f); bkD.lineTo(px1 + enx * w1f, py1 + eny * w1f); nb++;
+      }
+      if (hs0 > 0.55) { var lf = 0.2 + 0.6 * hash2(3, (hs0 * 9e3) | 0), lx2 = A2.x + ex * lf - enx * ww * 0.35, ly2 = A2.y + ey * lf - eny * ww * 0.35, lw = ww * (0.25 + 0.2 * hs0); bkL.moveTo(lx2 + lw, ly2); bkL.ellipse(lx2, ly2, lw, lw * 0.6, Math.atan2(ey, ex), 0, TAU); }
+    }
+    if (nb) { ctx.strokeStyle = rgb(folK(scl(bark[0], 0.7), 0.1), 0.45); ctx.lineWidth = Math.max(0.25, 0.6 / KS * 1.6); ctx.stroke(bkD); ctx.fillStyle = rgb(folK(mixc(bark[2], [170, 176, 150], 0.5), 0.8), 0.35); ctx.fill(bkL); }
   }
   if (snowK && !sil()) {
     ctx.strokeStyle = rgb(mulc(SNOW, lightTint(1))); ctx.lineCap = 'round';
@@ -631,7 +660,7 @@ function paintSprays(ctx, t, filt, opt) {
     if (acc) for (b = 0; b < 2; b++) { var ac = ramp(opt.accent.pal, b ? 0.8 : 0.3); if (haze) ac = mixc(ac, LIT.haze, haze); ctx.fillStyle = rgb(folK(tc(ac, tint), b ? 0.8 : 0.3)); ctx.fill(acc[b]); }
     if (lpaths) for (b = 0; b < NL; b++) { var lc = ramp(opt.leafPal, b / (NL - 1)); if (haze) lc = mixc(lc, LIT.haze, haze); ctx.fillStyle = rgb(folK(tc(lc, tint), b / (NL - 1))); ctx.fill(lpaths[b]); lpaths[b] = new Path2D(); }
   }
-  if (snowP) { ctx.fillStyle = rgb(mulc(SNOW, lightTint(0.9))); ctx.fill(snowP); }
+  if (snowP) snowLumps(ctx, snowP, ds);
 }
 function drawMaple(ctx, t) {
   var cd = Pa(t.center).d;
@@ -713,7 +742,14 @@ function genPine(seed, bx, bz, g, by) {
     var m1 = [s[0] + dir[0] * L * 0.32 + side[0] * j1, s[1] + (b.dy - 0.1) * S, s[2] + dir[2] * L * 0.32 + side[2] * j1];
     var mid = [s[0] + dir[0] * L * 0.62 + side[0] * j2, s[1] + (b.dy - 0.08) * S, s[2] + dir[2] * L * 0.62 + side[2] * j2];
     var end = [s[0] + dir[0] * L, s[1] + (b.dy + 0.06) * S, s[2] + dir[2] * L];
-    limbs.push({ a: s, b: m1, r0: 0.06 * S, r1: 0.048 * S }, { a: m1, b: mid, r0: 0.048 * S, r1: 0.036 * S }, { a: mid, b: end, r0: 0.036 * S, r1: 0.022 * S });
+    var kp = [s, s, m1, mid, end, end], NS = 4, rad = [0.06, 0.048, 0.036, 0.022], lp = null, lr = 0;   // the limb as a smooth curve through its joints (three straight pieces bent at angles read as planks of wood)
+    for (var sp2 = 1; sp2 <= 3; sp2++) for (var sq = 0; sq < NS; sq++) {
+      var tq = (sq + 1) / NS, p0 = kp[sp2 - 1], p1 = kp[sp2], p2 = kp[sp2 + 1], p3 = kp[sp2 + 2], t2 = tq * tq, t3 = t2 * tq, cp3 = [0, 0, 0];
+      for (var ci = 0; ci < 3; ci++) cp3[ci] = 0.5 * (2 * p1[ci] + (p2[ci] - p0[ci]) * tq + (2 * p0[ci] - 5 * p1[ci] + 4 * p2[ci] - p3[ci]) * t2 + (3 * p1[ci] - p0[ci] - 3 * p2[ci] + p3[ci]) * t3);
+      var rq = lerp(rad[sp2 - 1], rad[sp2], tq) * S;
+      if (!lp) { lp = s; lr = rad[0] * S; }
+      limbs.push({ a: lp, b: cp3, r0: lr, r1: rq }); lp = cp3; lr = rq;
+    }
     var pr = b.r * Math.pow(S, 0.85);
     pads.push({ x: end[0], y: end[1] + 0.1 * S, z: end[2], r: pr * 1.12, t: 0.3 * pr });
     if (b.l > 0.95 && gg > 0.6) pads.push({ x: mid[0] + (rng() - 0.5) * 0.2, y: mid[1] + 0.06 * S, z: mid[2], r: pr * 0.62, t: 0.3 * pr * 0.62 });
@@ -1002,6 +1038,14 @@ function drawLily(ctx, x, z, s, rng, flower) {
   var base = mode === 'fade' ? mixc([96, 104, 48], [150, 110, 54], rng()) : mode === 'pad' ? mixc([70, 112, 46], [110, 140, 60], rng()) : mixc([52, 94, 40], [86, 124, 52], rng());
   ctx.fillStyle = rgb(tc(mulc(scl(base, 0.55), lt), tint)); ctx.beginPath(); ctx.ellipse(p.x + 0.3, p.y + 0.4, r, ry, 0, 0, TAU); ctx.fill();
   ctx.fillStyle = rgb(tc(mulc(base, lt), tint)); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.ellipse(p.x, p.y, r, ry, 0, a0 + 0.22, a0 + TAU - 0.22); ctx.closePath(); ctx.fill();
+  if (r > 1.6) {   // (v2) a waxy leaf: the sky's sheen on its far half, the near half in its own green, fine veins from the stalk (it was a flat paper disc)
+    ctx.save(); ctx.clip();
+    var lg = ctx.createLinearGradient(0, p.y - ry, 0, p.y + ry), shc = tc(mulc(mixc(base, LIT.skyHor, 0.45), lt), tint);
+    lg.addColorStop(0, rgb(shc, 0.5)); lg.addColorStop(0.45, rgb(shc, 0.12)); lg.addColorStop(1, rgb(tc(mulc(scl(base, 0.7), lt), tint), 0.35)); ctx.fillStyle = lg; ctx.fillRect(p.x - r, p.y - ry, r * 2, ry * 2);
+    ctx.strokeStyle = rgb(tc(mulc(scl(base, 0.72), lt), tint), 0.4); ctx.lineWidth = Math.max(0.2, r * 0.03); ctx.beginPath();
+    for (var vk = 1; vk < 9; vk++) { var va = a0 + vk / 9 * TAU; ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + Math.cos(va) * r * 0.92, p.y + Math.sin(va) * ry * 0.92); }
+    ctx.stroke(); ctx.restore();
+  }
   ctx.strokeStyle = rgb(tc(mulc(mixc(base, [220, 230, 170], 0.4), lt), tint), 0.7); ctx.lineWidth = 0.35; ctx.beginPath(); ctx.ellipse(p.x, p.y, r, ry, 0, a0 + 0.3 + Math.PI, a0 + TAU - 0.3); ctx.stroke();
   if (flower && mode === 'bloom') {
     var fc = rng() < 0.6 ? [240, 150, 180] : [250, 246, 240], fr = r * 0.5;
@@ -1094,13 +1138,13 @@ function drawRock(ctx, R, mossK) {
     var alb = scl(R.alb, 0.9 + 0.2 * NZ.n3(tt.c[0] * 2.4, tt.c[1] * 2.4, tt.c[2] * 2.4));
     var mm = R.moss * mossK * rockMossW(R, tt.c, n);
     alb = mixc(alb, ramp(mossC, 0.3), clamp(mm * 1.05));   // (a dark, patchy moss that follows the stone, not a bright lid)
-    var snK = snow ? sstep(0.42, 0.7, n[1] + (NZ.n3(tt.c[0] * 5, tt.c[1] * 5, tt.c[2] * 5) - 0.5) * 0.3) * snow : 0;
+    var snK = snow ? sstep(0.5, 0.6, n[1] + (NZ.n3(tt.c[0] * 5, tt.c[1] * 5, tt.c[2] * 5) - 0.5) * 0.3 + (NZ.n3(tt.c[0] * 14 + 2, tt.c[1] * 14, tt.c[2] * 14) - 0.5) * 0.12) * snow : 0;   // (a cap with a lumpy, fairly crisp rim, as snow lies: it faded out down the stone like a grey bloom)
     if (snow) alb = mixc(alb, SNOW, snK);
-    if (LIT.wet) alb = scl(alb, 1 - (R.ry < 0.15 ? 0.4 : 0.26) * LIT.wet);   // rain darkens the stone (the flat stepping stones most)
+    if (LIT.wet) alb = scl(alb, 1 - (R.ry < 0.15 ? 0.44 : 0.32) * LIT.wet);   // rain darkens the stone (the flat stepping stones most)
     var col = shade(alb, n), hy = (tt.c[1] - R.by) / (R.ry || 1);
     col = scl(col, 0.6 + 0.4 * clamp(hy * 1.6 + 0.3));
     if (snK > 0 && LIT.id === 'night') col = mixc(col, [190, 204, 230], snK * 0.6);   // its snow cap moonlit too
-    if (LIT.wet) col = mixc(col, scl(LIT.skyHor, 0.95), sstep(0.55, 1, n[1]) * LIT.wet * 0.42);   // ...and its wet top shines with the sky
+    if (LIT.wet) col = mixc(col, scl(LIT.skyHor, 0.8), sstep(0.6, 1, n[1]) * LIT.wet * 0.15);   // ...and its wet top shines a little with the sky (at 0.42 every facet went pale: the stones read as snow-capped)
     var key = ((col[0] / 2) | 0) + ',' + ((col[1] / 2) | 0) + ',' + ((col[2] / 2) | 0), bk = buckets[key];
     if (!bk) { bk = buckets[key] = { c: col, p: new Path2D() }; order.push(bk); }
     bk.p.moveTo(pp[0].x, pp[0].y); bk.p.lineTo(pp[1].x, pp[1].y); bk.p.lineTo(pp[2].x, pp[2].y); bk.p.closePath();
@@ -1127,7 +1171,7 @@ function drawRock(ctx, R, mossK) {
   ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
   var c0 = P(R.cx, R.by + R.ry * 0.5, R.cz), rr = Math.max(R.rx, R.rz) * c0.k;
   // painterly strata / cracks
-  ctx.strokeStyle = 'rgba(30,26,24,0.28)'; ctx.lineWidth = 0.4;
+  ctx.strokeStyle = snow ? 'rgba(30,26,24,0.1)' : 'rgba(30,26,24,0.28)'; ctx.lineWidth = 0.4;   // (under snow the cracks are filled: dark scratches across a white cap read as dirt)
   for (i = 0; i < Math.min(14, rr * 0.5); i++) { var x0 = c0.x + (rng() - 0.5) * rr * 1.6, y0 = c0.y + (rng() - 0.5) * R.ry * c0.k * 1.4, L = rr * (0.15 + rng() * 0.3); ctx.beginPath(); ctx.moveTo(x0, y0); ctx.quadraticCurveTo(x0 + L * 0.5, y0 + (rng() - 0.5) * 2, x0 + L, y0 + (rng() - 0.5) * 3); ctx.stroke(); }
   for (i = 0; i < rr * rr * 0.08 * DQ; i++) { var x = c0.x + (rng() - 0.5) * rr * 2.2, y = c0.y + (rng() - 0.5) * R.ry * c0.k * 2; ctx.fillStyle = rng() < 0.5 ? 'rgba(214,206,170,0.33)' : 'rgba(40,36,32,0.22)'; ctx.fillRect(x, y, (0.5 + rng() * 0.7) / Math.sqrt(DQ), (0.5 + rng() * 0.5) / Math.sqrt(DQ)); }
   // the damp at its foot (darker, a little green), moss in the crevices low down, pale lichen on the dry upper faces
@@ -1144,9 +1188,9 @@ function drawRock(ctx, R, mossK) {
       var p5 = Pa(t4.c), lc = rng() < 0.8 ? [186, 192, 168] : [196, 168, 108]; ctx.fillStyle = rgb(mulc(lc, lightTint(1)), 0.22); ctx.beginPath(); ctx.arc(p5.x + (rng() - 0.5) * 2, p5.y + (rng() - 0.5) * 1.5, (0.35 + rng() * 0.6) / Math.sqrt(DQ), 0, TAU); ctx.fill();
     }
   }
-  if (LIT.wet && !sil() && R.ry < 0.15) { var wq0 = P(R.cx, R.by + R.ry * 0.9, R.cz), wgr = ctx.createRadialGradient(wq0.x, wq0.y, 0, wq0.x, wq0.y, R.rx * wq0.k); wgr.addColorStop(0, rgb(scl(LIT.skyHor, 0.95), 0.4 * LIT.wet)); wgr.addColorStop(1, rgb(LIT.skyHor, 0)); ctx.fillStyle = wgr; ctx.beginPath(); ctx.ellipse(wq0.x, wq0.y, R.rx * wq0.k * 0.8, R.rz * wq0.k * CAM.s * 0.75, 0, 0, TAU); ctx.fill(); }   // a film of water on the flat top, the sky in it
+  if (LIT.wet && !sil() && R.ry < 0.15) { var wq0 = P(R.cx, R.by + R.ry * 0.9, R.cz), wgr = ctx.createRadialGradient(wq0.x, wq0.y, 0, wq0.x, wq0.y, R.rx * wq0.k); wgr.addColorStop(0, rgb(scl(LIT.skyHor, 0.9), 0.26 * LIT.wet)); wgr.addColorStop(0.6, rgb(scl(LIT.skyHor, 0.9), 0.1 * LIT.wet)); wgr.addColorStop(1, rgb(LIT.skyHor, 0)); ctx.fillStyle = wgr; ctx.beginPath(); ctx.ellipse(wq0.x, wq0.y, R.rx * wq0.k * 0.8, R.rz * wq0.k * CAM.s * 0.75, 0, 0, TAU); ctx.fill(); }   // a film of water on the flat top, the sky in it
   if (LIT.wet && !sil()) {   // rain: a wet sheen, a few bright streaks where the sky catches the wet top
-    for (i = 0; i < vis.length; i++) { var t5 = vis[i].t; if (t5.sn[1] < 0.55 || rng() > 0.35) continue; var p6 = Pa(t5.c); ctx.fillStyle = rgb(scl(LIT.skyHor, 1.05), 0.35 * LIT.wet); ctx.beginPath(); ctx.ellipse(p6.x, p6.y, 1.6 / Math.sqrt(DQ), 0.5 / Math.sqrt(DQ), (rng() - 0.5) * 0.6, 0, TAU); ctx.fill(); }
+    for (i = 0; i < vis.length; i++) { var t5 = vis[i].t; if (t5.sn[1] < 0.75 || rng() > 0.06) continue; var p6 = Pa(t5.c); ctx.fillStyle = rgb(scl(LIT.skyHor, 1.05), 0.3 * LIT.wet); ctx.beginPath(); ctx.ellipse(p6.x, p6.y, 1.1 / Math.sqrt(DQ), 0.36 / Math.sqrt(DQ), (rng() - 0.5) * 0.6, 0, TAU); ctx.fill(); }   // (a few glints: one on every third facet of the top was a crust of pale scales, like frost)
   }
   if (R.moss * mossK > 0.05 && !snow) {
     for (i = 0; i < vis.length; i++) {
@@ -1202,7 +1246,7 @@ function prism(ctx, cx, cz, y0, y1, r0, r1, n, rot, alb, o) {
   if (o.tex && !sil()) grainClip(ctx, all, o.tex);
   return { all: all, out: out };
 }
-function mossDabs(ctx, pts3, count, rng, amt) {
+function mossDabs(ctx, pts3, count, rng, amt, grp) {
   /* moss on worked stone (lanterns, basins): small dark cushions in clusters that hug the edges and joints where damp and grit
      collect, more of them on the shaded faces, sized to the stone (not flat bright discs scattered over the face) */
   /* v2: painted the way the rocks' moss is (rockMossW): a fine stipple too small to read as dots, kept or dropped by a 3-D patch
@@ -1218,6 +1262,8 @@ function mossDabs(ctx, pts3, count, rng, amt) {
   for (i = 0; i < np; i++) { var pa = pp[i], pb = pp[(i + 1) % np]; ar += pa.x * pb.y - pb.x * pa.y; }
   ar = Math.abs(ar) / 2; if (ar < 1.5) return;
   var litF = dot(nf, SUN), shK = clamp(0.7 - litF * 0.8), top = nf[1] > 0.7, vert = Math.abs(nf[1]) < 0.3, mp = SEA.moss;
+  var yLo = 1e9, yHi = -1e9; for (i = 0; i < np; i++) { yLo = Math.min(yLo, pts3[i][1]); yHi = Math.max(yHi, pts3[i][1]); }
+  var slopeT = top && nf[1] < 0.97 && yHi - yLo > 0.02;   // a sloping roof facet: the moss thick up under the cap and in a line along the drip of the eave, not an island in its middle
   var age = 0.35 + 0.65 * clamp((F.rockMoss || 0) / 0.85), kc = Pa(ce).k, rd = clamp(0.0065 * kc, 0.3, 2.6);
   var hw = [], el = [], eT = 0;
   for (i = 0; i < np; i++) { var ev = sub(pts3[(i + 1) % np], pts3[i]), L3 = Math.hypot(ev[0], ev[1], ev[2]) || 1e-6; hw.push(1 - Math.abs(ev[1]) / L3); el.push(L3); eT += L3; }
@@ -1227,21 +1273,25 @@ function mossDabs(ctx, pts3, count, rng, amt) {
   for (var s = 0; s < N; s++) {
     var pick = rng() * eT, ie = 0; while (ie < np - 1 && pick > el[ie]) { pick -= el[ie]; ie++; }
     var ep = mixc(pts3[ie], pts3[(ie + 1) % np], rng()), r = Math.sqrt(rng()), q3 = mixc(ce, ep, r);
-    var crev = top ? 0.55 * (1 - r) + 0.25 * Math.pow(r, 10) : hw[ie] * Math.pow(r, 5) * (nf[1] > 0.3 ? 1 : 1.2);
+    var tY = slopeT ? clamp((q3[1] - yLo) / (yHi - yLo)) : 0;
+    var crev = slopeT ? 0.55 * Math.pow(tY, 1.5) + 0.3 * Math.pow(1 - tY, 7) : top ? 0.55 * (1 - r) + 0.25 * Math.pow(r, 10) : hw[ie] * Math.pow(r, 5) * (nf[1] > 0.3 ? 1 : 1.2);
+    var dampA = (vert && yLo < 0.05 ? 0.2 * Math.pow(1 - clamp(q3[1] / 0.22), 2) : 0) + (amt > 1.2 ? (amt - 1.2) * 0.4 : 0);   // (on a face standing in the ground the moss creeps up from the damp earth; a stone kept wet, such as the basin, has it all over its sides)
     var nz = NZ.n3(q3[0] * 6 + 3, q3[1] * 6 - 1, q3[2] * 6 + 7) * 0.7 + NZ.n3(q3[0] * 15 - 5, q3[1] * 15, q3[2] * 15 + 2) * 0.22 + NZ.n3(q3[0] * 40, q3[1] * 40 + 3, q3[2] * 40) * 0.08;   // (coherent cushions with a ragged rim, not lace)
-    var pat = sstep(0.56, 0.7, nz + crev * 0.3 + shK * 0.1 + (age - 1) * 0.22 - (top ? 0 : vert ? 0.09 : 0.04));
+    var pat = sstep(0.56, 0.7, nz + crev * 0.3 + dampA + shK * 0.1 - (1 - age) * (0.3 - 0.55 * Math.min(1, crev)) - (top ? 0 : vert ? 0.09 : 0.04));   // (young moss starts in the joints and along the eaves, not as islands in mid-face)
     if (top && r > 0.93) pat *= 0.4;
     if (rng() > pat * (0.45 + 0.55 * shK) * (0.55 + 0.45 * age)) continue;
     var q = Pa(q3), rr = rd * (0.55 + 0.9 * rng()), tn = clamp(0.32 + 0.42 * rng() - crev * 0.3 - (1 - pat) * 0.2), b = Math.min(NB - 1, (tn * NB) | 0);
     paths[b].moveTo(q.x + rr, q.y); paths[b].ellipse(q.x, q.y, rr, rr * (0.55 + rng() * 0.35), rng() * Math.PI, 0, TAU); tone[b]++; got++;
   }
   if (!got) return;
-  ctx.save(); poly(ctx, pp); ctx.clip();
+  ctx.save();
+  if (grp) { var cpp = new Path2D(); grp.forEach(function (g3) { var gq = g3.map(Pa); cpp.moveTo(gq[0].x, gq[0].y); for (var gi = 1; gi < gq.length; gi++) cpp.lineTo(gq[gi].x, gq[gi].y); cpp.closePath(); }); ctx.clip(cpp); }   // (clipped to the whole part, so a cushion runs on over a hip instead of stopping dead at the facet's edge)
+  else { poly(ctx, pp); ctx.clip(); }
   var sdy = rd * 0.5;   // each cushion's own shadow just under it first, so the moss stands up off the stone a little (not a printed pattern)
   ctx.save(); ctx.translate(0, sdy); ctx.fillStyle = rgb(scl(shade(ramp(mp, 0.02), nf), 0.55), 0.4); for (k = 0; k < NB; k++) if (tone[k]) ctx.fill(paths[k]); ctx.restore();
   for (k = 0; k < NB; k++) {
     if (!tone[k]) continue;
-    var alb = mixc(ramp(mp, 0.04 + k * 0.08), [136, 132, 122], 0.16), col = scl(shade(alb, nf), 0.9);
+    var skyF = clamp(nf[1] * 1.6 - 0.3), alb = mixc(ramp(mp, 0.04 + k * 0.08 + skyF * (0.24 + k * 0.05)), [136, 132, 122], 0.16 - skyF * 0.06), col = scl(shade(alb, nf), 0.9);   // (on the faces open to the sky the moss is a fresher, paler green)
     ctx.fillStyle = rgb(col, 0.74); ctx.fill(paths[k]);
   }
   ctx.restore();
@@ -1252,7 +1302,7 @@ var LAMP_ON = [255, 196, 110], LAMP_OFF = [30, 26, 24];
 /* ================= lanterns ================= */
 function drawLantern(ctx, L, lit) {
   var x = L.x, z = L.z, st = [150, 146, 136], rot = Math.PI / 6 + 0.25, O = { tex: 0.5 };
-  var mr = mulberry32(6), mz = function (pr, n, a, onlyTop) { if (!sil()) pr.out.forEach(function (q) { if (!onlyTop || q.f.top) mossDabs(ctx, q.f.pts, n, mr, a); }); };   // (each part's moss laid on right after it, so the parts above cover it: it was painted last, over the firebox)
+  var mr = mulberry32(6), mz = function (pr, n, a, onlyTop) { if (sil()) return; var grp = pr.out.map(function (q) { return q.f.pts; }); pr.out.forEach(function (q) { if (!onlyTop || q.f.top) mossDabs(ctx, q.f.pts, n, mr, a, grp); }); };   // (each part's moss laid on right after it, so the parts above cover it: it was painted last, over the firebox)
   var b1 = prism(ctx, x, z, -0.02, 0.15, 0.3, 0.29, 6, rot, st, O); mz(b1, 30, 1);
   mz(prism(ctx, x, z, 0.15, 0.22, 0.29, 0.2, 6, rot, st, O), 30, 1);
   prism(ctx, x, z, 0.22, 0.95, 0.085, 0.08, 14, 0, mul(st, 0.98), O);
@@ -1305,7 +1355,7 @@ function smallLantern(ctx, x, z, lit) {
   var rf = prism(ctx, x, z, 0.5, 0.64, 0.27, 0.04, 4, rot, st, O);
   prism(ctx, x, z, 0.64, 0.72, 0.045, 0.0, 8, 0, st, O);
   if (SEA.snow && !sil()) snowCap(ctx, x, 0.62, z, 0.2, 0.05);
-  var r2 = mulberry32(9); rf.out.forEach(function (q) { mossDabs(ctx, q.f.pts, 24, r2, 1); });
+  var r2 = mulberry32(9), rgrp = rf.out.map(function (q) { return q.f.pts; }); rf.out.forEach(function (q) { mossDabs(ctx, q.f.pts, 24, r2, 1, rgrp); });
 }
 
 /* ================= taiko bridge ================= */
@@ -1371,7 +1421,19 @@ function thatchFace(ctx, E0, E1, R0, R1, n, rng, o) {
   for (b = 0; b < NB; b++) { ctx.strokeStyle = rgb(shade(pal[b], n, { amb: 1.15 })); ctx.lineWidth = 0.5 / Math.sqrt(DQ) * 1.2; ctx.stroke(paths[b]); }
   if (snow) {
     // soft snow texture: faint bluish undulations
-    for (i = 0; i < 260 * DQ; i++) { var u2 = rng(), v2 = 0.15 + rng() * 0.85, a2 = mixc(mixc(E0, E1, u2), mixc(R0, R1, u2), v2), p2 = Pa(a2); ctx.fillStyle = rng() < 0.5 ? 'rgba(170,186,214,0.18)' : 'rgba(255,255,255,0.3)'; ctx.beginPath(); ctx.ellipse(p2.x, p2.y, 2 + rng() * 3, 0.6 + rng(), 0, 0, TAU); ctx.fill(); }
+    // (v2) the snow lies in soft runnels down the fall of the straw, a shadowed groove and a lit crest side by side, fading out
+    // towards the eave where the straw shows: it was a scatter of pale round blots, polka dots on a blue sheet
+    var sGr = new Path2D(), sCr = new Path2D(), ssd = Math.sign(LS[0]) || 1;
+    for (i = 0; i < 150 * DQ; i++) {
+      var u2 = rng(), v2 = 0.18 + Math.pow(rng(), 0.8) * 0.8, a2 = mixc(mixc(E0, E1, u2), mixc(R0, R1, u2), v2), up2 = sub(mixc(R0, R1, u2), mixc(E0, E1, u2)), b2 = add(a2, mul(up2, 0.12 + rng() * 0.3));
+      var p2 = Pa(a2), q2 = Pa(b2), dw = (0.025 + rng() * 0.03) * p2.k;
+      sGr.moveTo(p2.x, p2.y); sGr.lineTo(q2.x, q2.y); sCr.moveTo(p2.x + ssd * dw, p2.y); sCr.lineTo(q2.x + ssd * dw, q2.y);
+    }
+    ctx.lineCap = 'round'; ctx.lineWidth = Math.max(0.5, 0.035 * Pa(mixc(E0, R1, 0.5)).k);
+    ctx.strokeStyle = rgb(scl(shade([170, 184, 210], n), 0.95), 0.16); ctx.stroke(sGr); ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.stroke(sCr); ctx.lineCap = 'butt';
+    var eg0 = Pa(mixc(E0, E1, 0.5)), eg1 = Pa(mixc(mixc(E0, E1, 0.5), mixc(R0, R1, 0.5), 0.3)), egr = ctx.createLinearGradient(eg0.x, eg0.y, eg1.x, eg1.y);
+    egr.addColorStop(0, rgb(scl(shade([150, 160, 186], n), 0.9), 0.3)); egr.addColorStop(1, 'rgba(160,170,196,0)'); ctx.fillStyle = egr;
+    poly(ctx, pp); ctx.fill();   // the rounded overhang of the snow at the eave, in its own soft shadow
   } else {
     // moss in the old thatch: soft olive patches low on the roof, lying along the straw, thickest in their middles (not dots)
     var tu = sub(mixc(R0, R1, 0.5), mixc(E0, E1, 0.5)), tpe = Pa(mixc(E0, E1, 0.5)), tpr = Pa(mixc(R0, R1, 0.5)), tang = Math.atan2(tpr.y - tpe.y, tpr.x - tpe.x);
@@ -1497,9 +1559,9 @@ function drawFence(ctx, gap) {
     // weather: grey streaks washed down under the rails, and a green bloom of algae creeping up from the damp ground
     if (!SEA.snow) { var wr2 = mulberry32(19);
       for (var wk = 0; wk < (b - a) * 3; wk++) { var wxs = a + wr2() * (b - a), wy0 = [0.32, 0.9, 1.48][(wr2() * 3) | 0] - 0.04, wlen = 0.15 + wr2() * 0.35, w0p = P(wxs, wy0, zf - 0.002), w1p = P(wxs, wy0 - wlen, zf - 0.002), wg2 = ctx.createLinearGradient(0, w0p.y, 0, w1p.y); wg2.addColorStop(0, 'rgba(96,92,84,0.3)'); wg2.addColorStop(1, 'rgba(96,92,84,0)'); ctx.fillStyle = wg2; ctx.fillRect(w0p.x - 0.5 * (0.04 + wr2() * 0.06) * w0p.k, w0p.y, (0.04 + wr2() * 0.06) * w0p.k, w1p.y - w0p.y); }
-      for (var ak = 0; ak < (b - a) * 9; ak++) { var axs = a + wr2() * (b - a), anv = NZ.n2(axs * 1.3, 7.7); if (anv < 0.4) continue; var ah = (0.12 + wr2() * 0.36) * (0.5 + anv), a0p = P(axs, 0, zf - 0.002), a1p = P(axs, ah, zf - 0.002), ag = ctx.createLinearGradient(0, a0p.y, 0, a1p.y), acl = wr2() < 0.6 ? [62, 88, 44] : [92, 112, 58]; ag.addColorStop(0, rgb(shade(acl, n), 0.85 * anv + 0.15)); ag.addColorStop(0.55, rgb(shade(acl, n), 0.4 * anv)); ag.addColorStop(1, rgb(shade(acl, n), 0)); ctx.fillStyle = ag; ctx.fillRect(a0p.x - 0.05 * a0p.k, a1p.y, (0.05 + wr2() * 0.12) * a0p.k, a0p.y - a1p.y); }
+      for (var ak = 0; ak < (b - a) * 9; ak++) { var axs = a + wr2() * (b - a), anv = NZ.n2(axs * 1.3, 7.7); if (anv < 0.4) continue; var ah = Math.min(0.27, (0.12 + wr2() * 0.36) * (0.5 + anv)), a0p = P(axs, 0, zf - 0.002), a1p = P(axs, ah, zf - 0.002), ag = ctx.createLinearGradient(0, a0p.y, 0, a1p.y), acl = wr2() < 0.6 ? [62, 88, 44] : [92, 112, 58]; ag.addColorStop(0, rgb(shade(acl, n), 0.85 * anv + 0.15)); ag.addColorStop(0.55, rgb(shade(acl, n), 0.4 * anv)); ag.addColorStop(1, rgb(shade(acl, n), 0)); ctx.fillStyle = ag; ctx.fillRect(a0p.x - 0.05 * a0p.k, a1p.y, (0.05 + wr2() * 0.12) * a0p.k, a0p.y - a1p.y); }
       var amp2 = new Path2D(), amp3 = new Path2D();   /* the bloom itself: soft green flecks clustered on the culms low down, thinning upward */
-      for (var am = 0; am < (b - a) * 80; am++) { var amx = a + wr2() * (b - a), amv = NZ.n2(amx * 1.3, 7.7); if (amv < 0.42 || wr2() > amv) continue; var amy = Math.pow(wr2(), 2.2) * (0.2 + amv * 0.55), amq = P(amx, amy, zf - 0.003), amr = (0.016 + wr2() * 0.03) * amq.k, amP = wr2() < 0.55 ? amp2 : amp3; amP.moveTo(amq.x + amr, amq.y); amP.ellipse(amq.x, amq.y, amr, amr * 1.6, 0, 0, TAU); }
+      for (var am = 0; am < (b - a) * 80; am++) { var amx = a + wr2() * (b - a), amv = NZ.n2(amx * 1.3, 7.7); if (amv < 0.42 || wr2() > amv) continue; var amy = Math.pow(wr2(), 2.2) * (0.17 + amv * 0.14), onR = wr2() < 0.16; if (onR) amy = 0.362 + wr2() * 0.03; var amq = P(amx, amy, zf - 0.003), amr = (0.016 + wr2() * 0.03) * (onR ? 0.6 : 1) * amq.k, amP = wr2() < 0.55 ? amp2 : amp3; amP.moveTo(amq.x + amr, amq.y); amP.ellipse(amq.x, amq.y, amr * (onR ? 1.5 : 1), amr * (onR ? 0.7 : 1.6), 0, 0, TAU); }
       ctx.fillStyle = rgb(shade([58, 84, 42], n), 0.62); ctx.fill(amp2); ctx.fillStyle = rgb(shade([104, 124, 64], n), 0.52); ctx.fill(amp3);
     }
     ctx.save(); poly(ctx, [[a, 0, zf], [b, 0, zf], [b, Hh, zf], [a, Hh, zf]].map(Pa)); ctx.clip(); ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = 0.35; ctx.fillStyle = GRAINPAT; ctx.fillRect(0, 0, W, H);
@@ -1576,7 +1638,7 @@ function drawHill(ctx) {
   if (S) return;
   var pts = [], N = 10000 * DQ;   // (many small dabs of every size: a moss carpet, not a sheet of equal dots)
   for (i = 0; i < N; i++) {
-    var a3 = rng() * TAU, r3 = Math.sqrt(rng()), x3 = h.x + Math.cos(a3) * r3 * h.rx, z3 = h.z + Math.sin(a3) * r3 * h.rz, y3 = hillH(x3, z3), e = 0.03;
+    var a3 = rng() * TAU, r3 = Math.sqrt(rng()) * (SEA.snow ? 1 : 1.03), x3 = h.x + Math.cos(a3) * r3 * h.rx, z3 = h.z + Math.sin(a3) * r3 * h.rz, y3 = hillH(x3, z3), e = 0.03;
     var nx = -(hillH(x3 + e, z3) - hillH(x3 - e, z3)) / (2 * e), nz = -(hillH(x3, z3 + e) - hillH(x3, z3 - e)) / (2 * e);
     pts.push({ x: x3, y: y3, z: z3, n: norm([nx, 1, nz]), p: P(x3, y3, z3) });
   }
@@ -1587,7 +1649,7 @@ function drawHill(ctx) {
   pts.forEach(function (q) {
     // tone: the slope to the sun, then cushions of moss (each lit on its sunward side), then a little scatter
     var cuq = NZ.n2(q.x * 7.3 + q.z * 4.1, q.z * 7.3 - q.x * 4.1), cul = NZ.n2(q.x * 7.3 + q.z * 4.1 + 0.12 * SUN[0], q.z * 7.3 - q.x * 4.1 + 0.12 * SUN[2]) - cuq;
-    var l = clamp(0.22 + 0.62 * dot(q.n, SUN) + (NZ.n2(q.x * 2.2 + 3, q.z * 2.2) - 0.5) * 0.24 + (cuq - 0.5) * 0.2 + cul * 1.1 + (rng() - 0.5) * 0.08), alt = SEA.snow && NZ.n2(q.x * 3 + 7, q.z * 3) < 0.3 ? 1 : 0;
+    var l = clamp(0.22 + 0.62 * dot(q.n, SUN) + (NZ.n2(q.x * 2.2 + 3, q.z * 2.2) - 0.5) * 0.24 + (cuq - 0.5) * 0.2 + cul * 1.1 + (rng() - 0.5) * 0.08 - (SEA.snow ? 0.08 : 0.2) * (1 - clamp(q.y / (h.h * 0.3)))), alt = SEA.snow && NZ.n2(q.x * 3 + 7, q.z * 3) < 0.3 ? 1 : 0;
     var ix = alt * NB + Math.min(NB - 1, Math.round(l * (NB - 1))), rx = 0.036 * q.p.k * (0.55 + rng() * 0.9) / dq;
     bp[ix].moveTo(q.p.x + rx, q.p.y); bp[ix].ellipse(q.p.x, q.p.y, rx, rx * (0.5 + rng() * 0.35), (rng() - 0.5) * 0.9, 0, TAU);
   });
@@ -1738,7 +1800,8 @@ function drawTsukubai(ctx) {
   bamboo(ctx, [x - 0.6, 0.72, z + 0.1], [x - 0.12, 0.6, z + 0.02], 0.024, [170, 154, 96]);
   // the basin: a round stone with a carved square pool
   var bsn = prism(ctx, x, z, 0, 0.32, 0.24, 0.22, 20, 0, [146, 140, 128], { tex: 0.55 });
-  if (!S) bsn.out.forEach(function (q) { if (!q.f.top) mossDabs(ctx, q.f.pts, 34, rng, 1.1); });   // (on its own sides, damp from the splash: no longer a triangle of dots on the ground)
+  var bgrp = bsn.out.filter(function (q) { return !q.f.top; }).map(function (q) { return q.f.pts; });
+  if (!S) bsn.out.forEach(function (q) { if (!q.f.top) mossDabs(ctx, q.f.pts, 34, rng, 1.5, bgrp); });   // (on its own sides, damp from the splash: no longer a triangle of dots on the ground)
   if (!S) {
     var c = P(x, 0.322, z), rx = 0.12 * c.k, ry = rx * CAM.s * 1.1;
     ctx.fillStyle = 'rgb(30,30,28)'; ctx.beginPath(); ctx.ellipse(c.x, c.y, rx * 1.06, ry * 1.12, 0, 0, TAU); ctx.fill();
@@ -1811,6 +1874,7 @@ function drawPagoda(ctx, x, yb, s, col, lit) {
 function pagodaPos() { return { x: P(LX(0.75), 0, LZ(12)).x, y: Math.min(CAM.cy - 124, P(0, 1.72, LAY.fenceZ).y - 6) }; }
 function paintBackdrop(ctx) {
   var rng = mulberry32(301), L = LIT, yo = CAM.cy - 204, night = L.id === 'night', dayMoonP = null;
+  MOONCUT = null;
   var top = mixc(L.skyTop, SEA.sky, night ? 0 : 0.25), hor = L.skyHor;
   var yH = 130 + yo;
   var g = ctx.createLinearGradient(0, 0, 0, yH); g.addColorStop(0, rgb(top)); g.addColorStop(0.6, rgb(mixc(top, hor, 0.7))); g.addColorStop(1, rgb(hor)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, yH + 20);
@@ -1820,8 +1884,7 @@ function paintBackdrop(ctx) {
     var sr = mulberry32(5);
     for (var i = 0; i < 160; i++) { var x = sr() * W, y = sr() * (yH - 30), a = 0.25 + sr() * 0.6, r = 0.25 + sr() * 0.5; ctx.fillStyle = 'rgba(230,236,255,' + a * clamp(1 - y / yH) + ')'; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); }
     // moon
-    var mx = W * 0.17, my = 30 + yo * 0.5, mr = 9;
-    if (EVT === 'tsukimi') mr = 0;
+    var ms = EVT === 'tsukimi' ? null : moonSpot(yo, 9, 6, false), mx = ms ? ms.x : 0, my = ms ? ms.y : 0, mr = ms ? ms.r : 0;   // (it sat behind the far ridge in every frame the app shows: never seen)
     var mg = ctx.createRadialGradient(mx, my, mr * 0.5, mx, my, mr * 6); mg.addColorStop(0, 'rgba(220,230,255,0.35)'); mg.addColorStop(1, 'rgba(200,215,255,0)'); ctx.fillStyle = mg; ctx.fillRect(mx - mr * 6, my - mr * 6, mr * 12, mr * 12);
     var dmo = { warmth: 0.05, haze: 0.2, alt: 0.9, tilt: 0.1, glow: false, sglow: 0.55 };
     if (mr && MOONKEY) { ctx.fillStyle = 'rgb(255,0,255)'; ctx.beginPath(); ctx.arc(mx, my, mr + 0.3, 0, TAU); ctx.fill(); }   // (its key, for the crisp pass after the grade)
@@ -1840,6 +1903,8 @@ function paintBackdrop(ctx) {
   layers.forEach(function (Ly, li) {
     var pts = [], step = 2;
     for (var x2 = -10; x2 <= W + 10; x2 += step) pts.push([x2, yo + Ly.y - Ly.amp * NZ.fbm(x2 * Ly.f + li * 7, li * 3.1, 4) * 1.6 + Ly.amp * 0.4]);
+    var mcut = MOONCUT && MOONCUT[li];
+    if (mcut) pts.forEach(function (p) { var gq = mcut.g(p[0]); p[1] += Math.max(0, mcut.T - p[1]) * gq + Math.abs(NZ.fbm(p[0] * 0.09 + li * 5, 9.3, 3) - 0.5) * 3.2 * gq * Math.min(1, Math.max(0, mcut.T - p[1]) / 4); });   // (the col the moon sits in: see moonSpot; its floor ragged, only ever lower, so the moon stays clear)
     function ridgeY(x) { var f = (x + 10) / step, i0 = Math.max(0, Math.min(pts.length - 2, Math.floor(f))); return lerp(pts[i0][1], pts[i0 + 1][1], clamp(f - i0)); }
     var lcol = mixc(mulc(Ly.col, lt), haze, Ly.hz);
     if (SEA.snow && li < 2) lcol = mixc(lcol, mulc([236, 240, 248], lt), 0.55 - li * 0.15);
@@ -1866,13 +1931,15 @@ function paintBackdrop(ctx) {
     for (k = 0; k < NS; k++) { var al = (k + 0.5) / NS; ctx.fillStyle = rgb(scl(lcol, 0.66), al * 0.55); ctx.fill(sb[k]); ctx.fillStyle = rgb(mixc(lcol, [255, 250, 240], 0.3), al * 0.42); ctx.fill(sb[NS + k]); }
     ctx.restore();
     if (SEA.snow && li < 3) { // snow caps on ridges
-      ctx.save(); ctx.clip(sil2); ctx.fillStyle = rgb(mulc([244, 246, 250], lt), 0.55); ctx.beginPath(); pts.forEach(function (p, k) { if (k) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); }); for (var k2 = pts.length - 1; k2 >= 0; k2--) ctx.lineTo(pts[k2][0], pts[k2][1] + 6 + NZ.n2(pts[k2][0] * 0.1, li) * 6); ctx.closePath(); ctx.fill(); ctx.restore();
+      ctx.save(); ctx.clip(sil2); ctx.fillStyle = rgb(mulc([244, 246, 250], lt), 0.55); ctx.beginPath(); pts.forEach(function (p, k) { if (k) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); }); for (var k2 = pts.length - 1; k2 >= 0; k2--) { var sx5 = pts[k2][0], gul = Math.pow(Math.abs(NZ.n2(sx5 * 0.21 + li * 4, 3.3) * 2 - 1), 0.6), sd5 = (2 + 12 * NZ.fbm(sx5 * 0.03 + li * 2.7, li + 8, 3)) * (0.35 + 0.65 * gul) * (1 + 0.6 * clamp((pts[k2][1] - (yo + Ly.y - Ly.amp)) / (Ly.amp * 1.6))); ctx.lineTo(sx5, pts[k2][1] + sd5); }   // (the snow reaching far down the shallow faces and the gullies, thin on the spurs: a cap of one depth along the whole range read as a painted stripe)
+      ctx.closePath(); ctx.fill(); ctx.restore();
     }
     if (Ly.tree > 0) {
       // the forest: crowns with a lit cap and a shaded underside, densest along the ridge, thinning into the mist below
       var cnt = Math.floor((1150 * Ly.tree + 260) * Math.min(1.6, DQ)), NB = 3, sets = [], i2, b;
       var bodyC = mixc(lcol, forest, Ly.tree * 0.5), ovK = (L.overcast || 0) * clamp(0.85 - li * 0.2);
-      crowns.forEach(function (cc) { for (b = 0; b < NB; b++) { var c = mixc(mulc(scl(cc, 0.8 + (b + 0.5) / NB * 0.24), lt), haze, Ly.hz * 0.78 + 0.04); if (SEA.snow) c = mixc(c, lcol, 0.35); if (ovK) c = mixc(c, bodyC, ovK); sets.push({ c: c, sh: new Path2D(), bd: new Path2D(), lt: new Path2D(), lo: new Path2D() }); } });
+      var hzD = Ly.hz * (0.78 + 0.3 * clamp(1 - li / 2)) + 0.04, shK = li ? 1 : 0.45;   // (the far ranges: their crowns hazed as much as the hill under them, or they read as dark speckle on a pale slope)
+      crowns.forEach(function (cc) { for (b = 0; b < NB; b++) { var c = mixc(mulc(scl(cc, 0.8 + (b + 0.5) / NB * 0.24), lt), haze, hzD); if (SEA.snow) c = mixc(c, lcol, 0.35); if (ovK) c = mixc(c, bodyC, ovK); sets.push({ c: c, sh: new Path2D(), bd: new Path2D(), lt: new Path2D(), lo: new Path2D() }); } });
       for (i2 = 0; i2 < cnt; i2++) {
         var x3 = rng() * (W + 16) - 8, yr = ridgeY(x3), dep = Math.pow(rng(), 1.5), y3 = yr + dep * (Ly.amp * 2.6 + 8) + 0.6;
         var r3 = (0.75 + rng() * 0.9) * Ly.cr * (1 - dep * 0.35) / Math.sqrt(Math.min(1.6, DQ)), S2 = sets[(rng() * sets.length) | 0], body = dep > 0.55 ? S2.lo : S2.bd;
@@ -1881,7 +1948,7 @@ function paintBackdrop(ctx) {
         if (dep < 0.7) { S2.lt.moveTo(x3 + sgn * r3 * 0.3 + r3 * 0.5, y3 - r3 * 0.32); S2.lt.ellipse(x3 + sgn * r3 * 0.3, y3 - r3 * 0.32, r3 * 0.5, r3 * 0.36, 0, 0, TAU); }
       }
       var aK = 0.55 + 0.4 * Ly.tree;
-      sets.forEach(function (S3) { ctx.fillStyle = rgb(scl(S3.c, 0.72), 0.5 * aK); ctx.fill(S3.sh); ctx.fillStyle = rgb(S3.c, 0.85 * aK); ctx.fill(S3.bd); ctx.fillStyle = rgb(S3.c, 0.45 * aK); ctx.fill(S3.lo); ctx.fillStyle = rgb(mixc(scl(S3.c, 1.18), [255, 250, 236], 0.12), 0.6 * aK); ctx.fill(S3.lt); });
+      sets.forEach(function (S3) { ctx.fillStyle = rgb(scl(S3.c, 0.72 + 0.12 * (1 - shK)), 0.5 * aK * shK); ctx.fill(S3.sh); ctx.fillStyle = rgb(S3.c, 0.85 * aK); ctx.fill(S3.bd); ctx.fillStyle = rgb(S3.c, 0.45 * aK); ctx.fill(S3.lo); ctx.fillStyle = rgb(mixc(scl(S3.c, 1.18), [255, 250, 236], 0.12), 0.6 * aK); ctx.fill(S3.lt); });
     }
     if (li === 1) { paintRainVeil(ctx, yo); paintRainbow(ctx, yo); }   // a rainbow stands in front of the far hills
     if (li === 1) drawRidgeTemple(ctx, P(LX(-1.0), 0, LZ(12)).x, ridgeY, Ly, haze, lt);
@@ -2057,7 +2124,8 @@ function drawWisteria(ctx) {
     var pal = season === 'spring' ? [[40, 66, 22], [70, 100, 34], [112, 140, 54], [156, 176, 84], [196, 208, 126], [222, 230, 164]]
       : season === 'summer' ? [[10, 26, 14], [20, 44, 20], [36, 70, 30], [62, 100, 42], [98, 132, 60], [140, 164, 86]]
         : [[70, 58, 20], [116, 96, 30], [162, 136, 44], [200, 172, 66], [226, 204, 104], [240, 224, 150]];
-    paintFoliage(ctx, cl, { pal: pal, center: [(x0 + x1) / 2, h, zc], R: 1.0, kind: 'oval', dab: 0.045, density: season === 'summer' ? 1.3 : season === 'spring' ? 0.75 : 0.6, max: 140, seed: 713, sparse: season !== 'summer', tint: tint, flat: 0.55, litBase: LIT.moon ? 0.26 : 0.5, moonK: 0.3 });   // at night: a flat roof of leaves would all catch the moon and glow
+    if (LIT.moon) pal = pal.map(function (c, ix) { return scl(c, 0.62 + 0.06 * (pal.length - 1 - ix) / (pal.length - 1)); });   // (by night the thin new leaves are no paler than the rest of the garden: the canopy glowed white-green like frost)
+    paintFoliage(ctx, cl, { pal: pal, center: [(x0 + x1) / 2, h, zc], R: 1.0, kind: 'oval', dab: 0.045, density: season === 'summer' ? 1.3 : season === 'spring' ? 0.75 : 0.6, max: 140, seed: 713, sparse: season !== 'summer' && !LIT.moon, tint: tint, flat: 0.55, litBase: LIT.moon ? 0.26 : 0.5, moonK: 0.3 });   // at night: a flat roof of leaves would all catch the moon and glow
     if (season === 'summer' && !S) { // short leafy fringes where the flowers were
       var fr = mulberry32(714); ctx.fillStyle = rgb(tc(mulc([46, 86, 34], lt), tint));
       for (i = 0; i < 40 * g; i++) { var fx = lerp(x0 - 0.1, x1 + 0.1, fr()), fz = lerp(z0 - 0.05, z1 + 0.05, fr()), fp = P(fx, h - 0.02, fz); if (fz > zc) continue; ctx.beginPath(); ctx.ellipse(fp.x, fp.y + 0.08 * fp.k, 0.025 * fp.k, 0.1 * fp.k, 0, 0, TAU); ctx.fill(); }
@@ -2391,28 +2459,35 @@ function paintFullMoon(ctx, x, y, r, o) {
   var cv = document.createElement('canvas'); cv.width = cv.height = N;
   var cx2 = cv.getContext('2d'), im = cx2.createImageData(N, N), D = im.data;
   // the maria: [lon E+, lat N+, half-width, half-height (degrees), depth]
-  var MARE = [[-17, 34, 19, 15, 1], [-31, 45, 8, 5, 0.8], [18, 27, 11, 10, 0.85], [30, 8, 13, 10, 1], [20, 4, 8, 6, 0.9], [39, 14, 6, 5, 0.85], [4, 13, 6, 4, 0.8], [1, 2, 3.5, 3, 0.6],
-    [59, 17, 9, 8, 1], [51, -6, 9, 12, 0.8], [34, -15, 6, 6, 0.72], [-17, -21, 13, 9, 0.78], [-23, -10, 7, 5, 0.72], [-39, -24, 7, 6, 0.85],
+  var MARE = [[-17, 34, 18.5, 15, 1], [-31, 45, 8, 5, 0.8], [18, 27, 11, 10.5, 0.95], [31, 8, 14, 11, 1], [20, 4, 8, 6, 0.9], [39, 14, 6, 5, 0.85], [4, 13, 6, 4, 0.8], [1, 2, 3.5, 3, 0.6],
+    [59, 17, 9, 8, 1], [51, -5, 10, 13, 0.9], [34, -15, 7, 7, 0.82], [-17, -21, 13, 9, 0.78], [-23, -10, 7, 5, 0.72], [-39, -24, 7, 6, 0.85],
     [-30, 8, 10, 6, 0.75], [-8, 12, 6, 4, 0.65], [-56, 35, 13, 12, 0.95], [-60, 15, 13, 13, 1], [-52, 0, 12, 10, 0.92], [-62, -10, 9, 8, 0.8], [-41, 20, 9, 10, 0.85], [-50, -16, 6, 5, 0.6],
-    [0, 57, 40, 5.5, 0.4], [-32, 55, 16, 5, 0.42], [86, 13, 5, 6, 0.55], [86, -2, 4, 5, 0.5], [80, 57, 6, 3, 0.45]];
+    [0, 57, 40, 5.5, 0.4], [-32, 55, 16, 5, 0.42], [86, 13, 5, 6, 0.55], [86, -2, 4, 5, 0.5], [80, 57, 6, 3, 0.45],
+    [24, 18, 5, 4, 0.8], [42, -2, 5, 6, 0.75], [28, -7, 4, 4, 0.7]];   // (the last three: the straits joining Serenitatis, Tranquillitatis, Fecunditatis and Nectaris into the rabbit's head and ears)
   var SPOT = [[-11.4, -43.3, 1.2, 0.22], [-20, 9.6, 1.4, 0.16], [-38, 8.1, 1, 0.13], [-47.5, 23.7, 0.9, 0.3], [46.8, 16.1, 0.8, 0.13], [16, 16.3, 0.6, 0.1], [61, -8.9, 1.1, 0.08], [-5, -30, 0.7, 0.06]];
+  // how dark each sea is (as MARE): Serenitatis, Tranquillitatis and Crisium the darkest, Procellarum and Nubium paler and patchy
+  var TONE = [0.8, 0.72, 1, 1.05, 1, 0.95, 0.85, 0.7, 1.05, 0.86, 0.8, 0.68, 0.62, 0.92, 0.56, 0.78, 0.72, 0.76, 0.7, 0.62, 0.8, 0.6, 0.62, 0.62, 0.8, 0.78, 0.74, 1, 0.95, 0.85];
+  var nsk = 0.4 + 0.6 * cl((rp - 20) / 90);   // (small on screen: the shores' fine wobble dropped, or the seas break up into a scatter of grey blots)
   function vec(lo, la) { lo /= DEG; la /= DEG; return [Math.cos(la) * Math.sin(lo), Math.sin(la), Math.cos(la) * Math.cos(lo)]; }
   var TY = vec(-11.4, -43.3), tl = -11.4 / DEG, tb = -43.3 / DEG, tE = [Math.cos(tl), 0, -Math.sin(tl)], tN = [-Math.sin(tb) * Math.sin(tl), Math.cos(tb), -Math.sin(tb) * Math.cos(tl)];
   var RAYB = [], RW = [], i, k;
   var RL = [];
   for (k = 0; k < 11; k++) { RAYB.push(k / 11 * Math.PI * 2 + (hs(k, 3) - 0.5) * 0.5); RW.push(0.03 + hs(k, 7) * 0.06); RL.push(0.25 + Math.pow(hs(k, 11), 2) * 0.9); }   // (uneven rays: a few long, most short, broken: not a regular starburst)
-  var con = (0.25 - 0.08 * haze) * (1 - 0.2 * warm), ct = Math.cos(tilt), st = Math.sin(tilt);
+  var con = (0.38 - 0.1 * haze) * (1 - 0.45 * warm), ct = Math.cos(tilt), st = Math.sin(tilt);
   for (var j = 0; j < N; j++) for (i = 0; i < N; i++) {
     var u = (i + 0.5 - h) / rp, v = (j + 0.5 - h) / rp, sy = -v, rho = Math.hypot(u, v);
     if (rho > 1 + 1.5 / rp) continue;
     var a = u * ct + sy * st, b = -u * st + sy * ct, rr = Math.hypot(a, b); if (rr > 1) { a /= rr; b /= rr; }
     var z = Math.sqrt(Math.max(0, 1 - a * a - b * b)), la = Math.asin(b) * DEG, lo = Math.atan2(a, z) * DEG, m = 0;
-    var wlo = lo + (fb(lo * 0.05 + 11, la * 0.05) - 0.5) * 11, wla = la + (fb(lo * 0.05, la * 0.05 + 23) - 0.5) * 8, fm = 0;   // (the shores warped, one field for all: the seas run into one another, not separate round spots)
+    var wlo = lo + (fb(lo * 0.05 + 11, la * 0.05) - 0.5) * 11, wla = la + (fb(lo * 0.05, la * 0.05 + 23) - 0.5) * 8, fm = 0, tS = 0, tW = 0;   // (the shores warped, one field for all: the seas run into one another, not separate round spots)
     for (k = 0; k < MARE.length; k++) {
       var R = MARE[k], dx = (wlo - R[0]) * Math.cos(R[1] / DEG), dy = wla - R[1]; if (Math.abs(dx) > R[2] * 2.6 || Math.abs(dy) > R[3] * 2.6) continue;
-      var d2 = (dx * dx) / (R[2] * R[2]) + (dy * dy) / (R[3] * R[3]); fm = 1 - (1 - fm) * (1 - Math.exp(-d2 * 1.05) * R[4]);
+      var d2 = (dx * dx) / (R[2] * R[2]) + (dy * dy) / (R[3] * R[3]), g0 = Math.exp(-d2 * 1.05); fm = 1 - (1 - fm) * (1 - g0 * R[4]); tS += g0 * TONE[k]; tW += g0;
     }
-    m = ss(0.28, 0.64, fm + (fb(lo * 0.16 + 7, la * 0.16) - 0.5) * 0.26 + (fb(lo * 0.7 + 3, la * 0.7 + 9) - 0.5) * 0.16) *(0.66 + 0.18 * fm + 0.22 * fb(lo * 0.2 + 50, la * 0.2));
+    fm *= 1 - 0.85 * Math.exp(-Math.pow((lo - 3) / 4.5, 2) - Math.pow((la - 34) / 10, 2));   // the bright wedge of the Apennines and the Caucasus between Imbrium and Serenitatis
+    var tn = tW > 0 ? tS / tW : 0.8, cp = 0;
+    for (k = 0; k < 2; k++) { var Cq = k ? [-38, 8.1, 5] : [-20, 9.6, 8], ex = (lo - Cq[0]) * Math.cos(Cq[1] / DEG), ey = la - Cq[1], dd = Math.hypot(ex, ey); if (dd < Cq[2] * 4) cp += Math.exp(-dd / Cq[2]) * (0.3 + 0.7 * ss(0.45, 0.8, vn(Math.atan2(ey, ex) * 4 + k * 9, dd * 0.12 + k))); }   // Copernicus' and Kepler's bright splash streaked across the western seas
+    m = ss(0.22, 0.7, fm + ((fb(lo * 0.16 + 7, la * 0.16) - 0.5) * 0.26 + (fb(lo * 0.7 + 3, la * 0.7 + 9) - 0.5) * 0.16) * nsk) * (0.4 + 0.6 * tn) * (0.8 + 0.32 * fb(lo * 0.2 + 50, la * 0.2)) * (1 - 0.45 * Math.min(1, cp));
     var hm = (fb(lo * 0.3 + 40, la * 0.3) - 0.5) * 0.13 + (vn(lo * 1.4, la * 1.4) - 0.5) * 0.06 + (vn(lo * 4, la * 4) - 0.5) * 0.03;
     var p = [a, b, z], cd = p[0] * TY[0] + p[1] * TY[1] + p[2] * TY[2], dt = Math.acos(Math.max(-1, Math.min(1, cd))), ray = 0;
     if (dt < 1.3) {
@@ -2423,9 +2498,9 @@ function paintFullMoon(ctx, x, y, r, o) {
     var sp = 0;
     for (k = 0; k < SPOT.length; k++) { var S = SPOT[k], sx2 = (lo - S[0]) * Math.cos(S[1] / DEG), sy2 = la - S[1]; sp += Math.exp(-(sx2 * sx2 + sy2 * sy2) / (S[2] * S[2])) * S[3] + Math.exp(-(sx2 * sx2 + sy2 * sy2) / (S[2] * S[2] * 16)) * S[3] * 0.12; }
     var L = (1 - con * m + hm * (1 - 0.5 * m) * (1 - 0.4 * haze) + ray * 0.075 + sp) * (0.86 + 0.14 * Math.pow(z, 0.4)) * bright;
-    var mb = m * (1 - warm * 0.7), col = [tint[0] * L * (1 - 0.08 * mb), tint[1] * L * (1 - 0.03 * mb), tint[2] * L * (1 + 0.06 * mb)];
-    var lowF = ss(0.05, 1.05, v) * haze * (1 - alt), al = cl((1 - rho) * rp + 0.5) * (1 - lowF * 0.5);
-    col = [col[0] + (hz[0] - col[0]) * lowF * 0.55, col[1] + (hz[1] - col[1]) * lowF * 0.55, col[2] + (hz[2] - col[2]) * lowF * 0.55];
+    var mb = m * (1 - warm * 0.7), col = [tint[0] * L * (1 - 0.05 * mb), tint[1] * L * (1 - 0.025 * mb), tint[2] * L * (1 + 0.035 * mb * (tn - 0.6) * 2.5)];   // (the dark eastern seas a shade bluer, the pale western ones a grey-brown)
+    var lowF = ss(0.05, 1.05, v) * haze * (1 - alt), al = cl((1 - rho) * rp + 0.5) * (1 - lowF * 0.16);   // (the foot dimmed and reddened by the long air path, not see-through: a half-clear foot over the ridge read as a second, paler disc)
+    col = [(col[0] + (hz[0] - col[0]) * lowF * 0.4) * (1 - 0.08 * lowF), (col[1] + (hz[1] - col[1]) * lowF * 0.4) * (1 - 0.16 * lowF), (col[2] + (hz[2] - col[2]) * lowF * 0.4) * (1 - 0.24 * lowF)];
     var o4 = (j * N + i) * 4; D[o4] = Math.min(255, col[0]); D[o4 + 1] = Math.min(255, col[1]); D[o4 + 2] = Math.min(255, col[2]); D[o4 + 3] = al * 255;
   }
   cx2.putImageData(im, 0, 0);
@@ -2437,18 +2512,33 @@ function paintFullMoon(ctx, x, y, r, o) {
    behind the ridge and in the haze; at night high, silver-white and brighter, its glow lighting the clouds near it. Painted after
    the clouds and before the hills, so every ridge, tree and roof stands in front of it */
 var MOONP = null, MOONKEY = false;   // MOONP: where the event moon was painted (for its crisp pass); MOONKEY: the backdrop painted again with the moon as a key colour
+/* where the moon sits (the everyday night moon and the tsukimi moon, by one rule): by the pagoda, in the gap the big trees leave,
+   and whole in the sky. The 4:3 frames (desk, the phone's box) have little sky over the far peaks and the wide phone view none at
+   all, so the ranges behind it dip in a col there, each one only down behind the next nearer range (a saddle between peaks, never
+   a hole in a hill), and the disc is made smaller as far as it must. Sets MOONCUT for the ridge layers; returns { x, y, r } or null */
+var MOONCUT = null, RIDGEL = [[25, 16, 0.012, 0.55], [45, 14, 0.02, 0.85], [65, 12, 0.03, 1.15], [87, 10, 0.045, 1.45]];   // (y, amp, f, crown size: as the layers in paintBackdrop)
+function moonSpot(yo, rT, rMin, dusk) {
+  var x = pagodaPos().x + (F.namiki ? -24 : 16), li, k, q, cut = [];
+  function ry(l, xx) { var Ly = RIDGEL[l]; return yo + Ly[0] - Ly[1] * NZ.fbm(xx * Ly[2] + l * 7, l * 3.1, 4) * 1.6 + Ly[1] * 0.4; }
+  function top(l, hw) { var t = 1e9, c = cut[l]; for (q = -8; q <= 8; q++) { var xx = x + q * hw / 8, y = ry(l, xx); if (c) y += Math.max(0, c.T - y) * c.g(xx); t = Math.min(t, y - RIDGEL[l][3] * 2.4); } return t; }
+  var hw0 = rT * 1.1 + 2, S = -1e9, rr = 0;
+  for (k = 0; k < 3; k++) { S = 1e9; for (li = k; li < 4; li++) S = Math.min(S, top(li, hw0)); rr = (S - 2.5) / 2.15; if (rr >= rMin) break; }
+  if (rr < rMin) return null;
+  var r = Math.min(rT, rr);
+  for (li = 0; li < k; li++) (function (l) { var w = r * 1.6 + 12 + 6 * l, xc = x + r * (l ? -0.3 : 0.35), sd = l ? -1 : 1; cut[l] = { T: S + RIDGEL[l][3] * 2.4 + 2, li: l, g: function (xx) { var dx = xx - xc, ww = dx * sd > 0 ? w * 1.7 : w * 0.85, e = Math.exp(-Math.pow(Math.abs(dx) / ww, 1.8)), n = NZ.fbm(xx * 0.045 + l * 3.3, 4.7, 3) * 0.7 + NZ.n2(xx * 0.16 + l, 2.2) * 0.3; return e * (1 - 0.85 * (1 - e) * n); } }; })(li);   // (the shoulders broken by spurs and knolls, as hills are)   // (broad, off the moon's centre and lopsided, a long easy shoulder one side and a steeper one the other: a col between peaks; a symmetric cut read as a U-shaped notch made for it)
+  var tt = 1e9; for (li = 0; li < 4; li++) tt = Math.min(tt, top(li, r * 1.02));
+  r = Math.max(rMin * 0.9, Math.min(r, dusk ? (tt - 1.2) / 2.05 : (tt - 2.5) / 2.15));
+  var y = dusk ? tt - r * 1.05 : Math.min(20 + yo * 0.5, tt - r * 1.15 - 0.6);
+  y = Math.max(r + (dusk ? 1.2 : 1.5), y);
+  MOONCUT = k ? cut : null;
+  return { x: x, y: y, r: r };
+}
 function drawEventMoon(ctx, yo) {
   if (!MOONKEY) MOONP = null;
   if (EVT !== 'tsukimi' || !(LIT.id === 'night' || LIT.id === 'dusk') || LIT.overcast > 0.5 || LIT.fog) return false;
-  var night = LIT.id === 'night', mx = pagodaPos().x + (F.namiki ? -24 : 16), mr = night ? 14 : 17, my = 1e9, k;
-  function ridgeTop(cx, rr) { var t = 1e9; for (var q = -4; q <= 4; q++) t = Math.min(t, yo + 31.4 - 25.6 * NZ.fbm((cx + q * rr * 0.25) * 0.012, 0, 4)); return t - 1.2; }   // the far ridge's top under the disc (less its treeline)
-  var mx0 = mx, best = -1e9;
-  for (k = -12; k <= 12; k++) { var cxk = mx0 + k * 3, sk = ridgeTop(cxk, mr) - Math.abs(k * 3) * 0.06; if (sk > best) { best = sk; mx = cxk; } }   // (where the far ridge dips, near its place by the pagoda: more sky for it)
-  my = ridgeTop(mx, mr);
-  /* the sky over the far ridge may be short (the 4:3 desk and card frames: about 25 units): the disc is made smaller there so it
-     still sits whole in the sky at night (at dusk only its foot in the haze behind the ridge), and never leaves the frame */
-  var mr0 = mr; mr = Math.max(7, Math.min(mr0, night ? (my - 2.5) / 2.15 : (my - 1.5) / 1.8)); if (!(mr > 0)) mr = mr0;
-  my = Math.max(mr + 1.5, night ? Math.min(20 + yo * 0.5, my - mr * 1.15 - 0.6) : my - mr * 0.8);
+  var night = LIT.id === 'night', ms = moonSpot(yo, night ? 14 : 17, 6.5, !night);
+  if (!ms) return false;
+  var mx = ms.x, my = ms.y, mr = ms.r;
   var mo = night ? { warmth: 0.1, haze: 0.3, alt: 0.85, tilt: 0.12 } : { warmth: 0.72, haze: 0.8, alt: 0.05, tilt: 0.5, hazeCol: LIT.haze, bright: 1.08 };
   if (MOONKEY) { ctx.fillStyle = 'rgb(255,0,255)'; ctx.beginPath(); ctx.ellipse(mx, my, mr + 0.3, (mr + 0.3) * (1 - 0.045 * (1 - mo.alt)), 0, 0, TAU); ctx.fill(); return true; }
   paintFullMoon(ctx, mx, my, mr, mo);
@@ -2665,7 +2755,9 @@ function groundRows(D, M, PW, y0, y1, S) {
       // snow cover
       if (snow && gA < 1) {
         var snv = Gsnow[i00] * w00 + Gsnow[i10] * w10 + Gsnow[i01] * w01 + Gsnow[i11] * w11 + 0.12 + (n2(x * 5 + 9, z * 5 - 4) - 0.5) * 0.07 + (n2(x * 17, z * 17 + 3) - 0.5) * 0.025;
-        var snA = sstep(0.265, 0.315, snv);   // bare patches few, with a ragged melting edge (melt holes, not smudges); the earth just inside it dark with the melt-water
+        if (snv > 0.2 && snv < 0.36) snv += (n2(x * 31 + 5, z * 31 - 2) - 0.5) * 0.07 + (n2(x * 70, z * 70 + 11) - 0.5) * 0.035;   // (the rim of a melt hole lacy, with crumbs of snow left in the grass: it was a smooth-edged blot)
+        var snA = sstep(0.27, 0.3, snv);   // bare patches few, with a ragged melting edge (melt holes, not smudges); the earth just inside it dark with the melt-water
+        if (snA < 1) { var dorm = (1 - snA) * (0.5 + 0.2 * n2(x * 9 + 2, z * 9 - 7)) * (0.8 + 0.4 * hash2(px, py + 3)); r += (106 - r) * dorm; g += (98 - g) * dorm; bl += (64 - bl) * dorm; }   // (in a melt hole the lawn is winter-dormant, straw and olive: it showed as a flat green blot on the snow)
         if (snA < 1) { var wet = sstep(0.17, 0.265, snv) * (1 - snA) * 0.22; r *= 1 - wet; g *= 1 - wet; bl *= 1 - wet * 0.8; }
         if (mapleSnow) { var dmp = Math.sqrt((x - mx) * (x - mx) + (z - mz) * (z - mz) * 1.44); snA *= 0.6 + 0.4 * sstep(0.25, 1.1, dmp); }   // (a bare maple keeps only a thinner skin of snow off its foot, not a green hole)
         if (teahouse && x > thX0 - 0.5 && x < thX1 + 0.5 && z > thZE - 0.35 && z < thZE + 0.6) snA *= 0.3;
@@ -2674,7 +2766,7 @@ function groundRows(D, M, PW, y0, y1, S) {
         snowCov = a;
       }
       // pond
-      var w = 0;
+      var w = 0, iceK = 0, skimK = 0;
       if (pd < 0.4) {
         if (pd > -0.05) { var dk = 0.72 + 0.28 * sstep(-0.02, 0.35, pd); r *= dk; g *= dk; bl *= dk; }
         w = 1 - sstep(-fp * 0.6, fp * 0.6, pd);
@@ -2701,11 +2793,18 @@ function groundRows(D, M, PW, y0, y1, S) {
             var rimD = sstep(-0.3, -0.03, pd) * (1 - fbk) * 0.24; wr *= 1 - rimD; wg *= 1 - rimD * 0.85; wb *= 1 - rimD * 0.75; fres *= 1 - rimD;   /* the dark lip under every bank: the stones' and the earth's own shade in the water */
           }
           var wm = (0.94 + 0.12 * (rip - 0.5)) * (1 - 0.35 * sstep(-0.18, 0, pd));
-          wr = (wr + (sky[0] - wr) * fres) * wm; wg = (wg + (sky[1] - wg) * fres) * wm; wb = (wb + (sky[2] - wb) * fres) * wm;
+          var cldW = snow ? 1 : 0.86 + 0.3 * sstep(0.35, 0.75, n2(x * 0.42 + 20, z * 1.5 - 8) * 0.75 + n2(x * 1.3 - 4, z * 3.8 + 1) * 0.25);   // (the clouds overhead in it, drawn out across the surface: one even sheet of sky read as flat paint)
+          wr = (wr + (sky[0] * cldW - wr) * fres) * wm; wg = (wg + (sky[1] * cldW - wg) * fres) * wm; wb = (wb + (Math.min(255, sky[2] * (cldW * 0.9 + 0.1)) - wb) * fres) * wm;
           if (snow) {
-            var iceW = 0.32 + 0.22 * n2(x * 2.2 + 5, z * 2.2), ice = sstep(-iceW - 0.04, -iceW + 0.04, pd) * 0.92;
+            var iceW = 0.32 + 0.22 * n2(x * 2.2 + 5, z * 2.2) + 0.14 * (n2(x * 7.5 - 3, z * 9 + 1) - 0.5), ice = sstep(-iceW - 0.025, -iceW + 0.025, pd) * 0.92;   // (a ragged margin: the ice ran round the bank as one smooth ring)
+            skimK = pd < -iceW ? sstep(0.6, 0.68, n2(x * 1.7 + 40, z * 3.4 - 7) * 0.8 + n2(x * 6 + 2, z * 9) * 0.2) * 0.8 : 0;   // thin skims of new ice out on the open water, dull and grey: no mirror in them
+            if (skimK > 0) { var skf = 0.6 + 0.4 * n2(x * 11, z * 4); wr += (150 * skf + 40 - wr) * skimK; wg += (162 * skf + 42 - wg) * skimK; wb += (174 * skf + 46 - wb) * skimK; }
+            iceK = ice;
             if (ice > 0) {
               var icf = clamp(0.5 + (n2(x * 9, z * 3) - 0.5) * 0.8 + (pd + iceW) * 0.8), ir = 180 + 46 * icf, ig = 196 + 38 * icf, ib = 210 + 34 * icf;
+              var drf = sstep(0.5, 0.6, n2(x * 2.6 + 9, z * 5.5 - 3) * 0.75 + n2(x * 13, z * 20) * 0.25 + (pd + iceW) * 0.5);   // snow drifted on the ice in tongues (lying thickest near the bank)
+              ir += (240 - ir) * drf * 0.8; ig += (244 - ig) * drf * 0.8; ib += (250 - ib) * drf * 0.8;
+              var crk = Math.abs(n2(x * 5.5 + 21, z * 8 - 4) * 2 - 1); if (crk < 0.035 && drf < 0.5) { var ck = (1 - crk / 0.035) * 0.16 * (1 - drf * 2); ir *= 1 - ck; ig *= 1 - ck; ib *= 1 - ck * 0.7; }   // the odd fine crack
               if (pd > -0.06) { ir += (246 - ir) * 0.6; ig += (248 - ig) * 0.6; ib += (252 - ib) * 0.6; }
               wr += (ir - wr) * ice; wg += (ig - wg) * ice; wb += (ib - wb) * ice;
             }
@@ -2733,7 +2832,7 @@ function groundRows(D, M, PW, y0, y1, S) {
       if (snowCov > 0.8 && fp < 0.12 && hash2(px * 3 + 11, py * 7 - 5) > 0.9972) { var spk = (snowCov - 0.8) * 5 * (moonSnow ? 0.45 : 0.8) * (1 - fp / 0.12); r += (255 - r) * spk; g += (255 - g) * spk; bl += (255 - bl) * spk; }   // the snow's glitter: a few crystals catching the light   // moonlit snow: pale silver-blue, the brightest surface (the shadows on it stay dark: they are cast over this later)
       if (hz > 0) { r += (haze[0] - r) * hz; g += (haze[1] - g) * hz; bl += (haze[2] - bl) * hz; }
       D[k] = r; D[k + 1] = g; D[k + 2] = bl; D[k + 3] = 255 * (1 - sstep(edgeZ - fp, edgeZ + fp, z));
-      if (M && w > 0) M[k + 3] = 255 * w * (snow ? clamp((-pd - 0.3) * 6) : 1);
+      if (M && w > 0) M[k + 3] = 255 * w * (snow ? clamp(1 - iceK * 1.087) * (1 - skimK) : 1);   // (no reflection on the ice or the skims)
     }
   }
 }
@@ -2796,7 +2895,7 @@ function buildScene() {
       // behind the bamboo fence only the tops show (except through the gate)
       var behind = F.fence && !(F.gate && x > LAY.gate.xa - 1.2 && x < LAY.gate.xb + 1.2), hideY = behind ? P(x, 1.7, LAY.fenceZ).y : undefined;
       if (behind && Hh * 1.25 * 1.05 < 1.2) return;
-      put(x, z, { bend: 0.45, draw: function (c) { drawLayered(c, sh, { pal: pal, alt: warmAlt(pal), altK: 0.4, dab: 0.085, cap: 48, density: 1.2, snow: 0.2, hideY: hideY }); }, ao: function (c) { var p = P(x, 0, z); c.beginPath(); c.ellipse(p.x, p.y, R * p.k * 0.95, R * p.k * CAM.s * 0.9, 0, 0, TAU); c.fill(); }, noRefl: true });
+      put(x, z, { bend: 0.45, draw: function (c) { drawLayered(c, sh, { pal: pal, alt: warmAlt(pal), altK: 0.4, dab: 0.085, cap: 48, density: 1.2, snow: 0.2, hideY: hideY }); }, ao: function (c) { var p = P(x, 0, z), ag = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, R * p.k * 0.9); ag.addColorStop(0, 'rgba(0,0,0,0.9)'); ag.addColorStop(0.6, 'rgba(0,0,0,0.45)'); ag.addColorStop(1, 'rgba(0,0,0,0)'); c.save(); c.fillStyle = ag; c.translate(p.x, p.y); c.scale(1, CAM.s * 0.85); c.translate(-p.x, -p.y); c.beginPath(); c.arc(p.x, p.y, R * p.k * 0.9, 0, TAU); c.fill(); c.restore(); }, noRefl: true });   // (a soft pool of shade under each shrub: hard dark half-discs scalloped the edge of the lot)
     })(x, z, kind, R, Hh, i);
   }
   var cedar = makeCedar(701, LX(-6.9), LZ(11.6), 13, 1.9); put(cedar.x, cedar.z, { draw: function (c) { drawCedar(c, cedar, 0.06); }, noRefl: true, bend: 0.35, sway: { flex: 0.4 } });
@@ -3084,9 +3183,9 @@ async function renderStatic(job) {
     MODE = 'n'; DQ = dq0;
     rx.setTransform(1, 0, 0, 1, 0, 0); rx.globalCompositeOperation = 'destination-in'; rx.drawImage(mc, 0, 0, hw, hh);
     var r2 = tmpCanvas(hw, hh), r2x = r2.getContext('2d'), amp = KS * hw / bw;
-    for (var yy = 0; yy < hh; yy += 1) { var off = (Math.sin(yy / amp * 0.21 + 0.6) * 0.5 + Math.sin(yy / amp * 0.083) * 0.45 + Math.sin(yy / amp * 0.6) * 0.12) * amp; r2x.drawImage(rc, 0, yy, hw, 1, off, yy, hw, 1); }   // broad, gentle swells: the reflection keeps its shape
-    r2x.globalCompositeOperation = 'source-atop'; r2x.fillStyle = LIT.id === 'night' ? 'rgba(10,16,40,0.35)' : 'rgba(20,24,30,0.26)'; r2x.fillRect(0, 0, hw, hh);
-    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = SEA.snow ? 0.5 : 0.66; ctx.imageSmoothingQuality = 'high'; ctx.drawImage(r2, 0, 0, bw, bh); ctx.restore();
+    for (var yy = 0; yy < hh; yy += 1) { var off = (Math.sin(yy / amp * 0.21 + 0.6) * 0.5 + Math.sin(yy / amp * 0.083) * 0.45 + Math.sin(yy / amp * 0.6) * 0.12 + (Math.sin(yy / amp * 1.7 + 2.1) * 0.22 + Math.sin(yy / amp * 3.9 + 0.4) * 0.12) * (0.5 + 0.5 * Math.sin(yy / amp * 0.13 + 1.3))) * amp; r2x.drawImage(rc, 0, yy, hw, 1, off, yy, hw, 1); }   // broad, gentle swells: the reflection keeps its shape; on them a fine shiver, in bands, that breaks its straight edges
+    r2x.globalCompositeOperation = 'source-atop'; r2x.fillStyle = LIT.id === 'night' ? 'rgba(10,16,40,0.35)' : LIT.id === 'dusk' ? 'rgba(30,26,34,0.34)' : 'rgba(26,36,38,0.4)'; r2x.fillRect(0, 0, hw, hh);   // (the pond's own dark body in it: a sunlit red bridge mirrored at full strength read as a second bridge lying in the water)
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = SEA.snow ? 0.5 : LIT.id === 'day' ? 0.58 : 0.64; ctx.imageSmoothingQuality = 'high'; ctx.drawImage(r2, 0, 0, bw, bh); ctx.restore();
     // sheen glints
     var sc = tmpCanvas(bw, bh), sx = sc.getContext('2d'); lsT(sx, KS);
     var rng = mulberry32(808), gcol = LIT.id === 'night' ? [190, 210, 255] : LIT.id === 'dusk' ? [255, 210, 170] : [255, 246, 230];
@@ -4344,10 +4443,10 @@ function zeye(ctx, x, y, r, iris, open, slit) { // a small bright eye with a cat
 }
 function zblink(t, seed) { var per = 3.2 + (seed % 7) * 0.4, u = (t + seed * 0.37) % per; return u < 0.13 ? Math.abs(u - 0.065) / 0.065 : 1; }
 /* the local frame of a visitor standing at x, y, z: heading foreshortened by fs, the projected vertical; mag scales it */
-function zPlace(ctx, x, y, z, dir, fs, mag) {
+function zPlace(ctx, x, y, z, dir, fs, mag, sh) {   // sh: the ground's perspective along the body (screen drop per metre forward, in body units): turned toward us the chest and forefeet sit lower than the rump
   var p = P(x, y, z), q = P(x, y + 0.1, z), m = mag || 1, ux = (q.x - p.x) * 10 * m, uy = (q.y - p.y) * 10 * m;
   if (MODE !== 'm') RARE_LAST = { x: p.x, y: p.y, k: p.k };
-  ctx.save(); ctx.transform(dir * (fs || 1) * p.k * m, 0, -ux, -uy, p.x, p.y); return p;
+  ctx.save(); ctx.transform(dir * (fs || 1) * p.k * m, (sh || 0) * p.k * m, -ux, -uy, p.x, p.y); return p;
 }
 /* contact shadow and a soft cast shadow toward the light's shadow side (not mirrored, not on open water) */
 function zShadow(ctx, g, x, z, hx, len, wid, ht, a, yb) {
@@ -4623,7 +4722,10 @@ function zFacing(a, x, z, hx, hz) {
   var p = P(x, 0, z), q = P(x + hx * 0.2, 0, z + hz * 0.2), dx = q.x - p.x;
   if (Math.abs(dx) > p.k * 0.03 || a.face === undefined) a.face = dx >= 0 ? 1 : -1;
   ZF_TOW = q.d < p.d ? 1 : -1;   // coming toward us or going away (the far legs' side, farShift)
-  return { dir: a.face, fs: 0.55 + 0.45 * Math.min(1, Math.abs(dx) / (p.k * 0.2)) };   // (not squeezed thinner than this: a flat profile pressed narrow reads as a cut-out, not as an animal turned toward us)
+  var fs = 0.55 + 0.45 * Math.min(1, Math.abs(dx) / (p.k * 0.2)), lim = Math.sqrt(1 - fs * fs) * 0.6;   // (not squeezed thinner than this: a flat profile pressed narrow reads as a cut-out, not as an animal turned toward us)
+  var l1 = P(x + hz * 0.2, 0, z - hx * 0.2), l2 = P(x - hz * 0.2, 0, z + hx * 0.2), lf = l1.d > l2.d ? l1 : l2;
+  ZF_LDY = clamp((lf.y - p.y) / (p.k * 0.2), -0.6, 0);   // the far side's rise on screen per metre (its feet stand farther off, so higher up)
+  return { dir: a.face, fs: fs, sh: clamp((q.y - p.y) / (p.k * 0.2), -lim, lim), tow: ZF_TOW, ldy: ZF_LDY };
 }
 /* how much of a visitor standing at x, z (ht tall) can be seen: the share of a few sample points that nothing stands in front of.
    Uses the depth image of the upright things once it is worked out, else the tree crowns as discs (the hit circles) */
@@ -5015,8 +5117,9 @@ function harePaint(ctx, o) {
 var HAREK = [
   { u: 0.0, ext: 0.05, arch: 0, lift: 0, pitch: 0, foreF: [0.12, 0], foreFlex: 0, hindF: [-0.03, 0], hindT: 0, ears: 0.15 },
   { u: 0.13, ext: 0.55, arch: 0, lift: 0.15, pitch: -0.14, foreF: [0.19, -0.035], foreFlex: 0.5, hindF: [-0.13, 0], hindT: 1, ears: 0.3 },
-  { u: 0.3, ext: 1.0, arch: 0, lift: 1.0, pitch: 0.0, foreF: [0.37, -0.05], foreFlex: 0.05, hindF: [-0.38, -0.07], hindT: 1, ears: 0.45 },   // (v4: the forelegs reaching well forward, the long hind feet trailing far behind)
-  { u: 0.47, ext: 0.8, arch: 0.1, lift: 0.35, pitch: 0.2, foreF: [0.33, 0], foreFlex: 0, hindF: [-0.2, -0.1], hindT: 0.7, ears: 0.4 },   // the forefeet coming down, one after the other
+  { u: 0.3, ext: 1.0, arch: 0, lift: 1.0, pitch: 0.0, foreF: [0.37, -0.05], foreFlex: 0.05, hindF: [-0.495, -0.11], hindT: 1, ears: 0.45 },   // (v4: the forelegs reaching well forward, the long hind feet trailing far behind)   // (v5: the hind legs out at full stretch, knee and hock only a little bent: drawn in close, the leg folded under as a soft L)
+  { u: 0.39, ext: 0.92, arch: 0.04, lift: 0.75, pitch: 0.08, foreF: [0.36, -0.03], foreFlex: 0.03, hindF: [-0.32, -0.06], hindT: 0.95, hindH: 0.05, ears: 0.43 },   // (v5) the hind legs folding as they start forward: the knee coming forward under the belly, the heel drawn in and up behind the haunch, the foot hanging back from it (carried far back, the folding leg hung as a round knee under the haunch)
+  { u: 0.47, ext: 0.8, arch: 0.1, lift: 0.35, pitch: 0.2, foreF: [0.33, 0], foreFlex: 0, hindF: [-0.2, -0.1], hindT: 0.7, hindH: 0.035, ears: 0.4 },   // the forefeet coming down, one after the other
   { u: 0.6, ext: 0.2, arch: 0.9, lift: 0.12, pitch: 0.12, foreF: [0.1, -0.005], foreFlex: 0.35, hindF: [0.05, -0.09], hindT: 0.35, ears: 0.3 },   // (v5) the gather: the forefeet planted and passing back under the chest, the back rounding, the hind legs swinging forward under the belly, feet still off the snow
   { u: 0.7, ext: 0.12, arch: 1, lift: 0.05, pitch: 0.04, foreF: [-0.035, -0.05], foreFlex: 0.6, hindF: [0.2, -0.015], hindT: 0.2, ears: 0.25 },   // the hind feet landing ahead of the forefeet (outside them), the forefeet lifting off behind: the body bunched over them, arched, not a loaf
   { u: 0.85, ext: 0.06, arch: 0.4, lift: 0, pitch: 0.02, foreF: [0.11, -0.02], foreFlex: 0.3, hindF: [0.06, 0], hindT: 0, ears: 0.2 },
@@ -5029,7 +5132,7 @@ function hareHop(u, h, len) {
   function L(p) { return lerp(A[p], B[p], f); }
   function L2(p) { return [lerp(A[p][0], B[p][0], f), lerp(A[p][1], B[p][1], f)]; }
   var hf = L2('hindF'); if (u > 0.5 && u < 0.95) hf[0] += Math.sin((u - 0.5) / 0.45 * Math.PI) * 0.14 * reach;
-  return { ext: L('ext'), arch: L('arch'), lift: L('lift') * h, pitch: L('pitch'), foreF: L2('foreF'), foreFlex: L('foreFlex'), hindF: hf, hindT: L('hindT'), ears: L('ears') };
+  return { ext: L('ext'), arch: L('arch'), lift: L('lift') * h, pitch: L('pitch'), foreF: L2('foreF'), foreFlex: L('foreFlex'), hindF: hf, hindT: L('hindT'), hindH: lerp(A.hindH || 0, B.hindH || 0, f), ears: L('ears') };
 }
 
 /* ================= painted pelts: one silhouette, brushed with fur that follows the form =================
@@ -5238,7 +5341,7 @@ function sikaRig() {
   // toward the loins and deepening to the brisket behind the elbow; the foreleg; the chest; the throat; the poll; the crest
   // of the neck rising from the withers; the level back
   var C = [
-    [-0.54, -0.94, T], [-0.598, -0.902, T], [-0.632, -0.835, [0, 5]], [-0.64, -0.755, [0, 5]], [-0.622, -0.665, RB], [-0.585, -0.575, [5, 6]], [-0.55, -0.49, [5, 6]], [-0.48, -0.47, [5, 6]], [-0.41, -0.5, HF], [-0.345, -0.55, HF], [-0.28, -0.6, FK], [-0.24, -0.655, FK],
+    [-0.54, -0.94, T], [-0.598, -0.902, T], [-0.632, -0.835, [0, 5]], [-0.64, -0.755, [0, 5]], [-0.61, -0.665, RB], [-0.575, -0.575, [5, 6]], [-0.548, -0.49, [6]], [-0.528, -0.43, [6, 7]], [-0.512, -0.385, [6, 7]], [-0.47, -0.4, [6, 7]], [-0.44, -0.46, [6]], [-0.41, -0.52, HF], [-0.345, -0.55, HF], [-0.28, -0.6, FK], [-0.24, -0.655, FK],
     [-0.14, -0.59, BE], [0.0, -0.535, BE], [0.12, -0.505, [1, 9]], [0.2, -0.497, FU], [0.24, -0.47, [9, 10]], [0.27, -0.44, [9, 10]], [0.33, -0.44, [9, 10]], [0.37, -0.47, [9, 10]], [0.385, -0.51, FU], [0.415, -0.6, CH], [0.465, -0.68, CH], [0.47, -0.77, CH],
     [0.42, -0.86, T], [0.37, -0.94, T],
     [0.33, -0.985, T], [0.25, -0.98, T], [0.12, -0.952, T], [-0.06, -0.945, T], [-0.24, -0.958, T], [-0.38, -0.985, T], [-0.48, -0.975, T]
@@ -5354,6 +5457,12 @@ function sikaPose(R, o) {
     var Kn = [Fl[0] - Math.cos(aC) * B0[11].len, Fl[1] - Math.sin(aC) * B0[11].len], reach = (B0[9].len + B0[10].len) * 0.985, d = Math.hypot(Kn[0] - sp[0], Kn[1] - sp[1]);
     if (d > reach) { var ux = (Kn[0] - sp[0]) / d, uy = (Kn[1] - sp[1]) / d, sh = d - reach; Kn = [Kn[0] - ux * sh, Kn[1] - uy * sh]; Fl = [Fl[0] - ux * sh, Fl[1] - uy * sh]; }   // the foot comes up a little instead
     var k = zik2(sp, Kn, B0[9].len, B0[10].len, 1), El = k[0];
+    // (v4) the upper arm stays in under the chest (held within about 15 degrees of standing forward), the forearm and the cannon
+    // reaching on from the elbow to the foot (the knee found again from the held elbow, on the side it was): the elbow carried out
+    // ahead of the chest when the foot reached forward stood the leg's top in front of the brisket (on the far leg, a stump fading in mid-air)
+    if (!o.tuck && !ft.stott) { var aH0 = B0[9].th + pitchB, aH = Math.atan2(El[1] - sp[1], El[0] - sp[0]), dH = Math.atan2(Math.sin(aH - aH0), Math.cos(aH - aH0)), lmH = -0.26;
+      if (dH < lmH) { var aH2 = aH0 + lmH + (dH - lmH) * 0.25, El2 = [sp[0] + Math.cos(aH2) * B0[9].len, sp[1] + Math.sin(aH2) * B0[9].len], kA = zik2(El2, Fl, B0[10].len, B0[11].len, 1), kB = zik2(El2, Fl, B0[10].len, B0[11].len, -1);
+        El = El2; Kn = Math.hypot(kA[0][0] - Kn[0], kA[0][1] - Kn[1]) < Math.hypot(kB[0][0] - Kn[0], kB[0][1] - Kn[1]) ? kA[0] : kB[0]; } }
     return [{ a: sp, th: Math.atan2(El[1] - sp[1], El[0] - sp[0]) }, { a: El, th: Math.atan2(Kn[1] - El[1], Kn[0] - El[0]) }, { a: Kn, th: Math.atan2(Fl[1] - Kn[1], Fl[0] - Kn[0]) }, { a: Fl, th: aP }];
   }
   var h0 = hind(0), f0 = fore(2);
@@ -5470,20 +5579,24 @@ function sikaHead(ctx, o, wk, rut) {   // in the head frame: origin at the poll,
 function sikaLegTube(R, Bf, hindLeg) {
   var idx = hindLeg ? 8 : 12, e = [Bf[3].a[0] + Math.cos(Bf[3].th) * R.B0[idx].len, Bf[3].a[1] + Math.sin(Bf[3].th) * R.B0[idx].len];
   var mid = [lerp(Bf[1].a[0], Bf[2].a[0], 0.42), lerp(Bf[1].a[1], Bf[2].a[1], 0.42)], pts = [Bf[0].a, Bf[1].a, mid, Bf[2].a, Bf[3].a, e];
-  var wl = hindLeg ? [0.14, 0.118, 0.082, 0.056, 0.033, 0.027] : [0.112, 0.082, 0.058, 0.045, 0.031, 0.026], wr = hindLeg ? [0.13, 0.096, 0.06, 0.048, 0.031, 0.026] : [0.11, 0.076, 0.056, 0.043, 0.031, 0.026];   // (v3: the knee and the hock a knot wider than the cannon below them, the cannons a little sturdier: at a phone's size they were threads)   // the thigh and forearm full, tapering smoothly through the hock and the knee to slim cannons
+  var wl = hindLeg ? [0.13, 0.1, 0.05, 0.048, 0.023, 0.024] : [0.112, 0.082, 0.058, 0.045, 0.031, 0.026], wr = hindLeg ? [0.12, 0.09, 0.05, 0.04, 0.023, 0.023] : [0.11, 0.076, 0.056, 0.043, 0.031, 0.026];   // (v5: the hind leg leaner below the haunch, the gaskin slim, the hock a knot over a slim cannon: with the outline's hamstring running down to the point of the hock it no longer reads as a ball on a post)   // (v3: the knee and the hock a knot wider than the cannon below them, the cannons a little sturdier: at a phone's size they were threads)   // the thigh and forearm full, tapering smoothly through the hock and the knee to slim cannons
+  var wm = SIKA_WM.l; if (wm !== 1) { wl = wl.map(function (v) { return v * wm; }); wr = wr.map(function (v) { return v * wm; }); }
   return pLimb(pts, wl, wr, 5);
 }
+/* turned toward us (or away) the body is drawn pressed narrow, which would thin every limb across it: their own breadth seen
+   from the front put back (the neck nearly round in section, the legs flatter) */
+var SIKA_WM = { n: 1, l: 1 };
 /* a far leg: the same shape as the near one, posed by its own bones, a tone darker (it is in the body's shadow) */
 function sikaFarLeg(ctx, R, PB, Bf, hindLeg, cols, key) {
   var m = pLm(), idx = hindLeg ? [5, 6, 7, 8] : [9, 10, 11, 12];
-  var fsh = farShift(ctx, 0.15, 1); ctx.save(); if (fsh) ctx.translate(fsh, 0);   // (turned toward us, the far legs out beside the near ones by the body's width; restored at the end)
+  var fsh = farShift(ctx, 0.15, 1), fdy = 0.18 * ZF_LDY; ctx.save(); if (fsh || fdy) ctx.translate(fsh, fdy);   // (turned toward us, the far legs out beside the near ones by the body's width, and standing a little farther off, so higher; restored at the end)
   var lb = sikaLegTube(R, Bf, hindLeg);
   if (hindLeg) {   // (v3) the far hind leg drawn from inside the flank above its stifle, slim: the thigh is the far flank, always behind the body (its full thigh and stifle hung below the belly as a dark knob)
     var st = Bf[1].a, eH = [Bf[3].a[0] + Math.cos(Bf[3].th) * R.B0[8].len, Bf[3].a[1] + Math.sin(Bf[3].th) * R.B0[8].len], mH = [lerp(st[0], Bf[2].a[0], 0.42), lerp(st[1], Bf[2].a[1], 0.42)];
-    lb = pLimb([[st[0] + 0.03, st[1] - 0.16], st, mH, Bf[2].a, Bf[3].a, eH], [0.04, 0.062, 0.058, 0.05, 0.031, 0.025], [0.04, 0.05, 0.046, 0.04, 0.029, 0.024], 5);
+    lb = pLimb([[st[0] + 0.03, st[1] - 0.16], st, mH, Bf[2].a, Bf[3].a, eH], [0.04, 0.062, 0.058, 0.05, 0.031, 0.025].map(function (v) { return v * SIKA_WM.l; }), [0.04, 0.05, 0.046, 0.04, 0.029, 0.024].map(function (v) { return v * SIKA_WM.l; }), 5);
   }
-  var pts = [lb.at(0.9, 0), lb.at(1, 0)];  var e0 = lb.at(0, 0), e1 = lb.at(1, 0), fy0 = Bf[1].a[1] + (hindLeg ? -0.02 : -0.12), gf = ctx.createLinearGradient(0, fy0, 0, 0);   // (by height: the far legs unseen down to just below the belly and the brisket, where their tops are behind the body; turned, their tops hung below the belly as a dark lump)
-  gf.addColorStop(0, zc(scl(cols.coat || cols.leg, 0.55), 1, 0)); gf.addColorStop(clamp(0.06 / Math.max(0.1, -fy0)), zc(scl(cols.coat || cols.leg, 0.55), 1, 0.5)); gf.addColorStop(clamp(0.13 / Math.max(0.1, -fy0)), zc(scl(cols.coat || cols.leg, 0.58)));   // (faded in over ~13 cm: a short fade cut the leg's top off square in mid-air)
+  var pts = [lb.at(0.9, 0), lb.at(1, 0)];  var e0 = lb.at(0, 0), e1 = lb.at(1, 0), fy0 = hindLeg ? Math.min(Bf[1].a[1] - 0.02, fsh ? 0 : -0.4) : Bf[1].a[1] + (fsh ? -0.03 : -0.12), gf = ctx.createLinearGradient(0, fy0, 0, 0);   // (v5: the far hind leg's fade kept up inside the body: its stifle swung down in the walk, it showed as a pale ghost stub below the belly)   // (by height: the far legs unseen down to just below the belly and the brisket, where their tops are behind the body; turned, their tops hung below the belly as a dark lump)
+  gf.addColorStop(0, zc(scl(cols.coat || cols.leg, 0.55), 1, 0)); var fz1 = fsh && !hindLeg ? 0.025 : 0.06, fz2 = fsh && !hindLeg ? 0.06 : 0.13; gf.addColorStop(clamp(fz1 / Math.max(0.1, -fy0)), zc(scl(cols.coat || cols.leg, 0.55), 1, 0.5)); gf.addColorStop(clamp(fz2 / Math.max(0.1, -fy0)), zc(scl(cols.coat || cols.leg, 0.58)));   // (faded in over ~13 cm: a short fade cut the leg's top off square in mid-air; turned toward us the far foreleg's top is hidden down to the elbow, under the chest, and comes in quickly: its upper arm stood out ahead of the chest as a pale wedge)
   gf.addColorStop(0.45, zc(scl(cols.leg, 0.6))); gf.addColorStop(1, zc(scl(mixc(cols.leg, [40, 34, 40], 0.3), 0.55))); ctx.fillStyle = gf; ctx.fill(pPath(lb.out));   // the far leg: the same pelt, in the body's shadow
   var set = pSet({ c: pPal(scl(cols.leg, 0.78)) }), n = MODE === 'm' ? 0 : Math.min(420, pCount(lb.len * 0.07, RL.k < 320 ? 180 : 420)), Rr = pRand(key, Math.max(1, n));
   ctx.save(); ctx.clip(pPath(lb.out));
@@ -5491,7 +5604,7 @@ function sikaFarLeg(ctx, R, PB, Bf, hindLeg, cols, key) {
   pSetFlush(ctx, set, m.w * 0.9);
   ctx.restore();
   sikaHoof(ctx, Bf[3].a, pts[1], 0.6, Bf[3].th - R.B0[idx[3]].th);
-  if (fsh) zsoft(ctx, pts[1][0], 0.004, 0.06, 0.015, [20, 18, 26], 0.3);
+  if (fsh || fdy) { var fup = clamp(-pts[1][1] / 0.12); if (fup < 1) zsoft(ctx, pts[1][0], 0.004, 0.07, 0.02, [20, 18, 26], 0.4 * (1 - fup) * clamp(RL.lum * 1.1, 0.4, 1)); }   // (its own contact shadow, where it stands now)
   ctx.restore();
 }
 function sikaHoof(ctx, a, b, dk, rot) {   // a small pointed hoof under the pastern, turned with it (rot: the pastern's turn from standing)
@@ -5511,17 +5624,198 @@ function sikaNeck(R, B, o) {
   var base = glob(tho, sikaMp([0.22, -0.84])), base2 = glob(tho, sikaMp([0.36, -0.845])), dn0 = clamp((B[2].th - R.B0[2].th) / 1.9), c1 = off(B[2], 0.05 + dn0 * 0.06), c2 = off(B[3], 0.035 + dn0 * 0.02), c3 = off(B[4], 0.025);
   var wl = [0.15, 0.16, 0.145 * (1 + rut * 0.3), 0.125 * (1 + rut * 0.3), 0.115 * (1 + rut * 0.1)].map(function (v, i) { return v * (i > 1 ? hk : 1); });   // short and thick at the base, merging into the deep chest
   var dn = clamp((B[2].th - R.B0[2].th) / 1.9), wr = [0.1 * (1 - dn * 0.7), 0.13 * (1 - dn * 0.45), 0.125 * (1 + rut * 0.3) * (1 - dn * 0.25), 0.105 * (1 + rut * 0.22), 0.095 * (1 + rut * 0.05)].map(function (v, i) { return v * (i > 1 ? hk : 1); });
+  var wn = SIKA_WM.n; if (wn !== 1) { wl = wl.map(function (v) { return v * wn; }); wr = wr.map(function (v) { return v * wn; }); }
   return pLimb([base, base2, c1, c2, c3], wl, wr, 6);
+}
+/* (v5) the sika's head in the round, for when he is turned toward us (or away) or looks round at us: the skull, the ears and the
+   antlers built in three dimensions (head frame: x along the face to the nose, y down, z across, + to the far side) and projected
+   into the squeezed side frame (a point z across stands z x tan(turn) forward along the body and z x ldy higher), so the face
+   foreshortens with both eyes and both ears in view and the beams open into their lyre. (Squeezed flat, the side view's head
+   stayed a profile and the two antlers closed into one tall spike, or crossed.) H: the poll (design units), the head's angle,
+   its scale, the body's turn (F its cosine, S its sine, + coming toward us), ldy and psi (the head's own turn toward us) */
+var SIKA_T3 = 0.3;   // (the body turned more than this, in radians, from the side view: the head drawn in the round)
+var SIKA_HD = {
+  top: [[-0.07, -0.006], [-0.058, -0.045], [-0.02, -0.066], [0.03, -0.075], [0.09, -0.066], [0.15, -0.047], [0.2, -0.035], [0.24, -0.027], [0.268, -0.02], [0.284, -0.002]],
+  bot: [[-0.07, 0.012], [-0.06, 0.04], [-0.03, 0.07], [0.03, 0.088], [0.09, 0.08], [0.15, 0.058], [0.2, 0.047], [0.24, 0.041], [0.264, 0.033], [0.284, 0.012]],
+  wid: [[-0.07, 0.022], [-0.055, 0.036], [-0.02, 0.048], [0.04, 0.058], [0.09, 0.063], [0.13, 0.051], [0.18, 0.038], [0.23, 0.031], [0.268, 0.028], [0.284, 0.018]]
+};
+function sikaTab(T, x) { if (x <= T[0][0]) return T[0][1]; for (var k = 1; k < T.length; k++) if (x <= T[k][0]) { var f = (x - T[k - 1][0]) / (T[k][0] - T[k - 1][0]); f = f * f * (3 - 2 * f); return lerp(T[k - 1][1], T[k][1], f); } return T[T.length - 1][1]; }
+/* a point on the skull's surface: u along the head (its length, -0.08 at the back of the skull to the nose), phi round the section
+   (0 the near side, pi/2 the underside, -pi/2 the crown): the face's section a rounded box, broad and flat across the forehead and
+   the bridge of the nose, the cheeks full at the back, the muzzle narrowing to the lips */
+function sikaSkull(x, phi) {
+  var T = SIKA_HD, tp = sikaTab(T.top, x), bt = sikaTab(T.bot, x), w = sikaTab(T.wid, x), yc = (tp + bt) / 2, hh = (bt - tp) / 2, c = Math.cos(phi), s = Math.sin(phi);
+  var cz = (c < 0 ? -1 : 1) * Math.pow(Math.abs(c), 0.72), sy = (s < 0 ? -1 : 1) * Math.pow(Math.abs(s), 0.85), tap = lerp(0.12, -0.32, clamp((x - 0.04) / 0.2));
+  return [x, yc + hh * sy, -w * cz * (1 + tap * s)];
+}
+function sikaSkullN(x, phi) {
+  var e = 0.004, a = sikaSkull(x - e, phi), b = sikaSkull(x + e, phi), c = sikaSkull(x, phi - 0.05), d = sikaSkull(x, phi + 0.05);
+  var u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [d[0] - c[0], d[1] - c[1], d[2] - c[2]], n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]], l = Math.hypot(n[0], n[1], n[2]) || 1;
+  return [-n[0] / l, -n[1] / l, -n[2] / l];   // (outward)
+}
+function sikaHead3(ctx, o, wk, rut, H) {
+  var C = SIKA_C, face = o.coat || mixc(C.sum, C.win, wk), t = o.t || 0, m = pLm(), lod = MODE === 'm' || RL.k < 110, k1 = H.sc;
+  var ca = Math.cos(H.th), sa = Math.sin(H.th), cp = Math.cos(H.psi), sp = Math.sin(H.psi), F = H.F, S = H.S, ldy = H.ldy, tS = S / F;
+  function Wd(v) { var dx = v[0] * ca - v[1] * sa, dy = v[0] * sa + v[1] * ca; return [dx * cp + v[2] * sp, dy, -dx * sp + v[2] * cp]; }
+  function W(p) { var q = Wd([p[0] * k1, p[1] * k1, p[2] * k1]); return [H.o[0] + q[0], H.o[1] + q[1], q[2]]; }
+  function Pj(q) { return [q[0] + q[2] * tS, q[1] + q[2] * ldy]; }
+  function P(p) { return Pj(W(p)); }
+  var VV = (function () { var v = [S, -0.28, -F], l = Math.hypot(v[0], v[1], v[2]); return [v[0] / l, v[1] / l, v[2] / l]; })();
+  function vis(nl) { var n = Wd(nl); return n[0] * VV[0] + n[1] * VV[1] + n[2] * VV[2]; }
+  function tone(nl, occ) { var n = Wd(nl); return pTone(n[0] * F + n[2] * S, n[1], n[0] * VV[0] + n[1] * VV[1] + n[2] * VV[2], occ || 0); }
+  function dep(p) { var q = W(p); return -q[0] * S + q[2] * F; }
+  // a mark lying on the surface: its centre and two tangents (head frame), projected, so a circle drawn at the unit becomes the mark seen at its angle
+  function decal(c, t1, t2, fn) { var p0 = P(c), a = P([c[0] + t1[0], c[1] + t1[1], c[2] + t1[2]]), b = P([c[0] + t2[0], c[1] + t2[1], c[2] + t2[2]]); ctx.save(); ctx.transform(a[0] - p0[0], a[1] - p0[1], b[0] - p0[0], b[1] - p0[1], p0[0], p0[1]); fn(); ctx.restore(); }
+  function tang(n, v, L) { var d = v[0] * n[0] + v[1] * n[1] + v[2] * n[2], q = [v[0] - d * n[0], v[1] - d * n[1], v[2] - d * n[2]], l = Math.hypot(q[0], q[1], q[2]) || 1; return [q[0] / l * L, q[1] / l * L, q[2] / l * L]; }
+  function surfAt(x, yRel, side) {   // the surface point at x, at a height yRel (-1 the crown .. 1 the jaw), on the near (side -1) or far (+1) side
+    var phi = side < 0 ? Math.asin(clamp(yRel, -0.98, 0.98)) : Math.PI - Math.asin(clamp(yRel, -0.98, 0.98));
+    return [sikaSkull(x, phi), sikaSkullN(x, phi)];
+  }
+  // the skull's outline: the hull of its surface seen from here
+  var hullP = [], xi, ph;
+  for (xi = 0; xi <= 18; xi++) { var xx = lerp(-0.07, 0.284, xi / 18); for (ph = 0; ph < 20; ph++) hullP.push(P(sikaSkull(xx, ph / 20 * TAU))); }
+  var hd = pSmooth(pHull(hullP), true, 2), hp = pPath(hd), hb = pBox(hd);
+  // the ears and the antlers, far ones first (behind the skull), near ones after
+  var ea = (o.ears === undefined ? 0 : o.ears);
+  function ear(side) {
+    var a2 = -2.55 - ea * 0.5 - (o.hd || 0) * 0.6 + 0.3 * (1 - ea) + Math.sin(t * 1.3 + (side > 0 ? 1.5 : 0)) * 0.05, L = 0.155, wd = 0.066, b = [-0.018, -0.052, side * 0.04];
+    var d = [Math.cos(a2) * 0.75, Math.sin(a2), side * 1.05], dl = Math.hypot(d[0], d[1], d[2]); d = [d[0] / dl, d[1] / dl, d[2] / dl];
+    var n0 = [0.8, 0.1, side * 0.6], nd = n0[0] * d[0] + n0[1] * d[1] + n0[2] * d[2], n = [n0[0] - nd * d[0], n0[1] - nd * d[1], n0[2] - nd * d[2]], nl = Math.hypot(n[0], n[1], n[2]); n = [n[0] / nl, n[1] / nl, n[2] / nl];
+    var e = [d[1] * n[2] - d[2] * n[1], d[2] * n[0] - d[0] * n[2], d[0] * n[1] - d[1] * n[0]];
+    function pt(u, s, cup) { var w = Math.pow(Math.sin(Math.pow(u, 0.85) * Math.PI), 0.6) * wd * (u < 0.25 ? 0.55 + u * 1.8 : 1) * s, c = (cup || 0) * (1 - s * s) * Math.sin(u * Math.PI); return P([b[0] + d[0] * L * u + e[0] * w - n[0] * c, b[1] + d[1] * L * u + e[1] * w - n[1] * c, b[2] + d[2] * L * u + e[2] * w - n[2] * c]); }
+    var E = [], I = [], i;
+    for (i = 0; i <= 16; i++) E.push(pt(i / 16, 1));
+    for (i = 15; i >= 1; i--) E.push(pt(i / 16, -0.88));
+    var vi = vis(n), far = dep([b[0], b[1], b[2]]) > dep([b[0], b[1], -b[2]]), dk = far ? 0.78 : 1, ep = pPath(E), tp = P([b[0] + d[0] * L, b[1] + d[1] * L, b[2] + d[2] * L]), g = ctx.createLinearGradient(P(b)[0], P(b)[1], tp[0], tp[1]);
+    g.addColorStop(0, zc(face, 0.72 * dk)); g.addColorStop(0.7, zc(face, 0.9 * dk)); g.addColorStop(1, zc(mixc(face, C.blk, 0.5), 0.85 * dk)); ctx.fillStyle = g; ctx.fill(ep);
+    if (vi > 0.02) {   // the inside of the cup, pale with white hair, as it turns to us
+      for (i = 0; i <= 12; i++) { var u3 = 0.16 + i / 12 * 0.72; I.push(pt(u3, 0.66 * Math.sin((u3 - 0.16) / 0.72 * Math.PI) + 0.06, 0.02)); }
+      for (i = 11; i >= 1; i--) { var u4 = 0.16 + i / 12 * 0.72; I.push(pt(u4, -0.52 * Math.sin((u4 - 0.16) / 0.72 * Math.PI) - 0.04, 0.02)); }
+      var ip = pPath(I), va = clamp(vi / 0.35); ctx.fillStyle = zc(mixc(C.inner, face, 0.25), dk, 0.9 * va); ctx.fill(ip);
+      if (!lod) { ctx.save(); ctx.clip(ip); ctx.strokeStyle = zc([250, 246, 238], dk, 0.35 * va); ctx.lineWidth = m.w * 0.5; ctx.lineCap = 'round'; ctx.beginPath(); var r = mulberry32(side > 0 ? 5 : 3); for (i = 0; i < 9; i++) { var q1 = pt(0.25 + r() * 0.55, (r() - 0.55) * 0.5), q2 = pt(0.1 + r() * 0.2, (r() - 0.5) * 0.3); ctx.moveTo(q1[0], q1[1]); ctx.lineTo(lerp(q1[0], q2[0], 0.3), lerp(q1[1], q2[1], 0.3)); } ctx.stroke(); ctx.restore(); }
+    }
+    ctx.save(); ctx.clip(ep); zsoft(ctx, tp[0], tp[1], 0.045, 0.045, C.blk, 0.7); ctx.restore();   // the dark tip
+    ctx.strokeStyle = zc(mixc(face, C.blk, 0.6), 1, 0.5); ctx.lineWidth = m.w * 0.5; ctx.stroke(ep);
+  }
+  function antler(side) {
+    if (!o.antler) return;
+    var vel = !!o.velvet, sc = vel ? 0.85 : 1, hA = o.hd || 0, UP = -Math.PI / 2 - hA, BK = UP - 0.55, FW = -hA, far = side > 0 && dep([0.04, -0.06, 0.03]) > dep([0.04, -0.06, -0.03]) || side < 0 && dep([0.04, -0.06, -0.03]) > dep([0.04, -0.06, 0.03]), dk = far ? 0.74 : 1;
+    // the beam off the pedicle up and back over the neck, curving up and forward, and out to the side: seen from the front the two
+    // beams a wide lyre, their tips turning in a little
+    var segs = [[BK - 0.32, 0.065, 0.036], [BK - 0.14, 0.08, 0.05], [BK + 0.1, 0.09, 0.034], [BK + 0.36, 0.085, 0.01], [BK + 0.62, 0.075, -0.014]], bm = [[0.04, -0.062, side * 0.03]], i;
+    for (i = 0; i < segs.length; i++) bm.push([bm[i][0] + Math.cos(segs[i][0]) * segs[i][1] * sc, bm[i][1] + Math.sin(segs[i][0]) * segs[i][1] * sc, bm[i][2] + side * segs[i][2] * sc]);
+    if (vel) bm = bm.slice(0, 5);
+    var tot = 0, Ls = [0]; for (i = 1; i < bm.length; i++) { tot += Math.hypot(bm[i][0] - bm[i - 1][0], bm[i][1] - bm[i - 1][1], bm[i][2] - bm[i - 1][2]); Ls.push(tot); }
+    function along(u) { var s2 = u * tot, k = 1; while (k < bm.length - 1 && Ls[k] < s2) k++; var f = (s2 - Ls[k - 1]) / (Ls[k] - Ls[k - 1]); return [lerp(bm[k - 1][0], bm[k][0], f), lerp(bm[k - 1][1], bm[k][1], f), lerp(bm[k - 1][2], bm[k][2], f)]; }
+    var tines = [{ at: 0.1, a: FW - 0.5, L: 0.16 * sc, cv: -0.5, z: 0.012 }];   // the brow tine, forward over the face and curving up
+    if (vel) tines.push({ at: 0.66, a: FW - 0.8, L: 0.06, cv: -0.3, z: 0.004 });
+    else tines.push({ at: 0.8, a: BK - 0.4, L: 0.12, cv: 0.3, z: 0.006 });   // the rear tine of the top fork (the beam's end its front tine)
+    var w0 = (vel ? 0.04 : 0.036) * k1, c0 = vel ? C.velvet : C.ant, c1 = vel ? scl(C.velvet, 1.2) : C.antTip;
+    function limb(pts3, ws, key) {
+      var pts = pts3.map(P), lb = pLimb(pts, ws, ws, 7), e0 = lb.at(0, 0), e1 = lb.at(1, 0), gr = ctx.createLinearGradient(e0[0], e0[1], e1[0], e1[1]), lp = pPath(lb.out);
+      if (vel) { ctx.fillStyle = zc(scl(c0, dk * 1.08)); ctx.beginPath(); ctx.arc(e1[0], e1[1], ws[ws.length - 1] * 1.05, 0, TAU); ctx.fill(); }   // velvet tips are rounded knobs
+      gr.addColorStop(0, zc(scl(c0, dk * 0.62))); gr.addColorStop(0.5, zc(scl(c0, dk * 0.98))); gr.addColorStop(0.82, zc(scl(vel ? c0 : mixc(c0, c1, 0.35), dk))); gr.addColorStop(1, zc(scl(vel ? c0 : c1, dk))); ctx.fillStyle = gr; ctx.fill(lp);
+      if (!lod) {   // the round of the beam: shade down the side from the light, a light ridge on the other, the grooves along it
+        ctx.save(); ctx.clip(lp); ctx.lineCap = 'round';
+        var sd = RL.lx > 0 ? -1 : 1, gs = new Path2D(), gl = new Path2D(), j, k2;
+        for (j = 0; j <= 10; j++) { var q2 = lb.at(j / 10 * 0.9, 0.62 * sd); if (j) gs.lineTo(q2[0], q2[1]); else gs.moveTo(q2[0], q2[1]); var q3 = lb.at(j / 10 * 0.9, -0.45 * sd); if (j) gl.lineTo(q3[0], q3[1]); else gl.moveTo(q3[0], q3[1]); }
+        ctx.lineWidth = ws[0] * 0.75; ctx.strokeStyle = zc(scl(c0, 0.45), dk, 0.45); ctx.stroke(gs); ctx.lineWidth = ws[0] * 0.35; ctx.strokeStyle = zc(mixc(c0, vel ? [230, 210, 190] : c1, 0.45), dk, vel ? 0.3 : 0.4); ctx.stroke(gl);
+        if (!vel) { ctx.lineWidth = m.w * 0.5; for (k2 = 0; k2 < 4; k2++) { var v2 = -0.6 + k2 * 0.4, gp = new Path2D(); for (j = 0; j <= 8; j++) { var q4 = lb.at(j / 8 * 0.8, v2 + Math.sin(j * 1.7 + k2) * 0.06); if (j) gp.lineTo(q4[0], q4[1]); else gp.moveTo(q4[0], q4[1]); } ctx.strokeStyle = zc(scl(c0, 0.4), dk, 0.5); ctx.stroke(gp); } }
+        ctx.restore();
+      }
+      ctx.strokeStyle = zc(scl(c0, 0.42), dk, 0.55); ctx.lineWidth = m.w * 0.5; ctx.stroke(lp);   // a dark line round it so it reads against the coat and the leaves
+      void key; return lb;
+    }
+    var bw = bm.map(function (q, ii) { var u = ii / (bm.length - 1); return w0 * (1 - Math.pow(u, 0.8) * 0.72); }); bw[bw.length - 1] = w0 * (vel ? 0.55 : 0.14);
+    var pend = [];
+    tines.forEach(function (tn) { var s0 = along(tn.at), a3 = tn.a, pts = [s0], l = tn.L / 3; for (var k = 0; k < 3; k++) { a3 += tn.cv * 0.33; pts.push([pts[k][0] + Math.cos(a3) * l, pts[k][1] + Math.sin(a3) * l, pts[k][2] + side * tn.z]); } pend.push(pts); });
+    // a tine standing out toward us is drawn over the beam, one behind it under: by where its tip lies
+    var mid = dep(along(0.5));
+    pend.forEach(function (pts) { if (dep(pts[3]) > mid) limb(pts, [w0 * 0.75, w0 * 0.55, w0 * 0.35, w0 * (vel ? 0.45 : 0.1)], 't'); });
+    limb(bm, bw, 'b');
+    pend.forEach(function (pts) { if (dep(pts[3]) <= mid) limb(pts, [w0 * 0.75, w0 * 0.55, w0 * 0.35, w0 * (vel ? 0.45 : 0.1)], 't'); });
+    if (!vel) { var bc = P(bm[0]), bp = []; for (i = 0; i < 9; i++) { var an = i / 9 * TAU, rr = w0 * (0.66 + (i % 2) * 0.16); bp.push([bc[0] + Math.cos(an) * rr, bc[1] + Math.sin(an) * rr * 0.55]); } ctx.fillStyle = zc(scl(c0, dk * 0.82)); ctx.fill(pPath(pSmooth(bp, true, 2))); }   // the burr, knobbly
+  }
+  var nearS = dep([0, 0, 1]) > dep([0, 0, -1]) ? -1 : 1, farS = -nearS;
+  antler(farS); ear(farS);
+  // the skull: the local colour lit from above, then strokes in the round (their tone from the surface's turn to the light), the markings as patches lying on the surface
+  var gh = ctx.createLinearGradient(0, hb[1], 0, hb[3]);
+  gh.addColorStop(0, zc(mixc(face, [255, 232, 196], 0.12), 1.02)); gh.addColorStop(0.5, zc(face, 0.94)); gh.addColorStop(1, zc(mixc(face, [60, 50, 70], 0.25), 0.82));
+  ctx.fillStyle = gh; ctx.fill(hp);
+  ctx.save(); ctx.clip(hp);
+  var dkF = mixc(face, C.blk, 0.3), pale = C.muzzle;
+  // broad masses: the shade under the jaw and down the side turned from the light, the darker brow and bridge of the nose
+  for (xi = 0; xi < 6; xi++) {
+    var xs = -0.04 + xi * 0.06, sn2 = surfAt(xs, 0.75, nearS), sf2 = surfAt(xs, 0.75, farS);
+    [sn2, sf2].forEach(function (q) { var v0 = vis(q[1]); if (v0 < -0.1) return; var pq = P(q[0]); zsoft(ctx, pq[0], pq[1], 0.06 * k1, 0.035 * k1, mixc(face, [50, 42, 60], 0.4), 0.3 * clamp(0.5 + v0)); });
+  }
+  [[0.12, 0.09, 0.022], [0.22, 0.06, 0.016]].forEach(function (q) { var s0 = sikaSkull(q[0], -Math.PI / 2), n0 = sikaSkullN(q[0], -Math.PI / 2), v0 = vis(n0); if (v0 < -0.05) return; decal(s0, tang(n0, [1, 0, 0], q[1]), tang(n0, [0, 0, 1], q[2] * 2), function () { zsoft(ctx, 0, 0, 1, 0.5, dkF, 0.4 * clamp(v0 / 0.3 + 0.3)); }); });
+  var PALF = pPal(face);
+  var nX = RL.k < 320 ? 6 : 9, nP = RL.k < 320 ? 9 : 12;
+  if (MODE !== 'm') for (xi = 0; xi < nX; xi++) for (ph = 0; ph < nP; ph++) {
+    var xm = lerp(-0.05, 0.25, xi / (nX - 1)), pm = (ph + 0.5) / nP * TAU, sm3 = sikaSkull(xm, pm), nm3 = sikaSkullN(xm, pm), vm = vis(nm3); if (vm < 0.08) continue;
+    var tm = tone(nm3), cm = PALF[clamp(Math.round(tm * 6.4 + 0.3), 0, 7)], qm = P(sm3), rm = sikaTab(SIKA_HD.wid, xm) * k1 * (RL.k < 320 ? 0.95 : 0.75);
+    zsoft(ctx, qm[0], qm[1], rm, rm * 0.8, cm, 0.55 * clamp((vm - 0.08) / 0.3));
+  }
+  var n = lod ? 0 : pCount(0.032, 700), R = pRand('sika3h', Math.max(1, n)), set = pSet({ f: pPal(face), mz: pPal(pale) });
+  for (var k = 0; k < n; k++) {
+    var x = lerp(-0.07, 0.27, R[k * 4]), phk = R[k * 4 + 1] * TAU, p3 = sikaSkull(x, phk), nn = sikaSkullN(x, phk), v = vis(nn); if (v < 0.04) continue;
+    var q0 = P(p3), dq = P([p3[0] - 0.03, p3[1] + 0.004 * Math.sin(phk), p3[2]]), an = Math.atan2(dq[1] - q0[1], dq[0] - q0[0]) + (R[k * 4 + 2] - 0.5) * 0.4, cls = 'f';
+    if (x > 0.2 && Math.sin(phk) > 0.3 || x > 0.13 && x < 0.2 && Math.sin(phk) > 0.75) cls = 'mz';
+    pStroke(set, cls, pTi(tone(nn) * (cls === 'mz' ? 0.85 : 1), pMot(p3[0] + p3[2], p3[1], 7) * 0.8 + (R[k * 4 + 3] - 0.5) * 0.8), q0[0], q0[1], an, m.l * 0.6 * (0.6 + 0.4 * clamp(v * 2)));
+  }
+  ctx.globalAlpha = 0.85; pSetFlush(ctx, set, m.w * 0.8); ctx.globalAlpha = 1;
+  // the pale muzzle and lips and chin, each side and across the front; the pale band behind the nose
+  [[0.245, 0.55, 0.045, 0.026, 1], [0.2, 0.8, 0.05, 0.022, 0.8], [0.15, 0.92, 0.05, 0.022, 0.75], [0.1, 0.95, 0.04, 0.03, 0.35], [0.255, -0.35, 0.02, 0.02, 0.6]].forEach(function (q) { [nearS, farS].forEach(function (sd2) { var s0 = surfAt(q[0], q[1], sd2), v0 = vis(s0[1]); if (v0 < -0.05) return; decal(s0[0], tang(s0[1], [1, 0, 0], q[2]), tang(s0[1], [0, 1, 0], q[3]), function () { zsoft(ctx, 0, 0, 1, 1, pale, q[4] * clamp(v0 / 0.25 + 0.2)); }); }); });
+  (function () { var s0 = sikaSkull(0.255, Math.PI / 2), n0 = sikaSkullN(0.255, Math.PI / 2), v0 = vis(n0); if (v0 > -0.05) decal(s0, tang(n0, [1, 0, 0], 0.035), tang(n0, [0, 0, 1], 0.03), function () { zsoft(ctx, 0, 0, 1, 1, pale, 0.85 * clamp(v0 / 0.25 + 0.3)); }); })();
+  (function () { var s0 = sikaSkull(0.25, -Math.PI / 2), n0 = sikaSkullN(0.25, -Math.PI / 2), v0 = vis(n0); if (v0 > -0.05) decal(s0, tang(n0, [1, 0, 0], 0.016), tang(n0, [0, 0, 1], 0.03), function () { zsoft(ctx, 0, 0, 1, 1, mixc(pale, face, 0.15), 0.7 * clamp(v0 / 0.25 + 0.3)); }); })();
+  ctx.restore();
+  if (!lod) fineFur(ctx, [hd], function (x, y, nx, ny) { return y > lerp(hb[1], hb[3], 0.45) && ny > -0.2 ? 0.7 : 0; }, [scl(face, 1), scl(face, 0.8), scl(face, 0.6)], 83, 0.018 * k1, null, null, 0.6);
+  // the rim of sky light along the crown and the top of the ears' bases
+  ctx.save(); ctx.clip(hp); ctx.translate(0, m.w * 0.9); ctx.strokeStyle = zc(RL.rimC, 1, RL.rimA * 1.1); ctx.lineWidth = m.w * 0.9; ctx.beginPath();
+  for (var i2 = 0; i2 < hd.length; i2++) { var a0 = hd[i2], b0 = hd[(i2 + 1) % hd.length]; if (a0[1] < lerp(hb[1], hb[3], 0.4) && b0[1] < lerp(hb[1], hb[3], 0.4)) { ctx.moveTo(a0[0], a0[1]); ctx.lineTo(b0[0], b0[1]); } }
+  ctx.stroke(); ctx.restore();
+  // the nose: the bare black pad round the tip of the muzzle, the nostrils on its front
+  (function () {
+    var tipN = [1, 0.05, 0], vt = vis(tipN), ps = [];
+    for (var j = 0; j < 14; j++) { var aa = j / 14 * TAU; ps.push(P([0.283, -0.001 + 0.018 * Math.sin(aa), 0.023 * Math.cos(aa)])); }
+    var sideP = [nearS, farS].map(function (sd3) { return [[0.262, -0.016, sd3 * 0.026], [0.282, -0.016, sd3 * 0.02], [0.288, 0.006, sd3 * 0.016], [0.282, 0.02, sd3 * 0.018], [0.262, 0.02, sd3 * 0.025], [0.256, 0.002, sd3 * 0.028]].map(P); });
+    ctx.fillStyle = zc(C.nose); ctx.fill(pPath(pSmooth(pHull(ps.concat(sideP[0], vt > 0.1 ? sideP[1] : [])), true, 2)));
+    [-1, 1].forEach(function (sd3) { var nn3 = [0.7, 0, sd3 * 0.7], v3 = vis(nn3); if (v3 < 0.05) return; decal([0.281, 0.002, sd3 * 0.016], [0, 0, sd3 * 0.008], [0, 0.008, 0], function () { ctx.strokeStyle = 'rgba(70,64,62,' + (0.8 * clamp(v3 / 0.4)).toFixed(3) + ')'; ctx.lineWidth = 0.45; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(-0.6, -1.2); ctx.quadraticCurveTo(0.9, -0.2, 0.2, 1.1); ctx.stroke(); }); });   // the nostrils: curved slits either side of the pad, a little lighter than the wet black
+    var hl = P([0.284, -0.011, nearS * 0.006]); ctx.fillStyle = 'rgba(255,255,255,0.22)'; ctx.beginPath(); ctx.ellipse(hl[0], hl[1], 0.007 * k1, 0.003 * k1, 0, 0, TAU); ctx.fill();
+  })();
+  // the mouth line along the lips, each side as it turns to us
+  [nearS, farS].forEach(function (sd2) { var a1 = surfAt(0.27, 0.62, sd2), v0 = vis(a1[1]); if (v0 < 0.05) return; var q1 = P(a1[0]), q2 = P(surfAt(0.235, 0.78, sd2)[0]), q3 = P(surfAt(0.2, 0.75, sd2)[0]); ctx.strokeStyle = zc(scl(C.blk, 1.5), 1, 0.7 * clamp(v0 / 0.3)); ctx.lineWidth = Math.max(0.0018, 0.9 / Math.max(1, RL.k)); ctx.beginPath(); ctx.moveTo(q1[0], q1[1]); ctx.quadraticCurveTo(q2[0], q2[1], q3[0], q3[1]); ctx.stroke(); });
+  // the eyes: large and dark, set high on the sides with a pale ring and the dark preorbital gland in front; each as it turns to us
+  var bl = o.blink === undefined ? 1 : o.blink;
+  function almond(cx, cy, L, Hh, rot) { var c = Math.cos(rot), s2 = Math.sin(rot), Fp = [cx + c * L, cy + s2 * L], K = [cx - c * L, cy - s2 * L], p = new Path2D(); p.moveTo(Fp[0], Fp[1]); p.quadraticCurveTo(cx + s2 * Hh * 2, cy - c * Hh * 2, K[0], K[1]); p.quadraticCurveTo(cx - s2 * Hh * 1.5, cy + c * Hh * 1.5, Fp[0], Fp[1]); p.closePath(); return p; }
+  [nearS, farS].forEach(function (sd2) {
+    var s0 = surfAt(0.088, -0.42, sd2); s0[0][2] *= 1.07; s0[1] = (function (q) { var e = [q[0] + 0.3, q[1], q[2]], l = Math.hypot(e[0], e[1], e[2]); return [e[0] / l, e[1] / l, e[2] / l]; })(s0[1]); var v0 = vis(s0[1]); if (v0 < 0.02) return;
+    var a = clamp(v0 / 0.2), t1 = tang(s0[1], [1, 0, 0], 0.033), t2 = tang(s0[1], [0, 1, 0], 0.033);
+    decal(s0[0], t1, t2, function () {
+      ctx.globalAlpha = a;
+      var gl = new Path2D(); gl.moveTo(0.67, 0.12); gl.quadraticCurveTo(1.2, 0.24, 1.58, 0.6); gl.quadraticCurveTo(1.1, 0.48, 0.67, 0.27); gl.closePath(); ctx.fillStyle = zc(mixc(face, C.blk, 0.65), 1, 0.8); ctx.fill(gl);   // the preorbital gland
+      ctx.fillStyle = zc(mixc(C.muzzle, face, 0.45), 1, 0.8); ctx.fill(almond(0, 0, 0.96, 0.43, 0.18));   // the pale ring
+      if (bl < 0.2) { ctx.strokeStyle = zc(C.blk); ctx.lineWidth = 0.12; ctx.beginPath(); ctx.moveTo(-0.5, -0.1); ctx.quadraticCurveTo(0, 0.18, 0.55, 0.1); ctx.stroke(); }
+      else { var ep2 = almond(0, 0, 0.85, 0.37 * bl, 0.18); ctx.fillStyle = 'rgb(22,14,12)'; ctx.fill(ep2); ctx.save(); ctx.clip(ep2); zsoft(ctx, -0.06, 0.06, 0.36, 0.3, [86, 52, 34], 0.8); ctx.restore(); }
+      ctx.globalAlpha = 1;
+    });
+    if (bl >= 0.2) { var ec = P(s0[0]), ec2 = P([s0[0][0] + t1[0] * 0.2, s0[0][1] + t1[1] * 0.2 - 0.004, s0[0][2] + t1[2] * 0.2]); ctx.fillStyle = RL.night ? 'rgba(200,220,255,' + (0.5 * a).toFixed(3) + ')' : 'rgba(255,255,255,' + (0.75 * a).toFixed(3) + ')'; ctx.beginPath(); ctx.arc(lerp(ec[0], ec2[0], 0.8), lerp(ec[1], ec2[1], 0.8), 0.0038 * k1, 0, TAU); ctx.fill(); }   // the catch-light, round however the eye is turned
+    if (o.shine && bl > 0.5) { var es = P(s0[0]); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(210,230,170,' + (0.5 * o.shine * a) + ')'; ctx.beginPath(); ctx.arc(es[0], es[1], 0.015 * k1, 0, TAU); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; }
+  });
+  ear(nearS); antler(nearS);
 }
 function sikaPaint(ctx, o) {
   var R = sikaRig(), C = SIKA_C, wk = clamp(o.coatK === undefined ? 0.6 : o.coatK), rut = o.hind ? 0 : (o.rut || 0), m;
   RL.k = pScale(ctx); m = pLm();
   var coat = mixc(C.sum, C.win, wk), dor = mixc(C.dorS, C.dorW, wk), leg = mixc(C.legS, C.legW, wk), bel = mixc(C.belly, mixc(C.belly, C.win, 0.3), wk), cols = { leg: leg, coat: coat };
   var Po = sikaPose(R, o), B = Po.B, ns = null, B0 = R.B0;
+  var tF = qTurnF(ctx, 1), tS = Math.sqrt(Math.max(0, 1 - tF * tF));   // how far the body is turned from the side view (1: in profile)
+  SIKA_WM.n = Math.sqrt(tF * tF + 0.9 * tS * tS) / tF; SIKA_WM.l = Math.sqrt(tF * tF + 0.5 * tS * tS) / tF;
   ctx.save();
   // soft contact shadows under the hooves that are on the ground
   if (MODE !== 'm' && !o.noShadow) {
-    [[B[8], 8], [B[12], 12], [Po.farH[3], 8], [Po.farF[3], 12]].forEach(function (q) { var e = [q[0].a[0] + Math.cos(q[0].th) * B0[q[1]].len, q[0].a[1] + Math.sin(q[0].th) * B0[q[1]].len], up = clamp(-e[1] / 0.12); if (up >= 1) return; zsoft(ctx, e[0] + 0.01, 0.004, 0.075, 0.02, [20, 18, 26], 0.42 * (1 - up) * clamp(RL.lum * 1.1, 0.4, 1)); });
+    (farShift(ctx, 0.15, 1) || ZF_LDY ? [[B[8], 8], [B[12], 12]] : [[B[8], 8], [B[12], 12], [Po.farH[3], 8], [Po.farF[3], 12]]).forEach(function (q) { var e = [q[0].a[0] + Math.cos(q[0].th) * B0[q[1]].len, q[0].a[1] + Math.sin(q[0].th) * B0[q[1]].len], up = clamp(-e[1] / 0.12); if (up >= 1) return; zsoft(ctx, e[0] + 0.01, 0.004, 0.075, 0.02, [20, 18, 26], 0.42 * (1 - up) * clamp(RL.lum * 1.1, 0.4, 1)); });
   }
   // the far legs, behind
   sikaFarLeg(ctx, R, B, Po.farH, true, cols, 'sikafh'); sikaFarLeg(ctx, R, B, Po.farF, false, cols, 'sikaff');
@@ -5530,13 +5824,14 @@ function sikaPaint(ctx, o) {
   var hl = sikaLegTube(R, [B[5], B[6], B[7], B[8]], true), fl = sikaLegTube(R, [B[9], B[10], B[11], B[12]], false), hOut = pWind(hl.out, true), fOut = pWind(fl.out, true);
   var path = new Path2D(); pPath(out, path); pPath(nOut, path); pPath(hOut, path); pPath(fOut, path);
   var bodyLegs = new Path2D(); pPath(out, bodyLegs); pPath(hOut, bodyLegs); pPath(fOut, bodyLegs);
-  qFarBody(ctx, [out], 0.15, 1, cols.coat || cols.leg);   // (turned toward us, the far side of the body)
+  qFarBody(ctx, [out], 0.15, 1, cols.coat || cols.leg, { wb: 0.62, k: ZF_TOW > 0 ? lerp(1, 1.22, clamp(RL.lx)) : 0.9, L: 0.024 });   // (v5: its edge fur short, as the deer's coat is: long, the far haunch going away was a fuzzy orange halo)   // (turned toward us, the far side of the body: the chest's front, full down to the brisket where the far foreleg comes out from under it, lit when the light is in front of him)
   var PC = R.pc || (R.pc = {});
   function P2(x, y) { var key = x + ',' + y, L = PC[key]; if (!L) { var mp = sikaMp([x, y]); L = PC[key] = R.inherit(mp[0], mp[1]); } return sikaPt(B, L, ns); }   // a design point, posed (its skin weights kept)
   // (v3) the flank fold: the skin from the belly to the stifle, so the thigh swinging forward or back never leaves a notch under the
   // belly with the stifle standing out below it as a knob
   var webP = [P2(-0.26, -0.585), P2(-0.33, -0.6), P2(-0.4, -0.66), hl.at(0.04, 0), hl.at(0.14, -1), hl.at(0.14, 1), hl.at(0.2, -1), hl.at(0.2, 0.6)].map(function (q) { return [q[0], q[1]]; }), web = pWind(pSmooth(pHull(webP), true, 3), true);
   pPath(web, path); pPath(web, bodyLegs);
+  var rearSh = ZF_TOW < 0 ? farShift(ctx, 0.15, 1) * 0.92 : 0;   // (going away: the body's breadth, the back of the rump turned toward us)
   var Lt = pL(), lit = 0.5 + 0.5 * clamp(-Lt[1]);
   ctx.save(); ctx.clip(path);
   // 1. the big masses, painted wet: the local colour, a cool shadow under the barrel and down the legs, the light across the back
@@ -5602,15 +5897,27 @@ function sikaPaint(ctx, o) {
   ctx.fillStyle = gB; ctx.fill(bodyLegs);
   blob(-0.44, -0.84, 0.14, 0.11, hiC, 0.45 * lit * gz, 0.3); blob(0.3, -0.83, 0.08, 0.13, hiC, 0.42 * lit * gz, -0.4); blob(-0.05, -0.86, 0.24, 0.06, hiC, 0.25 * lit * gz);
   blob(0.2, -0.68, 0.06, 0.14, dkC, 0.18 * gz, 0.12); blob(-0.29, -0.69, 0.06, 0.12, dkC, 0.22 * gz, -0.3); blob(-0.52, -0.62, 0.035, 0.12, dkC, 0.2 * gz, 0.2);
+  if (tS > 0.15) {   // (v5) turned, the body has depth along its length: the end farther off a little cooler and darker, the top of the back seen as a lit band, the near barrel rolling into shade below (a turned flank read as one flat plane)
+    var eF = P2(0.45, -0.75), eB = P2(-0.62, -0.75), gD = ctx.createLinearGradient(eF[0], eF[1], eB[0], eB[1]), dA = 0.3 * tS, far0 = ZF_TOW > 0 ? 1 : 0;
+    gD.addColorStop(0, zc(dkC, 0.95, dA * (1 - far0))); gD.addColorStop(0.45, zc(dkC, 1, 0)); gD.addColorStop(1, zc(dkC, 0.95, dA * far0)); ctx.fillStyle = gD; ctx.fill(bodyLegs);
+    blob(-0.05, -0.955, 0.42, 0.035, hiC, 0.5 * tS * lit); blob(-0.05, -0.6, 0.34, 0.05, dkC, 0.3 * tS);
+  }
   // the rump patch: a soft white heart on the back of the haunch, a thin dark line round its top and front, the tail down its middle
-  var rp = [[-0.522, -0.895], [-0.548, -0.905], [-0.572, -0.885], [-0.598, -0.9], [-0.614, -0.87], [-0.618, -0.79], [-0.605, -0.71], [-0.585, -0.655], [-0.56, -0.7], [-0.535, -0.77], [-0.518, -0.84]].map(function (q) { var cx = -0.577, cy = -0.79, k = 1.15 + fla * 0.4; return P2(cx + (q[0] - cx) * k - fla * 0.014, cy + (q[1] - cy) * k); });   // (seen from the side, a soft crescent at the back of the haunch; flared, it spreads)
-  var rps = pSmooth(rp, true, 5), rbx = pBox(rps);
-  var grr = ctx.createLinearGradient(0, rbx[1], 0, rbx[3]); grr.addColorStop(0, zc(C.white, 1.02)); grr.addColorStop(0.6, zc(C.white, 0.94)); grr.addColorStop(1, zc(mixc(C.white, [130, 134, 156], 0.25), 0.82));
-  var rpA = ZF_TOW > 0 ? clamp((qTurnF(ctx, 1) - 0.5) / 0.42) : 1;   // (coming toward us the patch on the back of the haunch turns away out of sight)
+  var rp = [[-0.522, -0.895], [-0.548, -0.908], [-0.572, -0.906], [-0.598, -0.9], [-0.614, -0.87], [-0.618, -0.79], [-0.605, -0.71], [-0.585, -0.655], [-0.56, -0.7], [-0.535, -0.77], [-0.518, -0.84]].map(function (q) { var cx = -0.58, cy = -0.79, k = 0.98 + fla * 0.55; return P2(cx + (q[0] - cx) * k - fla * 0.014, cy + (q[1] - cy) * k); });   // (seen from the side, a soft crescent at the back of the haunch; flared, it spreads)
+  var rps = pSmooth(rp, true, 5), rbx = pBox(rps);   // (v5: at rest the patch smaller and a little warmer, the hairs closed down: full size and pure white it read as a sticker on the haunch at a phone's size; flared, it opens to its full bright white)
+  var grr = ctx.createLinearGradient(0, rbx[1], 0, rbx[3]); grr.addColorStop(0, zc(mixc(C.white, coat, 0.08 * (1 - fla)), 0.98)); grr.addColorStop(0.6, zc(mixc(C.white, coat, 0.14 * (1 - fla)), 0.9)); grr.addColorStop(1, zc(mixc(C.white, [130, 134, 156], 0.25), 0.82));
+  var rpA = ZF_TOW > 0 ? clamp((qTurnF(ctx, 1) - 0.5) / 0.42) : clamp(1 - Math.abs(rearSh) / 0.05);   // (v5: going away, it gives way to the patch across the back of both haunches, below)   // (coming toward us the patch on the back of the haunch turns away out of sight)
   ctx.fillStyle = grr; (mid ? [[0.014, 0.16], [0.002, 0.36], [-0.012, 0.9]] : [[0.018, 0.1], [0.011, 0.16], [0.005, 0.26], [-0.001, 0.4], [-0.007, 0.6], [-0.014, 0.9]]).forEach(function (q) { ctx.globalAlpha = q[1] * rpA; ctx.fill(pPath(pOffset(rps, q[0]))); }); ctx.globalAlpha = 1;   // the fur edge feathered well into the coat   // soft-edged: the white fades into the coat
   var re = pSmooth([rp[9], rp[10], rp[0], rp[1], rp[2]], false, 5), rb = new Path2D(); re.forEach(function (q, ii) { if (ii) rb.lineTo(q[0], q[1]); else rb.moveTo(q[0], q[1]); });
   ctx.save(); ctx.translate(0.012, -0.005); ctx.globalAlpha = rpA; ctx.strokeStyle = zc(mixc(C.blk, coat, 0.3), 1, 0.3); ctx.lineWidth = 0.036; ctx.stroke(rb); ctx.strokeStyle = zc(C.blk, 1, 0.62); ctx.lineWidth = 0.017; ctx.stroke(rb); ctx.restore();   // the dark line round its top and front, soft
   ctx.restore();
+  // (v5) going away, the white rump patch across the back of both haunches, edged black on its outer sides (only the near haunch's
+  // crescent showed, the far haunch a plain brown fur mass beside it)
+  if (rearSh && MODE !== 'm') { var rpc = P2(-0.6, -0.8), xN = rpc[0] + 0.04, xF = rpc[0] - 0.03 + rearSh, rhw = Math.abs(xN - xF) * 0.5, rcx = (xN + xF) * 0.5, rA = clamp(Math.abs(rearSh) / 0.06), RP = [];
+    [[0, -0.92], [0.45, -0.95], [0.88, -0.72], [1, -0.2], [0.85, 0.45], [0.5, 0.9], [0.15, 1], [0, 0.88], [-0.15, 1], [-0.5, 0.9], [-0.85, 0.45], [-1, -0.2], [-0.88, -0.72], [-0.45, -0.95]].forEach(function (q) { RP.push([rcx + q[0] * rhw, rpc[1] + 0.01 + q[1] * 0.11]); });
+    var RPs = pSmooth(RP, true, 4), rpp = pPath(RPs), grp = ctx.createLinearGradient(0, rpc[1] - 0.12, 0, rpc[1] + 0.13); grp.addColorStop(0, zc(C.white, 0.98, rA)); grp.addColorStop(0.7, zc(C.white, 0.9, rA)); grp.addColorStop(1, zc(mixc(C.white, [130, 134, 156], 0.3), 0.8, rA)); ctx.fillStyle = grp; ctx.globalAlpha = 0.35; ctx.fill(pPath(pOffset(RPs, 0.008))); ctx.globalAlpha = 1; ctx.fill(pPath(pOffset(RPs, -0.004)));
+    ctx.save(); ctx.clip(rpp); zsoft(ctx, xF + rhw * 0.4, rpc[1] + 0.03, rhw * 0.6, 0.11, [120, 116, 130], 0.28 * rA); zsoft(ctx, rcx, rpc[1] + 0.06, rhw * 0.15, 0.1, [150, 146, 160], 0.22 * rA); ctx.restore();   // the far haunch's half a shade cooler, the cleft between the two
+    [-1, 1].forEach(function (sd) { var bl = new Path2D(); for (var i = 0; i <= 8; i++) { var a = -0.95 + i / 8 * 1.5, x = rcx + sd * rhw * (1.0 + 0.06 * Math.cos(a)) * Math.cos(a * 0.55), y = rpc[1] + 0.01 + Math.sin(a) * 0.115; if (i) bl.lineTo(x, y); else bl.moveTo(x, y); } ctx.strokeStyle = zc(C.blk, 1, 0.6 * rA); ctx.lineWidth = 0.018; ctx.lineCap = 'round'; ctx.stroke(bl); }); }
   // 3. the edge: clean, with a thin sky rim along the top; broken into hair only at the throat, under the belly and (in rut) the mane
   var rim = new Path2D(), eh = pSet({ coat: pPal(coat), mane: pPal(C.mane), bel: pPal(mixc(bel, coat, 0.55)) }), er = mulberry32(17), bxN = pBox(nOut), bxB = pBox(out);
   function inBox(b2, q) { return q[0] > b2[0] && q[0] < b2[2] && q[1] > b2[1] && q[1] < b2[3]; }
@@ -5621,7 +5928,7 @@ function sikaPaint(ctx, o) {
       var a0 = dd[ii], c0 = dd[(ii + 1) % dd.length], sl = Math.hypot(c0[0] - a0[0], c0[1] - a0[1]), tx = (c0[0] - a0[0]) / (sl || 1), ty = (c0[1] - a0[1]) / (sl || 1), nx = ty * ar, ny = -tx * ar, hid = false;
       for (var oj = 0; oj < allO.length && !hid; oj++) if (allO[oj] !== dd && inBox(allB[oj], a0) && pInside(allO[oj], a0[0], a0[1])) hid = true;
       if (hid) continue;
-      if (-ny > 0.35) { rim.moveTo(a0[0] - nx * m.w * 0.5, a0[1] - ny * m.w * 0.5); rim.lineTo(c0[0] - nx * m.w * 0.5, c0[1] - ny * m.w * 0.5); }
+      if (-ny > 0.35 && dd !== hOut && dd !== fOut) { rim.moveTo(a0[0] - nx * m.w * 0.5, a0[1] - ny * m.w * 0.5); rim.lineTo(c0[0] - nx * m.w * 0.5, c0[1] - ny * m.w * 0.5); }   // (v5: no sky rim on the legs: where one leaves the body it drew a pale stroke across the leg)
       acc += sl; if (acc < m.w * 1.4) continue; acc = 0;
       var z = zoneFn(ii, a0, nx, ny); if (!z) continue;
       var L2 = m.l * z[1] * (0.6 + er() * 0.6), hx = nx * 0.6 + tx * z[2] * ar, hy = ny * 0.6 + ty * z[2] * ar + 0.25, hl = Math.hypot(hx, hy) || 1;
@@ -5636,10 +5943,10 @@ function sikaPaint(ctx, o) {
   ctx.strokeStyle = zc(RL.rimC, 1, RL.rimA * 0.9); ctx.lineWidth = m.w * 0.7; ctx.lineCap = 'round'; ctx.stroke(rim);
   if (!lo) {   // the neck's long hair: a soft shaggy mane along the crest and the throat in rut and in the winter coat, a few soft locks at the throat otherwise
     var mk = Math.max(rut, wk * 0.5), nkO = nOut, nbx = pBox(out);
-    tanWisps(ctx, [nkO], function (x, y, nx, ny) { if (pInside(out, x, y)) return 0; var throat = ny > 0.2 || nx > 0.6; return throat ? 0.25 + 0.6 * mk : ny < -0.2 ? 0.75 * mk : 0; }, [mixc(coat, C.mane, 0.3), mixc(coat, C.mane, 0.6), C.mane], m, 61); void nbx;
+    var hq0 = B[4].a; tanWisps(ctx, [nkO], function (x, y, nx, ny) { if (pInside(out, x, y) || tF < 0.97 && Math.hypot(x - hq0[0], y - hq0[1]) < 0.2) return 0; var throat = ny > 0.2 || nx > 0.6; return throat ? 0.25 + 0.6 * mk : ny < -0.2 ? 0.75 * mk : 0; }, [mixc(coat, C.mane, 0.3), mixc(coat, C.mane, 0.6), C.mane], m, 61); void nbx;
   }
   // the tail: short, down the middle of the patch; white beneath, a dark line down its top; up and flared when alarmed
-  var tb = P2(-0.572, -0.892), ta = lerp(1.72, 2.75, fla), tl = 0.085;
+  var tb = P2(-0.572, -0.892), ta = lerp(1.72, 2.75, fla), tl = 0.085; if (rearSh) tb = [tb[0] + rearSh * 0.5, tb[1]];   // (going away, the tail down the middle of the rump)
   var td = [Math.cos(ta), Math.sin(ta)], tn2 = [-td[1], td[0]], tail = pLimb([tb, [tb[0] + td[0] * tl * 0.5 + tn2[0] * 0.006, tb[1] + td[1] * tl * 0.5 + tn2[1] * 0.006], [tb[0] + td[0] * tl, tb[1] + td[1] * tl]], [0.026, 0.028, 0.016], [0.026, 0.028, 0.016], 4), tp = pPath(tail.out);
   var gt = ctx.createLinearGradient(tb[0] - tn2[0] * 0.03, tb[1] - tn2[1] * 0.03, tb[0] + tn2[0] * 0.03, tb[1] + tn2[1] * 0.03); gt.addColorStop(0, zc(C.white, 1.04)); gt.addColorStop(1, zc(C.white, 0.9)); ctx.fillStyle = gt; ctx.fill(tp);
   ctx.save(); ctx.clip(tp); var tq0 = tail.at(0.05, -0.45), tq1 = tail.at(0.75, -0.35); var tq2 = tail.at(0.4, -0.45); zsoft(ctx, tq2[0], tq2[1], 0.035, 0.008, mixc(C.blk, coat, 0.4), 0.45, 1, ta); ctx.restore(); void tq0; void tq1;   // a soft dark stripe down its top
@@ -5648,7 +5955,9 @@ function sikaPaint(ctx, o) {
   // the head on the end of the neck: the poll at the top of the last neck bone (the hind's smaller and finer)
   var hb = B[4], hdo = o.head || {}, nE = nk.at(1, -0.75), hsc = o.hind ? 1.24 : 1.34;
   ctx.save(); ctx.translate(lerp(hb.a[0], nE[0], 0.5), lerp(hb.a[1], nE[1], 0.5)); ctx.rotate(hb.th); ctx.scale(hsc, hsc);
-  sikaHead(ctx, { yaw: hdo.yaw, mouth: o.mouth, ears: o.ears, t: o.t, blink: o.blink, shine: o.shine, antler: o.hind ? 0 : o.antler === undefined ? 1 : o.antler, velvet: o.velvet, hd: hb.th, coat: coat }, wk, rut);
+  var hy3 = clamp(hdo.yaw || 0), ho3 = { yaw: hdo.yaw, mouth: o.mouth, ears: o.ears, t: o.t, blink: o.blink, shine: o.shine, antler: o.hind ? 0 : o.antler === undefined ? 1 : o.antler, velvet: o.velvet, hd: hb.th, coat: coat };
+  if (Math.acos(tF) > SIKA_T3) { ctx.restore(); sikaHead3(ctx, ho3, wk, rut, { o: [lerp(hb.a[0], nE[0], 0.5), lerp(hb.a[1], nE[1], 0.5)], th: hb.th, sc: hsc, F: tF, S: tS * ZF_TOW, ldy: ZF_LDY, psi: hy3 * 1.1 }); ctx.save(); }   // (turned: the head in the round; side-on, the painted profile)
+  else sikaHead(ctx, ho3, wk, rut);
   ctx.restore();
   ctx.restore();
 }
@@ -5747,7 +6056,7 @@ function qLegTube(R, Bf, hindLeg, wl0, wr0, top0) {
 /* (v2) turned toward us (the side view squeezed), the far legs stand out beside the near ones by the body's width: shifted along the
    body by that width x tan(turn), forward when it comes toward us (ZF_TOW, set by zFacing), back when it walks away; the
    squeeze read from the transform (base: its ratio seen side-on). So a three-quarter animal shows four legs, not two */
-var ZF_TOW = 1;
+var ZF_TOW = 1, ZF_LDY = 0;
 function farShift(ctx, W, base) { var M = ctx.getTransform(), f = clamp(Math.abs(M.a) / (Math.hypot(M.c, M.d) || 1) / (base || 1), 0.3, 1); return f > 0.97 ? 0 : W * Math.sqrt(1 - f * f) / f * ZF_TOW; }
 function qFarBody(ctx, outs, W, base, col, fo) {   // the far side of the body, seen past the near side when it turns toward us (or away): the body has a width; the far legs hang from it
   // (v3) only the leading end: the chest coming toward us, the haunch going away, the outline swept out by the body's width, its face lit
@@ -5757,7 +6066,7 @@ function qFarBody(ctx, outs, W, base, col, fo) {   // the far side of the body, 
   fo = fo || {}; var kk = fo.k || 1;
   var sh = farShift(ctx, W, base) * 0.92; if (!sh) return;
   var d = pWind(outs[0], true), bx = pBox(d), L = bx[2] - bx[0], fw = sh > 0, p = new Path2D();
-  var yb0 = bx[1], yh = Math.max(1e-6, bx[3] - bx[1]); function wp(y) { var v = clamp((y - yb0) / yh); return 0.3 + 0.7 * Math.pow(Math.sin(Math.PI * v), 0.6); }   // (v4) the body's breadth by height: in section the chest an oval, widest at the point of the shoulder, narrow at the spine and the brisket (a uniform sweep gave the far chest a straight front edge)
+  var yb0 = bx[1], yh = Math.max(1e-6, bx[3] - bx[1]); function wp(y) { var v = clamp((y - yb0) / yh); return fo.wb && v > 0.5 ? lerp(1, fo.wb, Math.pow((v - 0.5) / 0.5, 2)) : 0.3 + 0.7 * Math.pow(Math.sin(Math.PI * v), 0.6); }   // (fo.wb: the breadth kept down at the brisket, a deep chest's)   // (v4) the body's breadth by height: in section the chest an oval, widest at the point of the shoulder, narrow at the spine and the brisket (a uniform sweep gave the far chest a straight front edge)
   for (var si = 1; si <= 4; si++) { var dx = sh * si / 4; p.moveTo(d[0][0] + dx * wp(d[0][1]), d[0][1]); for (var sj = 1; sj < d.length; sj++) p.lineTo(d[sj][0] + dx * wp(d[sj][1]), d[sj][1]); p.closePath(); }   // the outline swept out by the width (its union with itself shifted): the back line keeps its own shape (a hull's chord across the dip of the back showed as a pale wedge)
   var x0 = fw ? bx[0] + L * 0.45 : bx[2] - L * 0.45, xe = fw ? bx[2] + sh : bx[0] + sh;
   var gF = ctx.createLinearGradient(x0, 0, xe, 0); gF.addColorStop(0, zc(col, 0.74 * kk, 0)); gF.addColorStop(0.3, zc(col, 0.76 * kk, 1)); gF.addColorStop(0.75, zc(col, 0.72 * kk, 1)); gF.addColorStop(1, zc(col, 0.58 * kk, 1));   // (a tone under the near side: it is the side turned from us)
@@ -5775,7 +6084,7 @@ function qTurnF(ctx, base) { var M = ctx.getTransform(); return clamp(Math.abs(M
 function qFarLeg(ctx, R, Bf, hindLeg, wl, wr, pal, key) {
   var lb = qLegTube(R, Bf, hindLeg, R.spec.farW ? wl : null, R.spec.farW ? wr : null, R.spec.farTop), path = pPath(lb.out), e0 = lb.at(0, 0), e1 = lb.at(1, 0), g = ctx.createLinearGradient(e0[0], e0[1], e1[0], e1[1]);
   var fsh = farShift(ctx, R.spec.key === 'fox' ? 0.085 : R.spec.key === 'tan' ? 0.1 : 0.09, R.spec.key === 'fox' ? 0.9 : 1); if (fsh) { ctx.save(); ctx.translate(fsh, 0); }   // (its top is covered by the far side of the body, qFarBody)
-  g.addColorStop(0, zc(pal[0], 0.62, fsh && hindLeg ? 0 : 1)); if (fsh && hindLeg) g.addColorStop(0.22, zc(pal[0], 0.6)); g.addColorStop(0.5, zc(mixc(pal[0], pal[1], 0.5), 0.55)); g.addColorStop(1, zc(pal[2], 0.6)); ctx.fillStyle = g; ctx.fill(path);   // (turned, the far thigh's top fades into the belly's shadow)
+  var fF = hindLeg && (fsh || R.spec.farFadeH); g.addColorStop(0, zc(pal[0], 0.62, fF ? 0 : 1)); if (fF) g.addColorStop(fsh ? 0.22 : R.spec.farFadeH, zc(pal[0], 0.6)); g.addColorStop(0.5, zc(mixc(pal[0], pal[1], 0.5), 0.55)); g.addColorStop(1, zc(pal[2], 0.6)); ctx.fillStyle = g; ctx.fill(path);   // (turned, the far thigh's top fades into the belly's shadow)
   if (fsh) { var fe = lb.at(1, 0); zsoft(ctx, fe[0], 0.004 * R.sc, 0.04, 0.011, [20, 18, 26], 0.35 * clamp(RL.lum * 1.1, 0.4, 1)); ctx.restore(); }   // (its own contact shadow where it now stands)
   return lb;
 }
@@ -5803,6 +6112,13 @@ function qEdge(ctx, outs, zoneFn, pals, rimOn) {
   });
   pSetFlush(ctx, set, m.w * 0.75);
   if (rimOn !== false) { ctx.strokeStyle = zc(RL.rimC, 1, RL.rimA * 0.9); ctx.lineWidth = m.w * 0.7; ctx.lineCap = 'round'; ctx.stroke(rim); }
+}
+/* (v5) the shadow side's edge: a thin darker line along the outline where it faces down (the belly, the underside of the neck, the backs
+   of the legs), only where it is the silhouette, so a small animal stands off the ground in dim light (soft fur alone read as a blur) */
+function qUnder(ctx, outs, col, a, w) {
+  var m = pLm(), p = new Path2D(), bxs = outs.map(pBox);
+  outs.forEach(function (dd, oi) { var ar = pArea(dd) > 0 ? 1 : -1; for (var ii = 0; ii < dd.length; ii++) { var a0 = dd[ii], c0 = dd[(ii + 1) % dd.length], sl = Math.hypot(c0[0] - a0[0], c0[1] - a0[1]) || 1, ny = -(c0[0] - a0[0]) / sl * ar, nx = (c0[1] - a0[1]) / sl * ar, hid = false; if (ny < 0.25) continue; for (var j = 0; j < outs.length && !hid; j++) if (j !== oi && a0[0] > bxs[j][0] && a0[0] < bxs[j][2] && a0[1] > bxs[j][1] && a0[1] < bxs[j][3] && pInside(outs[j], a0[0] + nx * m.w, a0[1] + ny * m.w)) hid = true; if (hid) continue; p.moveTo(a0[0] - nx * m.w * 0.4, a0[1] - ny * m.w * 0.4); p.lineTo(c0[0] - nx * m.w * 0.4, c0[1] - ny * m.w * 0.4); } });
+  ctx.strokeStyle = zc(col, 1, a); ctx.lineWidth = m.w * (w || 1); ctx.lineCap = 'round'; ctx.stroke(p);
 }
 /* a soft fur outline: the silhouette's edge feathered out a little in the coat's own colours (no hard vector edge, no ticks) */
 function qFuzz(ctx, path, c0, c1, y0, y1, w) {
@@ -6021,10 +6337,10 @@ function foxPaint2(ctx, o) {
   var hiC = mixc(coat, [255, 236, 200], 0.3), loC = mixc(coat, [40, 30, 44], 0.55);
   function blob(x, y, rx, ry, c, a, rot) { var q = P2(x, y); zsoft(ctx, q[0], q[1], rx, ry, c, a, 1, rot || 0); }
   blob(-0.17, -0.335, 0.12, 0.035, hiC, 0.35 * lit, -0.08); blob(0.02, -0.35, 0.14, 0.03, hiC, 0.35 * lit); blob(0.16, -0.32, 0.035, 0.06, hiC, 0.4 * lit, -0.4);   // light along the back and over the croup (no round highlight on the thigh)
-  blob(0.1, -0.26, 0.025, 0.07, loC, 0.4); blob(-0.11, -0.27, 0.05, 0.06, loC, 0.18, -0.3); blob(-0.04, -0.245, 0.11, 0.03, loC, 0.35); blob(-0.2, -0.2, 0.05, 0.06, loC, 0.2, 0.4);   // behind the elbow (the deep chest), a soft flank, the tucked waist
+  blob(0.1, -0.26, 0.025, 0.07, loC, 0.4); blob(-0.11, -0.27, 0.05, 0.06, loC, 0.18, -0.3); blob(-0.04, -0.245, 0.11, 0.03, loC, dsk ? 0.5 : 0.35); blob(-0.2, -0.2, 0.05, 0.06, loC, 0.2, 0.4);   // behind the elbow (the deep chest), a soft flank, the tucked waist
   blob(-0.01, -0.24, 0.12, 0.028, bel, 0.65); blob(0.2, -0.27, 0.05, 0.08, W2, 0.75); blob(0.19, -0.22, 0.035, 0.04, mixc(W2, coat, 0.3), 0.5);   // pale belly, the white chest, blended soft into the orange
   // the legs: the coat's own colour darkening toward the paws, with the thin black stripe down the front of each (細い黒斑)
-  var sT = P2(0, -0.15), g2 = ctx.createLinearGradient(0, sT[1], 0, 0); g2.addColorStop(0, zc(C.stock, 1, 0)); g2.addColorStop(0.5, zc(C.stock, 1, 0.5)); g2.addColorStop(1, zc(mixc(C.stock, C.blk, 0.4), 0.9, 0.9)); ctx.fillStyle = g2; ctx.fill(bodyLegs);
+  var sT = P2(0, -0.15), g2 = ctx.createLinearGradient(0, sT[1], 0, 0); g2.addColorStop(0, zc(C.stock, 1, 0)); g2.addColorStop(0.45, zc(mixc(C.stock, C.blk, 0.15), 1, 0.62)); g2.addColorStop(1, zc(mixc(C.stock, C.blk, 0.55), 0.9, 0.95)); ctx.fillStyle = g2; ctx.fill(bodyLegs);   // (v5: the stockings darker to the paws: in dim light brown legs were lost on the ground)
   // the neck: the white throat on its lower side, the crest a little darker
   var nA = Math.atan2(nk.at(1, 0)[1] - nk.at(0.2, 0)[1], nk.at(1, 0)[0] - nk.at(0.2, 0)[0]);
   // a rounded column: lit along the crest, turning into shadow toward the throat; the white bib a soft-edged band down the front
@@ -6045,7 +6361,7 @@ function foxPaint2(ctx, o) {
     for (i = 0; i < nn; i++) { var u = 0.15 + NR[i * 4] * 0.85, v = NR[i * 4 + 1] * 2 - 1, qn = nk.at(u, v), nm = qn[3]; pCurve(set, v > lerp(0.62, 0.22, u) + 0.14 * Math.sin(u * 23 + v * 7) ? 'bib' : 'coat', pTi(pTone(nm[0] * v, nm[1] * v, Math.sqrt(Math.max(0, 1 - v * v)), 0) * 0.6 + 0.2, (NR[i * 4 + 2] - 0.5) * 0.5), qn[0], qn[1], qn[2] + Math.PI + (NR[i * 4 + 3] - 0.5) * 0.35, m.l * 0.55 * fl, 0.15 + v * 0.1); }   // soft locks flowing down from the head
     ctx.globalAlpha = 0.55; pSetFlush(ctx, set, m.w * 0.8); ctx.globalAlpha = 1;
   }
-  [[flg, 0.62, 0.95], [hl, 0.68, 0.97]].forEach(function (q) { var lb = q[0], sp = new Path2D(), side = q === undefined ? 1 : -1; for (var k = 0; k <= 10; k++) { var u = lerp(q[1] - (lb === flg ? 0.3 : 0.08), q[2], k / 10), pt = lb.at(u, lb === flg ? -0.6 : -0.55); if (k) sp.lineTo(pt[0], pt[1]); else sp.moveTo(pt[0], pt[1]); } ctx.strokeStyle = zc(C.stripe, 1, 0.8); ctx.lineWidth = Math.max(0.006, m.w * 0.9); ctx.lineCap = 'round'; ctx.stroke(sp); void side; });
+  [[flg, 0.62, 0.95], [hl, 0.68, 0.97]].forEach(function (q) { var lb = q[0], sp = new Path2D(), side = q === undefined ? 1 : -1; for (var k = 0; k <= 10; k++) { var u = lerp(q[1] - (lb === flg ? 0.3 : 0.08), q[2], k / 10), pt = lb.at(u, lb === flg ? -0.6 : -0.55); if (k) sp.lineTo(pt[0], pt[1]); else sp.moveTo(pt[0], pt[1]); } ctx.strokeStyle = zc(C.stripe, 1, 0.9); ctx.lineWidth = Math.max(0.008, m.w * 1.3); ctx.lineCap = 'round'; ctx.stroke(sp); void side; });
   ctx.restore();
   // the edge: soft hair under the belly, the white chest and throat, the back of the thighs; rim light along the top
   var half = nOut.length / 2, rev = nk.out !== nOut;
@@ -6054,6 +6370,8 @@ function foxPaint2(ctx, o) {
     if (oi === 1) return null;
     return null;
   }, { w: qSoft(W2), b: qSoft(bel), c: qSoft(coat) });
+  if (MODE !== 'm' && RL.k < 420) qUnder(ctx, [out, nOut, hOut, fOut], mixc(coat, C.blk, 0.7), dsk || RL.night ? 0.55 : 0.4, 1.1);   // (v5: the shadow side's edge, darker: the fox off the ground at a phone's size)
+  if (dsk && MODE !== 'm') { var rA0 = RL.rimA; RL.rimA = rA0 * 1.7; qEdge(ctx, [out, nOut, hOut, fOut], function () { return null; }, {}, function (oi) { return oi < 2; }); RL.rimA = rA0; }   // (v5: dusk, the last light along the back and the crest of the neck, so the fox stands off the dim ground)
   if (MODE !== 'm') qFuzz(ctx, pPath(tail.out), coat, coat, 0, 0, m.w * 1.3);
   // paws
   [[B[8], 8], [B[12], 12]].forEach(function (q) { var e = qEnd(q[0], B0[q[1]].len), a = q[0].a; ctx.fillStyle = zc(C.blk, 0.9); ctx.beginPath(); ctx.ellipse(lerp(a[0], e[0], 0.6), lerp(a[1], e[1], 0.6) - 0.004, 0.026, 0.012, q[0].th, 0, TAU); ctx.fill(); });
@@ -6077,6 +6395,8 @@ function foxPaint2(ctx, o) {
 /* ---- the raccoon dog (ホンドタヌキ), drawn as one painted animal: about 25 cm at the shoulder, body 55 cm, round and low in a
    long grizzled coat. Dark legs and chest, a dark band over the shoulders, the black mask across the eyes and cheeks with a
    pale brow and muzzle above it, small rounded ears rimmed dark, a short bushy tail dark along the top ---- */
+// (v5) farFadeH: the far hind leg faded in down its length, its thigh lost behind the belly (it hung under it as a dark block);
+// the front of the upper arm slim (legW.fr): full, its top corner stood out of the chest and the leg's front kinked in at the elbow
 var TANS = {
   /* the tanuki's own gaits: an ambling, rolling waddle on short legs (the body rocks to the side of the foot that is down: one
      roll per stride), and when it must hurry, a scuttling trot of quick short steps */
@@ -6084,13 +6404,13 @@ var TANS = {
     walk: { beta: 0.68, off: [0, 0.5, 0.25, 0.75], lift: 0.18, liftH: 0.11, bob: 0.01, bobN: 1, roll: 0.045, rollN: 1, fold: 0.55 },
     trot: { beta: 0.45, off: [0, 0.5, 0.5, 0], lift: 0.2, liftH: 0.12, bob: 0.008, bobN: 2, roll: 0.03, rollN: 1, fold: 0.6, flick: 1, pitchA: 0 }
   },
-  key: 'tan', sc: 0.3, headAng: 0.3, pawFold: 0.3, wristFold: 0.9, tubeTop: 0.25,
-  legW: { hl: [0.062, 0.052, 0.042, 0.024, 0.019, 0.017], hr: [0.062, 0.042, 0.032, 0.021, 0.018, 0.016], fl: [0.046, 0.036, 0.03, 0.021, 0.018, 0.016], fr: [0.046, 0.034, 0.032, 0.021, 0.018, 0.016] },
+  key: 'tan', sc: 0.3, farFadeH: 0.3, headAng: 0.3, pawFold: 0.3, wristFold: 0.9, tubeTop: 0.25,
+  legW: { hl: [0.062, 0.052, 0.042, 0.024, 0.019, 0.017], hr: [0.062, 0.042, 0.032, 0.021, 0.018, 0.016], fl: [0.046, 0.036, 0.03, 0.021, 0.018, 0.016], fr: [0.022, 0.03, 0.03, 0.021, 0.018, 0.016] },
   J: { P0: [-0.15, -0.26], M: [0.0, -0.27], Wt: [0.13, -0.27], N0: [0.15, -0.27], Nm: [0.195, -0.3], N1: [0.24, -0.32], Ns: [0.35, -0.3],
     Hj: [-0.15, -0.21], St: [-0.1, -0.13], Hk: [-0.175, -0.07], HFt: [-0.168, -0.02], HHf: [-0.132, 0],
     Sp: [0.14, -0.2], El: [0.112, -0.13], Kn: [0.128, -0.05], FFt: [0.134, -0.02], FHf: [0.166, 0] },
   C: [[-0.235, -0.315, 'T'], [-0.27, -0.29, 'T'], [-0.292, -0.25, [0, 5]], [-0.292, -0.2, 'RB'], [-0.272, -0.15, [5, 6]], [-0.235, -0.12, [5, 6]], [-0.16, -0.11, 'HF'], [-0.1, -0.112, 'HF'], [-0.07, -0.1, 'FK'],
-    [-0.02, -0.088, 'BE'], [0.04, -0.088, 'BE'], [0.08, -0.095, [1, 9]], [0.094, -0.1, 'FU'], [0.103, -0.085, [9, 10]], [0.12, -0.08, [9, 10]], [0.155, -0.085, [9, 10]], [0.17, -0.13, 'FU'], [0.19, -0.17, 'CH'], [0.2, -0.21, 'CH'], [0.195, -0.245, 'CH'],
+    [-0.02, -0.088, 'BE'], [0.04, -0.088, 'BE'], [0.08, -0.095, [1, 9]], [0.094, -0.093, 'FU'], [0.103, -0.085, [9, 10]], [0.12, -0.08, [9, 10]], [0.155, -0.085, [9, 10]], [0.17, -0.13, 'FU'], [0.19, -0.17, 'CH'], [0.2, -0.21, 'CH'], [0.195, -0.245, 'CH'],
     [0.18, -0.275, 'T'], [0.155, -0.3, 'T'], [0.12, -0.322, 'T'], [0.05, -0.336, 'T'], [-0.03, -0.342, 'T'], [-0.11, -0.34, 'T'], [-0.18, -0.332, 'T']],
   MS: [[0.12, -0.22, 0.05, 0.07, 0.035, -0.3], [0.0, -0.23, 0.15, 0.1, 0.07, 0], [-0.19, -0.22, 0.09, 0.08, 0.05, 0.2], [-0.17, -0.12, 0.04, 0.05, 0.025, 0.3], [0.13, -0.09, 0.02, 0.05, 0.012, 0]],
   BK: [[-0.24, -0.31], [-0.15, -0.335], [-0.03, -0.342], [0.07, -0.333], [0.15, -0.3]], BL: [[-0.07, -0.1], [0.0, -0.088], [0.09, -0.095]],
@@ -6156,14 +6476,14 @@ function tanukiHead2(ctx, o, coat, C) {   // head frame: origin at the poll, x a
     if (!lod) qFuzz(ctx, p, mixc(coat, DK, 0.5), DK, tq[1], bS[1], m.w * 0.8);
   }
   function ruffP(sd) {   // the cheek ruff: long pale fur standing out behind and below the cheek, darker underneath, its edge in pointed tufts (narrow: a broad round ruff reads as an owl)
-    var rK = C.ruffK || 1, e = EL([-0.004, 0.024, (0.038 + 0.012 * sn) * sd * rK, 0.038 * rK, 0.042 + 0.006 * sn, 0.024 + 0.01 * sn]), c = Math.cos(e[4]), s2 = Math.sin(e[4]), D = [], ox = -sd * sn * 0.006;
+    var rK = (C.ruffK || 1) * (1 - 0.18 * sn), e = EL([-0.004, 0.026, (0.036 + 0.008 * sn) * sd * rK, 0.036 * rK, (0.04 + 0.004 * sn) * rK, (0.022 + 0.006 * sn) * rK]), c = Math.cos(e[4]), s2 = Math.sin(e[4]), D = [], ox = -sd * sn * 0.006;
     for (var k = 0; k < 28; k++) {
       var a = k / 28 * TAU, tf = k % 2 ? 0.94 : 1.1 + 0.05 * Math.sin(k * 2.7 + sd), px = Math.cos(a) * e[2] * tf, py = Math.sin(a) * e[3] * tf, X = e[0] + px * c - py * s2 + ox, Y = e[1] + px * s2 + py * c;
       var dn = Math.max(0, Y - e[1]) / e[3], out = (X - e[0]) * (sn > 0.4 ? -sd : -1);   // drawn down and out at the lower outer corner, to a soft point
       D.push([X + (sn > 0.4 ? -sd : -1) * dn * dn * 0.012 * Math.max(0, out) / Math.max(0.01, e[2]), Y + dn * dn * 0.008]);
     }
     var rp = pPath(pSmooth(D, true, 2)), g = ctx.createLinearGradient(e[0], e[1] - e[3], e[0], e[1] + e[3] * 1.1);
-    g.addColorStop(0, zc(mixc(C.ruff, coat, 0.2), RL.hi * 0.97)); g.addColorStop(0.55, zc(C.ruff, 0.95)); g.addColorStop(1, zc(mixc(C.ruff, DK, 0.45), 0.85)); ctx.fillStyle = g; ctx.fill(rp);
+    g.addColorStop(0, zc(mixc(C.ruff, coat, 0.2), RL.hi * 0.97)); g.addColorStop(0.45, zc(C.ruff, 0.92)); g.addColorStop(1, zc(mixc(C.ruff, DK, 0.6), 0.8)); ctx.fillStyle = g; ctx.fill(rp);   // (v5: smaller facing us and darker below: a big pale fan round the face read as an owl's disc)
     ctx.save(); ctx.clip(rp); var mq = PJ([0.018, 0.024, 0.036 * sd]); zsoft(ctx, mq[0], mq[1], 0.03, 0.024, DK, 0.75 * clamp(vis([0.2, 0.2, sd]) + 0.6)); ctx.restore();   // the mask running down into the ruff
     if (!lod) { qFuzz(ctx, rp, C.ruff, mixc(C.ruff, DK, 0.4), e[1] - e[3], e[1] + e[3], m.w * 1.3); tanWisps(ctx, [D], function (x, y, nx, ny) { return ny < -0.5 ? 0.35 : 1; }, [mixc(C.ruff, [236, 226, 204], 0.35), C.ruff, mixc(C.ruff, DK, 0.35)], m, 17 + sd, 0.024); }
     return rp;
@@ -6182,7 +6502,8 @@ function tanukiHead2(ctx, o, coat, C) {   // head frame: origin at the poll, x a
   var parts = HD.map(function (e, i) { return { e: ell[i], d: dep(e), c: e[6], a: 1 }; });
   [1, -1].forEach(function (sd) {
     [[0.064, -0.006, 0.021 * sd, 0.021, 0.0115, 0.016, DK, 1], [0.058, 0.007, 0.024 * sd, 0.02, 0.014, 0.017, DK, 1], [0.05, 0.004, 0.027 * sd, 0.021, 0.015, 0.017, DK, 1], [0.036, 0.015, 0.032 * sd, 0.022, 0.018, 0.017, DK, 1], [0.018, 0.023, 0.035 * sd, 0.022, 0.018, 0.017, DK, 0.95],   // the mask in one sweep: round the eye, down and back over the cheek to the jaw
-     [0.086, 0.009, 0.013 * sd, 0.024, 0.011, 0.012, mixc(DK, FACE, 0.1), 0.4 + 0.55 * sn],   // and forward along the side of the muzzle to its lower half: facing, the two patches join in a dark band low on the muzzle
+     [0.086, 0.009, 0.013 * sd, 0.024, 0.011, 0.012, mixc(DK, FACE, 0.1), 0.75 + 0.2 * sn],   // and forward along the side of the muzzle to its lower half: facing, the two patches join in a dark band low on the muzzle
+     [0.108, 0.01, 0.009 * sd, 0.014, 0.008, 0.009, mixc(DK, FACE, 0.18), 0.7],
      [0.052, -0.026, 0.02 * sd, 0.022, 0.0065, 0.02, mixc(FACE, BROW, 0.6), 0.45]].forEach(function (q) {   // the pale brow over the eye
       var v = vis([0.45, -0.1, 0.89 * sd]); parts.push({ e: EL(q), d: dep(q) + 0.005, c: q[6], a: q[7] * clamp((v + 0.35) * 2) });
     });
@@ -6193,14 +6514,15 @@ function tanukiHead2(ctx, o, coat, C) {   // head frame: origin at the poll, x a
   var M1 = ctx.getTransform();
   parts.forEach(function (q) {
     if (q.a <= 0.01) return; var e = q.e; ctx.translate(e[0], e[1]); ctx.rotate(e[4]); ctx.scale(e[2], e[3]);
-    var g = ctx.createRadialGradient(0, 0, 0, 0, 0, 1.08); g.addColorStop(0, zc(q.c, 1, q.a)); g.addColorStop(0.7, zc(q.c, 1, q.a * 0.95)); g.addColorStop(1, zc(q.c, 1, 0));
+    var g = ctx.createRadialGradient(0, 0, 0, 0, 0, 1.08); g.addColorStop(0, zc(q.c, 1, q.a)); g.addColorStop(0.45, zc(q.c, 1, q.a * 0.92)); g.addColorStop(0.8, zc(q.c, 1, q.a * 0.5)); g.addColorStop(1, zc(q.c, 1, 0));   // (v5: a longer falloff, and the muzzle's sides dark to the nose in profile too: a pale snout read as a sheep's)
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, 1.08, 0, TAU); ctx.fill(); ctx.setTransform(M1);
   });
   // the light: the top of the head and the bridge catching it, the underside and the side away rolling into shade
   var gl = ctx.createLinearGradient(0, -0.05, 0, 0.04); gl.addColorStop(0, zc([255, 244, 220], 1, 0.16 * RL.hi)); gl.addColorStop(0.45, zc([255, 244, 220], 1, 0)); gl.addColorStop(0.7, zc(DK, 1, 0)); gl.addColorStop(1, zc(DK, 1, 0.35)); ctx.fillStyle = gl; ctx.fillRect(-0.1, -0.08, 0.26, 0.16);
   if (!lod) { var gz = PJ([0.0, -0.03, 0]); zsoft(ctx, gz[0], gz[1], 0.05, 0.02, mixc(coat, C.frost, 0.3), 0.35); }   // the grizzled crown
+  if (!lod) { var hbx = [-0.09, -0.07, 0.15, 0.07], hA = Math.atan2(-RY[0], -RX[0]); fineHairs(ctx, hbx, function (x, y) { return true; }, Math.min(700, Math.round(pCount(0.012, 700))), [mixc(BROW, [250, 246, 236], 0.3), FACE, mixc(FACE, DK, 0.45), mixc(DK, coat, 0.2)], 211, 0.009, function (x, y) { return hA + 0.25 * Math.sin(x * 60 + y * 40); }, function (x, y, rr) { return rr < 0.3 ? 0 : rr < 0.6 ? 1 : rr < 0.85 ? 2 : 3; }, 0.28); }   // (v5) the face's short fur in fine hairs lying back from the nose, light and dark mixed: a smooth shaded shell read as a plastic mask
   ctx.restore();
-  if (!lod) qFuzz(ctx, hp, CROWN, JAW, -0.05, 0.04, m.w * (1.0 - 0.5 * sn));
+  if (!lod) { var hpH = []; ell.forEach(function (e) { var c = Math.cos(e[4]), s2 = Math.sin(e[4]); for (var k = 0; k < 16; k++) { var a = k / 16 * TAU, px = Math.cos(a) * e[2], py = Math.sin(a) * e[3]; hpH.push([e[0] + px * c - py * s2, e[1] + px * s2 + py * c]); } }); qFuzz(ctx, pPath(pSmooth(pHull(hpH), true, 2)), CROWN, JAW, -0.05, 0.04, m.w * (1.0 - 0.5 * sn)); }   // (v5: the fur edge round the head's one outline: round each of its parts, it drew their overlapping rims across the crown as rings)
   // the eyes: dark, a little almond, deep in the patch; a brown iris that catches a glint, the rim darker still
   var bl = o.blink === undefined ? 1 : o.blink;
   [-1, 1].forEach(function (sd) {
@@ -6215,7 +6537,7 @@ function tanukiHead2(ctx, o, coat, C) {   // head frame: origin at the poll, x a
       var gi = ctx.createRadialGradient(Mq[0], Mq[1] - ir * 0.3, 0, Mq[0], Mq[1], ir * 1.2); var EYC = mixc(C.eye, DK, 0.45); gi.addColorStop(0, zc(mixc(EYC, [200, 140, 70], 0.3))); gi.addColorStop(0.75, zc(EYC)); gi.addColorStop(1, zc(scl(EYC, 0.5))); ctx.fillStyle = gi; ctx.beginPath(); ctx.ellipse(Mq[0], Mq[1], ir * 1.05, ir * 0.95, 0, 0, TAU); ctx.fill();
       ctx.fillStyle = 'rgb(8,6,6)'; ctx.beginPath(); ctx.ellipse(Mq[0], Mq[1], ir * 0.5, ir * 0.62, 0, 0, TAU); ctx.fill();
       ctx.fillStyle = RL.night ? 'rgba(220,230,255,0.55)' : 'rgba(255,255,255,0.8)'; ctx.beginPath(); ctx.arc(Mq[0] + ir * 0.35, Mq[1] - ir * 0.3, ir * 0.2, 0, TAU); ctx.fill(); ctx.restore();
-      if (o.shine) { ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(230,210,150,' + (0.7 * o.shine * ev) + ')'; ctx.beginPath(); ctx.arc(Mq[0], Mq[1], ir * 1.6, 0, TAU); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; }
+      if (o.shine) { ctx.globalCompositeOperation = 'lighter'; var gs = ctx.createRadialGradient(Mq[0], Mq[1], 0, Mq[0], Mq[1], ir * 1.05); gs.addColorStop(0, 'rgba(236,250,190,' + (0.95 * o.shine * ev) + ')'); gs.addColorStop(0.45, 'rgba(190,220,120,' + (0.6 * o.shine * ev) + ')'); gs.addColorStop(1, 'rgba(120,150,60,0)'); ctx.fillStyle = gs; ctx.beginPath(); ctx.arc(Mq[0], Mq[1], ir * 1.05, 0, TAU); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; }   // (v5: the eyeshine within the eye, green-gold and hottest at the centre: a glowing disc bigger than the eye made an owl of it)
     }
     ctx.strokeStyle = 'rgba(8,6,6,0.9)'; ctx.lineWidth = LW(0.001, 0.7); ctx.stroke(ep);
   });
@@ -6242,14 +6564,14 @@ function tanukiPaint2(ctx, o) {
   var sumC = o.season === 'summer', R = qRig(sumC ? TANSS : TANS), C = TANK, m, t = o.t || 0;
   if (RL.night || sumC) { C = {}; for (var ck in TANK) C[ck] = TANK[ck]; }
   if (sumC) { C.coat = [92, 76, 60]; C.back = [62, 52, 42]; C.frost = [146, 134, 114]; C.ruff = [132, 118, 96]; C.ruffK = 0.62; }   // (summer: the short coat darker and less frosted, the cheek ruff small)
-  if (RL.night) { C.frost = scl(mixc(C.frost, [214, 220, 232], 0.25), 1.18); C.ruff = scl(C.ruff, 1.2); C.face = scl(TANK.face, 1.18); }   // (v3) at night the pale guard-hair tips, the cheek ruff and the muzzle catch what light there is (the moon, a lantern): lifted, so the mask pattern reads in the dark (toned down, it was one dark smudge at a phone's size)
+  if (RL.night) { C.frost = sumC ? scl(mixc(C.frost, C.coat, 0.3), 1.02) : scl(mixc(C.frost, [214, 220, 232], 0.25), 1.18); C.ruff = scl(C.ruff, 1.2); C.face = scl(TANK.face, 1.18); }   // (v5: the short summer coat barely frosted: lifted like the winter's, it read as a pale woolly sheep at a phone's size)   // (v3) at night the pale guard-hair tips, the cheek ruff and the muzzle catch what light there is (the moon, a lantern): lifted, so the mask pattern reads in the dark (toned down, it was one dark smudge at a phone's size)
   RL.k = pScale(ctx); m = pLm(); m = { l: Math.max(3.4 / RL.k, Math.min(m.l, 11 / RL.k)), w: Math.max(1.35 / RL.k, Math.min(m.w, 3.2 / RL.k)) };   // up close the strokes no finer than a real lock but no bigger than about 11 x 3 device px (larger they read as shards)
   var coat = C.coat, hd = o.head || {}, pitch = hd.pitch === undefined ? 0.15 : hd.pitch;
   var Po = qPose(R, { ph: o.ph, amp: o.amp, gait: o.gait, stride: o.stride || 0.34, crouch: (o.crouch || 0) * 0.4, head: { neck: R.B0[2].th + pitch * 0.5, ang: 0.25 + pitch * 0.9, bend: pitch * 0.1 } }), B = Po.B, B0 = R.B0;
   ctx.save();
   qContact(ctx, R, Po, 0.04);
-  var dk = sumC ? [mixc(C.coat, C.dark, 0.45), mixc(C.coat, C.dark, 0.75), C.dark] : [C.dark, C.dark, C.dark];   // (summer: with the belly higher the far thigh and upper arm show under it, in the coat's shade, darkening down the leg)
-  qFarLeg(ctx, R, Po.farH, true, [0.05, 0.04, 0.02, 0.014, 0.013, 0.012], [0.04, 0.035, 0.018, 0.013, 0.012, 0.011], dk, 'tanfh');
+  var dk = sumC ? [mixc(C.coat, C.dark, 0.45), mixc(C.coat, C.dark, 0.75), C.dark] : [mixc(C.dark, C.coat, 0.32), mixc(C.dark, C.coat, 0.18), C.dark];   // (summer: with the belly higher the far thigh and upper arm show under it, in the coat's shade, darkening down the leg)   // (v5: winter too a shade of the coat darkening to the paws, and the far hind leg slimmer: flat black they read as a hole, the far thigh as a block)
+  qFarLeg(ctx, R, Po.farH, true, [0.042, 0.034, 0.019, 0.014, 0.013, 0.012], [0.034, 0.03, 0.017, 0.013, 0.012, 0.011], dk, 'tanfh');
   qFarLeg(ctx, R, Po.farF, false, [0.03, 0.026, 0.018, 0.014, 0.013, 0.012], [0.026, 0.024, 0.017, 0.013, 0.012, 0.011], dk, 'tanff');
   // the tail: short, thick, carried low, dark along the top
   var P2 = function (x, y) { return qP2(R, B, x, tanY(y)); }, root = P2(-0.255, -0.27), ta = B[0].th + Math.PI - 1.3 + Math.sin(t * 1.3) * 0.04, tl = 0.2;   // (v3: hanging low behind the haunches, a little longer: carried out level it read as a pom-pom)
@@ -6267,6 +6589,7 @@ function tanukiPaint2(ctx, o) {
   var hl = qLegTube(R, [B[5], B[6], B[7], B[8]], true), flg = qLegTube(R, [B[9], B[10], B[11], B[12]], false), hOut = pWind(hl.out, true), fOut = pWind(flg.out, true);
   var path = new Path2D(); pPath(out, path); pPath(nOut, path); pPath(hOut, path); pPath(fOut, path);
   var bodyLegs = new Path2D(); pPath(out, bodyLegs); pPath(hOut, bodyLegs); pPath(fOut, bodyLegs);
+  var webA = pWind(pSmooth(pHull([P2(0.05, -0.092), P2(0.085, -0.098), flg.at(0.06, 1), flg.at(0.16, 1), flg.at(0.24, 0.8), flg.at(0.12, 0)].map(function (q) { return [q[0], q[1]]; })), true, 3), true); pPath(webA, path); pPath(webA, bodyLegs);   // (v5) the skin from the chest to the back of the upper arm, so the belly line runs into the leg without a notch at the elbow
   qFarBody(ctx, [out], 0.1, 1, [62, 52, 44], { k: 1.05, fur: [[150, 134, 112], [84, 70, 58], [32, 27, 24]], L: 0.05 });   // (turned toward us, the far side of the body, in the coat's shade: shaggy, frosted, dark toward the chest)
   var lit = 0.5 + 0.5 * clamp(-pL()[1]);
   ctx.save(); ctx.clip(path);
@@ -6295,7 +6618,7 @@ function tanukiPaint2(ctx, o) {
     ctx.globalAlpha = 0.3; pSetFlush(ctx, set, m.w * 0.95, ['un', 'dk', 'coat', 'fr']); ctx.globalAlpha = 1;
     if (RL.k > 160) {   // drawn large, fine guard hairs over the coat as well (the brush strokes alone thin out up close): pale tips over the back and flanks, darker underfur showing between
       var bxo = pBox(out), nh = Math.min(3000, Math.round((bxo[2] - bxo[0]) * (bxo[3] - bxo[1]) * RL.k * RL.k / 90)), yb0 = bxo[1], yb1 = bxo[3];
-      fineHairs(ctx, bxo, function (x, y) { return pInside(out, x, y); }, nh, [mixc(coat, C.frost, 0.65), mixc(coat, C.frost, 0.25), mixc(coat, C.dark, 0.3), mixc(coat, C.dark, 0.6)], 211, 0.022,
+      fineHairs(ctx, bxo, function (x, y) { return pInside(out, x, y); }, nh, [mixc(coat, C.frost, sumC ? 0.4 : 0.65), mixc(coat, C.frost, sumC ? 0.12 : 0.25), mixc(coat, C.dark, 0.3), mixc(coat, C.dark, 0.6)], 211, 0.022,
         function (x, y) { var v = clamp((y - yb0) / (yb1 - yb0)); return Math.PI - 0.2 - 0.9 * v * v; }, function (x, y, rr) { var v = clamp((y - yb0) / (yb1 - yb0)); return rr < 0.45 - 0.35 * v ? 0 : rr < 0.7 - 0.2 * v ? 1 : rr < 0.9 ? 2 : 3; }, 0.32 * clamp((RL.k - 160) / 200));
     }
   }
@@ -6413,15 +6736,15 @@ function harePaint2(ctx, o) {
   ctx.save(); ctx.translate(0, -lift); if (o.pitch) ctx.rotate(o.pitch);
   var ar = clamp(o.arch || 0), base = lerpPts(lerpPts(lerpPts(HARE_SIT, HARE_UP, up), HARE_STR, e), HARE_ARCH, ar).map(function (q, i) { return [q[0], q[1] + (i >= 2 && i <= 5 ? br : 0)]; });
   var hip = [lerp(lerp(lerp(-0.12, -0.1, up), -0.16, e), -0.115, ar), lerp(lerp(lerp(-0.13, -0.14, up), -0.23, e), -0.2, ar)], sh = [lerp(lerp(lerp(0.07, 0.06, up), 0.13, e), 0.11, ar), lerp(lerp(lerp(-0.17, -0.25, up), -0.24, e), -0.215, ar)];
-  var hf = o.hindF || [-0.03, 0], ff = o.foreF || [0.12, 0], th = o.hindT !== undefined ? o.hindT : 0, fx = o.foreFlex || 0;
+  var hf = o.hindF || [-0.03, 0], ff = o.foreF || [0.12, 0], th = o.hindT !== undefined ? o.hindT : 0, fx = o.foreFlex || 0, hH = o.hindH || 0;
   function hindTube(far) {
-    var dx = far ? 0.015 : 0, sit = 1 - clamp(th * 3), tf = [hf[0] + dx, hf[1] - 0.012 * sit], heel = [tf[0] - lerp(0.135, -0.11, th), tf[1] - lerp(0.016 * sit, 0.05, th)];   // (sitting, the foot's line raised off the snow by the sole and rising a little to the heel)
+    var dx = far ? 0.015 : 0, sit = 1 - clamp(th * 3), tf = [hf[0] + dx, hf[1] - 0.012 * sit], heel = [tf[0] - lerp(0.135, -0.125, th), tf[1] - lerp(0.016 * sit, 0.04, th) - hH];   // (sitting, the foot's line raised off the snow by the sole and rising a little to the heel)
     var h0 = [hip[0] + dx, hip[1] + 0.02], k = zik2(h0, heel, 0.12, 0.11, -1);
     var toe = [tf[0] + lerp(0.05, -0.035, th), tf[1] + 0.004 * sit - 0.003 * (1 - sit)];   // the long flat foot, furred to the toes
     var td = [toe[0] - tf[0], toe[1] - tf[1]], tl = Math.hypot(td[0], td[1]) || 1, tip = [toe[0] + td[0] / tl * 0.016, toe[1] + td[1] / tl * 0.016 + 0.003 * sit + 0.002];   // the toes: a rounded furry tip, turned down onto the snow, not a cut end
     var sn = [lerp(k[0][0], k[1][0], 0.62), lerp(k[0][1], k[1][1], 0.62)], ft2 = [lerp(tf[0], toe[0], 0.5), lerp(tf[1], toe[1], 0.5)];   // (v4) the shin just above the heel, and the middle of the long foot
-    var tS = 1 - 0.32 * e, lb = roundLimb([[hip[0] + dx + 0.02, hip[1] - 0.02], h0, k[0], sn, k[1], tf, ft2, toe, tip], [0.07 * tS, 0.085 * tS, 0.06 * tS, lerp(0.03, 0.022, 1 - sit), lerp(0.034, 0.032, 1 - sit), lerp(0.018, 0.025, 1 - sit), lerp(0.015, 0.026, 1 - sit), lerp(0.013, 0.025, 1 - sit), lerp(0.008, 0.012, 1 - sit)], [0.07 * tS, 0.08 * tS, 0.05 * tS, lerp(0.03, 0.02, 1 - sit), lerp(0.034, 0.028, 1 - sit), lerp(0.019, 0.018, 1 - sit), lerp(0.016, 0.018, 1 - sit), lerp(0.012, 0.016, 1 - sit), lerp(0.006, 0.01, 1 - sit)], 2, 2);   // (v4: lifted, the big hind foot shows its size)   // (v4: the shin narrows above a distinct heel knot, the long foot widens a little to the furred toes: stretched, the hind leg read as one smooth tube)   // a thick thigh; the long furry foot tapering from a full round heel to the toes (a deep even foot read as a block)
-    lb.knee = k[0]; lb.heel = k[1]; lb.h0 = h0; return lb;
+    var tS = 1 - 0.32 * e, lb = roundLimb([[hip[0] + dx + 0.02, hip[1] - 0.02], h0, k[0], sn, k[1], tf, ft2, toe, tip], [0.07 * tS, 0.085 * tS, 0.06 * tS * (1 - 0.3 * e), lerp(0.03, 0.015, 1 - sit), lerp(0.034, 0.035, 1 - sit), lerp(0.018, 0.019, 1 - sit), lerp(0.015, 0.016, 1 - sit), lerp(0.013, 0.021, 1 - sit), lerp(0.008, 0.012, 1 - sit)], [0.07 * tS, 0.08 * tS, 0.05 * tS * (1 - 0.3 * e), lerp(0.03, 0.023, 1 - sit), lerp(0.034, 0.024, 1 - sit), lerp(0.019, 0.016, 1 - sit), lerp(0.016, 0.014, 1 - sit), lerp(0.012, 0.017, 1 - sit), lerp(0.006, 0.01, 1 - sit)], 2, 2);   // (v5: lifted, the knee slimmer, the back of the shin thinning to the tendon above a pointed heel, the foot lean to its furred toes: a soft even tube read as a sock)   // (v4: lifted, the big hind foot shows its size)   // (v4: the shin narrows above a distinct heel knot, the long foot widens a little to the furred toes: stretched, the hind leg read as one smooth tube)   // a thick thigh; the long furry foot tapering from a full round heel to the toes (a deep even foot read as a block)
+    lb.knee = k[0]; lb.heel = k[1]; lb.h0 = h0; var JL = [[hip[0] + dx + 0.02, hip[1] - 0.02], h0, k[0], sn, k[1], tf, ft2, toe, tip], sL = 0, sH = 0, sK = 0; for (var jj = 1; jj < JL.length; jj++) { sL += Math.hypot(JL[jj][0] - JL[jj - 1][0], JL[jj][1] - JL[jj - 1][1]); if (jj === 2) sK = sL; if (jj === 4) sH = sL; } lb.uH = sH / sL; lb.uK = sK / sL; return lb;   // (uH, uK: where the heel and the knee lie along the leg)
   }
   function foreTube(far) {
     var dx = far ? 0.018 : 0, tf = [ff[0] + dx, ff[1]], el = [lerp(sh[0], tf[0], 0.5) - 0.02 - fx * 0.03, lerp(sh[1], tf[1], 0.5) + fx * 0.02];
@@ -6448,6 +6771,10 @@ function harePaint2(ctx, o) {
   for (var hk = 0; hk < 20; hk++) { var ha2 = hk / 20 * TAU, hx2 = Math.cos(ha2) * 0.097 * hkS, hy2 = Math.sin(ha2) * 0.071 * hkS; haunch.push([hcx + hx2 * Math.cos(hA) - hy2 * Math.sin(hA), hcy + hx2 * Math.sin(hA) + hy2 * Math.cos(hA)]); }   // (v3: the haunch a bigger mass)
   haunch = pWind(haunch, true);
   var all = [bodyO, hOut, fOut, nOut, haunch], path = new Path2D(); all.forEach(function (d) { pPath(d, path); });
+  // (v5) a little web of skin over the knee: folded sharply, the leg's inner outline crossed itself there and its loop, wound the other
+  // way, cut a hole through the haunch in the one silhouette
+  var kWb = []; for (var kw = -3; kw <= 3; kw++) { kWb.push(hl.at((hl.uK || 0.3) + kw * 0.025, -0.55)); kWb.push(hl.at((hl.uK || 0.3) + kw * 0.025, 0.55)); }
+  pPath(pWind(pHull(kWb.map(function (q) { return [q[0], q[1]]; })), true), path);
   var px1 = 1 / Math.max(1, RL.k);   // one device pixel, in metres
   function edge(pth, y0, y1, a0, a1) {   // the fine cool contour against the snow: a stroke the fill then covers inside, leaving about a pixel out; light along the top, firmer below
     if (MODE === 'm') return; var ge = ctx.createLinearGradient(0, y0, 0, y1); ge.addColorStop(0, zc(C.edge, 1, a0)); ge.addColorStop(1, zc(C.edge, 1, a1));
@@ -6485,7 +6812,7 @@ function harePaint2(ctx, o) {
     var b0 = lb.at(0.7, -1), b1 = lb.at(0.7, 1), gs2 = ctx.createLinearGradient(b0[0], b0[1], b1[0], b1[1]); gs2.addColorStop(0, 'rgba(0,0,0,0)'); gs2.addColorStop(0.45, 'rgba(0,0,0,0)'); gs2.addColorStop(1, zc(C.shade, 1, 0.5)); ctx.fillStyle = gs2; ctx.save(); ctx.clip(pPath(lb.out)); [uJ, uJ + 0.1, uJ + 0.2].forEach(function (u0) { ctx.save(); ctx.clip(lowLeg(lb, u0)); ctx.globalAlpha = 0.34; ctx.fill(pPath(lb.out)); ctx.restore(); }); ctx.restore(); ctx.globalAlpha = 1;   // a round of shade down the side turned from the light (v4: deeper, so the leg is round; on the lower leg only)
   });
   var lit = 0.5 + 0.5 * clamp(-pL()[1]), loC = mixc(C.coat, C.shade, 0.85);
-  if (e > 0.15) { var jc = mixc(C.coat, C.shade, 0.75); zsoft(ctx, hl.heel[0], hl.heel[1], 0.02, 0.014, jc, 0.5 * e); var fw2 = fl.at(0.55, 0); zsoft(ctx, fw2[0], fw2[1], 0.012, 0.016, jc, 0.45 * e); }   // (v4) the joints shaded as the legs stretch: the heel's knot, the wrist
+  if (e > 0.15) { var jc = mixc(C.coat, C.shade, 0.75), hkc = hl.at(hl.uH || 0.6, -0.7), hkp = hl.at((hl.uH || 0.6) - 0.01, 0.95), knc = hl.at(0.3, -0.75); zsoft(ctx, hkc[0], hkc[1], 0.016, 0.01, jc, 0.6 * e); zsoft(ctx, knc[0], knc[1], 0.022, 0.012, jc, 0.4 * e); zsoft(ctx, hkp[0], hkp[1], 0.012, 0.01, C.light, 0.55 * e); var fw2 = fl.at(0.55, 0); zsoft(ctx, fw2[0], fw2[1], 0.012, 0.016, jc, 0.45 * e); }   // (v4) the joints shaded as the legs stretch: the heel's knot, the wrist
   zsoft(ctx, hip[0] + 0.0, hip[1] + 0.06, 0.06, 0.06, loC, 0.5);              // under the haunch
   zsoft(ctx, hip[0] - 0.01, hip[1] - 0.035, 0.08, 0.05, C.light, (o.brown ? 0.3 : 0.6) * lit); // the lit round of the haunch
   var hfq = [hcx + Math.cos(hA) * 0.0 + 0.085, hcy - 0.005]; zsoft(ctx, hfq[0], hfq[1], 0.022, 0.06, loC, 0.42, 1, 0.25);   // (v3) the shade in front of the haunch where it turns under: the hind quarter massed apart from the flank
@@ -6502,7 +6829,7 @@ function harePaint2(ctx, o) {
     [hl, fl, nk].forEach(function (lb, li) { var nL3 = Math.min(500, pCount(lb.len * 0.07, 500)), R3 = pRand('hare3' + li, nL3); for (var k2 = 0; k2 < nL3; k2++) { var uu = 0.1 + R3[k2 * 4] * 0.9, vv = R3[k2 * 4 + 1] * 2 - 1, q = lb.at(uu, vv); pCurve(set, R3[k2 * 4 + 3] < 0.35 ? 's' : R3[k2 * 4 + 3] > 0.8 ? 'w' : 'c', pTi(0.7 - R3[k2 * 4] * 0.3, 0), q[0], q[1], q[2] + (li === 2 ? Math.PI : 0) + (R3[k2 * 4 + 2] - 0.5) * 0.4, m.l * 0.5, 0.15); } });
     ctx.globalAlpha = 0.12; pSetFlush(ctx, set, m.w * 0.8, ['s', 'c', 'w']); ctx.globalAlpha = 1;   // (lighter: at a phone's size heavier locks read as grey smudges on the white)
     // the long hind foot: furry, a soft pale underside along the sole
-    var so = new Path2D(); for (var k4 = 0; k4 <= 8; k4++) { var qs = hl.at(0.64 + k4 / 8 * 0.36, -0.95); if (k4) so.lineTo(qs[0], qs[1]); else so.moveTo(qs[0], qs[1]); } ctx.strokeStyle = zc(mixc(o.brown ? mixc(C.coat, C.belly, 0.4) : mixc(C.coat, C.warm, 0.2), mixc(C.shade, C.warm, 0.3), 0.75 * e), 1, lerp(0.16, 0.5, e)); ctx.lineCap = 'round'; ctx.lineWidth = 0.022; ctx.stroke(so); ctx.lineWidth = 0.012; ctx.stroke(so);   // a soft band, not a line (v4: lifted in the bound, the sole's dense fur shows dark beneath the big foot)
+    var so = new Path2D(), uH = hl.uH || 0.64; for (var k4 = 0; k4 <= 10; k4++) { var qs = hl.at(uH + 0.01 + k4 / 10 * (0.99 - uH), 0.92); if (k4) so.lineTo(qs[0], qs[1]); else so.moveTo(qs[0], qs[1]); } ctx.strokeStyle = zc(o.brown ? mixc(C.back, C.tip, 0.25) : mixc(mixc(C.coat, C.warm, 0.75), C.shade, 0.3), 1, lerp(0.3, 0.75, e)); ctx.lineCap = 'round'; ctx.lineWidth = 0.02; ctx.stroke(so); ctx.lineWidth = 0.011; ctx.stroke(so);   // (v5) the sole's dense coarse fur, a darker warm band from the heel to the toes along the sole side (in the bound the soles turn up and back, so it runs along the top of the trailing foot and marks the heel's corner; v4 had it on the top of the foot)
   }
   if (ffOK) {
         var lsd = RL.lx >= 0 ? 1 : -1, crm = mixc(C.light, [255, 232, 196], o.brown ? 0.1 : 0.45), b1 = pBox(bodyO);
@@ -6764,7 +7091,7 @@ function sb3Paint(ctx, kind, o) {
   var S = SB3[kind], L = S.L * BIRDV, fl = o.fluff ? 1.12 : 1, pitch = S.pitch + (o.pitch || 0), cr = clamp(o.crouch || 0), t = o.t || 0, m;
   RL.k = pScale(ctx); m = pLm();
   var lod = MODE === 'm' || RL.k * L < 26, turn = clamp(o.turn || 0);   // turn: 0 profile .. 1 three-quarter (the breast toward us)
-  var rx = L * S.rx * (1 - turn * 0.16), ry = L * S.ry * fl, hr = L * S.hr * fl, tl = S.tars * L * (1 - cr * 0.45);
+  var rx = L * S.rx * (1 - turn * 0.16), ry = L * S.ry * fl, hr = L * S.hr * fl, tl = S.tars * L * (kind === 'kawasemi' ? 1 : 0.72) * (1 - cr * 0.45);   // (v5: perched, the bird sits down on its legs, the tarsus slanting forward from the heel under the belly feathers: at full length and upright it stood on stilts)
   var c = Math.cos(pitch), s = Math.sin(pitch), low = Math.sqrt(rx * rx * s * s + ry * ry * c * c), bc = [0, -tl - low * 0.9];
   // the body's lowest point (where the belly feathers meet the legs) is straight above the toes
   var ta0 = Math.atan2(ry * c, rx * s), lowP = [rx * Math.cos(ta0) * c - ry * Math.sin(ta0) * s, rx * Math.cos(ta0) * s + ry * Math.sin(ta0) * c]; if (lowP[1] < 0) lowP = [-lowP[0], -lowP[1]];
@@ -6776,7 +7103,7 @@ function sb3Paint(ctx, kind, o) {
   // 1. the far leg and the tail (behind the body)
   var legW = Math.max(L * (kind === 'kawasemi' ? 0.016 : 0.015), 0.7 / Math.max(1, RL.k));
   function leg(far) {
-    var hip = [bc[0] + lowP[0] * 0.85 + (far ? L * 0.012 : -L * 0.004), bc[1] + lowP[1] * 0.96], ft = [far ? L * 0.016 : -L * 0.006, 0], k2 = far ? 0.75 : 1;   // only the short tarsus shows below the belly feathers
+    var hip = [bc[0] + lowP[0] * 0.85 + (far ? L * 0.012 : -L * 0.004) - L * 0.026, bc[1] + lowP[1] * 0.96], ft = [far ? L * 0.016 : -L * 0.006, 0], k2 = far ? 0.75 : 1;   // only the short tarsus shows below the belly feathers
     var g = ctx.createLinearGradient(hip[0] - legW, hip[1], hip[0] + legW, hip[1]); g.addColorStop(0, zc(scl(S.legs, 1.2 * k2))); g.addColorStop(1, zc(scl(S.legs, 0.7 * k2)));
     ctx.strokeStyle = g; ctx.lineWidth = legW; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(hip[0], hip[1]); ctx.quadraticCurveTo(lerp(hip[0], ft[0], 0.5) + L * 0.01, lerp(hip[1], ft[1], 0.5), ft[0], ft[1] - L * 0.004); ctx.stroke();
     ctx.strokeStyle = zc(scl(S.legs, 0.9 * k2)); ctx.lineWidth = legW * 0.8; ctx.beginPath();   // the toes round the perch: three forward, one back
@@ -7594,7 +7921,7 @@ RV.shika = {
       var q = it.q, d = it.d, p0 = P(q.x, 0, q.z), k = p0.k * d.mag, b2 = [p0.x - 1.25 * k, p0.y - 2.0 * k, p0.x + 1.25 * k, p0.y + 0.35 * k];
       bx = bx ? [Math.min(bx[0], b2[0]), Math.min(bx[1], b2[1]), Math.max(bx[2], b2[2]), Math.max(bx[3], b2[3])] : b2;
       zShadow(ctx, g, q.x, q.z, q.hx, 1.3 * d.mag, 0.36 * d.mag, 1.1 * d.mag, 0.9);
-      zrl(g, it.fc.dir); RL.lum = g.lum; zPlace(ctx, q.x, 0, q.z, it.fc.dir, it.fc.fs, d.mag); sikaPaint(ctx, it.o); ctx.restore();
+      zrl(g, it.fc.dir); RL.lum = g.lum; ZF_TOW = it.fc.tow; ZF_LDY = it.fc.ldy; zPlace(ctx, q.x, 0, q.z, it.fc.dir, it.fc.fs, d.mag, it.fc.sh); sikaPaint(ctx, it.o); ctx.restore(); ZF_LDY = 0;
     });
     if (MODE !== 'm') a.box = bx;   // the screen box the visitors fill (for the layer they are drawn on)
     return t < a.T;
@@ -7678,6 +8005,10 @@ function birdTwig(ctx, g, seed, look) {
     } else { ctx.fillStyle = zc(scl(bark, 0.8)); ctx.beginPath(); ctx.ellipse(p[0], p[1] - 0.008 * sc, 0.007 * sc, 0.011 * sc, an * 0.3, 0, TAU); ctx.fill(); }   // the buds
   });
 }
+/* (v5) each small bird's own readability scale over BIRDV, about its feet: the smallest and the ones seen far off or in the busy
+   blossom (the white-eye in the cherry, the kingfisher across the pond) were a few CSS pixels tall in the phone's 4:3 view, too
+   small to tell what they were */
+var BVK = { mejiro: 1.3, kawasemi: 1.3, uguisu: 1.15, rurubitaki: 1.15, ooruri: 1.1 };
 /* draw one small bird at its state: perched (with idle) or flying */
 function birdDraw(ctx, a, g, kind, q, o) {
   o = o || {}; var t = a.t;
@@ -7687,7 +8018,7 @@ function birdDraw(ctx, a, g, kind, q, o) {
     a.face = dir; a.dOcc = sp.d - 0.15;
     var onTw = q.e.tw || o.twig;   // perched on a spray in a tree: the twig drawn under its feet (the tree's own painted crown has none to show there)
     if (!o.noShadow && !onTw && MODE !== 'm') { var gs = P(pp[0], pp[1] - 0.005, pp[2]); ctx.fillStyle = 'rgba(16,14,22,' + (0.28 * clamp(g.lum * 1.1, 0.35, 1)) + ')'; ctx.beginPath(); ctx.ellipse(gs.x, gs.y, 0.06 * gs.k, 0.018 * gs.k, 0, 0, TAU); ctx.fill(); }
-    zrl(g, dir); zPlace(ctx, pp[0], pp[1], pp[2], dir, 1, 1.0);
+    zrl(g, dir); zPlace(ctx, pp[0], pp[1], pp[2], dir, 1, BVK[kind] || 1);
     var bo = { t: t, blink: zblink(t, a.seed % 61), fluff: g.season === 'winter' || g.wet };
     if (o.pose) o.pose(bo, q);
     if (onTw) birdTwig(ctx, g, (a.seed || 1) + (q.e.i || 0) * 7, onTw === 'leaf' || g.season === 'summer' ? 'leaf' : g.season === 'spring' ? 'bloom' : 'bare');
@@ -7698,7 +8029,7 @@ function birdDraw(ctx, a, g, kind, q, o) {
     a.face = dr; a.dOcc = s0.d - 0.15;
     var u = q.u, land = q.e.k === 'fly' && u > 0.8, start = u < 0.15, flap = start || land || (Math.sin(t * 0.9 + a.seed) > -0.3), wph = t * (o.wbf || 46);
     var fo = { t: t, ph: flap ? wph : Math.PI * 0.3, fold: o.bound && !land && !start && Math.sin(t * 5) > 0.2 ? 1 : 0, brake: land ? (u - 0.8) * 5 : 0, pitch: clamp(Math.atan2(dy, Math.abs(dx) + 1e-3), -0.5, 0.5) * dr - (land ? 0.35 : 0) };
-    zrl(g, dr); zPlace(ctx, q.p[0], q.p[1], q.p[2], dr, 1, 1.0); ctx.translate(0, -0.03); birdFlyPaint2(ctx, kind, fo); ctx.restore();
+    zrl(g, dr); zPlace(ctx, q.p[0], q.p[1], q.p[2], dr, 1, BVK[kind] || 1); ctx.translate(0, -0.03); birdFlyPaint2(ctx, kind, fo); ctx.restore();
   }
 }
 function birdOff(R, p, side, up) { var z = p[2] + 1.0, ex = R.edgeX(z, side); return [ex + side * 1.8, p[1] + (up || 1.6), z]; }
@@ -7789,14 +8120,14 @@ RV.kawasemi = {
     var e = S[i];
     if (e.k === 'dive') {   // down in a straight line, the splash and rings, back up to the perch with the fish
       var u = (t - e.t0) / (e.t1 - e.t0), c = P(e.b[0], WL, e.b[2]);
-      if (u < 0.3) { var w = u / 0.3, p = [lerp(e.a[0], e.b[0], w), lerp(e.a[1] + 0.15, WL, w * w), lerp(e.a[2], e.b[2], w)], sp = P(p[0], p[1], p[2]), dr = e.b[0] > e.a[0] ? 1 : -1; a.dOcc = sp.d - 0.15; zrl(g, dr); zPlace(ctx, p[0], p[1], p[2], dr, 1, 1); ctx.rotate(0.9); birdFlyPaint2(ctx, 'kawasemi', { ph: Math.PI * 0.5, fold: 0.85, pitch: 0 }); ctx.restore(); }
+      if (u < 0.3) { var w = u / 0.3, p = [lerp(e.a[0], e.b[0], w), lerp(e.a[1] + 0.15, WL, w * w), lerp(e.a[2], e.b[2], w)], sp = P(p[0], p[1], p[2]), dr = e.b[0] > e.a[0] ? 1 : -1; a.dOcc = sp.d - 0.15; zrl(g, dr); zPlace(ctx, p[0], p[1], p[2], dr, 1, BVK.kawasemi); ctx.rotate(0.9); birdFlyPaint2(ctx, 'kawasemi', { ph: Math.PI * 0.5, fold: 0.85, pitch: 0 }); ctx.restore(); }
       else if (!a.splashed) { a.splashed = true; a.cueSplash = true; }
       if (u > 0.28 && MODE !== 'm') {
         var su = clamp((u - 0.28) / 0.7);
         for (var r = 0; r < 3; r++) { var rr = (0.04 + su * 0.42 - r * 0.08) * c.k; if (rr <= 0) continue; ctx.strokeStyle = 'rgba(236,244,250,' + (0.55 * (1 - su)) + ')'; ctx.lineWidth = Math.max(0.5, 0.012 * c.k); ctx.beginPath(); ctx.ellipse(c.x, c.y, rr, rr * CAM.s * 0.9, 0, 0, TAU); ctx.stroke(); }
         if (su < 0.35) { ctx.fillStyle = 'rgba(240,248,252,' + (0.85 * (1 - su / 0.35)) + ')'; for (var d = 0; d < 10; d++) { var an = d / 10 * Math.PI, hh = Math.sin(su / 0.35 * Math.PI) * (0.12 + (d % 3) * 0.05); ctx.beginPath(); ctx.arc(c.x + Math.cos(an) * su * 0.5 * c.k * (d % 2 ? 1 : -1), c.y - hh * c.k, Math.max(0.5, 0.014 * c.k), 0, TAU); ctx.fill(); } }
       }
-      if (u > 0.42) { var w2 = easeIO((u - 0.42) / 0.58), p2 = [lerp(e.b[0], e.a[0], w2), lerp(WL, e.a[1], w2) + Math.sin(w2 * Math.PI) * 0.2, lerp(e.b[2], e.a[2], w2)], sp2 = P(p2[0], p2[1], p2[2]), dr2 = e.a[0] > e.b[0] ? 1 : -1; a.dOcc = sp2.d - 0.15; zrl(g, dr2); zPlace(ctx, p2[0], p2[1], p2[2], dr2, 1, 1); birdFlyPaint2(ctx, 'kawasemi', { ph: t * 50, pitch: -0.3 * (1 - w2) }); kfFish(ctx, 0.2, -0.05, 0); ctx.restore(); }
+      if (u > 0.42) { var w2 = easeIO((u - 0.42) / 0.58), p2 = [lerp(e.b[0], e.a[0], w2), lerp(WL, e.a[1], w2) + Math.sin(w2 * Math.PI) * 0.2, lerp(e.b[2], e.a[2], w2)], sp2 = P(p2[0], p2[1], p2[2]), dr2 = e.a[0] > e.b[0] ? 1 : -1; a.dOcc = sp2.d - 0.15; zrl(g, dr2); zPlace(ctx, p2[0], p2[1], p2[2], dr2, 1, BVK.kawasemi); birdFlyPaint2(ctx, 'kawasemi', { ph: t * 50, pitch: -0.3 * (1 - w2) }); kfFish(ctx, 0.2, -0.05, 0); ctx.restore(); }
       return t < a.T;
     }
     var q = birdAt(a, t);
@@ -7809,7 +8140,7 @@ RV.kawasemi = {
         if (q2.au < 0.25) bo.wings = 1 - q2.au / 0.25;
       }
     });
-    if (q.perch && q.e.act === 'fish' && q.au < 5) { var pp = q.p, dir = a.face; zrl(g, dir); zPlace(ctx, pp[0], pp[1], pp[2], dir, 1, 1); var S2 = SBIRD.kawasemi, L2 = S2.L * BIRDV; kfFish(ctx, L2 * 0.5 + (q.au < 3.5 ? Math.sin(q.au * 5) * 0.02 : 0), -S2.tars * L2 - L2 * 0.32, q.au < 3.5 ? Math.sin(q.au * 5) * 0.5 : 0.3); ctx.restore(); }
+    if (q.perch && q.e.act === 'fish' && q.au < 5) { var pp = q.p, dir = a.face; zrl(g, dir); zPlace(ctx, pp[0], pp[1], pp[2], dir, 1, BVK.kawasemi); var S2 = SBIRD.kawasemi, L2 = S2.L * BIRDV; kfFish(ctx, L2 * 0.5 + (q.au < 3.5 ? Math.sin(q.au * 5) * 0.02 : 0), -S2.tars * L2 - L2 * 0.32, q.au < 3.5 ? Math.sin(q.au * 5) * 0.5 : 0.3); ctx.restore(); }
     return t < a.T;
   }
 };
@@ -7846,7 +8177,7 @@ RV.mejiro = {
       if (Math.sin(u * 5.7) > 0.8) bo.sing = 0.6; if (q2.au < 0.2) bo.wings = 1 - q2.au / 0.2;
     };
     var q1 = birdAt(a, Math.max(0, t - a.lag)), q0 = birdAt(a, t);
-    if (t > a.lag) { var sv = a.face, so = a.dOcc; birdDraw(ctx, a, g, 'mejiro', offsetQ(q1, 0.075 * BIRDV), { pose: pose, wbf: 52, bound: true, noShadow: true, twig: a.tw }); a.face = sv; a.dOcc = so; }   // the second bird along the same spray, facing the same way, close beside the first (the mejiro's huddle): facing each other at a hand's distance they overlapped into an X
+    if (t > a.lag) { var sv = a.face, so = a.dOcc; birdDraw(ctx, a, g, 'mejiro', offsetQ(q1, 0.075 * BIRDV * BVK.mejiro), { pose: pose, wbf: 52, bound: true, noShadow: true, twig: a.tw }); a.face = sv; a.dOcc = so; }   // the second bird along the same spray, facing the same way, close beside the first (the mejiro's huddle): facing each other at a hand's distance they overlapped into an X
     birdDraw(ctx, a, g, 'mejiro', q0, { pose: pose, wbf: 52, bound: true, noShadow: true, twig: a.tw });
     return t < a.T + a.lag;
   }
@@ -7878,17 +8209,17 @@ RV.uguisu = {
     function spot(r, n) { return [Math.sin(n * 0.5) * 0.45 + (r() - 0.5) * 0.4 + a.side * 0.2, r() * 0.25]; }
     var s0 = spot(hr0, n0 - 1), s1 = spot(hr, n0), e2 = hu * hu * (3 - 2 * hu), along = lerp(s0[0], s1[0], e2), hy = lerp(s0[1], s1[1], e2) * az[3] * 0.4 + Math.sin(hu * Math.PI) * 0.06;
     var tq = (n0 + e2) * hpT, up = sstep(3, 5, tq) * (1 - sstep(10, 12, tq));   // up to the crown and down again, also hop by hop
-    var bx = az[0] + along * az[2] * 0.8, by = lerp(az[3] * 0.5 + hy, az[3] * 0.98 + 0.02, up) - hid * 0.3, bz = az[1] - az[2] * (0.75 - up * 0.2);
+    var bx = az[0] + along * az[2] * 0.8, by = lerp(az[3] * 0.5 + hy, az[3] * 1.0 + 0.06, up) - hid * 0.3, bz = az[1] - az[2] * (0.75 + up * 0.1);   // (v5: up on the crown it perches on the front of the top, in the open: kept back toward the middle, the bush's own flowers hid it)
     a.hopDir = s1[0] >= s0[0] ? 1 : -1;
     var vis = clamp(sstep(0.4, 1.8, t) * (1 - sstep(T - 1.6, T - 0.2, t)) * (1 - hid));
     if (vis <= 0.01) return t < T;
     var sp = P(bx, by, bz), dir = a.hopDir; a.face = dir; a.dOcc = sp.d - 0.05;
-    ctx.save(); ctx.globalAlpha *= vis; zrl(g, dir); zPlace(ctx, bx, by, bz, dir, 1, 1);
+    ctx.save(); ctx.globalAlpha *= vis; zrl(g, dir); zPlace(ctx, bx, by, bz, dir, 1, BVK.uguisu);
     var sing = up > 0.9 && (t % 4.5) > 1.2 && (t % 4.5) < 3.6, bo = { t: t, blink: zblink(t, a.seed % 53), sing: sing ? 0.6 + 0.4 * Math.abs(Math.sin(t * 9)) : 0, cock: sing ? 0.5 : 0.1, head: { pitch: sing ? -0.4 : 0.3 * Math.sin(t * 3), yaw: 0 }, pitch: sing ? -0.25 : 0.1, tilt: sing ? 0 : Math.sin(t * 2.3) * 0.2, wings: hu < 1 ? 0.35 * Math.sin(hu * Math.PI) : 0, crouch: hu >= 1 && (t - n0 * hpT) > hpT - 0.12 ? 0.4 : 0 };
     birdPaint2(ctx, 'uguisu', bo); ctx.restore();
     // leaves in front: it is only ever half seen. A few sprays of the bush's own leaves over the lower body
     if (MODE !== 'm') {
-      var lr = mulberry32(a.seed + 3), lc = mulc(g.SEA.shrub[2] || g.SEA.shrub[0], g.tint), lc2 = mulc(g.SEA.shrub[3] || g.SEA.shrub[0], g.tint), cover = 1 - up * 0.55;
+      var lr = mulberry32(a.seed + 3), lc = mulc(g.SEA.shrub[2] || g.SEA.shrub[0], g.tint), lc2 = mulc(g.SEA.shrub[3] || g.SEA.shrub[0], g.tint), cover = 1 - up * 0.85;   // (v5: singing on the crown it is in the open, only a leaf or two before it: half hidden even there, at a phone's size it was not seen at all)
       for (var k = 0; k < 9; k++) { var lx = bx + (lr() - 0.5) * 0.32, ly = by + 0.02 + lr() * 0.1 * cover + (1 - cover) * -0.04, lp = P(lx, ly, bz - 0.06); if (lr() > cover + 0.2) continue; ctx.fillStyle = rgb(k % 2 ? lc : lc2, vis); ctx.beginPath(); ctx.ellipse(lp.x, lp.y, 0.045 * lp.k, 0.024 * lp.k, lr() * 3, 0, TAU); ctx.fill(); }
     }
     return t < T;
@@ -9138,7 +9469,7 @@ function rareStudy(canvas, name, o) {
     var ctx = canvas.getContext('2d'), k = o.k || canvas.height * 0.7;
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = o.bg || '#7d8a6a'; ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.ellipse(canvas.width / 2 + (o.cx || 0) * k, canvas.height * (o.gy || 0.85), k * 0.5, k * 0.06, 0, 0, TAU); ctx.fill();
-    var gy = canvas.height * (o.gy || 0.85); zrl(g, o.dir || 1); ZF_TOW = o.tow || 1; ctx.setTransform((o.dir || 1) * k * (o.fs || 1), 0, 0, k, canvas.width / 2 + (o.cx || 0) * k, gy);
+    var gy = canvas.height * (o.gy || 0.85); zrl(g, o.dir || 1); ZF_TOW = o.tow || 1; ZF_LDY = o.ldy || 0; ctx.setTransform((o.dir || 1) * k * (o.fs || 1), (o.sh || 0) * k, 0, k, canvas.width / 2 + (o.cx || 0) * k, gy);
     STUDY[name](ctx, o); return true;
   } finally { restoreState(st); }
 }
@@ -9564,7 +9895,7 @@ function weedStudy(canvas, o) {
 
 /* ---- 09_runtime.js ---- */
 /* ================= public API & controller ================= */
-var VERSION = '1.4.0';   // (bumped: the painting changed: the tsukimi moon, lantern and basin moss)
+var VERSION = '1.4.1';   // (bumped: the painting changed: the moon's place and maria, moss, wet stones, reflections, branches, snow)
 var SEASON_KEYS = ['spring', 'summer', 'autumn', 'winter'], LIGHT_KEYS = ['morning', 'day', 'dusk', 'night'];
 function withScene(o, fn) {
   var st = saveState();
