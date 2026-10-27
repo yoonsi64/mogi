@@ -12536,7 +12536,8 @@ function mount(el, opts) {
     petals = sst && sst.fall > 0.01 ? makePetals(g, frng, sst.fall, clock, sst.bloom) : null;
     if (g.fallers === 'leaf') { g.nFall = leafCount(prog); fallers = initFallers(g, frng); }
     leafGust = null;
-    wfx = initWeatherFx(g, frng); lightning = null; setupFireworks(g);
+    wfx = withScene({ W: cur.spec.W, H: cur.spec.H, KS: cur.spec.KS, stage: cur.spec.stage, season: cur.spec.season, light: cur.spec.light, event: cur.spec.event, sp: cur.spec.sp, wx: cur.spec.wx, wsign: cur.spec.wsign }, function () { return initWeatherFx(g, frng); });   // (in the scene's own globals: on a phone the painting can arrive before they're set, and the eave drips need the camera)
+    lightning = null; setupFireworks(g);
     swayFx = null; sizeCanvas(sv, 1, 1); sv.getContext('2d').clearRect(0, 0, 1, 1);
     try { if (cur.sway && cur.sway.meta.length) { sizeCanvas(sv, fv.width, fv.height); sv.getContext('2d').clearRect(0, 0, sv.width, sv.height); swayFx = makeSwayFx(cur.sway, g, sv); } } catch (e) { swayFx = null; if (window.console) console.error(e); }
     if (cur.spec.after && g.season === 'summer' && g.light === 'day') setTimeout(function () { if (!dead) cue('rainbow', null, true); }, 0);   // a faint rainbow is in the sky
