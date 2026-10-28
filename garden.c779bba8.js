@@ -64,15 +64,15 @@ var MODE = 'n', BEND = 0, BENDY = 0, BENDS = 1, FW = false, SKYM = null;   // BE
 var F = null, SEA = null, LIT = null; // features, season params, light params
 var GRAINPAT = null, GLOWS = [], SWAYG = [];   // SWAYG: the grass, iris and reed clumps the animated layer moves with the wind
 var WL = -0.13;                 // water level
-var EDGE = 10.95 * 1.2;         // terrace edge (spread)
+var EDGE = 11.5 * 1.3;          // terrace edge (spread; 1.4.2: the plot made deeper by 0.55, and spread 1.3)
 
 /* layout spread (1.2): every placement is spread out from the camera axis, sizes stay real, so the garden is roomier */
-var SPX = 1.16, SPZ = 1.2, SP_X0 = 0.6;
+var SPX = 1.3, SPZ = 1.3, SP_X0 = 0.6;   // (1.4.2: was 1.16 and 1.2; the groups further apart, with open moss and lawn between them, and the camera drawn back to match)
 function LX(x) { return SP_X0 + (x - SP_X0) * SPX; }
 function LZ(z) { return z * SPZ; }
 function makeCam(w, h) {
   var th = 29.5 * Math.PI / 180, dist = 33.5, tz = 5.0;
-  return { isCam: true, s: Math.sin(th), c: Math.cos(th), x: 0.6, y: dist * Math.sin(th), z: tz - dist * Math.cos(th), F: 960, cx: w / 2, cy: 204 + (h - REF_H) / 2 };
+  return { isCam: true, s: Math.sin(th), c: Math.cos(th), x: 0.6, y: dist * Math.sin(th), z: tz - dist * Math.cos(th), F: 790 - 70 * clamp((REF_H - h) / 78), cx: w / 2, cy: 204 + (h - REF_H) / 2 + (h < REF_H ? (h - REF_H) * 0.04 : 0) };   // (1.4.2: F 960 -> 790, the wider, roomier plot in view; a short landscape frame zoomed out a little more, to 720, and aimed a little lower, so the dry garden in front is whole and there is sky over the far hills)
 }
 function setLight(l) {
   SUN = l.sun; SUNC = l.sunc; AMB = l.amb; LS = l.ls;
@@ -143,51 +143,58 @@ function grainClip(ctx, path, alpha) {
 var STAGE_DEFS = [
   [0, '空き地', '雑草の茂る空き地。ここから庭づくりが始まります', [0.9, 0.05, 3.2]],
   [15, '整地', '土をならし、砂利敷きの縁取りを描きました', [-2.7, 0, 1.45]],
-  [30, '砂紋と石', '白砂に砂紋を引き、石をひとつ据えました', [-2.3, 0.35, 1.6]],
-  [60, 'もみじの苗', 'もみじの苗を植えました', [-4.1, 0.55, 4.3]],
-  [120, '飛び石', '飛び石の小道ができました', [0.45, 0, 1.6]],
-  [180, '苔', '庭に苔が広がりはじめました', [-1.2, 0, 3.0]],
-  [300, 'つつじと松の苗', 'つつじと若い松を植えました', [5.3, 0.5, 2.3]],
-  [420, '池', '池を掘り、水を引きました', [2.4, 0, 4.6]],
-  [600, '錦鯉と石灯籠', '錦鯉を放ち、石灯籠を据えました', [-1.15, 0.9, 4.3]],
-  [900, '睡蓮と菖蒲', '睡蓮が浮かび、菖蒲が水辺を彩ります', [3.2, 0, 4.5]],
-  [1200, '竹垣', '庭を竹垣で囲いました', [0.6, 1.0, 10.45]],
-  [1500, '太鼓橋', '池に朱の太鼓橋を架けました', null],
-  [2100, '蹲踞', '筧の水が落ちる蹲踞を据えました', [-2.2, 0.3, 6.35]],
-  [3000, '茶室', '苔むした茶室が建ちました', [-1.95, 1.7, 8.8]],
-  [4500, '鹿おどし', '鹿おどしの音が庭に響きます', [0.75, 0.45, 3.25]],
-  [6000, '築山と滝', '築山を盛り、滝を落としました', [5.3, 0.9, 7.9]],
-  [7500, '藤棚', '池のほとりに藤棚を組みました', [1.15, 1.75, 6.6]],
-  [9000, '枯山水', '白砂に石組みを据え、枯山水を整えました', [-3.5, 0.5, 1.2]],
-  [12000, '苔庭と大もみじ', '苔が庭を覆い、もみじが大きく育ちました', [-3.75, 3.2, 4.3]],
-  [15000, '五重塔', '遠くの山に五重塔が見えます', 'pagoda'],
-  [18000, '山門', '竹垣に山門を構えました', [2.65, 1.6, 10.45]],
-  [21000, '桜並木', '垣根沿いに桜並木が育ちました', [4.1, 2.9, 10.95]],
-  [24000, '八つ橋', '菖蒲の沢に八つ橋を渡しました', [2.7, 0, 2.3]],
+  [35, '砂紋と石', '白砂に砂紋を引き、石をひとつ据えました', [-2.3, 0.35, 1.6]],
+  [60, 'もみじの苗', 'もみじの苗を植えました', [-4.4, 0.55, 4.2]],
+  [90, '飛び石', '飛び石の小道ができました', [0.45, 0, 1.6]],
+  [125, '苔', '庭に苔が広がりはじめました', [-1.2, 0, 3.0]],
+  [170, 'つつじと松の苗', 'つつじと若い松を植えました', [5.9, 0.5, 3.7]],
+  [225, '池', '池を掘り、水を引きました', [2.4, 0, 4.6]],
+  [290, '錦鯉と石灯籠', '錦鯉を放ち、石灯籠を据えました', [-0.85, 0.9, 3.95]],
+  [370, '睡蓮と菖蒲', '睡蓮が浮かび、菖蒲が水辺を彩ります', [3.2, 0, 4.5]],
+  [470, '流れ', '池から流れを引き、せせらぎが生まれました', [4.95, 0, 2.0]],
+  [595, '竹垣', '庭を竹垣で囲いました', [0.6, 1.0, 11.0]],
+  [750, '太鼓橋', '池に朱の太鼓橋を架けました', null],
+  [940, '石橋', '流れに一枚石の石橋を渡しました', [4.79, 0.2, 0.97]],
+  [1175, '蹲踞', '筧の水が落ちる蹲踞を据えました', [-2.2, 0.3, 6.35]],
+  [1465, '茶室', '苔むした茶室が建ちました', [-1.95, 1.7, 8.8]],
+  [1825, '延段', '茶室へ向かう延段を敷きました', [-0.7, 0, 5.5]],
+  [2270, '袖垣', '茶室の脇に竹の袖垣を添えました', [-0.25, 1.0, 7.88]],
+  [2820, '鹿おどし', '鹿おどしの音が庭に響きます', [0.75, 0.45, 3.25]],
+  [3500, '雪見灯籠', '水辺に雪見灯籠を据えました', [5.35, 0.7, 2.04]],
+  [4350, '築山と滝', '築山を盛り、滝を落としました', [5.3, 0.9, 7.9]],
+  [5400, '藤棚', '池のほとりに藤棚を組みました', [1.15, 1.75, 6.6]],
+  [6700, '枯山水', '白砂に石組みを据え、枯山水を整えました', [-3.5, 0.5, 1.2]],
+  [8300, '苔庭と大もみじ', '苔が庭を覆い、もみじが大きく育ちました', [-4.05, 3.2, 4.2]],
+  [10300, '竹林', '庭の奥に竹林が育ちました', [-3.8, 5.0, 10.5]],
+  [12800, '五重塔', '遠くの山に五重塔が見えます', 'pagoda'],
+  [15900, '山門', '竹垣に山門を構えました', [2.65, 1.6, 11.0]],
+  [19700, '桜並木', '垣根沿いに桜並木が育ちました', [7.7, 2.9, 11.55]],
+  [24400, '八つ橋', '菖蒲の沢に八つ橋を渡しました', [2.7, 0, 2.3]],
   [30000, '枝垂れ桜', '枝垂れ桜が咲き、庭が完成しました', [6.1, 3.9, 9.7]]
-];
+];   // (1.4.2: 30 stages, quick at first and longer later, the last still at 500 hours)
 STAGE_DEFS.forEach(function (d) { var f = d[3]; if (f && typeof f !== 'string') d[3] = [LX(f[0]), f[1], LZ(f[2])]; });
 var NST = STAGE_DEFS.length;
 
 /* ================= layout (world units, metres-ish) ================= */
 var LAY = {
   rock1: { x: -2.3, z: 1.6 },
-  maple: { x: -4.1, z: 4.3 },   // pulled in from the frame edge
+  maple: { x: -4.4, z: 4.2 },   // (1.4.2: a little further left, so its grown crown no longer hides the teahouse's window and shoji)
   maple2: { x: -6.1, z: 8.7 },
-  pine: { x: 5.5, z: 2.2 },
-  lantern: { x: -1.15, z: 4.3 },
+  pine: { x: 5.9, z: 3.7 },   // (1.4.2: right and back, by the pond's right shore on the stream's far bank: its low tiers covered the plank bridge's end)
+  lantern: { x: -0.85, z: 3.95 },   // (1.4.2: forward and right of the tsukubai: its broad roof sat over the basin)
   pondA: [2.0, 4.1, 2.3, 1.12], pondB: [3.35, 6.6, 2.35, 0.98], pondC: [5.3, 7.3, 0.85, 0.55], pondJ: [2.45, 5.38, 1.12, 0.5],
   marsh: [2.75, 2.3, 1.45, 0.52],
   hill: { x: 6.35, z: 9.0, rx: 2.35, rz: 1.3, h: 2.0 },
   fall: { x: 5.3, ztop: 8.0, zbot: 7.5, ytop: 1.75, wd: 0.66 },
-  fenceZ: 10.45,
+  fenceZ: 11.0,   // (1.4.2: was 10.45; the plot deeper, with room for the bamboo grove)
   gate: { xa: 1.95, xb: 3.35 },
   tsukubai: { x: -2.2, z: 6.35 },
   shishi: { x: 0.75, z: 3.25, m: -1 },
   cherry: { x: 6.1, z: 9.7 },
   ycherry: { x: -4.95, z: 8.7 },
   wis: { x0: 0.35, x1: 1.95, z0: 6.05, z1: 7.15, h: 2.05 },
-  namiki: [[-6.0, 10.95, 4.0], [-4.2, 11.0, 4.3], [4.1, 10.95, 4.2], [7.7, 11.0, 3.9]]
+  namiki: [[-6.0, 11.5, 4.0], [-4.2, 11.55, 4.3], [7.7, 11.55, 3.9], [9.4, 11.5, 4.1]],   // (1.4.2: none behind the gate: that stretch of sky is kept open for the moon and the fireworks)
+  beyond: [[-3.6, 12.0, 3.4], [9.8, 12.05, 3.8], [-8.0, 11.85, 4.2]]   // the trees beyond the terrace [x, z, height] (the right one moved out from behind the pagoda for the same reason)
 };
 var TH = (function () { var cx = LX(-1.85), ze = LZ(7.65); return { X0: cx - 1.45, X1: cx + 1.45, ZE: ze, ZW: ze + 0.45, ZB: ze + 2.4, FH: 0.5, WT: 2.35, EY: 2.42, RY: 3.9, ov: 0.62 }; })();
 (function spreadLayout() { // move every placement apart; keep sizes, grow the areas (pond, marsh, hill)
@@ -205,7 +212,7 @@ function sdE(x, z, e) { var dx = (x - e[0]) / e[2], dz = (z - e[1]) / e[3]; retu
 function smin(a, b, k) { var h = clamp(0.5 + 0.5 * (b - a) / k); return lerp(b, a, h) - k * h * (1 - h); }
 function pondBase(x, z) { return smin(smin(smin(sdE(x, z, LAY.pondA), sdE(x, z, LAY.pondB), 0.75), sdE(x, z, LAY.pondJ), 0.4), sdE(x, z, LAY.pondC), 0.5) + (NZ.n2(x * 1.2 + 40, z * 1.2) - 0.5) * 0.3; }
 function marshSDF(x, z) { return sdE(x, z, LAY.marsh) + (NZ.n2(x * 1.7 + 11, z * 1.7) - 0.5) * 0.22; }
-function pondSDF(x, z) { var d = pondBase(x, z); if (F && F.marsh) d = smin(d, marshSDF(x, z), 0.45); return d; }
+function pondSDF(x, z) { var d = pondBase(x, z); if (F && F.nagare) d = smin(d, nagareSDF(x, z), 0.3); if (F && F.marsh) d = smin(d, marshSDF(x, z), 0.45); return d; }
 var BRIDGE = (function () {
   var best = null;
   for (var z = LZ(5.15); z <= LZ(5.6); z += 0.05) {
@@ -224,16 +231,21 @@ var PATH_MAIN = [[0.85, -0.3, 0.30, 0.24], [0.42, 0.42, 0.27, 0.22], [0.78, 1.1,
 PATH_MAIN = PATH_MAIN.map(function (q, i, arr) { return i === arr.length - 1 ? q : [LX(q[0]), LZ(q[1]), q[2], q[3]]; });
 var PATH_TEA = [[-0.62, 5.3, 0.25, 0.2], [-0.95, 6.0, 0.26, 0.21], [-1.22, 6.68, 0.26, 0.21], [-1.5, 7.28, 0.42, 0.26]];
 PATH_TEA = PATH_TEA.map(function (q, i, arr) { return [LX(q[0]), LZ(q[1]), q[2], q[3]]; });
-var PATH_GATE = [[1.25, 7.95, 0.25, 0.2], [1.75, 8.6, 0.24, 0.2], [2.25, 9.25, 0.26, 0.21], [2.6, 9.85, 0.32, 0.22]];
+var PATH_GATE = [[1.25, 7.95, 0.25, 0.2], [1.75, 8.6, 0.24, 0.2], [2.2, 9.24, 0.26, 0.21], [2.48, 9.86, 0.25, 0.2], [2.65, 10.45, 0.32, 0.22]];   // (1.4.2: one more stone, the gate now stands further back)
 PATH_GATE = PATH_GATE.map(function (q, i, arr) { return [LX(q[0]), LZ(q[1]), q[2], q[3]]; });
-var AZALEAS0 = [[-3.25, 5.4, 0.6, 0.5], [-1.85, 5.2, 0.42, 0.36], [0.95, 8.2, 0.48, 0.4], [6.25, 4.35, 0.58, 0.48], [3.95, 1.25, 0.42, 0.36], [-2.55, 3.95, 0.4, 0.34], [-0.15, 9.0, 0.45, 0.38]];
+var AZALEAS0 = [[-3.25, 5.4, 0.6, 0.5], [6.55, 5.6, 0.58, 0.48], [-0.15, 9.0, 0.45, 0.38]];   // (1.4.2: thinned from seven: the ones crowding the lantern, the basin, the gate path and the stream are gone; the last comes with the teahouse)
+var AZ_TEA = 2;   // the index of the azalea planted with the teahouse
 var AZALEAS = AZALEAS0.map(function (a) { return [LX(a[0]), LZ(a[1]), a[2], a[3]]; });
 
 /* stage -> feature switches and growth amounts (trees mature continuously) */
 var OLD_EQ = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 15.5, 16, 17, 18, 19, 19.5, 20, 21];
+/* 1.4.2: 30 stages. PREV_EQ gives each its place in the 24 stages of 1.4.1 (the six new ones halfway between their neighbours),
+   so every older item still comes at its own stage and the trees and the moss go on growing smoothly */
+var PREV_EQ = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 9.5, 10, 11, 11.5, 12, 13, 13.3, 13.6, 14, 14.5, 15, 16, 17, 18, 18.5, 19, 20, 21, 22, 23];
 function features(st) {
-  var s = OLD_EQ[Math.max(0, Math.min(OLD_EQ.length - 1, st))], si = Math.floor(s);
-  var f = { s: si, stage: st };
+  st = Math.max(0, Math.min(PREV_EQ.length - 1, st));
+  var sp = PREV_EQ[st], s0 = Math.floor(sp), s = lerp(OLD_EQ[s0], OLD_EQ[Math.min(OLD_EQ.length - 1, s0 + 1)], sp - s0), si = Math.floor(s);
+  var f = { s: si, stage: st, sp: sp };
   f.weeds = s === 0; f.leveled = s >= 1; f.gravelOutline = s === 1; f.gravel = s >= 2; f.rock1 = s >= 2;
   f.maple = s < 3 ? 0 : s >= 17 ? 1 + (s - 17) * 0.03 : lerp(0.17, 0.8, Math.pow((s - 3) / 13, 0.9));
   f.path = s >= 4; f.mossOn = s >= 5;
@@ -247,10 +259,13 @@ function features(st) {
   f.pagoda = s >= 18; f.gate = s >= 19; f.marsh = s >= 20; f.yatsu = s >= 20; f.cherry = s >= 21 ? 1 : 0;
   f.lilyN = s < 9 ? 0 : Math.min(1, 0.5 + (s - 9) * 0.06);
   // new in 1.1: wisteria trellis (16), young cherry from the start, cherry avenue along the fence (21)
-  f.weeds = si === 0 && st === 0; f.gravelOutline = st === 1;
-  f.wisteria = st >= 16 ? Math.min(1, 0.62 + (st - 16) * 0.06) : 0;
-  f.ycherry = st >= 1 ? Math.min(1.05, lerp(0.14, 1, Math.pow((st - 1) / 18, 0.85))) : 0;
-  f.namiki = st >= 21;
+  f.weeds = si === 0 && st === 0; f.gravelOutline = sp === 1;
+  f.wisteria = sp >= 16 ? Math.min(1, 0.62 + (sp - 16) * 0.06) : 0;
+  f.ycherry = sp >= 1 ? Math.min(1.05, lerp(0.14, 1, Math.pow((sp - 1) / 18, 0.85))) : 0;
+  f.namiki = sp >= 21;
+  // new in 1.4.2 (by the new stage numbers)
+  f.nagare = st >= 10; f.ishibashi = st >= 13; f.nobedan = st >= 16; f.sodegaki = st >= 17; f.yukimi = st >= 19;
+  f.chikurin = st >= 24 ? Math.min(1, 0.8 + (st - 24) * 0.04) : 0;
   return f;
 }
 function gravelInfo(Fx) { return Fx.kare ? { cx: LX(-3.15), cz: LZ(1.45), rx: 3.75 * SPX, rz: 2.0 * SPZ } : { cx: LX(-2.9), cz: LZ(1.45), rx: 3.3 * SPX, rz: 1.82 * SPZ }; }
@@ -1540,7 +1555,7 @@ function bamboo(ctx, a, b, r, col) {
   ctx.lineCap = 'butt';
 }
 function drawFence(ctx, gap) {
-  var zf = LAY.fenceZ, x0 = LX(-9.5), x1 = LX(10.5), Hh = 1.72, rng = mulberry32(12), S = sil(), n = [0, 0, -1];
+  var zf = LAY.fenceZ, x0 = LX(-10.9), x1 = LX(11.9), Hh = 1.72, rng = mulberry32(12), S = sil(), n = [0, 0, -1];
   var segs = gap ? [[x0, gap[0]], [gap[1], x1]] : [[x0, x1]];
   segs.forEach(function (sg) {
     var a = sg[0], b = sg[1];
@@ -1822,7 +1837,7 @@ function drawUmi(ctx) { // pebble basin floor in front of the tsukubai
 }
 
 /* ================= yatsuhashi (zig-zag plank bridge) ================= */
-var YATSU = [[1.2, 2.72], [1.98, 2.18], [2.76, 2.62], [3.54, 2.08], [4.3, 2.48]].map(function (q) { return [LX(q[0]), LZ(q[1])]; });
+var YATSU = [[1.2, 2.72], [1.98, 2.18], [2.76, 2.62], [3.54, 2.08], [3.85, 2.3]].map(function (q) { return [LX(q[0]), LZ(q[1])]; });
 /* the zig-zag plank bridge, painted in short pieces (each sorted on its own depth, so an iris in front of a plank covers it
    and one behind is cut cleanly at the plank's edge) */
 var YATSU_W = 0.16, YATSU_EXT = 0.18, YATSU_STEP = 0.24;
@@ -1853,6 +1868,373 @@ function drawYatsuPiece(ctx, pc) {
 }
 function drawYatsuhashi(ctx) { yatsuPieces().sort(function (a, b) { return P(b.x, 0, b.z).d - P(a.x, 0, a.z).d; }).forEach(function (pc) { drawYatsuPiece(ctx, pc); }); }
 
+/* ================= 1.4.2: six late additions =================
+   流れ the pond's outflow stream, 石橋 its slab bridge, 延段 the paved walk to it, 雪見灯籠 at the stream's mouth,
+   袖垣 the sleeve fence at the teahouse, 竹林 the bamboo grove in the far left corner */
+/* 流れ: from the pond's right lobe past the iris marsh, out of the garden at the front right. One more term of pondSDF, so the
+   ground's water, the reflections, the ice, the walk grid and the weeds all follow it. [x, z, half width] */
+var NAGARE = [[3.98, 3.65, 0.42], [4.79, 2.96, 0.4], [4.99, 2.12, 0.38], [4.75, 1.27, 0.4], [4.87, 0.42, 0.42], [5.18, -0.42, 0.44], [5.45, -1.23, 0.46], [5.75, -2.15, 0.48]].map(function (q) { return [LX(q[0]), LZ(q[1]), q[2]]; });
+function nagareCore(x, z) {   // [distance to the bank (negative in the water), segment, t along it]
+  var best = 1e9, bi = 0, bt = 0;
+  for (var i = 0; i < NAGARE.length - 1; i++) {
+    var a = NAGARE[i], b = NAGARE[i + 1], dx = b[0] - a[0], dz = b[1] - a[1], t = clamp(((x - a[0]) * dx + (z - a[1]) * dz) / (dx * dx + dz * dz)), px = a[0] + dx * t - x, pz = a[1] + dz * t - z;
+    var d = Math.sqrt(px * px + pz * pz) - lerp(a[2], b[2], t);
+    if (d < best) { best = d; bi = i; bt = t; }
+  }
+  return [best, bi, bt];
+}
+function nagareSDF(x, z) { if (z > NAGARE[0][1] + 1.2) return 9; return nagareCore(x, z)[0] + (NZ.n2(x * 2.1 + 7, z * 2.1 - 3) - 0.5) * 0.12; }
+function nagareAt(i, t) { var a = NAGARE[i], b = NAGARE[i + 1], dx = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dx, dz); return { x: lerp(a[0], b[0], t), z: lerp(a[1], b[1], t), hw: lerp(a[2], b[2], t), ux: dx / L, uz: dz / L }; }
+/* 石橋: one slab of granite across the stream, square to the water, its ends on footing stones set into each bank */
+var ISHI = (function () { var q = nagareAt(3, 0.35), o = { x: q.x, z: q.z, ux: q.uz, uz: -q.ux, hl: 0.8, hw: 0.26, t: 0.13, y0: 0.035 }; if (o.ux < 0) { o.ux = -o.ux; o.uz = -o.uz; } return o; })();
+function ishiEnd(s) { return [ISHI.x + ISHI.ux * ISHI.hl * s, ISHI.z + ISHI.uz * ISHI.hl * s]; }
+/* the stones of the banks: on the outside of the bends, a few half in the water, none where the bridge's ends lie */
+var NAGARE_STONES = (function () {
+  var out = [], r = mulberry32(2207);
+  [[0, 1, 0.6, 0.3], [1, 1, 0.35, 0.26], [1, -1, 0.2, 0.22], [3, -1, 0.85, 0.27], [4, -1, 0.6, 0.2], [5, -1, 0.3, 0.26], [5, 1, 0.75, 0.22], [6, 1, 0.4, 0.28]].forEach(function (q, ii) {
+    var p = nagareAt(q[0], q[2]), nx = -p.uz * q[1], nz = p.ux * q[1], off = p.hw + q[3] * (0.15 + r() * 0.35), x = p.x + nx * off, z = p.z + nz * off;
+    if (Math.hypot(x - ishiEnd(-1)[0], z - ishiEnd(-1)[1]) < 0.55 || Math.hypot(x - ishiEnd(1)[0], z - ishiEnd(1)[1]) < 0.55) return;
+    out.push({ seed: 2300 + ii, x: x, z: z, rx: q[3] * 1.15, ry: q[3] * (0.55 + r() * 0.35), rz: q[3] * 0.9 });
+  });
+  return out;
+})();
+/* the small things along the stream's banks: wet pebbles half in the water and tufts of grass, kept off the bridge's ends, the
+   lantern and the big bank stones */
+function nagareBank() {
+  var out = [], r = mulberry32(2611), i, k, pal = [scl(SEA.grass[0], 0.75), SEA.grass[0], mixc(SEA.grass[0], SEA.grass[1], 0.6)];
+  if (SEA.snow) pal = [[120, 106, 70], [160, 140, 96], [200, 186, 140]];
+  for (i = 0; i < NAGARE.length - 1; i++) for (k = 0; k < 10; k++) {
+    var t = (k + r()) / 10, q = nagareAt(i, t), sd = r() < 0.5 ? -1 : 1, g = r() < 0.5, off = q.hw + (g ? 0.05 + r() * 0.06 : -0.02 + r() * 0.05), x = q.x - q.uz * off * sd, z = q.z + q.ux * off * sd, ok = true;
+    if (pondBase(x, z) < 0.2) continue;
+    [ishiEnd(-1), ishiEnd(1), [YUKIMI.x, YUKIMI.z]].forEach(function (e) { if (Math.hypot(x - e[0], z - e[1]) < 0.55) ok = false; });
+    NAGARE_STONES.forEach(function (s) { if (Math.hypot(x - s.x, z - s.z) < s.rx + 0.12) ok = false; });
+    if (!ok || r() < 0.25) continue;
+    out.push(g ? { g: true, x: x, z: z, s: 0.08 + r() * 0.07, seed: 2700 + i * 10 + k, pal: pal } : { x: x, z: z, s: 0.05 + r() * 0.06, seed: 2650 + i * 10 + k });
+  }
+  return out;
+}
+/* 延段: a straight walk of cut granite and natural stones fitted together, set in the moss of the tea garden */
+function teaStones() { return F.teaPath ? (F.nobedan ? PATH_TEA.slice(2) : PATH_TEA) : []; }   // the tea path's stepping stones (its first two are under the paved walk once it is laid)
+var NOBE = { a: [LX(-0.4), LZ(4.78)], b: [LX(-0.98), LZ(6.22)], w: 0.52 };   // (1.4.2: part of the tea garden: from the stepping stones by the pond up toward the teahouse, in place of the tea path's first two stones)
+function nobeFrame() { var dx = NOBE.b[0] - NOBE.a[0], dz = NOBE.b[1] - NOBE.a[1], L = Math.hypot(dx, dz); return { L: L, ux: dx / L, uz: dz / L, vx: -dz / L, vz: dx / L }; }
+function nobeNear(x, z, m) { var f = nobeFrame(), u = (x - NOBE.a[0]) * f.ux + (z - NOBE.a[1]) * f.uz, v = (x - NOBE.a[0]) * f.vx + (z - NOBE.a[1]) * f.vz; return u > -m && u < f.L + m && Math.abs(v) < NOBE.w / 2 + m; }
+var NOBE_P = null;
+function nobePieces() {
+  if (NOBE_P) return NOBE_P;
+  var f = nobeFrame(), r = mulberry32(1501), out = [], u = 0, hw = NOBE.w / 2, J = 0.016;
+  function Wp(uu, vv) { return [NOBE.a[0] + f.ux * uu + f.vx * vv, NOBE.a[1] + f.uz * uu + f.vz * vv]; }
+  while (u < f.L - 0.05) {
+    var cl = Math.min(f.L - u, 0.16 + r() * 0.3); if (f.L - u - cl < 0.12) cl = f.L - u;
+    var n = cl > 0.34 ? 1 : 1 + (r() * 2.4 | 0), cuts = [-hw], k; for (k = 1; k < n; k++) cuts.push(-hw + NOBE.w * (k / n + (r() - 0.5) * 0.18)); cuts.push(hw);
+    for (k = 0; k < n; k++) {
+      var u0 = u + J, u1 = u + cl - J, v0 = cuts[k] + J, v1 = cuts[k + 1] - J, nat = r() < 0.28, pts = [], tone = r();
+      if (nat) { var cu = (u0 + u1) / 2, cv = (v0 + v1) / 2, ru = (u1 - u0) / 2, rv = (v1 - v0) / 2, ph = r() * TAU; for (var m = 0; m < 8; m++) { var a = m / 8 * TAU, w = 0.86 + 0.14 * Math.sin(a * 3 + ph); pts.push(Wp(cu + Math.cos(a) * ru * w, cv + Math.sin(a) * rv * w)); } }
+      else pts = [Wp(u0 + (r() - 0.5) * 0.02, v0), Wp(u1 + (r() - 0.5) * 0.02, v0), Wp(u1, v1), Wp(u0, v1)];
+      out.push({ pts: pts, nat: nat, tone: tone, c: Wp((u0 + u1) / 2, (v0 + v1) / 2), h: 0.022 + r() * 0.026 });
+    }
+    u += cl;
+  }
+  NOBE_P = out; return out;
+}
+function drawNobedan(ctx) {
+  if (sil()) return;
+  var f = nobeFrame(), lt = lightTint(1), snow = SEA.snow, wet = LIT.wet, pcs = nobePieces(), i;
+  function Wq(uu, vv, y) { return P(NOBE.a[0] + f.ux * uu + f.vx * vv, y || 0, NOBE.a[1] + f.uz * uu + f.vz * vv); }
+  function grown(pc, g, y) { return pc.pts.map(function (q) { var dx = q[0] - pc.c[0], dz = q[1] - pc.c[1], l = Math.hypot(dx, dz) || 1; return P(q[0] + dx / l * g, y, q[1] + dz / l * g); }); }
+  function pathOf(pp) { var p = new Path2D(); pp.forEach(function (q, k) { if (k) p.lineTo(q.x, q.y); else p.moveTo(q.x, q.y); }); p.closePath(); return p; }
+  function edges(pc, fn) { var n = pc.pts.length; for (var k = 0; k < n; k++) { var a = pc.pts[k], b = pc.pts[(k + 1) % n], nx = b[1] - a[1], nz = a[0] - b[0], nl = Math.hypot(nx, nz) || 1; nx /= nl; nz /= nl; if (((a[0] + b[0]) / 2 - pc.c[0]) * nx + ((a[1] + b[1]) / 2 - pc.c[1]) * nz < 0) { nx = -nx; nz = -nz; } fn(a, b, nx, nz); } }
+  // 1. the bed: each stone's own footprint a little larger, so the joints between them fill with earth and moss and the walk's edge follows the stones
+  var jc = snow ? [206, 214, 226] : F.mossOn ? mixc(SEA.moss[1], [58, 50, 40], 0.4) : [80, 68, 54], bed = new Path2D(), shd = new Path2D();
+  pcs.forEach(function (pc) { bed.addPath(pathOf(grown(pc, 0.028, 0))); });
+  ctx.fillStyle = rgb(mulc(jc, lt)); ctx.fill(bed);
+  pcs.forEach(function (pc) { shd.addPath(pathOf(pc.pts.map(function (q) { return P(q[0] + SX * pc.h * 1.4, 0, q[1] + SZ * pc.h * 1.4); }))); });   // each stone's low shadow on the joint, away from the light
+  ctx.fillStyle = rgb(scl(mulc(jc, lt), 0.5), 0.55 * (LIT.shadowA || 0.5) * 2); ctx.fill(shd);
+  // 2. each stone: a slab a few centimetres proud of the bed, its sides where they face us, its top with a lit and a shaded arris
+  var tones = [[164, 160, 152], [150, 146, 140], [176, 170, 160], [140, 136, 132], [158, 148, 134]], all = new Path2D();
+  pcs.forEach(function (pc) {
+    var alb = ramp(tones, pc.tone), h = pc.h; if (pc.nat) alb = mixc(alb, [128, 122, 112], 0.35);
+    if (wet) alb = scl(alb, 0.72);
+    var topA = snow ? mixc(alb, SNOW, 0.9 - pc.tone * 0.1) : alb;
+    edges(pc, function (a, b, nx, nz) {
+      if (!faceVisible([(a[0] + b[0]) / 2, h / 2, (a[1] + b[1]) / 2], [nx, 0, nz])) return;
+      poly(ctx, [P(a[0], -0.01, a[1]), P(b[0], -0.01, b[1]), P(b[0], h, b[1]), P(a[0], h, a[1])]); ctx.fillStyle = rgb(shade(scl(alb, 0.92), [nx, 0.1, nz])); ctx.fill();
+    });
+    var tp = pathOf(pc.pts.map(function (q) { return P(q[0], h, q[1]); })); all.addPath(tp);
+    ctx.fillStyle = rgb(shade(topA, [0, 1, 0])); ctx.fill(tp);
+    ctx.lineCap = 'round';
+    edges(pc, function (a, b, nx, nz) {   // the arris toward the sun catches it; the others a thin dark line
+      var sw = nx * SUN[0] + nz * SUN[2], pa = P(a[0], h, a[1]), pb = P(b[0], h, b[1]);
+      ctx.strokeStyle = sw > 0.1 ? rgb(shade(mixc(topA, [255, 252, 240], 0.35), [nx * 0.6, 0.8, nz * 0.6]), 0.75) : rgb(scl(shade(alb, [0, 1, 0]), 0.6), 0.45);
+      ctx.lineWidth = Math.max(0.35, 0.012 * pa.k); ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+    });
+    ctx.lineCap = 'butt';
+  });
+  grainClip(ctx, all, 0.45);
+  if (!snow) {   // moss in the joints, thickest at the edges, and a few blades of grass coming up where the stones meet the lawn
+    var mr = mulberry32(1502), mp = new Path2D(), gp = [scl(SEA.grass[0], 0.8), SEA.grass[0], mixc(SEA.grass[0], SEA.grass[1], 0.6)];
+    if (F.mossOn) { for (i = 0; i < 300 * DQ; i++) { var p = Wq(mr() * f.L, (mr() < 0.5 ? -1 : 1) * (NOBE.w / 2 + 0.01 - mr() * 0.07), 0.005), rr = (0.01 + mr() * 0.018) * p.k; mp.moveTo(p.x + rr, p.y); mp.ellipse(p.x, p.y, rr, rr * 0.5, 0, 0, TAU); } ctx.fillStyle = rgb(mulc(SEA.moss[2], lt), 0.6); ctx.fill(mp); }
+    pcs.forEach(function (pc) { pc.pts.forEach(function (q) { if (mr() < 0.16) grassTuft(ctx, q[0], q[1], 0.035 + mr() * 0.025, mulberry32((mr() * 1e6) | 0), gp, true); }); });
+    for (i = 0; i < 26; i++) { var uu = mr() * f.L, vv = (mr() < 0.5 ? -1 : 1) * (NOBE.w / 2 + 0.03), qx = NOBE.a[0] + f.ux * uu + f.vx * vv, qz = NOBE.a[1] + f.uz * uu + f.vz * vv; grassTuft(ctx, qx, qz, 0.05 + mr() * 0.04, mulberry32((mr() * 1e6) | 0), gp, true); }
+  }
+  if (wet) { ctx.save(); ctx.clip(all); var g = Wq(f.L * 0.5, 0), sh = ctx.createLinearGradient(g.x - 40, g.y, g.x + 40, g.y); sh.addColorStop(0, 'rgba(255,255,255,0)'); sh.addColorStop(0.5, rgb(mixc(LIT.skyHor, [255, 255, 255], 0.3), 0.18)); sh.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = sh; ctx.fillRect(0, 0, W, H); ctx.restore(); }   // the sky's sheen on the wet stone
+}
+/* a block of worked stone: centre, its long axis (ux, uz), half length, half width, bottom and top */
+function stoneBox(ctx, cx, cz, ux, uz, hl, hw, y0, y1, alb, o) {
+  o = o || {};
+  var vx = -uz, vz = ux, C = function (a, b, y) { return [cx + ux * hl * a + vx * hw * b, y, cz + uz * hl * a + vz * hw * b]; };
+  var faces = [
+    { pts: [C(-1, -1, y1), C(1, -1, y1), C(1, 1, y1), C(-1, 1, y1)], n: [0, 1, 0], c: [cx, y1, cz], top: true },
+    { pts: [C(-1, -1, y0), C(1, -1, y0), C(1, -1, y1), C(-1, -1, y1)], n: [-vx, 0, -vz], c: C(0, -1, (y0 + y1) / 2) },
+    { pts: [C(-1, 1, y0), C(1, 1, y0), C(1, 1, y1), C(-1, 1, y1)], n: [vx, 0, vz], c: C(0, 1, (y0 + y1) / 2) },
+    { pts: [C(-1, -1, y0), C(-1, 1, y0), C(-1, 1, y1), C(-1, -1, y1)], n: [-ux, 0, -uz], c: C(-1, 0, (y0 + y1) / 2) },
+    { pts: [C(1, -1, y0), C(1, 1, y0), C(1, 1, y1), C(1, -1, y1)], n: [ux, 0, uz], c: C(1, 0, (y0 + y1) / 2) }
+  ];
+  var vis = faces.filter(function (f) { return faceVisible(f.c, f.n); }).map(function (f) { return { f: f, d: Pa(f.c).d }; }).sort(function (a, b) { return b.d - a.d; }), out = [];
+  vis.forEach(function (v) {
+    var f = v.f, pp = f.pts.map(Pa);
+    poly(ctx, pp); ctx.fillStyle = rgb(sil() ? [0, 0, 0] : shade(snowAlb(alb, f.n[1], o.snow), f.n, o)); ctx.fill();
+    if (!sil()) { ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = 0.4; ctx.stroke(); }
+    out.push({ f: f, pp: pp });
+  });
+  if (!sil() && o.tex) { var all = new Path2D(); out.forEach(function (q) { q.pp.forEach(function (p, k) { if (k) all.lineTo(p.x, p.y); else all.moveTo(p.x, p.y); }); all.closePath(); }); grainClip(ctx, all, o.tex); }
+  return out;
+}
+function drawIshibashi(ctx) {
+  var I = ISHI, vx = -I.uz, vz = I.ux, S = sil();
+  [-1, 1].forEach(function (s) { [-1, 1].forEach(function (t2) {   // 橋挟石: a stone at each corner where the slab comes to the bank
+    var e = ishiEnd(s), x = e[0] + vx * (I.hw + 0.12) * t2 - I.ux * 0.05 * s, z = e[1] + vz * (I.hw + 0.12) * t2 - I.uz * 0.05 * s;
+    drawRock(ctx, makeRock(2400 + (s + 1) * 2 + (t2 + 1) / 2, x, z, 0.16, 0.15 + (s > 0 ? 0.03 : 0), 0.14, { alb: [138, 134, 126], moss: F.rockMoss * 0.7, flat: 0.6, amp: 0.25 }));
+  }); });
+  [-1, 1].forEach(function (s) { var e = ishiEnd(s); stoneBox(ctx, e[0] - I.ux * 0.16 * s, e[1] - I.uz * 0.16 * s, I.ux, I.uz, 0.22, I.hw + 0.05, -0.06, I.y0, [120, 116, 110], { tex: 0.4 }); });   // the footings it rests on, set into each bank, a little wider than the slab
+  var top = stoneBox(ctx, I.x, I.z, I.ux, I.uz, I.hl, I.hw, I.y0, I.y0 + I.t, [158, 154, 146], { tex: 0.55, amb: 1.05 });
+  if (S) return;
+  // granite: a fine salt-and-pepper of dark mica and pale feldspar, the arrises worn round and a little darker, a chip or two
+  var gp = new Path2D(), sr = mulberry32(2412), dk = new Path2D(), lk = new Path2D();
+  top.forEach(function (q) { q.pp.forEach(function (p, k) { if (k) gp.lineTo(p.x, p.y); else gp.moveTo(p.x, p.y); }); gp.closePath(); });
+  ctx.save(); ctx.clip(gp);
+  var c0 = P(I.x, I.y0 + I.t, I.z), span = (I.hl + I.hw) * c0.k;
+  for (var gi = 0; gi < 340 * DQ; gi++) { var gx = c0.x + (sr() - 0.5) * span * 2.2, gy = c0.y + (sr() - 0.5) * span * 0.9, gr = (0.18 + sr() * 0.32) / Math.sqrt(DQ), gpth = sr() < 0.55 ? dk : lk; gpth.moveTo(gx + gr, gy); gpth.arc(gx, gy, gr, 0, TAU); }
+  ctx.fillStyle = rgb(scl(shade([70, 68, 66], [0, 1, 0]), 1), 0.45); ctx.fill(dk); ctx.fillStyle = rgb(shade([226, 222, 212], [0, 1, 0]), 0.35); ctx.fill(lk);
+  ctx.restore();
+  var tq = top.filter(function (q) { return q.f.top; })[0];
+  if (tq && !SEA.snow) {
+    ctx.save(); ctx.lineJoin = 'round'; poly(ctx, tq.pp); ctx.strokeStyle = rgb(scl(shade([150, 146, 138], [0, 1, 0]), 0.62), 0.5); ctx.lineWidth = Math.max(0.5, 0.025 * c0.k); ctx.stroke();   // the worn arris
+    [0, 2].forEach(function (k2) { var p = tq.pp[k2], w = Math.max(0.6, 0.04 * c0.k); ctx.fillStyle = rgb(scl(shade([120, 116, 110], [0, 1, 0]), 0.8), 0.7); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + w * (k2 ? -1 : 1), p.y + w * 0.2); ctx.lineTo(p.x + w * 0.2 * (k2 ? -1 : 1), p.y + w * 0.6); ctx.closePath(); ctx.fill(); });   // two corners chipped
+    ctx.restore();
+  }
+  var mr = mulberry32(2411), grp = top.map(function (q) { return q.f.pts; });
+  top.forEach(function (q) { if (!q.f.top) mossDabs(ctx, q.f.pts, 26, mr, 1.1, grp); });
+  var tf = top.filter(function (q) { return q.f.top; })[0];
+  if (tf && !SEA.snow) {   // a darker stain at each end, where the moss and the damp of the banks start
+    ctx.save(); poly(ctx, tf.pp); ctx.clip();
+    var a = P(I.x - I.ux * I.hl, I.y0 + I.t, I.z - I.uz * I.hl), b = P(I.x + I.ux * I.hl, I.y0 + I.t, I.z + I.uz * I.hl), g = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
+    g.addColorStop(0, rgb(scl(SEA.moss[1], 0.9), 0.35)); g.addColorStop(0.18, 'rgba(0,0,0,0)'); g.addColorStop(0.82, 'rgba(0,0,0,0)'); g.addColorStop(1, rgb(scl(SEA.moss[1], 0.9), 0.35));
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); ctx.restore();
+  }
+}
+/* the stream's own surface: the light along the current, white water breaking below the stones in it */
+function nagareBand(off0, off1) {   // the band between two offsets from the centre line (as fractions of the half width; -1 the near bank), from just out of the pond to the frame's edge
+  var L = [], R = [], i, k, j;
+  for (i = 0; i < NAGARE.length - 1; i++) for (k = i ? 0 : 5; k < 10; k++) { var q = nagareAt(i, k / 10); L.push(P(q.x + q.uz * q.hw * off0, WL, q.z - q.ux * q.hw * off0)); R.push(P(q.x + q.uz * q.hw * off1, WL, q.z - q.ux * q.hw * off1)); }
+  var q2 = nagareAt(NAGARE.length - 2, 1); L.push(P(q2.x + q2.uz * q2.hw * off0, WL, q2.z - q2.ux * q2.hw * off0)); R.push(P(q2.x + q2.uz * q2.hw * off1, WL, q2.z - q2.ux * q2.hw * off1));
+  var p = new Path2D(); L.forEach(function (a, j) { if (j) p.lineTo(a.x, a.y); else p.moveTo(a.x, a.y); }); for (j = R.length - 1; j >= 0; j--) p.lineTo(R[j].x, R[j].y); p.closePath();
+  return { path: p, L: L, R: R };
+}
+function drawNagareSurf(ctx) {
+  if (sil()) return;
+  var r = mulberry32(2501), night = LIT.id === 'night', gc = night ? [186, 204, 240] : LIT.id === 'dusk' ? [255, 216, 178] : [250, 252, 246], ice = SEA.snow, i, lt = lightTint(1);
+  var flow = new Path2D(), foam = new Path2D(), gl = new Path2D(), vee = new Path2D();
+  // the sky in the running water, broken by the current: soft elongated flecks of light lying along the flow, gathered where the surface is ruffled
+  var mid = nagareBand(-0.8, 0.8), sk = mixc(mixc(LIT.skyHor, LIT.skyTop, 0.3), [255, 255, 255], 0.12);
+  if (!ice) {
+    ctx.save(); ctx.clip(mid.path);
+    var shA = new Path2D(), shB = new Path2D();
+    for (i = 0; i < 170 * Math.sqrt(DQ); i++) {
+      var sq0 = nagareAt((r() * (NAGARE.length - 1)) | 0, r()), so = (r() - 0.5) * 1.6 * sq0.hw, fx = sq0.x - sq0.uz * so, fz = sq0.z + sq0.ux * so;
+      var ruf = NZ.n2(fx * 2.2 + 3, fz * 2.2 - 1); if (r() > 0.25 + ruf * 0.9) continue;
+      var c0 = P(fx, WL, fz), c1 = P(fx + sq0.ux * 0.1, WL, fz + sq0.uz * 0.1), ang = Math.atan2(c1.y - c0.y, c1.x - c0.x), ln = (0.05 + r() * 0.14) * c0.k, wd = (0.012 + r() * 0.022) * c0.k;
+      var tgt = r() < 0.45 ? shB : shA; tgt.moveTo(c0.x + Math.cos(ang) * ln, c0.y + Math.sin(ang) * ln); tgt.ellipse(c0.x, c0.y, ln, wd, ang, 0, TAU);
+    }
+    ctx.fillStyle = rgb(sk, night ? 0.12 : 0.2); ctx.fill(shA); ctx.fillStyle = rgb(sk, night ? 0.2 : 0.34); ctx.fill(shB);
+    ctx.restore();
+  }
+  // the bank line: the earth's dark lip right at the water, and the wet edge just below it
+  [mid.L, mid.R].forEach(function (side, si2) {
+    var bk = nagareBand(si2 ? 0.98 : -0.98, si2 ? 0.98 : -0.98).L;
+    ctx.strokeStyle = rgb(scl(mulc([60, 52, 40], lt), 1), ice ? 0.2 : 0.42); ctx.lineWidth = 0.7; ctx.lineJoin = 'round'; ctx.beginPath(); bk.forEach(function (p, j) { if (j) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y); }); ctx.stroke();
+  });
+  if (F.ishibashi && !ice) {   // the slab's shade on the water under it and to its shadow side
+    var I = ISHI, vx = -I.uz, vz = I.ux, sy = I.y0 + I.t, ox = SX * sy, oz = SZ * sy, pts = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(function (c) { return P(I.x + I.ux * I.hl * 0.8 * c[0] + vx * (I.hw + 0.04) * c[1] + ox, WL, I.z + I.uz * I.hl * 0.8 * c[0] + vz * (I.hw + 0.04) * c[1] + oz); });
+    ctx.save(); ctx.clip(mid.path); poly(ctx, pts); ctx.fillStyle = rgb(scl(mulc([30, 40, 44], lt), 1), 0.5 * clamp(LIT.shadowA * 2, 0.4, 1)); ctx.fill(); ctx.restore();
+  }
+  // the current: a few long, soft, wandering lines that follow the bends (no two alike), faint
+  function W2(q, along, side) { return P(q.x + q.ux * along - q.uz * side, WL, q.z + q.uz * along + q.ux * side); }
+  for (i = 0; i < 36 * Math.sqrt(DQ); i++) {
+    var si = (r() * (NAGARE.length - 1)) | 0, q = nagareAt(si, r()), off = (r() - 0.5) * 1.3 * q.hw, ln2 = 0.12 + r() * 0.4, bend = (r() - 0.5) * 0.08;
+    if (pondBase(q.x, q.z) < 0.1) continue;
+    var a = W2(q, 0, off), m = W2(q, ln2 * 0.5, off + bend), b = W2(q, ln2, off + bend * 0.4);
+    flow.moveTo(a.x, a.y); flow.quadraticCurveTo(m.x, m.y, b.x, b.y);
+  }
+  var rif = NAGARE_STONES.map(function (s) { return [s.x, s.z, s.rx, s.rz]; });
+  if (F.ishibashi) rif.push([ISHI.x, ISHI.z, 0.12, ISHI.hw]);   // (the water quickening where the slab narrows it)
+  rif.forEach(function (s) {   // around each stone in the current: a V of ripples opening downstream, and a little broken white water just below it
+    var c = nagareCore(s[0], s[1]); if (c[0] > s[2] * 1.1) return;
+    var q = nagareAt(c[1], c[2]), sx = s[0], sz = s[1], ux = q.ux, uz = q.uz, vx = -uz, vz = ux;
+    [-1, 1].forEach(function (sd) {
+      for (var k = 0; k < 2; k++) {
+        var w0 = s[2] * (0.75 + k * 0.25), a = P(sx + vx * w0 * sd - ux * s[3] * 0.3, WL, sz + vz * w0 * sd - uz * s[3] * 0.3), L2 = 0.25 + k * 0.18 + r() * 0.12, spr = 0.16 + k * 0.1;
+        var m = P(sx + ux * L2 * 0.5 + vx * (w0 + spr * 0.4) * sd, WL, sz + uz * L2 * 0.5 + vz * (w0 + spr * 0.4) * sd), b = P(sx + ux * L2 + vx * (w0 + spr) * sd, WL, sz + uz * L2 + vz * (w0 + spr) * sd);
+        (k ? flow : vee).moveTo(a.x, a.y); (k ? flow : vee).quadraticCurveTo(m.x, m.y, b.x, b.y);
+      }
+    });
+    for (var k = 0; k < 9; k++) { var d = s[3] * 0.7 + r() * 0.22, sw = (r() - 0.5) * s[2] * 1.1, p = P(sx + ux * d + vx * sw, WL, sz + uz * d + vz * sw), fr = (0.008 + r() * 0.02) * p.k; foam.moveTo(p.x + fr * 1.6, p.y); foam.ellipse(p.x, p.y, fr * 1.6, fr * 0.7, Math.atan2(uz, ux) * 0.3, 0, TAU); }
+  });
+  for (i = 0; i < 10; i++) { var gq = nagareAt((r() * (NAGARE.length - 1)) | 0, r()), go = (r() - 0.5) * 0.9 * gq.hw, gpp = P(gq.x - gq.uz * go, WL, gq.z + gq.ux * go), gr2 = Math.max(0.35, 0.006 * gpp.k); if (pondBase(gq.x, gq.z) < 0.1) continue; gl.moveTo(gpp.x + gr2, gpp.y); gl.arc(gpp.x, gpp.y, gr2, 0, TAU); }   // a sparkle or two
+  ctx.save(); ctx.lineCap = 'round';
+  ctx.lineWidth = 0.4; ctx.strokeStyle = rgb(gc, ice ? 0.08 : night ? 0.1 : 0.16); ctx.stroke(flow);
+  ctx.lineWidth = 0.55; ctx.strokeStyle = rgb(gc, ice ? 0.14 : night ? 0.22 : 0.36); ctx.stroke(vee);
+  ctx.fillStyle = rgb(gc, ice ? 0.25 : night ? 0.35 : 0.6); ctx.fill(foam);
+  if (!ice && !(LIT.overcast > 0.5)) { ctx.fillStyle = rgb(gc, night ? 0.35 : 0.75); ctx.fill(gl); }
+  ctx.restore();
+}
+/* a soft dome of snow sitting on something round: its foot an ellipse of radius r at height y, its crown h above, overhanging a little,
+   lit on the sun's side and blue in its own shade */
+function snowDome(ctx, x, y, z, r, h) {
+  var c = P(x, y, z), t = P(x, y + h, z), rx = r * c.k, ry = rx * CAM.s * 1.05, top = t.y, sd = Math.sign(LS[0]) || 1;
+  var sc = LIT.id === 'night' ? mixc(mulc(SNOW, lightTint(1)), [190, 204, 230], 0.6) : mulc(SNOW, lightTint(1)), shd = mixc(scl(sc, 0.78), [150, 170, 210], 0.25);
+  var p = new Path2D();
+  p.moveTo(c.x - rx * 1.03, c.y + ry * 0.15);
+  p.bezierCurveTo(c.x - rx * 1.06, top + (c.y - top) * 0.25, c.x - rx * 0.45, top, c.x, top);
+  p.bezierCurveTo(c.x + rx * 0.45, top, c.x + rx * 1.06, top + (c.y - top) * 0.25, c.x + rx * 1.03, c.y + ry * 0.15);
+  p.ellipse(c.x, c.y + ry * 0.15, rx * 1.03, ry, 0, 0, Math.PI, false);
+  p.closePath();
+  var g = ctx.createLinearGradient(c.x - rx * sd, top, c.x + rx * sd, c.y);
+  g.addColorStop(0, rgb(mixc(sc, [255, 255, 255], 0.15))); g.addColorStop(0.55, rgb(sc)); g.addColorStop(1, rgb(shd));
+  ctx.fillStyle = g; ctx.fill(p);
+  ctx.save(); ctx.clip(p); var g2 = ctx.createLinearGradient(0, c.y - ry, 0, c.y + ry * 1.2); g2.addColorStop(0, 'rgba(120,140,180,0)'); g2.addColorStop(1, 'rgba(120,140,180,0.3)'); ctx.fillStyle = g2; ctx.fillRect(c.x - rx * 1.1, c.y - ry, rx * 2.2, ry * 2.4); ctx.restore();   // the shade under its overhanging rim
+}
+/* 雪見灯籠: the snow-viewing lantern, low on three curved legs, its broad hat made to hold the snow; at the water's edge */
+var YUKIMI = { x: LX(5.35), z: LZ(2.04) };   // on the stream's near bank, well in front of the pine (out of its shade), its far legs in the water; it marks the end of the plank bridge too
+function drawYukimi(ctx, lit) {
+  var x = YUKIMI.x, z = YUKIMI.z, st = [148, 144, 134], rot = 0.35, O = { tex: 0.5 }, S = sil(), mr = mulberry32(2601), i;
+  function mz(pr, n, a) { if (S) return; var grp = pr.out.map(function (q) { return q.f.pts; }); pr.out.forEach(function (q) { mossDabs(ctx, q.f.pts, n, mr, a, grp); }); }
+  var legs = [0, 1, 2].map(function (k) { var a = rot + 0.5 + k * TAU / 3; return { a: a, foot: [x + Math.cos(a) * 0.4, -0.02, z + Math.sin(a) * 0.4], knee: [x + Math.cos(a) * 0.36, 0.26, z + Math.sin(a) * 0.36], top: [x + Math.cos(a) * 0.2, 0.42, z + Math.sin(a) * 0.2], d: P(x + Math.cos(a) * 0.4, 0, z + Math.sin(a) * 0.4).d }; });
+  function leg(L) {
+    var f = Pa(L.foot), k = Pa(L.knee), t = Pa(L.top), w = Math.max(0.9, 0.075 * f.k);
+    ctx.lineCap = 'round';
+    if (S) { ctx.strokeStyle = '#000'; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(f.x, f.y); ctx.quadraticCurveTo(k.x, k.y, t.x, t.y); ctx.stroke(); ctx.lineCap = 'butt'; return; }
+    var lit2 = Math.cos(L.a) * SUN[0] + Math.sin(L.a) * SUN[2];
+    ctx.strokeStyle = rgb(shade(snowAlb(st, 0.2), [Math.cos(L.a), 0.1, Math.sin(L.a)])); ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(f.x, f.y); ctx.quadraticCurveTo(k.x, k.y, t.x, t.y); ctx.stroke();
+    ctx.strokeStyle = rgb(shade(mixc(st, [220, 214, 200], 0.3), norm([Math.cos(L.a) * 0.5 + SUN[0] * 0.5, 0.3, Math.sin(L.a) * 0.5 + SUN[2] * 0.5])), 0.5 + 0.3 * clamp(lit2)); ctx.lineWidth = w * 0.35; ctx.beginPath(); ctx.moveTo(f.x - w * 0.2, f.y); ctx.quadraticCurveTo(k.x - w * 0.2, k.y, t.x - w * 0.15, t.y); ctx.stroke();
+    ctx.lineCap = 'butt';
+  }
+  var cd = P(x, 0, z).d;
+  legs.filter(function (L) { return L.d > cd; }).forEach(leg);
+  mz(prism(ctx, x, z, 0.38, 0.47, 0.24, 0.25, 6, rot, st, O), 20, 0.8);   // the ring the legs carry
+  var fb = prism(ctx, x, z, 0.47, 0.74, 0.16, 0.16, 6, rot, st, O);
+  fb.out.forEach(function (q) {
+    var f = q.f; if (f.top || Math.abs(f.n[1]) > 0.5 || S || (f.i % 2)) return;
+    var A = f.pts, qq = function (u, v) { var b = mixc(A[0], A[1], u), t = mixc(A[3], A[2], u); return Pa(mixc(b, t, v)); };
+    poly(ctx, [qq(0.2, 0.15), qq(0.8, 0.15), qq(0.8, 0.85), qq(0.2, 0.85)]); ctx.fillStyle = lit ? rgb(LAMP_ON) : rgb(LAMP_OFF); ctx.fill();
+    if (lit) addGlow(qq(0.5, 0.5), 15, 0.8, true);
+  });
+  if (lit && MODE === 'n') { var gp = P(x, 0.02, z); GLOWS.push({ x: gp.x, y: gp.y, r: 1.3 * gp.k, a: 0.45, pool: CAM.s ? 1 / Math.max(0.25, CAM.s * 0.9) : 3 }); }
+  legs.filter(function (L) { return L.d <= cd; }).forEach(leg);
+  prism(ctx, x, z, 0.74, 0.79, 0.2, 0.2, 6, rot, mul(st, 0.95), O);
+  prism(ctx, x, z, 0.79, 0.86, 0.58, 0.6, 6, rot, mul(st, 0.97), O);   // the broad, low hat: its eave, then the long shallow slope
+  mz(prism(ctx, x, z, 0.86, 1.02, 0.6, 0.16, 6, rot, st, O), 44, 1.1);
+  if (!S) for (i = 0; i < 6; i++) {   // the corners of the eave turned up a little
+    var a = rot + i * TAU / 6, p0 = P(x + Math.cos(a) * 0.6, 0.86, z + Math.sin(a) * 0.6), p1 = P(x + Math.cos(a) * 0.66, 0.93, z + Math.sin(a) * 0.66);
+    ctx.strokeStyle = rgb(shade(snowAlb(st, 0.7), [Math.cos(a), 0.4, Math.sin(a)])); ctx.lineWidth = Math.max(0.9, 0.045 * p0.k); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.quadraticCurveTo(p1.x, p0.y, p1.x, p1.y); ctx.stroke(); ctx.lineCap = 'butt';
+  }
+  prism(ctx, x, z, 1.02, 1.07, 0.1, 0.1, 10, 0, st, O);
+  prism(ctx, x, z, 1.07, 1.15, 0.1, 0.075, 10, 0, st, O);
+  prism(ctx, x, z, 1.15, 1.25, 0.075, 0.0, 10, 0, st, O);
+  if (SEA.snow && !S) snowDome(ctx, x, 0.86, z, 0.64, 0.42);   // what it is for: one deep, rounded cushion of snow on the hat (three stacked caps read as a tiered cake)
+}
+/* 袖垣: a short screen of bamboo brush standing out from the teahouse's front corner, its top a bound roll that sweeps down to
+   the free end (a sleeve) */
+var SODE = { x0: TH.X1 + 0.12, x1: TH.X1 + 1.15, z: TH.ZE + 0.3, h0: 1.55, h1: 1.05 };
+function sodeH(t) { return lerp(SODE.h0, SODE.h1, t * t * (3 - 2 * t) * 0.6 + t * 0.4); }
+function drawSodegaki(ctx) {
+  var s = SODE, z = s.z, S = sil(), n = [0, 0, -1], N = 14, i;
+  function X(t) { return lerp(s.x0, s.x1, t); }
+  var top = [], bot = [];
+  for (i = 0; i <= N; i++) { var t = i / N; top.push(P(X(t), sodeH(t) - 0.05, z)); bot.push(P(X(t), 0.04, z)); }
+  var pan = new Path2D(); top.forEach(function (p, k) { if (k) pan.lineTo(p.x, p.y); else pan.moveTo(p.x, p.y); }); for (i = N; i >= 0; i--) pan.lineTo(bot[i].x, bot[i].y); pan.closePath();
+  if (S) { ctx.fillStyle = '#000'; ctx.fill(pan); }
+  else {
+    ctx.fillStyle = rgb(shade([84, 64, 44], n, { amb: 1.1 })); ctx.fill(pan);
+    ctx.save(); ctx.clip(pan);   // the brush: fine twigs of bamboo branch packed upright, a little ragged
+    var r = mulberry32(2701), NB = 4, ps = []; for (i = 0; i < NB; i++) ps.push(new Path2D());
+    for (i = 0; i < 520 * DQ; i++) { var tt = r(), xx = X(tt), a = P(xx, r() * 0.3, z - 0.01), b = P(xx + (r() - 0.5) * 0.06, sodeH(tt) * (0.75 + r() * 0.3), z - 0.01), pth = ps[(r() * NB) | 0]; pth.moveTo(a.x, a.y); pth.lineTo(b.x, b.y); }
+    var bp = [[54, 40, 28], [92, 70, 46], [124, 98, 64], [150, 124, 84]];
+    for (i = 0; i < NB; i++) { ctx.strokeStyle = rgb(shade(bp[i], n, { amb: 1.1 }), 0.75); ctx.lineWidth = 0.35; ctx.stroke(ps[i]); }
+    var gb = P(s.x0, 0, z), gt2 = P(s.x0, 0.45, z), gg = ctx.createLinearGradient(0, gb.y, 0, gt2.y); gg.addColorStop(0, 'rgba(20,16,12,0.5)'); gg.addColorStop(1, 'rgba(20,16,12,0)'); ctx.fillStyle = gg; ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = 0.35; ctx.fillStyle = GRAINPAT; ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+    if (SEA.snow) { ctx.save(); ctx.clip(pan); ctx.fillStyle = rgb(mulc(SNOW, lightTint(1)), 0.16); ctx.fill(pan); ctx.restore(); }
+  }
+  [0.3, 0.75].forEach(function (yy) {   // two split-bamboo battens across, tied with black palm rope
+    bamboo(ctx, [s.x0, yy, z - 0.03], [s.x1 - 0.02, Math.min(yy, sodeH(1) - 0.12), z - 0.03], 0.018, [168, 150, 96]);
+    if (!S) for (var k = 1; k < 5; k++) { var t = k / 5, p = P(X(t), Math.min(yy, sodeH(t) - 0.12), z - 0.05), w = Math.max(0.6, 0.03 * p.k); ctx.strokeStyle = 'rgb(22,18,16)'; ctx.lineWidth = Math.max(0.4, 0.012 * p.k); ctx.beginPath(); ctx.moveTo(p.x - w, p.y - w); ctx.lineTo(p.x + w, p.y + w); ctx.moveTo(p.x + w, p.y - w); ctx.lineTo(p.x - w, p.y + w); ctx.stroke(); }
+  });
+  // the bound roll along the top, sweeping down to the end
+  var rl = []; for (i = 0; i <= N; i++) rl.push(P(X(i / N), sodeH(i / N), z - 0.02));
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  var rw = Math.max(1, 0.085 * rl[0].k);
+  function roll(col, w, dy) { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); rl.forEach(function (p, k) { if (k) ctx.lineTo(p.x, p.y + dy); else ctx.moveTo(p.x, p.y + dy); }); ctx.stroke(); }
+  if (S) roll('#000', rw, 0);
+  else {
+    roll(rgb(shade([120, 104, 62], n)), rw, 0); roll(rgb(shade([176, 160, 104], norm([0, 0.6, -0.8]))), rw * 0.45, -rw * 0.18);
+    if (SEA.snow) roll(rgb(mulc(SNOW, lightTint(1))), rw * 0.55, -rw * 0.42);
+    for (i = 1; i < N; i += 2) { var p = rl[i]; ctx.strokeStyle = 'rgb(26,20,16)'; ctx.lineWidth = Math.max(0.4, 0.014 * p.k); ctx.beginPath(); ctx.moveTo(p.x - rw * 0.15, p.y - rw * 0.5); ctx.lineTo(p.x + rw * 0.15, p.y + rw * 0.5); ctx.stroke(); }
+  }
+  ctx.lineCap = 'butt'; ctx.lineJoin = 'miter';
+  bamboo(ctx, [s.x0, 0, z + 0.01], [s.x0, s.h0 + 0.06, z + 0.01], 0.045, [112, 92, 66]);   // the posts: one by the teahouse, a thinner one at the free end
+  bamboo(ctx, [s.x1, 0, z + 0.01], [s.x1, s.h1 + 0.02, z + 0.01], 0.036, [112, 92, 66]);
+}
+/* 竹林: a grove of madake along the fence behind the teahouse: tall culms leaning a little, their leaves in the upper half, rising
+   over the thatch (in the far left corner the big maple hid it) */
+var TAKE = { x0: LX(-6.4), x1: LX(-2.3), z0: LZ(10.2), z1: LZ(10.85) };
+function genChikurin(amt) {
+  var r = mulberry32(2801), C = [], n = Math.round(46 * amt), i;
+  for (i = 0; i < n; i++) {
+    var u = r(), v = r(), x = lerp(TAKE.x0, TAKE.x1, u), z = lerp(TAKE.z0, TAKE.z1, v), h = (4.6 + r() * 2.2) * (0.75 + 0.25 * amt), old = r() < 0.25, rad = 0.032 + r() * 0.026, lx = 0.12 + (r() - 0.3) * 0.25, lz = (r() - 0.5) * 0.12, tone = r();
+    if (u > 0.8 && v < 0.5) continue;   // its right end thins out toward the gate
+    C.push({ x: x, z: z, h: h, r: rad, lx: lx, lz: lz, tone: tone, old: old, seed: 2900 + i });
+  }
+  return C;
+}
+function culmPt(c, y) { var f = y / c.h, b = f * f; return [c.x + c.lx * b * c.h * 0.16, y * (1 - 0.04 * b), c.z + c.lz * b * c.h * 0.16]; }
+function drawCulm(ctx, c) {
+  var S = sil(), col = c.old ? [150, 146, 88] : mixc([84, 120, 60], [110, 138, 70], c.tone), n = 5, i, k;
+  if (SEA === SEASONS.spring) col = mixc(col, [150, 140, 80], 0.15);
+  for (i = 0; i < n; i++) bamboo(ctx, culmPt(c, c.h * i / n), culmPt(c, c.h * (i + 1) / n), c.r * (1 - 0.45 * i / n), col);
+  if (S && MODE === 's') return;
+  // branches at the nodes of the upper half, each holding a spray of narrow leaves that droop from their tips
+  var r = mulberry32(c.seed), sp = SEA === SEASONS.spring, snow = SEA.snow, NB = 3, leaves = [], tw = new Path2D(), lumps = new Path2D();
+  for (k = 0; k < NB; k++) leaves.push(new Path2D());
+  for (var y = c.h * 0.42; y < c.h * 0.98; y += 0.22 + r() * 0.1) {
+    var base = culmPt(c, y), ang = r() * TAU, len = 0.25 + r() * 0.45 * (1 - (y - c.h * 0.5) / c.h), dx = Math.cos(ang) * len, dz = Math.sin(ang) * len * 0.6;
+    var tip = [base[0] + dx, base[1] + 0.06 + r() * 0.1, base[2] + dz], pb = Pa(base), pt = Pa(tip);
+    tw.moveTo(pb.x, pb.y); tw.lineTo(pt.x, pt.y);
+    var nl = 9 + (r() * 7 | 0);
+    for (var j = 0; j < nl; j++) {
+      var q = mixc(base, tip, 0.35 + r() * 0.65), la = Math.atan2(dz, dx) + (r() - 0.5) * 2.2, ll = 0.15 + r() * 0.09, droop = snow ? 0.12 : 0.05 + r() * 0.05;
+      var a = Pa(q), e = Pa([q[0] + Math.cos(la) * ll, q[1] - droop, q[2] + Math.sin(la) * ll * 0.6]), m = Pa([q[0] + Math.cos(la) * ll * 0.5, q[1] - droop * 0.2 + 0.015, q[2] + Math.sin(la) * ll * 0.3]);
+      var w = Math.max(0.25, 0.022 * a.k), L = leaves[(r() * NB) | 0], nx = -(e.y - a.y), ny = e.x - a.x, nl2 = Math.hypot(nx, ny) || 1; nx = nx / nl2 * w; ny = ny / nl2 * w;
+      L.moveTo(a.x, a.y); L.quadraticCurveTo(m.x + nx, m.y + ny, e.x, e.y); L.quadraticCurveTo(m.x - nx, m.y - ny, a.x, a.y);
+      if (snow && r() < 0.25) { var sr = Math.max(0.4, 0.035 * a.k); lumps.moveTo(m.x + sr * 1.3, m.y - sr * 0.4); lumps.ellipse(m.x, m.y - sr * 0.4, sr * 1.3, sr * 0.7, 0, 0, TAU); }
+    }
+  }
+  if (S) { ctx.strokeStyle = '#000'; ctx.lineWidth = 0.3; ctx.stroke(tw); ctx.fillStyle = '#000'; for (k = 0; k < NB; k++) ctx.fill(leaves[k]); return; }
+  ctx.strokeStyle = rgb(mulc(scl(col, 0.8), lightTint(0.8))); ctx.lineWidth = 0.3; ctx.stroke(tw);
+  var lp = sp ? [[86, 104, 44], [128, 138, 60], [176, 168, 86]] : snow ? [[48, 72, 42], [70, 96, 54], [98, 124, 68]] : [[46, 76, 34], [72, 110, 46], [118, 150, 66]];   // (a little brighter: the grove read as dark scribble)   // (in spring the old leaves yellow before they fall: 竹の秋)
+  for (k = 0; k < NB; k++) { ctx.fillStyle = rgb(tc(mulc(lp[k], lightTint(0.7 + k * 0.15)), LIT.foliageTint)); ctx.fill(leaves[k]); }
+  if (snow) { ctx.fillStyle = rgb(mulc(SNOW, lightTint(1))); ctx.fill(lumps); }
+}
+
 /* ================= backdrop ================= */
 function drawPagoda(ctx, x, yb, s, col, lit) {
   var tiers = 5, y = yb, wBase = 30 * s, tierH = 11 * s;
@@ -1871,9 +2253,12 @@ function drawPagoda(ctx, x, yb, s, col, lit) {
   for (var k2 = 0; k2 < 9; k2++) { ctx.fillStyle = dark; ctx.fillRect(x - 2.2 * s, y - 4 * s - k2 * 2.2 * s, 4.4 * s, 0.9 * s); }
   if (lit) { for (var t = 0; t < 4; t++) GLOWS.push({ x: x + (t % 2 ? 2 : -2) * s, y: yb - tierH * (0.4 + t * 0.95), r: 4, a: 0.4, far: true }); }
 }
-function pagodaPos() { return { x: P(LX(0.75), 0, LZ(12)).x, y: Math.min(CAM.cy - 124, P(0, 1.72, LAY.fenceZ).y - 6) }; }
+function pagodaPos() { return { x: P(LX(0.75), 0, LZ(12)).x, y: Math.min(hYo() + 80, P(0, 1.72, LAY.fenceZ).y - 6) }; }
+/* the far hills' offset in the frame: (1.4.2) set a little lower than the garden's own centre, so there is open sky for the moon and
+   the fireworks (the short landscape frame most, as its hills filled it to the top); the nearer ranges go down behind the fence */
+function hYo() { return CAM.cy - 204 + 28 + 28 * clamp((REF_H - H) / 78); }
 function paintBackdrop(ctx) {
-  var rng = mulberry32(301), L = LIT, yo = CAM.cy - 204, night = L.id === 'night', dayMoonP = null;
+  var rng = mulberry32(301), L = LIT, yo = hYo(), night = L.id === 'night', dayMoonP = null;
   MOONCUT = null;
   var top = mixc(L.skyTop, SEA.sky, night ? 0 : 0.25), hor = L.skyHor;
   var yH = 130 + yo;
@@ -2518,7 +2903,7 @@ var MOONP = null, MOONKEY = false;   // MOONP: where the event moon was painted 
    a hole in a hill), and the disc is made smaller as far as it must. Sets MOONCUT for the ridge layers; returns { x, y, r } or null */
 var MOONCUT = null, RIDGEL = [[25, 16, 0.012, 0.55], [45, 14, 0.02, 0.85], [65, 12, 0.03, 1.15], [87, 10, 0.045, 1.45]];   // (y, amp, f, crown size: as the layers in paintBackdrop)
 function moonSpot(yo, rT, rMin, dusk) {
-  var x = pagodaPos().x + (F.namiki ? -24 : 16), li, k, q, cut = [];
+  var x = pagodaPos().x + Math.max(16, rT * 1.2 + 4), li, k, q, cut = [];   // (1.4.2: the avenue no longer stands behind the gate, so the moon keeps its place right of the pagoda)
   function ry(l, xx) { var Ly = RIDGEL[l]; return yo + Ly[0] - Ly[1] * NZ.fbm(xx * Ly[2] + l * 7, l * 3.1, 4) * 1.6 + Ly[1] * 0.4; }
   function top(l, hw) { var t = 1e9, c = cut[l]; for (q = -8; q <= 8; q++) { var xx = x + q * hw / 8, y = ry(l, xx); if (c) y += Math.max(0, c.T - y) * c.g(xx); t = Math.min(t, y - RIDGEL[l][3] * 2.4); } return t; }
   var hw0 = rT * 1.1 + 2, S = -1e9, rr = 0;
@@ -2578,9 +2963,9 @@ function groundSetup() {
   return { gi: gi, G: G, RR: rakeRocks(F), Lh: Lh, sky: sky, sp: 0.11, thr: F.moss, snow: SEA.snow, grid: buildGrid() };
 }
 /* low-frequency fields cached on a coarse world grid (bilinear sampled per pixel) */
-var GG = { x0: -13, z0: -5, st: 0.085 };
+var GG = { x0: -16, z0: -6, st: 0.085 };   // (1.4.2: the wider, deeper plot)
 function buildGrid() {
-  var nx = Math.ceil(27 / GG.st) + 2, nz = Math.ceil(20.5 / GG.st) + 2, N = nx * nz;
+  var nx = Math.ceil(33 / GG.st) + 2, nz = Math.ceil(24 / GG.st) + 2, N = nx * nz;
   var soil = new Float32Array(N), grass = new Float32Array(N), moss = new Float32Array(N), snow = new Float32Array(N), pd = new Float32Array(N), gnz = new Float32Array(N), gcol = new Float32Array(N);
   var mx = LAY.maple.x, mz = LAY.maple.z, lx = LAY.lantern.x, lz = LAY.lantern.z, tcx = (TH.X0 + TH.X1) / 2, n2 = NZ.n2, fbm = NZ.fbm;
   for (var j = 0; j < nz; j++) {
@@ -2588,7 +2973,7 @@ function buildGrid() {
     for (var i = 0; i < nx; i++) {
       var x = GG.x0 + i * GG.st, k = j * nx + i;
       soil[k] = fbm(x * 0.7, z * 0.7, 3); grass[k] = fbm(x * 0.55 + 3, z * 0.55 + 9, 2);
-      var p = F.pond && x > LX(-1.6) && x < LX(7.8) && z > LZ(0.8) && z < LZ(9) ? pondSDF(x, z) : 9; pd[k] = p;
+      var p = F.pond && x > LX(-1.6) && x < LX(F.nagare ? 8.6 : 7.8) && z > LZ(F.nagare ? -2.2 : 0.8) && z < LZ(9) ? pondSDF(x, z) : 9; pd[k] = p;
       if (F.mossOn) {
         var bonus = 0;
         if (p < 4) bonus += 0.16 * Math.exp(-Math.max(0, p) * 1.4);
@@ -2617,6 +3002,7 @@ function groundRows(D, M, PW, y0, y1, S) {
   var dryK = SEA.snow ? 0 : (g0[1] > g0[0] * 1.4 ? 0.42 : 0.28), dryC = [g1[0] * 0.8 + s1[0] * 0.2 + 26, g1[1] * 0.85 + s1[1] * 0.15 + 10, g1[2] * 0.7 + s1[2] * 0.2];   // a sun-dried, yellower green (not mud)   // the dry patches' straw colour, from this season's grass and soil
   var n2 = NZ.n2, fbm = NZ.fbm, mx = LAY.maple.x, mz = LAY.maple.z, lx = LAY.lantern.x, lz = LAY.lantern.z, tcx = (TH.X0 + TH.X1) / 2;
   var gravelOn = F.gravel, outlineOn = F.gravelOutline, pondOn = F.pond, mossOn = F.mossOn, weeds = F.weeds, marsh = F.marsh, kare = F.kare;
+  var pondZ0 = LZ(F.nagare ? -2.0 : 1.2), pondX1 = LX(F.nagare ? 8.4 : 7.4), pondX0 = LX(-1.2), nagareOn = !!F.nagare, pondZ1 = NAGARE[0][1] + 0.3;   // (1.4.2: the stream runs out to the front right)
   var mapleBig = F.maple > 0.5, mapleSnow = F.maple > 0.4, lantern = F.lantern, teahouse = F.teahouse;
   var levOn = F.leveled && !weeds, levK = levOn ? clamp((6.5 - F.s) / 4.5) : 0, lvB = 0, cov = 0;   // the newly levelled lot: the rake's furrows, pebbles and clods of turned earth, fading as the lawn and moss take it over
   // every object field the hot loops need, read once into locals (shared hidden classes elsewhere must never slow these loops)
@@ -2628,7 +3014,7 @@ function groundRows(D, M, PW, y0, y1, S) {
     var sy = (py + 0.5) / ks, b = -(sy - cCy) / cF, dy = -cS + b * cC, rowk = py * PW * 4, px;
     if (dy >= 0) { for (px = 0; px < PW; px++) D[rowk + px * 4 + 3] = 0; continue; }
     var t = -cY / dy, z = cZ + t * (cC + b * cS), fp = t / (cF * ks) * 1.9;
-    var hz = clamp((t - 22) / 40) * 0.35 * hazeK, rowNearPond = pondOn && z > LZ(1.2) && z < LZ(8.6), rowNearGravel = (gravelOn || outlineOn) && Math.abs(z - Gcz) < Grz * 1.2;
+    var hz = clamp((t - 22) / 40) * 0.35 * hazeK, rowNearPond = pondOn && z > pondZ0 && z < LZ(8.6), rowNearGravel = (gravelOn || outlineOn) && Math.abs(z - Gcz) < Grz * 1.2;
     var tx = t / cF, x0 = cX - tx * cCx;
     var fz = (z - gZ0) * ist, iz = fz | 0; if (iz < 0) iz = 0; if (iz > gst - 2) iz = gst - 2; var tz = fz - iz; if (tz > 1) tz = 1; if (tz < 0) tz = 0; var zo = iz * gnx;
     for (px = 0; px < PW; px++) {
@@ -2704,7 +3090,7 @@ function groundRows(D, M, PW, y0, y1, S) {
       }
       // pond distance
       var pd = 9;
-      if (rowNearPond && x > LX(-1.2) && x < LX(7.4)) pd = Gpd[i00] * w00 + Gpd[i10] * w10 + Gpd[i01] * w01 + Gpd[i11] * w11;
+      if (rowNearPond && x > pondX0 && x < pondX1) pd =Gpd[i00] * w00 + Gpd[i10] * w10 + Gpd[i01] * w01 + Gpd[i11] * w11;
       // gravel ellipse distance
       var ge = 9;
       if (rowNearGravel) { var ex = (x - Gcx) / Grx, ez = (z - Gcz) / Grz; ge = Math.sqrt(ex * ex + ez * ez); if (ge < 1.2) ge += (Ggnz[i00] * w00 + Ggnz[i10] * w10 + Ggnz[i01] * w01 + Ggnz[i11] * w11 - 0.5) * 0.08; }
@@ -2773,8 +3159,17 @@ function groundRows(D, M, PW, y0, y1, S) {
         if (w > 0) {
           var wq0 = n2(x * 0.9 + 12, z * 2.2 - 5), dep = clamp(-pd / 0.9), rip = fbm(x * 2.3 + 30 + wq0 * 1.6, z * 5.2 + wq0 * 2.6, 3), dp = Math.pow(dep, 0.6);   /* (warped and less stretched: broken swells, not ruled horizontal bands) */
           var wr = pc[0] + (20 - pc[0]) * dp, wg = pc[1] + (44 - pc[1]) * dp, wb = pc[2] + (46 - pc[2]) * dp;
-          var marshy = marsh ? clamp(1 - Math.max(0, marshSDF(x, z)) * 3) : 0;
-          if (dep < 0.2 || marshy > 0) { var pbb = n2(x * 14, z * 14), shal = clamp(Math.max((0.2 - dep) * 2.2, marshy * 0.55)); wr += (92 + 34 * pbb - wr) * shal; wg += (86 + 34 * pbb - wg) * shal; wb += (66 + 28 * pbb - wb) * shal; }   /* (only a narrow shelf of the bottom shows by the edge: a garden pond reads dark, not a sandy puddle) */
+          var marshy = marsh ? clamp(1 - Math.max(0, marshSDF(x, z)) * 3) : 0, streamy = nagareOn && z < pondZ1 ? clamp((pondBase(x, z) - 0.05) * 4) : 0;   // (1.4.2: the stream is shallow, its stony bed showing through)
+          if (streamy > 0) {   // the stream's bed through the water: rounded pebbles, warm greys and browns on sand, darker down the deeper middle
+            var pcx = Math.floor(x * 15), pcz = Math.floor(z * 15), bmd = clamp(-pd / 0.36), bR = 0, bG = 0, bB = 0, pbest = 9, ptn = 0;
+            for (var pdx = 0; pdx < 2; pdx++) for (var pdz = 0; pdz < 2; pdz++) { var qx = pcx + pdx - (x * 15 - pcx < 0.5 ? 1 : 0), qz = pcz + pdz - (z * 15 - pcz < 0.5 ? 1 : 0), jx = (qx + 0.2 + hash2(qx, qz + 31) * 0.6) / 15, jz = (qz + 0.2 + hash2(qx + 17, qz) * 0.6) / 15, prd = (0.022 + hash2(qx - 5, qz + 9) * 0.03), pdd = Math.hypot(x - jx, (z - jz) * 1.2) / prd; if (pdd < pbest) { pbest = pdd; ptn = hash2(qx * 3 + 1, qz * 7 - 2); } }
+            var peb = 1 - sstep(0.75, 1.0, pbest), sand = [138, 122, 94], ptc = ptn < 0.3 ? [150, 140, 120] : ptn < 0.55 ? [118, 108, 92] : ptn < 0.8 ? [164, 146, 112] : [96, 92, 86];
+            bR = lerp(sand[0], ptc[0] * (0.9 + 0.2 * (1 - pbest)), peb); bG = lerp(sand[1], ptc[1] * (0.9 + 0.2 * (1 - pbest)), peb); bB = lerp(sand[2], ptc[2] * (0.9 + 0.2 * (1 - pbest)), peb);
+            if (pbest > 0.75 && pbest < 1.15) { bR *= 0.72; bG *= 0.72; bB *= 0.75; }   // the crevice round each pebble
+            var bdk = 1 - 0.42 * bmd, bsh = streamy * (0.78 - 0.38 * bmd);
+            wr += (bR * bdk * 0.85 - wr) * bsh; wg += (bG * bdk * 0.9 - wg) * bsh; wb += (bB * bdk * 0.95 - wb) * bsh;   // (seen through a little green-grey water)
+          }
+          else if (dep < 0.2 || marshy > 0) { var pbb = n2(x * 14, z * 14), shal = clamp(Math.max((0.2 - dep) * 2.2, marshy * 0.55)); wr += (92 + 34 * pbb - wr) * shal; wg += (86 + 34 * pbb - wg) * shal; wb += (66 + 28 * pbb - wb) * shal; }   /* (only a narrow shelf of the bottom shows by the edge: a garden pond reads dark, not a sandy puddle) */
           if (dep < 0.45 && !snow && fp < 0.12) {   // caustics: the sun's net of light on the shallow bottom, fading with depth
             var ca = 1 - Math.abs(n2(x * 6.5 + 3, z * 9) * 2 - 1), cb = 1 - Math.abs(n2(x * 9 - 7, z * 6.5 + 2) * 2 - 1), cs = Math.pow(ca, 7) + Math.pow(cb, 7), cK = cs * (0.45 - dep) * 1.6 * causK * (1 - fp / 0.12);
             wr += (255 - wr) * cK * 0.35; wg += (250 - wg) * cK * 0.38; wb += (220 - wb) * cK * 0.3;
@@ -2797,7 +3192,9 @@ function groundRows(D, M, PW, y0, y1, S) {
           wr = (wr + (sky[0] * cldW - wr) * fres) * wm; wg = (wg + (sky[1] * cldW - wg) * fres) * wm; wb = (wb + (Math.min(255, sky[2] * (cldW * 0.9 + 0.1)) - wb) * fres) * wm;
           if (snow) {
             var iceW = 0.32 + 0.22 * n2(x * 2.2 + 5, z * 2.2) + 0.14 * (n2(x * 7.5 - 3, z * 9 + 1) - 0.5), ice = sstep(-iceW - 0.025, -iceW + 0.025, pd) * 0.92;   // (a ragged margin: the ice ran round the bank as one smooth ring)
-            skimK = pd < -iceW ? sstep(0.6, 0.68, n2(x * 1.7 + 40, z * 3.4 - 7) * 0.8 + n2(x * 6 + 2, z * 9) * 0.2) * 0.8 : 0;   // thin skims of new ice out on the open water, dull and grey: no mirror in them
+            var runW = nagareOn && z < pondZ1 && pondBase(x, z) > 0.03 && !(marsh && marshSDF(x, z) < 0.05);   // (1.4.2: the stream runs, so only a thin rim of ice along its banks)
+            if (runW) { iceW = 0.05 + 0.05 * n2(x * 9 + 3, z * 9); ice = sstep(-iceW - 0.02, -iceW + 0.02, pd) * 0.85; }
+            skimK = runW ? 0 : pd < -iceW ? sstep(0.6, 0.68, n2(x * 1.7 + 40, z * 3.4 - 7) * 0.8 + n2(x * 6 + 2, z * 9) * 0.2) * 0.8 : 0;   // thin skims of new ice out on the open water, dull and grey: no mirror in them
             if (skimK > 0) { var skf = 0.6 + 0.4 * n2(x * 11, z * 4); wr += (150 * skf + 40 - wr) * skimK; wg += (162 * skf + 42 - wg) * skimK; wb += (174 * skf + 46 - wb) * skimK; }
             iceK = ice;
             if (ice > 0) {
@@ -2857,6 +3254,12 @@ function edgeTreePal(i) {
   return T[s][i];
 }
 function edgeBareFor(kindIx) { return SEA.snow && (kindIx === 2 || kindIx === 3 || kindIx === 4); }
+/* 1.4.2: no pond-edge rock where the stream leaves the pond, nor crowding the shishi-odoshi (it stood wedged among them) */
+function pondRockSkip(px, pz) {
+  if (F.nagare && nagareSDF(px, pz) < 0.4 && pz < NAGARE[0][1] + 0.3) return true;
+  if (F.shishi) { var s = LAY.shishi; if (px > s.x - 1.25 && px < s.x + 0.75 && Math.abs(pz - s.z) < 0.62) return true; }
+  return false;
+}
 function nearPondEdge(x, z) {
   for (var i = 0; i < 12; i++) {
     var d = pondBase(x, z), e = 0.02, gx = (pondBase(x + e, z) - pondBase(x - e, z)) / (2 * e), gz = (pondBase(x, z + e) - pondBase(x, z - e)) / (2 * e), gl = Math.hypot(gx, gz) || 1;
@@ -2874,7 +3277,7 @@ function buildScene() {
   var HZ = LIT.haze;
   function hz(pal) { return pal ? pal.map(function (c) { return mixc(c, HZ, 0.14); }) : null; }
   // beyond the terrace
-  [[730, LX(-3.6), LZ(11.45), 3.4, 0], [731, LX(4.4), LZ(11.5), 3.8, 1], [732, LX(-8.0), LZ(11.3), 4.2, 2]].forEach(function (a) {
+  LAY.beyond.map(function (b, k) { return [730 + k, LX(b[0]), LZ(b[1]), b[2], k]; }).forEach(function (a) {
     if (sname === 'spring') { // someiyoshino in full bloom beyond the fence (the avenue takes their place once it grows)
       if (F.namiki && a[4] < 2) return;
       var sk = genSakura(a[0], a[1], a[2], a[3] / 4.4, 0, 1.25, 4); put(a[1], a[2], { draw: function (c) { drawSakura(c, sk, { density: 1.15, haze: 0.16, far: true }); }, noRefl: true, bend: 0.7, sway: { flex: 0.7 } }); return;
@@ -2885,9 +3288,9 @@ function buildScene() {
   if (F.namiki) LAY.namiki.forEach(function (a, ii) { // the cherry avenue along the fence
     var nt = genSakura(760 + ii, a[0], a[1], a[2] / 4.6, 0, 1.2, 4); put(a[0], a[1], { draw: function (c) { drawSakura(c, nt, { density: 1.2, haze: 0.06, far: true, pink: true }); }, noRefl: true, bend: 0.75, sway: { flex: 0.75 } });
   });
-  var EP2 = [0, 0, 0, 1, 1, 5, 5, 2, 3];
-  for (var i = 0; i < 19; i++) {
-    var x = LX(-8.6 + i * 0.95 + (er() - 0.5) * 0.7), z = LZ(11.0 + er() * 0.6), kind = EP2[(er() * EP2.length) | 0], R = 0.55 + er() * 0.55, Hh = 0.7 + er() * 0.8;
+  var EP2 = [0, 0, 0, 1, 1, 5, 5, 2, 3], er2 = mulberry32(501);
+  for (var i = -2; i < 22; i++) {   // (1.4.2: two more shrubs at each end for the wider plot, from their own seed so the rest stay as they were)
+    var ex = i < 0 || i > 18 ? er2 : er, x = LX(-8.6 + i * 0.95 + (ex() - 0.5) * 0.7), z = LZ(11.55 + ex() * 0.6), kind = EP2[(ex() * EP2.length) | 0], R = 0.55 + ex() * 0.55, Hh = 0.7 + ex() * 0.8;
     (function (x, z, kind, R, Hh, ii) {
       var bare = edgeBareFor(kind);
       // a hedge of mixed shrubs, each a small layered crown on a few stems
@@ -2898,8 +3301,8 @@ function buildScene() {
       put(x, z, { bend: 0.45, draw: function (c) { drawLayered(c, sh, { pal: pal, alt: warmAlt(pal), altK: 0.4, dab: 0.085, cap: 48, density: 1.2, snow: 0.2, hideY: hideY }); }, ao: function (c) { var p = P(x, 0, z), ag = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, R * p.k * 0.9); ag.addColorStop(0, 'rgba(0,0,0,0.9)'); ag.addColorStop(0.6, 'rgba(0,0,0,0.45)'); ag.addColorStop(1, 'rgba(0,0,0,0)'); c.save(); c.fillStyle = ag; c.translate(p.x, p.y); c.scale(1, CAM.s * 0.85); c.translate(-p.x, -p.y); c.beginPath(); c.arc(p.x, p.y, R * p.k * 0.9, 0, TAU); c.fill(); c.restore(); }, noRefl: true });   // (a soft pool of shade under each shrub: hard dark half-discs scalloped the edge of the lot)
     })(x, z, kind, R, Hh, i);
   }
-  var cedar = makeCedar(701, LX(-6.9), LZ(11.6), 13, 1.9); put(cedar.x, cedar.z, { draw: function (c) { drawCedar(c, cedar, 0.06); }, noRefl: true, bend: 0.35, sway: { flex: 0.4 } });
-  var gx = LX(7.9), gz = LZ(11.4), ginkgo = makeLayered(702, gx, gz, 9, 2.5, { maxl: 5, spray: 1.15 }), gp = SEA.ginkgo;
+  var cedar = makeCedar(701, LX(-6.9), LZ(12.15), 13, 1.9); put(cedar.x, cedar.z, { draw: function (c) { drawCedar(c, cedar, 0.06); }, noRefl: true, bend: 0.35, sway: { flex: 0.4 } });
+  var gx = LX(7.9), gz = LZ(11.95), ginkgo = makeLayered(702, gx, gz, 9, 2.5, { maxl: 5, spray: 1.15 }), gp = SEA.ginkgo;
   put(gx, gz, { bend: 0.5, sway: { flex: 0.55 }, draw: function (c) { drawLayered(c, ginkgo, { pal: gp, alt: warmAlt(gp), altK: 0.35, dab: 0.1, cap: 55, density: 1.0, snow: 0.5, bark: [[60, 52, 44], [100, 90, 76], [140, 128, 108]] }); }, noRefl: true });
   // rocks
   if (F.gravelOutline) { // 縄張り: the bed laid out with little stakes and a taut string between them, as a garden is set out on the ground
@@ -2918,7 +3321,6 @@ function buildScene() {
     });
   }
   if (F.rock1) { var rk = makeRock(101, LAY.rock1.x, LAY.rock1.z, 0.62, 0.55, 0.48, { alb: [146, 140, 128], moss: F.rockMoss, flat: 0.72, amp: 0.3 }); put(LAY.rock1.x, LAY.rock1.z, { draw: function (c) { drawRock(c, rk); }, ao: function (c) { rockAO(c, rk); } }); }
-  if (F.lantern) { var rk2 = makeRock(104, LX(-1.62), LZ(2.3), 0.28, 0.2, 0.24, { alb: [140, 136, 126], moss: F.rockMoss, flat: 0.5 }); put(LX(-1.62), LZ(2.3), { draw: function (c) { drawRock(c, rk2); }, ao: function (c) { rockAO(c, rk2); } }); }
   if (F.kare) [[110, LX(-3.75), LZ(1.0), 0.34, 1.12, 0.3], [111, LX(-4.55), LZ(2.05), 0.46, 0.7, 0.38], [112, LX(-1.2), LZ(0.7), 0.5, 0.3, 0.4], [113, LX(-3.15), LZ(0.5), 0.24, 0.3, 0.2]].forEach(function (a) {
     var r = makeRock(a[0], a[1], a[2], a[3], a[4], a[5], { alb: [128, 124, 118], moss: F.rockMoss * 0.6, flat: a[4] > 0.6 ? 0.9 : 0.7, amp: 0.3, nu: 28, nv: 14, taper: a[4] > 0.6 ? 0.45 : 0.15, lean: a[4] > 0.6 ? 0.12 : 0 });
     put(a[1], a[2], { draw: function (c) { drawRock(c, r); }, ao: function (c) { rockAO(c, r); } });
@@ -2926,7 +3328,7 @@ function buildScene() {
   // stepping stones
   var stones = [];
   if (F.path) stones = stones.concat(PATH_MAIN.slice(0, F.bridge ? 9 : 8));
-  if (F.teaPath) stones = stones.concat(PATH_TEA);
+  stones = stones.concat(teaStones());
   if (F.gate) stones = stones.concat(PATH_GATE);
   stones.forEach(function (st, ii) {
     var tone = [[150, 146, 138], [142, 136, 124], [156, 150, 140], [132, 130, 128], [148, 140, 126]][ii % 5];
@@ -2940,6 +3342,7 @@ function buildScene() {
     var tx = LX(-6 + tr() * 12.5), tz = LZ(-0.8 + tr() * 11), ge = Math.hypot((tx - G.cx) / G.rx, (tz - G.cz) / G.rz), ts = (s === 0 ? 0.16 : 0.12) + tr() * 0.12, seed = tr() * 1e6 | 0;
     if ((F.gravel || F.gravelOutline) && ge < 1.1) continue; if (F.pond && pondSDF(tx, tz) < 0.25) continue; if (F.hill && hillH(tx, tz) > 0) continue;
     if (F.teahouse && tx > TH.X0 - 0.3 && tx < TH.X1 + 0.3 && tz > TH.ZE - 0.3) continue;
+    if (F.nobedan && nobeNear(tx, tz, 0.1)) continue;
     (function (tx, tz, ts, seed) { put(tx, tz, { draw: function (c) { grassTuft(c, tx, tz, ts, mulberry32(seed), tuftPal); }, noShadow: true }); })(tx, tz, ts, seed);
   }
   if (!SEA.snow && s >= 1 && s <= 9) {   /* the young lawn's patches on the levelled lot: short blades standing in them (thickest inside, thinning at the ragged rim), so a patch reads as grass and not a green smudge */
@@ -2950,6 +3353,7 @@ function buildScene() {
       if (gkeep > sstep(0.58, 0.68, gv) * (0.4 + 0.6 * NZ.n2(gx * 16, gz * 4))) continue;
       if ((F.gravel || F.gravelOutline) && Math.hypot((gx - G.cx) / G.rx, (gz - G.cz) / G.rz) < 1.08) continue; if (F.pond && pondSDF(gx, gz) < 0.3) continue; if (F.hill && hillH(gx, gz) > 0) continue;
       if (F.teahouse && gx > TH.X0 - 0.3 && gx < TH.X1 + 0.3 && gz > TH.ZE - 0.3) continue;
+      if (F.nobedan && nobeNear(gx, gz, 0.02)) continue;
       (function (tx, tz, ts, seed) { put(tx, tz, { draw: function (c) { grassTuft(c, tx, tz, ts, mulberry32(seed), gpPal, true); }, noShadow: true }); })(gx, gz, gsz, gsd);
     }
   }
@@ -2965,7 +3369,7 @@ function buildScene() {
   if (F.maple2 > 0) { var mt2 = genMaple(47, LAY.maple2.x, LAY.maple2.z, F.maple2); put(LAY.maple2.x, LAY.maple2.z, { draw: function (c) { drawMaple(c, mt2); }, ao: function (c) { mapleAO(c, mt2); }, sway: { flex: 0.8 } }); }
   // azaleas
   if (F.azaleas > 0) AZALEAS.forEach(function (a, ii) {
-    if (ii === 6 && !F.teahouse) return;
+    if (ii === AZ_TEA && !F.teahouse) return;
     var sc = F.azaleas, bloom = SEA.azBloom, acc;
     if (bloom) acc = { p: Math.min(0.85, bloom.p * (0.6 + 0.4 * sc) * 1.45), pal: bloom.pal, kind: 'circle', s: 0.8, clump: true };   /* (many small flowers, not a few big pink discs) */
     else if (sname === 'autumn') acc = { p: 0.12, pal: [[84, 30, 20], [118, 46, 26], [150, 70, 36]] };
@@ -2976,12 +3380,13 @@ function buildScene() {
   if (F.pine > 0) { var pt = genPine(23, LAY.pine.x, LAY.pine.z, F.pine); pt.yuki = true; put(LAY.pine.x, LAY.pine.z, { bend: 0.3, sway: { flex: 0.35, tag: 'pine' }, draw: function (c) { drawPine(c, pt); }, ao: function (c) { var p = Pa(pt.base); c.beginPath(); c.ellipse(p.x, p.y, 0.4 * p.k * pt.S + 1, 0.15 * p.k * pt.S + 0.6, 0, 0, TAU); c.fill(); } }); }
   if (F.pond) {
     var rr = mulberry32(77), placed = [];
-    for (i = 0; i < 5000 && placed.length < 34; i++) {
+    for (i = 0; i < 5000 && placed.length < 24; i++) {
       var px = LX(-0.2 + rr() * 6.8), pz = LZ(2.4 + rr() * 5.6), d = pondBase(px, pz);
       if (Math.abs(d) > 0.06) continue;
       if (Math.abs(pz - BRIDGE.zc) < 0.75 && (Math.abs(px - BRIDGE.x0) < 0.7 || Math.abs(px - BRIDGE.x1) < 0.7)) continue;
       if (Math.abs(px - LAY.fall.x) < 0.75 && pz > LZ(7.0)) continue;
       if (px > LX(1.0) && px < LX(4.4) && pz < LZ(3.5)) continue; // where the iris marsh joins later
+      if (pondRockSkip(px, pz)) continue;
       if (placed.some(function (p) { return Math.hypot(p[0] - px, p[1] - pz) < 0.62; })) continue;
       placed.push([px, pz]);
     }
@@ -3017,7 +3422,7 @@ function buildScene() {
   }
   if (F.lantern) put(LAY.lantern.x, LAY.lantern.z, { hit: { id: 'lantern' }, draw: function (c) { drawLantern(c, LAY.lantern, LIT.lit); }, ao: function (c) { var p = P(LAY.lantern.x, 0, LAY.lantern.z); c.beginPath(); c.ellipse(p.x, p.y, 0.42 * p.k, 0.17 * p.k, 0, 0, TAU); c.fill(); }, refl: true });
   if (F.bridge) put((BRIDGE.x0 + BRIDGE.x1) / 2, BRIDGE.zc - 0.3, { hit: { id: 'bridge', perch: [(BRIDGE.x0 + BRIDGE.x1) / 2, 0.92, BRIDGE.zc - 0.35] }, draw: drawBridge, refl: true });
-  if (F.fence) put(0, LAY.fenceZ, { draw: function (c) { drawFence(c, F.gate ? [LAY.gate.xa - 0.05, LAY.gate.xb + 0.05] : null); }, ao: function (c) { var a = P(-9, 0, LAY.fenceZ), b = P(10, 0, LAY.fenceZ); c.fillRect(a.x, a.y - 1.2, b.x - a.x, 2.6); }, noRefl: true });
+  if (F.fence) put(0, LAY.fenceZ, { draw: function (c) { drawFence(c, F.gate ? [LAY.gate.xa - 0.05, LAY.gate.xb + 0.05] : null); }, ao: function (c) { var a = P(-12, 0, LAY.fenceZ), b = P(13, 0, LAY.fenceZ); c.fillRect(a.x, a.y - 1.2, b.x - a.x, 2.6); }, noRefl: true });
   if (F.gate) put((LAY.gate.xa + LAY.gate.xb) / 2, LAY.fenceZ - 0.05, { draw: drawGate, noRefl: true });
   if (F.teahouse) put((TH.X0 + TH.X1) / 2, TH.ZE + 0.95, { draw: function (c) { drawTeahouse(c, LIT.lit); }, ao: function (c) { var a = P(TH.X0 - 0.2, 0, TH.ZE - 0.1), b = P(TH.X1 + 0.3, 0, TH.ZE - 0.1); c.beginPath(); c.ellipse((a.x + b.x) / 2, a.y - 1, (b.x - a.x) / 2 + 3, 4, 0, 0, TAU); c.fill(); } });
   if (F.smallLanterns) { var sl1 = [LX(-2.55), LZ(7.25)], sl2 = [LX(4.7), LZ(5.55)]; put(sl1[0], sl1[1], { draw: function (c) { smallLantern(c, sl1[0], sl1[1], LIT.lit); } }); put(sl2[0], sl2[1], { draw: function (c) { smallLantern(c, sl2[0], sl2[1], LIT.lit); }, refl: true }); }
@@ -3048,6 +3453,29 @@ function buildScene() {
         if (SEA.fallen === 'leaf') leafShape(c, p.x, p.y, 0.07 * p.k, fr() * TAU, 0.5, rgb(mulc(ramp([[150, 30, 20], [214, 80, 34], [236, 150, 60]], fr()), lightTint(1))));
         else { var pa = fr() * TAU; c.save(); c.translate(p.x, p.y); c.scale(1, 0.5); petalShape(c, 0, 0, 0.03 * p.k, pa, rgb(mulc(mixc([238, 204, 214], [253, 244, 246], fr()), lightTint(1)), 0.95)); c.restore(); }
       }
+    });
+  }
+  // 1.4.2: the paved walk, the stream with its bank stones and slab bridge, the snow-viewing lantern, the sleeve fence, the bamboo grove
+  if (F.nobedan) { var nf0 = nobeFrame(); flat.push({ draw: drawNobedan, key: P(NOBE.a[0] + nf0.ux * nf0.L / 2, 0, NOBE.a[1] + nf0.uz * nf0.L / 2).d }); }
+  if (F.nagare) {
+    surf.push(drawNagareSurf);
+    nagareBank().forEach(function (q) {   // the bank broken up: small dark wet stones half in the water, and grasses leaning over it
+      if (q.g) { put(q.x, q.z, { draw: function (c) { grassTuft(c, q.x, q.z, q.s, mulberry32(q.seed), q.pal, true); }, noShadow: true, refl: true }); return; }
+      var r = makeRock(q.seed, q.x, q.z, q.s, q.s * 0.6, q.s * 0.85, { alb: [92, 88, 80], moss: F.rockMoss * 0.4, flat: 0.55, amp: 0.3, nu: 10, nv: 5 }); put(q.x, q.z, { draw: function (c) { drawRock(c, r); }, refl: true });
+    });
+    NAGARE_STONES.forEach(function (q) { var r = makeRock(q.seed, q.x, q.z, q.rx, q.ry, q.rz, { alb: [134, 130, 122], moss: F.rockMoss * 0.7, flat: 0.62, amp: 0.28, nu: 16, nv: 8 }); put(q.x, q.z, { draw: function (c) { drawRock(c, r); }, ao: function (c) { rockAO(c, r); }, refl: true }); });
+  }
+  if (F.ishibashi) put(ISHI.x, ISHI.z, { hit: { id: 'stone', perch: [ISHI.x, ISHI.y0 + ISHI.t, ISHI.z] }, draw: drawIshibashi, refl: true });
+  if (F.yukimi) put(YUKIMI.x, YUKIMI.z, { hit: { id: 'stone', perch: [YUKIMI.x, 1.25, YUKIMI.z] }, draw: function (c) { drawYukimi(c, LIT.lit); }, ao: function (c) { var p = P(YUKIMI.x, 0, YUKIMI.z); c.beginPath(); c.ellipse(p.x, p.y, 0.5 * p.k, 0.2 * p.k, 0, 0, TAU); c.fill(); }, refl: true });
+  if (F.sodegaki) put((SODE.x0 + SODE.x1) / 2, SODE.z, { draw: drawSodegaki, noRefl: true, ao: function (c) { var a = P(SODE.x0, 0, SODE.z), b = P(SODE.x1, 0, SODE.z); c.fillRect(a.x, a.y - 1, b.x - a.x, 2.4); } });
+  if (F.chikurin) {   // in three clumps (each sorted back to front), so the wind can move them and the depth sort still holds
+    var culms = genChikurin(F.chikurin), cl3 = [[], [], []];
+    culms.forEach(function (cu) { cl3[Math.min(2, Math.floor((cu.x - TAKE.x0) / (TAKE.x1 - TAKE.x0) * 3))].push(cu); });
+    cl3.forEach(function (grp) {
+      if (!grp.length) return;
+      grp.sort(function (a, b) { return P(b.x, 0, b.z).d - P(a.x, 0, a.z).d; });
+      var cx = 0, cz = 0; grp.forEach(function (cu) { cx += cu.x / grp.length; cz += cu.z / grp.length; });
+      put(cx, cz, { draw: function (c) { grp.forEach(function (cu) { drawCulm(c, cu); }); }, noRefl: true, bend: 0.5, sway: { flex: 0.9 }, ao: function (c) { grp.forEach(function (cu) { var p = P(cu.x, 0, cu.z); c.beginPath(); c.ellipse(p.x, p.y, 0.12 * p.k, 0.05 * p.k, 0, 0, TAU); c.fill(); }); } });
     });
   }
   eventScene(put, flat);
@@ -3190,7 +3618,7 @@ async function renderStatic(job) {
     var sc = tmpCanvas(bw, bh), sx = sc.getContext('2d'); lsT(sx, KS);
     var rng = mulberry32(808), gcol = LIT.id === 'night' ? [190, 210, 255] : LIT.id === 'dusk' ? [255, 210, 170] : [255, 246, 230];
     for (i = 0; i < 420 * Math.sqrt(DQ); i++) {   // the light on ripple crests: short bowed strokes, crowded where a breath of wind roughens the water, each with the shade of its trough under it
-      var wx = 0.2 + rng() * 6.4, wz = 1.8 + rng() * 6; if (pondSDF(wx, wz) > -0.15) continue;
+      var wx = LX(-0.2 + rng() * 6.8), wz = LZ(1.6 + rng() * 6.6); if (pondSDF(wx, wz) > -0.15) continue;   // (1.4.2: in layout units, so the whole pond gets them after the spread)
       var cpg = sstep(0.52, 0.78, NZ.n2(wx * 0.75 + wz * 0.3 + 3, wz * 1.7 - wx * 0.4 - 2) * 0.8 + NZ.fbm(wx * 1.6 + 30, wz * 7, 2) * 0.2); if (rng() > 0.25 + cpg * 0.75) continue;
       var p = P(wx, WL, wz), l = (1.2 + rng() * 3.6) * p.k / 30, bw2 = (rng() - 0.5) * l * 0.5, al = (0.1 + rng() * 0.24) * (0.6 + 0.4 * cpg);
       sx.lineWidth = 0.3 + rng() * 0.35; sx.strokeStyle = rgb([24, 30, 34], al * 0.5); sx.beginPath(); sx.moveTo(p.x - l, p.y + 0.5); sx.quadraticCurveTo(p.x + bw2, p.y + 0.5 - l * 0.14, p.x + l, p.y + 0.5); sx.stroke();
@@ -3258,7 +3686,7 @@ async function renderStatic(job) {
   return { canvas: out, mask: wm, occ: occ, sky: skm, glows: glows.filter(function (g) { return !g.pool; }), grass: SWAYG.slice(), ms: now() - t0, phases: PH };
 }
 function post(ctx, bw, bh, glows, reflGlows, mc, mlay) {
-  var yo = CAM.cy - 204, i;
+  var yo = hYo(), i;
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
   // depth of field: soften distance and the very front
   var b = softBlur(ctx.canvas, 2.0 * KS), tb = tmpCanvas(bw, bh), tbx = tb.getContext('2d');
@@ -3409,13 +3837,18 @@ function animGeo(o) {
       var p = P(x, WL, z); g.glints.push({ x: p.x, y: p.y, l: (0.05 + rng() * 0.12) * p.k, ph: rng() * TAU, w: 0.6 + rng() * 1.6, a: 0.25 + rng() * 0.5 });
       if (d < openW - 0.2 && rng() < 0.5) g.ripplePts.push([x, z]);
     }
+    if (F.nagare && !SEA.snow) for (var sr0 = mulberry32(2551), si0 = 0; si0 < 40; si0++) {   // (1.4.2: the stream's own glints, quicker, on its own seed so the pond's keep theirs)
+      var sq = nagareAt((sr0() * (NAGARE.length - 1)) | 0, sr0()), so0 = (sr0() - 0.5) * sq.hw, sx0 = sq.x - sq.uz * so0, sz0 = sq.z + sq.ux * so0;
+      if (pondSDF(sx0, sz0) > -0.1) continue;
+      var sp0 = P(sx0, WL, sz0); g.glints.push({ x: sp0.x, y: sp0.y, l: (0.04 + sr0() * 0.08) * sp0.k, ph: sr0() * TAU, w: 1.6 + sr0() * 2.2, a: 0.3 + sr0() * 0.4 });
+    }
     g.rainPts = [];   // where raindrops strike: anywhere on the open water, evenly (its own seed, so the glints keep theirs)
     for (var rr0 = mulberry32(4711), ri0 = 0; ri0 < 9000 && g.rainPts.length < 420; ri0++) { var rx0 = LX(-0.8 + rr0() * 8.2), rz0 = LZ(1.6 + rr0() * 6.6); if (pondSDF(rx0, rz0) < openW - 0.04) g.rainPts.push([rx0, rz0]); }
     g.caus = [];   // the sun's moving net of light on the shallow bottom (by day)
     if (!SEA.snow && (o.light === 'day' || o.light === 'morning')) for (i = 0; i < 6000 && g.caus.length < 260; i++) { var cx3 = LX(-0.8 + rng() * 8.2), cz3 = LZ(1.6 + rng() * 6.6), d3 = pondSDF(cx3, cz3); if (d3 > -0.04 || d3 < -0.5) continue; var p3 = P(cx3, WL, cz3); g.caus.push({ x: p3.x, y: p3.y, k: p3.k, a: rng() * TAU, ph: rng() * TAU, w: 0.7 + rng() * 1.1, dep: -d3 }); }
   }
   if (F.koi) {
-    var nk = Math.min(7, 3 + Math.floor((o.stage - 8) / 3)), deep = SEA.snow ? -0.75 : -0.4;
+    var nk = Math.min(7, 3 + Math.floor((F.sp - 8) / 3)), deep = SEA.snow ? -0.75 : -0.4;
     g.koi = [];
     for (var k = 0; k < nk; k++) {
       var best = null;
@@ -3847,7 +4280,7 @@ function petalSources(g) {
   var src = [];
   function add(x, y, z, r, w) { var p = P(x, y, z); src.push({ x: p.x, y: p.y, r: r * p.k, w: w }); }
   if (g.season !== 'spring') return src;
-  [[-3.6, 11.45, 3.4], [4.4, 11.5, 3.8], [-8.0, 11.3, 4.2]].forEach(function (a) { add(LX(a[0]), a[2] * 0.8, LZ(a[1]), 1.8, 1); });
+  LAY.beyond.forEach(function (a) { add(LX(a[0]), a[2] * 0.8, LZ(a[1]), 1.8, 1); });
   if (F.ycherry > 0.3) add(LAY.ycherry.x, 3.6 * F.ycherry * 0.82, LAY.ycherry.z, 1.6 * F.ycherry, 1.2);
   if (F.namiki) LAY.namiki.forEach(function (a) { add(a[0], a[2] * 0.85, a[1], 1.8, 1.2); });
   if (F.cherry) add(LAY.cherry.x, 3.4, LAY.cherry.z, 1.7, 2.5);
@@ -4151,7 +4584,7 @@ function butterflyMode(season, light, date) {
 }
 function butterflyPoints(g) {
   var rng = mulberry32(5551), fl = [], wander = [], i;
-  if (F.azaleas > 0) AZALEAS.forEach(function (a, ii) { if (ii === 6 && !F.teahouse) return; for (var k = 0; k < 2; k++) fl.push([a[0] + (rng() - 0.5) * a[2], a[3] * F.azaleas * 0.85 + 0.05, a[1] + (rng() - 0.5) * a[2] * 0.6]); });
+  if (F.azaleas > 0) AZALEAS.forEach(function (a, ii) { if (ii === AZ_TEA && !F.teahouse) return; for (var k = 0; k < 2; k++) fl.push([a[0] + (rng() - 0.5) * a[2], a[3] * F.azaleas * 0.85 + 0.05, a[1] + (rng() - 0.5) * a[2] * 0.6]); });
   if (F.irises) [[4.6, 3.7], [-0.05, 4.4], [4.3, 6.0]].forEach(function (q) { var e = nearPondEdge(LX(q[0]), LZ(q[1])); fl.push([e[0], 0.7, e[1]]); });
   if (SEA === SEASONS.spring && F.ycherry > 0.3) for (i = 0; i < 3; i++) fl.push([LAY.ycherry.x + 0.6 + rng() * 0.8, 1.0 + rng() * 1.6 * F.ycherry, LAY.ycherry.z - 0.6]);
   if (!fl.length) for (i = 0; i < 5; i++) fl.push([LX(0.8 + rng() * 3.5), 0.12, LZ(0.6 + rng() * 2.4)]); // wild flowers in the grass
@@ -4310,9 +4743,9 @@ var RARE = [
   { id: 'kawasemi', name: 'カワセミ', season: ['spring', 'summer', 'autumn'], light: ['morning', 'day'], minStage: 7, desc: '水辺の宝石。岩から池に飛び込み小魚をとる', w: 1 },
   { id: 'rurubitaki', name: 'ルリビタキ', season: ['winter'], light: ['morning', 'day'], minStage: 8, desc: '雪の灯籠にとまる、冬の小さな青い鳥', w: 1 },
   { id: 'usagi', name: '白いノウサギ', season: ['winter'], light: ['morning', 'day', 'dusk', 'night'], minStage: 0, desc: '雪の上を跳ねる、冬毛の白いノウサギ', w: 1 },
-  { id: 'kitsune', name: 'キツネ', season: ['autumn', 'winter'], light: ['dusk', 'night'], minStage: 10, desc: '垣根沿いを音もなく歩くキツネ', w: 0.9 },
-  { id: 'tanuki', name: 'タヌキ', season: ['spring', 'summer', 'autumn'], light: ['night'], minStage: 13, desc: '茶室のそばをのんびり歩くタヌキ', w: 0.9 },
-  { id: 'shika', name: '鹿', season: ['autumn'], light: ['morning', 'dusk'], minStage: 12, desc: 'もみじのそばにたたずむ角のある牡鹿', w: 0.7 },
+  { id: 'kitsune', name: 'キツネ', season: ['autumn', 'winter'], light: ['dusk', 'night'], minStage: 11, desc: '垣根沿いを音もなく歩くキツネ', w: 0.9 },
+  { id: 'tanuki', name: 'タヌキ', season: ['spring', 'summer', 'autumn'], light: ['night'], minStage: 15, desc: '茶室のそばをのんびり歩くタヌキ', w: 0.9 },
+  { id: 'shika', name: '鹿', season: ['autumn'], light: ['morning', 'dusk'], minStage: 14, desc: 'もみじのそばにたたずむ角のある牡鹿', w: 0.7 },
   { id: 'sagi', name: '白鷺', season: ['summer'], light: ['morning', 'day'], minStage: 7, desc: '池の浅瀬をそっと歩く白い鷺', w: 0.8 },
   { id: 'mejiro', name: 'メジロ', season: ['spring'], light: ['morning', 'day'], minStage: 4, desc: '桜の花に来た、目のまわりの白い小鳥のつがい', w: 1 },
   { id: 'uguisu', name: 'ウグイス', season: ['spring'], light: ['morning', 'day', 'dusk'], minStage: 6, desc: '茂みにちらりと姿を見せた春告げ鳥', w: 0.9 },
@@ -4334,7 +4767,7 @@ function rarePoints(g) {
   if (F.lantern) o.lanternTop = [LAY.lantern.x, 1.93, LAY.lantern.z];
   if (F.pond) { var e = nearPondEdge(LX(1.0), LZ(3.5)); o.perch = [e[0] - 0.12, 0.3, e[1] - 0.12]; o.dive = [e[0] + 0.7, WL, e[1] + 0.45]; var s2 = nearPondEdge(LX(3.4), LZ(3.6)); o.shallow = [s2[0], s2[1]]; o.shallow2 = nearPondEdge(LX(2.5), LZ(3.3)); o.pond = [LX(2.0), LZ(4.1)]; }
   o.maple = [LAY.maple.x, LAY.maple.z]; o.yc = F.ycherry > 0.3 ? [LAY.ycherry.x, LAY.ycherry.z, 4.7 * F.ycherry * 0.82] : null;
-  o.az = F.azaleas > 0 ? AZALEAS.filter(function (a, i) { return i !== 6 || F.teahouse; }).map(function (a) { return [a[0], a[1], a[2] * F.azaleas, a[3] * F.azaleas]; }) : [];
+  o.az = F.azaleas > 0 ? AZALEAS.filter(function (a, i) { return i !== AZ_TEA || F.teahouse; }).map(function (a) { return [a[0], a[1], a[2] * F.azaleas, a[3] * F.azaleas]; }) : [];
   o.lawn = [LX(1.6), LZ(1.6)];
   return o;
 }
@@ -4476,17 +4909,18 @@ function rareObstacles() {
   var C = [], B = [], i;
   function c(x, z, r) { C.push([x, z, r]); }
   if (F.rock1) c(LAY.rock1.x, LAY.rock1.z, 0.7);
-  if (F.lantern) { c(LX(-1.62), LZ(2.3), 0.32); c(LAY.lantern.x, LAY.lantern.z, 0.4); }
+  if (F.lantern) c(LAY.lantern.x, LAY.lantern.z, 0.4);   // (1.4.2: the stray rock between the dry garden and the lantern is gone, here as painted)
   if (F.kare) [[LX(-3.75), LZ(1.0), 0.36], [LX(-4.55), LZ(2.05), 0.5], [LX(-1.2), LZ(0.7), 0.52], [LX(-3.15), LZ(0.5), 0.26]].forEach(function (q) { c(q[0], q[1], q[2]); });
   var rocks = [];
   if (F.pond) {
     var rr = mulberry32(77), placed = [];
-    for (i = 0; i < 5000 && placed.length < 34; i++) {
+    for (i = 0; i < 5000 && placed.length < 24; i++) {
       var px = LX(-0.2 + rr() * 6.8), pz = LZ(2.4 + rr() * 5.6), d = pondBase(px, pz);
       if (Math.abs(d) > 0.06) continue;
       if (Math.abs(pz - BRIDGE.zc) < 0.75 && (Math.abs(px - BRIDGE.x0) < 0.7 || Math.abs(px - BRIDGE.x1) < 0.7)) continue;
       if (Math.abs(px - LAY.fall.x) < 0.75 && pz > LZ(7.0)) continue;
       if (px > LX(1.0) && px < LX(4.4) && pz < LZ(3.5)) continue;
+      if (pondRockSkip(px, pz)) continue;   // (the same as painted)
       if (placed.some(function (p) { return Math.hypot(p[0] - px, p[1] - pz) < 0.62; })) continue;
       placed.push([px, pz]);
     }
@@ -4496,11 +4930,16 @@ function rareObstacles() {
   if (F.maple > 0) c(LAY.maple.x, LAY.maple.z, 0.14 + 0.16 * Math.min(1, F.maple));
   if (F.ycherry > 0) c(LAY.ycherry.x, LAY.ycherry.z, 0.1 + 0.12 * Math.min(1, F.ycherry));
   if (F.pine > 0) c(LAY.pine.x, LAY.pine.z, 0.12 + 0.2 * Math.min(1, F.pine));
-  if (F.azaleas > 0) AZALEAS.forEach(function (a, ii) { if (ii === 6 && !F.teahouse) return; c(a[0], a[1], a[2] * F.azaleas * 0.92); });
+  if (F.azaleas > 0) AZALEAS.forEach(function (a, ii) { if (ii === AZ_TEA && !F.teahouse) return; c(a[0], a[1], a[2] * F.azaleas * 0.92); });
   if (F.tsukubai) { var t = LAY.tsukubai; c(t.x, t.z, 0.32); c(t.x - 0.75, t.z - 0.35, 0.34); c(t.x + 0.62, t.z - 0.12, 0.26); c(t.x + 0.05, t.z - 0.62, 0.3); c(t.x - 0.62, t.z + 0.12, 0.1); }
   if (F.shishi) { var s = LAY.shishi; B.push([s.x - 1.12, s.x + 0.45, s.z - 0.32, s.z + 0.32]); }
   if (F.smallLanterns) { c(LX(-2.55), LZ(7.25), 0.22); c(LX(4.7), LZ(5.55), 0.22); }
   if (F.wisteria) { var w = LAY.wis; [[w.x0, w.z0], [w.x1, w.z0], [w.x0, w.z1], [w.x1, w.z1]].forEach(function (q) { c(q[0], q[1], 0.13); }); }
+  if (F.nagare) NAGARE_STONES.forEach(function (q) { c(q.x, q.z, q.rx); });   // (1.4.2: the stream itself is water in the grid, from pondSDF)
+  if (F.ishibashi) { var I = ISHI; [-1, 1].forEach(function (s) { [-1, 1].forEach(function (t2) { var e = ishiEnd(s); c(e[0] - I.uz * (I.hw + 0.12) * t2 - I.ux * 0.05 * s, e[1] + I.ux * (I.hw + 0.12) * t2 - I.uz * 0.05 * s, 0.2); }); c(ishiEnd(s)[0], ishiEnd(s)[1], 0.3); }); }
+  if (F.yukimi) c(YUKIMI.x, YUKIMI.z, 0.46);
+  if (F.sodegaki) B.push([SODE.x0 - 0.06, SODE.x1 + 0.06, SODE.z - 0.12, SODE.z + 0.12]);
+  if (F.chikurin) genChikurin(F.chikurin).forEach(function (cu) { c(cu.x, cu.z, 0.12); });
   if (F.teahouse) B.push([TH.X0 - 0.22, TH.X1 + 0.22, TH.ZE - 0.28, TH.ZB + 0.05]);
   if (F.bridge) B.push([BRIDGE.x0 + 0.15, BRIDGE.x1 - 0.15, BRIDGE.zc - 0.75, BRIDGE.zc + 0.75]);   // its posts and the shade under it
   if (F.marsh) yatsuPieces().forEach(function (pc) { c(pc.x, pc.z, 0.32); });   // the plank bridge's trestles
@@ -4580,9 +5019,23 @@ var ZSLICE = 5;   // ms of search per slice (about 20 ms on a slow phone)
 function zAstar(G, cls, rad, a, b, pref) { return zMemo(G, 'mA', zKey(cls, rad, a, b), pref || null, function () { return zAstar0(G, cls, rad, a, b, pref); }).slice(); }
 function zAstar0(G, cls, rad, a, b, pref) { var J = zAstarJob(G, cls, rad, a, b, pref); J.run(1e9); return J.out; }
 /* the A* search as a job that can stop when its time is up and carry on later (run(ms) is true once it has its answer in .out) */
+/* (v6) the ground where a walking visitor would read as standing on top of something: its feet hidden behind a rail, a rock top or a
+   low lantern while its back shows above (the cut is right, but the eye reads it as walking along the bridge's rail). A* pays to
+   cross it, so a way round in plain view (or wholly behind) is taken where there is one. Null until the depth image is worked out */
+function zAmb(G) {
+  var R = G.R, Z = R && R.Z; if (!Z) return null; if (G.AMB && G.AMBZ === Z) return G.AMB;
+  var A = new Float32Array(G.nx * G.nz);
+  function hid(x, y, z, d) { var q = P(x, y, z), ix = Math.floor(q.x * Z.ms), iy = Math.floor(q.y * Z.ms); if (ix < 0 || iy < 0 || ix >= Z.w || iy >= Z.h) return false; var k = iy * Z.w + ix, th = 1 + (d - Z.d0) / (Z.d1 - Z.d0) * 253; return Z.A[k] > 140 && Z.D[k] < th - 0.5; }
+  for (var j = 0; j < G.nz; j++) for (var i = 0; i < G.nx; i++) {
+    var x = G.x0 + (i + 0.5) * G.cs, z = G.z0 + (j + 0.5) * G.cs, d = P(x, 0, z).d, fh = 0, bh = 0;
+    for (var a = -1; a <= 1; a++) { if (hid(x + a * 0.15, 0.03, z, d)) fh++; if (hid(x + a * 0.15, 0.14, z, d)) fh++; if (hid(x + a * 0.15, 0.5, z, d)) bh++; if (hid(x + a * 0.15, 0.72, z, d)) bh++; }
+    A[j * G.nx + i] = fh >= 3 && bh <= 4 ? 4 : 0;   // (the feet hidden, some of the back above in view: the bridge's rail across a tanuki's legs read as it walking along the rail)
+  }
+  G.AMB = A; G.AMBZ = Z; return A;
+}
 function zAstarJob(G, cls, rad, a, b, pref) {
   var J = { out: null, run: function () { return true; } };
-  var C = zClear(G, cls), nx = G.nx, nz = G.nz, N = nx * nz, cs = G.cs;
+  var C = zClear(G, cls), nx = G.nx, nz = G.nz, N = nx * nz, cs = G.cs, AM = cls === 'land' ? zAmb(G) : null;
   var A = zSnap(G, C, rad, a), Bp = zSnap(G, C, rad, b), s = zIdx(G, A[0], A[1]), e = zIdx(G, Bp[0], Bp[1]);
   if (s < 0 || e < 0) { J.out = [a, b]; return J; }
   var gS = new Float32Array(N), came = new Int32Array(N), done = new Uint8Array(N), hp = [], hf = [], i;
@@ -4602,7 +5055,7 @@ function zAstarJob(G, cls, rad, a, b, pref) {
       var ii = ki + NB[m][0], jj = kj + NB[m][1]; if (ii < 0 || jj < 0 || ii >= nx || jj >= nz) continue;
       var q = jj * nx + ii; if (done[q]) continue; var cl = C[q] - cs * 0.5; if (cl < rad) continue;
       var pen = cl < rad + 0.6 ? (rad + 0.6 - cl) * 1.6 : 0, wx = G.x0 + (ii + 0.5) * cs, wz = G.z0 + (jj + 0.5) * cs;
-      var ng = gS[k] + cs * NB[m][2] * (1 + pen + G.CO[q] + (pref ? pref(wx, wz) : 0));
+      var ng = gS[k] + cs * NB[m][2] * (1 + pen + G.CO[q] + (AM ? AM[q] : 0) + (pref ? pref(wx, wz) : 0));
       if (ng < gS[q]) { gS[q] = ng; came[q] = k; push(q, ng + h(q)); }
     }
   }
@@ -5323,7 +5776,7 @@ function sikaInv(p) { var y = p[1], d = -SIKA_Y0 * (1 - SIKA_LEG); return [p[0],
 function sikaRig() {
   if (SIKA) return SIKA;
   var J = { P0: [-0.4, -0.88], M: [-0.04, -0.9], Wt: [0.32, -0.92], N0: [0.36, -0.9], Nm: [0.45, -1.04], N1: [0.54, -1.17], Ns: [0.8, -1.1],
-    Hj: [-0.38, -0.8], St: [-0.27, -0.6], Hk: [-0.49, -0.37], HFt: [-0.465, -0.075], HHf: [-0.41, 0],
+    Hj: [-0.38, -0.8], St: [-0.27, -0.6], Hk: [-0.525, -0.37], HFt: [-0.49, -0.075], HHf: [-0.435, 0],
     Sp: [0.38, -0.76], El: [0.27, -0.58], Kn: [0.31, -0.29], FFt: [0.312, -0.075], FHf: [0.365, 0] };
   for (var jk in J) J[jk] = sikaMp(J[jk]);
   var BN = [['P0', 'M'], ['M', 'Wt'], ['N0', 'Nm'], ['Nm', 'N1'], ['N1', 'Ns'], ['Hj', 'St'], ['St', 'Hk'], ['Hk', 'HFt'], ['HFt', 'HHf'], ['Sp', 'El'], ['El', 'Kn'], ['Kn', 'FFt'], ['FFt', 'FHf']];
@@ -5341,7 +5794,7 @@ function sikaRig() {
   // toward the loins and deepening to the brisket behind the elbow; the foreleg; the chest; the throat; the poll; the crest
   // of the neck rising from the withers; the level back
   var C = [
-    [-0.54, -0.94, T], [-0.598, -0.902, T], [-0.632, -0.835, [0, 5]], [-0.64, -0.755, [0, 5]], [-0.61, -0.665, RB], [-0.575, -0.575, [5, 6]], [-0.548, -0.49, [6]], [-0.528, -0.43, [6, 7]], [-0.512, -0.385, [6, 7]], [-0.47, -0.4, [6, 7]], [-0.44, -0.46, [6]], [-0.41, -0.52, HF], [-0.345, -0.55, HF], [-0.28, -0.6, FK], [-0.24, -0.655, FK],
+    [-0.54, -0.94, T], [-0.594, -0.906, T], [-0.618, -0.852, [0, 5]], [-0.622, -0.79, [0, 5]], [-0.612, -0.7, RB], [-0.601, -0.62, [5, 6]], [-0.59, -0.54, [5, 6]], [-0.581, -0.47, [6]], [-0.573, -0.42, [6, 7]], [-0.565, -0.385, [6, 7]], [-0.5, -0.4, [6, 7]], [-0.46, -0.46, [6]], [-0.42, -0.52, HF], [-0.345, -0.55, HF], [-0.28, -0.6, FK], [-0.24, -0.655, FK],
     [-0.14, -0.59, BE], [0.0, -0.535, BE], [0.12, -0.505, [1, 9]], [0.2, -0.497, FU], [0.24, -0.47, [9, 10]], [0.27, -0.44, [9, 10]], [0.33, -0.44, [9, 10]], [0.37, -0.47, [9, 10]], [0.385, -0.51, FU], [0.415, -0.6, CH], [0.465, -0.68, CH], [0.47, -0.77, CH],
     [0.42, -0.86, T], [0.37, -0.94, T],
     [0.33, -0.985, T], [0.25, -0.98, T], [0.12, -0.952, T], [-0.06, -0.945, T], [-0.24, -0.958, T], [-0.38, -0.985, T], [-0.48, -0.975, T]
@@ -5349,11 +5802,16 @@ function sikaRig() {
   // the cannons and pasterns a little fuller than the design (slim, not needle-thin): push the outline out from each leg's centre line
   C = C.map(function (c) { var y = c[1]; if (y > -0.36) { var cx = c[0] < 0 ? lerp(-0.47, -0.43, clamp(-y / 0.36)) : lerp(0.31, 0.33, clamp(-y / 0.36)); if (c[0] > 0.2 || c[0] < -0.3) c = [cx + (c[0] - cx) * 1.25, y, c[2]]; } var q = sikaMp([c[0], c[1]]); return [q[0], q[1], c[2]]; });
   var ctrl = C.map(function (c) { var ws = wts(c[2], c[0], c[1]); return { x: c[0], y: c[1], ws: ws, L: rigLocal(B0, ws, c[0], c[1]) }; });
+  // the hamstring: the outline from the point of the buttock down to the point of the hock is held as one near-straight line
+  // between those two (each point its place along it and its small bow out from it), so in any stride it runs straight from
+  // the rump to the hock (skinned point by point to the thigh's bones, it folded into a shelf when the leg swung forward)
+  var HAM = [3, 9], ha = ctrl[HAM[0]], hb = ctrl[HAM[1]], hdx = hb.x - ha.x, hdy = hb.y - ha.y, hl2 = hdx * hdx + hdy * hdy;
+  for (var hi = HAM[0] + 1; hi < HAM[1]; hi++) { var rx0 = ctrl[hi].x - ha.x, ry0 = ctrl[hi].y - ha.y; ctrl[hi].ham = [(rx0 * hdx + ry0 * hdy) / hl2, (-rx0 * hdy + ry0 * hdx) / hl2]; }
   var rest = pSmooth(C.map(function (c) { return [c[0], c[1]]; }), true, 5);
   // the form, as rounded masses [cx, cy, rx, ry, height, rotation]: neck, shoulder blade, point of shoulder, chest, ribs, loin, haunch, thigh, gaskin, legs
   var MS = [[0.5, -1.05, 0.26, 0.1, 0.09, -1.1], [0.3, -0.8, 0.09, 0.18, 0.09, -0.45], [0.42, -0.7, 0.07, 0.07, 0.06, 0], [0.37, -0.63, 0.1, 0.08, 0.06, 0],
     [0.12, -0.75, 0.22, 0.19, 0.12, 0.1], [-0.14, -0.82, 0.16, 0.12, 0.08, 0], [-0.46, -0.81, 0.17, 0.15, 0.11, 0.3], [-0.44, -0.62, 0.12, 0.12, 0.08, 0.2], [-0.47, -0.47, 0.05, 0.11, 0.05, -0.5],
-    [0.3, -0.45, 0.04, 0.13, 0.04, 0.05], [0.31, -0.18, 0.018, 0.11, 0.02, 0], [-0.475, -0.2, 0.02, 0.13, 0.02, 0], [-0.495, -0.36, 0.03, 0.04, 0.025, 0]];
+    [0.3, -0.45, 0.04, 0.13, 0.04, 0.05], [0.31, -0.18, 0.018, 0.11, 0.02, 0], [-0.5, -0.2, 0.02, 0.13, 0.02, 0], [-0.53, -0.36, 0.03, 0.04, 0.025, 0]];
   function pw(T, x) { if (x <= T[0][0]) return T[0][1]; for (var k = 1; k < T.length; k++) if (x <= T[k][0]) { var f = (x - T[k - 1][0]) / (T[k][0] - T[k - 1][0]); f = f * f * (3 - 2 * f); return lerp(T[k - 1][1], T[k][1], f); } return T[T.length - 1][1]; }
   var BK = [[-0.56, -0.925], [-0.48, -0.975], [-0.38, -0.985], [-0.24, -0.958], [-0.06, -0.945], [0.12, -0.952], [0.25, -0.985], [0.33, -1.0]], BL = [[-0.24, -0.655], [-0.14, -0.59], [0.0, -0.535], [0.12, -0.505], [0.2, -0.497]];
   function backY(x) { return pw(BK, x); }
@@ -5380,7 +5838,7 @@ function sikaRig() {
   for (i = 0; i < 12; i++) { if (r() < 0.5) continue; var x4 = -0.36 + i * 0.045 + (r() - 0.5) * 0.05; if (x4 > 0.08) break; SP.push([x4, backY(x4) + 0.22 + (r() - 0.5) * 0.05, 0.45 + r() * 0.4, 0.42]); }
   for (i = 0; i < 14; i++) { var a = r() * TAU, rr = Math.sqrt(r()); SP.push([-0.42 + Math.cos(a) * rr * 0.12, -0.8 + Math.sin(a) * rr * 0.1, 0.5 + r() * 0.5, 0.6]); }
   SP = SP.map(function (p) { var q = sikaMp(p); return [p[0], p[1], p[2], q[0], q[1], p[3]]; }).filter(function (p) { return pInside(rest, p[3], p[4]); }).map(function (p) { return { x: p[0], y: p[1], s: p[2], al: p[5], asp: 0.55 + r() * 0.4, rot: (r() - 0.5) * 0.7, L: inherit(p[3], p[4]), nr: normal(p[0], p[1]), ha: hair(p[0], p[1]) }; });
-  SIKA = { J: J, BN: BN, B0: B0, ctrl: ctrl, rest: rest, area: Math.abs(pArea(rest)), backY: backY, bellyY: bellyY, hair: hair, normal: normal, inherit: inherit, SP: SP, S: [], head: null };
+  SIKA = { J: J, BN: BN, B0: B0, ham: HAM, ctrl: ctrl, rest: rest, area: Math.abs(pArea(rest)), backY: backY, bellyY: bellyY, hair: hair, normal: normal, inherit: inherit, SP: SP, S: [], head: null };
   return SIKA;
 }
 function sikaSamples(R, n) {   // strokes' places, made once and grown as needed
@@ -5390,6 +5848,11 @@ function sikaSamples(R, n) {   // strokes' places, made once and grown as needed
   return R.S;
 }
 /* a point bound to bones, posed; the neck's cross-section swells by ns (rut: the throat and mane thicken) */
+function sikaOutPts(R, B, ns) {   // the body's outline posed: every point skinned, then the hamstring laid straight from buttock to hock
+  var Q = R.ctrl.map(function (c) { return sikaPt(B, c.L, ns); });
+  if (R.ham) { var a = Q[R.ham[0]], b = Q[R.ham[1]], dx = b[0] - a[0], dy = b[1] - a[1]; for (var i = R.ham[0] + 1; i < R.ham[1]; i++) { var h = R.ctrl[i].ham; Q[i] = [a[0] + dx * h[0] - dy * h[1], a[1] + dy * h[0] + dx * h[1]]; } }
+  return Q;
+}
 function sikaPt(B, L, ns, B0) {   // skinned by blended angle: every bone's anchor, but one shared turn, so a joint bends without collapsing
   var x = 0, y = 0, d = 0, i;
   B0 = B0 || (SIKA && SIKA.B0);
@@ -5820,7 +6283,7 @@ function sikaPaint(ctx, o) {
   // the far legs, behind
   sikaFarLeg(ctx, R, B, Po.farH, true, cols, 'sikafh'); sikaFarLeg(ctx, R, B, Po.farF, false, cols, 'sikaff');
   // the one silhouette: the body with its near legs (skinned to the skeleton) and the neck (a tube on the neck bones), filled as one
-  var out0 = pSmooth(R.ctrl.map(function (c) { return sikaPt(B, c.L, ns); }), true, 5), out = pWind(out0, true), oRev = out !== out0, nk = sikaNeck(R, B, o), nOut = pWind(nk.out, true);
+  var out0 = pSmooth(sikaOutPts(R, B, ns), true, 5), out = pWind(out0, true), oRev = out !== out0, nk = sikaNeck(R, B, o), nOut = pWind(nk.out, true);
   var hl = sikaLegTube(R, [B[5], B[6], B[7], B[8]], true), fl = sikaLegTube(R, [B[9], B[10], B[11], B[12]], false), hOut = pWind(hl.out, true), fOut = pWind(fl.out, true);
   var path = new Path2D(); pPath(out, path); pPath(nOut, path); pPath(hOut, path); pPath(fOut, path);
   var bodyLegs = new Path2D(); pPath(out, bodyLegs); pPath(hOut, bodyLegs); pPath(fOut, bodyLegs);
@@ -6023,7 +6486,7 @@ function qPose(R, o) {
   function hind(i, far) {
     var ft = foot(i), dxf = far ? 0.03 * sc : 0, hip = glob(pel, loc(B0[0], J.Hj)); hip = [hip[0] + dxf, hip[1]];
     if (o.tuck) ft = { dx: -0.3 * sc, up: 0.12 * sc + lift, f: 1 };
-    var T = [J.HHf[0] + ft.dx + dxf, -ft.up], aP = Math.atan2(J.HHf[1] - J.HFt[1], J.HHf[0] - J.HFt[0]) + ft.f * 0.9;
+    var T = [J.HHf[0] + ft.dx + dxf, -ft.up], aP = Math.atan2(J.HHf[1] - J.HFt[1], J.HHf[0] - J.HFt[0]) + ft.f * (R.spec.hindPF === undefined ? 0.9 : R.spec.hindPF);   // (hindPF: how far the hind foot folds in the swing; a hoof hardly at all)
     var Fl = [T[0] - Math.cos(aP) * B0[8].len, T[1] - Math.sin(aP) * B0[8].len], aC = B0[7].th - ft.f * 0.55 - (ft.st >= 0 ? (ft.dx / Math.max(0.2 * sc, stride)) * 0.6 : 0);
     var lc = B0[7].len, reach = (B0[5].len + B0[6].len) * 0.985;
     function hk(a) { return [Fl[0] - Math.cos(a) * lc, Fl[1] - Math.sin(a) * lc]; }
@@ -6566,6 +7029,7 @@ function tanukiPaint2(ctx, o) {
   if (sumC) { C.coat = [92, 76, 60]; C.back = [62, 52, 42]; C.frost = [146, 134, 114]; C.ruff = [132, 118, 96]; C.ruffK = 0.62; }   // (summer: the short coat darker and less frosted, the cheek ruff small)
   if (RL.night) { C.frost = sumC ? scl(mixc(C.frost, C.coat, 0.3), 1.02) : scl(mixc(C.frost, [214, 220, 232], 0.25), 1.18); C.ruff = scl(C.ruff, 1.2); C.face = scl(TANK.face, 1.18); }   // (v5: the short summer coat barely frosted: lifted like the winter's, it read as a pale woolly sheep at a phone's size)   // (v3) at night the pale guard-hair tips, the cheek ruff and the muzzle catch what light there is (the moon, a lantern): lifted, so the mask pattern reads in the dark (toned down, it was one dark smudge at a phone's size)
   RL.k = pScale(ctx); m = pLm(); m = { l: Math.max(3.4 / RL.k, Math.min(m.l, 11 / RL.k)), w: Math.max(1.35 / RL.k, Math.min(m.w, 3.2 / RL.k)) };   // up close the strokes no finer than a real lock but no bigger than about 11 x 3 device px (larger they read as shards)
+  if (sumC && RL.k < 95) C.frost = mixc(C.frost, C.coat, 0.6 * clamp((95 - RL.k) / 50));   // (v6) small, the short summer coat barely frosted at all: its pale tips, a pixel each, made it a pale woolly blob
   var coat = C.coat, hd = o.head || {}, pitch = hd.pitch === undefined ? 0.15 : hd.pitch;
   var Po = qPose(R, { ph: o.ph, amp: o.amp, gait: o.gait, stride: o.stride || 0.34, crouch: (o.crouch || 0) * 0.4, head: { neck: R.B0[2].th + pitch * 0.5, ang: 0.25 + pitch * 0.9, bend: pitch * 0.1 } }), B = Po.B, B0 = R.B0;
   ctx.save();
@@ -6627,9 +7091,11 @@ function tanukiPaint2(ctx, o) {
   var gzT = clamp(1.5 - RL.k / 420, 0.45, 1.1), gt0 = P2(0, -0.36), gt1 = P2(0, -0.12), gG = ctx.createLinearGradient(gt0[0], gt0[1], gt1[0], gt1[1]);
   gG.addColorStop(0, zc(mixc(coat, C.frost, 0.55), 1.05, 0.38 * gzT * lit)); gG.addColorStop(0.3, zc(coat, 1, 0)); gG.addColorStop(0.62, zc(coat, 1, 0)); gG.addColorStop(1, zc(mixc(coat, C.dark, 0.6), 0.9, 0.45 * gzT));
   ctx.fillStyle = gG; ctx.fill(pPath(out));
+  if (RL.k < 95 && MODE !== 'm') { ctx.fillStyle = zc(mixc(coat, C.dark, 0.55), 1, clamp((95 - RL.k) / 55) * (sumC ? 0.5 : 0.32)); ctx.fill(pPath(out)); }   // (v6) small on the screen the body taken darker, so the pale face reads against it (a frosted round body on dark legs, a few pixels long, read as a sheep)
   ctx.restore();
   // the long shaggy coat: soft guard hairs lying back along the body and spilling over the outline, grizzled pale and dark
-  if (MODE !== 'm') { qFuzz(ctx, path, mixc(coat, C.frost, 0.3), C.dark, P2(0, -0.34)[1], 0, m.w * (sumC ? 0.8 : 1.5)); qFuzz(ctx, pPath(tail.out), coat, C.dark, 0, 0, m.w * 0.9);
+  var fzA = clamp((RL.k - 30) / 70);   // (v6: the shag fades out when the animal is small: each lock a device pixel wide, the frosted fringe covered a few-pixel tanuki and it read as a sheep)
+  if (MODE !== 'm' && fzA > 0.02) { var ga0 = ctx.globalAlpha; ctx.globalAlpha = ga0 * fzA; qFuzz(ctx, path, mixc(coat, C.frost, 0.3), C.dark, P2(0, -0.34)[1], 0, m.w * (sumC ? 0.8 : 1.5)); qFuzz(ctx, pPath(tail.out), coat, C.dark, 0, 0, m.w * 0.9);
     var yb = P2(0, -0.2)[1], wK = sumC ? 0.4 : 1;
     tanWisps(ctx, [out, nOut, tail.out], function (x, y, nx, ny, oi) { return wK * wtF(x, y, nx, ny, oi); }, [mixc(coat, C.frost, 0.4), coat, mixc(coat, C.dark, 0.3)], m, 91);
     function wtF(x, y, nx, ny, oi) {
@@ -6641,6 +7107,7 @@ function tanukiPaint2(ctx, o) {
       return y < yb ? 0.25 : 0.45;                                // a few elsewhere: mostly the soft edge
     }
     if (RL.night) { var rmC = scl(mixc(RL.rimC, TANK.frost, 0.3), 1.5); tanWisps(ctx, [out, nOut, tail.out], function (x, y, nx, ny) { return ny < -0.35 && y < -0.12 ? 0.85 : 0; }, [rmC, mixc(rmC, coat, 0.4)], m, 97); }   // (night: the guard hairs along the back catch the moon, so the dark animal's line stands off the dark ground)
+    ctx.globalAlpha = ga0;
   }
   // turned to the viewer the face is seen at its own width, not pressed narrow with the body's turn; and its tilt goes into the head's
   // own nose-down pitch (a turn in the picture would roll it sideways)
@@ -6657,6 +7124,10 @@ function tanukiPaint2(ctx, o) {
     gB.addColorStop(0, zc(mixc(coat, C.frost, 0.25), 1, broad)); gB.addColorStop(0.35, zc(coat, 0.92, broad)); gB.addColorStop(0.7, zc(mixc(coat, C.dark, 0.6), 0.9, broad)); gB.addColorStop(1, zc(C.dark, 0.9, broad)); ctx.fillStyle = gB; ctx.fill(bp2);
     if (MODE !== 'm') { ctx.globalAlpha = broad; qFuzz(ctx, bp2, coat, C.dark, -bh, bh, m.w * 1.4); tanWisps(ctx, [BD], function (x, y, nx, ny) { return ny < -0.6 ? 0.3 : 0.9; }, [mixc(coat, C.frost, 0.4), coat, mixc(coat, C.dark, 0.4)], m, 23, 0.028); ctx.globalAlpha = 1; }
     ctx.restore();
+  }
+  if (RL.night && MODE !== 'm' && RL.k < 160) {   // (v6) at night and small: a fine line of moonlight along the top of the back, so the dark animal stands off a dark road (its grizzled back alone sank into it: in the town at night it read as a grey sheep)
+    var yMd = P2(0, -0.22)[1], bxr = pBox(out); ctx.save(); ctx.beginPath(); ctx.rect(bxr[0] - 1, bxr[1] - 1, bxr[2] - bxr[0] + 2, yMd - bxr[1] + 1); ctx.clip();
+    ctx.strokeStyle = zc(scl(mixc(RL.rimC, TANK.frost, 0.35), 1.35), 1, 0.7); ctx.lineWidth = 2.2 / RL.k; ctx.lineJoin = 'round'; ctx.stroke(pPath(out)); ctx.restore();
   }
   ctx.save(); ctx.translate(lerp(hb.a[0], nE[0], 0.5), lerp(hb.a[1], nE[1], 0.5)); ctx.scale(1 / fsE, 1); ctx.rotate(hth * (1 - hsn)); ctx.scale(lerp(fsE, 1, hsn), 1);
   tanukiHead2(ctx, { yaw: hyaw, t: t, blink: o.blink, shine: o.shine, sniff: o.sniff, tilt: hth * hsn }, coat, C);
@@ -7948,6 +8419,8 @@ function birdPerches(g, R) {
   if (F.namiki) { o.namiki = []; LAY.namiki.forEach(function (a, ii) { var nt = genSakura(760 + ii, a[0], a[1], a[2] / 4.6, 0, 1.2, 4); nt.segs.forEach(function (s) { if (s.lvl >= 3 && s.b[1] > 2.0) o.namiki.push([s.b[0], s.b[1] + s.r1, s.b[2]]); }); }); }
   if (F.bridge) o.bridge = [(BRIDGE.x0 + BRIDGE.x1) / 2 + 0.3, 0.98, BRIDGE.zc - 0.55];
   if (F.shishi) { var s = LAY.shishi; o.shishi = [s.x - 0.28 * s.m, 0.99, s.z + 0.08]; }
+  if (F.yukimi) o.yukimi = [YUKIMI.x, 1.25, YUKIMI.z];   // (1.4.2) the top of the snow-viewing lantern's broad hat
+  if (F.ishibashi) o.ishibashi = [ISHI.x, ISHI.y0 + ISHI.t, ISHI.z];   // and the stone slab over the stream
   return o;
 }
 function onScreen(p, m) { var q = P(p[0], p[1], p[2]); return q.x > W * (m || 0.08) && q.x < W * (1 - (m || 0.08)) && q.y > 8 && q.y < H * 0.95; }
@@ -8077,6 +8550,9 @@ RV.rurubitaki = {
     if (B.rocks) B.rocks.slice(0, 6).forEach(function (r) { if (onScreen(r, 0.12)) low.push([r[0], r[1], r[2]]); });
     if (B.shishi && onScreen(B.shishi, 0.12)) low.push(B.shishi);
     if (B.lanternRoof) low.push(B.lanternRoof);
+    if (B.yukimi && onScreen(B.yukimi, 0.12)) low.push(B.yukimi, B.yukimi);   // (v6: the snow-viewing lantern's hat, its favourite in the snow)
+    var seenOn = function (p2) { return zSeenPt(R, p2) && zSeenPt(R, [p2[0], p2[1] - 0.1, p2[2]]); };   // (the bird and what it stands on in view: on a rock behind the bridge's rail it seemed to stand on the rail)
+    low = low.filter(seenOn).concat(low.length && !low.some(seenOn) ? low : []);   // (only perches it is seen on, if there are any)
     if (!low.length) low.push(B.lantern || [LX(-1.15), 1.9, LZ(4.3)]);
     var first = low[(rng() * low.length) | 0], legs = [{ p: first, dur: 4.5, act: 'flick' }];
     function groundBy(p2) { for (var k = 0; k < 8; k++) { var an = rng() * TAU, x = p2[0] + Math.cos(an) * 0.45, z = p2[2] - Math.abs(Math.sin(an)) * 0.4; if (!F.pond || pondSDF(x, z) > 0.25) return [x, Math.max(0, hillH(x, z)) + 0.01, z]; } return null; }
@@ -8106,7 +8582,7 @@ RV.rurubitaki = {
    with a fish, a beat of it on the rock, swallowed head first, and away low over the water ---- */
 RV.kawasemi = {
   start: function (a, g, R, rng) {
-    var B = birdPerches(g, R), cands = (B.rocks || []).filter(function (r) { return onScreen(r, 0.15); }), rk = cands.length ? cands[(rng() * cands.length) | 0] : (R.perch || [LX(1), 0.3, LZ(3.4)]);
+    var B = birdPerches(g, R), cands0 = (B.rocks || []).filter(function (r) { return onScreen(r, 0.15); }), cands = cands0.filter(function (r) { return zSeenPt(R, r) && zSeenPt(R, [r[0], r[1] - 0.1, r[2]]); }), rk = cands.length ? cands[(rng() * cands.length) | 0] : cands0.length ? cands0[(rng() * cands0.length) | 0] : (R.perch || [LX(1), 0.3, LZ(3.4)]);   // (v6: a rock it is seen on: with the bridge built it could perch behind its rail)
     var perch = [rk[0], rk[1], rk[2]], e = nearPondEdge(perch[0], perch[2]), dv = [lerp(perch[0], e[0], 1) + (e[0] - perch[0]) * 1.5, WL, lerp(perch[2], e[1], 1) + (e[1] - perch[2]) * 1.5];
     if (pondSDF(dv[0], dv[2]) > -0.25) { for (var k = 0; k < 20 && pondSDF(dv[0], dv[2]) > -0.25; k++) { var c = R.pond || [LX(2), LZ(4)]; dv[0] = lerp(dv[0], c[0], 0.15); dv[2] = lerp(dv[2], c[1], 0.15); } }
     a.dv = dv; var side = P(perch[0], 0, perch[2]).x < g.W / 2 ? -1 : 1;
@@ -8196,7 +8672,8 @@ function zSeenPt(R, p, base) {   // a perch point that nothing stands in front o
    to the top to sing its "hoh-hokekyo" (tail cocked, bill wide), and slips back in ---- */
 RV.uguisu = {
   start: function (a, g, R, rng) {
-    var near = R.az.slice().filter(function (z) { return onScreen([z[0], z[3], z[1]], 0.1); }).sort(function (p, q) { return p[1] - q[1]; }).slice(0, 3);
+    var near0 = R.az.slice().filter(function (z) { return onScreen([z[0], z[3], z[1]], 0.1); }), near1 = near0.filter(function (z) { return zSeenPt(R, [z[0], z[3] * 0.95, z[1] - z[2] * 0.75]); });   // (v6: a bush whose top is in view: the teahouse's azalea is behind the 袖垣 now)
+    var near = near1.sort(function (p, q) { return p[1] - q[1]; }).slice(0, 3);
     var az = near.length ? near[(rng() * near.length) | 0] : [LX(1.5), LZ(1.5), 0.5, 0.4];
     a.az = az; a.T = 14; a.ext = 0.6 * BIRDV / 1.6; a.refl = false; a.side = rng() < 0.5 ? -1 : 1;
   },
@@ -8589,7 +9066,7 @@ function wetGround(gx, bw, bh) { // a darker ground: rain soaks the soil and the
 function paintPuddles(ctx) {
   if (!LIT.wet || sil()) return;
   var rng = mulberry32(5150), n = Math.round(12 * LIT.wet * (LIT.puddles || 1)), G = gravelInfo(F), placed = 0, sky = mixc(LIT.skyTop, LIT.skyHor, 0.55), i;
-  var spots = []; (F.path ? PATH_MAIN.concat(F.teaPath ? PATH_TEA : []) : []).forEach(function (s) { spots.push([s[0] + (rng() - 0.5) * 0.9, s[1] + (rng() - 0.5) * 0.5]); });   // water gathers in the hollows by the stepping stones
+  var spots = []; (F.path ? PATH_MAIN.concat(teaStones()) : []).forEach(function (s) { spots.push([s[0] + (rng() - 0.5) * 0.9, s[1] + (rng() - 0.5) * 0.5]); });   // water gathers in the hollows by the stepping stones
   for (i = 0; i < 400 && placed < n; i++) {
     var sp = spots.length && rng() < 0.6 ? spots[(rng() * spots.length) | 0] : null, x = sp ? sp[0] : LX(-4.5 + rng() * 11), z = sp ? sp[1] : LZ(-0.3 + rng() * 8.8), r = 0.14 + rng() * 0.3;
     if (F.pond && pondSDF(x, z) < r + 0.35) continue; if (F.hill && hillH(x, z) > 0) continue;
@@ -8642,7 +9119,7 @@ function weatherPoints(g) { // world points the weather plays on, computed under
   if (F.gate) for (x = LAY.gate.xa - 0.45; x <= LAY.gate.xb + 0.45; x += 0.34) o.drips.push([x, 2.5, LAY.fenceZ - 0.45]);
   if (F.lantern) for (i = 0; i < 6; i++) { var a = i / 6 * TAU + 0.3; o.drips.push([LAY.lantern.x + Math.cos(a) * 0.3, 1.04, LAY.lantern.z + Math.sin(a) * 0.3]); }
   if (F.wisteria) for (x = LAY.wis.x0; x <= LAY.wis.x1; x += 0.4) o.drips.push([x, LAY.wis.h, LAY.wis.z0]);
-  var st = []; if (F.path) st = st.concat(PATH_MAIN); if (F.teaPath) st = st.concat(PATH_TEA); if (F.gate) st = st.concat(PATH_GATE);
+  var st = []; if (F.path) st = st.concat(PATH_MAIN); st = st.concat(teaStones()); if (F.gate) st = st.concat(PATH_GATE);
   st.forEach(function (s) { o.stones.push([s[0], 0.08, s[1], s[2]]); });
   rakeRocks(F).forEach(function (r) { o.stones.push([r.x, r.r * 0.75, r.z, r.r * 0.6]); });
   var rng = mulberry32(6060);
@@ -8767,7 +9244,7 @@ function paintDrifts(ctx) { // blizzard: snow piled on the windward side of the 
 }
 function paintFog(ctx, bw, bh) { // blizzard whiteout: strongest far away, thinning toward the eye
   if (!LIT.fog) return;
-  var yo = CAM.cy - 204, fb = P(0, 0, LAY.fenceZ).y, g = ctx.createLinearGradient(0, 0, 0, bh);
+  var yo = hYo(), fb = P(0, 0, LAY.fenceZ).y, g = ctx.createLinearGradient(0, 0, 0, bh);
   function st(ly) { return clamp((ly) / H); }
   g.addColorStop(0, rgb(LIT.fog, 0.75)); g.addColorStop(st(fb), rgb(LIT.fog, 0.62)); g.addColorStop(st(fb + 70), rgb(LIT.fog, 0.3)); g.addColorStop(1, rgb(LIT.fog, 0.1));
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = g; ctx.fillRect(0, 0, bw, bh); ctx.restore();
@@ -8958,7 +9435,9 @@ function hitTargets(g) { // screen-space hit areas, computed under the scene's g
   if (F0.lantern) boxAt('lantern', LAY.lantern.x - 0.38, LAY.lantern.x + 0.38, 0.1, 1.6, LAY.lantern.z, { pri: 3 });
   if (F0.wisteria) { var w = LAY.wis; boxAt('fuji', w.x0, w.x1, w.h - 1.6, w.h + 0.1, (w.z0 + w.z1) / 2, { pri: 2 }); }
   if (F0.bridge) boxAt('bridge', BRIDGE.x0 + 0.3, BRIDGE.x1 - 0.3, 0.2, 1.0, BRIDGE.zc, { pri: 2, perch: [(BRIDGE.x0 + BRIDGE.x1) / 2, 0.92, BRIDGE.zc - 0.35] });
-  var st = []; if (F0.path) st = st.concat(PATH_MAIN.slice(0, F0.bridge ? 9 : 8)); /* the stones that are laid, as buildScene */ if (F0.teaPath) st = st.concat(PATH_TEA); if (F0.gate) st = st.concat(PATH_GATE);
+  if (F0.yukimi) boxAt('stone', YUKIMI.x - 0.6, YUKIMI.x + 0.6, 0.3, 1.25, YUKIMI.z, { pri: 2, perch: [YUKIMI.x, 1.25, YUKIMI.z] });   // (1.4.2: a bird comes to its hat)
+  if (F0.ishibashi) boxAt('stone', ISHI.x - ISHI.hl * 0.8, ISHI.x + ISHI.hl * 0.8, 0, 0.25, ISHI.z, { pri: 1, perch: [ISHI.x, ISHI.y0 + ISHI.t, ISHI.z] });
+  var st = []; if (F0.path) st = st.concat(PATH_MAIN.slice(0, F0.bridge ? 9 : 8)); /* the stones that are laid, as buildScene */ if (F0.teaPath) st = st.concat(F0.nobedan ? PATH_TEA.slice(2) : PATH_TEA); if (F0.gate) st = st.concat(PATH_GATE);
   st.forEach(function (q) { var p = P(q[0], 0.08, q[1]); add('stone', p.x, p.y, Math.max(6, q[2] * p.k * 1.1), { pri: 1, perch: [q[0], 0.08, q[1]] }); });
   function tree(cx, cy, cz, R, kind, tag) { var p = P(cx, cy, cz); add('tree', p.x, p.y, R * p.k + 3, { pri: 1, kind: kind, c: [cx, cy, cz], R: R, tag: tag }); }
   if (F0.maple > 0.15) { var mh = lerp(0.75, 4.7, Math.min(1, F0.maple)); tree(LAY.maple.x + 0.3 + 0.6 * clamp(F0.maple * 2 - 1), mh * 0.62, LAY.maple.z, mh * 0.55, 'maple', 'maple'); }
@@ -9524,7 +10003,7 @@ function weedLook(seed, age, season, date, force) {
    so a weed drawn on the live overlay sits in the painting as if it had been painted with it */
 function weedRgba(s) { var m = /rgba?\(([^)]+)\)/.exec(s || ''); if (!m) return [255, 255, 255, 0]; var v = m[1].split(',').map(parseFloat); return [v[0], v[1], v[2], v.length > 3 ? v[3] : 1]; }
 function weedPost(x, y) {
-  var L = LIT, yo = CAM.cy - 204, M = Math.max(W, H);
+  var L = LIT, yo = hYo(), M = Math.max(W, H);
   var sx = W * (L.sunX < 0.5 ? L.sunX - 0.08 : L.sunX + 0.08), sy = yo - H * 0.05 + L.sunY * 120, u = clamp(Math.hypot(x - sx, y - sy) / (W * 1.1));
   var w0 = weedRgba(L.wash[0]), w1 = weedRgba(L.wash[1]), w2 = [255, 200, 140, 0], wc = u < 0.55 ? [0, 1, 2, 3].map(function (i) { return lerp(w0[i], w1[i], u / 0.55); }) : [0, 1, 2, 3].map(function (i) { return lerp(w1[i], w2[i], (u - 0.55) / 0.45); });
   var gr = null;
@@ -9557,18 +10036,23 @@ function weedSnow(x, z) {
 function weedField(R) {   // computed once per painting, under its scene globals
   var G = zGeoReady(R), C = zClear(G, 'land'), stones = [], GV = F.gravel || F.gravelOutline ? gravelInfo(F) : null;
   if (F.path) stones = stones.concat(PATH_MAIN.slice(0, F.bridge ? 9 : 8));
-  if (F.teaPath) stones = stones.concat(PATH_TEA);
+  stones = stones.concat(teaStones());
   if (F.gate) stones = stones.concat(PATH_GATE);
-  var yp = F.marsh ? yatsuPieces() : [];
+  var yp =F.marsh ? yatsuPieces() : [];
   var bx = []; // boxes no weed grows in: under the wisteria, the bridge's ends, the teahouse and its veranda, the shishi-odoshi
   if (F.wisteria) bx.push([LAY.wis.x0 - 0.35, LAY.wis.x1 + 0.35, LAY.wis.z0 - 0.4, LAY.wis.z1 + 0.3]);
   if (F.bridge) bx.push([BRIDGE.x0 - 0.35, BRIDGE.x1 + 0.35, BRIDGE.zc - 0.85, BRIDGE.zc + 0.85]);
   if (F.teahouse) bx.push([TH.X0 - 0.4, TH.X1 + 0.4, TH.ZE - 0.45, TH.ZB + 0.2]);
   if (F.shishi) { var s = LAY.shishi; bx.push([s.x - 1.3, s.x + 0.6, s.z - 0.45, s.z + 0.45]); }
-  var cam0 = makeCam(REF_W, REF_H), dx = CAM.cx - cam0.cx, dy = CAM.cy - cam0.cy;   // the 4:3 card's frame in this view (the camera is the same; only the frame moves)
+  if (F.nobedan) bx.push([Math.min(NOBE.a[0], NOBE.b[0]) - 0.12, Math.max(NOBE.a[0], NOBE.b[0]) + 0.12, Math.min(NOBE.a[1], NOBE.b[1]) - NOBE.w / 2 - 0.3, Math.max(NOBE.a[1], NOBE.b[1]) + NOBE.w / 2 + 0.06]);   // (1.4.2; in front a little more room, so a weed does not stand over the paving)
+  if (F.ishibashi) bx.push([ISHI.x - ISHI.hl - 0.35, ISHI.x + ISHI.hl + 0.35, ISHI.z - 0.6, ISHI.z + 0.5]);
+  if (F.sodegaki) bx.push([SODE.x0 - 0.3, SODE.x1 + 0.3, SODE.z - 0.45, SODE.z + 0.2]);
+  var cam0 = makeCam(REF_W, REF_H), fs = CAM.F / cam0.F;   // the 4:3 card's frame in this view (the camera stands in the same place; the frame moves, and the short frame is zoomed out a little)
+  function cX(x) { return CAM.cx + (x - cam0.cx) * fs; }
+  function cY(y) { return CAM.cy + (y - cam0.cy) * fs; }
   var shade = []; try { hitTargets({ F: F }).forEach(function (h) { if (h.id !== 'tree' || !h.c) return; var gy = Math.max(0, h.c[1] - h.R * 0.3); shade.push([h.c[0], h.c[2], h.R * 1.05]); shade.push([h.c[0] + gy * SX, h.c[2] + gy * SZ, h.R * 0.95]); }); } catch (e) { /* no shade discs */ }   // under each crown, and its cast shadow
-  var hz = P(0, 0, LAY.fenceZ).y, bot = dy + REF_H * 0.94;
-  return { G: G, C: C, stones: stones, GV: GV, yp: yp, bx: bx, R: R, shade: shade, fr: [dx + REF_W * 0.07, dx + REF_W * 0.93, bot], horizon: hz, front: lerp(hz, bot, 0.3), zMax: Math.min(F.fence ? LAY.fenceZ - 0.32 : EDGE - 1.1, EDGE - 1.1) };
+  var hz = P(0, 0, LAY.fenceZ).y, bot = cY(REF_H * 0.94);
+  return { G: G, C: C, stones: stones, GV: GV, yp: yp, bx: bx, R: R, shade: shade, fr: [cX(REF_W * 0.07), cX(REF_W * 0.93), bot], horizon: hz, front: lerp(hz, bot, 0.3), zMax: Math.min(F.fence ? LAY.fenceZ - 0.32 : EDGE - 1.1, EDGE - 1.1) };
 }
 /* is (x, z) a good spot: ground a weed grows in, a body's width from anything else, on screen in this view and the card's, in view */
 function weedOk(Fd, x, z, Z, placed, gap) {
@@ -9895,7 +10379,7 @@ function weedStudy(canvas, o) {
 
 /* ---- 09_runtime.js ---- */
 /* ================= public API & controller ================= */
-var VERSION = '1.4.1';   // (bumped: the painting changed: the moon's place and maria, moss, wet stones, reflections, branches, snow)
+var VERSION = '1.4.2';   // (1.4.2: layout audit, wider plot, 30 stages; bumped: the painting changed: the moon's place and maria, moss, wet stones, reflections, branches, snow)
 var SEASON_KEYS = ['spring', 'summer', 'autumn', 'winter'], LIGHT_KEYS = ['morning', 'day', 'dusk', 'night'];
 function withScene(o, fn) {
   var st = saveState();
@@ -10345,7 +10829,7 @@ function mount(el, opts) {
         wx.setTransform(1, 0, 0, 1, 0, 0); wx.globalCompositeOperation = 'source-over'; wx.clearRect(wb[0], wb[1], wb[2], wb[3]);
         wx.setTransform(ws, 0, 0, ws, 0, 0); drawWaterLayer(wx, g, t); if (petals) drawFloatPetals(wx, petals, g, ws);
         if (rare && rare.refl && rareNearWater(g)) { var md0 = MODE; MODE = 'm'; wx.globalAlpha = g.light === 'night' ? 0.35 : 0.5; try { drawRare(wx, rare, g); } catch (e) { /* the reflection is a nicety */ } MODE = md0; wx.globalAlpha = 1; wx.globalCompositeOperation = 'source-over'; RARE_LAST = null; }
-        if (leafs) drawLeafFloats(wx, leafs, g, ws); if (wfx) { drawRainRipples(wx, wfx, g); drawWhitecaps(wx, wfx, g); } if (fws) drawFireworkPond(wx, fws, g); if (taps && taps.length) drawTapsWater(wx, taps, g, clock);
+        if (leafs) drawLeafFloats(wx, leafs, g, ws); if (wfx) { drawRainRipples(wx, wfx, g); drawWhitecaps(wx, wfx, g); } if (fws) { wx.save(); wx.setTransform(1, 0, 0, 1, 0, 0); wx.beginPath(); wx.rect(wb[0] + 2, wb[1] + 2, wb[2] - 4, wb[3] - 4); wx.clip(); wx.setTransform(ws, 0, 0, ws, 0, 0); drawFireworkPond(wx, fws, g); wx.restore(); }   /* (kept inside the masked box: its flash outside it bled in at the box's edges as a faint rectangle) */ if (taps && taps.length) drawTapsWater(wx, taps, g, clock);
         wx.setTransform(1, 0, 0, 1, 0, 0); wx.save(); wx.beginPath(); wx.rect(wb[0], wb[1], wb[2], wb[3]); wx.clip(); wx.globalCompositeOperation = 'destination-in'; wx.drawImage(fitted(cur.mask, wl.width, wl.height), wb[0], wb[1], wb[2], wb[3], wb[0], wb[1], wb[2], wb[3]); wx.restore(); wx.globalCompositeOperation = 'source-over';
         }
         ctx.drawImage(wl, wb[0], wb[1], wb[2], wb[3], wb[0] * fv.width / wl.width, wb[1] * fv.height / wl.height, wb[2] * fv.width / wl.width, wb[3] * fv.height / wl.height);

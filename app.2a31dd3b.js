@@ -5930,6 +5930,10 @@
     // reached a new stage since the garden was last seen: play the reveal on the card
     function gdCheckStageUp() {
         var s = gdState(), sk = gdWorld().seen, seen = parseInt(localStorage.getItem(sk), 10);
+        // the stage list grew (24 → 30 steps): an index saved under the old numbering means something else now,
+        // so it is reset once to the present stage rather than replaying a reveal of things already there
+        var E = gdEngine(), nk = sk + 'N', n = E && E.STAGES ? E.STAGES.length : 0;
+        if (n && localStorage.getItem(nk) !== String(n)) { localStorage.setItem(nk, String(n)); if (!isNaN(seen)) { localStorage.setItem(sk, String(s.stage)); return; } }
         if (isNaN(seen) || seen > s.stage) { localStorage.setItem(sk, String(s.stage)); return; }
         if (s.stage <= seen || !GD.ctrl || !GD.el || !GD.el.isConnected) return;
         localStorage.setItem(sk, String(s.stage));
@@ -6108,9 +6112,21 @@
         if (!window.MogiSound) return;
         if (!on || !gardenOpen() || document.hidden) { MogiSound.stop(true); return; }
         var w = gdViewWorld(), o = gdViewOpts(gdState(w));
-        MogiSound.play({ world: w, season: o.season, light: o.light, stage: o.stage, event: o.event, weather: o.weather, fireworks: o.fireworks, sky: gdSkyOpen() });
+        MogiSound.play({ world: w, season: o.season, light: o.light, stage: skyStage(w, o.stage), event: o.event, weather: o.weather, fireworks: o.fireworks, sky: gdSkyOpen() });
     }
     document.addEventListener('visibilitychange', function() { if (gardenOpen()) gdSoundUpdate(); });
+    // The garden and town grew from 24 to 30 stages. An ambience.js built for the old numbering (no MogiSky.STAGES30)
+    // is given the old index of the same scenery, so the sky view and the sounds keep showing what the painting shows.
+    var SKY_OLD_TO_NEW = {
+        garden: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 14, 15, 18, 20, 21, 22, 23, 25, 26, 27, 28, 29],
+        town: [0, 1, 2, 3, 4, 5, 7, 9, 10, 12, 13, 14, 15, 16, 17, 19, 20, 21, 22, 24, 25, 27, 28, 29]
+    };
+    function skyStage(w, st) {
+        if (window.MogiSky && MogiSky.STAGES30) return st;
+        var m = SKY_OLD_TO_NEW[w === 'town' ? 'town' : 'garden'], old = 0;
+        for (var i = 0; i < m.length; i++) if (m[i] <= st) old = i;
+        return old;
+    }
     // ---------- 見上げる: the night sky over the garden or town (ambience.js: window.MogiSky) ----------
     function gdSkyOpen() { return !!(GD.view && GD.view.classList.contains('sky')); }
     function gdOpenSky() {
@@ -6120,7 +6136,7 @@
         GD.view.querySelector('.gd-sky').setAttribute('aria-hidden', 'false');
         if (GD.vctrl) GD.vctrl.pause();
         var box = GD.view.querySelector('.gd-sky-canvas'); box.innerHTML = '';
-        GD.sky = MogiSky.mount(box, { date: o.date || new Date(), light: o.light, season: o.season, world: w, stage: o.stage, event: o.event, weather: o.weather, fireworks: o.fireworks,
+        GD.sky = MogiSky.mount(box, { date: o.date || new Date(), light: o.light, season: o.season, world: w, stage: skyStage(w, o.stage), event: o.event, weather: o.weather, fireworks: o.fireworks,
             onCue: function(name) {
                 if (GD.devMode) return;
                 if (name === 'shootingstar') { skyRecord('shootingstar'); var md = (new Date().getMonth() + 1) * 100 + new Date().getDate(); if ((md >= 810 && md <= 814) || (md >= 1212 && md <= 1215)) skyRecord('meteor'); }
@@ -6146,7 +6162,7 @@
         if (!gdSkyOpen() || !GD.sky) return;
         if (GD.vctrl) GD.vctrl.pause();          // (the painting underneath waits until the sky is put away)
         var w = gdViewWorld(), o = gdViewOpts(gdState(w));
-        GD.sky.update({ world: w, stage: o.stage, light: o.light, season: o.season, event: o.event, weather: o.weather, fireworks: o.fireworks, transition: true });
+        GD.sky.update({ world: w, stage: skyStage(w, o.stage), light: o.light, season: o.season, event: o.event, weather: o.weather, fireworks: o.fireworks, transition: true });
         gdSoundUpdate();
     }
     function gdCloseSky(quiet) {
@@ -6351,7 +6367,7 @@
             } });
         if (window.MogiSound) {
             MogiSound.unlock();
-            if (getSetting('gdSound', true)) MogiSound.play({ world: w, season: s.season, light: s.light, stage: s.stage, event: s.event, weather: s.weather, fireworks: s.fireworks, focus: true });
+            if (getSetting('gdSound', true)) MogiSound.play({ world: w, season: s.season, light: s.light, stage: skyStage(w, s.stage), event: s.event, weather: s.weather, fireworks: s.fireworks, focus: true });
         }
         focusDraw();
         syncNavHistory();

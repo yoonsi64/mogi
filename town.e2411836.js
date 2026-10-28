@@ -63,9 +63,12 @@ var MODE = 'n';                 // n normal, m mirrored, s shadow projection, k 
 var F = null, SEA = null, LIT = null; // features, season params, light params
 var GRAINPAT = null, GLOWS = [];
 
+var CAM_ZOOM = 0.93;   // (the town grew: the frame drawn back a little, so the farm's west side, the far bank's eastern blocks and the kura row all have room inside the 4:3 card)
+var SKY_LIFT = 0;   // 0..1: on summer nights (花火) and at 月見 the view tilts up a little, giving the sky room for the bursts and the moon
+function skyLiftFor(o) { return (o.light === 'night' && o.season === 'summer') || (o.event === 'tsukimi' && (o.light === 'dusk' || o.light === 'night')) ? 1 : 0; }
 function makeCam(w, h) {
   var th = 24 * Math.PI / 180, dist = 200, tz = 64;
-  return { s: Math.sin(th), c: Math.cos(th), x: -5.8, y: dist * Math.sin(th), z: tz - dist * Math.cos(th), F: 878 * (1 - Math.max(0, 266 - h) * 0.0016), cx: w / 2, cy: 158 + (h - REF_H) / 2 + Math.max(0, 266 - h) * 0.5 };   // (x: aimed a little west of the bridge, where the town has spread; a short frame, the phone's landscape full view, gives up more of the near meadow than of the sky, so the moon and the fireworks still have room)
+  return { s: Math.sin(th), c: Math.cos(th), x: -5.8, y: dist * Math.sin(th), z: tz - dist * Math.cos(th), F: 878 * CAM_ZOOM * (1 - Math.max(0, 266 - h) * 0.0016), cx: w / 2, cy: 158 + (h - REF_H) / 2 + Math.max(0, 266 - h) * 0.5 + SKY_LIFT * h * 0.11 };   // (x: aimed a little west of the bridge, where the town has spread; a short frame, the phone's landscape full view, gives up more of the near meadow than of the sky, so the moon and the fireworks still have room)
 }
 function setLight(l) {
   SUN = l.sun; SUNC = l.sunc; AMB = l.amb; LS = l.ls;
@@ -138,34 +141,44 @@ function grainClip(ctx, path, alpha) {
 
 /* ---- 02_params.js ---- */
 /* ================= stages ================= */
-/* [minutes, name, desc, focus [x, y, z] in world metres, or the name of a place resolved by stageFocus()] */
+/* [minutes, name, desc, focus [x, y, z] in world metres, or the name of a place resolved by stageFocus(), key]
+   Thirty stages to 500 hours: quick at first, longer later. Everything that asks "has the town reached X yet" asks by key
+   (st >= SI.temple), never by number, so a stage can be added anywhere in the order. */
 var STAGE_DEFS = [
-  [0, '一本道', '草原を一本の道が川へと続いています', [-9, 1, 15]],
-  [15, '道標', '分かれ道に石の道標が立ちました', [-11.4, 0.8, 12.6]],
-  [30, '茶屋', '街道沿いに茶屋が店を開きました', [-12.6, 2, 23]],
-  [60, '井戸', '茶屋の脇に井戸が掘られました', [-17.6, 1, 19.5]],
-  [120, '農家', '茅葺きの農家が建ちました', [-31, 3.5, 29]],
-  [180, '田んぼ', '道の両側に田んぼが開かれました', [22, 0, 14]],
-  [300, '水車小屋', '川辺に水車小屋ができ、水車が回りはじめました', [-21.2, 2.2, 43.3]],
-  [420, '祠と鳥居', '森の祠に鳥居が奉納されました', [-36.5, 2.5, 39]],
-  [600, '太鼓橋', '川に木の太鼓橋が架かりました', [2, 2.5, 41]],
-  [900, '商家', '橋のたもとに大きな商家が建ちました', 'shoka'],
-  [1200, '長屋', '裏通りに長屋が軒を連ねました', 'nagaya'],
-  [1500, '旅籠', '旅人を迎える旅籠ができました', 'inn'],
-  [2100, '火の見櫓', '町を見守る火の見櫓が立ちました', 'tower'],
-  [3000, '土蔵', '川沿いになまこ壁の土蔵が並びました', 'kura'],
-  [4500, '寺と鐘楼', '山すそに寺が建ち、鐘の音が響きます', [-26.3, 5, 88]],
-  [6000, '町家の通り', '格子の町家が通りを埋めました', 'street'],
-  [7500, '市場', '橋のたもとに市が立ち、にぎわっています', 'market'],
-  [9000, '船着き場', '船着き場に舟が出入りします', [21.4, 0.5, 36.5]],
-  [12000, '芝居小屋', '幟がはためく芝居小屋ができました', 'theatre'],
-  [15000, '五重塔', '寺に五重塔がそびえ立ちました', [-47, 12, 94]],
-  [18000, '武家屋敷', '白壁の武家屋敷が並びました', 'buke'],
-  [21000, '石垣', '城山に高い石垣が築かれました', [33, 6, 87]],
-  [24000, '天守', '石垣の上に天守がそびえました', [33, 14, 87]],
-  [30000, '城下町の完成', '提灯が灯り、城下町の祭りが始まりました', 'centre']
+  [0, '一本道', '草原を一本の道が川へと続いています', [-9, 1, 15], 'road'],
+  [10, '道標', '分かれ道に石の道標が立ちました', [-11.4, 0.8, 12.6], 'sign'],
+  [20, '茶屋', '街道沿いに茶屋が店を開きました', [-12.6, 2, 23], 'teahouse'],
+  [40, '井戸', '茶屋の脇に井戸が掘られました', [-17.6, 1, 19.5], 'well'],
+  [60, '農家', '茅葺きの農家が建ちました', [-31, 3.5, 29], 'farm'],
+  [90, '田んぼ', '道の両側に田んぼが開かれました', [22, 0, 14], 'paddy'],
+  [120, '茶畑', '街道沿いに茶畑が開かれました', 'tea', 'tea'],
+  [180, '水車小屋', '川辺に水車小屋ができ、水車が回りはじめました', [-21.2, 2.2, 43.3], 'mill'],
+  [240, '鍛冶屋', '農家のとなりに鍛冶屋ができ、槌の音が響きます', 'smithy', 'smithy'],
+  [300, '祠と鳥居', '杉木立の祠に鳥居が奉納されました', [3.8, 2.2, 28.6], 'shrine'],
+  [420, '太鼓橋', '川に木の太鼓橋が架かりました', [2, 2.5, 41], 'stoneBridge'],
+  [540, '高札場', '橋の手前に高札場が設けられました', 'kosatsu', 'kosatsu'],
+  [720, '商家', '橋のたもとに大きな商家が建ちました', 'shoka', 'shoka'],
+  [900, '長屋', '裏通りに長屋が軒を連ねました', 'nagaya', 'nagaya'],
+  [1200, '旅籠', '旅人を迎える旅籠ができました', 'inn', 'inn'],
+  [1500, '火の見櫓', '町を見守る火の見櫓が立ちました', 'tower', 'tower'],
+  [1800, '土蔵', '川沿いになまこ壁の土蔵が並びました', 'kura', 'kura'],
+  [2400, '寺と鐘楼', '山すそに寺が建ち、鐘の音が響きます', [-26.3, 5, 88], 'temple'],
+  [3000, '寺子屋', '寺の境内に寺子屋が開かれ、子どもたちが通います', 'terakoya', 'terakoya'],
+  [3600, '町家の通り', '格子の町家が通りを埋めました', 'street', 'machiya'],
+  [4500, '市場', '橋のたもとに市が立ち、にぎわっています', 'market', 'market'],
+  [6000, '船着き場', '船着き場に舟が出入りします', [21.4, 0.5, 36.5], 'landing'],
+  [7500, '芝居小屋', '幟がはためく芝居小屋ができました', 'theatre', 'theatre'],
+  [9000, '酒蔵', '町の東に酒蔵ができ、軒先に杉玉が下がりました', 'sakagura', 'sakagura'],
+  [12000, '五重塔', '寺に五重塔がそびえ立ちました', [-47, 12, 94], 'pagoda'],
+  [15000, '武家屋敷', '白壁の武家屋敷が並びました', 'buke', 'buke'],
+  [18000, '木戸と番屋', '大通りに木戸が設けられ、番屋ができました', 'kido', 'kido'],
+  [21000, '石垣', '城山に高い石垣が築かれました', [33, 6, 87], 'ishigaki'],
+  [24000, '天守', '石垣の上に天守がそびえました', [33, 14, 87], 'keep'],
+  [30000, '城下町の完成', '提灯が灯り、城下町の祭りが始まりました', 'centre', 'festival']
 ];
 var NST = STAGE_DEFS.length;
+var SI = {};   // stage index by key
+STAGE_DEFS.forEach(function (d, i) { SI[d[4]] = i; });
 
 /* ================= layout (world metres; x right, z away from the eye) =================
    The river comes down from the left and runs diagonally to the front right. The country road comes up from the
@@ -202,22 +215,34 @@ var HILLS = [
 var CASTLE = { x: 33, z: 87, top: 3.6 };
 var PADDY_L = { x0: -52, x1: -20.5, z0: -4, z1: 22, rot: -0.04, cw: 7.8, cd: 5.6 };
 var PADDY_R = { x0: 14, x1: 60, z0: -3, z1: 17.6, rot: 0.06, cw: 8.6, cd: 5.6 };
-var TREE0 = { x: -23.5, z: 8.6 };
+var TREE0 = { x: -31.5, z: 6.4 };   // (on a levee out in the paddies, well left of the road: nearer the road its crown hid the well, the farm's fence and front)
 var SIGN = { x: -11.4, z: 12.6 };
 var TEA = { x: -12.6, z: 23, u: norm2([0.9, 0.42]) };
 var WELL = { x: -17.6, z: 19.5 };
 var FARM = { x: -28.6, z: 30 };
 var HAZA = [[-28.5, 17.4], [-23.5, 12.6]];
-var KAKI = { x: -19.6, z: 31.5 };
+var KAKI = { x: -36.0, z: 36.6 };   // (behind the farmhouse's west end, its crown over the thatch: by the house's east side it hid the 水車小屋, in front of the yard it hid the house)
 var MILL = { x: -16.5, z: 39.2, u: norm2([0.866, -0.5]), wx: -21.2, wz: 43.3, wr: 2.2 };
 var SHRINE = { x: 3.8, z: 29.6 }, TORII = { x: 3.38, z: 25.42 };   // a roadside shrine before the bridge; its torii square on the shrine's centre line, 4.2 m before it
+var SHRINE_CEDARS = [[5.8, -1.6, 8.6, 702], [7.6, 0.8, 9.2, 701], [4.6, 2.4, 8.4, 704]];   // the shrine's cedars [dx, dz from the shrine, height, seed] (three, lower, a little to the right: four tall ones stood across the bridge's far end and the market)
 var TEMPLE = { x: -28.22, z: 93.66 }, BELL = { x: -14.29, z: 86.78 }, PAGODA = { x: -47.44, z: 94.37 };   // the temple precinct beyond the riverside row (street frame: the hall at t 21, w 52.5 facing the street; the bell tower at t 22, w 37 behind the row; the 五重塔 at t 12, w 69.5)
 var MARKET = (function () { var p = stPt(0.6, -10.2); return { x: p[0], z: p[1], rx: 6.2, rz: 4.0 }; })();
 var TOWER = (function () { var p = stPt(22, 16.8); return { x: p[0], z: p[1] }; })();   // 火の見櫓: in the back lots behind the soba shop
+/* the later additions: 茶畑 in the open meadow right of the 街道 (its rows across the field, the nearest first); 鍛冶屋, a village
+   smithy beside the farm; 高札場 where the road comes to the bridge, its notices facing the way travellers come; 寺子屋 inside
+   the temple's east wing behind the belfry; 酒蔵 on the open block east of the main street, behind the theatre; 木戸 across the
+   main street where the merchants' town gives way to the samurai houses, its 番屋 tucked against the inn's front */
+var CHA = { x0: -2.4, x1: 8.8, z0: 4.8, z1: 12.4, n: 4 };
+var SMITHY = { x: -40.4, z: 32.2, u: norm2([1, 0.06]) };
+var KOSATSU = { x: -8.6, z: 29.4, u: norm2([0.87, 0.5]) };
+var TERAKOYA = (function () { var p = stPt(7.0, 62.4); return { x: p[0], z: p[1] }; })();   // (inside the front wall, west of the gate, clear of the hall's front and the pagoda: behind the belfry it was hidden)
+var SAKAGURA = (function () { var p = stPt(18.8, -18.6); return { x: p[0], z: p[1] }; })();   // (kept low and close behind the theatre: taller or further back, it hid the eastern 武家屋敷)
+var KIDO = (function () { var p = stPt(30.6, 0); return { x: p[0], z: p[1], t: 30.6 }; })();
+var BANYA = (function () { var p = stPt(29.0, 3.3); return { x: p[0], z: p[1] }; })();
 /* wild groves on the far bank: there until the town needs their ground [x, z, stage that clears it, trees] */
 var GROVES = (function () {
   function g(t, w, s, n) { var p = stPt(t, w); return [p[0], p[1], s, n]; }
-  return [g(19, 9.5, 15, 2), g(31.5, 10, 11, 1), g(16, -9.5, 15, 2), g(8.5, 27, 15, 2), g(9.5, 45.5, 14, 1), g(30, 23, 20, 2), g(36, -12, 20, 1), g(25, -10, 15, 1), [-2, 101, 99, 1], [25, 101, 99, 1]];
+  return [g(19, 9.5, SI.machiya, 2), g(31.5, 10, SI.inn, 1), g(16, -9.5, SI.machiya, 2), g(8.5, 27, SI.machiya, 2), g(9.5, 45.5, SI.temple, 1), g(30, 23, SI.buke, 2), g(36, -12, SI.buke, 1), g(25, -10, SI.machiya, 1), [-2, 101, 99, 1], [25, 101, 99, 1]];
 })();
 var FIELD = { x0: 7.2, x1: 13.6, z0: 19, z1: 27.6 };
 var FIELDN = { x0: -12.6, x1: 1.4, z0: -21.5, z1: -9.2 };   // the kitchen field in the near foreground, right of the road (all of it on a tall screen)
@@ -312,15 +337,12 @@ Object.keys(LIGHTS).forEach(function (k) { LIGHTS[k].name = k; });
 /* stage -> feature switches */
 function features(st) {
   var f = { s: st, stage: st };
-  f.tree0 = Math.min(1, 0.72 + st * 0.02);
-  f.sign = st >= 1; f.teahouse = st >= 2; f.well = st >= 3; f.farm = st >= 4; f.paddy = st >= 5; f.mill = st >= 6; f.shrine = st >= 7;
-  f.stoneBridge = st >= 8; f.shoka = st >= 9; f.nagaya = st >= 10; f.inn = st >= 11; f.tower = st >= 12; f.kura = st >= 13;
-  f.temple = st >= 14; f.machiya = st >= 15; f.market = st >= 16; f.landing = st >= 17; f.theatre = st >= 18; f.pagoda = st >= 19;
-  f.buke = st >= 20; f.ishigaki = st >= 21; f.keep = st >= 22; f.festival = st >= 23;
-  f.street = st >= 9;          // the track has become a street
-  f.rivst = st >= 10;          // the street along the far bank
-  f.town = clamp((st - 8) / 10);  // how much of the ground is worn into a town
-  f.riverCherry = st >= 8 ? Math.min(1, 0.5 + (st - 8) * 0.05) : 0;
+  f.tree0 = 0.72 + 0.28 * Math.min(1, st / SI.temple);
+  STAGE_DEFS.forEach(function (d, i) { if (i) f[d[4]] = st >= i; });   // f.sign, f.teahouse ... f.festival: each thing from its own stage on
+  f.street = st >= SI.shoka;          // the track has become a street
+  f.rivst = st >= SI.nagaya;          // the street along the far bank
+  f.town = clamp((st - SI.stoneBridge) / (SI.theatre - SI.stoneBridge));  // how much of the ground is worn into a town
+  f.riverCherry = st >= SI.stoneBridge ? Math.min(1, 0.5 + 0.5 * (st - SI.stoneBridge) / (SI.theatre - SI.stoneBridge)) : 0;
   return f;
 }
 /* where a stage's new thing stands (for the reveal's focus) */
@@ -331,11 +353,17 @@ function stageFocus(f) {
   if (f === 'nagaya') return s(16.6, 24.4, 2);
   if (f === 'inn') return s(32.2, STREET_HW + 5.25, 4);
   if (f === 'tower') return [TOWER.x, 8, TOWER.z];
-  if (f === 'kura') { var k = krPt(36, RIVER_HW + 6); return [k[0], 3, k[1]]; }
+  if (f === 'kura') { var k = krPt(31.5, RIVER_HW + 6); return [k[0], 3, k[1]]; }   // (the row's first 蔵: on the 4:3 card the others run on out of the frame)
   if (f === 'street') return s(20, 0, 2.5);
   if (f === 'market') return [MARKET.x, 1.5, MARKET.z];
   if (f === 'theatre') { var tq = theatreFrame(); return [tq.x, 4, tq.z]; }
   if (f === 'buke') return [BUKE[0].x, 2.5, BUKE[0].z];
+  if (f === 'tea') return [(CHA.x0 + CHA.x1) / 2, 0.8, (CHA.z0 + CHA.z1) / 2];
+  if (f === 'smithy') return [SMITHY.x, 2.2, SMITHY.z];
+  if (f === 'kosatsu') return [KOSATSU.x, 1.9, KOSATSU.z];
+  if (f === 'terakoya') return [TERAKOYA.x, 3.2, TERAKOYA.z];
+  if (f === 'sakagura') return [SAKAGURA.x, 5.5, SAKAGURA.z];
+  if (f === 'kido') return [KIDO.x - 1.2, 2.2, KIDO.z];
   return s(12, 0, 4);
 }
 
@@ -3111,6 +3139,9 @@ function doorList() {
     else { var dw = b.type === 'shoka' ? 2.4 : 1.7, dl = b.doorLeft ? 0.25 : b.w - dw - 0.25; add(W0, dl, dl + dw, 2.65, b.type); }
   });
   if (F.temple) { var tf = templeFrame(), tw = boxWalls(tf, 13, 10.5, 1.0, 5.2).f; add(tw, 5.2, 7.8, 3.8, 'temple'); }
+  if (F.smithy) add(boxWalls(smithyFrame(), SMITH_W, SMITH_D, 0, 2.55).f, 1.9, SMITH_W - 0.25, 2.25, 'smithy');
+  if (F.sakagura) add(boxWalls(sakaguraFrame(), SAKE_W, SAKE_D, 0, SAKE_H).r, SAKE_D / 2 - 1.5, SAKE_D / 2 + 1.5, 2.45, 'sake');
+  if (F.kido) add(boxWalls(banyaFrame(), 2.5, 1.8, 0, 2.15).f, 1.85, 2.38, 1.95, 'banya');
   return out;
 }
 function doorKey(d) { return Pa(d.W.at((d.s0 + d.s1) / 2, 0, 0.6)).d; }
@@ -3196,7 +3227,7 @@ function koiPoles() {
 }
 function tanabataList() {
   var out = [];
-  doorList().forEach(function (d, i) { if (d.kind === 'temple' || d.kind === 'mill' || (i % 2 && d.kind === 'house')) return; var base = d.W.at(d.s0 - 0.35, 0, 0.6); out.push({ base: base, lean: d.W.n, h: d.kind === 'nagaya' ? 4.2 : 5.8, ph: i * 1.3 }); });
+  doorList().forEach(function (d, i) { if (d.kind === 'temple' || d.kind === 'mill' || d.kind === 'banya' || (i % 2 && d.kind === 'house')) return; var base = d.W.at(d.s0 - 0.35, 0, 0.6); out.push({ base: base, lean: d.W.n, h: d.kind === 'nagaya' ? 4.2 : 5.8, ph: i * 1.3 }); });
   if (!out.length) { var p = [TREE0.x + 4, 0, TREE0.z + 2]; out.push({ base: p, lean: [0.5, 0, -0.5], h: 3.6, ph: 0 }); }
   return out;
 }
@@ -3222,7 +3253,7 @@ function drawEventExtras(ctx, which) {
     if (F.farm) { var fb = farmFrame(); vase(ctx, fb.L(-1.2, -4.0, 0.5), 'susuki'); dango(ctx, fb.L(0.2, -4.1, 0.5)); }
     else if (F.teahouse) { var tb = teaFrame(); vase(ctx, tb.L(-0.5, -4.1, 0.5), 'susuki'); dango(ctx, tb.L(0.6, -4.1, 0.5)); }
     townPlan(F).forEach(function (b) { if (b.type !== 'inn') return; var B = BF(b.x, b.z, b.u, 0); vase(ctx, B.L(-2.5, -b.d / 2 - 0.45, 3.6), 'susuki'); dango(ctx, B.L(-1.4, -b.d / 2 - 0.5, 3.6)); });
-    for (i = 0; i < 7; i++) vase(ctx, [TREE0.x + 3.5 + i * 1.2, 0, TREE0.z - 1.5 + (i % 3) * 1.3], 'susuki');
+    for (i = 0; i < 7; i++) vase(ctx, [-20.0 + i * 1.2, 0, 7.1 + (i % 3) * 1.3], 'susuki');   // (along the road's verge, where the lone tree once stood)
   }
   if (which === 'koi') koiPoles().forEach(function (q) { prism(ctx, q[0], q[1], 0, q[2], 0.08, 0.06, 6, 0, [140, 120, 90], { snow: 0 }); if (!sil()) { var tp = P(q[0], q[2] + 0.2, q[1]); ctx.fillStyle = rgb(mulc([220, 180, 70], lightTint(1))); ctx.beginPath(); ctx.arc(tp.x, tp.y, 0.16 * tp.k, 0, TAU); ctx.fill(); } });
 }
@@ -3326,11 +3357,274 @@ function placeProps(put) {
   if (F.kura) { var kp = krPt(28.4, RIVER_HW + 1.8); put(kp[0], kp[1], { draw: function (c) { bales(c, kp[0], kp[1], 3); }, drift: 0.7 }); }
   // rain barrels and standing signs at the shopfronts
   doorList().forEach(function (d, i) {
-    if (d.kind === 'temple' || d.kind === 'mill' || d.kind === 'nagaya') return;
+    if (d.kind === 'temple' || d.kind === 'mill' || d.kind === 'nagaya' || d.kind === 'smithy' || d.kind === 'tera' || d.kind === 'sake' || d.kind === 'banya') return;   // (the later additions bring their own tubs and casks)
     var key = doorKey(d) - 0.04;
     if (i % 2 === 0) { var rb = d.W.at(d.s1 + 0.7, 0, 0.55); put(rb[0], rb[2], { draw: function (c) { rainBarrel(c, rb); }, key: key, drift: 0.55 }); }
     else if (d.kind === 'machiya' || d.kind === 'shoka' || d.kind === 'inn') { var sg = d.W.at(d.s0 - 0.6, 0, 0.9); put(sg[0], sg[2], { draw: function (c) { standSign(c, sg, d.W, i); }, key: key, drift: 0.4 }); }
   });
+}
+
+/* ---- 04h_later.js ---- */
+/* ================= the later additions: 茶畑, 鍛冶屋, 高札場, 寺子屋, 酒蔵, 木戸と番屋 ================= */
+/* 茶畑: rows of clipped tea bushes, each a long rounded hedge waist high with a worn earth path between; the old leaves dark and
+   glossy, the top in spring lit by the new flush (新芽, yellow-green, picked at 八十八夜), small white tea flowers along the sides in
+   October and November, snow lying along the tops in winter */
+function teaRows() { var out = [], sp = (CHA.z1 - CHA.z0) / CHA.n; for (var i = 0; i < CHA.n; i++) out.push({ z: CHA.z0 + sp * (i + 0.5), i: i, sp: sp }); return out; }
+function teaRowZ(r, x) { return r.z + 0.2 * Math.sin(x * 0.31 + r.i * 1.7); }   // (a gentle wave along each row: planted by hand, not ruled)
+function teaRowEnds(r) { return [CHA.x0 + 0.5 * hash2(r.i, 3), CHA.x1 - 0.5 * hash2(r.i, 5)]; }
+function teaLeaf() {
+  var sn = seasonName(), p = F.prog === undefined ? 0.5 : F.prog;
+  if (SEA.snow) return { side: [38, 62, 44], top: [54, 82, 52], flush: 0, flower: 0 };
+  if (sn === 'spring') { var fl = sstep(0.35, 0.7, p); return { side: [46, 80, 46], top: mixc([70, 108, 56], [158, 196, 70], fl), flush: fl, flower: 0 }; }
+  if (sn === 'summer') return { side: [44, 82, 46], top: [84, 128, 60], flush: 0.2, flower: 0 };
+  if (sn === 'autumn') return { side: [42, 72, 44], top: [70, 104, 56], flush: 0, flower: sstep(0.2, 0.45, p) * (1 - sstep(0.85, 1, p)) };
+  return { side: [36, 62, 42], top: [56, 86, 52], flush: 0, flower: 0 };
+}
+function teaPickers() { var R = teaRows(); return [[CHA.x0 + 2.6, R[1].z - R[1].sp / 2], [CHA.x0 + 6.4, R[2].z - R[2].sp / 2], [CHA.x0 + 8.6, R[0].z - R[0].sp / 2]]; }   // 茶摘み: in the paths between the rows
+function drawTeaRow(ctx, r) {
+  var S = sil(), L = teaLeaf(), hw = 0.6, h = 0.95, e = teaRowEnds(r), x0 = e[0], x1 = e[1], N = Math.max(10, Math.round((x1 - x0) / 0.3)), k;
+  var rng = mulberry32(700 + r.i * 13), hb = [];
+  for (k = 0; k <= N; k++) { var f = k / N, cap = Math.min(1, f / 0.06, (1 - f) / 0.06); hb.push(h * (0.88 + 0.09 * Math.abs(Math.sin(k * 0.9 + r.i * 2)) + (rng() - 0.5) * 0.05) * (0.55 + 0.45 * Math.sqrt(Math.max(0, cap)))); }   // (the bushes' tops in soft humps, one plant to the next; the row's ends rounded off)
+  function pt(k2, a, y) { var x = lerp(x0, x1, k2 / N); return P(x, y, teaRowZ(r, x) + a); }
+  function strip(a0, y0f, a1, y1f) { ctx.beginPath(); for (var q = 0; q <= N; q++) { var p = pt(q, a0, y0f < 0 ? 0.03 : hb[q] * y0f); if (q) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y); } for (q = N; q >= 0; q--) { var p2 = pt(q, a1, y1f < 0 ? 0.03 : hb[q] * y1f); ctx.lineTo(p2.x, p2.y); } ctx.closePath(); }
+  if (!S) {   // the earth path in front of the row (the nearer row covers the rest of it)
+    var gap = r.sp - 2 * hw, soil = SEA.snow ? snowLt(lightTint(1)) : mulc(mixc([128, 104, 76], [104, 86, 64], F.wet ? 0.6 : 0), lightTint(1));
+    strip(-hw - gap - 0.05, -1, -hw + 0.1, -1); ctx.fillStyle = rgb(soil); ctx.fill();
+    if (!SEA.snow) { strip(-hw - 0.1, -1, -hw + 0.12, -1); ctx.fillStyle = 'rgba(26,22,16,0.32)'; ctx.fill(); }   // the shade at the hedge's foot
+  }
+  strip(-hw, -1, 0.05, 1.0); ctx.fillStyle = S ? '#000' : rgb(shade(L.side, [0, 0.3, -1])); ctx.fill();   // the whole loaf, its clipped face toward us
+  if (S) return;
+  strip(-hw * 0.72, 0.62, 0.05, 1.0); ctx.fillStyle = rgb(shade(L.top, [0, 0.75, -0.66])); ctx.fill();   // the rounded top, turning up to the sky
+  strip(-hw * 0.38, 0.86, 0.05, 1.0); ctx.fillStyle = rgb(shade(mixc(L.top, [255, 250, 220], 0.1 + 0.15 * L.flush), [0, 0.95, -0.3])); ctx.fill();   // the crest
+  strip(-hw * 0.98, 0.04, -hw * 0.9, 0.3); ctx.fillStyle = 'rgba(12,20,12,0.28)'; ctx.fill();   // the dark skirt where the leaves meet the earth
+  for (var lx = x0 + 0.3; lx < x1 - 0.2; lx += 0.5 + 0.12 * rng()) {   // the plants: each a soft dome in the row, shadowed where it meets the next, its crown lit
+    var lq = clamp((lx - x0) / (x1 - x0) * N, 0, N), lh = hb[Math.round(lq)], lz = teaRowZ(r, lx), lc = P(lx, lh * 0.78, lz - hw * 0.28), lk = lc.k, lr = 0.3 + 0.06 * rng();
+    var dg = ctx.createRadialGradient(lc.x - 0.08 * lk * (LS[0] < 0 ? 1 : -1), lc.y - 0.1 * lk, 0.02 * lk, lc.x, lc.y, lr * lk * 1.15);
+    dg.addColorStop(0, rgb(shade(mixc(L.top, [255, 250, 220], 0.12 + 0.12 * L.flush), [0, 0.95, -0.3]), 0.85)); dg.addColorStop(0.55, rgb(shade(L.top, [0, 0.7, -0.7]), 0.55)); dg.addColorStop(1, rgb(shade(L.side, [0, 0.3, -1]), 0));
+    ctx.fillStyle = dg; ctx.beginPath(); ctx.ellipse(lc.x, lc.y, lr * lk * 1.15, lr * lk * 0.85, 0, 0, TAU); ctx.fill();
+    var sh = P(lx + 0.27, lh * 0.45, lz - hw * 0.9); ctx.fillStyle = rgb(scl(shade(L.side, [0, 0.3, -1]), 0.72), 0.45); ctx.beginPath(); ctx.ellipse(sh.x, sh.y, 0.05 * lk, 0.26 * lk, 0, 0, TAU); ctx.fill();   // the cleft between two plants
+  }
+  var kk = pt(N >> 1, 0, h).k, nd = Math.round((x1 - x0) * 24 * Math.min(1.8, Math.max(0.5, kk / 14)));
+  for (var j = 0; j < nd; j++) {   // leaf dabs over the face and the top, the light ones on top
+    var q = rng() * N, qi = Math.floor(q), up = rng(), a = lerp(-hw * 0.95, 0.02, Math.sqrt(up)), y = Math.sqrt(Math.max(0, 1 - Math.pow(Math.min(1, Math.abs(a) / hw), 2))) * hb[qi] * (0.97 + 0.03 * rng()), p = pt(q, a, y), s = Math.max(0.4, 0.08 * p.k), tp = up > 0.5;
+    var c = tp ? mixc(L.top, L.flush > 0.3 ? [206, 222, 104] : [140, 172, 96], 0.2 + 0.45 * rng()) : (rng() < 0.5 ? scl(L.side, 0.82 + 0.1 * rng()) : mixc(L.side, [96, 130, 80], 0.35 * rng()));   // (mid greens: near-black dabs read as holes)
+    ctx.fillStyle = rgb(shade(c, tp ? [0, 0.85, -0.5] : [0, 0.3, -1])); ctx.beginPath(); ctx.ellipse(p.x, p.y, s, s * 0.62, rng() * 3, 0, TAU); ctx.fill();
+  }
+  if (L.flower > 0.05) { ctx.fillStyle = rgb(shade([246, 244, 232], [0, 0.5, -1], { amb: 1.2 })); for (j = 0; j < (x1 - x0) * 6 * L.flower; j++) { var fq = rng() * N, fp = pt(fq, -hw * (0.4 + 0.5 * rng()), hb[Math.floor(fq)] * (0.35 + 0.5 * rng())); ctx.beginPath(); ctx.arc(fp.x, fp.y, Math.max(0.35, 0.05 * fp.k), 0, TAU); ctx.fill(); } }   // 茶の花
+  if (SEA.snow) { strip(-hw * 0.5, 0.84, hw * 0.4, 0.98); ctx.fillStyle = rgb(snowLt(lightTint(1))); ctx.fill(); }   // snow along the tops
+}
+function teaRowAO(ctx, r) { var e = teaRowEnds(r), N = 12, pp = []; for (var k = 0; k <= N; k++) { var x = lerp(e[0], e[1], k / N); pp.push(P(x, 0, teaRowZ(r, x) - 0.75)); } for (k = N; k >= 0; k--) { var x2 = lerp(e[0], e[1], k / N); pp.push(P(x2, 0, teaRowZ(r, x2) + 0.75)); } poly(ctx, pp); ctx.fill(); }
+
+/* 鍛冶屋: a village smithy of weathered boards under a tiled roof with a smoke vent on the ridge; its wide front bay open by day on
+   the dark workshop where the 火床's coals glow, an anvil on its block outside, a quench tub, charcoal bales, new hoes against the
+   wall. Shut at night, the banked coals still showing red through the crack of the shutters */
+function smithyFrame() { return BF(SMITHY.x, SMITHY.z, SMITHY.u, 0); }
+var SMITH_W = 5.6, SMITH_D = 4.4;
+function drawSmithy(ctx) {
+  var B = smithyFrame(), w = SMITH_W, d = SMITH_D, yE = 2.55, S = sil(), Wl = boxWalls(B, w, d, 0, yE), night = LIT.name === 'night', bw = [92, 76, 60];
+  [Wl.l, Wl.r].forEach(function (q) { if (!q.vis) return; paintWall(ctx, q, bw, { gable: yE + 0.55 * (d / 2 + 0.55), eave: 0.4, seed: 51, tex: 0.5 }); if (!S) { boards(ctx, q, 0, q.len, 0, yE, [80, 66, 54]); frameWall(ctx, q, [0.08, q.len - 0.08], [], MAT.woodD, 0.14); } });
+  var f = Wl.f, b0 = 1.9, b1 = w - 0.25;
+  if (f.vis) {
+    paintWall(ctx, f, bw, { eave: 0.6, seed: 52, tex: 0.5 });
+    if (!S) {
+      boards(ctx, f, 0, b0 - 0.1, 0, yE, [80, 66, 54]);
+      lattice(ctx, f, 0.4, 1.35, 1.15, 1.85, { col: [70, 56, 44], out: 0.04, sp: 0.13, lit: night && LIT.win > 0 && winOn(53) });
+      if (night) {
+        boards(ctx, f, b0, b1, 0, yE - 0.3, [72, 60, 50]);   // the shutters up for the night
+        ctx.strokeStyle = 'rgba(255,128,60,0.7)'; ctx.lineWidth = Math.max(0.3, 0.03 * Pa(f.c).k); ctx.beginPath(); wline(ctx, f, (b0 + b1) / 2, 0.2, (b0 + b1) / 2 + 0.02, 1.2, 0.05); ctx.stroke();
+        addGlow(Pa(f.at((b0 + b1) / 2, 0.7, 0.05)), 2.4, 0.3, true);
+      } else {
+        var op = [f.at(b0, 0, 0.01), f.at(b1, 0, 0.01), f.at(b1, yE - 0.3, 0.01), f.at(b0, yE - 0.3, 0.01)].map(Pa);
+        poly(ctx, op); ctx.fillStyle = 'rgb(30,24,22)'; ctx.fill();
+        ctx.save(); poly(ctx, op); ctx.clip();
+        var hc = f.at(b0 + 1.0, 0.8, -2.9), hp = Pa(hc), k = hp.k, hot = LIT.lit ? 1 : 0.75;
+        var gl = ctx.createRadialGradient(hp.x, hp.y, 0, hp.x, hp.y, 1.5 * k); gl.addColorStop(0, 'rgba(255,170,70,' + (0.7 * hot) + ')'); gl.addColorStop(0.35, 'rgba(210,90,30,' + (0.3 * hot) + ')'); gl.addColorStop(1, 'rgba(120,40,20,0)'); ctx.fillStyle = gl; ctx.fillRect(hp.x - 2 * k, hp.y - 2 * k, 4 * k, 4 * k);   // the forge's glow on the dark walls, the rest of the shop in shadow
+        fillPts(ctx, [f.at(b0 + 0.4, 0, -2.6), f.at(b0 + 1.6, 0, -2.6), f.at(b0 + 1.6, 0.75, -2.6), f.at(b0 + 0.4, 0.75, -2.6)], [92, 66, 50], 0.3);   // the clay hearth
+        ctx.fillStyle = 'rgba(255,190,90,' + (0.9 * hot) + ')'; ctx.beginPath(); ctx.ellipse(hp.x, hp.y + 0.02 * k, 0.4 * k, 0.12 * k, 0, 0, TAU); ctx.fill();   // the coals
+        fillPts(ctx, [f.at(b0 + 1.8, 0, -2.4), f.at(b0 + 2.9, 0, -2.4), f.at(b0 + 2.9, 0.9, -2.4), f.at(b0 + 1.8, 0.9, -2.4)], scl([96, 70, 52], 0.5 + 0.3 * hot), 0.3);   // the box bellows (鞴)
+        ctx.restore();
+        if (LIT.lit) { addGlow(Pa(f.at(b0 + 1.0, 0.9, 0)), 7, 0.55, true); addPool(f.at(b0 + 1.2, 0, 1.2), 2.2, 0.7); }
+      }
+      frameWall(ctx, f, [0.08, b0 - 0.05, b1 + 0.05, w - 0.06], [yE - 0.25], MAT.woodD, 0.15);
+      for (var hq = 0; hq < 3; hq++) { var h0 = Pa(f.at(0.35 + hq * 0.42, 0.02, 0.18)), h1 = Pa(f.at(0.45 + hq * 0.42, 1.35, 0.06)), kk = h0.k; ctx.strokeStyle = rgb(lit([120, 92, 62], f.n)); ctx.lineWidth = Math.max(0.3, 0.035 * kk); ctx.beginPath(); ctx.moveTo(h0.x, h0.y); ctx.lineTo(h1.x, h1.y); ctx.stroke(); ctx.fillStyle = rgb(lit([92, 92, 96], f.n, { amb: 1.2 })); ctx.beginPath(); ctx.moveTo(h0.x - 0.1 * kk, h0.y); ctx.lineTo(h0.x + 0.12 * kk, h0.y - 0.02 * kk); ctx.lineTo(h0.x + 0.1 * kk, h0.y - 0.2 * kk); ctx.lineTo(h0.x - 0.08 * kk, h0.y - 0.18 * kk); ctx.closePath(); ctx.fill(); }   // new 鍬 leaning against the wall, blades down
+    }
+  }
+  var R = { W: w / 2 + 0.5, D: d / 2 + 0.55, yE: yE - 0.1, s: 0.55, type: 'gable', mat: 'kawara', seed: 54, ridgeH: 0.3 }, yR = R.yE + R.s * R.D;
+  drawRoof(ctx, B, R);
+  boxIn(ctx, B, 0.45, 1.45, -0.4, 0.4, yR - 0.25, yR + 0.42, [74, 62, 52]);   // the 煙出し: a little louvred box on the ridge
+  drawRoof(ctx, B, { W: 0.75, D: 0.6, yE: yR + 0.38, s: 0.5, type: 'gable', mat: 'kawara', seed: 55, ridgeH: 0.1, ca: 0.95 });
+  // outside: the anvil on its block, the quench tub, charcoal bales, the grindstone
+  var an = B.L(b0 + 1.05 - w / 2, -d / 2 - 0.95, 0);
+  prism(ctx, an[0], an[2], 0, 0.55, 0.27, 0.25, 9, 0, [108, 84, 62], { snow: 0 });
+  var aB = BF(an[0], an[2], SMITHY.u, 0); boxIn(ctx, aB, -0.26, 0.26, -0.12, 0.12, 0.55, 0.72, [58, 58, 62]);
+  var tb = B.L(b0 + 2.4 - w / 2, -d / 2 - 0.7, 0); prism(ctx, tb[0], tb[2], 0, 0.5, 0.32, 0.36, 12, 0, [104, 80, 58], { snow: 0 });
+  if (!S) { var tw = P(tb[0], 0.5, tb[2]); ctx.fillStyle = SEA.snow ? 'rgb(52,58,66)' : 'rgb(30,38,44)'; ctx.beginPath(); ctx.ellipse(tw.x, tw.y, 0.28 * tw.k, 0.28 * tw.k * CAM.s, 0, 0, TAU); ctx.fill(); }
+  var cb = BF(B.L(-w / 2 - 0.55, -0.6, 0)[0], B.L(-w / 2 - 0.55, -0.6, 0)[2], [0, 1], 0);
+  [[-0.9, 0], [0, 0], [0.9, 0], [-0.45, 0.6], [0.45, 0.6]].forEach(function (q) { var c = cb.L(q[0], 0, q[1]); prism(ctx, c[0], c[2], q[1], q[1] + 0.6, 0.3, 0.3, 8, 0.3, [150, 126, 86], { tex: 0.5 }); });   // 炭俵, straw bales of charcoal, stacked
+}
+function smithAnvil() { var B = smithyFrame(); return B.L(1.9 + 1.05 - SMITH_W / 2, -SMITH_D / 2 - 0.95, 0); }
+
+/* 高札場: the notice boards of the lord's edicts on a stone footing under a small tiled roof, behind a bamboo 矢来; plain boards of
+   pale wood with peaked tops (their writing too small to read at this distance) */
+function kosatsuFrame() { return BF(KOSATSU.x, KOSATSU.z, KOSATSU.u, 0); }
+function yarai(ctx, B, runs, h) {   // 竹矢来: a low palisade of crossed bamboo on posts. runs: [[a, b], [a, b]] in the frame
+  var S = sil(), col = S ? '#000' : rgb(shade(snowAlb([168, 150, 96], 0.2), B.N(0, -1, 0.3))), colD = S ? '#000' : rgb(shade([128, 112, 72], B.N(0, -1, 0.3)));
+  runs.forEach(function (rn) {
+    var A = rn[0], C = rn[1], L = Math.hypot(C[0] - A[0], C[1] - A[1]), n = Math.max(1, Math.round(L / 0.9)), i;
+    function Q(f, y) { return Pa(B.L(lerp(A[0], C[0], f), lerp(A[1], C[1], f), y)); }
+    var k = Q(0.5, 0).k; ctx.lineCap = 'round';
+    ctx.strokeStyle = colD; ctx.lineWidth = Math.max(0.3, 0.032 * k); ctx.beginPath();
+    for (i = 0; i < n * 2; i++) { var fa = i / (n * 2), fb = (i + 1) / (n * 2), q0 = Q(fa, 0.06), q1 = Q(fb, h * 0.92), q2 = Q(fb, 0.06), q3 = Q(fa, h * 0.92); ctx.moveTo(q0.x, q0.y); ctx.lineTo(q1.x, q1.y); ctx.moveTo(q2.x, q2.y); ctx.lineTo(q3.x, q3.y); }
+    ctx.stroke();
+    ctx.strokeStyle = col; ctx.lineWidth = Math.max(0.35, 0.055 * k); ctx.beginPath();
+    for (i = 0; i <= n; i++) { var p0 = Q(i / n, 0), p1 = Q(i / n, h + 0.06); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); }
+    [h * 0.94, h * 0.42].forEach(function (y) { var p0 = Q(0, y), p1 = Q(1, y); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); });
+    ctx.stroke(); ctx.lineCap = 'butt';
+  });
+}
+function drawKosatsu(ctx) {
+  var B = kosatsuFrame(), S = sil(), wood = [100, 78, 58], board = [224, 212, 186];
+  yarai(ctx, B, [[[-2.75, 0.9], [-2.75, -1.6]], [[2.75, -1.6], [2.75, 0.9]]], 1.05);
+  stoneBox(ctx, B, -2.3, 2.3, -0.75, 0.6, 0, 0.62, [150, 146, 136], null, { seed: 61, ch: 0.31, blk: 0.7 });
+  [-2.05, 2.05].forEach(function (a) { postIn(ctx, B, a, 0.05, 0.62, 3.45, 0.11, wood); });
+  boxIn(ctx, B, -2.1, 2.1, 0.03, 0.13, 1.2, 3.1, scl(wood, 0.8));   // the backboard
+  boxIn(ctx, B, -2.15, 2.15, -0.06, 0.06, 3.0, 3.14, scl(wood, 0.9));   // the top rail
+  for (var i = 0; i < 5; i++) {   // the 高札, peaked boards of plain wood, a little greyed with weather
+    var a = -1.64 + i * 0.82, h0 = 1.32 + (i % 2) * 0.1, h1 = 2.82 - 0.1 * Math.abs(i - 2), hw = 0.33;
+    var pts = [B.L(a - hw, -0.03, h0), B.L(a + hw, -0.03, h0), B.L(a + hw, -0.03, h1 - 0.17), B.L(a, -0.03, h1), B.L(a - hw, -0.03, h1 - 0.17)];
+    var pp = fillPts(ctx, pts, S ? [0, 0, 0] : shade(snowAlb(mixc(board, [176, 168, 150], hash2(i, 9) * 0.4), 0), B.N(0, -1, 0.04), { amb: 1.15 }), 0.3);
+    if (!S) { ctx.strokeStyle = rgb(shade([96, 80, 62], B.N(0, -1, 0))); ctx.lineWidth = 0.3; poly(ctx, pp); ctx.stroke(); }
+  }
+  drawRoof(ctx, B, { W: 2.65, D: 0.95, yE: 3.3, s: 0.6, type: 'gable', mat: 'kawara', seed: 63, ridgeH: 0.22 });
+  yarai(ctx, B, [[[-2.75, -1.6], [2.75, -1.6]]], 1.05);   // the front run last: it stands before everything
+}
+
+/* 寺子屋: the temple's writing school inside the front wall, west of the gate: a plastered house on a raised floor with a plank 縁側,
+   its middle screens slid open on fair days on the room where the children sit at their desks */
+function terakoyaFrame() { return BF(TERAKOYA.x, TERAKOYA.z, KR_DIR, 0); }
+var TERA_W = 5.0, TERA_D = 3.2;
+function drawTerakoya(ctx) {
+  var B = terakoyaFrame(), w = TERA_W, d = TERA_D, yE = 2.75, S = sil(), Wl = boxWalls(B, w, d, 0.5, yE), night = LIT.name === 'night';
+  boxIn(ctx, B, -w / 2 - 0.05, w / 2 + 0.05, -d / 2 - 0.05, d / 2 + 0.05, 0, 0.5, [124, 116, 104]);   // the footing under the raised floor
+  [Wl.l, Wl.r].forEach(function (q) { if (!q.vis) return; paintWall(ctx, q, MAT.plasterOld, { gable: yE + 0.5 * (d / 2 + 0.7), eave: 0.4, seed: 71 }); if (!S) { boards(ctx, q, 0, q.len, 0.5, 1.35, [88, 72, 58]); frameWall(ctx, q, [0.08, q.len / 2, q.len - 0.08], [], MAT.wood, 0.14); } });
+  var f = Wl.f;
+  if (f.vis) {
+    paintWall(ctx, f, MAT.plasterOld, { eave: 0.6, seed: 72 });
+    if (!S) {
+      var open = (LIT.name === 'day' || LIT.name === 'morning') && !SEA.snow && !F.wet, m0 = w * 0.3, m1 = w * 0.7;
+      shoji(ctx, f, 0.25, m0 - 0.05, 0.6, 2.4, { lit: (night || LIT.name === 'dusk') && winOn(73) });
+      if (open) {
+        wquad(ctx, f, m0, m1, 0.6, 2.4, [56, 46, 38], 0.01);
+        wquad(ctx, f, m0, m1, 0.6, 0.78, lit([170, 150, 104], [0, 1, 0]), 0.012);   // the tatami's edge inside
+        for (var dk = 0; dk < Math.floor((m1 - m0 - 0.2) / 0.6); dk++) wquad(ctx, f, m0 + 0.2 + dk * 0.6, m0 + 0.62 + dk * 0.6, 0.78, 0.98, lit([84, 58, 40], f.n), 0.014);   // the low writing desks (天神机)
+      } else shoji(ctx, f, m0, m1, 0.6, 2.4, { lit: (night || LIT.name === 'dusk') && winOn(74) });
+      shoji(ctx, f, m1 + 0.05, w - 0.25, 0.6, 2.4, { lit: night && winOn(75) });
+      frameWall(ctx, f, [0.08, m0 - 0.02, m1 + 0.02, w - 0.08], [2.5], MAT.wood, 0.14);
+    }
+  }
+  [-w / 2 + 0.15, 0, w / 2 - 0.15].forEach(function (a) { postIn(ctx, B, a, -d / 2 - 0.5, 0, 0.36, 0.05, [96, 76, 56]); });
+  boxIn(ctx, B, -w / 2, w / 2, -d / 2 - 0.6, -d / 2, 0.36, 0.47, [140, 110, 80]);   // the 縁側, on its little posts
+  drawRoof(ctx, B, { W: w / 2 + 0.6, D: d / 2 + 0.75, yE: yE - 0.1, s: 0.55, type: 'irimoya', bm: 0.6, mat: 'kawara', seed: 77, ridgeH: 0.25 });
+}
+
+/* 酒蔵: a brewery of thick white plaster over a namako skirt, two storeys under a heavy tiled roof with a long 越屋根 (the raised
+   vent along the ridge that lets the steam of the rice out); the wide entrance under a pent roof, the 杉玉 hung under the eaves above
+   it (fresh green when the new sake is pressed in winter, browning through the year), a hanging board with 酒 beside the door,
+   straw-wrapped casks stacked by it. In the cold months the brewers work into the night, the upper windows lit, steam rising */
+function sakaguraFrame() { return BF(SAKAGURA.x, SAKAGURA.z, KR_DIR, 0); }
+var SAKE_W = 10.5, SAKE_D = 7, SAKE_H = 4.8;
+function sugidamaCol() {
+  var sn = seasonName(), p = F.prog === undefined ? 0.5 : F.prog;
+  return sn === 'winter' ? mixc([60, 96, 46], [52, 90, 44], p) : sn === 'spring' ? mixc([80, 104, 52], [112, 112, 60], p) : sn === 'summer' ? mixc([122, 112, 62], [134, 104, 58], p) : mixc([130, 96, 56], [112, 80, 48], p);
+}
+function drawSakagura(ctx) {
+  var B = sakaguraFrame(), w = SAKE_W, d = SAKE_D, yE = SAKE_H, S = sil(), Wl = boxWalls(B, w, d, 0, yE), brewing = seasonName() === 'winter';
+  [Wl.b, Wl.l, Wl.r, Wl.f].forEach(function (q) {
+    if (!q.vis) return;
+    var gb = q === Wl.l || q === Wl.r ? yE + 0.5 * (d / 2 + 0.6) : 0;
+    paintWall(ctx, q, [242, 238, 228], { gable: gb || undefined, grime: 0.16, eave: 0.4, seed: 81, tex: 0.18 });
+    if (S) return;
+    namako(ctx, q, 0, q.len, 0, 1.5);
+    wquad(ctx, q, 0, q.len, 1.5, 1.64, lit([236, 232, 222], q.n), 0.06);
+    var nw = Math.max(1, Math.floor(q.len / 2.7));
+    for (var i = 0; i < nw; i++) { var s = (i + 0.5) * q.len / nw; mushiko(ctx, q, s - 0.5, s + 0.5, yE - 1.75, yE - 0.95, LIT.win > 0 && (brewing ? hash2(i + (q === Wl.f ? 0 : 9), 81) < 0.75 : winOn(81 + i))); }
+    if (q === Wl.r) {   // 妻入り: the entrance in the gable end, the side that shows over the theatre
+      var c = q.len / 2, on = LIT.lit && (brewing || winOn(86));
+      wquad(ctx, q, c - 1.75, c + 1.75, 0, 2.7, lit([58, 44, 34], q.n), 0.05);   // the entrance's heavy frame
+      doorway(ctx, q, c - 1.5, c + 1.5, 0, 2.45, on);
+      wquad(ctx, q, c - 1.5, c - 0.45, 0, 2.45, lit([84, 64, 46], q.n), 0.06);   // one leaf of the door, slid half across
+      pentRoof(ctx, q, c - 2.0, c + 2.0, 3.0, 0.9, { mat: 'kawara', s: 0.45 });
+      var bs = c + 2.45;   // the hanging board, 酒 in gold on black
+      wquad(ctx, q, bs - 0.4, bs + 0.4, 0.95, 2.55, lit([40, 30, 26], q.n), 0.1);
+      signText(ctx, '酒', function (u, v) { return Pa(q.at(bs - 0.33 + u * 0.66, 2.48 - v * 1.46, 0.115)); }, true, rgb(lit([226, 190, 110], q.n, { amb: 1.3 })), { fill: 0.86 });
+    }
+  });
+  var R = { W: w / 2 + 0.5, D: d / 2 + 0.6, yE: yE - 0.1, s: 0.5, type: 'gable', mat: 'kawara', seed: 83, ridgeH: 0.42 }, yR = R.yE + R.s * R.D;
+  drawRoof(ctx, B, R);
+  var VW = boxWalls(B, 6.4, 1.1, yR - 0.2, yR + 0.75);   // the 越屋根: slatted sides under its own little roof
+  [VW.f, VW.l, VW.r].forEach(function (q) { if (!q.vis) return; wquad(ctx, q, 0, q.len, q.y0, q.y1, S ? [0, 0, 0] : lit([70, 58, 48], q.n), 0); if (!S) { ctx.strokeStyle = rgb(lit([118, 98, 76], q.n)); ctx.lineWidth = 0.35; ctx.beginPath(); for (var s2 = 0.18; s2 < q.len; s2 += 0.18) wline(ctx, q, s2, q.y0, s2, q.y1, 0.02); ctx.stroke(); } });
+  drawRoof(ctx, B, { W: 3.6, D: 1.15, yE: yR + 0.7, s: 0.5, type: 'gable', mat: 'kawara', seed: 84, ridgeH: 0.2 });
+  // the 杉玉 on its bracket high in the gable, above the door
+  var sg = B.L(w / 2 + 0.55, 0, yE + 0.2), sp = Pa(sg), sk = sp.k, top = Pa(B.L(w / 2 + 0.05, 0, yE + 0.85));
+  if (S) { ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(sp.x, sp.y, 0.46 * sk, 0, TAU); ctx.fill(); }
+  else {
+    ctx.strokeStyle = rgb(shade([70, 56, 40], [0, 0.4, -1])); ctx.lineWidth = Math.max(0.3, 0.04 * sk); ctx.beginPath(); ctx.moveTo(top.x, top.y); ctx.lineTo(sp.x, sp.y - 0.4 * sk); ctx.stroke();
+    var col = sugidamaCol(), gr = ctx.createRadialGradient(sp.x - 0.15 * sk * (LS[0] < 0 ? 1 : -1), sp.y - 0.15 * sk, 0.05 * sk, sp.x, sp.y, 0.48 * sk);
+    gr.addColorStop(0, rgb(shade(mixc(col, [255, 250, 220], 0.2), [0, 0.6, -0.8]))); gr.addColorStop(1, rgb(scl(shade(col, [0, 0.2, -1]), 0.55)));
+    ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(sp.x, sp.y, 0.46 * sk, 0, TAU); ctx.fill();
+    var rr = mulberry32(85); ctx.lineWidth = Math.max(0.2, 0.012 * sk);
+    for (var n = 0; n < 40; n++) { var an = rr() * TAU, rd = 0.46 * Math.sqrt(rr()), px = sp.x + Math.cos(an) * rd * sk, py = sp.y + Math.sin(an) * rd * sk; ctx.strokeStyle = rgb(shade(scl(col, 0.7 + 0.6 * rr()), [Math.cos(an), 0.5, -0.8]), 0.8); ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + Math.cos(an) * 0.06 * sk, py + Math.sin(an) * 0.06 * sk); ctx.stroke(); }   // the cedar needles' bristle
+    if (SEA.snow) { ctx.fillStyle = rgb(snowLt(lightTint(1))); ctx.beginPath(); ctx.ellipse(sp.x, sp.y - 0.38 * sk, 0.3 * sk, 0.1 * sk, 0, 0, TAU); ctx.fill(); }
+  }
+  // the casks (菰樽) by the door: three below, two on them
+  [[-0.7, 0], [0, 0], [0.7, 0], [-0.35, 1], [0.35, 1]].forEach(function (q) { var p = B.L(w / 2 + 0.62, -2.5 + q[0], 0); prism(ctx, p[0], p[2], q[1] * 0.62, q[1] * 0.62 + 0.6, 0.31, 0.33, 12, 0, [204, 184, 132], q[1] ? { tex: 0.5 } : { tex: 0.5, snow: 0 }); });
+}
+function sakeWorkerAt() { return sakaguraFrame().L(SAKE_W / 2 + 1.7, 0.4, 0); }
+
+/* 木戸 and 番屋: the town gate across the main street (stout posts and a capped crossbeam, plank leaves, board fences out to the
+   house fronts), standing open by day and shut at night; the 番屋 beside it, a little board hut with a paper-screened front, its
+   lantern lit at dusk, fire buckets by the door */
+function kidoFrame() { return BF(KIDO.x, KIDO.z, KR_DIR, 0); }
+var KIDO_GO = 1.95;   // half the gate's opening
+function kidoShut() { return LIT.name === 'night'; }
+function drawKido(ctx) {
+  var B = kidoFrame(), S = sil(), wood = [104, 82, 60], dark = [70, 56, 44], hw = STREET_HW, go = KIDO_GO, h = 3.55, shut = kidoShut(), i;
+  function leaf(a0, a1, b0, b1) {   // a plank door leaf between two ground points in the frame, 2.5 m high
+    var q = [B.L(a0, b0, 0.06), B.L(a1, b1, 0.06), B.L(a1, b1, 2.55), B.L(a0, b0, 2.55)], c = centroid(q), n = norm([q[1][2] - q[0][2], 0, -(q[1][0] - q[0][0])]);
+    if (!faceVisible(c, n)) n = mul(n, -1);
+    var pp = fillPts(ctx, q, S ? [0, 0, 0] : shade(wood, n), 0.35); if (S) return;
+    ctx.strokeStyle = rgb(scl(shade(wood, n), 0.65)); ctx.lineWidth = 0.35; ctx.beginPath();
+    for (var j = 1; j < 6; j++) { var f = j / 6, a = Pa(B.L(lerp(a0, a1, f), lerp(b0, b1, f), 0.06)), b = Pa(B.L(lerp(a0, a1, f), lerp(b0, b1, f), 2.55)); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); }
+    [0.5, 2.1].forEach(function (y) { var a = Pa(B.L(a0, b0, y)), b = Pa(B.L(a1, b1, y)); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); }); ctx.stroke();
+  }
+  if (shut) { leaf(-go + 0.1, 0, 0.02, 0.02); leaf(0, go - 0.1, 0.02, 0.02); if (!S) { ctx.strokeStyle = rgb(shade(dark, B.N(0, -1, 0))); ctx.lineWidth = 0.4; var w0 = Pa(B.L(go - 0.9, -0.03, 0.08)), w1 = Pa(B.L(go - 0.25, -0.03, 1.35)); ctx.strokeRect(Math.min(w0.x, w1.x), Math.min(w0.y, w1.y), Math.abs(w1.x - w0.x), Math.abs(w1.y - w0.y)); } }   // shut, the wicket (潜り戸) in one leaf
+  else { leaf(-go + 0.1, -go + 0.25, 0.1, 1.95); leaf(go - 0.1, go - 0.25, 0.1, 1.95); }   // swung back against the fences behind
+  [-1, 1].forEach(function (sg) {   // the board fences out to the house fronts
+    var a0 = sg < 0 ? -hw : go + 0.12, a1 = sg < 0 ? -go - 0.12 : hw, W0 = wallOf(B, [a0, 0], [a1, 0], 0, 2.35);
+    fillPts(ctx, W0.p, S ? [0, 0, 0] : shade(snowAlb(wood, 0), W0.vis ? W0.n : mul(W0.n, -1)), 0.35);
+    if (!S && W0.vis) { boards(ctx, W0, 0, W0.len, 0, 2.35, [96, 76, 58]); }
+    postIn(ctx, B, sg * (hw - 0.08), 0, 0, 2.5, 0.09, wood);
+  });
+  [-go, go].forEach(function (a) { postIn(ctx, B, a, 0, 0, h, 0.15, dark); });
+  boxIn(ctx, B, -go - 0.45, go + 0.45, -0.13, 0.13, h - 0.38, h - 0.06, dark);   // the 冠木
+  drawRoof(ctx, B, { W: go + 0.7, D: 0.7, yE: h, s: 0.6, type: 'gable', mat: 'board', seed: 91, ridgeH: 0.12 });
+}
+function banyaFrame() { return BF(BANYA.x, BANYA.z, STREET_DIR, 0); }
+function drawBanya(ctx) {
+  var B = banyaFrame(), w = 2.5, d = 1.8, yE = 2.15, S = sil(), Wl = boxWalls(B, w, d, 0, yE);
+  [Wl.l, Wl.r].forEach(function (q) { if (!q.vis) return; paintWall(ctx, q, [96, 78, 60], { gable: yE + 0.5 * (d / 2 + 0.4), eave: 0.3, seed: 92, tex: 0.5 }); if (!S) boards(ctx, q, 0, q.len, 0, yE, [84, 68, 54]); });
+  var f = Wl.f;
+  if (f.vis) {
+    paintWall(ctx, f, [96, 78, 60], { eave: 0.45, seed: 93 });
+    if (!S) {
+      boards(ctx, f, 0, w, 0, 0.75, [84, 68, 54]);
+      shoji(ctx, f, 0.15, w - 0.75, 0.75, 1.95, { lit: LIT.lit });   // the 腰高障子, lit from the lamp inside at dusk and through the night
+      frameWall(ctx, f, [0.06, w - 0.7, w - 0.06], [1.98], MAT.woodD, 0.12);
+      wquad(ctx, f, w - 0.65, w - 0.12, 0, 1.95, lit([46, 36, 30], f.n), 0.01);   // the door
+    }
+  }
+  drawRoof(ctx, B, { W: w / 2 + 0.35, D: d / 2 + 0.45, yE: yE - 0.05, s: 0.55, type: 'gable', mat: 'kawara', seed: 94, ridgeH: 0.15 });
+  if (f.vis) { chochin(ctx, f.at(0.5, yE - 0.32, 0.4), [236, 228, 210], 0.95); rainBarrel(ctx, B.L(-w / 2 - 0.5, -0.2, 0)); }
 }
 
 /* ---- 05_ground.js ---- */
@@ -3973,7 +4267,7 @@ function nearField(ctx, z0, z1) {
     if (rd < 0.45 || riverD(jx, jz) < 1.5) continue;
     var pdc = paddyAt(PADDY_L, jx, jz) || paddyAt(PADDY_R, jx, jz);
     if (pdc) { if (hig && F.paddy && pdc.e < 0.22 && r() < 0.55 * sstep(0.42, 0.66, NZ.n2(jx * 0.1 + 60, jz * 0.1 - 4))) higan(jx, jz, 2); continue; }   // (on the paddies only the 畦, the banks between them, where the 彼岸花 come up in red lines at the equinox)
-    if ((F.sign && polyD(SIDE_S, jx, jz) < 0.9) || (F.shrine && polyD(SHR_S, jx, jz) < 1.2) || Math.hypot(jx - SIGN.x, jz - SIGN.z) < 0.9 || Math.hypot(jx - WELL.x, jz - WELL.z) < 2 || Math.hypot(jx - TREE0.x, jz - TREE0.z) < 1.4 || (F.farm && jx > FIELDN.x0 - 0.2 && jx < FIELDN.x1 + 0.2 && jz > FIELDN.z0 - 0.2 && jz < FIELDN.z1 + 0.2) || (F.paddy && jz < 0 && polyD(FOOT_S, jx, jz) < 0.45) || (F.paddy && jx > 7.6 && Math.abs(jz - ditchZ(jx)) < 0.62) || (jx > FIELD.x0 - 0.5 && jx < FIELD.x1 + 0.5 && jz > FIELD.z0 - 0.5)) continue;   // (clear of the paths, the signpost, the well, the lone tree, the field)
+    if ((F.sign && polyD(SIDE_S, jx, jz) < 0.9) || (F.shrine && polyD(SHR_S, jx, jz) < 1.2) || Math.hypot(jx - SIGN.x, jz - SIGN.z) < 0.9 || Math.hypot(jx - WELL.x, jz - WELL.z) < 2 || Math.hypot(jx - TREE0.x, jz - TREE0.z) < 1.4 || (F.farm && jx > FIELDN.x0 - 0.2 && jx < FIELDN.x1 + 0.2 && jz > FIELDN.z0 - 0.2 && jz < FIELDN.z1 + 0.2) || (F.paddy && jz < 0 && polyD(FOOT_S, jx, jz) < 0.45) || (F.paddy && jx > 7.6 && Math.abs(jz - ditchZ(jx)) < 0.62) || (jx > FIELD.x0 - 0.5 && jx < FIELD.x1 + 0.5 && jz > FIELD.z0 - 0.5) || (F.tea && jx > CHA.x0 - 0.6 && jx < CHA.x1 + 0.6 && jz > CHA.z0 - 0.9 && jz < CHA.z1 + 0.3)) continue;   // (clear of the paths, the signpost, the well, the lone tree, the field)
     if (jz > riverZAt(jx) - RIVER_HW) continue;   // (only on this side of the river)
     if (jz > 19 && (jx < -4 || Math.hypot(jx - SHRINE.x, jz - SHRINE.z) < 3.2 || Math.hypot(jx - TORII.x, jz - TORII.z) < 1.8)) continue;   // (beyond the fork only on the open bank right of the road, clear of the shrine and its torii)
     var fade = (1 - 0.4 * sstep(-6, 14, jz)) * (jx < -4 ? 1 - sstep(14, 19, jz) : 1), dens = NZ.n2(jx * 0.22 + 7, jz * 0.22) * 0.7 + 0.3 * NZ.n2(jx * 0.9, jz * 0.9 + 3);
@@ -4054,7 +4348,7 @@ function buildScene() {
   if (F.kura) flat.push({ draw: function (c) { drawRevetment(c, [krPt(5, RIVER_HW), krPt(14, RIVER_HW + 0.2), krPt(24, RIVER_HW), krPt(34, RIVER_HW + 0.3), krPt(48, RIVER_HW + 0.2)]); }, key: 0 });
   if (F.rivst) flat.push({ draw: function (c) { drawRevetment(c, farBankPts(-52, -3)); }, key: 0 });   // the riverside street's stone bank
   // cherries along the river
-  if (F.riverCherry > 0) [[-46, 64.5, 0.9], [-14.5, 40.6, 0.8], [-28, 47.3, 0.85], [19.5, 21.5, 0.95], [31.5, 14.5, 0.9]].forEach(function (a, ii) {
+  if (F.riverCherry > 0) RIVER_CHERRY.forEach(function (a, ii) {
     var sk = genTownSakura(800 + ii, a[0], a[1], a[2] * 1.45 * F.riverCherry, 1.5);
     put(a[0], a[1], { draw: function (c) { drawSakura(c, sk, { density: sakDens(sk), dab: 0.24, cap: 60, batch: true }); }, ao: function (c) { mapleAO(c, sk); }, refl: true, sway: swayTree('broad', sk), tap: 'cherry' });
   });
@@ -4080,7 +4374,7 @@ function buildScene() {
     YARDS.push({ x: SHRINE.x, z: SHRINE.z, u: [1, 0], v: [0, 1], w: 5, d: 5, pad: 1.2, k: 0.7 });
     simple(SHRINE.x, SHRINE.z, drawHokora, { ao: circAO(SHRINE.x, SHRINE.z, 2), drift: 1.1 });
     simple(TORII.x, TORII.z, drawTorii, { ao: function (c) { var tb2 = toriiFrame(); [-1.45, 1.45].forEach(function (a) { var p = Pa(tb2.L(a, 0, 0)); c.beginPath(); c.ellipse(p.x, p.y, 0.4 * p.k, 0.2 * p.k, 0, 0, TAU); c.fill(); }); } });
-    [[4.0, 1.4, 10.5, 701], [5.4, -1.8, 9, 702], [6.6, 1.2, 9.5, 703], [2.4, 2.8, 10, 704]].map(function (a) { return [SHRINE.x + a[0], SHRINE.z + a[1], a[2], a[3]]; }).forEach(function (a) { put(a[0], a[1], { draw: function (c) { drawCedar(c, a[0], a[1], a[2], a[3]); }, ao: circAO(a[0], a[1], 1.4), sway: swayCedar(a[0], a[1], a[2], a[3]), tap: 'cedar' }); });
+    SHRINE_CEDARS.map(function (a) { return [SHRINE.x + a[0], SHRINE.z + a[1], a[2], a[3]]; }).forEach(function (a) { put(a[0], a[1], { draw: function (c) { drawCedar(c, a[0], a[1], a[2], a[3]); }, ao: circAO(a[0], a[1], 1.4), sway: swayCedar(a[0], a[1], a[2], a[3]), tap: 'cedar' }); });
   }
   if (F.landing) simple(landingGeom().B.x, landingGeom().B.z, drawLanding, { refl: true, key: P(landingGeom().B.x, 0, landingGeom().B.z - 3).d });
   // ---- the town's landmarks
@@ -4093,7 +4387,7 @@ function buildScene() {
     var gfr = gateFrame(); simple(gfr.x, gfr.z, drawTempleGate, { ao: function (c) { footAO(c, { x: gfr.x, z: gfr.z, u: gfr.u, w: 4.2, d: 2.4 }, 0.4); } });
     sandoLanterns().forEach(function (q) { simple(q[0], q[2], function (c) { stoneLantern(c, q[0], q[2], 1.15, LIT.lit); }, { ao: circAO(q[0], q[2], 0.5) }); });
     var czf = chozuyaFrame(); simple(czf.x, czf.z, drawChozuya, { ao: function (c) { footAO(c, { x: czf.x, z: czf.z, u: czf.u, w: 2.9, d: 2.2 }, 0.4); } });
-    [[-15.3, 93.1, 1.3, 51], [-41.1, 102.3, 1.25, 52]].forEach(function (a) { var mt = genBroad(a[3], a[0], a[1], a[2], 1.2); put(a[0], a[1], { draw: function (c) { if (SEA.maple) drawBroad(c, mt, { pal: SEA.maple, dab: 0.26 }); else drawBroad(c, mt); }, ao: function (c) { mapleAO(c, mt); }, sway: swayTree('broad', mt), tap: 'maple' }); });
+    [[-19.3, 99.1, 1.3, 51], [-41.1, 102.3, 1.25, 52]].forEach(function (a) { var mt = genBroad(a[3], a[0], a[1], a[2], 1.2); put(a[0], a[1], { draw: function (c) { if (SEA.maple) drawBroad(c, mt, { pal: SEA.maple, dab: 0.26 }); else drawBroad(c, mt); }, ao: function (c) { mapleAO(c, mt); }, sway: swayTree('broad', mt), tap: 'maple' }); });
     var tc = genTownSakura(820, -6, 94, 1.4, 1.4); put(-6, 94, { draw: function (c) { drawSakura(c, tc, { density: sakDens(tc), dab: 0.24, cap: 60, batch: true }); }, sway: swayTree('broad', tc), tap: 'cherry' });
   }
   if (F.pagoda) { var pf = pagodaFrame(); YARDS.push({ x: PAGODA.x, z: PAGODA.z, u: pf.u, v: pf.v, w: 10, d: 10, pad: 1.5, k: 0.9 }); simple(PAGODA.x, PAGODA.z, drawPagoda, { ao: function (c) { footAO(c, { x: PAGODA.x, z: PAGODA.z, u: pf.u, w: 8, d: 8 }, 0.6); } }); }
@@ -4107,6 +4401,13 @@ function buildScene() {
     put(pq[0], pq[2], { draw: function (c) { drawPine(c, pn); }, key: bkey - 1e-4, sway: swayTree('pine', pn), tap: 'pine' });
   });
   if (F.ishigaki) { var ig = ishiGeom(); put(CASTLE.x, CASTLE.z, { draw: function (c) { drawIshigaki(c); if (F.keep) drawKeep(c); castleFront(c); castleHaze(c); }, key: P(CASTLE.x, 0, CASTLE.z - 6).d, ao: function (c) { footAO(c, { x: CASTLE.x, z: CASTLE.z, u: ig.B.u, w: ig.w + 3, d: ig.d + 3 }, 0.6); } }); }
+  // ---- the later additions
+  if (F.tea) teaRows().forEach(function (r) { var e = teaRowEnds(r), xm = (e[0] + e[1]) / 2; put(xm, r.z, { draw: function (c) { drawTeaRow(c, r); }, ao: function (c) { teaRowAO(c, r); }, key: P(xm, 0, r.z - 0.6).d, drift: 0.6 }); });
+  if (F.smithy) { var smB = smithyFrame(); YARDS.push({ x: SMITHY.x, z: SMITHY.z - 1.2, u: smB.u, v: smB.v, w: 9, d: 8, pad: 1.4, k: 0.7 }); simple(SMITHY.x, SMITHY.z, drawSmithy, { ao: function (c) { footAO(c, { x: SMITHY.x, z: SMITHY.z, u: smB.u, w: SMITH_W, d: SMITH_D }); }, key: P.apply(null, smB.L(0, -SMITH_D / 2 - 0.9, 0)).d, foot: { x: SMITHY.x, z: SMITHY.z, u: smB.u, w: SMITH_W, d: SMITH_D } }); }
+  if (F.kosatsu) { var ksB = kosatsuFrame(); YARDS.push({ x: KOSATSU.x, z: KOSATSU.z, u: ksB.u, v: ksB.v, w: 6.5, d: 4, pad: 1, k: 0.6 }); simple(KOSATSU.x, KOSATSU.z, drawKosatsu, { ao: function (c) { footAO(c, { x: KOSATSU.x, z: KOSATSU.z, u: ksB.u, w: 4.6, d: 1.4 }, 0.4); }, key: P.apply(null, ksB.L(0, -1.6, 0)).d, drift: 0.8 }); }
+  if (F.terakoya) { var tkB = terakoyaFrame(); YARDS.push({ x: TERAKOYA.x, z: TERAKOYA.z, u: tkB.u, v: tkB.v, w: TERA_W + 1, d: TERA_D + 2, pad: 1, k: 0.6 }); simple(TERAKOYA.x, TERAKOYA.z, drawTerakoya, { ao: function (c) { footAO(c, { x: TERAKOYA.x, z: TERAKOYA.z, u: tkB.u, w: TERA_W, d: TERA_D }); }, foot: { x: TERAKOYA.x, z: TERAKOYA.z, u: tkB.u, w: TERA_W, d: TERA_D } }); }
+  if (F.sakagura) { var skB = sakaguraFrame(); YARDS.push({ x: SAKAGURA.x, z: SAKAGURA.z, u: skB.u, v: skB.v, w: SAKE_W + 1.5, d: SAKE_D + 4, pad: 1.5, k: 0.7 }); simple(SAKAGURA.x, SAKAGURA.z, drawSakagura, { ao: function (c) { footAO(c, { x: SAKAGURA.x, z: SAKAGURA.z, u: skB.u, w: SAKE_W, d: SAKE_D }); }, key: P.apply(null, skB.L(0, -SAKE_D / 2 * 0.6, 0)).d, foot: { x: SAKAGURA.x, z: SAKAGURA.z, u: skB.u, w: SAKE_W, d: SAKE_D } }); }
+  if (F.kido) { var kdB = kidoFrame(), byB = banyaFrame(); simple(KIDO.x, KIDO.z, drawKido, { ao: function (c) { footAO(c, { x: KIDO.x, z: KIDO.z, u: kdB.u, w: STREET_HW * 2, d: 0.4 }, 0.3); } }); simple(BANYA.x, BANYA.z, drawBanya, { ao: function (c) { footAO(c, { x: BANYA.x, z: BANYA.z, u: byB.u, w: 2.5, d: 1.8 }); }, key: P.apply(null, byB.L(0, -0.9, 0)).d, foot: { x: BANYA.x, z: BANYA.z, u: byB.u, w: 2.5, d: 1.8 } }); }
   // the 竹林 at the edge of the wood west of the temple (in the full view's wider frame)
   var bmb = makeBamboo(771, BAMBOO); put(BAMBOO.x, BAMBOO.z, { draw: function (c) { drawBamboo(c, bmb); }, ao: function (c) { var p = P(BAMBOO.x, 0, BAMBOO.z); c.beginPath(); c.ellipse(p.x, p.y, BAMBOO.ru * p.k, BAMBOO.rv * p.k * CAM.s * 1.4, 0, 0, TAU); c.fill(); } });
   // pines about the castle hill; with the 武家屋敷, one more on the open ground between the eastern compounds and the wood
@@ -4331,7 +4632,7 @@ function moonSpot(big, night) {
     if (!best || sc > best.sc) best = { sc: sc, x: sx, sk: sk };
   }
   var room = best.sk - top, r, y;
-  if (big && !night) { r = clamp(room / 1.65, 3.2, 16.5); y = best.sk - 0.62 * r; }   // rising: about a fifth of the disc still behind the hills
+  if (big && !night) { r = clamp(room / 2.35, 3.2, 16.5); y = best.sk - 1.1 * r; }   // just risen: the whole disc clear of the ridge, low and large (月見 is for looking at it whole)
   else {
     var want = big ? 12 : 6.2, lift = big ? 1.5 : 2.4;   // (how far above the ridge the moon's foot stands, in radii; on a tall screen it has climbed a third of the sky)
     r = clamp((room - 2) / (2 + lift), 3, want); y = Math.max(top + r + 1, best.sk - Math.max((1 + lift) * r, room * (big ? 0.3 : 0.45)));
@@ -4889,7 +5190,7 @@ function makeTicker(job, budget) {
 function saveState() { return { WIND_LEAN: WIND_LEAN, W: W, H: H, KS: KS, DQ: DQ, CAM: CAM, SUN: SUN, SUNC: SUNC, AMB: AMB, LS: LS, SX: SX, SZ: SZ, MODE: MODE, F: F, SEA: SEA, LIT: LIT, GRAINPAT: GRAINPAT, GLOWS: GLOWS, TMPS: TMPS }; }
 function restoreState(s) { WIND_LEAN = s.WIND_LEAN; W = s.W; H = s.H; KS = s.KS; DQ = s.DQ; CAM = s.CAM; SUN = s.SUN; SUNC = s.SUNC; AMB = s.AMB; LS = s.LS; SX = s.SX; SZ = s.SZ; MODE = s.MODE; F = s.F; SEA = s.SEA; LIT = s.LIT; GRAINPAT = s.GRAINPAT; GLOWS = s.GLOWS; TMPS = s.TMPS; }
 function setupScene(o) {
-  W = o.W; H = o.H; KS = o.KS; DQ = o.DQ || 1; CAM = makeCam(W, H); F = features(o.stage); F.event = o.event || null; F.prog = o.sp === undefined || o.sp === null ? 0.5 : o.sp; SEA = o.season === 'spring' ? springSea(F.prog) : SEASONS[o.season]; if (F.event === 'shogatsu' && !SEA.snow) SEA = lightSnow(SEA); LIT = weatherLight(LIGHTS[o.light], o.wx); F.wx = o.wx || 'clear'; F.after = !!o.after; F.wet = wxWet(F.wx); F.frost = o.light === 'morning' && (F.wx === 'clear' || F.wx === 'cloudy') && !F.after && !SEA.snow && ((o.season === 'autumn' && F.prog >= 0.75) || (o.season === 'spring' && F.prog < 0.1)) ? (o.season === 'autumn' && F.prog >= 1 ? 1 : 0.7) : 0; setLight(LIT); MODE = 'n'; WIND_LEAN = (o.wsign === -1 ? -1 : 1) * (o.wx === 'typhoon' ? 3 : o.wx === 'blizzard' || o.wx === 'storm' ? 1.8 : 1);   // (F.frost, 霜: a white rime on clear mornings in late autumn and the first days of March, gone by the day)
+  W = o.W; H = o.H; KS = o.KS; DQ = o.DQ || 1; SKY_LIFT = skyLiftFor(o); CAM = makeCam(W, H); F = features(o.stage); F.event = o.event || null; F.prog = o.sp === undefined || o.sp === null ? 0.5 : o.sp; SEA = o.season === 'spring' ? springSea(F.prog) : SEASONS[o.season]; if (F.event === 'shogatsu' && !SEA.snow) SEA = lightSnow(SEA); LIT = weatherLight(LIGHTS[o.light], o.wx); F.wx = o.wx || 'clear'; F.after = !!o.after; F.wet = wxWet(F.wx); F.frost = o.light === 'morning' && (F.wx === 'clear' || F.wx === 'cloudy') && !F.after && !SEA.snow && ((o.season === 'autumn' && F.prog >= 0.75) || (o.season === 'spring' && F.prog < 0.1)) ? (o.season === 'autumn' && F.prog >= 1 ? 1 : 0.7) : 0; setLight(LIT); MODE = 'n'; WIND_LEAN = (o.wsign === -1 ? -1 : 1) * (o.wx === 'typhoon' ? 3 : o.wx === 'blizzard' || o.wx === 'storm' ? 1.8 : 1);   // (F.frost, 霜: a white rime on clear mornings in late autumn and the first days of March, gone by the day)
 }
 function makeGrainPat(ctx) {
   var p = ctx.createPattern(getGrain(), 'repeat');
@@ -4995,7 +5296,7 @@ async function renderStatic(job) {
   if (swayOn) { sway = await bakeSway(job, scene, out, base0, glows, reflGlows, mc, tick); mark('sway'); }
   // 8b. where the sky shows (for the drifting clouds): not behind the ranges, the hills, the ground or anything standing
   var sky = mkCanvas(hw, Math.round(hh * 0.62)), skx = sky.getContext('2d'); skx.fillStyle = '#fff'; skx.fillRect(0, 0, sky.width, sky.height);
-  skx.globalCompositeOperation = 'destination-out'; if (rangeP) { lsT(skx, KS * hw / bw); skx.fill(rangeP); skx.setTransform(1, 0, 0, 1, 0, 0); }
+  skx.globalCompositeOperation = 'destination-out'; if (rangeP) { lsT(skx, KS * hw / bw); skx.globalAlpha = 254 / 255; skx.fill(rangeP); skx.globalAlpha = 1; skx.setTransform(1, 0, 0, 1, 0, 0); }   // (the far ranges left at alpha 1/255: shut to the clouds, but fwSkyMask() opens them to the fireworks, which burst in front of the mountains)
   skx.drawImage(gc, 0, 0, hw, hh); skx.drawImage(obj, 0, 0, hw, hh);
   // 9. water visibility mask for the animated overlay (half res)
   var wm = null;
@@ -5425,7 +5726,11 @@ function walkPaths() {
   if (F.sign) P0.push({ pts: SIDE_S.slice(), band: 0, spread: 0.3, w: 0.35 });
   if (F.shrine) P0.push({ pts: SHR_S.slice(), band: 0, spread: 0.2, w: 0.2 });
   if (F.rivst || F.street) P0.push({ pts: RIVST_S.slice(0), band: 2, spread: 2.0, w: F.machiya ? 1.6 : 0.8 });
-  if (F.street) P0.push({ pts: [stPt(-1), stPt(14), stPt(28), stPt(39.5)], band: 2, spread: F.machiya ? 3.2 : 2.0, w: 1.6 });
+  if (F.street && !F.kido) P0.push({ pts: [stPt(-1), stPt(14), stPt(28), stPt(39.5)], band: 2, spread: F.machiya ? 3.2 : 2.0, w: 1.6 });
+  if (F.kido) {   // the street as far as the 番屋 the whole width; through the 木戸 in single file, and at night not at all
+    P0.push({ pts: [stPt(-1), stPt(14), stPt(26.6)], band: 2, spread: 3.2, w: 1.3 });
+    if (LIT.name !== 'night') P0.push({ pts: [stPt(23.5), stPt(30.6), stPt(39.5)], band: 2, spread: 1.15, w: 0.4 });
+  }
   if (F.landing) P0.push({ pts: [krPt(5, RIVER_HW + 1.3), krPt(19, RIVER_HW + 1.3), krPt(34, RIVER_HW + 1.5), krPt(46, RIVER_HW + 1.5)], band: 2, spread: 0.4, w: 0.5 });
   if (F.market) P0.push({ pts: [[MARKET.x - 7, MARKET.z + 1.5], [MARKET.x - 1, MARKET.z - 2], [MARKET.x + 5, MARKET.z + 0.5], [MARKET.x + 9, MARKET.z + 3]], band: 2, spread: 1.2, w: 0.8 });
   spectatorPaths().forEach(function (q) { P0.push(q); });
@@ -5498,7 +5803,7 @@ function animGeo(o) {
   });
   // walkers
   g.paths = walkPaths();
-  var wxK = { clear: 1, cloudy: 0.95, rain: 0.5, storm: 0.3, snow: 0.7, typhoon: 0, blizzard: 0 }[g.wx], nw = Math.round((1 + o.stage * 1.05 + (F.festival ? 8 : 0)) * (wxK === undefined ? 1 : wxK) * (o.light === 'night' ? 0.45 : o.light === 'dusk' ? 0.85 : 1))   /* (fewer out late at night) */, tw = 0;
+  var wxK = { clear: 1, cloudy: 0.95, rain: 0.5, storm: 0.3, snow: 0.7, typhoon: 0, blizzard: 0 }[g.wx], nw = Math.round((1 + o.stage * 1.05 * 23 / (NST - 1) +(F.festival ? 8 : 0)) * (wxK === undefined ? 1 : wxK) * (o.light === 'night' ? 0.45 : o.light === 'dusk' ? 0.85 : 1))   /* (fewer out late at night) */, tw = 0;
   if (g.wx === 'blizzard') nw = 1; g.paths.forEach(function (q) { tw += q.w; });
   g.walkers = [];
   for (i = 0; i < nw; i++) {
@@ -5510,10 +5815,10 @@ function animGeo(o) {
   // the town's trades on the move: a 飛脚 runner, a 虚無僧, a pack horse led by its owner, a 大八車 pulled along, the 棒手振り's fish or greens
   var fair = !wxWet(g.wx) && g.wx !== 'blizzard' && o.light !== 'night', cand = g.walkers.filter(function (w) { return !w.kago && !w.still && !w.child && g.paths[w.pi].pa.len > 20; });
   function take(fn) { for (var i2 = 0; i2 < cand.length; i2++) { var w2 = cand[i2]; if (!w2.trade && fn(w2)) { w2.trade = true; return w2; } } return null; }
-  if (fair && o.stage >= 6) { var hk = take(function () { return true; }); if (hk) { hk.hikyaku = true; hk.load = null; hk.woman = false; hk.umb = null; hk.lantern = false; hk.sp = 2.7; hk.pauseK = 0; hk.hat = null; } }
-  if (fair && o.stage >= 14) { var km = take(function (w2) { return !w2.load; }); if (km) { km.komuso = true; km.woman = false; km.sp = 0.42; km.hat = null; km.lantern = false; km.umb = null; } }
-  if (fair && o.stage >= 4) { var hs = take(function (w2) { return g.paths[w2.pi].band === 0 || g.paths[w2.pi].spread >= 2; }); if (hs) { hs.horse = { col: rng() < 0.5 ? [120, 84, 56] : [72, 58, 50] }; hs.load = null; hs.woman = false; hs.sp = 0.62; hs.lantern = false; } }
-  if (o.stage >= 8 && !wxSnowy(g.wx)) { var ct = take(function (w2) { return g.paths[w2.pi].band === 2 && g.paths[w2.pi].spread >= 2; }); /* (on the streets: the bridge's railings would cut the cart wrongly) */ if (ct) { ct.cart = true; ct.load = null; ct.woman = false; ct.umb = null; ct.sp = 0.7; ct.lantern = false; } }
+  if (fair && o.stage >= SI.mill) { var hk = take(function () { return true; }); if (hk) { hk.hikyaku = true; hk.load = null; hk.woman = false; hk.umb = null; hk.lantern = false; hk.sp = 2.7; hk.pauseK = 0; hk.hat = null; } }
+  if (fair && o.stage >= SI.temple) { var km = take(function (w2) { return !w2.load; }); if (km) { km.komuso = true; km.woman = false; km.sp = 0.42; km.hat = null; km.lantern = false; km.umb = null; } }
+  if (fair && o.stage >= SI.farm) { var hs = take(function (w2) { return g.paths[w2.pi].band === 0 || g.paths[w2.pi].spread >= 2; }); if (hs) { hs.horse = { col: rng() < 0.5 ? [120, 84, 56] : [72, 58, 50] }; hs.load = null; hs.woman = false; hs.sp = 0.62; hs.lantern = false; } }
+  if (o.stage >= SI.stoneBridge && !wxSnowy(g.wx)) { var ct = take(function (w2) { return g.paths[w2.pi].band === 2 && g.paths[w2.pi].spread >= 2; }); /* (on the streets: the bridge's railings would cut the cart wrongly) */ if (ct) { ct.cart = true; ct.load = null; ct.woman = false; ct.umb = null; ct.sp = 0.7; ct.lantern = false; } }
   g.walkers.forEach(function (w) { if (w.load === 'pole') w.goods = rng() < 0.5 ? 'fish' : 'veg'; });
   if (g.walkers.length > 1 && !wxWet(g.wx) && g.wx !== 'blizzard') { var pw = g.walkers[1]; pw.load = 'pole'; pw.woman = false; pw.child = false; pw.umb = null; }   // a peddler with his shoulder pole
   // smoke from kitchens and hearths
@@ -5531,7 +5836,7 @@ function animGeo(o) {
   }
   // falling things
   g.cherries = [];
-  if (F.riverCherry > 0) [[-46, 64.5, 0.9], [-14.5, 40.6, 0.8], [-28, 47.3, 0.85], [19.5, 21.5, 0.95], [31.5, 14.5, 0.9]].forEach(function (a) { g.cherries.push([a[0], a[1], 4.6 * a[2], 3.2]); });
+  if (F.riverCherry > 0) RIVER_CHERRY.forEach(function (a) { g.cherries.push([a[0], a[1], 4.6 * a[2], 3.2]); });
   if (F.temple) g.cherries.push([-6, 94, 4.8, 3]);
   g.fallers = g.wx === 'blizzard' ? null : g.wx === 'typhoon' ? (o.season === 'autumn' || o.season === 'summer' ? 'leaf' : null) : o.season === 'autumn' ? 'leaf' : wxSnowy(g.wx) || (o.season === 'winter' && !wxWet(g.wx)) ? 'snow' : null;
   g.petalSrc = petalSources(g);
@@ -5568,6 +5873,9 @@ function smokeSources(o) {
   function add(p3, k) { S.push({ p: p3, a: amt * (k || 1), ph: S.length * 1.7 }); }
   if (F.farm) { var fb = farmFrame(); add(fb.L(-5.75 - 0.3, 0, 2.7 + 0.98 * 4.9 + 0.3), 1.3); }
   if (F.teahouse) { var tb = teaFrame(); add(tb.L(1.2, 0.3, 4.4), 0.8); }
+  if (F.smithy) { var smb = smithyFrame(); S.push({ p: smb.L(0.95, 0, 4.55), a: night ? 0.25 : o.light === 'dusk' ? 1.3 : 1.1, ph: S.length * 1.7 }); }   // the forge's smoke out of the 煙出し, all the working day
+  if (F.sakagura) { var skb = sakaguraFrame(); S.push({ p: skb.L(0.6, 0, 9.05), a: o.season === 'winter' ? (night ? 1.2 : 1.6) : 0.3, ph: S.length * 1.7, big: o.season === 'winter' }); }   // 寒造り: in the cold months the steam of the rice rises from the 越屋根
+  if (F.terakoya) { var tkb = terakoyaFrame(); add(tkb.L(2.6, 0.6, 4.6), 0.4); }
   townPlan(F).forEach(function (b, i) {
     if (b.type === 'kura') return;
     if (b.yuya) { var Bq = BF(b.x, b.z, b.u, 0); S.push({ p: Bq.L(b.w * 0.18, b.d / 2 - 1.4, 9.9), a: o.light === 'dusk' ? 1.6 : o.light === 'night' ? 1.0 : o.light === 'morning' ? 0.4 : 0.9, ph: S.length * 1.7, big: true }); }   // the 湯屋's boiler: the evening's biggest smoke
@@ -5631,7 +5939,7 @@ function dressFor(E, w, r) {
     var role;
     if (w.load === 'pole') role = 'peddler'; else if (w.load === 'pack') role = 'traveler'; else if (w.load === 'basket') role = 'farmer';
     else if (E.country && x < 0.55) role = 'farmer';
-    else { y = r(); role = y < 0.32 ? 'merchant' : y < 0.56 ? 'craft' : y < 0.68 ? 'farmer' : y < 0.8 ? 'elder' : (E.stage >= 20 && y < 0.91) ? 'samurai' : (E.stage >= 14 && y < 0.97) ? 'monk' : 'merchant'; }
+    else { y = r(); role = y < 0.32 ? 'merchant' : y < 0.56 ? 'craft' : y < 0.68 ? 'farmer' : y < 0.8 ? 'elder' : (E.stage >= SI.buke && y < 0.91) ? 'samurai' : (E.stage >= SI.temple && y < 0.97) ? 'monk' : 'merchant'; }
     D.role = role;
     if (role === 'merchant') { D.col = r() < 0.5 ? pickc(r, EDO_COL.nezu) : pickc(r, EDO_COL.cha); D.pat = r() < 0.5 ? 'stripe' : null; if (r() < 0.35) D.haori = pickc(r, [[36, 34, 38], [66, 50, 40], [44, 46, 60]]); else if (r() < 0.6) D.apron = pickc(r, [[40, 52, 84], [32, 38, 62]]); }
     else if (role === 'craft') { D.len = 'short'; D.jacket = { col: pickc(r, [[40, 56, 92], [32, 38, 64], [96, 66, 44]]), len: 0.44, crest: [232, 228, 216], eri: [26, 24, 26] }; D.col = D.jacket.col; D.legs = pickc(r, [[36, 44, 70], [30, 32, 44]]); D.sleeve = 0.04; if (r() < 0.6) { D.head = 'band'; D.cloth = r() < 0.6 ? [230, 228, 220] : [60, 80, 120]; } }
@@ -5867,9 +6175,163 @@ function drawPrints(ctx, g, w, t) {
     ctx.fillStyle = rgb(mulc([92, 104, 128], tint), 0.42 * a); ctx.beginPath(); ctx.ellipse(c.x, c.y, Math.max(0.35, len * 0.55), Math.max(0.2, 0.035 * k), rot, 0, TAU); ctx.fill();
   }
 }
-/* the pack horse: a stocky Japanese horse at a walk, a wooden pack saddle with two straw-wrapped bales slung either side, a halter;
-   side on along its way (the walk's four-beat legs), its tail swishing */
+/* ---- the pack horse (駄馬): a Japanese native horse of the 木曽馬 kind, about 1.3 m at the withers: stocky, a long deep body on
+   short strong legs, a thick neck carried low, a big plain head; bay or dark brown with black points (the mane, the tail, the lower
+   legs) and a dark line down the back. Painted on the shared rig (qRig, qAnimal) as the town's cats and the dog are, at its own
+   four-beat walk (the near hind, the near fore, the far hind, the far fore), the head nodding twice a stride; a straw-padded wooden
+   pack saddle (荷鞍) with a straw rice bale (俵) slung on either side, girth, breast strap and crupper; a red rope halter. ---- */
+var HORSES = {
+  // (v2) a pony's proportions: the barrel as deep as the legs are long (the chest floor about half the height at the withers), short
+  // sturdy legs with the knee and the hock low, a round rump, a big head on a thick neck
+  key: 'horse', sc: 1.3, headAng: 1.12, wristFold: 0.85, tubeTop: 0.3, hindPF: 0.3,
+  legW: { hl: [0.22, 0.17, 0.11, 0.075, 0.055, 0.066], hr: [0.19, 0.14, 0.085, 0.062, 0.05, 0.066], fl: [0.13, 0.1, 0.072, 0.064, 0.052, 0.066], fr: [0.13, 0.095, 0.068, 0.062, 0.05, 0.066] },
+  J: { P0: [-0.48, -1.18], M: [0.0, -1.2], Wt: [0.42, -1.26], N0: [0.5, -1.18], Nm: [0.72, -1.42], N1: [0.92, -1.62], Ns: [1.14, -1.14],
+    Hj: [-0.46, -1.02], St: [-0.3, -0.72], Hk: [-0.54, -0.42], HFt: [-0.5, -0.1], HHf: [-0.45, 0],
+    Sp: [0.46, -0.98], El: [0.36, -0.66], Kn: [0.39, -0.34], FFt: [0.41, -0.1], FHf: [0.46, 0] },
+  C: [[-0.54, -1.3, 'T'], [-0.63, -1.25, 'T'], [-0.69, -1.14, [0, 5]], [-0.7, -1.0, 'RB'], [-0.66, -0.86, [5, 6]], [-0.6, -0.74, [5, 6]], [-0.47, -0.66, 'HF'], [-0.34, -0.7, 'HF'], [-0.27, -0.72, 'FK'], [-0.15, -0.66, 'BE'],
+    [0.05, -0.64, 'BE'], [0.22, -0.64, [1, 9]], [0.3, -0.63, 'FU'], [0.33, -0.6, [9, 10]], [0.39, -0.56, [9, 10]], [0.47, -0.6, [9, 10]], [0.55, -0.74, 'FU'], [0.61, -0.9, 'CH'], [0.65, -1.03, 'CH'], [0.69, -1.15, [1, 2]], [0.72, -1.26, [1, 2]],
+    [0.56, -1.34, [1, 2]], [0.42, -1.34, 'T'], [0.25, -1.28, 'T'], [0.0, -1.25, 'T'], [-0.25, -1.27, 'T'], [-0.42, -1.31, 'T']],
+  MS: [[0.45, -0.98, 0.15, 0.22, 0.12, -0.4], [0.0, -0.96, 0.42, 0.26, 0.18, 0], [-0.48, -1.04, 0.21, 0.21, 0.15, 0.3], [-0.5, -0.8, 0.14, 0.12, 0.08, 0.2], [0.4, -0.5, 0.06, 0.13, 0.03, 0], [-0.55, -0.55, 0.06, 0.11, 0.03, 0]],
+  BK: [[-0.63, -1.25], [-0.42, -1.31], [-0.25, -1.27], [0.0, -1.25], [0.25, -1.28], [0.42, -1.34]], BL: [[-0.27, -0.72], [-0.15, -0.66], [0.05, -0.64], [0.22, -0.64]],
+  G: { walk: { beta: 0.62, off: [0, 0.5, 0.25, 0.75], lift: 0.14, liftH: 0.12, bob: 0.01, bobN: 2, roll: 0.012 } },
+  hair: function (x, y, R) { if (y > -0.66 && (x < -0.3 || x > 0.3)) return Math.PI / 2 + (x < 0 ? 0.06 : -0.04); if (x > 0.5) return Math.PI / 2 - 0.4; var s = clamp((y - R.backY(x)) / Math.max(0.1, R.bellyY(x) - R.backY(x))); return Math.PI - 0.12 - 0.8 * s * s; }
+};
+var HORSEK = { blk: [30, 25, 24], muzzle: [70, 60, 58], hoof: [44, 38, 36], straw: [196, 168, 108], strawD: [150, 124, 76], wood: [118, 88, 58], rope: [176, 150, 104], halter: [178, 52, 40], pad: [88, 74, 62] };
+/* the head (head frame: origin at the poll, x down the face to the muzzle, y toward the jaw): long and plain, the round jowl behind
+   the flat cheek, the straight face narrowing to a soft muzzle; small pricked ears, a forelock between them, the rope halter */
+function horseHead(ctx, o, col, dk) {
+  var K = HORSEK, m = pLm(), lod = MODE === 'm' || RL.k < 40, t = o.t || 0, ew = Math.sin(t * 0.6 + (o.seed || 0)) * 0.12;
+  function earP(far) {
+    var b = [far ? 0.035 : 0.0, -0.06], a = -1.75 + (far ? 0.22 : 0) + ew * (far ? -1 : 1), L = 0.14, w = 0.032, dx = Math.cos(a), dy = Math.sin(a), nx = -dy, ny = dx, tip = [b[0] + dx * L, b[1] + dy * L];
+    var E = pSmooth([[b[0] - nx * w, b[1] - ny * w], [b[0] + dx * L * 0.6 - nx * w * 0.75, b[1] + dy * L * 0.6 - ny * w * 0.75], tip, [b[0] + dx * L * 0.6 + nx * w * 0.8, b[1] + dy * L * 0.6 + ny * w * 0.8], [b[0] + nx * w, b[1] + ny * w]], true, 4);
+    ctx.fillStyle = zgrad2(ctx, b[0], b[1], tip[0], tip[1], far ? scl(col, 0.72) : col, mixc(col, dk, 0.6), far ? 0.8 : RL.hi, 0.85); ctx.fill(pPath(E));
+    if (!far && !lod) { ctx.fillStyle = zc(mixc(col, [30, 24, 26], 0.55), 1, 0.7); ctx.fill(pPath(pSmooth([[b[0] + dx * L * 0.15, b[1] + dy * L * 0.15], [b[0] + dx * L * 0.6 + nx * w * 0.35, b[1] + dy * L * 0.6 + ny * w * 0.35], [b[0] + dx * L * 0.85, b[1] + dy * L * 0.85], [b[0] + dx * L * 0.3 + nx * w * 0.6, b[1] + dy * L * 0.3 + ny * w * 0.6]], true, 3))); }
+  }
+  earP(true);
+  // (v2) the profile straight from the forehead to the nose, the jowl deep and round behind the long flat cheek
+  var d = pSmooth([[-0.07, -0.03], [-0.01, -0.07], [0.12, -0.077], [0.25, -0.071], [0.38, -0.063], [0.47, -0.053], [0.525, -0.032], [0.548, 0.0], [0.542, 0.042], [0.51, 0.072], [0.45, 0.082], [0.4, 0.074], [0.32, 0.094], [0.21, 0.145], [0.1, 0.185], [0.0, 0.186], [-0.065, 0.135], [-0.085, 0.05]], true, 5), hp = pPath(d);
+  ctx.fillStyle = zgrad2(ctx, 0.1, -0.07, 0.1, 0.17, mixc(col, [255, 236, 206], 0.1), mixc(col, [40, 30, 36], 0.35), 1.05, 0.86); ctx.fill(hp);
+  ctx.save(); ctx.clip(hp);
+  zsoft(ctx, 0.06, 0.08, 0.1, 0.07, mixc(col, [255, 236, 206], 0.18), 0.55);      // the round jowl catches the light
+  zsoft(ctx, 0.15, 0.13, 0.12, 0.035, mixc(col, dk, 0.5), 0.5);                     // under the jaw
+  zsoft(ctx, 0.23, -0.035, 0.16, 0.02, mixc(col, [255, 236, 206], 0.2), 0.45);     // the flat bridge of the face
+  zsoft(ctx, 0.47, 0.02, 0.07, 0.06, K.muzzle, 0.8);                                // the soft dark muzzle
+  zsoft(ctx, 0.3, 0.06, 0.1, 0.02, mixc(col, dk, 0.4), 0.4);                        // the hollow along the cheek
+  ctx.restore();
+  ctx.strokeStyle = zc(mixc(col, dk, 0.6), 1, 0.5); ctx.lineWidth = m.w * 0.8; ctx.lineCap = 'round'; ctx.stroke(hp);
+  var ex = 0.16, ey = -0.032;   // the eye: large, dark, set at the side under the brow
+  ctx.fillStyle = 'rgb(18,14,14)'; ctx.beginPath(); ctx.ellipse(ex, ey, 0.024, 0.016, 0.25, 0, TAU); ctx.fill();
+  if (!lod) { ctx.strokeStyle = zc(mixc(col, dk, 0.5), 1, 0.7); ctx.lineWidth = m.w * 0.7; ctx.beginPath(); ctx.ellipse(ex - 0.004, ey - 0.006, 0.03, 0.02, 0.25, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke(); }
+  ctx.fillStyle = RL.night ? 'rgba(210,220,250,0.45)' : 'rgba(255,255,255,0.75)'; ctx.beginPath(); ctx.arc(ex + 0.008, ey - 0.005, 0.005, 0, TAU); ctx.fill();
+  ctx.fillStyle = 'rgb(24,18,18)'; ctx.beginPath(); ctx.ellipse(0.495, -0.005, 0.014, 0.009, 0.6, 0, TAU); ctx.fill();   // the nostril
+  ctx.strokeStyle = 'rgba(26,20,20,0.7)'; ctx.lineWidth = m.w * 0.7; ctx.beginPath(); ctx.moveTo(0.52, 0.048); ctx.quadraticCurveTo(0.48, 0.058, 0.43, 0.056); ctx.stroke();   // the mouth
+  // the forelock between the ears, falling over the brow
+  ctx.strokeStyle = zc(K.blk, 1, 0.9); ctx.lineWidth = Math.max(m.w * 1.2, 0.012); ctx.beginPath(); for (var i = 0; i < 4; i++) { ctx.moveTo(0.0 + i * 0.008, -0.07); ctx.quadraticCurveTo(0.05 + i * 0.01, -0.09 + i * 0.006, 0.1 + i * 0.012, -0.055 + i * 0.008); } ctx.stroke();
+  // the rope halter: the noseband round the face, the cheek piece up to the poll, the throat latch; the lead rope hanging from the ring
+  ctx.strokeStyle = zc(K.halter, 1, lod ? 0.6 : 0.95); ctx.lineWidth = 0.018; ctx.beginPath(); ctx.moveTo(0.35, -0.062); ctx.quadraticCurveTo(0.37, 0.01, 0.38, 0.077); ctx.moveTo(0.36, 0.0); ctx.lineTo(0.02, -0.03); ctx.moveTo(0.04, -0.028); ctx.quadraticCurveTo(0.03, 0.07, -0.03, 0.14); ctx.stroke();
+  ctx.lineWidth = 0.014; ctx.beginPath(); ctx.moveTo(0.38, 0.077); ctx.quadraticCurveTo(0.42, 0.2 + Math.sin(t * 1.3) * 0.02, 0.3, 0.32); ctx.stroke();
+  earP(false);
+}
+/* o: { ph, amp, t, col (the coat), seed, swish, head {pitch} }: the horse and its pack, in the rig's frame (metres, y up negative) */
+function horsePaint(ctx, o) {
+  var K = HORSEK, col = o.col || [120, 84, 56], dk = mixc(col, K.blk, 0.75), bel = mixc(col, [214, 196, 168], 0.18), t = o.t || 0, amp = clamp(o.amp || 0), ph = o.ph || 0;
+  var nod = amp * Math.sin(ph * TAU * 2 + 0.6) * 0.06;   // at the walk the head nods twice a stride
+  var A = { spec: HORSES, coat: col, back: mixc(col, K.blk, 0.35), bel: bel, sets: { c: col, d: dk, b: bel }, stride: 1.7, contact: 0.12, pawR: 0.05, paw: K.hoof, short: 1.2, strokeA: 0.4, fine: 1.0,
+    cls: function (x, y) { return y > -0.82 && (x < -0.35 || x > 0.3) ? 'd' : y > HORSES.BL[2][1] - 0.06 && x > -0.2 && x < 0.2 ? 'b' : 'c'; },
+    legCls: function (u) { return u > 0.42 ? 'd' : 'c'; }, neckCls: function () { return 'c'; }, throat: col,
+    patches: [[0.0, -1.262, 0.42, 0.012, dk, 0.7]],   // the dark line down the back (鰻線)
+    farPal: [col, dk, dk], gy: [0, -1.32, -0.62], pitch0: 0.15, headK: 1.3,
+    neck: { a: [0.3, -1.06], b: [0.48, -1.17], o: [0.02, 0.015, 0.008], wl: [0.24, 0.27, 0.27, 0.2, 0.12], wr: [0.4, 0.34, 0.25, 0.17, 0.13] },   // (wl the crest side, arched and full; wr the throat)
+    edge: function (oi, ii, rx, ry, nx, ny) { if (oi > 1) return null; if (oi === 0 && ny > 0.5 && ii % 3 === 0) return ['b', 0.35, 0.3, 0.1, 0.4]; return null; },
+    // the body in the round: the barrel lit along its upper curve and rolling into shade underneath, the round of the rump and the
+    // slope of the shoulder catching the light, the creases behind the shoulder and in front of the stifle, the back of the thigh
+    marks: function (blob, P2, lit) {
+      var hi = mixc(col, [255, 236, 206], 0.3), lo = mixc(col, [26, 20, 30], 0.55);
+      blob(0.0, -1.1, 0.4, 0.07, hi, 0.4 * lit); blob(0.02, -0.7, 0.42, 0.075, lo, 0.55); blob(0.0, -0.8, 0.36, 0.05, lo, 0.25);
+      blob(-0.5, -1.16, 0.14, 0.1, hi, 0.5 * lit, 0.3); blob(-0.66, -0.95, 0.05, 0.16, lo, 0.4); blob(-0.33, -0.86, 0.05, 0.13, lo, 0.35, -0.35);
+      blob(0.44, -1.08, 0.07, 0.14, hi, 0.4 * lit, -0.45); blob(0.28, -0.92, 0.04, 0.2, lo, 0.35, 0.15); blob(0.57, -0.86, 0.05, 0.1, lo, 0.3, -0.3);
+    },
+    tailFront: false,
+    tail: function (c, R, B, P2) { horseTail(c, P2, B[0].th - R.B0[0].th, o, t, amp, col); return null; },
+    head: function (c, ho) { horseHead(c, { t: t, seed: o.seed }, col, dk); }
+  };
+  var r = qAnimal(ctx, { ph: ph, amp: amp, gait: 'walk', stride: 1.7, t: t, head: { pitch: (o.head && o.head.pitch || 0) + nod } }, A), B = r.B, P2 = r.P2, m = pLm();
+  // the crest: the top of the thick neck arching up from the withers to the poll (a stallion-like crest on a native pony), and on it
+  // the mane, a heavy fall of black hair lying over to the near side in locks
+  var cr = [], j, a0n = B[2].a, b2n = B[3].a, c2n = B[4].a;
+  for (j = 0; j <= 10; j++) { var u = j / 10, q = u < 0.5 ? [lerp(a0n[0], b2n[0], u * 2), lerp(a0n[1], b2n[1], u * 2)] : [lerp(b2n[0], c2n[0], u * 2 - 1), lerp(b2n[1], c2n[1], u * 2 - 1)], th = u < 0.5 ? B[2].th : B[3].th, off = u < 0.5 ? lerp(0.25, 0.19, u * 2) : lerp(0.19, 0.105, u * 2 - 1); cr.push([q[0] + Math.sin(th) * off, q[1] - Math.cos(th) * off, th]); }   // (along the neck's crest edge, a little inside it)
+  var w0 = P2(0.38, -1.3); cr.unshift([w0[0], w0[1], B[2].th]);
+  ctx.strokeStyle = zc(K.blk, 1, 0.97); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = 0.055; ctx.beginPath(); cr.forEach(function (q, i2) { if (i2) ctx.lineTo(q[0], q[1]); else ctx.moveTo(q[0], q[1]); }); ctx.stroke();
+  if (MODE !== 'm') {
+    var mr = mulberry32(((o.seed || 1) * 977) | 0), mw = Math.max(m.w * 0.9, 0.011);
+    for (var lk = 0; lk < 2; lk++) { ctx.strokeStyle = zc(lk ? mixc(K.blk, [120, 110, 110], 0.18) : K.blk, 1, 0.92); ctx.lineWidth = lk ? mw * 0.8 : mw * 1.4; ctx.beginPath();
+      for (j = 0; j < 46; j++) { var f4 = mr(), k4 = Math.min(cr.length - 2, Math.floor(f4 * (cr.length - 1))), g4 = f4 * (cr.length - 1) - k4, pa = cr[k4], pb = cr[k4 + 1], x4 = lerp(pa[0], pb[0], g4), y4 = lerp(pa[1], pb[1], g4), th4 = pa[2], Lm = 0.09 + mr() * 0.1 - f4 * 0.04, sw4 = Math.sin(t * 1.3 + j * 0.7) * 0.01 * (0.5 + amp);
+        var dx4 = -Math.sin(th4) * Lm, dy4 = Math.cos(th4) * Lm;   // down the near side of the neck from the crest
+        ctx.moveTo(x4 + Math.sin(th4) * 0.01, y4 - Math.cos(th4) * 0.01); ctx.quadraticCurveTo(x4 + dx4 * 0.5 + 0.02, y4 + dy4 * 0.5, x4 + dx4 + sw4 - 0.01, y4 + dy4 + 0.01); }
+      ctx.stroke(); }
+  }
+  // the pack: the wooden saddle frame on the back, a straw rice bale slung either side and sitting up on the back (the far one's top
+  // over the near one), lashed with ropes that go right round the body; breast strap and crupper; all posed with the body
+  function L(pts, w, cA, a) { ctx.strokeStyle = zc(cA, 1, a === undefined ? 1 : a); ctx.lineWidth = w; ctx.beginPath(); pts.forEach(function (q, i2) { var p = P2(q[0], q[1]); if (i2) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); }); ctx.stroke(); }
+  function bale(cx, cy, rx, ry, far) {
+    var a0 = P2(cx - rx, cy), a1 = P2(cx + rx, cy), ang = Math.atan2(a1[1] - a0[1], a1[0] - a0[0]), cc = [(a0[0] + a1[0]) / 2, (a0[1] + a1[1]) / 2], hl = Math.hypot(a1[0] - a0[0], a1[1] - a0[1]) / 2;
+    ctx.save(); ctx.translate(cc[0], cc[1]); ctx.rotate(ang);
+    var p = new Path2D(), cr = ry * 0.75; p.moveTo(-hl + cr, -ry); p.quadraticCurveTo(0, -ry * 1.1, hl - cr, -ry); p.quadraticCurveTo(hl, -ry, hl, -ry + cr); p.lineTo(hl, ry - cr); p.quadraticCurveTo(hl, ry, hl - cr, ry); p.quadraticCurveTo(0, ry * 1.1, -hl + cr, ry); p.quadraticCurveTo(-hl, ry, -hl, ry - cr); p.lineTo(-hl, -ry + cr); p.quadraticCurveTo(-hl, -ry, -hl + cr, -ry); p.closePath();   // a straw bale side on: a fat cylinder, its ends rounded
+    var g1 = ctx.createLinearGradient(0, -ry, 0, ry); g1.addColorStop(0, zc(K.straw, far ? 0.85 : 1.08)); g1.addColorStop(0.55, zc(K.straw, far ? 0.75 : 0.95)); g1.addColorStop(1, zc(K.strawD, far ? 0.6 : 0.8)); ctx.fillStyle = g1; ctx.fill(p);
+    ctx.save(); ctx.clip(p);
+    if (MODE !== 'm') { ctx.strokeStyle = zc(K.strawD, 1, 0.5); ctx.lineWidth = Math.max(m.w * 0.7, 0.008); ctx.beginPath(); for (var s = -6; s <= 6; s++) { ctx.moveTo(-hl, s * ry / 6.5); ctx.lineTo(hl, s * ry / 6.5 + 0.01); } ctx.stroke(); }
+    ctx.fillStyle = zc(K.strawD, 0.85, 0.85); [-hl, hl].forEach(function (ex2) { ctx.beginPath(); ctx.ellipse(ex2, 0, hl * 0.07, ry * 0.92, 0, 0, TAU); ctx.fill(); });   // the bound ends (桟俵)
+    ctx.strokeStyle = zc(mixc(K.rope, K.strawD, 0.5), 0.8, 0.95); ctx.lineWidth = Math.max(m.w * 1.2, 0.02); ctx.beginPath(); [-0.55, 0, 0.55].forEach(function (f) { ctx.moveTo(f * hl, -ry); ctx.lineTo(f * hl, ry); }); ctx.stroke();   // its rope bands
+    ctx.restore(); ctx.strokeStyle = zc(K.strawD, 0.6, 0.6); ctx.lineWidth = Math.max(m.w * 0.8, 0.01); ctx.stroke(p);
+    ctx.restore();
+  }
+  L([[0.2, -1.2], [0.36, -1.07], [0.48, -0.98], [0.57, -0.93]], 0.042, mixc(K.rope, K.blk, 0.15), 0.92);      // the breast strap from the pack's front down round the point of the shoulder to the chest
+  L([[-0.3, -1.3], [-0.5, -1.3], [-0.64, -1.22]], 0.026, K.rope, 0.85);                  // the crupper to the root of the tail
+  bale(-0.05, -1.47, 0.34, 0.19, true);   // the far bale, its top over the near one (the pack sits behind the withers, the neck clear of it)
+  L([[-0.28, -1.32], [-0.26, -1.5], [-0.21, -1.33]], 0.034, mixc(K.wood, K.blk, 0.25)); L([[0.13, -1.34], [0.17, -1.53], [0.22, -1.36]], 0.034, mixc(K.wood, K.blk, 0.25)); L([[-0.26, -1.49], [0.17, -1.52]], 0.028, K.wood);   // the wooden frame (two arches and a bar)
+  bale(-0.04, -1.3, 0.36, 0.2, false);   // the near bale, sitting on the back and the top of the flank
+  // the lashings: over the near bale and on down round the barrel to the belly (the girth), following the body's curve
+  [[-0.23, -0.26], [0.13, 0.16]].forEach(function (xs) { L([[xs[0], -1.52], [xs[0] - 0.005, -1.3], [xs[0], -1.1], [xs[0] + 0.012, -0.95], [xs[0] + 0.02, -0.8], [xs[1], -0.66]], 0.024, K.rope, 0.92); });
+  // the hooves: dark, flared at the ground, the hair of the fetlock feathered down over their tops
+  [[B[8], 8], [B[12], 12]].forEach(function (q) { var e = qEnd(q[0], HORSES.R.B0[q[1]].len), a2 = q[0].th; ctx.save(); ctx.translate(e[0], e[1]); ctx.rotate(a2 - Math.PI / 2); ctx.fillStyle = zc(K.hoof); ctx.beginPath(); ctx.moveTo(-0.048, -0.075); ctx.lineTo(0.048, -0.075); ctx.lineTo(0.07, 0.0); ctx.lineTo(-0.07, 0.0); ctx.closePath(); ctx.fill();
+    if (MODE !== 'm') { ctx.strokeStyle = zc(mixc(K.blk, col, 0.12), 1, 0.7); ctx.lineWidth = Math.max(m.w * 0.6, 0.008); ctx.beginPath(); for (var f5 = -4; f5 <= 4; f5++) { var x5 = f5 * 0.011; ctx.moveTo(x5, -0.13); ctx.quadraticCurveTo(x5 * 1.2, -0.095, x5 * 1.45 + 0.004, -0.062 - Math.abs(f5) * 0.002); } ctx.stroke(); }   // (a soft fringe over the coronet, not splayed)
+    ctx.restore(); });
+  return r;
+}
+/* the tail: a heavy fall of black hair from the dock, carried out a little from the croup and falling to below the hocks, in strands
+   (swinging as it walks, flicking now and then), not one solid shape */
+function horseTail(ctx, P2, rot, o, t, amp, col) {
+  var K = HORSEK, m = pLm(), r = mulberry32(((o.seed || 1) * 613) | 0), sw = Math.sin(t * 1.1 + (o.seed || 0)) * 0.05 + Math.sin(t * 0.37) * 0.03 + (o.swish || 0), wk = amp * Math.sin((o.ph || 0) * TAU) * 0.03;
+  var root = P2(-0.655, -1.235), d0 = P2(-0.73, -1.12), dx = d0[0] - root[0], dy = d0[1] - root[1];   // the dock, angled out and down
+  ctx.strokeStyle = zc(mixc(col, K.blk, 0.6)); ctx.lineCap = 'round'; ctx.lineWidth = 0.07; ctx.beginPath(); ctx.moveTo(root[0], root[1]); ctx.lineTo(d0[0], d0[1]); ctx.stroke();
+  var n = MODE === 'm' ? 10 : 34, lw = Math.max(m.w * 1.1, 0.014);
+  for (var pass = 0; pass < 2; pass++) {
+    ctx.strokeStyle = zc(pass ? mixc(K.blk, [140, 128, 124], 0.22) : K.blk, 1, pass ? 0.75 : 0.95); ctx.lineWidth = pass ? lw * 0.7 : lw * 1.5; ctx.beginPath();
+    for (var i = 0; i < n; i++) {
+      var f = r(), sx = root[0] + dx * f * 1.1, sy = root[1] + dy * f * 1.1, L = 0.48 + r() * 0.36 - f * 0.1, spread = (r() - 0.5) * 0.13, fl = sw + wk + spread * 0.5;   // (lengths uneven, so the end of the tail is ragged and thins out)
+      var ex = sx - 0.07 + spread + fl * 0.9 + (r() - 0.5) * 0.03, ey = sy + L, cx = sx - 0.12 + spread * 0.4 + (r() - 0.5) * 0.06, cy = sy + L * (0.3 + r() * 0.15);
+      ctx.moveTo(sx, sy); ctx.quadraticCurveTo(cx, cy, ex, ey);
+    }
+    ctx.stroke();
+  }
+  void rot;
+}
+function townHorse(ctx, x, y, k, o, g, wx, wz, fs, mag) {
+  var face = o.face || 1; zrl(g, face); RL.lum = g.lum;
+  if (wx !== undefined) zPlace(ctx, wx, y, wz, face, fs || 1, mag || 1); else { ctx.save(); ctx.transform(face * k * (mag || 1), 0, 0, k * (mag || 1), x, y); }
+  horsePaint(ctx, o); ctx.restore();
+}
 function drawPackHorse(ctx, g, w, B, t, moving) {
+  var y0 = bridgeY(B.x, B.z), c = P(B.x, y0, B.z), k = c.k, f = P(B.x + B.ux, 0, B.z + B.uz).x >= P(B.x, 0, B.z).x ? 1 : -1;
+  var Tm = ctx.getTransform ? ctx.getTransform() : { a: 1 }; if (k * Math.abs(Tm.a || 1) * 1.3 < 10) return drawPackHorseFlat(ctx, g, w, B, t, moving);   // (under about 10 device pixels tall: the flat sketch is as good and far cheaper)
+  var q2 = P(B.x + B.ux * 0.2, y0, B.z + B.uz * 0.2), dx = q2.x - c.x, fs = 0.45 + 0.55 * Math.min(1, Math.abs(dx) / (k * 0.2)), lim = Math.sqrt(1 - fs * fs) * 0.6, sh = clamp((q2.y - c.y) / (k * 0.2), -lim, lim);   // (turned toward us or away: pressed narrower, the ground's slope along it)
+  ctx.fillStyle = 'rgba(20,16,24,' + (0.28 * clamp(g.lum * 1.1, 0.4, 1)) + ')'; ctx.beginPath(); ctx.ellipse(c.x, c.y, 0.8 * k * fs + 0.25 * k, 0.16 * k, 0, 0, TAU); ctx.fill();
+  var tw0 = ZF_TOW; ZF_TOW = q2.d < c.d ? 1 : -1; zrl(g, f); RL.lum = g.lum;
+  zPlace(ctx, B.x, y0, B.z, f, fs, 1, sh); horsePaint(ctx, { t: t, ph: moving ? (w.dist || 0) / 1.7 : 0, amp: moving ? 1 : 0, col: w.horse.col, seed: (w.ph * 1000) % 61 }); ctx.restore();
+  ZF_TOW = tw0;
+}
+/* the old flat sketch, for a horse only a few pixels tall */
+function drawPackHorseFlat(ctx, g, w, B, t, moving) {
   var c = P(B.x, bridgeY(B.x, B.z), B.z), k = c.k, tint = g.tint, f = P(B.x + B.ux, 0, B.z + B.uz).x >= P(B.x, 0, B.z).x ? 1 : -1, cyc = moving ? (w.dist || 0) / 0.55 * Math.PI : 0, col = w.horse.col;
   var fs = clamp(Math.abs(P(B.x + B.ux, 0, B.z + B.uz).x - c.x) / k, 0.35, 1);   // foreshortened when it walks toward or away from us
   var L = 1.05 * k * fs, bh = 1.05 * k, by = c.y - bh, bodyC = rgb(mulc(col, tint)), dark = rgb(mulc(scl(col, 0.6), tint));
@@ -5942,7 +6404,7 @@ function drawKago(ctx, g, w, t) {
 /* a small townsperson in Edo dress (paintFolk), with whatever they carry */
 function folkDress(g, w) {   // dressed once, from the walker's own seed: role, colours, the weather's gear
   if (w.D) return w.D;
-  var q = g.paths[w.pi], r = mulberry32(((w.ph * 1e5) | 0) + 17), country = g.stage < 9 || (q && q.band === 0 && !q.still);
+  var q = g.paths[w.pi], r = mulberry32(((w.ph * 1e5) | 0) + 17), country = g.stage < SI.shoka || (q && q.band === 0 && !q.still);
   if (w.still && g.season === 'summer' && (g.light === 'night' || g.light === 'dusk')) w.yukata = r() < 0.75;
   w.D = dressFor(folkEnv(g, country), w, r); if (w.D.mino) w.mino = true;
   if (w.D.yukata || w.D.role === 'monk' || w.D.role === 'samurai') { if (w.load) w.load = null; }
@@ -6784,7 +7246,7 @@ function fadeIO(u) { return clamp(Math.min(u, 1 - u) * 12); }
    plinth, fences, the well, the wooded hills. Paths and yards are cheap, grass costs a little more, flooded paddies a lot. */
 var RW = { st: 0.5, x0: -64, z0: -12, x1: 72, z1: 100, cache: {} };
 function rwBuild() {
-  var key = F.s + (F.event || '') + SEA.paddy; if (RW.cache[key]) return RW.cache[key];
+  var key = F.s + (F.event || '') + SEA.paddy + (F.kido && LIT.name === 'night' ? '|shut' : ''); if (RW.cache[key]) return RW.cache[key];
   var st = RW.st, nx = Math.ceil((RW.x1 - RW.x0) / st), nz = Math.ceil((RW.z1 - RW.z0) / st), N = nx * nz, cost = new Float32Array(N), i, j;
   var tw = trackW(), rw = roadW(), vw = F.machiya ? 3.6 : 2.6, wet = SEA.paddy === 'flood' || SEA.paddy === 'green';
   for (j = 0; j < nz; j++) for (i = 0; i < nx; i++) {
@@ -6817,7 +7279,7 @@ function rwBuild() {
   if (F.sign) rect(SIGN.x, SIGN.z, [1, 0], 0.5, 0.5, 0.2);
   if (F.farm) { rect(FARM.x, FARM.z, [1, 0.08], 11.5, 7.6); seg([FARM.x - 8.5, FARM.z - 8], [FARM.x - 2.5, FARM.z - 8.3], 0.3); seg([FARM.x + 1.5, FARM.z - 8.4], [FARM.x + 6.5, FARM.z - 8.2], 0.3); rect(FARM.x + 7.5, FARM.z - 2, [1, 0], 2.2, 1, 0.2); }
   if (F.mill) rect(MILL.x, MILL.z, MILL.u, 5, 4.4);
-  if (F.shrine) { rect(SHRINE.x, SHRINE.z, [1, -0.1], 3, 3, 0.3); seg([SHRINE.x - 3, SHRINE.z - 2.6], [SHRINE.x - 0.85, SHRINE.z - 2.815], 0.3); seg([SHRINE.x + 0.85, SHRINE.z - 2.985], [SHRINE.x + 3, SHRINE.z - 3.2], 0.3); [-1.1, 1.1].forEach(function (a) { var q = BF(SHRINE.x, SHRINE.z, [1, -0.1], 0).L(a, -3.35, 0); rect(q[0], q[2], [1, 0], 0.4, 0.4, 0.1); }); [-1.45, 1.45].forEach(function (a) { var p = toriiFrame().L(a, 0, 0); rect(p[0], p[2], [1, 0], 0.5, 0.5, 0.15); }); [[4.0, 1.4], [5.4, -1.8], [6.6, 1.2], [2.4, 2.8]].forEach(function (a) { rect(SHRINE.x + a[0], SHRINE.z + a[1], [1, 0], 0.8, 0.8, 0.1); }); }
+  if (F.shrine) { rect(SHRINE.x, SHRINE.z, [1, -0.1], 3, 3, 0.3); seg([SHRINE.x - 3, SHRINE.z - 2.6], [SHRINE.x - 0.85, SHRINE.z - 2.815], 0.3); seg([SHRINE.x + 0.85, SHRINE.z - 2.985], [SHRINE.x + 3, SHRINE.z - 3.2], 0.3); [-1.1, 1.1].forEach(function (a) { var q = BF(SHRINE.x, SHRINE.z, [1, -0.1], 0).L(a, -3.35, 0); rect(q[0], q[2], [1, 0], 0.4, 0.4, 0.1); }); [-1.45, 1.45].forEach(function (a) { var p = toriiFrame().L(a, 0, 0); rect(p[0], p[2], [1, 0], 0.5, 0.5, 0.15); }); SHRINE_CEDARS.forEach(function (a) { rect(SHRINE.x + a[0], SHRINE.z + a[1], [1, 0], 0.8, 0.8, 0.1); }); }
   if (F.tower) rect(TOWER.x, TOWER.z, [1, 0.1], 3, 3, 0.2);
   if (F.farm) NEAR_BUSHES.forEach(function (q) { var e = q[2] * (q[4] === 'low' ? 2.6 : 1.8); rect(q[0], q[1], [1, 0], e, e * 0.8, 0.15); });
   if (F.temple) { box(templeFrame(), -8.9, 8.9, -10.3, 7.0); rect(BELL.x, BELL.z, KR_DIR, 4.4, 4.4, 0.2); precinctPieces().forEach(function (pc) { seg(pc.a, pc.b, 0.4); }); var gq = gateFrame(); [-2.0, 2.0].forEach(function (a) { var p = gq.L(a, 0, 0); rect(p[0], p[2], KR_DIR, 0.5, 2.2, 0.1); }); sandoLanterns().forEach(function (q) { rect(q[0], q[2], [1, 0], 0.7, 0.7, 0.1); }); }
@@ -6828,6 +7290,12 @@ function rwBuild() {
   if (F.buke) BUKE.forEach(function (bk) { rect(bk.x, bk.z, KR_DIR, bk.w, bk.d, 0.3); });
   if (F.ishigaki) { var ig = ishiGeom(); rect(CASTLE.x, CASTLE.z, ig.B.u, ig.w + 3, ig.d + 3, 0.3); }
   if (F.landing) { var lg = landingGeom().B; box(lg, -2.6, 2.6, -3.4, 0.2); }
+  if (F.tea) rect((CHA.x0 + CHA.x1) / 2, (CHA.z0 + CHA.z1) / 2 + 0.2, [1, 0], CHA.x1 - CHA.x0, CHA.z1 - CHA.z0 + 0.4, 0.2);   // (the hedges; the pickers keep to the paths between)
+  if (F.smithy) { var smb = smithyFrame(); box(smb, -SMITH_W / 2 - 1.2, SMITH_W / 2 + 0.3, -SMITH_D / 2 - 1.3, SMITH_D / 2 + 0.3); }   // (the house, the charcoal stack, the anvil and the tub)
+  if (F.kosatsu) box(kosatsuFrame(), -2.9, 2.9, -1.75, 1.0);
+  if (F.terakoya) box(terakoyaFrame(), -TERA_W / 2 - 0.3, TERA_W / 2 + 0.3, -TERA_D / 2 - 0.9, TERA_D / 2 + 0.3);
+  if (F.sakagura) box(sakaguraFrame(), -SAKE_W / 2 - 0.35, SAKE_W / 2 + 1.1, -SAKE_D / 2 - 0.35, SAKE_D / 2 + 0.35);   // (the casks stand by the gable door)
+  if (F.kido) { var kb = kidoFrame(); box(kb, -STREET_HW - 0.2, -KIDO_GO + 0.1, -0.35, 0.35); box(kb, KIDO_GO - 0.1, STREET_HW + 0.2, -0.35, 0.35); if (LIT.name === 'night') box(kb, -KIDO_GO, KIDO_GO, -0.3, 0.3); box(banyaFrame(), -1.45, 1.45, -1.1, 1.1); }   // (shut at night: nothing passes)
   // where the townspeople stand at their activities (the stalls, the hanami parties, the children...): routes keep clear of them
   var G = { nx: nx, nz: nz, cost: cost, avoid: lifeSites().map(function (q) { return [q.x, q.z]; }) };
   RW.cache[key] = G; return G;
@@ -7277,7 +7745,7 @@ function sikaInv(p) { var y = p[1], d = -SIKA_Y0 * (1 - SIKA_LEG); return [p[0],
 function sikaRig() {
   if (SIKA) return SIKA;
   var J = { P0: [-0.4, -0.88], M: [-0.04, -0.9], Wt: [0.32, -0.92], N0: [0.36, -0.9], Nm: [0.45, -1.04], N1: [0.54, -1.17], Ns: [0.8, -1.1],
-    Hj: [-0.38, -0.8], St: [-0.27, -0.6], Hk: [-0.49, -0.37], HFt: [-0.465, -0.075], HHf: [-0.41, 0],
+    Hj: [-0.38, -0.8], St: [-0.27, -0.6], Hk: [-0.525, -0.37], HFt: [-0.49, -0.075], HHf: [-0.435, 0],
     Sp: [0.38, -0.76], El: [0.27, -0.58], Kn: [0.31, -0.29], FFt: [0.312, -0.075], FHf: [0.365, 0] };
   for (var jk in J) J[jk] = sikaMp(J[jk]);
   var BN = [['P0', 'M'], ['M', 'Wt'], ['N0', 'Nm'], ['Nm', 'N1'], ['N1', 'Ns'], ['Hj', 'St'], ['St', 'Hk'], ['Hk', 'HFt'], ['HFt', 'HHf'], ['Sp', 'El'], ['El', 'Kn'], ['Kn', 'FFt'], ['FFt', 'FHf']];
@@ -7295,7 +7763,7 @@ function sikaRig() {
   // toward the loins and deepening to the brisket behind the elbow; the foreleg; the chest; the throat; the poll; the crest
   // of the neck rising from the withers; the level back
   var C = [
-    [-0.54, -0.94, T], [-0.598, -0.902, T], [-0.632, -0.835, [0, 5]], [-0.64, -0.755, [0, 5]], [-0.61, -0.665, RB], [-0.575, -0.575, [5, 6]], [-0.548, -0.49, [6]], [-0.528, -0.43, [6, 7]], [-0.512, -0.385, [6, 7]], [-0.47, -0.4, [6, 7]], [-0.44, -0.46, [6]], [-0.41, -0.52, HF], [-0.345, -0.55, HF], [-0.28, -0.6, FK], [-0.24, -0.655, FK],
+    [-0.54, -0.94, T], [-0.594, -0.906, T], [-0.618, -0.852, [0, 5]], [-0.622, -0.79, [0, 5]], [-0.612, -0.7, RB], [-0.601, -0.62, [5, 6]], [-0.59, -0.54, [5, 6]], [-0.581, -0.47, [6]], [-0.573, -0.42, [6, 7]], [-0.565, -0.385, [6, 7]], [-0.5, -0.4, [6, 7]], [-0.46, -0.46, [6]], [-0.42, -0.52, HF], [-0.345, -0.55, HF], [-0.28, -0.6, FK], [-0.24, -0.655, FK],
     [-0.14, -0.59, BE], [0.0, -0.535, BE], [0.12, -0.505, [1, 9]], [0.2, -0.497, FU], [0.24, -0.47, [9, 10]], [0.27, -0.44, [9, 10]], [0.33, -0.44, [9, 10]], [0.37, -0.47, [9, 10]], [0.385, -0.51, FU], [0.415, -0.6, CH], [0.465, -0.68, CH], [0.47, -0.77, CH],
     [0.42, -0.86, T], [0.37, -0.94, T],
     [0.33, -0.985, T], [0.25, -0.98, T], [0.12, -0.952, T], [-0.06, -0.945, T], [-0.24, -0.958, T], [-0.38, -0.985, T], [-0.48, -0.975, T]
@@ -7303,11 +7771,16 @@ function sikaRig() {
   // the cannons and pasterns a little fuller than the design (slim, not needle-thin): push the outline out from each leg's centre line
   C = C.map(function (c) { var y = c[1]; if (y > -0.36) { var cx = c[0] < 0 ? lerp(-0.47, -0.43, clamp(-y / 0.36)) : lerp(0.31, 0.33, clamp(-y / 0.36)); if (c[0] > 0.2 || c[0] < -0.3) c = [cx + (c[0] - cx) * 1.25, y, c[2]]; } var q = sikaMp([c[0], c[1]]); return [q[0], q[1], c[2]]; });
   var ctrl = C.map(function (c) { var ws = wts(c[2], c[0], c[1]); return { x: c[0], y: c[1], ws: ws, L: rigLocal(B0, ws, c[0], c[1]) }; });
+  // the hamstring: the outline from the point of the buttock down to the point of the hock is held as one near-straight line
+  // between those two (each point its place along it and its small bow out from it), so in any stride it runs straight from
+  // the rump to the hock (skinned point by point to the thigh's bones, it folded into a shelf when the leg swung forward)
+  var HAM = [3, 9], ha = ctrl[HAM[0]], hb = ctrl[HAM[1]], hdx = hb.x - ha.x, hdy = hb.y - ha.y, hl2 = hdx * hdx + hdy * hdy;
+  for (var hi = HAM[0] + 1; hi < HAM[1]; hi++) { var rx0 = ctrl[hi].x - ha.x, ry0 = ctrl[hi].y - ha.y; ctrl[hi].ham = [(rx0 * hdx + ry0 * hdy) / hl2, (-rx0 * hdy + ry0 * hdx) / hl2]; }
   var rest = pSmooth(C.map(function (c) { return [c[0], c[1]]; }), true, 5);
   // the form, as rounded masses [cx, cy, rx, ry, height, rotation]: neck, shoulder blade, point of shoulder, chest, ribs, loin, haunch, thigh, gaskin, legs
   var MS = [[0.5, -1.05, 0.26, 0.1, 0.09, -1.1], [0.3, -0.8, 0.09, 0.18, 0.09, -0.45], [0.42, -0.7, 0.07, 0.07, 0.06, 0], [0.37, -0.63, 0.1, 0.08, 0.06, 0],
     [0.12, -0.75, 0.22, 0.19, 0.12, 0.1], [-0.14, -0.82, 0.16, 0.12, 0.08, 0], [-0.46, -0.81, 0.17, 0.15, 0.11, 0.3], [-0.44, -0.62, 0.12, 0.12, 0.08, 0.2], [-0.47, -0.47, 0.05, 0.11, 0.05, -0.5],
-    [0.3, -0.45, 0.04, 0.13, 0.04, 0.05], [0.31, -0.18, 0.018, 0.11, 0.02, 0], [-0.475, -0.2, 0.02, 0.13, 0.02, 0], [-0.495, -0.36, 0.03, 0.04, 0.025, 0]];
+    [0.3, -0.45, 0.04, 0.13, 0.04, 0.05], [0.31, -0.18, 0.018, 0.11, 0.02, 0], [-0.5, -0.2, 0.02, 0.13, 0.02, 0], [-0.53, -0.36, 0.03, 0.04, 0.025, 0]];
   function pw(T, x) { if (x <= T[0][0]) return T[0][1]; for (var k = 1; k < T.length; k++) if (x <= T[k][0]) { var f = (x - T[k - 1][0]) / (T[k][0] - T[k - 1][0]); f = f * f * (3 - 2 * f); return lerp(T[k - 1][1], T[k][1], f); } return T[T.length - 1][1]; }
   var BK = [[-0.56, -0.925], [-0.48, -0.975], [-0.38, -0.985], [-0.24, -0.958], [-0.06, -0.945], [0.12, -0.952], [0.25, -0.985], [0.33, -1.0]], BL = [[-0.24, -0.655], [-0.14, -0.59], [0.0, -0.535], [0.12, -0.505], [0.2, -0.497]];
   function backY(x) { return pw(BK, x); }
@@ -7334,7 +7807,7 @@ function sikaRig() {
   for (i = 0; i < 12; i++) { if (r() < 0.5) continue; var x4 = -0.36 + i * 0.045 + (r() - 0.5) * 0.05; if (x4 > 0.08) break; SP.push([x4, backY(x4) + 0.22 + (r() - 0.5) * 0.05, 0.45 + r() * 0.4, 0.42]); }
   for (i = 0; i < 14; i++) { var a = r() * TAU, rr = Math.sqrt(r()); SP.push([-0.42 + Math.cos(a) * rr * 0.12, -0.8 + Math.sin(a) * rr * 0.1, 0.5 + r() * 0.5, 0.6]); }
   SP = SP.map(function (p) { var q = sikaMp(p); return [p[0], p[1], p[2], q[0], q[1], p[3]]; }).filter(function (p) { return pInside(rest, p[3], p[4]); }).map(function (p) { return { x: p[0], y: p[1], s: p[2], al: p[5], asp: 0.55 + r() * 0.4, rot: (r() - 0.5) * 0.7, L: inherit(p[3], p[4]), nr: normal(p[0], p[1]), ha: hair(p[0], p[1]) }; });
-  SIKA = { J: J, BN: BN, B0: B0, ctrl: ctrl, rest: rest, area: Math.abs(pArea(rest)), backY: backY, bellyY: bellyY, hair: hair, normal: normal, inherit: inherit, SP: SP, S: [], head: null };
+  SIKA = { J: J, BN: BN, B0: B0, ham: HAM, ctrl: ctrl, rest: rest, area: Math.abs(pArea(rest)), backY: backY, bellyY: bellyY, hair: hair, normal: normal, inherit: inherit, SP: SP, S: [], head: null };
   return SIKA;
 }
 function sikaSamples(R, n) {   // strokes' places, made once and grown as needed
@@ -7344,6 +7817,11 @@ function sikaSamples(R, n) {   // strokes' places, made once and grown as needed
   return R.S;
 }
 /* a point bound to bones, posed; the neck's cross-section swells by ns (rut: the throat and mane thicken) */
+function sikaOutPts(R, B, ns) {   // the body's outline posed: every point skinned, then the hamstring laid straight from buttock to hock
+  var Q = R.ctrl.map(function (c) { return sikaPt(B, c.L, ns); });
+  if (R.ham) { var a = Q[R.ham[0]], b = Q[R.ham[1]], dx = b[0] - a[0], dy = b[1] - a[1]; for (var i = R.ham[0] + 1; i < R.ham[1]; i++) { var h = R.ctrl[i].ham; Q[i] = [a[0] + dx * h[0] - dy * h[1], a[1] + dy * h[0] + dx * h[1]]; } }
+  return Q;
+}
 function sikaPt(B, L, ns, B0) {   // skinned by blended angle: every bone's anchor, but one shared turn, so a joint bends without collapsing
   var x = 0, y = 0, d = 0, i;
   B0 = B0 || (SIKA && SIKA.B0);
@@ -7774,7 +8252,7 @@ function sikaPaint(ctx, o) {
   // the far legs, behind
   sikaFarLeg(ctx, R, B, Po.farH, true, cols, 'sikafh'); sikaFarLeg(ctx, R, B, Po.farF, false, cols, 'sikaff');
   // the one silhouette: the body with its near legs (skinned to the skeleton) and the neck (a tube on the neck bones), filled as one
-  var out0 = pSmooth(R.ctrl.map(function (c) { return sikaPt(B, c.L, ns); }), true, 5), out = pWind(out0, true), oRev = out !== out0, nk = sikaNeck(R, B, o), nOut = pWind(nk.out, true);
+  var out0 = pSmooth(sikaOutPts(R, B, ns), true, 5), out = pWind(out0, true), oRev = out !== out0, nk = sikaNeck(R, B, o), nOut = pWind(nk.out, true);
   var hl = sikaLegTube(R, [B[5], B[6], B[7], B[8]], true), fl = sikaLegTube(R, [B[9], B[10], B[11], B[12]], false), hOut = pWind(hl.out, true), fOut = pWind(fl.out, true);
   var path = new Path2D(); pPath(out, path); pPath(nOut, path); pPath(hOut, path); pPath(fOut, path);
   var bodyLegs = new Path2D(); pPath(out, bodyLegs); pPath(hOut, bodyLegs); pPath(fOut, bodyLegs);
@@ -7977,7 +8455,7 @@ function qPose(R, o) {
   function hind(i, far) {
     var ft = foot(i), dxf = far ? 0.03 * sc : 0, hip = glob(pel, loc(B0[0], J.Hj)); hip = [hip[0] + dxf, hip[1]];
     if (o.tuck) ft = { dx: -0.3 * sc, up: 0.12 * sc + lift, f: 1 };
-    var T = [J.HHf[0] + ft.dx + dxf, -ft.up], aP = Math.atan2(J.HHf[1] - J.HFt[1], J.HHf[0] - J.HFt[0]) + ft.f * 0.9;
+    var T = [J.HHf[0] + ft.dx + dxf, -ft.up], aP = Math.atan2(J.HHf[1] - J.HFt[1], J.HHf[0] - J.HFt[0]) + ft.f * (R.spec.hindPF === undefined ? 0.9 : R.spec.hindPF);   // (hindPF: how far the hind foot folds in the swing; a hoof hardly at all)
     var Fl = [T[0] - Math.cos(aP) * B0[8].len, T[1] - Math.sin(aP) * B0[8].len], aC = B0[7].th - ft.f * 0.55 - (ft.st >= 0 ? (ft.dx / Math.max(0.2 * sc, stride)) * 0.6 : 0);
     var lc = B0[7].len, reach = (B0[5].len + B0[6].len) * 0.985;
     function hk(a) { return [Fl[0] - Math.cos(a) * lc, Fl[1] - Math.sin(a) * lc]; }
@@ -9257,6 +9735,7 @@ function tanukiPaint2(ctx, o) {
   if (sumC) { C.coat = [92, 76, 60]; C.back = [62, 52, 42]; C.frost = [146, 134, 114]; C.ruff = [132, 118, 96]; C.ruffK = 0.62; }   // (summer: the short coat darker and less frosted, the cheek ruff small)
   if (RL.night) { C.frost = sumC ? scl(mixc(C.frost, C.coat, 0.3), 1.02) : scl(mixc(C.frost, [214, 220, 232], 0.25), 1.18); C.ruff = scl(C.ruff, 1.2); C.face = scl(TANK.face, 1.18); }   // (v5: the short summer coat barely frosted: lifted like the winter's, it read as a pale woolly sheep at a phone's size)   // (v3) at night the pale guard-hair tips, the cheek ruff and the muzzle catch what light there is (the moon, a lantern): lifted, so the mask pattern reads in the dark (toned down, it was one dark smudge at a phone's size)
   RL.k = pScale(ctx); m = pLm(); m = { l: Math.max(3.4 / RL.k, Math.min(m.l, 11 / RL.k)), w: Math.max(1.35 / RL.k, Math.min(m.w, 3.2 / RL.k)) };   // up close the strokes no finer than a real lock but no bigger than about 11 x 3 device px (larger they read as shards)
+  if (sumC && RL.k < 95) C.frost = mixc(C.frost, C.coat, 0.6 * clamp((95 - RL.k) / 50));   // (v6) small, the short summer coat barely frosted at all: its pale tips, a pixel each, made it a pale woolly blob
   var coat = C.coat, hd = o.head || {}, pitch = hd.pitch === undefined ? 0.15 : hd.pitch;
   var Po = qPose(R, { ph: o.ph, amp: o.amp, gait: o.gait, stride: o.stride || 0.34, crouch: (o.crouch || 0) * 0.4, head: { neck: R.B0[2].th + pitch * 0.5, ang: 0.25 + pitch * 0.9, bend: pitch * 0.1 } }), B = Po.B, B0 = R.B0;
   ctx.save();
@@ -9318,9 +9797,11 @@ function tanukiPaint2(ctx, o) {
   var gzT = clamp(1.5 - RL.k / 420, 0.45, 1.1), gt0 = P2(0, -0.36), gt1 = P2(0, -0.12), gG = ctx.createLinearGradient(gt0[0], gt0[1], gt1[0], gt1[1]);
   gG.addColorStop(0, zc(mixc(coat, C.frost, 0.55), 1.05, 0.38 * gzT * lit)); gG.addColorStop(0.3, zc(coat, 1, 0)); gG.addColorStop(0.62, zc(coat, 1, 0)); gG.addColorStop(1, zc(mixc(coat, C.dark, 0.6), 0.9, 0.45 * gzT));
   ctx.fillStyle = gG; ctx.fill(pPath(out));
+  if (RL.k < 95 && MODE !== 'm') { ctx.fillStyle = zc(mixc(coat, C.dark, 0.55), 1, clamp((95 - RL.k) / 55) * (sumC ? 0.5 : 0.32)); ctx.fill(pPath(out)); }   // (v6) small on the screen the body taken darker, so the pale face reads against it (a frosted round body on dark legs, a few pixels long, read as a sheep)
   ctx.restore();
   // the long shaggy coat: soft guard hairs lying back along the body and spilling over the outline, grizzled pale and dark
-  if (MODE !== 'm') { qFuzz(ctx, path, mixc(coat, C.frost, 0.3), C.dark, P2(0, -0.34)[1], 0, m.w * (sumC ? 0.8 : 1.5)); qFuzz(ctx, pPath(tail.out), coat, C.dark, 0, 0, m.w * 0.9);
+  var fzA = clamp((RL.k - 30) / 70);   // (v6: the shag fades out when the animal is small: each lock a device pixel wide, the frosted fringe covered a few-pixel tanuki and it read as a sheep)
+  if (MODE !== 'm' && fzA > 0.02) { var ga0 = ctx.globalAlpha; ctx.globalAlpha = ga0 * fzA; qFuzz(ctx, path, mixc(coat, C.frost, 0.3), C.dark, P2(0, -0.34)[1], 0, m.w * (sumC ? 0.8 : 1.5)); qFuzz(ctx, pPath(tail.out), coat, C.dark, 0, 0, m.w * 0.9);
     var yb = P2(0, -0.2)[1], wK = sumC ? 0.4 : 1;
     tanWisps(ctx, [out, nOut, tail.out], function (x, y, nx, ny, oi) { return wK * wtF(x, y, nx, ny, oi); }, [mixc(coat, C.frost, 0.4), coat, mixc(coat, C.dark, 0.3)], m, 91);
     function wtF(x, y, nx, ny, oi) {
@@ -9332,6 +9813,7 @@ function tanukiPaint2(ctx, o) {
       return y < yb ? 0.25 : 0.45;                                // a few elsewhere: mostly the soft edge
     }
     if (RL.night) { var rmC = scl(mixc(RL.rimC, TANK.frost, 0.3), 1.5); tanWisps(ctx, [out, nOut, tail.out], function (x, y, nx, ny) { return ny < -0.35 && y < -0.12 ? 0.85 : 0; }, [rmC, mixc(rmC, coat, 0.4)], m, 97); }   // (night: the guard hairs along the back catch the moon, so the dark animal's line stands off the dark ground)
+    ctx.globalAlpha = ga0;
   }
   // turned to the viewer the face is seen at its own width, not pressed narrow with the body's turn; and its tilt goes into the head's
   // own nose-down pitch (a turn in the picture would roll it sideways)
@@ -9348,6 +9830,10 @@ function tanukiPaint2(ctx, o) {
     gB.addColorStop(0, zc(mixc(coat, C.frost, 0.25), 1, broad)); gB.addColorStop(0.35, zc(coat, 0.92, broad)); gB.addColorStop(0.7, zc(mixc(coat, C.dark, 0.6), 0.9, broad)); gB.addColorStop(1, zc(C.dark, 0.9, broad)); ctx.fillStyle = gB; ctx.fill(bp2);
     if (MODE !== 'm') { ctx.globalAlpha = broad; qFuzz(ctx, bp2, coat, C.dark, -bh, bh, m.w * 1.4); tanWisps(ctx, [BD], function (x, y, nx, ny) { return ny < -0.6 ? 0.3 : 0.9; }, [mixc(coat, C.frost, 0.4), coat, mixc(coat, C.dark, 0.4)], m, 23, 0.028); ctx.globalAlpha = 1; }
     ctx.restore();
+  }
+  if (RL.night && MODE !== 'm' && RL.k < 160) {   // (v6) at night and small: a fine line of moonlight along the top of the back, so the dark animal stands off a dark road (its grizzled back alone sank into it: in the town at night it read as a grey sheep)
+    var yMd = P2(0, -0.22)[1], bxr = pBox(out); ctx.save(); ctx.beginPath(); ctx.rect(bxr[0] - 1, bxr[1] - 1, bxr[2] - bxr[0] + 2, yMd - bxr[1] + 1); ctx.clip();
+    ctx.strokeStyle = zc(scl(mixc(RL.rimC, TANK.frost, 0.35), 1.35), 1, 0.7); ctx.lineWidth = 2.2 / RL.k; ctx.lineJoin = 'round'; ctx.stroke(pPath(out)); ctx.restore();
   }
   ctx.save(); ctx.translate(lerp(hb.a[0], nE[0], 0.5), lerp(hb.a[1], nE[1], 0.5)); ctx.scale(1 / fsE, 1); ctx.rotate(hth * (1 - hsn)); ctx.scale(lerp(fsE, 1, hsn), 1);
   tanukiHead2(ctx, { yaw: hyaw, t: t, blink: o.blink, shine: o.shine, sniff: o.sniff, tilt: hth * hsn }, coat, C);
@@ -9762,13 +10248,16 @@ var CATSIT = {   // sitting upright: the haunches tucked under, the front legs s
 var CATLOAF = {   // the loaf: legs folded under, the body a rounded bread-loaf on the ground, paws just showing
   key: 'catloaf', sc: 0.28, headAng: 0.32, pawFold: 0.2, wristFold: 2.6, tubeTop: 0.4,
   legW: { hl: [0.04, 0.03, 0.02, 0.012, 0.011, 0.011], hr: [0.04, 0.03, 0.02, 0.012, 0.011, 0.011], fl: [0.02, 0.016, 0.013, 0.011, 0.011, 0.011], fr: [0.02, 0.016, 0.013, 0.011, 0.011, 0.011] },
-  J: { P0: [-0.096, -0.1272], M: [0.0, -0.1357], Wt: [0.072, -0.1399], N0: [0.088, -0.1378], Nm: [0.104, -0.159], N1: [0.1184, -0.1781], Ns: [0.176, -0.1749],
-    Hj: [-0.096, -0.106], St: [-0.056, -0.053], Hk: [-0.104, -0.0212], HFt: [-0.072, -0.0106], HHf: [-0.048, 0.0],
-    Sp: [0.088, -0.106], El: [0.08, -0.053], Kn: [0.104, -0.0265], FFt: [0.12, -0.0127], FHf: [0.132, -0.0042] },
-  C: [[-0.108, -0.134, 'T'], [-0.144, -0.106, [0, 5]], [-0.158, -0.064, 'RB'], [-0.15, -0.027, [5, 6]], [-0.122, -0.006, 'HF'], [-0.06, -0.002, 'BE'], [0.016, -0.002, 'BE'], [0.078, -0.004, 'FU'], [0.108, -0.018, 'CH'], [0.122, -0.05, 'CH'], [0.118, -0.09, 'CH'],
-    [0.1, -0.124, 'T'], [0.07, -0.147, 'T'], [0.025, -0.159, 'T'], [-0.025, -0.156, 'T'], [-0.07, -0.149, 'T']],   // (v2) a rounded dome, highest just behind the shoulders, the haunch a ball at the rear (squared off, it read as a box)
-  MS: [[0.0, -0.0848, 0.16, 0.075, 0.05, 0], [-0.104, -0.0742, 0.07, 0.06, 0.035, 0], [0.088, -0.0848, 0.04, 0.05, 0.03, 0]],
-  BK: [[-0.128, -0.1378], [-0.04, -0.1548], [0.04, -0.1548], [0.104, -0.1272]], BL: [[-0.128, -0.0064], [0.08, -0.0042]],
+  J: { P0: [-0.09, -0.13], M: [0.0, -0.145], Wt: [0.058, -0.15], N0: [0.07, -0.14], Nm: [0.082, -0.153], N1: [0.094, -0.166], Ns: [0.15, -0.164],
+    Hj: [-0.092, -0.106], St: [-0.054, -0.053], Hk: [-0.1, -0.0212], HFt: [-0.07, -0.0106], HHf: [-0.046, 0.0],
+    Sp: [0.074, -0.1], El: [0.068, -0.05], Kn: [0.088, -0.022], FFt: [0.102, -0.012], FHf: [0.112, -0.004] },
+  // (v3) shorter and taller, as a cat really sits in the loaf: the back rising from the round haunch to its height over the shoulders,
+  // the chest a full upright front with the head set down on it (the neck lost in the ruff, the face only a little ahead of the chest),
+  // the forepaws tucked under it. (v2's long low dome with the head held up ahead on a neck read as a sausage with a small head)
+  C: [[-0.1, -0.142, 'T'], [-0.134, -0.12, [0, 5]], [-0.15, -0.082, 'RB'], [-0.146, -0.042, [5, 6]], [-0.126, -0.01, 'HF'], [-0.075, -0.002, 'BE'], [0.0, -0.002, 'BE'], [0.06, -0.003, 'FU'], [0.096, -0.01, 'CH'], [0.116, -0.036, 'CH'], [0.123, -0.076, 'CH'],
+    [0.116, -0.116, 'T'], [0.096, -0.15, 'T'], [0.062, -0.172, 'T'], [0.018, -0.178, 'T'], [-0.03, -0.172, 'T'], [-0.07, -0.16, 'T']],
+  MS: [[0.0, -0.092, 0.15, 0.085, 0.05, 0], [-0.095, -0.075, 0.065, 0.065, 0.035, 0], [0.085, -0.09, 0.045, 0.06, 0.03, 0]],
+  BK: [[-0.128, -0.13], [-0.04, -0.172], [0.04, -0.176], [0.1, -0.142]], BL: [[-0.128, -0.0064], [0.08, -0.0042]],
   hair: function (x, y, R) { var s = clamp((y - R.backY(x)) / Math.max(0.03, R.bellyY(x) - R.backY(x))); return Math.PI - 0.1 - 0.9 * s * s; }
 };
 var CATBOW = {   // the play-bow stretch: forelegs reaching out along the ground, the chest down, the rear up on straight legs
@@ -9833,14 +10322,14 @@ function catCoat2(kind, pose) {
   if (kind === 'tora') {   // ginger tabby: orange over cream, soft darker bars
     var bars = pose === 'stand' ? [[0.0, -0.135, 0.12, 0.02, K.cream, 0.85]].concat([-0.15, -0.115, -0.08, -0.045, -0.01, 0.025, 0.06].map(function (x, i) { var y0 = CATS.BK ? -0.24 - 0.012 * Math.sin((x + 0.15) * 14) : -0.24; return [x, y0 + 0.042, 0.007, 0.042, K.gingerD, 0.55 - i * 0.03, 0.18 + x * 1.2]; })).concat([[-0.03, -0.244, 0.12, 0.008, K.gingerD, 0.6]])
       : pose === 'sit' ? [[-0.09, -0.14, 0.02, 0.05, K.gingerD, 0.55, -0.6], [-0.05, -0.2, 0.018, 0.04, K.gingerD, 0.5, -0.8], [0.07, -0.18, 0.02, 0.06, K.cream, 0.9]]
-        : [[-0.1, -0.13, 0.018, 0.045, K.gingerD, 0.55, 0.2], [-0.04, -0.14, 0.018, 0.045, K.gingerD, 0.55, 0.1], [0.02, -0.14, 0.018, 0.04, K.gingerD, 0.5, 0], [0.12, -0.06, 0.03, 0.05, K.cream, 0.85]];
+        : [[-0.1, -0.14, 0.018, 0.045, K.gingerD, 0.55, 0.2], [-0.04, -0.155, 0.018, 0.045, K.gingerD, 0.55, 0.1], [0.02, -0.158, 0.018, 0.04, K.gingerD, 0.5, 0], [0.108, -0.07, 0.03, 0.055, K.cream, 0.85]];
     return { coat: K.ginger, back: K.gingerD, bel: K.cream, sets: { c: K.ginger, d: K.gingerD, w: K.cream }, cls: function (x, y) { return y > -0.13 && pose === 'stand' || pose === 'sit' && x > 0.05 ? 'w' : 'c'; }, legCls: function () { return 'c'; }, neckCls: function (u, v) { return v > 0.2 ? 'w' : 'c'; }, iris: [208, 172, 64], ear: K.ginger, patches: bars,
       head: function (c) { [-0.012, 0.0, 0.012].forEach(function (y0, i) { zsoft(c, -0.0 + i * 0.006, -0.03 + y0 * 0.4, 0.012, 0.004, K.gingerD, 0.7, 1, -1.2 + i * 0.2); }); zsoft(c, 0.04, 0.025, 0.035, 0.015, K.cream, 0.8); } };
   }
   // calico (三毛): a white cat with soft irregular patches of orange and black on the back, the head and the tail
   var O = K.orange, B = K.black, pt = pose === 'stand' ? [[-0.14, -0.215, 0.055, 0.04, O, 0.95, 0.2, 1], [-0.05, -0.23, 0.04, 0.03, B, 0.95, -0.1, 1], [0.05, -0.218, 0.05, 0.03, O, 0.9, 0.1, 1], [-0.17, -0.18, 0.025, 0.03, B, 0.9, 0.3], [0.11, -0.22, 0.03, 0.02, B, 0.85, -0.4]]
     : pose === 'sit' ? [[-0.08, -0.12, 0.05, 0.05, O, 0.95, -0.6, 1], [-0.03, -0.22, 0.035, 0.04, B, 0.95, -0.9, 1], [0.02, -0.255, 0.035, 0.022, O, 0.9, -0.3], [-0.11, -0.06, 0.028, 0.03, B, 0.9]]
-      : [[-0.12, -0.12, 0.05, 0.03, O, 0.95, 0.1, 1], [-0.03, -0.135, 0.04, 0.025, B, 0.95, 0, 1], [0.06, -0.125, 0.04, 0.025, O, 0.9, 0, 1]];
+      : [[-0.11, -0.128, 0.05, 0.035, O, 0.95, 0.1, 1], [-0.025, -0.152, 0.04, 0.028, B, 0.95, 0, 1], [0.058, -0.145, 0.04, 0.028, O, 0.9, 0, 1]];
   function inPatch(x, y) { for (var i = 0; i < pt.length; i++) { var q = pt[i], dx = (x - q[0]) / (q[2] * 1.15), dy = (y - q[1]) / (q[3] * 1.15); if (dx * dx + dy * dy < 1) return q[4] === O ? 'o' : 'k'; } return 'c'; }
   return { coat: K.white, back: [240, 236, 230], bel: [234, 230, 222], sets: { c: K.white, o: O, k: B }, cls: inPatch, legCls: function () { return 'c'; }, neckCls: function (u, v) { return v < -0.3 && u > 0.5 ? 'o' : 'c'; }, iris: [206, 170, 62], ear: O, earFar: B, patches: pt,
     head: function (c) { zsoft(c, -0.012, -0.026, 0.03, 0.02, O, 0.95, 1, 0.3); zsoft(c, 0.018, -0.036, 0.018, 0.012, B, 0.9, 1, -0.2); zsoft(c, -0.03, 0.0, 0.016, 0.02, O, 0.8); } };
@@ -9851,9 +10340,9 @@ function catPaint(ctx, o) {
   var pose = o.pose || 'stand', K = catCoat2(o.coat || 'white', pose === 'bow' ? 'stand' : pose), spec = pose === 'sit' ? CATSIT : pose === 'loaf' ? CATLOAF : pose === 'bow' ? CATBOW : CATS, t = o.t || 0, fl = o.flick || 0;
   var A = { spec: spec, coat: K.coat, back: K.back, bel: K.bel, sets: K.sets, cls: K.cls, legCls: K.legCls, neckCls: K.neckCls, patches: pose === 'bow' ? K.patches.map(function (q) { var r = q.slice(); r[1] = q[1] + (q[0] + 0.12) * 0.55 + 0.02; return r; }) : K.patches, stride: 0.24, contact: 0.03, pawR: 0.016, paw: K.coat, short: 0.6, strokeA: 0.3, fine: 0.38,
     farPal: [K.coat, K.coat, K.coat], farW: { hl: [0.04, 0.032, 0.018, 0.012, 0.011, 0.01], hr: [0.034, 0.028, 0.016, 0.011, 0.01, 0.01], fl: [0.024, 0.02, 0.014, 0.011, 0.01, 0.01], fr: [0.022, 0.019, 0.013, 0.011, 0.01, 0.01] },
-    gy: pose === 'stand' ? [0, -0.226, -0.11] : pose === 'sit' ? [0, -0.27, -0.02] : pose === 'bow' ? [0, -0.2, -0.02] : [0, -0.15, -0.01], pitch0: pose === 'sit' ? -0.05 : pose === 'bow' ? -0.1 : 0.08, headK: 1.0,
+    gy: pose === 'stand' ? [0, -0.226, -0.11] : pose === 'sit' ? [0, -0.27, -0.02] : pose === 'bow' ? [0, -0.2, -0.02] : [0, -0.176, -0.01], pitch0: pose === 'sit' ? -0.05 : pose === 'bow' ? -0.1 : 0.08, headK: pose === 'loaf' ? 1.12 : 1.0,   // (the loaf: the head fluffed out, sunk on the chest)
     neck: pose === 'sit' ? { a: [0.02, -0.24], b: [0.06, -0.25], o: [0.015, 0.012, 0.006], wl: [0.04, 0.045, 0.044, 0.04, 0.035], wr: [0.035, 0.04, 0.04, 0.036, 0.03] }
-      : pose === 'loaf' ? { a: [0.05, -0.135], b: [0.09, -0.156], o: [0.012, 0.008, 0.004], wl: [0.04, 0.045, 0.044, 0.04, 0.035], wr: [0.035, 0.04, 0.04, 0.036, 0.03] }   // (the head held up off the shoulders, its top over the back line with a dip between: level with the back it merged into the loaf at a phone's size)
+      : pose === 'loaf' ? { a: [0.036, -0.142], b: [0.07, -0.16], o: [0.012, 0.008, 0.004], wl: [0.04, 0.045, 0.044, 0.04, 0.035], wr: [0.035, 0.04, 0.04, 0.036, 0.03] }   // (the head held up off the shoulders, its top over the back line with a dip between: level with the back it merged into the loaf at a phone's size)
       : pose === 'bow' ? { a: [0.04, -0.13], b: [0.085, -0.11], o: [0.015, 0.012, 0.006], wl: [0.04, 0.045, 0.044, 0.04, 0.035], wr: [0.035, 0.04, 0.04, 0.036, 0.03] }
         : { a: [0.08, -0.187], b: [0.13, -0.192], o: [0.015, 0.012, 0.006], wl: [0.04, 0.046, 0.045, 0.04, 0.035], wr: [0.035, 0.042, 0.04, 0.036, 0.03] },
     edge: function (oi, ii, rx, ry, nx, ny) { if (oi > 1) return null; if (oi === 0 && ny > 0.5 && ii % 2) return ['b', 0.45, 0.4, 0.15, 0.5]; if (oi === 0 && rx < -0.15 && ii % 2) return ['c', 0.5, 0.4, 0.1, 0.5]; return null; },
@@ -9875,7 +10364,7 @@ function catPaint(ctx, o) {
     head: function (c, ho) { catHead(c, ho, K.coat, K.ear, K.iris, K.head); }
   };
   if (pose === 'sit') { A.haunch = [-0.07, -0.075, 0.05]; A.throat = K.coat; }
-  if (pose === 'loaf') A.haunch = [-0.088, -0.07, 0.052];   // the folded thigh: a lit round at the rear, shade in front of and under it (the loaf's flank was one flat side)
+  if (pose === 'loaf') A.haunch = [-0.086, -0.072, 0.056];   // the folded thigh: a lit round at the rear, shade in front of and under it (the loaf's flank was one flat side)
   if (pose === 'stand' && o.stalk) { o.crouch = Math.max(o.crouch || 0, o.stalk * 2.6); if (!o.head) o.head = { pitch: -0.05, neck: 0.35 }; }   // the stalk: low, the head carried forward and level
   return qAnimal(ctx, o, A);
 }
@@ -10289,7 +10778,7 @@ function townWaderRings(ctx, g, st, T, t) {   // rings round the egret's legs wh
   for (var r = 0; r < 2; r++) { var u = (rph + r * 0.5) % 1, rr = (0.06 + u * 0.3) * c.k; ctx.strokeStyle = 'rgba(232,240,246,' + (0.4 * (1 - u)) + ')'; ctx.lineWidth = Math.max(0.5, 0.01 * c.k); ctx.beginPath(); ctx.ellipse(c.x, c.y, rr, rr * CAM.s * 0.9, 0, 0, TAU); ctx.stroke(); }
 }
 function townKingfisher(ctx, g, st, T, t) {
-  var mag = 2.0 / BIRDV, S2 = SB3.kawasemi, L2 = S2.L * BIRDV, A = st.A, B = st.B, pe = st.perch, dv = st.dive;
+  var mag = 4.0 / BIRDV, S2 = SB3.kawasemi, L2 = S2.L * BIRDV, A = st.A, B = st.B, pe = st.perch, dv = st.dive;   // (v6: 4 times life, on a shorter stake: at 2.0 on a stake a metre out of the water it was a 2-pixel dot on top of a post on a phone)
   var tIn = 2.6, tW = 9.5, tD = 2.1, tF = 6.2, p, dir, mode, uu;   // in, watch, dive and back, the fish, out
   function cut(p3, fn) { var q = P(p3[0], p3[1], p3[2]), e = 0.5 * q.k; drawCut(ctx, g, [q.x - e, q.y - e, q.x + e, q.y + e * 0.5], q.d - 0.3, fn); st.now = p3; }
   // the stake it perches on, standing in the shallows
@@ -10321,9 +10810,9 @@ function townKingfisher(ctx, g, st, T, t) {
    card), so a life-size fox is three pixels tall. They stay in proportion to the townsfolk, though, so not more than this;
    up close they are for the pinch zoom and the full screen (their layer is drawn at the screen's resolution, zoom included).
    Each one's stride scales with it, so the feet do not slide */
-var TZ = { kitsune: 1.75, tanuki: 1.8, usagi: 1.7, shika: 1.3, cat: 1.35, dog: 1.2, sagi: 1.3, tsuru: 1.15 };
+var TZ = { kitsune: 1.9, tanuki: 2.1, usagi: 2.0, shika: 1.45, cat: 1.75, dog: 1.6, sagi: 1.3, tsuru: 1.15 };   // (v6: the cats, the dog and the deer as large as stays in proportion to the townsfolk: a cat's head about a walker's knee, the dog's and the fox's toward the hip, the deer's shoulder about a walker's; at 1.35 and 1.2 a visiting cat or the dog was 8 device px on a phone, a speck)
 var RARE_DEFS = [
-  { id: 'shironeko', name: '白い猫', season: ALL_S, light: ['morning', 'day', 'dusk'], minStage: 9, w: 1, dur: 22, desc: '商家の屋根の上を、白い猫がゆっくり歩いていきます',
+  { id: 'shironeko', name: '白い猫', season: ALL_S, light: ['morning', 'day', 'dusk'], minStage: SI.shoka, w: 1, dur: 22, desc: '商家の屋根の上を、白い猫がゆっくり歩いていきます',
     // along the ridge of the merchant house: over the ridge-end, a slow walk, a sit to wash and watch, on and down the far side
     setup: function () {
       var b = null; townPlan(F).forEach(function (q) { if (q.type === 'shoka') b = q; }); var B = BF(b.x, b.z, b.u, 0), yR = 5.15 + 0.5 * (b.d / 2 + 0.85) + 0.22, f = planFoot(b), fr = B.L(0, -f.d / 2, 0);
@@ -10341,7 +10830,7 @@ var RARE_DEFS = [
       }, 0.5 * TZ.cat);
       st.a = st.b = st.now;
     } },
-  { id: 'mikeneko', name: '三毛猫', season: ALL_S, light: ['morning', 'day'], minStage: 2, w: 1, dur: 30, desc: '縁台で三毛猫が気持ちよさそうに昼寝をしています',
+  { id: 'mikeneko', name: '三毛猫', season: ALL_S, light: ['morning', 'day'], minStage: SI.teahouse, w: 1, dur: 30, desc: '縁台で三毛猫が気持ちよさそうに昼寝をしています',
     // round from behind the teahouse, up onto the bench, a long nap (breathing, a tail-tip flick, an ear twitch), a stretch, away
     setup: function () {
       var tb = teaFrame(), bb = tb.L(0.2, -2.1 - 2.0, 0.55), fr = tb.L(0.2, -4.95, 0), back = tb.L(-1.2, 3.9, 0), side = tb.L(-4.0, -1.0, 0);
@@ -10360,7 +10849,7 @@ var RARE_DEFS = [
       }, 0.5 * TZ.cat);
       if (st.now) st.bench = st.now;
     } },
-  { id: 'kitsune', name: 'キツネ', season: ALL_S, light: ['dusk', 'night'], minStage: 7, w: 0.8, dur: 38, desc: '祠のそばに、キツネがそっと姿を見せました',
+  { id: 'kitsune', name: 'キツネ', season: ALL_S, light: ['dusk', 'night'], minStage: SI.shrine, w: 0.8, dur: 38, desc: '祠のそばに、キツネがそっと姿を見せました',
     // the garden's fox in the meadow below the shrine: in at an easy trot, a stop to look and listen (the eyes catching the last
     // light), a crouched stalk through the grass, the mousing pounce (up, arched, and down nose first) and a trot away
     setup: function () {
@@ -10402,7 +10891,7 @@ var RARE_DEFS = [
         }
       }, 0.9 * TZ.kitsune);
     } },
-  { id: 'shirasagi', name: '白鷺', season: ['summer'], light: ['morning', 'day', 'dusk'], minStage: 5, w: 1, dur: 35, desc: '青田に白鷺が舞い降りました',
+  { id: 'shirasagi', name: '白鷺', season: ['summer'], light: ['morning', 'day', 'dusk'], minStage: SI.paddy, w: 1, dur: 35, desc: '青田に白鷺が舞い降りました',
     // the garden's egret in the green paddies right of the road: a long glide down on bowed wings, a settle, a slow stalk through
     // the rice with the neck drawn back, a freeze, the lightning strike (sometimes with a fish), on a few steps, and away
     setup: function () {
@@ -10415,7 +10904,7 @@ var RARE_DEFS = [
     draw: function () { },
     water: function (ctx, g, st, u, t) { townWaderRings(ctx, g, st, u * 35, t); },
     loose: function (ctx, g, st, u, t) { townWader(ctx, g, st, u * 35, t, 'sagi', 1.25 * TZ.sagi); } },
-  { id: 'tancho', name: '丹頂鶴', season: ['winter'], light: ['morning', 'day'], minStage: 5, w: 0.2, dur: 35, desc: '雪の田んぼに丹頂鶴が舞い降りました。めったに見られません',
+  { id: 'tancho', name: '丹頂鶴', season: ['winter'], light: ['morning', 'day'], minStage: SI.paddy, w: 0.2, dur: 35, desc: '雪の田んぼに丹頂鶴が舞い降りました。めったに見られません',
     // the garden's crane on the snow of the fields: it glides in on its broad wings, walks and probes, dances (the bow, the wings
     // flung open, a bounding leap, the bow again) and calls with its head thrown back, then runs a few steps and lifts off
     setup: function () {
@@ -10427,7 +10916,7 @@ var RARE_DEFS = [
     },
     draw: function () { },
     loose: function (ctx, g, st, u, t) { townWader(ctx, g, st, u * 35, t, 'tsuru', 1.15 * TZ.tsuru); } },
-  { id: 'tsubame', name: 'ツバメ', season: ['spring'], light: ['morning', 'day'], minStage: 9, w: 1, dur: 14, desc: 'ツバメが軒先をすいすいとかすめていきます',
+  { id: 'tsubame', name: 'ツバメ', season: ['spring'], light: ['morning', 'day'], minStage: SI.shoka, w: 1, dur: 14, desc: 'ツバメが軒先をすいすいとかすめていきます',
     setup: function () { return swallowSetup((RARE_N.tsubame = (RARE_N.tsubame || 0) + 1)); },
     draw: function () { },
     water: function (ctx, g, st, u, t) {   // the touch of a skimming swallow on the water: a ring where it dipped
@@ -10443,13 +10932,17 @@ var RARE_DEFS = [
       } else swallowDraw(ctx, g, st.b, st.b.len * Math.pow((T - tA - tP) / (14 - tA - tP), 0.8), t, 0.3);
       if (T > 0.4) { swallowDraw(ctx, g, st.c, st.c.len * clamp((T - 0.4) / 12.6), t, 0.7); st.now = swallowAt(st.c, st.c.len * clamp((T - 0.4) / 12.6)); }   // its mate, never stopping
     } },
-  { id: 'shika', name: '鹿', season: ALL_S, light: ['morning', 'day', 'dusk'], minStage: 14, w: 0.8, dur: 52, desc: '寺の木立から、鹿が静かに現れました',
+  { id: 'shika', name: '鹿', season: ALL_S, light: ['morning', 'day', 'dusk'], minStage: SI.temple, w: 0.8, dur: 52, desc: '寺の木立から、鹿が静かに現れました',
     // out of the temple wood: a stag, a hind, or (in the rut) a stag with a hind a few seconds behind; a walk onto the open
     // ground, browsing, a look round (the stag's call in autumn), and back into the trees. The garden's sika, on the town's walk grid.
     setup: function () {
       var n = (RARE_N.shika = (RARE_N.shika || 0) + 1), su = SEA.name || 'autumn', r0 = ((n * 0.618034) % 1);
       var who = su === 'autumn' ? (r0 < 0.5 ? ['stag'] : r0 < 0.65 ? ['hind'] : ['stag', 'hind']) : (r0 < 0.6 ? ['stag'] : ['hind']);
-      var S1 = F.pagoda ? [[-27.5, 67.2], [-25.5, 68.4], [-29, 66.6]][n % 3] : [[-31.5, 79.5], [-30, 81], [-32.5, 80.6]][n % 3], A = F.pagoda ? [-46, 68.6 + (n % 3) * 0.4] : [-47, 81 + (n % 3) * 0.6], Ex = F.pagoda ? [-46.5, 70.4] : [-47.5, 83 - (n % 3) * 0.4];
+      var setP = { S: [[-27.5, 67.2], [-25.5, 68.4], [-29, 66.6]][n % 3], A: [-46, 68.6 + (n % 3) * 0.4], E: [-46.5, 70.4] }, setT = { S: [[-31.5, 79.5], [-30, 81], [-32.5, 80.6]][n % 3], A: [-47, 81 + (n % 3) * 0.6], E: [-47.5, 83 - (n % 3) * 0.4] };
+      // (v6) the stand in the temple grounds only where the deer can be seen there (on a phone the temple wall hid it for the whole
+      // visit): else out on the open ground in front, as once the pagoda stands
+      var seenAt = function (S) { return Math.min(rareSeen(S[0], 0, S[1], 0.8, 1.6), rareSeen(S[0] + 1.6, 0, S[1] - 0.3, 0.8, 1.6)); };
+      var use = F.pagoda || seenAt(setT.S) < 0.7 ? setP : setT, S1 = use.S, A = use.A, Ex = use.E;
       var deer = who.map(function (kind, ii) {
         var hind = kind === 'hind', s1 = ii ? [S1[0] - 1.6, S1[1] + 1.2] : S1, s2 = [s1[0] + 1.6, s1[1] - 0.3];
         var pl = landPlan(A, (ii ? [{ wait: 4.5, act: 'hidden', fill: false }] : []).concat([{ go: s1, v: hind ? 0.95 : 1.0 }, { wait: 8, act: 'browse' }, { go: s2, v: 0.7 }, { wait: 7, act: hind ? 'look' : su === 'autumn' ? 'call' : 'look' }, { wait: 0.6, act: 'alarm', fill: false }, { go: Ex, v: 4.2, gait: 'bound' }]), 52);   // (something startles it: the white rump flares and it bounds away)
@@ -10513,9 +11006,16 @@ var RARE_DEFS = [
     // the garden's kingfisher: in fast and low along the river to a stake by the far bank's stones, a watch with the head bobbing, the
     // dive straight down (the splash, the rings), back up to the stake with a fish, which it beats and swallows, and away
     setup: function () {
-      var n = (RARE_N.kawasemi = (RARE_N.kawasemi || 0) + 1), f = 0.37 + (n % 2) * 0.04, a = riverAt(f, RIVER_HW - 1.1), b = riverAt(f, -(RIVER_HW - 1.1)), nr = a[1] > b[1] ? a : b, sg = nr === a ? 1 : -1, dv = riverAt(f + 0.006, sg * (RIVER_HW - 3.0));
+      var n = (RARE_N.kawasemi = (RARE_N.kawasemi || 0) + 1), best = null;
+      // (v6) the stake where it can be seen: a place along the river, on either bank, on the screen with nothing in front of it, and
+      // of those the nearest (always by the near bank at 0.37-0.41 along, it perched behind a riverside pine, wholly hidden; by the
+      // far bank it was a few pixels)
+      [0.37, 0.41, 0.33, 0.45, 0.29, 0.49, 0.25, 0.53, 0.21, 0.57, 0.17, 0.61].forEach(function (f0, i) { var f1 = f0 + (n % 2) * 0.02;
+        [1, -1].forEach(function (sg1) { var q = riverAt(f1, sg1 * (RIVER_HW - 1.1)), p = P(q[0], WL + 0.62, q[1]); if (p.x < W * 0.1 || p.x > W * 0.9 || p.y < H * 0.12 || p.y > H * 0.9) return; var s0 = rareSeen(q[0], WL + 0.62, q[1], 0.35, 0.8), s = (s0 >= 0.92 ? 2 : 0) + s0 + p.k * 0.08 - i * 0.002; if (!best || s > best.s) best = { s: s, f: f1, sg: sg1, nr: q }; }); });
+      if (!best) { var f2 = 0.37 + (n % 2) * 0.04, a = riverAt(f2, RIVER_HW - 1.1), b = riverAt(f2, -(RIVER_HW - 1.1)); best = { f: f2, nr: a[1] > b[1] ? a : b, sg: a[1] > b[1] ? 1 : -1 }; }
+      var f = best.f, nr = best.nr, sg = best.sg, dv = riverAt(f + 0.006, sg * (RIVER_HW - 3.0));
       var A0 = riverAt(f - 0.08, sg * (RIVER_HW - 2)), A1 = riverAt(f + 0.09, sg * (RIVER_HW - 2.5));
-      return { perch: [nr[0], WL + 1.05, nr[1]], dive: [dv[0], WL, dv[1]], A: [A0[0], WL + 0.7, A0[1]], B: [A1[0], WL + 0.8, A1[1]], seed: 80 + n, fishK: n % 2 };
+      return { perch: [nr[0], WL + 0.62, nr[1]], dive: [dv[0], WL, dv[1]], A: [A0[0], WL + 0.7, A0[1]], B: [A1[0], WL + 0.8, A1[1]], seed: 80 + n, fishK: n % 2 };
     },
     draw: function () { },
     water: function (ctx, g, st, u, t) {   // the rings where it went in
@@ -10523,7 +11023,7 @@ var RARE_DEFS = [
       for (var r = 0; r < 3; r++) { var rr = (0.05 + su * 0.5 - r * 0.09) * c.k; if (rr <= 0) continue; ctx.strokeStyle = 'rgba(236,244,250,' + (0.55 * (1 - su)) + ')'; ctx.lineWidth = Math.max(0.5, 0.012 * c.k); ctx.beginPath(); ctx.ellipse(c.x, c.y, rr, rr * CAM.s * 0.9, 0, 0, TAU); ctx.stroke(); }
     },
     loose: function (ctx, g, st, u, t) { townKingfisher(ctx, g, st, u * 22, t); } },
-  { id: 'tanuki', name: '狸', season: ['spring', 'summer', 'autumn'], light: ['night'], minStage: 2, w: 0.9, dur: 30, desc: '夜道を、狸がとことこ歩いていきます',
+  { id: 'tanuki', name: '狸', season: ['spring', 'summer', 'autumn'], light: ['night'], minStage: SI.teahouse, w: 0.9, dur: 30, desc: '夜道を、狸がとことこ歩いていきます',
     // the garden's tanuki at night by the teahouse: an unhurried amble in from behind it, nose to the ground foraging along the
     // road's verge, a pause to sit up and look round (the eyes catching the lamplight), and away down the road out of the picture
     setup: function () {
@@ -10534,7 +11034,7 @@ var RARE_DEFS = [
     draw: function () { },
     loose: function (ctx, g, st, u, t) {
       landLoose(ctx, g, st, u, function (c, x, y, k, face, S) {
-        var into = S.walk ? Math.min(S.f * S.e.len, (1 - S.f) * S.e.len) : 0, o = { t: t, face: face, ph: S.dist / (0.34 * TZ.tanuki), amp: S.walk ? clamp(into / 0.4 + 0.2) : 0, gait: 'walk', stride: 0.34, blink: zblink(t, st.seed % 89) };
+        var into = S.walk ? Math.min(S.f * S.e.len, (1 - S.f) * S.e.len) : 0, o = { t: t, face: face, ph: S.dist / (0.34 * TZ.tanuki), amp: S.walk ? clamp(into / 0.4 + 0.2) : 0, gait: 'walk', stride: 0.34, blink: zblink(t, st.seed % 89), season: g.season };   // (v6: its season's coat: without it the town's summer tanuki wore the thick frosted winter coat, a pale woolly blob at night)
         var au = S.f * (S.e.t1 - S.e.t0), ad = S.e.t1 - S.e.t0, wx = S.x, wz = S.z, wd = Math.sin(o.ph * TAU) * 0.014 * TZ.tanuki * o.amp; wx += -S.dz * wd; wz += S.dx * wd;   // the waddle
         if (S.act === 'forage') { var dn = sstep(0, 0.6, au) * (1 - sstep(ad - 0.7, ad, au)); o.head = { pitch: 0.15 + dn * 0.75 + Math.sin(t * 3.1) * 0.06 * dn, yaw: 0.1 * Math.sin(t * 0.9) * dn }; o.sniff = dn; var sp = (au % 1.8) / 1.8; if (dn > 0.5 && sp > 0.6) { o.amp = 0.35; o.ph += (sp - 0.6) / 0.4 * 0.5; } }
         else if (S.act === 'sit') { var u2 = au / ad, lk = sstep(0.08, 0.25, u2) * (1 - sstep(0.85, 0.98, u2)); o.head = { yaw: lk * (0.8 + 0.2 * Math.sin(t * 0.6)), pitch: -0.2 * lk + 0.05 * Math.sin(t * 0.7) }; o.crouch = lk * 0.5; o.sniff = 0.4 * lk; o.shine = lk * 0.9; }
@@ -10544,7 +11044,7 @@ var RARE_DEFS = [
         townGarden(tanukiPaint2, c, 0, 0, q.k, o, g, wx, wz, fs, TZ.tanuki);
       }, 0.7 * TZ.tanuki);
     } },
-  { id: 'nishikigoi', name: '大きな錦鯉', season: ['spring', 'summer', 'autumn'], light: ['morning', 'day', 'dusk'], minStage: 8, w: 0.5, dur: 16, desc: '大きな錦鯉が、川面で高く跳ねました',
+  { id: 'nishikigoi', name: '大きな錦鯉', season: ['spring', 'summer', 'autumn'], light: ['morning', 'day', 'dusk'], minStage: SI.stoneBridge, w: 0.5, dur: 16, desc: '大きな錦鯉が、川面で高く跳ねました',
     // a few koi come gliding up from the deep water below the near bank, close under the surface; the big one (now and then)
     // leaps clear in an arc and goes back in with a splash; they sink away and are gone
     setup: function () {
@@ -10556,13 +11056,16 @@ var RARE_DEFS = [
     draw: function () { },
     water: function (ctx, g, st, u, t) { st.fish.forEach(function (f, i) { drawKoiWater(ctx, g, f, clamp(u - i * 0.015), t + i * 1.7); }); },
     loose: function (ctx, g, st, u, t) { var m = st.main; if (m.lu > 1) return; var a = polyAt(m.pa, m.pa.len * 0.45), q = P(a.x, WL, a.z), k = q.k; drawCut(ctx, g, [q.x - 6 * k, q.y - 3 * k, q.x + 6 * k, q.y + 1.5 * k], q.d - 0.5, function (cx) { drawKoiAir(cx, g, m, u, t); }); } },
-  { id: 'inu', name: '野良犬', season: ALL_S, light: ['morning', 'day', 'dusk'], minStage: 9, w: 1, dur: 50, desc: '野良犬が、通りをとことこ駆けていきます',
+  { id: 'inu', name: '野良犬', season: ALL_S, light: ['morning', 'day', 'dusk'], minStage: SI.shoka, w: 1, dur: 50, desc: '野良犬が、通りをとことこ駆けていきます',
     // up the road from below the picture at a trot, over the bridge, a stop to sniff round a shop's rain barrel, a look about
     // with the tail going, a few steps and another sniff, then off along the riverside street out of the picture
     setup: function () {
       // down the main street from its far end (behind the row's turn), to a shopfront near the bridge; away over the bridge and down the road
       var A = stPt(39.5, 0.5), dl = doorList().filter(function (d) { return d.kind === 'shoka' || d.kind === 'machiya' || d.kind === 'inn'; }).sort(function (p, q) { var a1 = p.W.at(p.s1, 0, 1), b1 = q.W.at(q.s1, 0, 1); return Math.hypot(a1[0] - BR_FAR[0], a1[2] - BR_FAR[1]) - Math.hypot(b1[0] - BR_FAR[0], b1[2] - BR_FAR[1]); });
-      var d0 = dl[(RARE_N.inu = (RARE_N.inu || 0) + 1) % Math.min(2, Math.max(1, dl.length))] || null;
+      // (v6) of the shopfronts nearest the bridge, those where the dog stands in plain view (the nearest two were hidden behind the near
+      // row's roofs and the willow on a phone, so the dog was seen only on its way out)
+      var dv = dl.slice(0, 8).filter(function (d) { var q = d.W.at(d.s1 + 0.7, 0, 1.25), q2 = d.W.at(d.s1 + 2.2, 0, 1.7); return Math.min(rareSeen(q[0], 0, q[2], 0.55, 1.0), rareSeen(q2[0], 0, q2[2], 0.55, 1.0)) >= 0.85; }), dL = dv.length ? dv : dl;
+      var d0 = dL[(RARE_N.inu = (RARE_N.inu || 0) + 1) % Math.min(2, Math.max(1, dL.length))] || null;
       var S1 = d0 ? d0.W.at(d0.s1 + 0.7, 0, 1.25) : [stPt(6, 0)[0], 0, stPt(6, 0)[1]], S2 = d0 ? d0.W.at(d0.s1 + 2.2, 0, 1.7) : [stPt(9, 1)[0], 0, stPt(9, 1)[1]];
       var pl = landPlan(A, [{ go: [S1[0], S1[2]], v: 2.2, gait: 'trot' }, { wait: 4, act: 'sniff' }, { wait: 2.5, act: 'look' }, { go: [S2[0], S2[2]], v: 0.9 }, { wait: 2.5, act: 'sniff' }, { go: BR_FAR, v: 2.3, gait: 'trot' }, { go: [-12, 6], v: 2.4, gait: 'trot' }], 50);
       pl.fadeEnd = true; pl.a = pl.p0; pl.b = pl.p1; return pl;
@@ -10579,6 +11082,14 @@ var RARE_DEFS = [
 ];
 var RARE = RARE_DEFS.map(function (d) { return { id: d.id, name: d.name, season: d.season.slice(), light: d.light.slice(), minStage: d.minStage, desc: d.desc }; });
 /* where a rare animal's appearance takes place: its depth band and screen box (for the occluder masks) */
+/* how much of a small upright box at a world point is in plain view (the share of the depth map's cells there that are not
+   nearer than it): for a visit's setup to choose a perch or a stand nothing stands in front of; 1 before the depth map exists */
+function rareSeen(x, y, z, hw, hh) {
+  var g = BIRD_G, D = g && g.depth; if (!D || !g.W) return 1;
+  var p = P(x, y, z), df = D.w / g.W, r = Math.max(1, hw * p.k * df), rh = Math.max(1, hh * p.k * df), n = 0, ok = 0, key = p.d - 0.15, sx = Math.max(1, r / 4), sy = Math.max(1, rh / 4);
+  for (var j = -rh; j <= 0.01; j += sy) for (var i = -r; i <= r + 0.01; i += sx) { var X = Math.round(p.x * df + i), Y = Math.round(p.y * df + j); if (X < 0 || Y < 0 || X >= D.w || Y >= D.h) continue; n++; if (D.d[Y * D.w + X] >= key) ok++; }
+  return n ? ok / n : 0;
+}
 function rareAnchor(def, st0) {
   var st = st0 || def.setup(), pts = [];
   (function walk(o) { for (var k in o) { var v = o[k]; if (v && v.length === 3 && typeof v[0] === 'number') pts.push(v); else if (v && v.length === 2 && typeof v[0] === 'number') pts.push([v[0], 0, v[1]]); } })(st);
@@ -10628,7 +11139,7 @@ function springSea(prog) {
 function springProgress(d) { return seasonProgress(d, 'spring'); }
 
 /* trees that drop petals or leaves: [x, z, crown radius, weight] */
-var RIVER_CHERRY = [[-46, 64.5, 0.9], [-14.5, 40.6, 0.8], [-28, 47.3, 0.85], [19.5, 21.5, 0.95], [31.5, 14.5, 0.9]];
+var RIVER_CHERRY = [[-46, 64.5, 0.9], [-35.5, 50.0, 0.8], [-28, 47.3, 0.85], [24.4, 18.0, 0.78], [31.5, 14.5, 0.9]];   // (the second stood against the mill's back wall, its crown through the hut's roof and over the wheel: now upstream on the open bank; the fourth stood where its crown hid the 船着き場 across the water: now smaller, nearer and to the right, so it hides only water)
 function shedTrees() {
   var out = [];
   if (F.riverCherry > 0) RIVER_CHERRY.forEach(function (a) { out.push([a[0], a[1], 4.4 * a[2] * F.riverCherry, 1]); });
@@ -11197,20 +11708,60 @@ function fwLaunchPts(g) {   // barges on the river, as screen points
   return out.length ? out : [{ x: g.W * 0.5, y: g.H * 0.7, k: 5 }];
 }
 function newShell(g, rng, finale) {
-  var L = g.fw.launch[(rng() * g.fw.launch.length) | 0], r = rng(), kind = finale ? (r < 0.5 ? 'botan' : r < 0.8 ? 'kiku' : 'senrin') : (r < 0.32 ? 'kiku' : r < 0.58 ? 'botan' : r < 0.8 ? 'yanagi' : 'senrin');
-  var size = finale ? 0.4 + rng() * 0.4 : 0.6 + rng() * 0.4, bx = clamp(L.x + (rng() - 0.5) * 90, 40, g.W - 40), by = Math.max(14, Math.min(30 + rng() * 40, g.horizonY * 0.55 + rng() * 26) + (1 - size) * 16);   // high enough to open in clear sky above the ridge
+  var L = g.fw.launch[(rng() * g.fw.launch.length) | 0], r = rng(), kind = finale ? (r < 0.5 ? 'botan' : r < 0.8 ? 'kiku' : 'senrin') : (r < 0.52 ? 'kiku' : r < 0.68 ? 'botan' : r < 0.86 ? 'yanagi' : 'senrin');
+  var size = finale ? 0.4 + rng() * 0.4 : 0.6 + rng() * 0.4;
+  // the burst sized to the open sky of this view (from the frame's top to the ridges, a little of its foot allowed to sink
+  // behind them): never cut by the frame, a big 菊 about a fifth of the frame across; kept off the moon and clear of the
+  // castle's and the pagoda's tops
+  var FWs = g.FW || {}, fl = FWs.floor, top = 3, bx = clamp(L.x + (rng() - 0.5) * g.W * 0.3, 20, g.W - 20);
+  function floorAt(x) { if (!fl) return g.ridgeY; var i = clamp(x / g.W * (fl.length - 1), 0, fl.length - 1), i0 = Math.floor(i), i1 = Math.min(fl.length - 1, i0 + 1); return lerp(fl[i0], fl[i1], i - i0); }
+  var win = Math.max(34, floorAt(bx) - 2 - top);
+  var R = Math.min((36 + 46 * size) * (kind === 'senrin' ? 0.7 : 1) * 0.8, win / 1.7, g.W * 0.12);
+  bx = clamp(bx, R + 6, g.W - R - 6);
+  var by = top + R * 1.02 + rng() * Math.max(0, win - 1.7 * R) * 0.8;
+  var avoid = (FWs.avoid || []).concat(g.moonS ? [[g.moonS.x - g.moonS.r - 4, g.moonS.x + g.moonS.r + 4, g.moonS.y - g.moonS.r - 4]] : []);
+  function clashes(x, r) { return avoid.some(function (A) { return x + r * 0.95 > A[0] && x - r * 0.95 < A[1] && by + r * 1.05 > A[2]; }); }
+  if (clashes(bx, R)) {   // slide the burst sideways to the nearest place clear of everything it would sit on (smaller if it must)
+    var best = null;
+    for (var sh = 0; sh < 3 && !best; sh++) {
+      var rr = R * (1 - sh * 0.2), cands = [];
+      avoid.forEach(function (A) { cands.push(A[0] - rr * 0.95 - 4, A[1] + rr * 0.95 + 4); });
+      cands.forEach(function (x) { if (x < rr + 6 || x > g.W - rr - 6 || clashes(x, rr)) return; if (!best || Math.abs(x - bx) < Math.abs(best[0] - bx)) best = [x, rr]; });
+    }
+    if (best) { bx = best[0]; R = best[1]; }
+  }
   var c1 = FW_COLS[(rng() * FW_COLS.length) | 0], c2 = rng() < 0.5 ? FW_COLS[(rng() * FW_COLS.length) | 0] : c1;
   if (kind === 'yanagi') { c1 = [255, 200, 120]; c2 = [220, 150, 70]; }
-  return { kind: kind, x0: L.x, y0: L.y, bx: bx, by: by, rise: 1.1 + rng() * 0.5 + (finale ? -0.4 : 0), R: (36 + 46 * size) * (kind === 'senrin' ? 0.7 : 1), c1: c1, c2: c2, size: size, seed: (rng() * 1e9) | 0, t0: 0, n: kind === 'botan' ? 80 : kind === 'yanagi' ? 54 : kind === 'senrin' ? 30 : 72 };
+  return { kind: kind, x0: L.x, y0: L.y, bx: bx, by: by, rise: 1.1 + rng() * 0.5 + (finale ? -0.4 : 0), R: R, c1: c1, c2: c2, size: size, seed: (rng() * 1e9) | 0, t0: 0, n: kind === 'botan' ? 80 : kind === 'yanagi' ? 54 : kind === 'senrin' ? 30 : 72 };
 }
 function initFireworks(g, rng) {
-  return { launch: fwLaunchPts(g), shells: [], smoke: [], next: 0.5, finaleUntil: -1, lastFinale: -999, boats: [0.18, 0.47, 0.71].map(function (f, i) { return { f: f, ph: rng() * TAU, sp: 0.02 + rng() * 0.015, dir: i % 2 ? -1 : 1 }; }) };
+  return { launch: fwLaunchPts(g), floor: fwSkyFloor(), avoid: fwAvoid(), shells: [], smoke: [], next: 0.5, finaleUntil: -1, lastFinale: -999, boats: [0.18, 0.47, 0.71].map(function (f, i) { return { f: f, ph: rng() * TAU, sp: 0.02 + rng() * 0.015, dir: i % 2 ? -1 : 1 }; }) };
+}
+/* the bottom of the fireworks' sky across the frame (screen y, every W/24): the wooded foothills' ridge. The far ranges do not
+   count: the bursts open in front of them, as they would over a river town with mountains behind it */
+function fwSkyFloor() {
+  var out = [];
+  for (var i = 0; i <= 24; i++) {
+    var sx = i / 24 * W, y = H;
+    for (var z = 84; z <= 126; z += 2) { var X = CAM.x, yy = 0, d = 1; for (var it = 0; it < 3; it++) { d = -(yy - CAM.y) * CAM.s + (z - CAM.z) * CAM.c; X = CAM.x + (sx - CAM.cx) * d / CAM.F; yy = hillH(X, z) + (hillClear(X, z) ? 0.3 : 3.4); } var u = (yy - CAM.y) * CAM.c + (z - CAM.z) * CAM.s; y = Math.min(y, CAM.cy - CAM.F * u / d); }
+    out.push(y);
+  }
+  return out;
+}
+/* what stands up into that sky (its screen x span and top): the 天守 and the 五重塔. The bursts are pushed off them */
+function fwAvoid() {
+  var out = [];
+  function add(x, z, top, hw) { var t = P(x, top, z), k = t.k; out.push([t.x - hw * k, t.x + hw * k, t.y]); }
+  if (F.keep) add(CASTLE.x, CASTLE.z, CASTLE.top + 19, 8.5); else if (F.ishigaki) add(CASTLE.x, CASTLE.z, CASTLE.top + 6, 8);
+  if (F.pagoda) add(PAGODA.x, PAGODA.z, 26, 5.5);   // (to the tip of the 相輪)
+  if (F.tower) add(TOWER.x, TOWER.z, 9.5, 2);
+  return out;
 }
 function stepFireworks(g, FW, dt, t, rng, finaleNow, cueFn) {
   var finale = finaleNow || t < FW.finaleUntil;
   if (t > FW.next) {
     var s = newShell(g, rng, finale); s.t0 = t; FW.shells.push(s);
-    FW.next = t + (finale ? 0.2 + rng() * 0.4 : (rng() < 0.3 ? 0.4 + rng() * 0.6 : 1.6 + rng() * 2.6));
+    FW.next = t + (finale ? 0.2 + rng() * 0.4 : (rng() < 0.35 ? 0.3 + rng() * 0.5 : 1.0 + rng() * 1.6));   // (a shell every second or two, now and then two together)
     s.cued = false;
   }
   for (var i = FW.shells.length - 1; i >= 0; i--) {
@@ -11224,7 +11775,7 @@ function stepFireworks(g, FW, dt, t, rng, finaleNow, cueFn) {
 /* each star's position: out along its ray with drag, then falling under gravity (willow stars fall more, trailing) */
 function starPos(S, j, a) {
   // stars leave on a sphere; seen from afar the shell projects to a disc that is densest at its rim
-  var r = mulberry32(S.seed + j * 7919), th = r() * TAU, cz = 1 - 2 * ((j + r() * 0.8) / S.n), sp = Math.sqrt(Math.max(0, 1 - cz * cz)), v = S.R * (0.94 + r() * 0.12), drag = 1 - Math.exp(-a * 2.6), droop = (S.kind === 'yanagi' ? 7 : 4) * a * a;
+  var r = mulberry32(S.seed + j * 7919), th = r() * TAU, cz = 1 - 2 * ((j + r() * 0.8) / S.n), sp = Math.sqrt(Math.max(0, 1 - cz * cz)), v = S.R * (0.94 + r() * 0.12), drag = 1 - Math.exp(-a * 5.2), ag = Math.max(0, a - 0.18), droop = (S.kind === 'yanagi' ? 10 : 5) * ag * ag;   // (out fast from the point of burst, then slowed by the air and pulled down)
   return { x: S.bx + Math.cos(th) * sp * v * drag, y: S.by + Math.sin(th) * sp * v * drag * 0.96 + droop };
 }
 function drawFireworks(ctx, g, FW, t) {
@@ -11236,29 +11787,37 @@ function drawFireworks(ctx, g, FW, t) {
     var S = FW.shells[i], u = (t - S.t0) / S.rise;
     if (u < 1) { // the rising shell and its sparkling tail
       var e = 1 - Math.pow(1 - u, 2), x = lerp(S.x0, S.bx, e), y = lerp(S.y0, S.by, e);
-      ctx.strokeStyle = 'rgba(255,220,170,0.55)'; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(x, y); var pu = Math.max(0, u - 0.12), pe = 1 - Math.pow(1 - pu, 2); ctx.lineTo(lerp(S.x0, S.bx, pe), lerp(S.y0, S.by, pe)); ctx.stroke();
+      ctx.globalAlpha = 1; ctx.strokeStyle = 'rgba(255,220,170,0.55)'; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(x, y); var pu = Math.max(0, u - 0.12), pe = 1 - Math.pow(1 - pu, 2); ctx.lineTo(lerp(S.x0, S.bx, pe), lerp(S.y0, S.by, pe)); ctx.stroke();
       stamp(ctx, spr, x, y, 1.6, 1.6, 0.9); continue;
     }
     var a = t - S.t0 - S.rise, life = S.kind === 'yanagi' ? 4.0 : S.kind === 'botan' ? 1.9 : 2.5, fade = clamp(1 - a / life);
     if (fade <= 0) continue;
-    if (a < 0.45) { var fa = (1 - a / 0.45) * S.size; flash = Math.max(flash, fa); fc = S.c1; stamp(ctx, tintedSprite(S.c1), S.bx, S.by, S.R * 1.8, S.R * 1.8, 0.6 * fa); stamp(ctx, spr, S.bx, S.by, 6 * fa + 2, 6 * fa + 2, fa); }
+    if (a < 0.45) { var fa = (1 - a / 0.45) * S.size; flash = Math.max(flash, fa); fc = S.c1; }   // (the burst's flash lights the town and the clouds (the caller); there is no glowing ball: the light is in the stars)
     var col = mixc(S.c1, S.c2, clamp(a / life * 1.6)), flick = S.kind === 'senrin' ? 1 : 0.85 + 0.15 * Math.sin(t * 40 + S.seed);
+    if (a > 0.3) stamp(ctx, tintedSprite(col.map(function (v) { return Math.round(v); })), S.bx, S.by + a * a * 2, S.R * 1.7, S.R * 1.6, 0.09 * fade * S.size * clamp((a - 0.3) / 0.4));   // the faint light hanging in the smoke once the stars have spread
     if (S.kind === 'senrin' && a > 0.55) { // a thousand little flowers: crackling sub-bursts around the first
       var r2 = mulberry32(S.seed + 3);
       for (var b = 0; b < 12; b++) { var p0 = starPos(S, b, 0.55), aa = a - 0.55 - r2() * 0.3; if (aa < 0 || aa > 0.9) continue; var bc = FW_COLS[(r2() * FW_COLS.length) | 0]; stamp(ctx, tintedSprite(bc), p0.x, p0.y, 4 * (1 - aa), 4 * (1 - aa), 0.8 * (1 - aa)); for (var q = 0; q < 6; q++) { var an = q / 6 * TAU + b; stamp(ctx, spr, p0.x + Math.cos(an) * aa * 9, p0.y + Math.sin(an) * aa * 9 + aa * aa * 3, 0.9, 0.9, 0.7 * (1 - aa)); } }
       if (a > 1.0) continue;
     }
-    ctx.strokeStyle = rgb(mixc(col, [255, 255, 255], 0.25), 0.8 * fade); ctx.lineWidth = S.kind === 'yanagi' ? 0.8 : 1.0; ctx.beginPath();
-    var pts = [];
-    for (var j = 0; j < S.n; j++) {
-      var p = starPos(S, j, a); pts.push(p);
-      if (S.kind === 'kiku' || S.kind === 'yanagi') { var tl = S.kind === 'yanagi' ? 0.55 : 0.22, pq = starPos(S, j, Math.max(0, a - tl)); ctx.moveTo(p.x, p.y); ctx.lineTo(pq.x, pq.y); }
+    // each star's streak: a tapering line along the path it has just flown, thin and faint at the tail, broad and bright at the
+    // head; long while the burst is young, shortening as it slows; the 柳's long golden streaks hang and droop
+    var pts = [], j, kseg, tl = S.kind === 'yanagi' ? 1.7 : S.kind === 'kiku' ? 0.95 * (1 - 0.35 * clamp(a / life)) : S.kind === 'botan' ? (a < 0.8 ? 0.26 : 0) : (a < 0.55 ? 0.16 : 0);   // (the sparks a star sheds glow on behind it: in the first second the 菊's streaks run back nearly to the point of burst)
+    for (j = 0; j < S.n; j++) pts.push(starPos(S, j, a));
+    if (tl > 0) {
+      var K = S.kind === 'yanagi' ? 7 : 5, wMax = Math.max(0.9, S.R * (S.kind === 'yanagi' ? 0.04 : S.kind === 'kiku' ? 0.05 : 0.04)), tcol = mixc(col, [255, 250, 230], 0.3), tails = [];
+      for (j = 0; j < S.n; j++) { var tp = []; for (kseg = 0; kseg <= K; kseg++) tp.push(starPos(S, j, Math.max(0, a - tl * (1 - kseg / K)))); tails.push(tp); }
+      ctx.lineCap = 'round'; ctx.globalAlpha = 1;   // (stamp() leaves its own alpha set: the streaks carry theirs in the colour)
+      for (kseg = 0; kseg < K; kseg++) {
+        var fk = (kseg + 1) / K; ctx.strokeStyle = rgb(tcol, clamp((0.3 + 0.65 * fk) * fade * clamp(a / 0.06) * (0.15 + 0.85 * clamp(a / 0.3)))); ctx.lineWidth = wMax * (0.4 + 0.6 * fk); ctx.beginPath();
+        for (j = 0; j < S.n; j++) { var A0 = tails[j][kseg], A1 = tails[j][kseg + 1]; ctx.moveTo(A0.x, A0.y); ctx.lineTo(A1.x, A1.y); }
+        ctx.stroke();
+      }
     }
-    ctx.stroke();
-    var spc = tintedSprite(col.map(function (v) { return Math.round(v); })), sz = (S.kind === 'botan' ? 3.0 : 2.2) * (0.7 + S.size * 0.5);
-    for (j = 0; j < pts.length; j++) { var tw = S.kind === 'kiku' && a > life * 0.6 ? (Math.sin(t * 30 + j) > 0 ? 1 : 0.3) : 1; stamp(ctx, spc, pts[j].x, pts[j].y, sz, sz, fade * flick * tw); if (a < life * 0.5) stamp(ctx, spr, pts[j].x, pts[j].y, sz * 0.45, sz * 0.45, fade * 0.9); }
+    var spc = tintedSprite(col.map(function (v) { return Math.round(v); })), sz = (S.kind === 'botan' ? 3.0 : S.kind === 'yanagi' ? 1.6 : 2.2) * (0.7 + S.size * 0.5) * clamp(S.R / 34, 0.85, 1.3), hk = clamp(a / 0.15);
+    for (j = 0; j < pts.length; j++) { var tw = S.kind === 'kiku' && a > life * 0.6 ? (Math.sin(t * 30 + j) > 0 ? 1 : 0.3) : 1; stamp(ctx, spc, pts[j].x, pts[j].y, sz, sz, fade * flick * tw * hk); if (a < life * 0.5) stamp(ctx, spr, pts[j].x, pts[j].y, sz * 0.45, sz * 0.45, fade * 0.9 * hk); }   // the stars' heads
   }
-  ctx.globalAlpha = 1;
+  ctx.globalAlpha = 1; ctx.lineCap = 'butt';
   ctx.globalCompositeOperation = 'source-over';
   return { flash: flash, fc: fc };   // the caller lights the whole scene with it (the bursts themselves stay in open sky)
 }
@@ -11268,7 +11827,7 @@ function drawFireworkReflections(ctx, g, FW, t) {
   for (var i = 0; i < FW.shells.length; i++) {
     var S = FW.shells[i], a = t - S.t0 - S.rise; if (a < 0 || a > 2.2) continue;
     var f = clamp(1 - a / 2.2) * S.size, spc = tintedSprite(S.c1);
-    for (var k = 0; k < 9; k++) { var yy = g.horizonY + 40 + k * 9 + Math.sin(t * 2 + k) * 2, w = 6 + k * 1.5 + Math.sin(t * 3 + k * 1.7) * 2; stamp(ctx, spc, S.bx + Math.sin(t * 1.3 + k) * 2, yy, w, 1.6, 0.5 * f); }
+    for (var k = 0; k < 16; k++) { var yy = lerp(g.horizonY + 12, g.H, k / 15) + Math.sin(t * 2 + k) * 2, w = (6 + k * 1.2 + Math.sin(t * 3 + k * 1.7) * 2) * (0.6 + S.R / 60); stamp(ctx, spc, S.bx + Math.sin(t * 1.3 + k) * 2, yy, w, 1.6, 0.5 * f); }   // (a broken column of the burst's light down whatever water lies under it; the water mask keeps it on the river)
   }
   ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
 }
@@ -11290,7 +11849,7 @@ function spectatorPaths() {
   var out = [], deck = [BR_NEAR, [BR.x, BR.z], BR_FAR];
   out.push({ pts: deck, band: 0, spread: 1.4, w: 0, still: true });
   if (F.rivst) out.push({ pts: [stPt(-2.2, 4), stPt(-2.2, 18), stPt(-2.4, 32)], band: 2, spread: 0.6, w: 0, still: true });
-  out.push({ pts: [[BR_NEAR[0] - 3, BR_NEAR[1] - 1.5], [BR_NEAR[0] - 14, BR_NEAR[1] + 3.5], [BR_NEAR[0] - 24, BR_NEAR[1] + 8.5]], band: 0, spread: 0.8, w: 0, still: true });
+  out.push({ pts: [[BR_NEAR[0] - (F.kosatsu ? 6.5 : 3), BR_NEAR[1] + (F.kosatsu ? 1.0 : -1.5)], [BR_NEAR[0] - 14, BR_NEAR[1] + 3.5], [BR_NEAR[0] - 24, BR_NEAR[1] + 8.5]], band: 0, spread: 0.8, w: 0, still: true });   // (with the 高札場 there, the line of watchers starts behind it)
   out.forEach(function (q) { q.pa = polyLen(q.pts); });
   return out;
 }
@@ -11316,7 +11875,7 @@ function tapTreeList() {
 }
 function initInteract(g) {
   var I = { bell: null, birds: [], wheel: 0, lamps: [], trees: [], koi: null, paddy: null, taiko: null, cat: null, outs: [] };
-  if (g.stage >= 14) { I.bellP = P(BELL.x, 3.2, BELL.z); var bb = screenBox([[BELL.x - 2.6, 0, BELL.z - 2.6], [BELL.x + 2.6, 6.2, BELL.z + 2.6]], 1); I.bellBox = { x: (bb[0] + bb[2]) / 2, y: (bb[1] + bb[3]) / 2, rx: (bb[2] - bb[0]) / 2 + 2, ry: (bb[3] - bb[1]) / 2 + 2, d: P(BELL.x, 0, BELL.z).d }; }
+  if (g.stage >= SI.temple) { I.bellP = P(BELL.x, 3.2, BELL.z); var bb = screenBox([[BELL.x - 2.6, 0, BELL.z - 2.6], [BELL.x + 2.6, 6.2, BELL.z + 2.6]], 1); I.bellBox = { x: (bb[0] + bb[2]) / 2, y: (bb[1] + bb[3]) / 2, rx: (bb[2] - bb[0]) / 2 + 2, ry: (bb[3] - bb[1]) / 2 + 2, d: P(BELL.x, 0, BELL.z).d }; }
   if (g.F.mill) I.wheelP = Pa(g.wheel ? g.wheel.c : millWheelGeom().c);
   if (g.F.festival) { var tk = TAIKO(); I.taikoW = tk; I.taikoP = P(tk.x, 1.2, tk.z); }
   var cs = townCatSpot(); if (cs) { I.catW = cs; I.catP = P(cs.x, 0.3, cs.z); }
@@ -11505,7 +12064,7 @@ function drawTownCat(ctx, g, I, t, full) {   // full: on the loose layer at devi
 }
 /* (v5) the cats that keep to one place (the dozing ginger loaf in the street, the calico on the ridge) drawn this much larger again:
    a few device pixels on a phone, they read as a pale blob with ears, not as a cat */
-var TCAT_M = 1.45;
+var TCAT_M = 1.12;   // (v6: with TZ.cat raised for the visiting cats, the same size as before for these)
 
 /* where each tappable thing is actually painted (debug/test): silhouettes of the static scene, front to back, so a
    target's point is one where it is really visible; moving things from the same anchors the overlay draws them at */
@@ -11536,7 +12095,7 @@ function tapTruth(g) {
    Chosen from the date (and the stage, the light and the weather); drawn in the depth bands so houses and trees hide them. */
 var LIFE_SITES = {   // (kids: two children together on the open bank, clear of the bridge foot and the trees)
   angler: [12.3, 28.05], washNear: [7.2, 30.8], ducks: [12.4, 32.6],   // (the open near bank past the shrine, where nothing stands in front)
-  hanami: [[-12.2, 36.4], [-25.2, 42.4], [24.6, 18.9]], dangoStall: [-9.2, 34.6], bon: [6.5, 17.4],
+  hanami: [[-25.2, 42.4], [-32.6, 46.6], [21.4, 20.0]], dangoStall: [-9.2, 34.6], bon: [3.2, 16.6],
   kids: [[-6.7, 35.55], [-8.6, 36.45]], harvest: [[-23.5, 18.6], [19.6, 15.6], [-26.6, 19.6], [16.4, 16.0], [-21.6, 16.4]]
 };
 function lifeSites() {   // every place an activity might happen at this stage (for the occluder masks)
@@ -11557,7 +12116,20 @@ function lifeSites() {   // every place an activity might happen at this stage (
   if (F.farm) { var ff = farmFrame().L(2.5, -9.6, 0); add(ff[0], ff[2], 2.2); }
   if (F.market) [[-0.5, -3.2], [7.6, -1.0]].forEach(function (q) { add(MARKET.x + q[0], MARKET.z + q[1], 1.6); });   // the benches
   if (F.teahouse) { var tb = teaFrame().L(0.2, -4.1, 0); add(tb[0], tb[2], 1.6); }
+  lateLifeSpots().forEach(function (q) { add(q.x, q.z, q.r, q.h); });
   return out;
+}
+/* where the later additions' people stand: the tea pickers, the smiths at the anvil, readers at the 高札場, the temple's school
+   children at play in the forecourt, the brewer with a cask, the gate's watchman */
+function lateLifeSpots() {
+  var o = [];
+  if (F.tea) teaPickers().forEach(function (q) { o.push({ k: 'chatsumi', x: q[0], z: q[1], r: 1.5, h: 1.9 }); });
+  if (F.smithy) { var an = smithAnvil(); o.push({ k: 'smith', x: an[0], z: an[2], r: 2.4, h: 2.6 }); }
+  if (F.kosatsu) { var kq = kosatsuFrame().L(0.2, -2.45, 0); o.push({ k: 'read', x: kq[0], z: kq[2], r: 1.9, h: 2.2 }); }
+  if (F.terakoya) { var tq = stPt(-0.9, 57.5); tq = [tq[0], 0, tq[1]]; o.push({ k: 'tplay', x: tq[0], z: tq[2], r: 2.6, h: 2.2 }); }
+  if (F.sakagura) { var sq = sakeWorkerAt(); o.push({ k: 'brewer', x: sq[0], z: sq[2], r: 3.6, h: 2.6 }); }
+  if (F.kido) { var bq = banyaFrame().L(-0.3, -1.75, 0); o.push({ k: 'kidoban', x: bq[0], z: bq[2], r: 1.3, h: 2.3 }); }
+  return o;
 }
 function lifeFronts() {   // in front of a few shops: where water is sprinkled and snow swept
   var out = [];
@@ -11627,7 +12199,17 @@ function lifeScenes(g, date, rng) {
     }
     // any day: children at play
     if (daytime && g.season !== 'winter') { var kp = F0.street ? stPt(10, 0.5) : [TEA.x + 3, TEA.z - 4]; L.push({ kind: 'play', x: kp[0], z: kp[1], folk: people(3).map(function (f) { f.child = true; return f; }) }); }
+    // the later additions: 茶摘み in the bright rows of May; the smiths at the anvil from morning to dusk; travellers reading the
+    // 高札; the temple school's children let out into the forecourt at midday; a brewer carrying casks; the gate's watchman at night
+    lateLifeSpots().forEach(function (q, qi) {
+      if (q.k === 'chatsumi' && g.season === 'spring' && daytime && seasonProgress(d, 'spring') > 0.55) { var pk = people(1); pk[0].woman = qi !== 1; pk[0].child = false; pk[0].face = qi % 2 ? -1 : 1; pk[0].tasuki = true; L.push({ kind: 'chatsumi', x: q.x, z: q.z, folk: pk }); }
+      if (q.k === 'smith' && light !== 'night') L.push({ kind: 'smith', x: q.x, z: q.z, folk: people(2).map(function (f) { f.woman = false; f.child = false; return f; }) });
+      if (q.k === 'read' && daytime && rng() < 0.8) L.push({ kind: 'read', x: q.x, z: q.z, folk: people(2).map(function (f) { f.child = false; return f; }) });
+      if (q.k === 'tplay' && light === 'day' && !(m === 0 && day <= 7) && wd !== 0) L.push({ kind: 'play', x: q.x, z: q.z, folk: people(4).map(function (f) { f.child = true; return f; }) });
+      if (q.k === 'brewer' && daytime) L.push({ kind: 'brewer', x: q.x, z: q.z, folk: people(1).map(function (f) { f.woman = false; f.child = false; return f; }) });
+    });
   }
+  if (g.F.kido && light === 'night' && g.wx !== 'storm' && g.wx !== 'typhoon' && g.wx !== 'blizzard') { var kbq = lateLifeSpots().filter(function (q) { return q.k === 'kidoban'; })[0]; if (kbq) L.push({ kind: 'kidoban', x: kbq.x, z: kbq.z, folk: people(1).map(function (f) { f.woman = false; f.child = false; return f; }) }); }   // (out in the rain too: it is his job)
   L.forEach(function (a) { a.band = P(a.x, 0, a.z).d < P(0, 0, 36).d ? 0 : 2; a.d = P(a.x, 0, a.z).d - (a.kind === 'bench' ? 0.9 : 0); });   // (the sitters are in front of the bench they sit on)
   return L;
 }
@@ -12100,6 +12682,41 @@ function drawLife(ctx, g, a, t) {
     for (i = 0; i < a.folk.length; i++) { f = a.folk[i]; var off = (i - (a.folk.length - 1) / 2) * 0.75, bq = P(a.x + ua[0] * off, 0.47, a.z + ua[1] * off), talk = Math.sin(t * 0.8 + f.ph) > 0.4; f.face = a.folk.length > 1 ? (i ? -1 : 1) : (f.ph % 2 > 1 ? 1 : -1); figure(ctx, bq.x, bq.y, h, f, tint, { pose: 'sit', arms: talk ? [[-0.9 + 0.3 * Math.sin(t * 3 + f.ph), 0.3]] : [[0.9, 0.3]] }); }
   } else if (a.kind === 'play') {
     for (i = 0; i < a.folk.length; i++) { f = a.folk[i]; var an2 = t * 1.1 + i * TAU / a.folk.length, px2 = a.x + Math.cos(an2) * 1.6, pz2 = a.z + Math.sin(an2) * 1.1, p3 = P(px2, Math.abs(Math.sin(t * 7 + i)) * 0.12, pz2); figure(ctx, p3.x, p3.y, h, f, tint, { arms: [[-0.6 + Math.sin(t * 7 + i) * 0.8, 1], [-2.5 - Math.sin(t * 7 + i) * 0.8, -1]] }); }
+  } else lifeLate(ctx, g, a, t, tint, h, c, k);
+}
+/* the later additions' people (see lateLifeSpots) */
+function lifeLate(ctx, g, a, t, tint, h, c, k) {
+  var f = a.folk ? a.folk[0] : null, i;
+  if (a.kind === 'chatsumi') {   // 茶摘み: bent to the hedge in a red 襷, both hands plucking the new tips into the basket at the hip
+    var pk = Math.sin(t * 2.1 + f.ph * 3), fs = figure(ctx, c.x, c.y, h, f, tint, { face: f.face, bend: 0.28 + 0.04 * Math.sin(t * 0.7 + f.ph), arms: [[0.15 + pk * 0.3, 1], [0.35 - pk * 0.25, -1]] });
+    ctx.fillStyle = rgb(mulc([156, 122, 76], tint)); ctx.beginPath(); ctx.ellipse(c.x - (f.face || 1) * 0.16 * k, c.y - 0.72 * k, 0.17 * k, 0.12 * k, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = rgb(mulc([110, 84, 52], tint)); ctx.lineWidth = Math.max(0.2, 0.02 * k); ctx.beginPath(); ctx.ellipse(c.x - (f.face || 1) * 0.16 * k, c.y - 0.78 * k, 0.17 * k, 0.05 * k, 0, 0, TAU); ctx.stroke();   // the 茶摘み籠's rim
+    if (fs && fs.sh) { ctx.strokeStyle = rgb(mulc([196, 50, 44], tint)); ctx.lineWidth = Math.max(0.25, 0.03 * k); ctx.beginPath(); ctx.moveTo(fs.sh[0] - 0.08 * k, fs.sh[1]); ctx.lineTo(fs.sh[0] + 0.1 * k, fs.sh[1] + 0.25 * k); ctx.stroke(); }   // the 襷
+  } else if (a.kind === 'smith') {   // the master's small hammer and the striker's sledge (向こう槌) in turn on the iron, sparks at each blow
+    var an = P(a.x, 0.72, a.z), mx = P.apply(null, smithyFrame().L(1.9 + 0.45 - SMITH_W / 2, -SMITH_D / 2 - 1.05, 0)), sx = P.apply(null, smithyFrame().L(1.9 + 1.85 - SMITH_W / 2, -SMITH_D / 2 - 1.15, 0));
+    var T = t * 2.6, bm = Math.sin(T), bs = Math.sin(T + Math.PI), lt = g.LIT.lit;
+    if (lt) { ctx.globalCompositeOperation = 'lighter'; stamp(ctx, sprite('warm'), an.x, an.y, 0.9 * an.k, 0.9 * an.k, 0.35 + 0.15 * Math.max(0, -bm)); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; }   // the hot iron's glow
+    ctx.fillStyle = 'rgb(255,170,80)'; ctx.fillRect(an.x - 0.12 * an.k, an.y - 0.05 * an.k, 0.24 * an.k, 0.05 * an.k);   // the iron on the anvil, red hot
+    [[mx, a.folk[0], bm, an.x > mx.x ? 1 : -1, 0.55], [sx, a.folk[1], bs, an.x > sx.x ? 1 : -1, 1.0]].forEach(function (q) {
+      var p = q[0], up = clamp(q[2] * 0.5 + 0.5), ang = -1.9 + up * 2.2, fh = 1.6 * p.k;
+      var fg = figure(ctx, p.x, p.y, fh, q[1], tint, { face: q[3], bend: 0.18 + 0.12 * (1 - up), arms: [[ang, 1], [ang + 0.15, -1]] }), hd = fg.hand || [p.x, p.y - fh * 0.5];
+      var hx = hd[0] + q[3] * Math.cos(ang) * q[4] * 0.55 * p.k, hy = hd[1] + Math.sin(ang) * q[4] * 0.55 * p.k;
+      ctx.strokeStyle = rgb(mulc([120, 96, 66], tint)); ctx.lineWidth = Math.max(0.3, 0.035 * p.k); ctx.beginPath(); ctx.moveTo(hd[0], hd[1]); ctx.lineTo(hx, hy); ctx.stroke();
+      ctx.fillStyle = rgb(mulc([70, 70, 74], tint)); ctx.beginPath(); ctx.ellipse(hx, hy, (0.06 + 0.05 * q[4]) * p.k, (0.05 + 0.03 * q[4]) * p.k, ang, 0, TAU); ctx.fill();
+    });
+    [bm, bs].forEach(function (b, bi) { if (b > -0.75) return; var r = mulberry32(((t * 2.6 / Math.PI) | 0) * 7 + bi + 1); ctx.fillStyle = 'rgba(255,214,120,0.95)'; for (i = 0; i < 9; i++) { var sa = -Math.PI * (0.15 + 0.7 * r()), sd = (0.15 + 0.5 * r()) * an.k * (1.4 + b); ctx.fillRect(an.x + Math.cos(sa) * sd, an.y + Math.sin(sa) * sd, Math.max(0.4, 0.035 * an.k), Math.max(0.4, 0.035 * an.k)); } });   // sparks off the struck iron
+  } else if (a.kind === 'read') {   // two travellers stopped at the boards, one pointing out a line to the other
+    var KB = kosatsuFrame(), bd = Pa(KB.L(0, 0, 2.2));
+    a.folk.forEach(function (f2, i2) { var q = P(a.x + KOSATSU.u[0] * (i2 ? 0.75 : -0.6), 0, a.z + KOSATSU.u[1] * (i2 ? 0.75 : -0.6)); figure(ctx, q.x, q.y, h, f2, tint, { face: bd.x > q.x ? 1 : -1, bend: 0.04, arms: i2 ? [[-0.55 + 0.12 * Math.sin(t * 0.8 + f2.ph), 1]] : [[1.1, 1]] }); });
+  } else if (a.kind === 'brewer') {   // a brewer in a short coat carrying a cask on his shoulder along the front, then back for the next
+    var SB = sakaguraFrame(), ph = (t * 0.07 + f.ph) % 2, u = ph < 1 ? ph : 2 - ph, along = -2.4 + u * 4.8, q2 = SB.L(SAKE_W / 2 + 1.7, along, 0), wp = P.apply(null, q2), dir = Pa(SB.L(SAKE_W / 2 + 1.7, along + 1, 0)).x > wp.x ? 1 : -1, face = ph < 1 ? dir : -dir, fh2 = 1.6 * wp.k;
+    var fb = figure(ctx, wp.x, wp.y, fh2, f, tint, { face: face, moving: true, cyc: t * 1.7 + f.ph, arms: [[-1.7, 1]] });
+    if (ph < 1) { var bx = (fb.sh ? fb.sh[0] : wp.x) + face * 0.06 * wp.k, by = (fb.sh ? fb.sh[1] : wp.y - fh2 * 0.82) - 0.18 * wp.k; ctx.fillStyle = rgb(mulc([200, 180, 128], tint)); ctx.beginPath(); ctx.ellipse(bx, by, 0.2 * wp.k, 0.16 * wp.k, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = rgb(mulc([120, 96, 60], tint)); ctx.lineWidth = Math.max(0.25, 0.025 * wp.k); ctx.beginPath(); ctx.moveTo(bx - 0.2 * wp.k, by); ctx.lineTo(bx + 0.2 * wp.k, by); ctx.stroke(); }   // the 菰樽 (out loaded, back empty-handed)
+  } else if (a.kind === 'kidoban') {   // the 木戸番 standing his watch by the shut gate, a lantern low on its stick, the 拍子木 at his belt
+    var fk = figure(ctx, c.x, c.y, h, f, tint, { face: -1, bend: 0.03 + 0.02 * Math.sin(t * 0.5), arms: [[1.15, 1]] }), hd2 = fk.hand || [c.x - h * 0.14, c.y - h * 0.42], lx = hd2[0] - h * 0.05, ly = hd2[1] + h * 0.1;
+    ctx.strokeStyle = rgb(mulc([80, 60, 40], tint)); ctx.lineWidth = Math.max(0.2, h * 0.012); ctx.beginPath(); ctx.moveTo(hd2[0], hd2[1]); ctx.lineTo(lx, ly - h * 0.06); ctx.stroke();
+    paintLantern(ctx, lx, ly, h * 0.045, h * 0.06, { col: [240, 228, 200], on: g.LIT.lit, red: false });
+    if (g.LIT.lit) { ctx.globalCompositeOperation = 'lighter'; stamp(ctx, sprite('warm'), lx, ly, h * 0.7, h * 0.7, 0.55); stamp(ctx, sprite('warm'), c.x, c.y, h * 1.2, h * 0.35, 0.4); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; }
   }
 }
 /* 大晦日 at the temple: a queue winding back from the belfry for 除夜の鐘, or a loose crowd before the hall, each with a lit
@@ -12227,9 +12844,9 @@ function clearSway(S) { if (!S.shown) return; var U = S.U, x = S.layer.getContex
    Flying birds are a small 3D model: the wing is a jointed spar (shoulder - wrist - tip) that flexes through the stroke,
    seen a little from below and banked into turns; bodies, wings and tails are shaded with soft gradients (darker backs,
    paler undersides), feather-edge strokes and a thin rim of sky light. Perched birds and waders are drawn side-on. */
-var BIRD_VIS = { sparrow: 1.3, swallow: 1.8, kingfisher: 1.3 };   // small birds a little larger than life (at most 1.3x), or they would be specks at town scale
+var BIRD_VIS = { sparrow: 1.3, swallow: 2.6, kingfisher: 1.3 };   // (v6: the swallow 2.6, its forked tail and long wings are what say swallow; at 1.8 the visiting pair never showed on a phone)   // small birds a little larger than life (at most 1.3x), or they would be specks at town scale
 /* and never smaller on screen than a few pixels (BIRD_MINPX, bill to tail): below that a bird stops reading as a bird */
-var BIRD_MINPX = { sparrow: 1.0, swallow: 2.6, pigeon: 1.4, kingfisher: 1.0 };   // logical px, bill to tail: just enough to stay a speck
+var BIRD_MINPX = { sparrow: 1.0, swallow: 4.0, pigeon: 1.4, kingfisher: 1.0 };   // logical px, bill to tail: just enough to stay a speck
 function birdScale(spName, k) { var L = BIRD_SP[spName].L * k * (BIRD_VIS[spName] || 1), m = BIRD_MINPX[spName] || 0; return L < m ? k * m / Math.max(0.01, L) : k; }
 var BIRD_SP = {
   // Eurasian tree sparrow (suzume): 14 cm, span 21 cm, tail 5.3 cm, bill 1.0 cm, tarsus 1.7 cm
@@ -12605,15 +13222,15 @@ function initFauna(g, rng) {
   // a grey heron in the shallows of the near bank
   if ((g.light !== 'night') && g.season !== 'winter' || (g.season === 'winter' && day && !g.SEA.snow)) {
     var spot = heronSpot();
-    if (spot && g.stage >= 1 && g.wx !== 'snow') FA.heron = { x: spot[0], z: spot[1], hx: spot[0], hz: spot[1], y: 0, face: spot[2], ext: 0.1, act: 'stand', timer: 6 + rng() * 8, strike: 0, step: null, fly: null, gone: 0, band: P(spot[0], 0, spot[1]).d < P(0, 0, 36).d ? 0 : 1 };
+    if (spot && g.stage >= SI.sign && g.wx !== 'snow') FA.heron = { x: spot[0], z: spot[1], hx: spot[0], hz: spot[1], y: 0, face: spot[2], ext: 0.1, act: 'stand', timer: 6 + rng() * 8, strike: 0, step: null, fly: null, gone: 0, band: P(spot[0], 0, spot[1]).d < P(0, 0, 36).d ? 0 : 1 };
   }
   // pigeons on the shrine's forecourt (dry days)
-  if (F.shrine && dry && g.light !== 'night' && g.stage >= 7) { FA.pg = { x: SHRINE.x - 0.6, z: SHRINE.z - 4.6, birds: [], band: P(SHRINE.x, 0, SHRINE.z - 4.6).d < P(0, 0, 36).d ? 0 : 2 }; for (var pj = 0; pj < 3 + ((rng() * 2) | 0); pj++) FA.pg.birds.push({ x: FA.pg.x + (rng() - 0.5) * 2.4, z: FA.pg.z + (rng() - 0.5) * 1.2, face: rng() < 0.5 ? 1 : -1, act: 'walk', at: rng() * 2, ph: rng() * TAU, st: 0 }); }
+  if (F.shrine && dry && g.light !== 'night' && g.stage >= SI.shrine) { FA.pg = { x: SHRINE.x - 0.6, z: SHRINE.z - 4.6, birds: [], band: P(SHRINE.x, 0, SHRINE.z - 4.6).d < P(0, 0, 36).d ? 0 : 2 }; for (var pj = 0; pj < 3 + ((rng() * 2) | 0); pj++) FA.pg.birds.push({ x: FA.pg.x + (rng() - 0.5) * 2.4, z: FA.pg.z + (rng() - 0.5) * 1.2, face: rng() < 0.5 ? 1 : -1, act: 'walk', at: rng() * 2, ph: rng() * TAU, st: 0 }); }
   // swallows over the river on summer days
   if ((g.season === 'summer' || g.season === 'spring') && g.light !== 'night' && dry) { FA.sw = []; for (var j = 0; j < 4; j++) FA.sw.push({ s: 0.2 + rng() * 0.6, off: (rng() - 0.5) * 6, h: 1 + rng() * 2, v: (rng() < 0.5 ? 1 : -1) * (0.045 + rng() * 0.025), ph: rng() * TAU, burst: rng(), paddy: F.paddy && j % 2 === 1 }); }
   return FA;
 }
-function faunaTrees() { var t = [[TREE0.x, TREE0.z]]; if (F.riverCherry > 0) RIVER_CHERRY.forEach(function (c) { t.push([c[0], c[1]]); }); if (F.shoka) t.push(stPt(-4.4, 5.6), stPt(-3.6, -5.8)); if (F.shrine) t.push([SHRINE.x + 4.5, SHRINE.z + 0.5]); return t; }
+function faunaTrees() { var t = [[TREE0.x, TREE0.z]]; if (F.riverCherry > 0) RIVER_CHERRY.forEach(function (c) { t.push([c[0], c[1]]); }); if (F.shoka) t.push(stPt(-4.4, 5.6), stPt(-3.6, -5.8)); if (F.shrine) t.push([SHRINE.x + SHRINE_CEDARS[0][0], SHRINE.z + SHRINE_CEDARS[0][1]]); return t; }
 function faunaVisible(x, z) { var p = P(x, 0, z); return p.x > W * 0.08 && p.x < W * 0.92 && p.y > H * 0.42 && p.y < H * 0.9; }
 function faunaHidden(x, z) { return faunaTrees().some(function (q) { return Math.abs(q[0] - x) < 6 && q[1] < z + 1 && q[1] > z - 9; }); }
 function sparrowHome() {   // a quiet patch of grass on the river bank, clear of every path, any building and any tree in front
@@ -12838,7 +13455,7 @@ function drawFaunaGround(ctx, g, FA, band, t) {
 
 /* ---- 09_runtime.js ---- */
 /* ================= public API & controller ================= */
-var VERSION = '1.3.9';
+var VERSION = '1.3.10';
 var SEASON_KEYS = ['spring', 'summer', 'autumn', 'winter'], LIGHT_KEYS = ['morning', 'day', 'dusk', 'night'];
 var WEATHERS = ['clear', 'cloudy', 'rain', 'storm', 'snow', 'typhoon', 'blizzard'];
 var EVENTS = ['shogatsu', 'setsubun', 'hinamatsuri', 'kodomo', 'tanabata', 'obon', 'tsukimi'];
@@ -12847,8 +13464,9 @@ function withScene(o, fn) {
   try { setupScene(o); return fn(); } finally { restoreState(st); }
 }
 /* normalized 0..1 focus of a stage for a frame of logical size w x h */
-function focusFor(i, w, h) {
-  return withScene({ W: w, H: h, KS: 1, stage: i, season: 'autumn', light: 'day' }, function () {
+function focusFor(i, w, h, sc) {
+  sc = sc || {};
+  return withScene({ W: w, H: h, KS: 1, stage: i, season: sc.season || 'autumn', light: sc.light || 'day', event: sc.event || null }, function () {   // (the season, light and event only matter to the view's tilt: see SKY_LIFT)
     var d = stageFocus(STAGE_DEFS[i][3]), p = P(d[0], d[1], d[2]), x = p.x, y = p.y;
     return [Math.round(clamp(x / w, 0.04, 0.96) * 1000) / 1000, Math.round(clamp(y / h, 0.04, 0.96) * 1000) / 1000];
   });
@@ -13181,7 +13799,7 @@ function mount(el, opts) {
     if (first && !readyFired) { readyFired = true; if (typeof o.onReady === 'function') setTimeout(function () { if (!dead) try { o.onReady(api); } catch (e) { if (window.console) console.error(e); } }, 0); }
   }
   var aq = { lvl: 0, walk: 0, part: 1, ema: 0, t: 0 }, AQ_RES = [1, 0.85, 0.7, 0.6], AQ_WALK = [0, 0.25, 0.45, 0.55], AQ_PART = [1, 0.65, 0.4, 0.3], AQ_GAP = [31, 31, 31, 62], AQ_UP = [0, 23, 20, 17];
-  function ovW() { return Math.round(Math.min(cur ? cur.spec.bw : 800, size.cssW * Math.min(size.dpr, 3)) * AQ_RES[aq.lvl]); }
+  function ovW() { return Math.round(size.cssW * size.dpr); }   // the moving layers at the screen's own resolution at every size (capped by the painting's width they were soft, about 0.6x on a phone: the walkers smeared); AQ_RES no longer shrinks them
   function ovH() { return Math.round(ovW() * (cur ? cur.spec.H / cur.spec.W : 0.75)); }
   var wl = null, bl = null, fallers = [], petals = null, frng = mulberry32(99), bird = null, clock = 0, lastTs = 0, raf = 0;
   var cues = { last: -99, next: {}, gust: null, rings: [] }, leafGust = null, wfx = null, swayFx = null, lightning = null, wxCheck = 0, FW = null, dflies = null, bflies = null, rare = null, rareRoll = 0;
@@ -13251,8 +13869,8 @@ function mount(el, opts) {
   }
   function tickCues() {
     var g = cur.geo, n = cues.next;
-    var nd = nowDate(); if (g.stage >= 14 && g.light === 'night' && nd.getMonth() === 11 && nd.getDate() === 31 && clock > n.bell) { cue('bell', null, true); n.bell = clock + 9 + frng() * 2; if (g.I) g.I.bell = { t0: clock, monk: true }; }   // 除夜の鐘: the bell struck again and again into the night
-    else if (g.stage >= 14 && g.light === 'dusk' && clock > n.bell) { if (cue('bell')) { n.bell = clock + 55 + frng() * 10; if (g.I) g.I.bell = { t0: clock, monk: true }; } else n.bell = clock + 2; }   // 入相の鐘: a monk swings the beam
+    var nd = nowDate(); if (g.stage >= SI.temple && g.light === 'night' && nd.getMonth() === 11 && nd.getDate() === 31 && clock > n.bell) { cue('bell', null, true); n.bell = clock + 9 + frng() * 2; if (g.I) g.I.bell = { t0: clock, monk: true }; }   // 除夜の鐘: the bell struck again and again into the night
+    else if (g.stage >= SI.temple && g.light === 'dusk' && clock > n.bell) { if (cue('bell')) { n.bell = clock + 55 + frng() * 10; if (g.I) g.I.bell = { t0: clock, monk: true }; } else n.bell = clock + 2; }   // 入相の鐘: a monk swings the beam
     if (g.F.mill && clock > n.wheel) { if (cue('wheel')) n.wheel = clock + 24 + frng() * 22; else n.wheel = clock + 3; }
     if (clock > n.splash && (g.wx === 'clear' || g.wx === 'cloudy' || g.wx === 'rain')) {
       if (cue('splash')) { // a fish rises somewhere on the river: draw its rings
@@ -13384,7 +14002,7 @@ function mount(el, opts) {
         if (g.FA) drawSkyBirds(ctx, g, g.FA, t);
         if (rare && !g.rareNow) rare.def.draw(ctx, g, rare.st, clamp((t - rare.t0) / rare.def.dur), t);
         if (g.I) drawInteract(ctx, g, g.I, t);
-        if (FW) { var fwr = null; drawSkyMasked(ctx, g, function (c) { fwr = drawFireworks(c, g, FW, t); }, 'lighter'); if (fwr && fwr.flash > 0.02) { ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = rgb(mixc(fwr.fc, [255, 220, 170], 0.4), 0.055 * Math.min(1, fwr.flash)); ctx.fillRect(0, 0, g.W, g.H); ctx.globalCompositeOperation = 'source-over'; } }   // bursts, sparks and smoke only where the sky shows; their flash lights everything
+        if (FW) { var fwr = null; drawSkyMasked(ctx, g, function (c) { fwr = drawFireworks(c, g, FW, t); }, 'lighter', fwSkyMask()); if (fwr && fwr.flash > 0.02) { ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = rgb(mixc(fwr.fc, [255, 220, 170], 0.4), 0.055 * Math.min(1, fwr.flash)); ctx.fillRect(0, 0, g.W, g.H); ctx.globalCompositeOperation = 'source-over'; } }   // bursts, sparks and smoke only where the sky shows; their flash lights everything
         if (wfx) { var wdt = Math.min(0.1, Math.max(0, t - (wfx.lt || t))); drawWeatherFx(ctx, g, wfx, t, wdt); wfx.lt = t; if (wfx.bz) drawBlizzard(ctx, g, wfx.bz, t, wdt); }
         if (lightning) { if (!drawLightningFlash(ctx, g, lightning, t)) lightning = null; else drawSkyMasked(ctx, g, function (c) { drawLightning(c, g, lightning, t); }); }
       }
@@ -13424,13 +14042,20 @@ function mount(el, opts) {
     cx.globalCompositeOperation = 'destination-in'; cx.drawImage(cur.sky, 0, 0, cw, ch); cx.globalCompositeOperation = 'source-over';
   }
   var skyTmp = null;
-  function drawSkyMasked(ctx, g, fn, op) {   // draw something that belongs to the sky: hidden by the ranges, hills and town (op: how it lands, e.g. 'lighter')
+  function fwSkyMask() {   // the sky mask with the far ranges opened (their alpha 1/255 raised to full): where the fireworks may show
+    if (!cur.sky) return null;
+    if (cur.fwSky && cur.fwSky.src === cur.sky) return cur.fwSky.c;
+    var c = null;
+    try { c = mkCanvas(cur.sky.width, cur.sky.height); var x = c.getContext('2d'); x.drawImage(cur.sky, 0, 0); var im = x.getImageData(0, 0, c.width, c.height), d = im.data; for (var i = 3; i < d.length; i += 4) { var a = d[i] > 0 ? 255 : 0; d[i] = a; d[i - 1] = d[i - 2] = d[i - 3] = 255; } x.putImageData(im, 0, 0); } catch (e) { c = cur.sky; }
+    cur.fwSky = { src: cur.sky, c: c }; return c;
+  }
+  function drawSkyMasked(ctx, g, fn, op, mask) {   // draw something that belongs to the sky: hidden by the ranges, hills and town (op: how it lands, e.g. 'lighter'); mask: another sky mask
     if (!cur.sky) { fn(ctx); return; }
     var cw = fv.width, ch = Math.round(fv.height * 0.62), sc = cw / g.W;
     skyTmp = skyTmp || mkCanvas(2, 2); sizeCanvas(skyTmp, cw, ch);
     var x = skyTmp.getContext('2d'); x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'source-over'; x.clearRect(0, 0, cw, ch);
     x.setTransform(sc, 0, 0, sc, 0, 0); fn(x); x.setTransform(1, 0, 0, 1, 0, 0);
-    x.globalCompositeOperation = 'destination-in'; x.drawImage(cur.sky, 0, 0, cw, ch); x.globalCompositeOperation = 'source-over';
+    x.globalCompositeOperation = 'destination-in'; x.drawImage(mask || cur.sky, 0, 0, cw, ch); x.globalCompositeOperation = 'source-over';
     ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); if (op) ctx.globalCompositeOperation = op; ctx.drawImage(skyTmp, 0, 0); ctx.restore();
   }
   function drawRings(ctx, g, t) {
@@ -13658,7 +14283,7 @@ function mount(el, opts) {
           if (oldImg) { sizeCanvas(tv, ovW(), ovH()); tv.getContext('2d').drawImage(oldImg, 0, 0, tv.width, tv.height); tv.style.transition = 'none'; tv.style.opacity = '1'; void tv.offsetWidth; tv.style.transition = 'opacity 0.5s ease'; tv.style.opacity = '0'; }
           return;
         }
-        var g = cur.geo, f = withScene({ W: g.W, H: g.H, KS: 1, stage: to, season: o.season, light: o.light }, function () { return focusFor(to, g.W, g.H); });
+        var g = cur.geo, f = focusFor(to, g.W, g.H, { season: cur.spec.season, light: cur.spec.light, event: cur.spec.event });
         startReveal(oldImg, f, !!keepOld);
       });
     }).catch(function (e) { if (e !== CANCEL && window.console) console.error(e); });
@@ -13765,7 +14390,7 @@ var API = {
   weatherAt: weatherAt,
   fireworksAt: fireworksAt
 };
-try { Object.defineProperty(API, '_dbg', { value: { renderStatic: renderStatic, makeCam: makeCam, focusFor: focusFor, idbOpen: idbOpen, P: function () { return P.apply(null, arguments); }, folk: { paint: paintFolk, dress: dressFor, env: folkEnv, setSc: function (v) { FOLK_SC = v; } }, animals: { sika: function (ctx, x, y, k, o, g) { townSika(ctx, x, y, k, o, g); }, sb3: function (ctx, x, y, k, o, g) { townGarden(function (c, oo) { sb3Paint(c, oo.kind, oo); }, ctx, x, y, k, o, g); }, sb3f: function (ctx, x, y, k, o, g) { townGarden(function (c, oo) { sb3Fly(c, oo.kind, oo); }, ctx, x, y, k, o, g); }, wd3: function (ctx, x, y, k, o, g) { townGarden(function (c, oo) { wd3Paint(c, oo.kind, oo); }, ctx, x, y, k, o, g); }, wd3f: function (ctx, x, y, k, o, g) { townGarden(function (c, oo) { wd3Fly(c, oo.kind, oo); }, ctx, x, y, k, o, g); }, fox: function (ctx, x, y, k, o, g) { townGarden(foxPaint2, ctx, x, y, k, o, g); }, cat2: function (ctx, x, y, k, o, g) { townCat(ctx, x, y, k, o, g); }, dog2: function (ctx, x, y, k, o, g) { townDog(ctx, x, y, k, o, g); }, tanuki: function (ctx, x, y, k, o, g) { townGarden(tanukiPaint2, ctx, x, y, k, o, g); }, hare: function (ctx, x, y, k, o, g) { if (o.hopU !== undefined) { var hp = hareHop(o.hopU, 0.12, 0.8), q; for (q in hp) o[q] = hp[q]; } townGarden(harePaint2, ctx, x, y, k, o, g); }, }, fauna: { swallowPos: swallowPos, drawFlyer: drawFlyer, drawPerched: drawPerched, drawWader: drawWader, drawDragonfly: drawDragonfly, drawButterfly: drawButterfly, wingBeat: wingBeat, fireflyGlow: fireflyGlow, sprite: sprite, stamp: stamp } }, enumerable: false }); } catch (e) { /* ignore */ }
+try { Object.defineProperty(API, '_dbg', { value: { renderStatic: renderStatic, makeCam: makeCam, focusFor: focusFor, idbOpen: idbOpen, P: function () { return P.apply(null, arguments); }, folk: { paint: paintFolk, dress: dressFor, env: folkEnv, setSc: function (v) { FOLK_SC = v; } }, animals: { sika: function (ctx, x, y, k, o, g) { townSika(ctx, x, y, k, o, g); }, sb3: function (ctx, x, y, k, o, g) { townGarden(function (c, oo) { sb3Paint(c, oo.kind, oo); }, ctx, x, y, k, o, g); }, sb3f: function (ctx, x, y, k, o, g) { townGarden(function (c, oo) { sb3Fly(c, oo.kind, oo); }, ctx, x, y, k, o, g); }, wd3: function (ctx, x, y, k, o, g) { townGarden(function (c, oo) { wd3Paint(c, oo.kind, oo); }, ctx, x, y, k, o, g); }, wd3f: function (ctx, x, y, k, o, g) { townGarden(function (c, oo) { wd3Fly(c, oo.kind, oo); }, ctx, x, y, k, o, g); }, fox: function (ctx, x, y, k, o, g) { townGarden(foxPaint2, ctx, x, y, k, o, g); }, cat2: function (ctx, x, y, k, o, g) { townCat(ctx, x, y, k, o, g); }, dog2: function (ctx, x, y, k, o, g) { townDog(ctx, x, y, k, o, g); }, horse: function (ctx, x, y, k, o, g) { townHorse(ctx, x, y, k, o, g); }, tanuki: function (ctx, x, y, k, o, g) { townGarden(tanukiPaint2, ctx, x, y, k, o, g); }, hare: function (ctx, x, y, k, o, g) { if (o.hopU !== undefined) { var hp = hareHop(o.hopU, 0.12, 0.8), q; for (q in hp) o[q] = hp[q]; } townGarden(harePaint2, ctx, x, y, k, o, g); }, }, fauna: { swallowPos: swallowPos, drawFlyer: drawFlyer, drawPerched: drawPerched, drawWader: drawWader, drawDragonfly: drawDragonfly, drawButterfly: drawButterfly, wingBeat: wingBeat, fireflyGlow: fireflyGlow, sprite: sprite, stamp: stamp } }, enumerable: false }); } catch (e) { /* ignore */ }
 window.MogiTown = API;
 
 })();
