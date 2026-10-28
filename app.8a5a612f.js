@@ -9692,7 +9692,7 @@
             (q.label ? '・' + escapeHtml(exrPlain(q.label)) : '') + (it.blank !== null ? '・空欄' + blankNum(q, it.blank) : '') + '　#' + escapeHtml(it.key);
         h += '<div class="df-meta">' + meta + '</div>';
         var mark = function(opts, correct) {
-            return '<ol class="exr-opts">' + opts.map(function(o, i) { return '<li' + (i === correct ? ' class="ok"' : '') + '><span class="exr-n">' + CIRCLED[i] + '</span>' + o + (i === correct ? '<b class="exr-ok">正解</b>' : '') + '</li>'; }).join('') + '</ol>';
+            return '<ol class="exr-opts">' + opts.map(function(o, i) { return '<li' + (i === correct ? ' class="ok"' : '') + '><span class="exr-n">' + CIRCLED[i] + '</span><span class="exr-t">' + o + '</span>' + (i === correct ? '<b class="exr-ok">正解</b>' : '') + '</li>'; }).join('') + '</ol>';
         };
         if (q.type === 'Text Grammar') {
             var body = q.sentence;

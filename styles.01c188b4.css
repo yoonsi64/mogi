@@ -612,6 +612,7 @@
         .exr-frag.star { color: var(--active-blue); font-weight: bold; }
         .exr-opts { list-style: none; margin: 4px 0 0; padding: 0; }
         .exr-opts li { display: flex; gap: 8px; align-items: baseline; padding: 6px 8px; border-left: 3px solid transparent; border-radius: 0 6px 6px 0; line-height: 1.6; font-family: var(--option-font); }
+        .exr-opts .exr-t { flex: 1; min-width: 0; }     /* the choice's text (furigana included) wraps as one line of text, not as separate pieces */
         .exr-opts li.ok { border-left-color: var(--correct-color); background: var(--surface-2); font-weight: bold; }
         .exr-n { flex: 0 0 auto; }
         .exr-ok { flex: 0 0 auto; margin-left: auto; padding: 0 6px; border: 1px solid var(--correct-color); border-radius: 8px; color: var(--correct-color); font-size: 0.7rem; }
