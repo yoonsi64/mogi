@@ -797,6 +797,18 @@
             bindOmikujiHome();
             if (window.scrollY !== y) window.scrollTo(0, y);
         }
+        // back on 記録: refresh the おみくじ card there too (counts, and the 御朱印帳 page with the お守り just kept),
+        // keeping the screen and the 御朱印帳 where they were. Page taps are handled on document, so nothing to re-bind.
+        var book = document.querySelector('.omk-book'), statCard = book && book.closest('.stat-card');
+        if (statCard && typeof omikujiStatsHtml === 'function') {
+            var sy = window.scrollY, bx = book.scrollLeft, by = book.scrollTop;
+            var t2 = document.createElement('div'); t2.innerHTML = omikujiStatsHtml();
+            if (t2.firstChild) {
+                statCard.parentNode.replaceChild(t2.firstChild, statCard);
+                var nb = document.querySelector('.omk-book'); if (nb) { nb.scrollLeft = bx; nb.scrollTop = by; }
+                if (window.scrollY !== sy) window.scrollTo(0, sy);
+            }
+        }
     }
     function homeIsShowing() { var h = document.getElementById('omk-home'); return !!(h && h.offsetParent && h.getClientRects().length); }
     function omkKey(e) { if (e.key === 'Escape') closeOmikuji(); }
@@ -1112,7 +1124,7 @@
             panel.scrollTo({ top: 0, behavior: 'smooth' });
             setTimeout(function() { omkSound('bell', 0.6); omkVibrate(15); }, 650);
             var mine = omkOverlay;
-            setTimeout(function() { if (omkOverlay === mine) closeOmikuji(); }, rareT ? 3600 : 2600);
+            setTimeout(function() { if (omkOverlay === mine) closeOmikuji(); }, rareT ? 4600 : 3600);
             if (rareT) setTimeout(function() { omkSound('bell', 0.8); omkVibrate([12, 60, 18]); }, 1200);
         }
     }
