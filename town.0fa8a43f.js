@@ -1943,9 +1943,20 @@ function houseBack(ctx, Wb, wallC, seed, y1) {
 /* ---- 04c_works.js ---- */
 /* ================= bridges, river works ================= */
 function bridgeFrame() { return BF(BR.x, BR.z, BR.ax, 0); }
+/* the plank bridge's deck over its 17 m: a low hump over the water, its ends brought down onto the banks so the way steps on and
+   off it level (before, they stood half a metre up in the air and the walkers jumped up and down); the 太鼓橋's arch */
+function plankH(a) { var c = Math.cos(clamp(Math.abs(a) / 8.5) * Math.PI / 2); return 0.06 + 0.84 * Math.pow(c, 0.55); }
+function bridgeNear(x, z, m) { var dx = x - BR.x, dz = z - BR.z, e = m === undefined ? 1.5 : m; return Math.abs(dx * BR.ax[0] + dz * BR.ax[1]) < BR.len / 2 + e && Math.abs(-dx * BR.ax[1] + dz * BR.ax[0]) < BR.w / 2 + e + 1; }   // (on or about the bridge, within m of its ends)
+function bridgeKey() { return F.stoneBridge ? P(BR.x + 1.5, 0, BR.z - 2).d : P(BR.x, 0, BR.z - 1).d; }   // the bridge's place in the painting's order
+function bridgeSliceClip(ctx, a0, a1) {   // clip to the screen region of the near side's stretch a0..a1 (the near railing's pieces)
+  var B = bridgeFrame(), b = -BR.w / 2 - 0.1, pts = [Pa(B.L(a0, b, WL - 0.8)), Pa(B.L(a1, b, WL - 0.8))];
+  for (var j = 6; j >= 0; j--) { var a = lerp(a0, a1, j / 6); pts.push(Pa(B.L(a, b, archH(a) + 1.9))); }
+  ctx.beginPath(); pts.forEach(function (p, i) { if (i) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y); }); ctx.closePath(); ctx.clip();
+}
+function archH(a) { var u = clamp(Math.abs(a) / (BR.len / 2)); return 0.1 + 3.25 * Math.pow(Math.cos(u * Math.PI / 2), 1.25); }
 /* the humble plank bridge on wooden piles (before the stone bridge) */
 function drawPlankBridge(ctx) {
-  var B = bridgeFrame(), L = 17, w = 2.2, S = sil(), y = function (a) { return 0.55 + 0.35 * Math.cos(a / L * Math.PI); };
+  var B = bridgeFrame(), L = 17, w = 2.2, S = sil(), y = plankH;
   var wood = [120, 96, 70];
   for (var a = -6; a <= 6.1; a += 3) [-1, 1].forEach(function (sg) { var p = B.L(a, sg * (w / 2 - 0.15), 0); prism(ctx, p[0], p[2], WL - 0.4, y(a) - 0.05, 0.1, 0.1, 6, 0, [86, 70, 54], { snow: 0 }); });
   var N = 16, i, near = [], far = [];
@@ -1956,7 +1967,7 @@ function drawPlankBridge(ctx) {
     fillPts(ctx, [near[i], near[i + 1], far[i + 1], far[i]], S ? [0, 0, 0] : shade(alb, n), 0.4);
   }
   // side beam
-  var top = near.map(Pa), bot = near.map(function (p) { return P(p[0], p[1] - 0.22, p[2]); });
+  var top = near.map(Pa), bot = near.map(function (p) { return P(p[0], Math.max(0, p[1] - 0.22), p[2]); });   // (the beam thins out where the ends come down onto the banks)
   poly(ctx, top.concat(bot.slice().reverse())); ctx.fillStyle = S ? '#000' : rgb(shade([90, 70, 52], B.N(0, -1, 0))); ctx.fill();
   if (!S && !SEA.snow) { ctx.strokeStyle = 'rgba(50,36,26,0.5)'; ctx.lineWidth = 0.35; ctx.beginPath(); for (i = 1; i < N * 2; i++) { var a2 = -L / 2 + L * i / (N * 2), p0 = Pa(B.L(a2, -w / 2, y(a2))), p1 = Pa(B.L(a2, w / 2, y(a2))); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); } ctx.stroke(); }
 }
@@ -1964,7 +1975,7 @@ function drawPlankBridge(ctx) {
    the river, thick curved 桁 on both sides, a deck of weathered boards stepping up the curve, stone abutments at the ends, and
    a 高欄 on both edges -- square posts (taller 親柱 at the ends), a broad top rail (笠木), a mid rail (平桁), a base rail
    (地覆), short 束 between -- with bronze 擬宝珠 on the end and middle posts. Painted far to near. */
-function drawStoneBridge(ctx) {
+function drawStoneBridge(ctx, part) {   // part: 'back' (the piles, the deck, the far railing), 'front' (the near girder, abutments and railing), or the whole
   var B = bridgeFrame(), L = BR.len, w = BR.w, S = sil(), snow = SEA.snow, N = 40, i, k;
   var wood = snow ? [132, 114, 94] : [116, 94, 72], dark = [74, 58, 44], stoneC = [140, 134, 122], nF = B.N(0, -1, 0), nB = B.N(0, 1, 0), up = [0, 1, 0];
   var deckH = function (a) { var u = clamp(Math.abs(a) / (L / 2)); return 0.1 + 3.25 * Math.pow(Math.cos(u * Math.PI / 2), 1.25); };
@@ -1996,13 +2007,14 @@ function drawStoneBridge(ctx) {
     if (!S && !LIT.lit) { ctx.fillStyle = rgb(shade([220, 190, 128], up), 0.45); ctx.beginPath(); ctx.ellipse(c.x - r * 0.35, c.y - r * 1.45, r * 0.22, r * 0.38, -0.3, 0, TAU); ctx.fill(); }
   }
   // the pile bents: three posts on each, a cap beam, an X brace where it stands high enough
-  [-5.4, -2.7, 0, 2.7, 5.4].forEach(function (a) {
+  if (part !== 'front') [-5.4, -2.7, 0, 2.7, 5.4].forEach(function (a) {
     var top = deckH(a) - 0.6, g0 = gy(a), col = shade(dark, nF);
     [w / 2 - 0.3, 0, -w / 2 + 0.3].forEach(function (b) { if (top - g0 > 0.2) fillPts(ctx, [Q(a - 0.11, b, g0), Q(a + 0.11, b, g0), Q(a + 0.11, b, top), Q(a - 0.11, b, top)], scl(col, b > 0 ? 0.8 : 1), 0.3); });
     fillPts(ctx, [Q(a - 0.12, -w / 2 - 0.15, top + 0.16), Q(a + 0.12, -w / 2 - 0.15, top + 0.16), Q(a + 0.12, w / 2 + 0.15, top - 0.02), Q(a - 0.12, w / 2 + 0.15, top - 0.02)], scl(col, 1.05), 0.3);
     if (top - g0 > 1.2 && !S) { ctx.strokeStyle = rgb(scl(col, 0.85)); var k0 = Pa(Q(a, 0, top)).k; ctx.lineWidth = Math.max(0.4, 0.09 * k0); ctx.beginPath(); var p0 = Pa(Q(a, -w / 2 + 0.3, g0 + 0.25)), p1 = Pa(Q(a, w / 2 - 0.3, top - 0.15)), p2 = Pa(Q(a, w / 2 - 0.3, g0 + 0.25)), p3 = Pa(Q(a, -w / 2 + 0.3, top - 0.15)); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.moveTo(p2.x, p2.y); ctx.lineTo(p3.x, p3.y); ctx.stroke(); }
   });
   // the deck: boards across, each its own weathered tone, a dark gap between, the step of each board catching the light
+  if (part !== 'front') {
   var dn = [], df = []; for (i = 0; i <= N; i++) { var aa = -L / 2 + L * i / N; dn.push(Q(aa, -w / 2, deckH(aa))); df.push(Q(aa, w / 2, deckH(aa))); }
   for (i = 0; i < N; i++) {
     var n = norm(cross(sub(dn[i + 1], dn[i]), sub(df[i], dn[i]))); if (n[1] < 0) n = mul(n, -1);
@@ -2011,6 +2023,7 @@ function drawStoneBridge(ctx) {
   }
   if (!S && !snow) { ctx.strokeStyle = 'rgba(40,30,22,0.55)'; ctx.lineWidth = 0.35; ctx.beginPath(); for (i = 1; i < N; i++) { var q0 = Pa(dn[i]), q1 = Pa(df[i]); ctx.moveTo(q0.x, q0.y); ctx.lineTo(q1.x, q1.y); } ctx.stroke();
     ctx.strokeStyle = 'rgba(210,190,160,0.18)'; ctx.beginPath(); for (i = 1; i < N; i += 2) { var aq = -L / 2 + L * (i + 0.5) / N, q2 = Pa(Q(aq, -w / 2 + 0.3, deckH(aq) + 0.01)), q3 = Pa(Q(aq, w / 2 - 0.3, deckH(aq) + 0.01)); ctx.moveTo(q2.x, q2.y); ctx.lineTo(q3.x, q3.y); } ctx.stroke(); }
+  }
   // the railings: far one first (seen from the deck side), then the near
   function railing(sd) {
     var b = sd * (w / 2 - 0.08), a0 = -L / 2 + 0.35, a1 = L / 2 - 0.35, NP = 12, H = 1.0, col = wood, fc = sd > 0 ? nF : nF;
@@ -2024,7 +2037,8 @@ function drawStoneBridge(ctx) {
     if (!S && !snow) { var tl = []; for (var j = 0; j <= 24; j++) { var aj = lerp(a0, a1, j / 24); tl.push(Pa(Q(aj, b - 0.1, deckH(aj) + H + 0.04))); } ctx.strokeStyle = rgb(shade(mixc(col, [255, 240, 214], 0.35), up), 0.6); ctx.lineWidth = 0.35; ctx.beginPath(); tl.forEach(function (p, j2) { if (j2) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y); }); ctx.stroke(); }
     [0, NP / 2, NP].forEach(function (k3) { var big = k3 !== NP / 2; giboshi(posts[k3], b, big ? H * 1.2 : H + 0.04); });
   }
-  railing(1);
+  if (part !== 'front') railing(1);
+  if (part === 'back') return;
   // the near girder (桁): a thick curved beam under the near edge, lit along its top, the timber joints showing; the abutments' stone
   var gt = [], gb = [];
   for (i = 0; i <= N; i++) { var ag = -L / 2 + L * i / N; gt.push(Q(ag, -w / 2 - 0.05, deckH(ag) + 0.06)); gb.push(Q(ag, -w / 2 - 0.05, Math.max(deckH(ag) - 0.62, gy(ag, -w / 2) + 0.02))); }
@@ -4337,8 +4351,18 @@ function buildScene() {
   var t0 = genBroad(31, TREE0.x, TREE0.z, 1.5 * F.tree0, 1.2);
   put(TREE0.x, TREE0.z, { draw: function (c) { drawBroad(c, t0, { dab: 0.28, cap: 40 }); }, ao: function (c) { mapleAO(c, t0); }, sway: swayTree('broad', t0), tap: 'broad' });
   // bridges
-  if (F.stoneBridge) put(BR.x, BR.z, { draw: drawStoneBridge, key: P(BR.x + 1.5, 0, BR.z - 2).d, refl: true, noShadow: false });
-  else put(BR.x, BR.z, { draw: drawPlankBridge, key: P(BR.x, 0, BR.z - 1).d, refl: true });
+  // (in the silhouette passes, the moving things' occluders and the depth map, the bridge is laid down in parts: its back, the
+  // deck, piles and far railing, at the bridge's own depth; then over it the 太鼓橋's near girder and railing in short pieces,
+  // each at its own depth. Whoever crosses is cut by the stretch of near railing in front of them and never by the deck
+  // under their feet (drawCut's ign). Neither part is among the near countryside's occluders: the walkers on and about the bridge
+  // are cut per pixel instead, see drawBand)
+  var brK = bridgeKey(), brB = bridgeFrame();
+  put(BR.x, BR.z, { draw: function (c) { if (MODE === 'k') return; if (F.stoneBridge) drawStoneBridge(c); else drawPlankBridge(c); }, key: brK, refl: true, noShadow: false, ob: [] });
+  put(BR.x, BR.z, { draw: function (c) { if (MODE !== 'k') return; if (F.stoneBridge) drawStoneBridge(c, 'back'); else drawPlankBridge(c); }, key: brK + 0.002, dval: brK, okey: brK, ob: [1, 2], noShadow: true });
+  if (F.stoneBridge) for (var brI = 0; brI < 10; brI++) (function (a0, a1) {
+    var m = brB.L((a0 + a1) / 2, -BR.w / 2, 0);
+    put(m[0], m[2], { draw: function (c) { if (MODE !== 'k') return; c.save(); bridgeSliceClip(c, a0, a1); drawStoneBridge(c, 'front'); c.restore(); }, key: brK - 0.001, dval: P(m[0], 0, m[2]).d, okey: brK, ob: [1, 2], noShadow: true });
+  })(brI ? -BR.len / 2 + BR.len * brI / 10 : -BR.len / 2 - 0.5, brI < 9 ? -BR.len / 2 + BR.len * (brI + 1) / 10 : BR.len / 2 + 0.5);
   // the town
   townPlan(F).forEach(function (b) {
     var f = planFoot(b); YARDS.push({ x: f.x, z: f.z, u: f.u, v: f.v, w: f.w, d: f.d, pad: 2.2 });
@@ -5315,8 +5339,9 @@ async function renderStatic(job) {
       // one pass: each object once, clipped to the boxes of the anchors it stands in front of
       for (var j = 0; j < scene.up.length; j++) {
         var u = scene.up[j]; if (u.key >= 1e5) continue;
-        var clipP = null;
-        for (var m = 0; m < mine.length; m++) { var a = mine[m]; if (u.key < a.key - 0.02) { if (!clipP) clipP = new Path2D(); clipP.rect(a.bb[0], a.bb[1], a.bb[2] - a.bb[0], a.bb[3] - a.bb[1]); } }
+        if (u.ob && u.ob.indexOf(bd) < 0) continue;   // (an object kept out of this band's occluders)
+        var clipP = null, uk = u.okey !== undefined ? u.okey : u.key;
+        for (var m = 0; m < mine.length; m++) { var a = mine[m]; if (uk < a.key - 0.02) { if (!clipP) clipP = new Path2D(); clipP.rect(a.bb[0], a.bb[1], a.bb[2] - a.bb[0], a.bb[3] - a.bb[1]); } }
         if (!clipP) continue;
         oc.save(); oc.clip(clipP); u.draw(oc); oc.restore();
       }
@@ -5405,7 +5430,7 @@ async function bakeDepth(scene, hw, hh, bw, tick) {
       TB.reset(); tx.setTransform(KS * hw / bw, 0, 0, KS * hw / bw, 0, 0); u.draw(tx);
       var bx = TB.box(hw, hh, 3);
       if (bx[2] <= bx[0] || bx[3] <= bx[1]) continue;
-      var v = clamp(Math.round(u.key * 100), 0, 65535);
+      var v = clamp(Math.round((u.dval !== undefined ? u.dval : u.key) * 100), 0, 65535);
       tx.setTransform(1, 0, 0, 1, 0, 0); tx.globalCompositeOperation = 'source-in'; tx.fillStyle = 'rgb(' + (v >> 8) + ',' + (v & 255) + ',0)'; tx.fillRect(bx[0], bx[1], bx[2] - bx[0], bx[3] - bx[1]);
       dx.drawImage(tc, bx[0], bx[1], bx[2] - bx[0], bx[3] - bx[1], bx[0], bx[1], bx[2] - bx[0], bx[3] - bx[1]);
       tk = tick(); if (tk) { G.Path2D = P2; await tk; if (P2) G.Path2D = trackedPath2D(P2); }
@@ -5665,9 +5690,9 @@ var NBANDS = 4;   // 0 the near countryside, 1 the river, 2 the town, 3 spare
 /* height of the deck where a path crosses the bridge */
 function bridgeY(x, z) {
   var a = (x - BR.x) * BR.ax[0] + (z - BR.z) * BR.ax[1], b = -(x - BR.x) * BR.ax[1] + (z - BR.z) * BR.ax[0];
-  if (Math.abs(b) > BR.w / 2 + 0.2 || Math.abs(a) > BR.len / 2) return 0;
-  if (F.stoneBridge) { var u = clamp(Math.abs(a) / (BR.len / 2)); return 0.1 + 3.25 * Math.pow(Math.cos(u * Math.PI / 2), 1.25); }
-  var L = 17; return Math.abs(a) < L / 2 ? 0.55 + 0.35 * Math.cos(a / L * Math.PI) : 0;
+  if (Math.abs(b) > (F.stoneBridge ? BR.w / 2 : 1.1) + 0.2 || Math.abs(a) > BR.len / 2) return 0;   // (the plank bridge is 2.2 m wide)
+  if (F.stoneBridge) return archH(a);
+  return Math.abs(a) < 8.5 ? plankH(a) : 0;
 }
 function screenBox(pts3, m) {
   var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
@@ -5734,7 +5759,7 @@ function walkPaths() {
   if (F.landing) P0.push({ pts: [krPt(5, RIVER_HW + 1.3), krPt(19, RIVER_HW + 1.3), krPt(34, RIVER_HW + 1.5), krPt(46, RIVER_HW + 1.5)], band: 2, spread: 0.4, w: 0.5 });
   if (F.market) P0.push({ pts: [[MARKET.x - 7, MARKET.z + 1.5], [MARKET.x - 1, MARKET.z - 2], [MARKET.x + 5, MARKET.z + 0.5], [MARKET.x + 9, MARKET.z + 3]], band: 2, spread: 1.2, w: 0.8 });
   spectatorPaths().forEach(function (q) { P0.push(q); });
-  P0.forEach(function (q) { q.pa = polyLen(q.pts); });
+  P0.forEach(function (q) { q.pts = q.pts.filter(function (p, i, A) { return !i || Math.hypot(p[0] - A[i - 1][0], p[1] - A[i - 1][1]) > 1e-6; }); q.pa = polyLen(q.pts); });   // (no corners of no length)
   return P0;
 }
 function boatPath() { var pts = []; for (var i = 0; i < RIVER_S.length; i += 2) { var p = RIVER_S[i]; if (p[0] < -62 || p[0] > 66) continue; pts.push([p[0] + 0.0, p[1] + 1.6]); } return polyLen(pts); }
@@ -6150,14 +6175,289 @@ function pickUmb(w, rng) {
   w.umb = L[(rng() * L.length) | 0]; w.umbK = jano ? 'jano' : 'ban';
 }
 function stepWalkers(g, dt, rng) {
-  for (var i = 0; i < g.walkers.length; i++) {
-    var w = g.walkers[i], q = g.paths[w.pi];
-    if (w.pause > 0) { w.pause -= dt; continue; }
+  if (!g.fkG || g.fkLife !== g.life) fkPrepare(g);   // (the lanes again whenever the life scenes change)
+  var WK = g.walkers, i, w, q, K, until = now() + 6;   // (the ways' lanes are marked a little each frame, 6 ms at most; a walker is placed, and drawn, once its way's are done)
+  for (i = 0; i < WK.length; i++) {
+    w = WK[i]; q = g.paths[w.pi];
+    if (w.cl === undefined) { K = fkLanes(g, q, until); if (!K) continue; fkSettle(g, w, q, K); }
+    var p0 = walkerPos(g, w), f0 = pathFrame(q.pa, w.s); w.fx = p0.x; w.fz = p0.z; w.nx = f0.nx; w.nz = f0.nz; w.hx = f0.dx * w.dir; w.hz = f0.dz * w.dir; w.bp = fkBodyPts(g, w); if (w.pause > 0 || w.still || w.tl === null) w.vx = w.vz = 0;
+  }
+  for (i = 0; i < WK.length; i++) {
+    w = WK[i]; q = g.paths[w.pi]; if (w.cl === undefined) continue;
+    K = fkLanes(g, q, until); if (!K) continue;
+    w.vx = w.vz = 0;
+    if (w.still) continue;
+    if (w.pause > 0) { w.pause -= dt; w.lt = 0; continue; }   // (and look again before setting off)
+    w.lt = (w.lt || 0) - dt;
+    if (w.lt <= 0 || w.tl === undefined) { w.lt = 0.2 + rng() * 0.1; w.tl = fkChoose(g, w, q, K); }
+    if (w.tl === null) {   // the way ahead is shut (by something standing there, or someone coming): wait, and in a while turn back
+      w.wt = (w.wt || 0) + dt; if (w.wt > 1.4 + (i % 4) * 0.4) { w.dir = -w.dir; w.wt = 0; w.lt = 0; }
+      continue;
+    }
+    w.wt = 0;
     var ds = w.sp * dt * (w.child ? 0.8 : 1); w.s += w.dir * ds; w.dist = (w.dist || 0) + ds;   // (the gait is read from the distance walked, so the feet do not slide)
-    if (w.s > q.pa.len || w.s < 0) { w.dir = -w.dir; w.s = clamp(w.s, 0, q.pa.len); w.pause = 1 + rng() * 4; w.lat = (rng() - 0.5) * q.spread * 2; }
+    var mx = ds * 0.9 + dt * 0.15; w.cl += clamp(w.tl - w.cl, -mx, mx);   // (edging across the way at most 0.9 m a metre walked)
+    var fr = pathFrame(q.pa, w.s); w.vx = fr.dx * w.dir * ds / dt; w.vz = fr.dz * w.dir * ds / dt;
+    if (w.s > K.s1 || w.s < K.s0) { w.dir = -w.dir; w.s = clamp(w.s, K.s0, K.s1); w.pause = 1 + rng() * 4; w.lat = (rng() - 0.5) * q.spread * 2; w.lt = 0; }
     else if (rng() < dt * 0.02 * (w.pauseK === undefined ? 1 : w.pauseK)) w.pause = 1.5 + rng() * 3;   // stops to talk or look (in the rain, hardly)
     if (w.prints && w.pause <= 0) stepPrints(g, w);
   }
+}
+/* ---------------- where the townsfolk may set foot ----------------
+   The walkers keep to their ways (walkPaths), each at its own offset across the way (lat); every few steps each looks a couple of
+   metres ahead and picks a lane (an offset every 0.2 m across the way, out a little beyond its spread) that is clear of whatever
+   stands there, of the water, and of the others coming: they edge round a well or a stall, pass one another side by side, slow
+   behind someone, wait, or turn back where the way is shut. What stands is the stage's own layout (fkShapes): the footprints of
+   the buildings and walls, fences, trunks, lanterns, barrels, signs, carts, stalls and racks; the life scenes' places (fkZones,
+   from g.life); and the water (fkWet: the river off the decks, the landing's steps, the fields, the 用水路 off its plank, the
+   wooded hills). Looked up per 0.25 m cell on demand, each cell once; each way's lanes are marked once (fkLanes). */
+var FK = { st: 0.125, x0: -70, z0: -32, x1: 80, z1: 110, R: 0.2, cache: {}, keys: [] };   // (a cell is clear only if every point of it is: R and half its diagonal)
+function fkShapes() {
+  var S = [], i;
+  function box(B, a0, a1, b0, b1) { S.push({ t: 1, B: B, a0: a0, a1: a1, b0: b0, b1: b1 }); }
+  function rect(x, z, u, w, d) { box(BF(x, z, u, 0), -w / 2, w / 2, -d / 2, d / 2); }
+  function circ(x, z, r) { S.push({ t: 0, x: x, z: z, r: r }); }
+  function seg(a, b, r) { S.push({ t: 2, a: a, b: b, r: r }); }
+  townPlan(F).forEach(function (b) { var f = planFoot(b); rect(f.x, f.z, f.u, f.w, f.d); });
+  circ(TREE0.x, TREE0.z, 0.4);
+  GROVES.forEach(function (gv, gi) { if (F.s >= gv[2]) return; var gr = mulberry32(900 + gi); for (var n = 0; n < gv[3]; n++) { var tx = gv[0] + (gr() - 0.5) * 7, tz = gv[1] + (gr() - 0.5) * 5; gr(); circ(tx, tz, 0.35); } });   // (as buildScene draws them)
+  var bb = BAMBOO; box(BF(bb.x, bb.z, bb.u, 0), -bb.ru * 0.85, bb.ru * 0.85, -bb.rv * 0.85, bb.rv * 0.85);
+  if (F.sign) circ(SIGN.x, SIGN.z, 0.22);
+  if (F.teahouse) { var tb = teaFrame(), hp = tb.L(-4.6, -1.5, 0); rect(TEA.x, TEA.z, TEA.u, 5.6, 4.2); box(BF(hp[0], hp[2], [Math.cos(0.9), Math.sin(0.9)], 0), -1.4, 1.0, -0.65, 0.65); }   // (and its handcart)
+  if (F.well) circ(WELL.x, WELL.z, 0.7);
+  if (F.farm) {
+    rect(FARM.x, FARM.z, [1, 0.08], 11.5, 7.6); seg([FARM.x - 8.5, FARM.z - 8], [FARM.x - 2.5, FARM.z - 8.3], 0.06); seg([FARM.x + 1.5, FARM.z - 8.4], [FARM.x + 6.5, FARM.z - 8.2], 0.06);
+    rect(FARM.x + 7.5, FARM.z - 2, [1, 0], 1.9, 0.8); circ(KAKI.x, KAKI.z, 0.3);
+    NEAR_BUSHES.forEach(function (q) { circ(q[0], q[1], q[2] * 0.85); });
+    if (seasonName() === 'autumn' && F.paddy && F.prog < 0.875) [[8, 0.02], [7, -0.06]].forEach(function (h, k) { var c = Math.cos(h[1]) * h[0] / 2, s = Math.sin(h[1]) * h[0] / 2; seg([HAZA[k][0] - c, HAZA[k][1] - s], [HAZA[k][0] + c, HAZA[k][1] + s], 0.08); });
+  }
+  if (F.mill) { rect(MILL.x, MILL.z, MILL.u, 5, 4.4); var mw = millWheelGeom().B; box(mw, -MILL.wr, MILL.wr, -0.4, 0.4); }
+  if (F.shrine) {
+    var sf = BF(SHRINE.x, SHRINE.z, [1, -0.1], 0); box(sf, -1.3, 1.3, -1.3, 1.3);
+    seg([SHRINE.x - 3, SHRINE.z - 2.6], [SHRINE.x - 0.85, SHRINE.z - 2.815], 0.06); seg([SHRINE.x + 0.85, SHRINE.z - 2.985], [SHRINE.x + 3, SHRINE.z - 3.2], 0.06);
+    [-1.1, 1.1].forEach(function (a) { var q = sf.L(a, -3.35, 0); circ(q[0], q[2], 0.22); });
+    [-1.45, 1.45].forEach(function (a) { var p = toriiFrame().L(a, 0, 0); circ(p[0], p[2], 0.18); });
+    SHRINE_CEDARS.forEach(function (a) { circ(SHRINE.x + a[0], SHRINE.z + a[1], 0.45); });
+  }
+  if (F.tower) rect(TOWER.x, TOWER.z, [1, 0.1], 3, 3);
+  if (F.temple) {
+    var tf = templeFrame(); rect(TEMPLE.x, TEMPLE.z, tf.u, 15.8, 13.5); rect(BELL.x, BELL.z, KR_DIR, 4.4, 4.4);
+    precinctPieces().forEach(function (pc) { seg(pc.a, pc.b, 0.25); });
+    var gq = gateFrame(); [-2.0, 2.0].forEach(function (a) { var p = gq.L(a, 0, 0); rect(p[0], p[2], KR_DIR, 0.5, 2.2); });
+    sandoLanterns().forEach(function (q) { circ(q[0], q[2], 0.3); }); box(chozuyaFrame(), -1.35, 1.35, -1.0, 1.0);
+    [[-19.3, 99.1], [-41.1, 102.3], [-6, 94]].forEach(function (a) { circ(a[0], a[1], 0.35); });
+  }
+  if (F.pagoda) rect(PAGODA.x, PAGODA.z, KR_DIR, 8, 8);
+  if (F.theatre) { var th = theatreFrame(); rect(th.x, th.z, th.u, 9.5, 11); }
+  if (F.market) { [[-5, -1.5, 0.35], [-1.2, 1.4, 0.3], [2.8, -1.0, 0.4], [5.6, 2.0, 0.3], [-4.2, 3.0, 0.25]].forEach(function (q) { rect(MARKET.x + q[0], MARKET.z + q[1], [Math.cos(q[2]), Math.sin(q[2])], 2.3, 1.6); }); box(BF(MARKET.x + 7, MARKET.z - 2, [Math.cos(-0.4), Math.sin(-0.4)], 0), -1.4, 1.0, -0.65, 0.65); }
+  if (F.buke) BUKE.forEach(function (bk) { rect(bk.x, bk.z, KR_DIR, bk.w, bk.d); var pq = bk.seed > 402 ? BF(bk.x, bk.z, KR_DIR, 0).L(bk.seed === 403 ? -bk.w * 0.34 : bk.w * 0.36, bk.d * 0.28, 0) : BF(bk.x, bk.z, KR_DIR, 0).L(bk.w * 0.3, 1.5, 0); circ(pq[0], pq[2], 0.4); });
+  if (F.ishigaki) { var ig = ishiGeom(); rect(CASTLE.x, CASTLE.z, ig.B.u, ig.w + 2.6, ig.d + 2.6); }
+  if (F.ishigaki || F.buke) [[22, 80.5], [44, 81], [28, 95]].concat(F.buke ? [[58.5, 83.6]] : []).forEach(function (a) { circ(a[0], a[1], 0.4); });
+  if (F.landing) { var lb = landingGeom().B; [[-2.8, -1.8], [2.8, -1.8], [-1.5, -3.6], [3.4, -3.4]].forEach(function (q) { var p = lb.L(q[0], q[1], 0); circ(p[0], p[2], 0.1); }); var bp = lb.L(4.6, 1.6, 0); rect(bp[0], bp[2] + 0.05, [1, 0], 1.9, 0.8); }
+  if (F.kura) { var kp = krPt(28.4, RIVER_HW + 1.8); rect(kp[0], kp[1] + 0.05, [1, 0], 1.9, 0.8); }
+  if (F.nagaya) [stPt(13.3, 24.4), stPt(13.1, 27.7)].forEach(function (q) { circ(q[0], q[1], 0.08); });
+  if (F.shoka) [stPt(-4.4, 5.6), stPt(-3.6, -5.8)].forEach(function (q) { circ(q[0], q[1], 0.35); });
+  if (F.riverCherry > 0) RIVER_CHERRY.forEach(function (c) { circ(c[0], c[1], 0.35); });
+  doorList().forEach(function (d, k) {   // the rain barrels and standing signs at the shopfronts (as placeProps sets them)
+    if (d.kind === 'temple' || d.kind === 'mill' || d.kind === 'nagaya' || d.kind === 'smithy' || d.kind === 'tera' || d.kind === 'sake' || d.kind === 'banya') return;
+    if (k % 2 === 0) { var rb = d.W.at(d.s1 + 0.7, 0, 0.55); circ(rb[0], rb[2], 0.28); }
+    else if (d.kind === 'machiya' || d.kind === 'shoka' || d.kind === 'inn') { var sg = d.W.at(d.s0 - 0.6, 0, 0.9); circ(sg[0], sg[2], 0.2); }
+  });
+  if (F.tea) teaRows().forEach(function (r) { var e = teaRowEnds(r); for (i = 0; i < 12; i++) { var xa = lerp(e[0], e[1], i / 12), xb = lerp(e[0], e[1], (i + 1) / 12); seg([xa, teaRowZ(r, xa)], [xb, teaRowZ(r, xb)], 0.6); } });
+  if (F.smithy) box(smithyFrame(), -SMITH_W / 2 - 1.2, SMITH_W / 2 + 0.3, -SMITH_D / 2 - 1.3, SMITH_D / 2 + 0.3);   // (with the anvil, the tub and the charcoal before it)
+  if (F.kosatsu) box(kosatsuFrame(), -2.9, 2.9, -1.75, 1.0);
+  if (F.terakoya) box(terakoyaFrame(), -TERA_W / 2 - 0.3, TERA_W / 2 + 0.3, -TERA_D / 2 - 0.9, TERA_D / 2 + 0.3);
+  if (F.sakagura) box(sakaguraFrame(), -SAKE_W / 2 - 0.35, SAKE_W / 2 + 1.1, -SAKE_D / 2 - 0.35, SAKE_D / 2 + 0.35);
+  if (F.kido) { var kb = kidoFrame(); box(kb, -STREET_HW - 0.2, -KIDO_GO, -0.3, 0.3); box(kb, KIDO_GO, STREET_HW + 0.2, -0.3, 0.3); if (LIT.name === 'night') box(kb, -KIDO_GO, KIDO_GO, -0.3, 0.3); box(banyaFrame(), -1.25, 1.25, -0.9, 0.9); }
+  noboriList().forEach(function (q) { circ(q.x, q.z, 0.1); });
+  if (F.festival) { var tk = TAIKO(); circ(tk.x + 0.5, tk.z, 1.1); }
+  if (F.event === 'hinamatsuri') [[-25.5, 21.5], [-3.5, 31]].concat(F.shoka ? [rvPt(4, 6)] : []).forEach(function (a) { circ(a[0], a[1], 0.3); });
+  if (F.event === 'kodomo') koiPoles().forEach(function (q) { circ(q[0], q[1], 0.12); });
+  if (F.event === 'tanabata') tanabataList().forEach(function (q) { circ(q.base[0], q.base[2], 0.15); });
+  return S;
+}
+/* the places the life scenes take up (people and their things), as shapes like fkShapes' */
+function fkZones(life) {
+  var S = [];
+  function box(B, a0, a1, b0, b1) { S.push({ t: 1, B: B, a0: a0, a1: a1, b0: b0, b1: b1 }); }
+  function circ(x, z, r) { S.push({ t: 0, x: x, z: z, r: r }); }
+  (life || []).forEach(function (a) {
+    var k = a.kind, X = a.x, Z = a.z, ax = BF(X, Z, [1, 0], 0);
+    if (k === 'hanami') box(BF(X, Z, [Math.cos(a.ang), Math.sin(a.ang)], 0), -1.6, 1.6, -1.2, 1.2);
+    else if (k === 'dango' || k === 'soba' || k === 'tako' || k === 'hotaru' || k === 'snowman' || k === 'mochi') circ(X, Z, k === 'mochi' ? 1.5 : 1.3);
+    else if (k === 'yatai') box(ax, -1.8, 1.8, -1.9, 1.0);
+    else if (k === 'bon') box(ax, -5.6, 5.6, -3.6, 4.0);
+    else if (k === 'net') circ(X, Z, 1.5);
+    else if (k === 'fish' || k === 'wash' || k === 'shutter' || k === 'sweep' || k === 'uchimizu' || k === 'kidoban') circ(X, Z, 0.9);
+    else if (k === 'unload') box(landingGeom().B, -3.6, 4.2, -3.8, 1.9);
+    else if (k === 'daido') box(ax, -2.3, 2.3, -1.5, 1.5);
+    else if (k === 'play') box(ax, -2.1, 2.1, -1.7, 1.7);
+    else if (k === 'pray') box(ax, -1.4, 2.0, -2.6, 0.5);
+    else if (k === 'bench') box(BF(X, Z, a.u || [1, 0], 0), -1.0, 1.0, -0.7, 0.5);
+    else if (k === 'read') box(BF(X, Z, KOSATSU.u, 0), -1.0, 1.1, -0.5, 0.5);
+    else if (k === 'brewer') box(sakaguraFrame(), SAKE_W / 2 + 1.1, SAKE_W / 2 + 2.3, -2.9, 2.9);
+    else if (k === 'chatsumi' || k === 'smith') circ(X, Z, 0.6);
+    else if (k === 'joya') lifeJoyaSpots(a).forEach(function (q) { circ(q[0], q[1], 0.35); });
+    else if (k === 'mikoshi') { box(BF(STREET0[0], STREET0[1], STREET_DIR, 0), 1, 35.5, -1.7, 1.7); mikoshiCrowd(a).forEach(function (q) { circ(q.x, q.z, 0.35); }); }   // (the procession up the middle of the street, the crowd along the sides)
+    else if (k === 'momiji' || k === 'harvest' || k === 'hasa' || k === 'plant' || k === 'weed') circ(X, Z, 1.6);
+  });
+  return S;
+}
+function fkBox(o) {   // a shape's reach (x0, z0, x1, z1)
+  if (o.t === 0) return [o.x - o.r, o.z - o.r, o.x + o.r, o.z + o.r];
+  if (o.t === 2) return [Math.min(o.a[0], o.b[0]) - o.r, Math.min(o.a[1], o.b[1]) - o.r, Math.max(o.a[0], o.b[0]) + o.r, Math.max(o.a[1], o.b[1]) + o.r];
+  var c = [o.B.L(o.a0, o.b0, 0), o.B.L(o.a1, o.b0, 0), o.B.L(o.a1, o.b1, 0), o.B.L(o.a0, o.b1, 0)];
+  return [Math.min(c[0][0], c[1][0], c[2][0], c[3][0]), Math.min(c[0][2], c[1][2], c[2][2], c[3][2]), Math.max(c[0][0], c[1][0], c[2][0], c[3][0]), Math.max(c[0][2], c[1][2], c[2][2], c[3][2])];
+}
+function fkIn(o, x, z, r) {   // is (x, z) within r of the shape
+  if (o.t === 0) { var dx = x - o.x, dz = z - o.z, rr = o.r + r; return dx * dx + dz * dz < rr * rr; }
+  if (o.t === 2) { var ax = o.b[0] - o.a[0], az = o.b[1] - o.a[1], f = clamp(((x - o.a[0]) * ax + (z - o.a[1]) * az) / (ax * ax + az * az || 1)); return Math.hypot(x - o.a[0] - ax * f, z - o.a[1] - az * f) < o.r + r; }
+  var ex = x - o.B.x, ez = z - o.B.z, a = ex * o.B.u[0] + ez * o.B.u[1], b = ex * o.B.v[0] + ez * o.B.v[1];
+  return a > o.a0 - r && a < o.a1 + r && b > o.b0 - r && b < o.b1 + r;
+}
+function fkHash(S) {   // the shapes by 4 m buckets
+  var H = {}; S.forEach(function (o) { var b = fkBox(o), R = FK.R + FK.st; for (var j = Math.floor((b[1] - R - FK.z0) / 4); j <= Math.floor((b[3] + R - FK.z0) / 4); j++) for (var i = Math.floor((b[0] - R - FK.x0) / 4); i <= Math.floor((b[2] + R - FK.x0) / 4); i++) { var k = j * 64 + i; (H[k] || (H[k] = [])).push(o); } });
+  return H;
+}
+function fkWet(x, z) {   // water, a field, the 用水路, the wood, or off the deck of the bridge
+  var dx = x - BR.x, dz = z - BR.z, a = Math.abs(dx * BR.ax[0] + dz * BR.ax[1]), b = Math.abs(-dx * BR.ax[1] + dz * BR.ax[0]);
+  if (a < (F.stoneBridge ? BR.len / 2 : 8.5)) {
+    if (b <= (F.stoneBridge ? BR.w / 2 - 0.35 : 0.95) - FK.R) return false;   // on the deck, inside the railings
+    if (b < (F.stoneBridge ? BR.w / 2 : 1.1) + 0.8) return true;   // (its railings, its edge and the air beside it)
+  }
+  if (F.landing) { var L = landingGeom().B, ex = x - L.x, ez = z - L.z, la = ex * L.u[0] + ez * L.u[1], lb = ex * L.v[0] + ez * L.v[1]; if (la > -2.4 - FK.R && la < 2.4 + FK.R && lb > -3.6 && lb < -0.3 + FK.R) return true; }   // (the steps down to the water)
+  if (fkRiver(x, z, 0.2)) return true;
+  if (F.paddy && (paddyAt(PADDY_L, x, z) || paddyAt(PADDY_R, x, z))) return true;
+  if (F.paddy && x > 8.6 && x < 62 && Math.abs(z - ditchZ(x)) < 0.45 + FK.R) { var cx = x - 12.87, cz = z - ditchZ(12.87); if (!(Math.abs(cx * 0.946 + cz * 0.324) < 0.9 && Math.abs(-cx * 0.324 + cz * 0.946) < 0.3)) return true; }   // (but on its plank)
+  return z > 78 && hillH(x, z) > 0.55 && !hillClear(x, z);   // (the hills all stand beyond z 80)
+}
+var FKR = null;   // the river's stretches by 8 m buckets
+function fkRiver(x, z, m) {   // riverD(x, z) < m (m up to 2), looking only at the stretches of the river nearby
+  if (!FKR) { FKR = {}; for (var i = 0; i < RIVER_S.length - 1; i++) { var a = RIVER_S[i], b = RIVER_S[i + 1], r = RIVER_HW + 2; for (var bj = Math.floor((Math.min(a[1], b[1]) - r) / 8); bj <= Math.floor((Math.max(a[1], b[1]) + r) / 8); bj++) for (var bi = Math.floor((Math.min(a[0], b[0]) - r) / 8); bi <= Math.floor((Math.max(a[0], b[0]) + r) / 8); bi++) { var k = bj * 1000 + bi; (FKR[k] || (FKR[k] = [])).push(i); } } }
+  var L = FKR[Math.floor(z / 8) * 1000 + Math.floor(x / 8)]; if (!L) return false;
+  for (var j = 0; j < L.length; j++) { var p = RIVER_S[L[j]], q = RIVER_S[L[j] + 1]; if (segD(x, z, p[0], p[1], q[0], q[1]) < RIVER_HW + m) return true; }
+  return false;
+}
+function fkBuild() {
+  var key = F.s + '|' + (F.event || '') + '|' + SEA.paddy + '|' + seasonName() + (F.prog < 0.875 ? 'a' : 'b') + '|' + (LIT.name === 'night' ? 'n' : 'd') + '|' + F.riverCherry;
+  if (FK.cache[key]) return FK.cache[key];
+  var nx = Math.ceil((FK.x1 - FK.x0) / FK.st), nz = Math.ceil((FK.z1 - FK.z0) / FK.st), c = new Int8Array(nx * nz); c.fill(-1);
+  var G = { key: key, nx: nx, nz: nz, c: c, H: fkHash(fkShapes()) };
+  FK.keys.push(key); if (FK.keys.length > 4) delete FK.cache[FK.keys.shift()];
+  return (FK.cache[key] = G);
+}
+function fkFree(G, x, z) {   // nothing stands within a body's half width of (x, z), and it is dry ground
+  var i = Math.floor((x - FK.x0) / FK.st), j = Math.floor((z - FK.z0) / FK.st); if (i < 0 || j < 0 || i >= G.nx || j >= G.nz) return false;
+  var k = j * G.nx + i, v = G.c[k];
+  if (v < 0) {
+    var cx = FK.x0 + (i + 0.5) * FK.st, cz = FK.z0 + (j + 0.5) * FK.st, hd = FK.st * 0.71; v = fkWet(cx, cz) ? 1 : 0;
+    if (!v) { var L = G.H[Math.floor((cz - FK.z0) / 4) * 64 + Math.floor((cx - FK.x0) / 4)]; if (L) for (var m = 0; m < L.length; m++) if (fkIn(L[m], cx, cz, FK.R + hd)) { v = 1; break; } }
+    G.c[k] = v;
+  }
+  return !v;
+}
+/* a smoothly turning frame along a way: the position at s, the heading, and the left normal blended across each bend (so an
+   offset from the middle runs on round a corner instead of jumping) */
+function pathFrame(pa, s) {
+  s = clamp(s, 0, pa.len); var lo = 0, hi = pa.L.length - 1;
+  while (hi - lo > 1) { var m = (lo + hi) >> 1; if (pa.L[m] <= s) lo = m; else hi = m; }
+  var a = pa.p[lo], b = pa.p[hi], sl = pa.L[hi] - pa.L[lo], f = (s - pa.L[lo]) / (sl || 1), dx = b[0] - a[0], dz = b[1] - a[1], dl = Math.hypot(dx, dz) || 1;
+  dx /= dl; dz /= dl;
+  function dirAt(i) { if (i < 0 || i >= pa.p.length - 1) return [dx, dz]; var p = pa.p[i], q = pa.p[i + 1], l = Math.hypot(q[0] - p[0], q[1] - p[1]); return l > 1e-6 ? [(q[0] - p[0]) / l, (q[1] - p[1]) / l] : [dx, dz]; }
+  var d0 = dirAt(lo - 1), d1 = dirAt(hi), t0x = dx + d0[0], t0z = dz + d0[1], t1x = dx + d1[0], t1z = dz + d1[1], l0 = Math.hypot(t0x, t0z) || 1, l1 = Math.hypot(t1x, t1z) || 1;
+  var hx = lerp(t0x / l0, t1x / l1, f), hz = lerp(t0z / l0, t1z / l1, f), hl = Math.hypot(hx, hz) || 1;   // (the tangent at each corner halfway between its two legs, and between the corners in proportion)
+  return { x: a[0] + dx * sl * f, z: a[1] + dz * sl * f, dx: dx, dz: dz, nx: -hz / hl, nz: hx / hl };
+}
+/* a way's lanes: lat0 + 0.2 m steps across, s every 0.25 m along, each marked blocked or clear; and where along it a walker
+   should turn back (the first and last places with a clear lane) */
+function fkLanes(g, q, until) {   // until: a time (now()) to stop at, the rest left for the next frame (then null till it is done)
+  if (q.fk && q.fk.G === g.fkG && q.fk.Z === g.fkZ) return q.fk;
+  var K = q.fkP;
+  if (!K || K.G !== g.fkG || K.Z !== g.fkZ) {
+    var X = q.still ? 0.6 : 1.4, half = q.spread + X, nl = Math.round(half * 2 / 0.2) + 1, ns = Math.floor(q.pa.len / 0.25) + 2;
+    var bx = [1e9, 1e9, -1e9, -1e9]; q.pa.p.forEach(function (p) { bx = [Math.min(bx[0], p[0]), Math.min(bx[1], p[1]), Math.max(bx[2], p[0]), Math.max(bx[3], p[1])]; });
+    K = q.fkP = { G: g.fkG, Z: g.fkZ, nl: nl, lat0: -(nl - 1) * 0.1, ns: ns, blk: new Uint8Array(ns * nl), i: 0, a0: -1, a1: -1,
+      Zp: g.fkZ.filter(function (o) { var b = fkBox(o), m = half + 1; return b[0] < bx[2] + m && b[2] > bx[0] - m && b[1] < bx[3] + m && b[3] > bx[1] - m; }) };   // (only the life scenes near this way)
+  }
+  var G = K.G, Zp = K.Zp, nl = K.nl;
+  for (; K.i < K.ns; K.i++) {
+    if (until && (K.i & 15) === 0 && now() > until) return null;
+    var i = K.i, fr = pathFrame(q.pa, i * 0.25), any = false;
+    for (var l = 0; l < nl; l++) {
+      var lat = K.lat0 + l * 0.2, x = fr.x + fr.nx * lat, z = fr.z + fr.nz * lat, b = !fkFree(G, x, z) || (q.band !== 0 && bridgeNear(x, z, 0.8));   // (the town's ways stop short of the bridge: only the road crosses it)
+      if (!b) for (var m = 0; m < Zp.length; m++) if (fkIn(Zp[m], x, z, FK.R)) { b = true; break; }
+      K.blk[i * nl + l] = b ? 1 : 0; if (!b && Math.abs(lat) <= q.spread + 0.6) any = true;
+    }
+    if (any) { if (K.a0 < 0) K.a0 = i; K.a1 = i; }
+  }
+  K.s0 = K.a0 < 0 ? 0 : Math.min(q.pa.len, K.a0 * 0.25 + 0.3); K.s1 = K.a1 < 0 ? q.pa.len : Math.max(0, Math.min(q.pa.len, K.a1 * 0.25 - 0.3));
+  q.fkP = null; return (q.fk = K);
+}
+function fkBlocked(K, s, lat, wide) {   // the lanes either side of lat at s (and the next ones out for a horse or a cart)
+  var i = Math.round(s / 0.25); if (i < 0 || i >= K.ns) return true;
+  var f = (lat - K.lat0) / 0.2, l0 = Math.floor(f) - (wide ? 2 : 0), l1 = Math.ceil(f) + (wide ? 2 : 0);
+  if (l0 < 0 || l1 >= K.nl) return true;
+  for (var l = l0; l <= l1; l++) if (K.blk[i * K.nl + l]) return true;
+  return false;
+}
+function fkPrepare(g) { g.fkG = fkBuild(); g.fkZ = fkZones(g.life); g.fkLife = g.life; }
+/* where a walker's body is along the way, relative to its own feet: the bearers of a 駕籠, the horse led ahead, the cart behind */
+function fkBody(w) { return w.kago ? [-0.95, 0, 0.95] : w.horse ? [0, 0.9, 1.5, 2.1] : w.cart ? [0, -1.1, -1.7, -2.3] : [0]; }
+function fkBodyPts(g, w) {   // those places in the world: x, z, and 1 for a part that is not the walker's own feet
+  var q = g.paths[w.pi], B = fkBody(w), out = [], l = w.cl === undefined ? w.lat : w.cl;
+  for (var i = 0; i < B.length; i++) { if (!B[i]) { out.push(w.fx, w.fz, 0); continue; } var f = pathFrame(q.pa, w.s + w.dir * B[i]); out.push(f.x + f.nx * l, f.z + f.nz * l, 1); }
+  return out;
+}
+/* the lane to make for, or null when none is open: clear for the next couple of metres (edging over at the walk's own rate), and
+   clear of anyone coming (both moving on, nobody passes nearer than 0.6 m unless they are already drawing apart) */
+function fkChoose(g, w, q, K) {
+  var A = 2.4, body = fkBody(w), wide = !!(w.horse || w.cart), order = [], l, sc = [];
+  var here = fkBlocked(K, w.s, w.cl, false);   // (stepping out of a doorway, or caught where the way is shut: free to move off)
+  for (l = 0; l < K.nl; l++) { var c = K.lat0 + l * 0.2; sc.push(Math.abs(c - w.lat) + 0.8 * Math.abs(c - w.cl) + 3 * Math.max(0, Math.abs(c) - q.spread)); order.push(l); }
+  order.sort(function (x, y) { return sc[x] - sc[y]; });
+  var near = [], WK = g.walkers, me = w.bp || [w.fx, w.fz, 0];
+  for (var j = 0; j < WK.length; j++) { var o = WK[j]; if (o === w || o.fx === undefined) continue; if (Math.hypot(o.fx - w.fx, o.fz - w.fz) < 8) near.push(o); }
+  for (var n = 0; n < order.length; n++) {
+    var c2 = K.lat0 + order[n] * 0.2, ok = true;
+    for (var e = 0; e <= A + 0.01 && ok; e += 0.25) {
+      var lat = w.cl + clamp(c2 - w.cl, -(0.9 * e + 0.06), 0.9 * e + 0.06);
+      for (var b = 0; b < body.length; b++) { if (here && e < 0.7 && body[b] === 0) continue; if (fkBlocked(K, w.s + w.dir * (e + body[b]), lat, wide && body[b] !== 0)) { ok = false; break; } }
+    }
+    for (var b2 = 0; b2 < body.length && ok; b2++) {   // and the others (every part of them: a cart, a horse, a 駕籠's bearers), each going on as it is
+      var tr = [], mx0 = me[b2 * 3], mz0 = me[b2 * 3 + 1];
+      for (var e2 = 0; e2 <= 2.01; e2 += 0.25) { var lat2 = w.cl + clamp(c2 - w.cl, -(0.9 * e2 + 0.06), 0.9 * e2 + 0.06), fr = pathFrame(q.pa, w.s + w.dir * (e2 + body[b2])); tr.push(fr.x + fr.nx * lat2, fr.z + fr.nz * lat2, e2 / Math.max(0.3, w.sp * (w.child ? 0.8 : 1))); }
+      for (var m = 0; m < near.length && ok; m++) {
+        var O = near[m], ob = O.bp || [O.fx, O.fz, 0], om = (O.vx || O.vz) && O.tl !== null && O.tl !== undefined;
+        for (var k2 = 0; k2 < ob.length && ok; k2 += 3) {
+          if ((ob[k2] - mx0) * w.hx + (ob[k2 + 1] - mz0) * w.hz < -0.6) continue;   // (whoever is well behind looks out for us)
+          var lim = 0.62 + (body[b2] !== 0 ? 0.3 : 0) + (ob[k2 + 2] ? 0.3 : 0), d0 = Math.hypot(mx0 - ob[k2], mz0 - ob[k2 + 1]), thr = Math.min(lim, d0 - 0.01), px = 0, pz = 0;   // (no nearer than lim; or, already that near, no nearer still)
+          for (var s3 = 0; s3 < tr.length; s3 += 3) {
+            var tau = tr[s3 + 2], osh = om ? clamp(O.tl - O.cl, -0.9 * O.sp * tau - 0.06, 0.9 * O.sp * tau + 0.06) : 0;   // (the other edging toward its own lane as it goes)
+            var rx = tr[s3] - ob[k2] - (O.vx || 0) * tau - (O.nx || 0) * osh, rz = tr[s3 + 1] - ob[k2 + 1] - (O.vz || 0) * tau - (O.nz || 0) * osh;
+            if (s3) { var ex = rx - px, ez = rz - pz, f = clamp(-(px * ex + pz * ez) / (ex * ex + ez * ez || 1)); if (Math.hypot(px + ex * f, pz + ez * f) < thr) { ok = false; break; } }   // (the nearest they come between one step and the next)
+            px = rx; pz = rz;
+          }
+        }
+      }
+    }
+    if (ok) return c2;
+  }
+  return null;
+}
+/* where a walker first stands: the clear lane nearest its own, or, where the way is shut, the nearest clear place along it; and
+   not on top of anyone already placed */
+function fkSettle(g, w, q, K) {
+  var body = fkBody(w), WK = g.walkers;
+  function clear(s, c) {
+    for (var b = 0; b < body.length; b++) if (fkBlocked(K, s + w.dir * body[b], c, false)) return false;
+    var fr = pathFrame(q.pa, s), x = fr.x + fr.nx * c, z = fr.z + fr.nz * c; for (var j = 0; j < WK.length; j++) { var o = WK[j]; if (o !== w && o.cl !== undefined && o.fx !== undefined && Math.hypot(o.fx - x, o.fz - z) < (w.still && o.still ? 0.55 : 0.7)) return false; }
+    return true;
+  }
+  for (var ds = 0; ds <= 8; ds += 0.25) for (var sg = -1; sg <= 1; sg += 2) {
+    var s = clamp(w.s + sg * ds, K.s0, K.s1);
+    for (var dl = 0; dl <= q.spread + 1.4; dl += 0.2) for (var sl = -1; sl <= 1; sl += 2) { var c = clamp(w.lat, -q.spread, q.spread) + sl * dl; if (clear(s, c)) { w.s = s; w.cl = c; var p = walkerPos(g, w); w.fx = p.x; w.fz = p.z; return; } }
+  }
+  w.cl = w.lat; var p2 = walkerPos(g, w); w.fx = p2.x; w.fz = p2.z;
 }
 /* footprints in fresh snow: one a step, left and right of the way walked, filling in again over a minute or two */
 function stepPrints(g, w) {
@@ -6370,14 +6670,14 @@ function drawDaihachi(ctx, g, w, B, t, moving) {
   wheel(-farSd);
 }
 function walkerPos(g, w) {
-  var q = g.paths[w.pi], a = polyAt(q.pa, w.s), x = a.x - a.dz * w.lat, z = a.z + a.dx * w.lat;
+  var q = g.paths[w.pi], a = pathFrame(q.pa, w.s), l = w.cl === undefined ? w.lat : w.cl, x = a.x + a.nx * l, z = a.z + a.nz * l;   // (cl: the lane it keeps, see stepWalkers)
   return { x: x, z: z, y: bridgeY(x, z), dx: a.dx * w.dir, dz: a.dz * w.dir };
 }
 /* 駕籠: a palanquin of woven bamboo hung from a pole, carried by two bearers at a short jogging step, the pole on their shoulders */
 function drawKago(ctx, g, w, t) {
   var q = g.paths[w.pi], tint = g.tint, moving = w.pause <= 0, ends = [], i;
   for (i = 0; i < 2; i++) {   // the rear bearer first (he is farther along the way back), then the front
-    var ss = clamp(w.s + w.dir * (i ? 0.95 : -0.95), 0, q.pa.len), a = polyAt(q.pa, ss), x = a.x - a.dz * w.lat, z = a.z + a.dx * w.lat;
+    var ss = clamp(w.s + w.dir * (i ? 0.95 : -0.95), 0, q.pa.len), a = pathFrame(q.pa, ss), l = w.cl === undefined ? w.lat : w.cl, x = a.x + a.nx * l, z = a.z + a.nz * l;
     ends.push({ x: x, z: z, y: bridgeY(x, z), dx: a.dx * w.dir, dz: a.dz * w.dir });
   }
   ends.sort(function (A, B) { return P(B.x, 0, B.z).d - P(A.x, 0, A.z).d; });
@@ -6736,12 +7036,12 @@ function bandRects(g, it, bb, sc) {
   return tot > area * 0.7 ? null : R;
 }
 /* depth-sorted things in one band */
-function bandItems(g, band) {
+function bandItems(g, band) {   // (a walker only once placed on its way, see stepWalkers)
   var it = [], i;
   for (i = 0; i < g.noren.length; i++) if (g.noren[i].band === band) it.push({ d: Pa(g.noren[i].W.c).d, k: 'n', o: g.noren[i] });
   for (i = 0; i < g.nobori.length; i++) if (g.nobori[i].band === band && g.wx !== 'typhoon') it.push({ d: P(g.nobori[i].x, 0, g.nobori[i].z).d, k: 'b', o: g.nobori[i] });
   for (i = 0; i < g.strings.length; i++) if (g.strings[i].band === band) it.push({ d: Pa(mixc(g.strings[i].a, g.strings[i].b, 0.5)).d - 0.5, k: 's', o: g.strings[i] });
-  for (i = 0; i < g.walkers.length; i++) { var w = g.walkers[i]; if (g.paths[w.pi].band !== band) continue; if (AQ.walk && !w.temp && !w.react && ((w.ph * 1.6180339) % 1) < AQ.walk) continue; var wp = walkerPos(g, w); it.push({ d: P(wp.x, 0, wp.z).d, k: 'w', o: w }); }
+  for (i = 0; i < g.walkers.length; i++) { var w = g.walkers[i]; if (g.paths[w.pi].band !== band || w.cl === undefined) continue; if (AQ.walk && !w.temp && !w.react && ((w.ph * 1.6180339) % 1) < AQ.walk) continue; var wp = walkerPos(g, w); it.push({ d: P(wp.x, 0, wp.z).d, k: 'w', o: w }); }
   if (band === 1 && g.wheel) it.push({ d: Pa(g.wheel.c).d, k: 'wheel' });
   for (i = 0; i < g.koi.length && g.wx !== 'typhoon'; i++) { var kb = P(g.koi[i][0], 0, g.koi[i][1]).d < P(0, 0, 36).d ? 0 : 2; if (kb === band) it.push({ d: P(g.koi[i][0], 0, g.koi[i][1]).d, k: 'koi', o: g.koi[i], i: i }); }
   for (i = 0; i < g.tana.length; i++) { var tb = Pa(g.tana[i].base).d < P(0, 0, 36).d ? 0 : 2; if (tb === band) it.push({ d: Pa(g.tana[i].base).d - 0.1, k: 'tana', o: g.tana[i] }); }
@@ -6761,7 +7061,7 @@ function drawBand(ctx, g, band, t, still, items) {
     if (q.k === 'n') drawNoren(ctx, g, q.o, still ? 0 : t);
     else if (q.k === 'b') drawNobori(ctx, g, q.o, still ? 0 : t);
     else if (q.k === 's') drawString(ctx, g, q.o, still ? 0 : t);
-    else if (q.k === 'w') drawPerson(ctx, g, q.o, still ? 0 : t);
+    else if (q.k === 'w') { var wq = walkerPos(g, q.o); if (band === 0 && g.depth && bridgeNear(wq.x, wq.z)) drawCut(ctx, g, itemBox(g, q), P(wq.x, 0, wq.z).d, function (c) { drawPerson(c, g, q.o, still ? 0 : t); }, true); else drawPerson(ctx, g, q.o, still ? 0 : t); }   // (on and about the bridge: cut per pixel, by the near railing in front and not by the deck)
     else if (q.k === 'wheel') drawWheel(ctx, g, t, still);
     else if (q.k === 'boat' && !still) drawBoatAnim(ctx, g, t);
     else if (q.k === 'yakata' && g.FW) drawYakatabune(ctx, g, g.FW, t);
@@ -6780,7 +7080,7 @@ function drawBand(ctx, g, band, t, still, items) {
 /* something that moves among the buildings, drawn on its own and cut wherever the depth map says a standing object is nearer
    than dkey (its own depth). bb: its logical screen box; fn(c) draws it in logical coordinates. */
 var CUT = { s: null, m: null, n: 0 };   // n: the cuts drawn this frame (the loose layer shows only when it has some)
-function drawCut(ctx, g, bb, dkey, fn) {
+function drawCut(ctx, g, bb, dkey, fn, ign) {   // ign: not cut by the bridge's deck (whoever is on it; D.ign is its depth)
   if (CUT.box) { var U = CUT.box; U[0] = Math.min(U[0], bb[0]); U[1] = Math.min(U[1], bb[1]); U[2] = Math.max(U[2], bb[2]); U[3] = Math.max(U[3], bb[3]); return; }   // (the measuring pass: only where it would draw)
   var T = ctx.getTransform ? ctx.getTransform() : { a: 1, e: 0, f: 0 }, sc = T.a || 1, cw = ctx.canvas.width, ch = ctx.canvas.height;
   var px0 = Math.max(0, Math.floor(bb[0] * sc + T.e)), py0 = Math.max(0, Math.floor(bb[1] * sc + T.f)), px1 = Math.min(cw, Math.ceil(bb[2] * sc + T.e)), py1 = Math.min(ch, Math.ceil(bb[3] * sc + T.f));
@@ -6796,7 +7096,8 @@ function drawCut(ctx, g, bb, dkey, fn) {
   if (mw > 0 && mh > 0) {
     var M = CUT.m || (CUT.m = mkCanvas(2, 2)); if (M.width < mw || M.height < mh) { M.width = Math.max(M.width, mw); M.height = Math.max(M.height, mh); }
     var mc = M.getContext('2d'), im = mc.createImageData(mw, mh), a = im.data, any = false;
-    for (var y = 0; y < mh; y++) { var row = (my0 + y) * D.w; for (var x = 0; x < mw; x++) if (D.d[row + mx0 + x] < dkey) { a[(y * mw + x) * 4 + 3] = 255; any = true; } }
+    var ig = ign && D.ign !== undefined ? D.ign : -9;
+    for (var y = 0; y < mh; y++) { var row = (my0 + y) * D.w; for (var x = 0; x < mw; x++) { var dv = D.d[row + mx0 + x]; if (dv < dkey && Math.abs(dv - ig) > 0.004) { a[(y * mw + x) * 4 + 3] = 255; any = true; } } }
     if (any) { mc.putImageData(im, 0, 0); sx.globalCompositeOperation = 'destination-out'; sx.imageSmoothingEnabled = true; sx.drawImage(M, 0, 0, mw, mh, (mx0 / df) * sc + T.e - px0, (my0 / df) * sc + T.f - py0, mw / df * sc, mh / df * sc); sx.globalCompositeOperation = 'source-over'; }
   }
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(S, 0, 0, pw, ph, px0, py0, pw, ph); ctx.restore(); CUT.n++;
@@ -12171,6 +12472,7 @@ function lifeScenes(g, date, rng) {
     // 凧揚げ in the first half of January: a child on the bank flying a kite high over the river
     if (m === 0 && day <= 15 && daytime && g.wx !== 'snow' && g.wx !== 'blizzard') L.push({ kind: 'tako', x: LIFE_SITES.kids[1][0], z: LIFE_SITES.kids[1][1], folk: people(2).map(function (q) { q.child = true; return q; }) });
     // 秋祭り: on the weekend of the third Sunday in October the shrine's 神輿 is carried up the main street, a crowd along the way
+    // (it turns back short of the wood at the street's head)
     var sun3 = day - wd >= 15 && day - wd <= 21 || (wd === 6 && day + 1 >= 15 && day + 1 <= 21);
     if (m === 9 && (wd === 0 || wd === 6) && sun3 && daytime && F0.machiya) L.push({ kind: 'mikoshi', x: stPt(18, 0)[0], z: stPt(18, 0)[1], folk: people(10, [[236, 232, 222]]).map(function (q) { q.happi = true; q.woman = false; q.child = false; return q; }), crowd: people(16) });
     // 蛍狩り: summer evenings on the bank, a mother in yukata with an 団扇 and a child with a little cage
@@ -12185,7 +12487,7 @@ function lifeScenes(g, date, rng) {
     // 初詣: the first visits of the year
     // 大晦日: on the last night of the year a queue with chōchin at the belfry to strike 除夜の鐘, and people at the hall waiting for the new year (二年参り)
     if (m === 11 && day === 31 && light === 'night' && F0.temple) { var bq2 = bellFrame().L(-3.3, -1.4, 0), tf3 = templeFrame().L(0, -11.6, 0); L.push({ kind: 'joya', x: bq2[0], z: bq2[2], folk: people(8) }); L.push({ kind: 'joya', x: tf3[0], z: tf3[2], crowd: true, folk: people(10) }); }
-    if (m === 0 && day <= 7 && light !== 'night') { if (F0.shrine) L.push({ kind: 'pray', x: SHRINE.x - 0.35, z: SHRINE.z - 3.35, folk: people(5) }); if (F0.temple) { var tf = templeFrame().L(0, -11.6, 0); L.push({ kind: 'pray', x: tf[0], z: tf[2], folk: people(8) }); } }
+    if (m === 0 && day <= 7 && light !== 'night') { if (F0.shrine) L.push({ kind: 'pray', small: true, x: SHRINE.x - 0.35, z: SHRINE.z - 3.35, folk: people(5) }); if (F0.temple) { var tf = templeFrame().L(0, -11.6, 0); L.push({ kind: 'pray', x: tf[0], z: tf[2], folk: people(8) }); } }
     // shops opening in the morning (the 板戸 taken down one by one and stacked away) and shut up again at dusk
     if ((light === 'morning' || light === 'dusk') && F0.machiya && g.wx !== 'typhoon') lifeFronts().forEach(function (q, i) { if (light === 'morning' && i === 0) return; L.push({ kind: 'shutter', x: q[0], z: q[2], W: q.W, w: q.w, i: i, open: light === 'morning', folk: people(1) }); });
     // 夜鳴きそば: a soba seller's carrying stall set down on the riverside street at night, its lantern lit, a customer at a bowl
@@ -12197,8 +12499,8 @@ function lifeScenes(g, date, rng) {
       if (F0.market) [[-0.5, -3.2], [7.6, -1.0]].forEach(function (q, qi) { if (rng() < 0.7) L.push({ kind: 'bench', x: MARKET.x + q[0], z: MARKET.z + q[1], u: [1, 0], folk: people(1 + (rng() < 0.5 ? 1 : 0)) }); });
       if (F0.teahouse && rng() < 0.6) { var tb2 = teaFrame(), bp = tb2.L(0.2, -2.1 - 2.0, 0); L.push({ kind: 'bench', x: bp[0], z: bp[2], u: TEA.u, folk: people(1 + (rng() < 0.6 ? 1 : 0)) }); }
     }
-    // any day: children at play
-    if (daytime && g.season !== 'winter') { var kp = F0.street ? stPt(10, 0.5) : [TEA.x + 3, TEA.z - 4]; L.push({ kind: 'play', x: kp[0], z: kp[1], folk: people(3).map(function (f) { f.child = true; return f; }) }); }
+    // any day: children at play (but not in the street the 神輿 is coming up)
+    if (daytime && g.season !== 'winter' && !(F0.street && L.some(function (q) { return q.kind === 'mikoshi'; }))) { var kp = F0.street ? stPt(10, 0.5) : [TEA.x + 3, TEA.z - 4]; L.push({ kind: 'play', x: kp[0], z: kp[1], folk: people(3).map(function (f) { f.child = true; return f; }) }); }
     // the later additions: 茶摘み in the bright rows of May; the smiths at the anvil from morning to dusk; travellers reading the
     // 高札; the temple school's children let out into the forecourt at midday; a brewer carrying casks; the gate's watchman at night
     lateLifeSpots().forEach(function (q, qi) {
@@ -12327,11 +12629,21 @@ function lifeTako(ctx, g, a, t, tint, h) {
 /* 秋祭り: the 神輿 carried up the main street and back, black lacquer and gilt under a roof with a phoenix, on two long poles on the
    shoulders of men in white 法被 and headbands, all bobbing together (わっしょい); a leader with a fan walking backwards before it;
    the crowd lined along the house fronts, turned to watch it go by */
+function mikoshiCrowd(a) {   // the crowd along the way: both sides, a little apart, clear of the 太鼓, the banners and the 木戸 and its 番屋
+  var out = [], G = fkBuild(), n = (a.crowd || []).length, t0 = F.festival ? 7.6 : 6, t1 = F.kido ? KIDO.t - 3.8 : 36, step = Math.min(4, (t1 - t0) / Math.max(1, (n >> 1) - 0.5)), bn = noboriList().filter(function (q) { return q.band === 2; });
+  for (var j = 0; j < n; j++) {
+    var side = j % 2 ? 1 : -1, ct = t0 + (j >> 1) * step + (hash2(j, 3) - 0.5) * Math.min(1.5, step * 0.4), cw = side * (STREET_HW - 1.3 - hash2(j, 7) * 0.4), q = stPt(ct, cw);
+    for (var k = 0; k < bn.length; k++) if (Math.hypot(bn[k].x - q[0], bn[k].z - q[1]) < 0.6) { ct += 0.7; q = stPt(ct, cw); }   // (not against a banner's pole)
+    for (var m = 0; m < 4 && !fkFree(G, q[0], q[1]); m++) { ct += 0.5; q = stPt(ct, cw); }   // (nor a shop's barrel or sign)
+    out.push({ ct: ct, cw: cw, side: side, x: q[0], z: q[1] });
+  }
+  return out;
+}
 function lifeMikoshi(ctx, g, a, t, tint, h) {
-  var per = 110, u = (t % per) / per, tt = u < 0.5 ? 4 + u * 2 * 32 : 36 - (u - 0.5) * 2 * 32, dir = u < 0.5 ? 1 : -1, bob = Math.abs(Math.sin(t * 3.4)), i;
-  var crowd = a.crowd || [];
+  var per = 110, u = (t % per) / per, tt = u < 0.5 ? 4 + u * 2 * 28 : 32 - (u - 0.5) * 2 * 28, dir = u < 0.5 ? 1 : -1, bob = Math.abs(Math.sin(t * 3.4)), i;
+  var crowd = a.crowd || [], CS = a.cs || (a.cs = mikoshiCrowd(a));
   crowd.forEach(function (f, j) {   // the crowd: along both sides, a little apart, watching
-    var side = j % 2 ? 1 : -1, ct = 6 + (j >> 1) * 4 + (hash2(j, 3) - 0.5) * 1.5, cw = side * (STREET_HW - 1.0 - hash2(j, 7) * 0.5), q = stPt(ct, cw), qp = P(q[0], 0, q[1]), m = stPt(tt, 0), mp = P(m[0], 0, m[1]);
+    var side = CS[j].side, ct = CS[j].ct, qp = P(CS[j].x, 0, CS[j].z), m = stPt(tt, 0), mp = P(m[0], 0, m[1]);
     if (side > 0) return;   // (the near side: drawn after the procession)
     figure(ctx, qp.x, qp.y, h, f, tint, { face: mp.x > qp.x ? 1 : -1, arms: Math.abs(ct - tt) < 4 ? [[-1.6 - Math.sin(t * 5 + j) * 0.3, 1]] : null });
   });
@@ -12359,7 +12671,7 @@ function lifeMikoshi(ctx, g, a, t, tint, h) {
   });
   crowd.forEach(function (f, j) {
     var side = j % 2 ? 1 : -1; if (side < 0) return;
-    var ct = 6 + (j >> 1) * 4 + (hash2(j, 3) - 0.5) * 1.5, cw = side * (STREET_HW - 1.0 - hash2(j, 7) * 0.5), q = stPt(ct, cw), qp = P(q[0], 0, q[1]), m = stPt(tt, 0), mp = P(m[0], 0, m[1]);
+    var ct = CS[j].ct, qp = P(CS[j].x, 0, CS[j].z), m = stPt(tt, 0), mp = P(m[0], 0, m[1]);
     figure(ctx, qp.x, qp.y, h, f, tint, { face: mp.x > qp.x ? 1 : -1, arms: Math.abs(ct - tt) < 4 ? [[-1.6 - Math.sin(t * 5 + j) * 0.3, 1]] : null });
   });
 }
@@ -12436,7 +12748,7 @@ function lifeWash(ctx, g, a, t, tint, h) {
 function lifeUnload(ctx, g, a, t, tint, h) {
   var B = landingGeom().B, f0 = a.folk[0], f1 = a.folk[1];
   function stepY(b) { if (b > -0.3) return 0; var i = Math.min(4, Math.floor((-0.3 - b) / 0.55)); return 0.05 - i * 0.2; }
-  var W = [[-3.3, -3.3], [-1.8, -2.8], [-1.6, -0.4], [1.4, 0.8], [3.7, 1.3]], segL = [], tot = 0, i;
+  var W = [[-3.3, -3.0], [-1.9, -2.6], [-1.6, -0.4], [1.4, 0.8], [3.3, 1.15]], segL = [], tot = 0, i;
   for (i = 1; i < W.length; i++) { var l = Math.hypot(W[i][0] - W[i - 1][0], W[i][1] - W[i - 1][1]); segL.push(l); tot += l; }
   var per = tot * 2 / 0.75 + 6, u = ((t + f1.ph * 5) % per), carry, dpos;
   if (u < 2) { dpos = 0; carry = u > 1.2; } else if (u < 2 + tot / 0.75) { dpos = (u - 2) * 0.75; carry = true; } else if (u < 4 + tot / 0.75) { dpos = tot; carry = u < 3 + tot / 0.75; } else { dpos = tot - (u - 4 - tot / 0.75) * 0.75; carry = false; }
@@ -12676,7 +12988,7 @@ function drawLife(ctx, g, a, t) {
   } else if (a.kind === 'joya') {
     lifeJoya(ctx, g, a, t, tint);
   } else if (a.kind === 'pray') {
-    for (i = 0; i < a.folk.length; i++) { f = a.folk[i]; var col = i % 3, row = (i / 3) | 0, q2 = P(a.x + (col - 1) * 0.9 + row * 0.3, 0, a.z - row * 1.1); figure(ctx, q2.x, q2.y, h, f, tint, { bend: 0.12 + 0.08 * Math.sin(t * 0.5 + f.ph), arms: [[-1.2, 0.2], [-1.25, -0.2]] }); }
+    for (i = 0; i < a.folk.length; i++) { f = a.folk[i]; var col = i % 3, row = (i / 3) | 0, q2 = a.small ? P(a.x + (col - 1) * 0.72 + row * 0.25, 0, a.z - 0.9 - row * 1.0) : P(a.x + (col - 1) * 0.9 + row * 0.3, 0, a.z - row * 1.1); figure(ctx, q2.x, q2.y, h, f, tint, { bend: 0.12 + 0.08 * Math.sin(t * 0.5 + f.ph), arms: [[-1.2, 0.2], [-1.25, -0.2]] }); }
   } else if (a.kind === 'bench') {   // sitting on the bench: a cup of tea, a fan, a word to the neighbour
     var ua = norm2(a.u || [1, 0]);
     for (i = 0; i < a.folk.length; i++) { f = a.folk[i]; var off = (i - (a.folk.length - 1) / 2) * 0.75, bq = P(a.x + ua[0] * off, 0.47, a.z + ua[1] * off), talk = Math.sin(t * 0.8 + f.ph) > 0.4; f.face = a.folk.length > 1 ? (i ? -1 : 1) : (f.ph % 2 > 1 ? 1 : -1); figure(ctx, bq.x, bq.y, h, f, tint, { pose: 'sit', arms: talk ? [[-0.9 + 0.3 * Math.sin(t * 3 + f.ph), 0.3]] : [[0.9, 0.3]] }); }
@@ -12721,15 +13033,19 @@ function lifeLate(ctx, g, a, t, tint, h, c, k) {
 }
 /* 大晦日 at the temple: a queue winding back from the belfry for 除夜の鐘, or a loose crowd before the hall, each with a lit
    chōchin held low on its stick; they shift their feet in the cold, and the queue faces the bell */
-function lifeJoya(ctx, g, a, t, tint) {
-  var u = KR_DIR, v = [-u[1], u[0]], pts = [], i;
-  for (i = 0; i < a.folk.length; i++) {
-    var f = a.folk[i], du, dv;
+function lifeJoyaSpots(a) {   // where each of them stands (also the walkers' fkZones)
+  var u = KR_DIR, v = [-u[1], u[0]], out = [];
+  for (var i = 0; i < a.folk.length; i++) {
+    var du, dv;
     if (a.crowd) { du = ((i % 5) - 2) * 0.95 + (hash2(i, 7) - 0.5) * 0.35; dv = -((i / 5) | 0) * 1.05 + (hash2(i, 9) - 0.5) * 0.3; }
     else { du = (hash2(i, 5) - 0.5) * 0.22 - (i > 5 ? 0.75 : 0); dv = (i > 5 ? 11 - i : i) * 0.68; }   // (the queue runs back beside the belfry and doubles back on itself at the end)
-    var x = a.x + u[0] * du + v[0] * dv, z = a.z + u[1] * du + v[1] * dv;
-    pts.push({ f: f, p: P(x, 0, z), x: x, z: z });
+    out.push([a.x + u[0] * du + v[0] * dv, a.z + u[1] * du + v[1] * dv]);
   }
+  return out;
+}
+function lifeJoya(ctx, g, a, t, tint) {
+  var pts = [], i, sp = lifeJoyaSpots(a);
+  for (i = 0; i < a.folk.length; i++) { var x = sp[i][0], z = sp[i][1]; pts.push({ f: a.folk[i], p: P(x, 0, z), x: x, z: z }); }
   pts.sort(function (p1, p2) { return p2.p.d - p1.p.d; });
   var bellS = P(BELL.x, 0, BELL.z), spr = sprite('warm'), lit = g.LIT.lit;
   pts.forEach(function (q) {
@@ -13455,7 +13771,7 @@ function drawFaunaGround(ctx, g, FA, band, t) {
 
 /* ---- 09_runtime.js ---- */
 /* ================= public API & controller ================= */
-var VERSION = '1.3.10';
+var VERSION = '1.3.11';
 var SEASON_KEYS = ['spring', 'summer', 'autumn', 'winter'], LIGHT_KEYS = ['morning', 'day', 'dusk', 'night'];
 var WEATHERS = ['clear', 'cloudy', 'rain', 'storm', 'snow', 'typhoon', 'blizzard'];
 var EVENTS = ['shogatsu', 'setsubun', 'hinamatsuri', 'kodomo', 'tanabata', 'obon', 'tsukimi'];
@@ -13763,7 +14079,7 @@ function mount(el, opts) {
   }
   function makeGeo(res) {
     var sp = res.spec;
-    return withScene({ W: sp.W, H: sp.H, KS: sp.KS, stage: sp.stage, season: sp.season, light: sp.light, event: sp.event, sp: sp.sp, wx: sp.wx, after: sp.after, wsign: sp.wsign }, function () { var g = animGeo(sp); g.glows = res.glows || []; g.water = waterGrid(res.mask, g); g.depth = decodeDepth(res.occ && res.occ[NBANDS - 1]); return g; });
+    return withScene({ W: sp.W, H: sp.H, KS: sp.KS, stage: sp.stage, season: sp.season, light: sp.light, event: sp.event, sp: sp.sp, wx: sp.wx, after: sp.after, wsign: sp.wsign }, function () { var g = animGeo(sp); g.glows = res.glows || []; g.water = waterGrid(res.mask, g); g.depth = decodeDepth(res.occ && res.occ[NBANDS - 1]); if (g.depth) g.depth.ign = Math.round(bridgeKey() * 100) / 100; return g; });
   }
   function waterGrid(mask, g) {
     if (!mask || (g.season !== 'spring' && !wxWet(g.wx))) return null;
