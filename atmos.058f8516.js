@@ -1207,8 +1207,9 @@ return y;
 function moonSpot(big,night){
 var key=[W,H,CAM.cy,CAM.F,CAM.x,big,night].join();
 if(MOON_SPOT&&MOON_SPOT.key===key)return MOON_SPOT;
-var yo=skyBand(),top=3,tx=W*(big?(night?0.4:0.33):0.42),best=null;
-for(var sx=W*0.24;sx<=W*0.58;sx+=2){
+var W16=Math.min(W,H*16/9),o16=(W-W16)/2;
+var yo=skyBand(),top=3,tx=o16+W16*(big?(night?0.4:0.33):0.42),best=null;
+for(var sx=o16+W16*0.24;sx<=o16+W16*0.58;sx+=2){
 var sk=Math.min(skyTopAt(sx-6,yo),skyTopAt(sx,yo),skyTopAt(sx+6,yo)),sc=sk-Math.abs(sx-tx)*0.12;
 if(!best||sc>best.sc)best={sc:sc,x:sx,sk:sk};
 }
