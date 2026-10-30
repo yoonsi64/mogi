@@ -9367,7 +9367,7 @@
     }
     // today's cards: learning/relearning first, then reviews (up to the daily limit), then new cards (up to the new-card limit)
     function srsTodayQueue(mode) {
-        var today = getTodayDateString(), k = srsK(mode), pool = mode === 'def' || mode === 'word' ? writeWords() : wordList;
+        var today = getTodayDateString(), k = srsK(mode), pool = mode === 'def' || mode === 'word' ? writeWords() : studyWords();
         pool.forEach(function(e) { srsMigrate(e, mode); });
         var learn = [], review = [], fresh = [];
         pool.forEach(function(e) {
@@ -9379,7 +9379,7 @@
         var maxRev = getSetting('srsMaxReviews', 200);
         if (maxRev) review = review.slice(0, maxRev);
         fresh.sort(function(a, b) { return a.added - b.added; });
-        var nNew = srsNewLeftToday(mode);
+        var nNew = studyDay() ? Infinity : srsNewLeftToday(mode);      // a day picked on purpose: all of that day's new words
         fresh = fresh.slice(0, nNew === Infinity ? fresh.length : nNew);
         return { learn: learn, review: review, fresh: fresh, all: learn.concat(review, fresh) };
     }
@@ -9388,7 +9388,11 @@
     // 意味を書く has two directions, each with its own schedule: 'def' (word → write the definition: wbox/wdue)
     // and 'word' (definition → write the word: wwbox/wwdue). Both use only the words with a 書く練習の定義.
     function writeKeys(write) { return write === 'word' ? { box: 'wwbox', due: 'wwdue' } : write ? { box: 'wbox', due: 'wdue' } : { box: 'box', due: 'due' }; }
-    function writeWords() { return wordList.filter(function(e) { return e.writeDef; }); }
+    // A day picked in a book deck (1일째, 2일째 …): the cards and the writing practice use only that day's words
+    function studyDay() { return activeDeck && wlWeek ? String(wlWeek) : ''; }
+    function studyWords() { var d = studyDay(); return d ? wordList.filter(function(e) { return String(e.deckDay) === d; }) : wordList; }
+    function studyDayTag() { var d = studyDay(); return d ? d + '일째・' : ''; }
+    function writeWords() { return studyWords().filter(function(e) { return e.writeDef; }); }
     function flashDueWords(write) {
         return srsTodayQueue(write || 'card').all;
         var today = getTodayDateString(), dk = writeKeys(write).due;
@@ -9425,7 +9429,7 @@
         write = write === 'def' || write === 'word' ? write : false;
         var due = flashDueWords(write);
         var practiceAll = !due.length;          // nothing due today: go through every word (cards: a practice run that doesn't change the schedule)
-        var list = practiceAll ? shuffleInPlace((write ? writeWords() : wordList).slice()) : due;
+        var list = practiceAll ? shuffleInPlace((write ? writeWords() : studyWords()).slice()) : due;
         if (!list.length) return;
         flash = { queue: list.map(function(e) { return e.id; }), pos: 0, revealed: false, known: 0, again: 0, practiceAll: practiceAll, write: write, typed: '', start: Date.now(), missedIds: [] };
         buildFlashView();
@@ -10931,23 +10935,23 @@
         hl.classList.toggle('on', !!getSetting('wlHideLearned', false)); hl.setAttribute('aria-pressed', String(!!getSetting('wlHideLearned', false)));
         hf.classList.toggle('on', !!getSetting('wlHideFurigana', false)); hf.setAttribute('aria-pressed', String(!!getSetting('wlHideFurigana', false)));
         var sq = srsTodayQueue();
-        document.getElementById('flash-start-sub').textContent = !wordList.length ? '' : sq.all.length ? '新' + sq.fresh.length + '・学習' + sq.learn.length + '・復習' + sq.review.length : '今日の分は完了 ✓';
+        document.getElementById('flash-start-sub').textContent = !wordList.length ? '' : studyDayTag() + (sq.all.length ? '新' + sq.fresh.length + '・学習' + sq.learn.length + '・復習' + sq.review.length : '今日の分は完了 ✓');
         document.getElementById('flash-start').disabled = !wordList.length;
         var nDef = writeWords().length;
-        document.getElementById('write-start-sub').textContent = !wordList.length ? '' : nDef ? '定義あり ' + nDef + '語' : '定義を追加して使う';
+        document.getElementById('write-start-sub').textContent = !wordList.length ? '' : studyDayTag() + (nDef ? '定義あり ' + nDef + '語' : '定義を追加して使う');
         document.getElementById('write-start').disabled = !wordList.length;
         var withMeaning = wqPool(true).length, allMeaning = wqPool(false).length;
         var mco = matchOpts && mcOpts();
-        document.getElementById('mc-start-sub').textContent = { w2m: '言葉→意味', m2w: '意味→言葉', mix: 'まぜる', w2r: '言葉→読み' }[mco.kind] + '・' + (mco.count ? mco.count + '問' : 'すべて');
+        document.getElementById('mc-start-sub').textContent = studyDayTag() + { w2m: '言葉→意味', m2w: '意味→言葉', mix: 'まぜる', w2r: '言葉→読み' }[mco.kind] + '・' + (mco.count ? mco.count + '問' : 'すべて');
         document.getElementById('mc-start').disabled = !wordList.length;
         var cz = clozeOpts();
-        document.getElementById('cloze-start-sub').textContent = ({ choose: '選ぶ', bank: '語群', type: '書く' }[cz.how]) + '・' + (cz.count ? cz.count + '問' : 'すべて');
+        document.getElementById('cloze-start-sub').textContent = studyDayTag() + ({ choose: '選ぶ', bank: '語群', type: '書く' }[cz.how]) + '・' + (cz.count ? cz.count + '問' : 'すべて');
         document.getElementById('cloze-start').disabled = !wordList.length;
         var mmo = memOpts();
-        document.getElementById('mem-start-sub').textContent = (mmo.side === 'reading' ? '読み・' : '') + mmo.pairs + '組' + (mmo.peek ? '・最初に見る' : '');
+        document.getElementById('mem-start-sub').textContent = studyDayTag() + (mmo.side === 'reading' ? '読み・' : '') + mmo.pairs + '組' + (mmo.peek ? '・最初に見る' : '');
         document.getElementById('mem-start').disabled = !wordList.length;
         var mo = matchOpts();
-        document.getElementById('match-start-sub').textContent = (mo.side === 'reading' ? '読み・' : '') + mo.pairs + '組ずつ・' + (mo.rounds ? mo.rounds + '回' : 'すべて');
+        document.getElementById('match-start-sub').textContent = studyDayTag() + (mo.side === 'reading' ? '読み・' : '') + mo.pairs + '組ずつ・' + (mo.rounds ? mo.rounds + '回' : 'すべて');
         document.getElementById('match-start').disabled = !wordList.length;
     }
     document.getElementById('wordlist-search').addEventListener('input', function(e) { wlSearch = e.target.value.trim(); renderWordListItems(); });
