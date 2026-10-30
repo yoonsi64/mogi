@@ -1590,6 +1590,36 @@
         .word-item-meaning { font-size: 0.9rem; line-height: 1.5; margin-bottom: 6px; }
         .word-item-meaning.empty { color: #aaa; font-style: italic; }
         .word-item-context { font-size: 0.8rem; color: var(--text-sub); line-height: 1.6; margin-bottom: 6px; }
+        .word-item-tr { font-size: 0.74rem; opacity: 0.85; }
+        .wl-decks { margin: 0 0 10px; }
+        .wl-deck-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+        .wl-deck { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px 12px; border: 1px solid var(--border-light); border-radius: 10px; background: var(--surface); color: var(--text-main); text-align: left; }
+        .wl-deck-t { font-weight: bold; font-size: 0.85rem; }
+        .wl-deck-n { font-size: 0.72rem; color: var(--text-sub); }
+        .wl-deck.on { border-color: var(--active-blue); box-shadow: inset 0 0 0 1px var(--active-blue); }
+        .wl-deck.curated .wl-deck-t::before { content: '厳選 '; font-size: 0.7rem; color: var(--active-blue); }
+        .wl-deck.has-cover { flex-direction: row; align-items: center; gap: 9px; padding: 6px 12px 6px 6px; }
+        .wl-deck.has-cover .wl-deck-t::before { content: none; }
+        .wl-deck-txt { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; }
+        .wl-deck-cover { width: 34px; height: 46px; object-fit: cover; border-radius: 3px; box-shadow: 0 1px 3px rgba(0,0,0,.25); flex: 0 0 auto; }
+        .wl-book { --bk-red: #E60012; --bk-yel: #FFC845; margin: 10px 0 4px; border: 1px solid var(--border-light); border-radius: 12px; background: var(--surface); overflow: hidden; }
+        .wl-book-head { display: flex; gap: 12px; align-items: center; padding: 10px 12px; background: linear-gradient(90deg, var(--bk-red) 0 6px, transparent 6px); }
+        .wl-book-head img { width: 56px; height: 76px; object-fit: cover; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,.3); flex: 0 0 auto; }
+        .wl-book-t { font-weight: 800; font-size: 0.95rem; line-height: 1.3; }
+        .wl-book-t b { display: inline-block; background: var(--bk-red); color: #fff; padding: 0 5px; border-radius: 3px; margin-left: 4px; font-size: 0.8rem; }
+        .wl-book-m { font-size: 0.74rem; color: var(--text-sub); margin-top: 3px; }
+        .wl-book-bar { height: 5px; border-radius: 3px; background: var(--border-light); margin-top: 6px; overflow: hidden; max-width: 220px; }
+        .wl-book-bar i { display: block; height: 100%; background: var(--bk-yel); }
+        .wl-book-tg { margin-left: auto; align-self: flex-start; font-size: 0.72rem; color: var(--text-sub); background: none; border: none; cursor: pointer; padding: 2px 4px; }
+        .wl-sched { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; padding: 0 10px 10px; }
+        .wl-sd { border: 1px solid var(--border-light); border-radius: 7px; padding: 4px 2px; text-align: center; background: none; color: inherit; font: inherit; cursor: pointer; line-height: 1.25; min-width: 0; }
+        .wl-sd .d { font-weight: bold; font-size: 0.74rem; }
+        .wl-sd .p { font-size: 0.64rem; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .wl-sd .c { font-size: 0.62rem; color: var(--bk-red); }
+        .wl-sd.empty { opacity: .4; cursor: default; }
+        .wl-sd.on { border-color: var(--bk-red); box-shadow: inset 0 0 0 1px var(--bk-red); }
+        .wl-book.closed .wl-sched { display: none; }
+        #wordlist-view.deck-on .word-item-delete, #wordlist-view.deck-on #wordlist-export { display: none; }
         .word-item-meta { display: flex; justify-content: space-between; align-items: center; font-size: 0.7rem; color: #999; font-weight: bold; gap: 8px; }
         .word-item-open { background: none; border: 1px solid var(--border-light); color: var(--active-blue); font-size: 0.75rem; font-weight: bold; padding: 4px 8px; white-space: nowrap; flex-shrink: 0; }
         .word-item-delete { position: absolute; top: 6px; right: 6px; background: none; border: none; font-size: 1.2rem; color: var(--incorrect-color); padding: 4px 8px; }
