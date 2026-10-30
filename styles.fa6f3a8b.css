@@ -1600,6 +1600,9 @@
         .wl-deck.curated .wl-deck-t::before { content: '厳選 '; font-size: 0.7rem; color: var(--active-blue); }
         .wl-deck.has-cover { flex-direction: row; align-items: center; gap: 9px; padding: 6px 12px 6px 6px; }
         .wl-deck.has-cover .wl-deck-t::before { content: none; }
+        .wl-sd-sel { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 2px 2px 6px; font-size: 0.78rem; color: var(--text-sub); }
+        .wl-sd-sel span { min-width: 0; }
+        .wl-sd-clear { flex: 0 0 auto; font-size: 0.74rem; padding: 3px 10px; border: 1px solid var(--border-light); border-radius: 999px; background: var(--surface); color: var(--text-main); }
         .wl-deck-txt { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; }
         .wl-deck-cover { width: 34px; height: 46px; object-fit: cover; border-radius: 3px; box-shadow: 0 1px 3px rgba(0,0,0,.25); flex: 0 0 auto; }
         .wl-book { --bk-red: #E60012; --bk-yel: #FFC845; margin: 10px 0 4px; border: 1px solid var(--border-light); border-radius: 12px; background: var(--surface); overflow: hidden; }

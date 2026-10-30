@@ -8150,7 +8150,7 @@
         d.words.forEach(function(w) { cnt[w.deckDay] = (cnt[w.deckDay] || 0) + 1; });
         var cells = bk.schedule.map(function(sc, i) {
             var n = cnt[i + 1] || 0; if (n) done++;
-            return '<button class="wl-sd' + (n ? '' : ' empty') + (String(i + 1) === String(wlWeek) ? ' on' : '') + '"' + (n ? ' data-day="' + (i + 1) + '"' : ' disabled') + ' title="' + escapeHtml(sc.pos + ' p.' + sc.pages) + '">' +
+            return '<button class="wl-sd' + (n ? '' : ' empty') + (deckDaySel().indexOf(String(i + 1)) >= 0 ? ' on' : '') + '"' + (n ? ' data-day="' + (i + 1) + '"' : ' disabled') + ' title="' + escapeHtml(sc.pos + ' p.' + sc.pages) + '">' +
                 '<div class="d">' + (i + 1) + '일째</div><div class="p">' + escapeHtml(sc.pos) + '</div><div class="p">p.' + escapeHtml(sc.pages) + '</div>' + (n ? '<div class="c">' + n + '語</div>' : '') + '</button>';
         }).join('');
         var closed = getSetting('wlBookClosed', false);
@@ -8160,6 +8160,7 @@
             '<div class="wl-book-m">학습 스케줄 ' + done + ' / ' + bk.schedule.length + '일째 수록 · ' + d.words.length + '語</div>' +
             '<div class="wl-book-bar"><i style="width:' + Math.round(done / bk.schedule.length * 100) + '%"></i></div></div>' +
             '<button class="wl-book-tg">' + (closed ? 'スケジュール ▾' : '閉じる ▴') + '</button></div>' +
+            '<div class="wl-sd-sel">' + (deckDaySel().length ? '<span>選択中：' + escapeHtml(daySelLabel()) + '（' + wordList.filter(function(e) { return deckDaySel().indexOf(String(e.deckDay)) >= 0; }).length + '語）</span><button class="wl-sd-clear">選択を解除</button>' : '<span>日をタップして選ぶ（いくつでも）</span>') + '</div>' +
             '<div class="wl-sched">' + cells + '</div></div>';
     }
     function renderDeckPicker() {
@@ -8173,9 +8174,12 @@
             }).join('') + '</div>' + deckBookPanel();
         box.querySelectorAll('.wl-deck').forEach(function(b) { b.addEventListener('click', function() { switchDeck(b.dataset.deck); renderWordListItems(); }); });
         box.querySelectorAll('.wl-sd[data-day]').forEach(function(b) { b.addEventListener('click', function() {
-            var sel = document.getElementById('wordlist-week'), v = wlWeek === b.dataset.day ? '' : b.dataset.day;
-            sel.value = v; wlWeek = v; renderWordListItems(); renderDeckPicker();
+            var cur = deckDaySel(), d = b.dataset.day, at = cur.indexOf(d);
+            if (at >= 0) cur.splice(at, 1); else cur.push(d);
+            cur.sort(function(x, y) { return x - y; });
+            wlWeek = cur.join(','); syncDaySelect(); renderWordListItems(); renderDeckPicker();
         }); });
+        var clr = box.querySelector('.wl-sd-clear'); if (clr) clr.addEventListener('click', function() { wlWeek = ''; syncDaySelect(); renderWordListItems(); renderDeckPicker(); });
         var tg = box.querySelector('.wl-book-tg'); if (tg) tg.addEventListener('click', function() { setSetting('wlBookClosed', !getSetting('wlBookClosed', false)); renderDeckPicker(); });
         document.getElementById('wordlist-view').classList.toggle('deck-on', !!activeDeck);
         var nb = document.querySelector('#wordlist-sort-controls button[data-sort="new"]'); if (nb) nb.textContent = activeDeck ? '本の順' : '新しい順';
@@ -9389,9 +9393,19 @@
     // and 'word' (definition → write the word: wwbox/wwdue). Both use only the words with a 書く練習の定義.
     function writeKeys(write) { return write === 'word' ? { box: 'wwbox', due: 'wwdue' } : write ? { box: 'wbox', due: 'wdue' } : { box: 'box', due: 'due' }; }
     // A day picked in a book deck (1일째, 2일째 …): the cards and the writing practice use only that day's words
-    function studyDay() { return activeDeck && wlWeek ? String(wlWeek) : ''; }
-    function studyWords() { var d = studyDay(); return d ? wordList.filter(function(e) { return String(e.deckDay) === d; }) : wordList; }
-    function studyDayTag() { var d = studyDay(); return d ? d + '일째・' : ''; }
+    // (several days can be picked: wlWeek holds them as "3,5,7")
+    function deckDaySel() { return activeDeck && wlWeek ? String(wlWeek).split(',').filter(Boolean) : []; }
+    function daySelLabel() { var d = deckDaySel(); return d.length > 3 ? d.length + '일치' : d.join('・') + '일째'; }
+    function studyDay() { return deckDaySel().join(','); }
+    function studyWords() { var d = deckDaySel(); return d.length ? wordList.filter(function(e) { return d.indexOf(String(e.deckDay)) >= 0; }) : wordList; }
+    function studyDayTag() { return deckDaySel().length ? daySelLabel() + '・' : ''; }
+    // the filter menu shows a multi-day pick as one extra option
+    function syncDaySelect() {
+        var sel = document.getElementById('wordlist-week'); if (!sel) return;
+        sel.querySelectorAll('option[data-multi]').forEach(function(o) { o.remove(); });
+        if (deckDaySel().length > 1) { var o = document.createElement('option'); o.value = wlWeek; o.dataset.multi = '1'; o.textContent = daySelLabel(); sel.appendChild(o); }
+        sel.value = wlWeek;
+    }
     function writeWords() { return studyWords().filter(function(e) { return e.writeDef; }); }
     function flashDueWords(write) {
         return srsTodayQueue(write || 'card').all;
@@ -10918,7 +10932,7 @@
     function isLearned(e) { return e.srs ? e.srs.state === 'review' && e.srs.s >= 7 : (e.box || 0) >= 3; }
     function wordMatchesFilters(e) {
         if (getSetting('wlHideLearned', false) && isLearned(e)) return false;
-        if (wlWeek && activeDeck) { if (String(e.deckDay) !== wlWeek) return false; }
+        if (wlWeek && activeDeck) { if (deckDaySel().indexOf(String(e.deckDay)) < 0) return false; }
         else if (wlWeek) {
             var q = e.qid ? findQuestion(e.qid) : null;
             if (wlWeek === 'none' ? !!q : (!q || (q.lib === DEFAULT_LIB ? '' : q.lib + '~') + q.week !== wlWeek)) return false;
