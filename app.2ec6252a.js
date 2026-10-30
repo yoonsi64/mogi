@@ -9406,7 +9406,10 @@
         if (deckDaySel().length > 1) { var o = document.createElement('option'); o.value = wlWeek; o.dataset.multi = '1'; o.textContent = daySelLabel(); sel.appendChild(o); }
         sel.value = wlWeek;
     }
-    function writeWords() { return studyWords().filter(function(e) { return e.writeDef; }); }
+    // In a book deck every word can be practised straight away: without its own 書く練習の定義 it uses the book's meaning
+    function writeDefOf(e) { return e.writeDef || (activeDeck ? String(e.meaning || '').trim() : ''); }
+    function writeDefLabel(e) { return e.writeDef ? '書く練習の定義' : '本の意味'; }
+    function writeWords() { return studyWords().filter(function(e) { return writeDefOf(e); }); }
     function flashDueWords(write) {
         return srsTodayQueue(write || 'card').all;
         var today = getTodayDateString(), dk = writeKeys(write).due;
@@ -9515,7 +9518,7 @@
         v.querySelector('.flash-body').innerHTML = '<div class="write-pick">' +
             '<button id="wp-def"' + (n ? '' : ' disabled') + '><b>意味を書く</b><span>言葉を見て、定義を書く' + (n ? '・' + (dDef ? cnt(qD) : '今日の分は完了 ✓') : '') + '</span></button>' +
             '<button id="wp-word"' + (n ? '' : ' disabled') + '><b>言葉を書く</b><span>定義を見て、日本語の言葉を書く（自動で採点）' + (n ? '・' + (dWord ? cnt(qW) : '今日の分は完了 ✓') : '') + '</span></button>' +
-            (n ? '<div class="write-pick-note">書く練習の定義がある ' + n + '語 で練習します（カードと同じFSRS・それぞれ別のスケジュール）。単語帳の単語をタップすると、定義を追加・変更できます。</div>'
+            (n ? '<div class="write-pick-note">' + (activeDeck ? '本の意味（または書く練習の定義）で ' + n + '語 を練習します' : '書く練習の定義がある ' + n + '語 で練習します') + '（カードと同じFSRS・それぞれ別のスケジュール）。単語帳の単語をタップすると、定義を追加・変更できます。</div>'
                : '<div class="write-pick-note">どちらも「書く練習の定義」がある単語で練習します。まだありません。<br>単語帳の単語をタップして、「書く練習の定義」に短い定義を入れてください（「意味から入れる」で今の意味を写せます）。</div>' +
                  '<button id="wp-back"><b>単語帳に戻る</b></button>') +
             '</div>';
@@ -9539,7 +9542,7 @@
         if (!flash.revealed) {
             body.innerHTML = '<div class="flash-card write-card">' +
                 (label ? '<div class="flash-source">' + escapeHtml(label) + '</div>' : '') + srsKindHtml(e) +
-                (toWord ? '<div class="wq-dir">この定義の言葉は？</div><div class="wq-prompt meaning">' + escapeHtml(e.writeDef) + '</div>'
+                (toWord ? '<div class="wq-dir">' + (e.writeDef ? 'この定義の言葉は？' : 'この意味の言葉は？') + '</div><div class="wq-prompt meaning">' + escapeHtml(writeDefOf(e)) + '</div>'
                         : '<div class="flash-word">' + escapeHtml(e.word) + '</div>') +
                 (toWord ? '<input class="write-input" id="write-input" style="min-height:0" lang="ja" autocomplete="off" placeholder="日本語の言葉（漢字でもかなでも）" aria-label="言葉">'
                         : '<textarea class="write-input" id="write-input" rows="3" placeholder="定義を書いてください（日本語でも韓国語でも）" aria-label="定義"></textarea>') +
@@ -9563,8 +9566,8 @@
             '<div class="flash-word">' + entryWordHtml(e) + '</div>' +
             '<div class="write-compare">' +
                 '<div class="write-box mine"><small>あなたの答え</small><div' + (mine ? '>' + escapeHtml(mine) : ' class="empty">（空欄）') + '</div></div>' +
-                '<div class="write-box"><small>書く練習の定義</small><div>' + escapeHtml(e.writeDef) + '</div></div>' +
-                (e.meaning && e.meaning !== e.writeDef ? '<div class="write-box"><small>単語帳の意味</small><div>' + escapeHtml(e.meaning) + '</div></div>' : '') +
+                '<div class="write-box"><small>' + writeDefLabel(e) + '</small><div>' + escapeHtml(writeDefOf(e)) + '</div></div>' +
+                (e.meaning && e.meaning !== writeDefOf(e) ? '<div class="write-box"><small>単語帳の意味</small><div>' + escapeHtml(e.meaning) + '</div></div>' : '') +
                 (e[lastKey] && e[lastKey] !== mine ? '<div class="write-box"><small>前回の答え</small><div>' + escapeHtml(e[lastKey]) + '</div></div>' : '') +
             '</div>' +
             (e.context ? '<div class="flash-context">' + highlightIn(e.context, e.word) + '</div>' : '') +
@@ -10952,7 +10955,7 @@
         document.getElementById('flash-start-sub').textContent = !wordList.length ? '' : studyDayTag() + (sq.all.length ? '新' + sq.fresh.length + '・学習' + sq.learn.length + '・復習' + sq.review.length : '今日の分は完了 ✓');
         document.getElementById('flash-start').disabled = !wordList.length;
         var nDef = writeWords().length;
-        document.getElementById('write-start-sub').textContent = !wordList.length ? '' : studyDayTag() + (nDef ? '定義あり ' + nDef + '語' : '定義を追加して使う');
+        document.getElementById('write-start-sub').textContent = !wordList.length ? '' : studyDayTag() + (nDef ? (activeDeck ? nDef + '語・本の意味で' : '定義あり ' + nDef + '語') : '定義を追加して使う');
         document.getElementById('write-start').disabled = !wordList.length;
         var withMeaning = wqPool(true).length, allMeaning = wqPool(false).length;
         var mco = matchOpts && mcOpts();
