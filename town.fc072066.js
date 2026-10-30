@@ -68,7 +68,7 @@ var SKY_LIFT = 0;   // 0..1: on summer nights (花火) and at 月見 the view ti
 function skyLiftFor(o) { return (o.light === 'night' && o.season === 'summer') || (o.event === 'tsukimi' && (o.light === 'dusk' || o.light === 'night')) ? 1 : 0; }
 function makeCam(w, h) {
   var th = 24 * Math.PI / 180, dist = 200, tz = 64;
-  return { s: Math.sin(th), c: Math.cos(th), x: -5.8, y: dist * Math.sin(th), z: tz - dist * Math.cos(th), F: 878 * CAM_ZOOM * (1 - Math.max(0, 266 - h) * 0.0016), cx: w / 2, cy: 158 + (h - REF_H) / 2 + Math.max(0, 266 - h) * 0.5 + SKY_LIFT * h * 0.11 };   // (x: aimed a little west of the bridge, where the town has spread; a short frame, the phone's landscape full view, gives up more of the near meadow than of the sky, so the moon and the fireworks still have room)
+  return { s: Math.sin(th), c: Math.cos(th), x: -5.8 + 2.5 * clamp((1.62 - w / h) / 0.3), y: dist * Math.sin(th), z: tz - dist * Math.cos(th), F: 878 * CAM_ZOOM * (1 - Math.max(0, 266 - h) * 0.0016), cx: w / 2, cy: 158 + (h - REF_H) / 2 + Math.max(0, 266 - h) * 0.5 + SKY_LIFT * h * 0.11 };   // (x: aimed a little west of the bridge, where the town has spread; on a squarer frame (the phone's card) a little less, so the castle's walls and their corner turret come inside the right edge; a short frame, the phone's landscape full view, gives up more of the near meadow than of the sky, so the moon and the fireworks still have room)
 }
 function setLight(l) {
   SUN = l.sun; SUNC = l.sunc; AMB = l.amb; LS = l.ls;
@@ -152,7 +152,7 @@ var STAGE_DEFS = [
   [60, '農家', '茅葺きの農家が建ちました', [-31, 3.5, 29], 'farm'],
   [90, '田んぼ', '道の両側に田んぼが開かれました', [22, 0, 14], 'paddy'],
   [120, '茶畑', '街道沿いに茶畑が開かれました', 'tea', 'tea'],
-  [180, '水車小屋', '川辺に水車小屋ができ、水車が回りはじめました', [-21.2, 2.2, 43.3], 'mill'],
+  [180, '水車小屋', '川辺に水車小屋ができ、水車が回りはじめました', [-17.4, 1.8, 37.4], 'mill'],
   [240, '鍛冶屋', '農家のとなりに鍛冶屋ができ、槌の音が響きます', 'smithy', 'smithy'],
   [300, '祠と鳥居', '杉木立の祠に鳥居が奉納されました', [3.8, 2.2, 28.6], 'shrine'],
   [420, '太鼓橋', '川に木の太鼓橋が架かりました', [2, 2.5, 41], 'stoneBridge'],
@@ -172,8 +172,8 @@ var STAGE_DEFS = [
   [12000, '五重塔', '寺に五重塔がそびえ立ちました', [-47, 12, 94], 'pagoda'],
   [15000, '武家屋敷', '白壁の武家屋敷が並びました', 'buke', 'buke'],
   [18000, '木戸と番屋', '大通りに木戸が設けられ、番屋ができました', 'kido', 'kido'],
-  [21000, '石垣', '城山に高い石垣が築かれました', [30, 5, 84], 'ishigaki'],
-  [24000, '天守', '石垣の上に天守がそびえました', [33, 14, 87], 'keep'],
+  [21000, '石垣', '城山に高い石垣が築かれました', [32.5, 3, 90.5], 'ishigaki'],
+  [24000, '天守', '石垣の上に天守がそびえました', [34.5, 13, 103.5], 'keep'],
   [30000, '城下町の完成', '提灯が灯り、城下町の祭りが始まりました', 'centre', 'festival']
 ];
 var NST = STAGE_DEFS.length;
@@ -210,9 +210,9 @@ var HILLS = [
   { x: -38, z: 112, rx: 26, rz: 6.5, h: 5.5 },
   { x: 78, z: 96, rx: 22, rz: 10, h: 8 },
   { x: -80, z: 101, rx: 22, rz: 10, h: 8.5 },
-  { x: 33, z: 88.5, rx: 13, rz: 7.5, h: 3 }
+  { x: 35, z: 106, rx: 13, rz: 7.5, h: 3 }   // (the castle's own hill)
 ];
-var CASTLE = { x: 33, z: 87, top: 3.6 };
+var CASTLE = (function () { var p = stPt(47 + 14.5, 3.5); return { x: p[0], z: p[1], top: 3.6 }; })();   // the keep on its mound at the back of the castle's enclosure, square to the main street (frame O of the 大手門: a -3.5, b 14.5); a little left of the 櫓門, so that gate stands clear in front of its stones
 var PADDY_L = { x0: -52, x1: -20.5, z0: -4, z1: 22, rot: -0.04, cw: 7.8, cd: 5.6 };
 var PADDY_R = { x0: 14, x1: 60, z0: -3, z1: 17.6, rot: 0.06, cw: 8.6, cd: 5.6 };
 var TREE0 = { x: -31.5, z: 6.4 };   // (on a levee out in the paddies, well left of the road: nearer the road its crown hid the well, the farm's fence and front)
@@ -222,7 +222,10 @@ var WELL = { x: -17.6, z: 19.5 };
 var FARM = { x: -28.6, z: 30 };
 var HAZA = [[-28.5, 17.4], [-23.5, 12.6]];
 var KAKI = { x: -36.0, z: 36.6 };   // (behind the farmhouse's west end, its crown over the thatch: by the house's east side it hid the 水車小屋, in front of the yard it hid the house)
-var MILL = { x: -16.5, z: 39.2, u: norm2([0.866, -0.5]), wx: -21.2, wz: 43.3, wr: 2.2 };
+var MILL = { x: -16.5, z: 39.2, u: norm2([0.925, -0.38]), wr: 2.0, wb: -3.4, ry: -0.15 };   // 水車小屋: the hut on the near bank, its back to the river, square to it (frame M: a downstream, b toward the water); the wheel's radius and the plane it turns in (b); the race's water, brim-full
+/* the race (水路): taken off the river just upstream of the hut, it loops round in front of the hut in a stone-lined channel, past
+   the wheel, and back into the river just below it, so the hut stands on an island between race and river (frame M, centre line) */
+var MILL_RACE = [[-6.2, 5.0], [-5.7, 1.9], [-4.9, -0.8], [-3.8, -2.75], [-2.5, -3.55], [2.5, -3.55], [3.8, -2.75], [4.9, -0.8], [5.7, 1.9], [6.2, 5.0]], MILL_RACE_HW = 1.0;
 var SHRINE = { x: 3.8, z: 29.6 }, TORII = { x: 3.38, z: 25.42 };   // a roadside shrine before the bridge; its torii square on the shrine's centre line, 4.2 m before it
 var SHRINE_CEDARS = [[5.8, -1.6, 8.6, 702], [7.6, 0.8, 9.2, 701], [4.6, 2.4, 8.4, 704]];   // the shrine's cedars [dx, dz from the shrine, height, seed] (three, lower, a little to the right: four tall ones stood across the bridge's far end and the market)
 var TEMPLE = { x: -28.22, z: 93.66 }, BELL = { x: -14.29, z: 86.78 }, PAGODA = { x: -47.44, z: 94.37 };   // the temple precinct beyond the riverside row (street frame: the hall at t 21, w 52.5 facing the street; the bell tower at t 22, w 37 behind the row; the 五重塔 at t 12, w 69.5)
@@ -242,13 +245,13 @@ var BANYA = (function () { var p = stPt(29.0, 3.3); return { x: p[0], z: p[1] };
 /* wild groves on the far bank: there until the town needs their ground [x, z, stage that clears it, trees] */
 var GROVES = (function () {
   function g(t, w, s, n) { var p = stPt(t, w); return [p[0], p[1], s, n]; }
-  return [g(19, 9.5, SI.machiya, 2), g(31.5, 10, SI.inn, 1), g(16, -9.5, SI.machiya, 2), g(8.5, 27, SI.machiya, 2), g(9.5, 45.5, SI.temple, 1), g(30, 23, SI.buke, 2), g(36, -12, SI.buke, 1), g(25, -10, SI.machiya, 1), [-2, 101, 99, 1], [25, 101, 99, 1]];
+  return [g(19, 9.5, SI.machiya, 2), g(31.5, 10, SI.inn, 1), g(16, -9.5, SI.machiya, 2), g(8.5, 27, SI.machiya, 2), g(9.5, 45.5, SI.temple, 1), g(30, 23, SI.buke, 2), g(36, -12, SI.buke, 1), g(25, -10, SI.machiya, 1), [-2, 101, 99, 1], [25, 101, SI.ishigaki, 1]];
 })();
 var FIELD = { x0: 7.2, x1: 13.6, z0: 19, z1: 27.6 };
 var FIELDN = { x0: -12.6, x1: 1.4, z0: -21.5, z1: -9.2 };   // the kitchen field in the near foreground, right of the road (all of it on a tall screen)
 var NEAR_BUSHES = [[-14.6, -13.2, 1.0, 0.7, 'low'], [-14.3, -18.8, 0.9, 1.0, 'round'], [3.6, -10.2, 1.2, 0.8, 'low'], [6.2, -11.8, 0.8, 1.5, 'tall'], [11.5, -14.5, 1.4, 1.2, 'round'], [17, -9.5, 1.0, 0.6, 'low'], [8.5, -20, 1.5, 1.0, 'low'], [-6, -4.6, 0.7, 0.8, 'round'], [20.5, -17.5, 1.1, 1.8, 'tall']];   // [x, z, radius, height]: low bushes about the near meadow (from the farm's stage)
 var FOOT = [[-19.4, -10.2], [-12.8, -7.9], [-4, -7.3], [4.5, -6.3], [10, -5.0], [13.8, -3.7]];   // a footpath trodden across the near meadow, from the road along the field's top to the paddies' corner
-var BUKE = (function () { var a = stPt(30, 23.5), b = stPt(36, -12.2), c = stPt(33, -27), e = stPt(45, -27.2); return [{ x: a[0], z: a[1], w: 13, d: 11, seed: 401 }, { x: b[0], z: b[1], w: 12, d: 10, seed: 402 }, { x: c[0], z: c[1], w: 12, d: 10, seed: 403 }, { x: e[0], z: e[1], w: 12.5, d: 10, seed: 404 }]; })();   // (the last two east of the main street, on the open ground below the castle, a lane between each; on the full view's wide frame that ground lay bare)
+var BUKE = (function () { var a = stPt(30, 23.5), b = stPt(56.5, -27.6), c = stPt(33, -27), e = stPt(45, -27.6); return [{ x: a[0], z: a[1], w: 13, d: 11, seed: 401 }, { x: b[0], z: b[1], w: 12, d: 10, seed: 402 }, { x: c[0], z: c[1], w: 12, d: 10, seed: 403 }, { x: e[0], z: e[1], w: 12.5, d: 10, seed: 404 }]; })();   // (the last two east of the main street, on the open ground below the castle, a lane between each; on the full view's wide frame that ground lay bare. The second beyond the fourth, past the castle moat's east arm, on the ground where a lone pine stood: where it stood, at the head of the street, it hid the castle's gate and moat)
 function norm2(v) { var l = Math.hypot(v[0], v[1]) || 1; return [v[0] / l, v[1] / l]; }
 /* the temple precinct, in the street frame: its front along the riverside street (t 4.4) from past the last townhouse (w 42.6)
    to beyond the pagoda (w 76), back to the hill; a wing east behind the row's back lane for the bell tower (w 33.2 from t 13) */
@@ -2174,16 +2177,93 @@ function drawTeahouse(ctx) {
     }
   }
   drawRoof(ctx, B, { W: w / 2 + 0.6, D: d / 2 + 0.8, yE: yE - 0.15, s: 0.9, type: 'irimoya', bm: 0.7, mat: 'thatch', seed: 33, ridgeH: 0.35 });
-  // the bench in front, covered with red felt, and a big red parasol
-  var bb = BF(B.L(0.2, -d / 2 - 2.0, 0)[0], B.L(0.2, -d / 2 - 2.0, 0)[2], TEA.u, 0);
+  // the bench in front, covered with red felt (its parasol: drawTeaParasol)
+  var bb =BF(B.L(0.2, -d / 2 - 2.0, 0)[0], B.L(0.2, -d / 2 - 2.0, 0)[2], TEA.u, 0);
   [-0.8, 0.8].forEach(function (a) { postIn(ctx, bb, a, 0, 0, 0.42, 0.05, [80, 60, 44]); });
   boxIn(ctx, bb, -1.0, 1.0, -0.35, 0.35, 0.42, 0.5, [176, 40, 34], SEA.snow ? null : [190, 44, 36]);
-  if (!SEA.snow) {
-    var pp = B.L(-w / 2 + 0.6, -d / 2 - 2.1, 0);
-    prism(ctx, pp[0], pp[2], 0, 2.5, 0.04, 0.04, 6, 0, [90, 70, 50], { snow: 0 });
-    prism(ctx, pp[0], pp[2], 2.05, 2.55, 1.35, 0.05, 18, 0.1, [196, 50, 40], { snow: 0 });
-    if (!S) { var cpt = P(pp[0], 2.05, pp[2]), rx = 1.35 * cpt.k; ctx.strokeStyle = 'rgba(80,20,16,0.5)'; ctx.lineWidth = 0.35; ctx.beginPath(); ctx.ellipse(cpt.x, cpt.y, rx, rx * CAM.s * 0.95, 0, 0, Math.PI); ctx.stroke(); }
+}
+/* the 茶屋's parasol (its own piece of the scene, so what stands between the bench and the house goes under it): the pole planted
+   just behind the bench's left half, the canopy leaning in over the seat toward the road, a little forward, its back rim short of
+   the eaves; those sitting on the bench sit in its shade, in front of its lower half */
+function teaParasol() {
+  var B = teaFrame(), bb = BF(B.L(0.2, -4.1, 0)[0], B.L(0.2, -4.1, 0)[2], TEA.u, 0), pb = bb.L(-1.0, 0.56, 0);
+  return { base: [pb[0], 0, pb[2]], dir: norm2([bb.u[0] * 0.86 - bb.v[0] * 0.5, bb.u[1] * 0.86 - bb.v[1] * 0.5]), tilt: 0.13, R: 1.15, H: 2.5 };
+}
+function drawTeaParasol(ctx) { if (SEA.snow) return; var q = teaParasol(); nodategasa(ctx, q.base, q.dir, q.tilt, q.R, q.H); }
+/* 野点傘: the big red paper parasol of an open-air tea stall. A bamboo pole planted in the ground, leaning a little; the canopy a
+   shallow cone of forty-odd ribs, drooping toward the rim, the oiled paper stretched over them so each panel sags a little between
+   its ribs (one half lit, one in shade), the ribs and the ring of stretchers showing through the paper; a black-lacquered cap at
+   the crown, the rib ends at the rim. base: [x, 0, z]; dir: the way it leans (ground unit vector); tilt in radians; R the canopy's
+   radius; H the crown's height along the pole. */
+function nodategasa(ctx, base, dir, tilt, R, H) {
+  var S = sil(), ax = norm([dir[0] * Math.sin(tilt), Math.cos(tilt), dir[1] * Math.sin(tilt)]), bs = basis(ax), e1 = bs[0], e2 = bs[1];
+  var A = add(base, mul(ax, H)), NR = 44, prof = [[0, 0], [0.12, 0.045], [0.34, 0.15], [0.62, 0.3], [0.86, 0.46], [1, 0.58]];
+  function pt(phi, j, out) { var r = prof[j][0] * R, dr = prof[j][1], c = Math.cos(phi), s = Math.sin(phi); return add(A, add(mul(add(mul(e1, c), mul(e2, s)), r * (out || 1)), mul(ax, -dr))); }
+  // the pole: a bamboo cane, a node every half metre, from the ground into the crown
+  var p0 = Pa(base), p1 = Pa(add(base, mul(ax, H - 0.1))), k0 = p0.k;
+  ctx.lineCap = 'round'; ctx.strokeStyle = S ? '#000' : rgb(shade([128, 100, 62], norm([LS[0], 0.2, LS[1]]))); ctx.lineWidth = Math.max(S ? 0.6 : 0.45, 0.065 * k0); ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.stroke();
+  if (!S && 0.065 * k0 > 1.2) { ctx.strokeStyle = 'rgba(232,206,150,0.45)'; ctx.lineWidth = 0.02 * k0; ctx.beginPath(); ctx.moveTo(p0.x - 0.012 * k0, p0.y); ctx.lineTo(p1.x - 0.012 * k0, p1.y); ctx.stroke(); ctx.strokeStyle = 'rgba(60,44,26,0.6)'; ctx.lineWidth = Math.max(0.3, 0.02 * k0); ctx.beginPath(); for (var nd = 0.5; nd < H - 0.6; nd += 0.5) { var q = Pa(add(base, mul(ax, nd))); ctx.moveTo(q.x - 0.04 * k0, q.y); ctx.lineTo(q.x + 0.04 * k0, q.y); } ctx.stroke(); }
+  ctx.lineCap = 'butt';
+  if (!S) { var g0 = P(base[0], 0, base[2]); ctx.fillStyle = 'rgba(40,30,20,0.35)'; ctx.beginPath(); ctx.ellipse(g0.x, g0.y, 0.14 * k0, 0.07 * k0, 0, 0, TAU); ctx.fill(); }   // the hole it is planted in
+  if (F && wxWet(F.wx)) {   // in the rain it is furled: the paper folded down round the ribs into a slim red sheaf, tied near its foot
+    var top3 = add(A, mul(ax, 0.06)), lo3 = add(A, mul(ax, -1.15)), sideV = norm(cross(ax, [CAM.x - A[0], 0, CAM.z - A[2]])), wq = [];
+    [0, 0.25, 0.55, 0.85, 1].forEach(function (f, fi) { var rr = [0.02, 0.07, 0.1, 0.11, 0.085][fi], c3 = add(top3, mul(sub(lo3, top3), f)); wq.push([add(c3, mul(sideV, -rr)), add(c3, mul(sideV, rr))]); });
+    var outl = wq.map(function (p) { return p[0]; }).concat(wq.map(function (p) { return p[1]; }).reverse());
+    fillPts(ctx, outl, S ? [0, 0, 0] : shade([176, 40, 32], norm([sideV[0] + LS[0] * 0.3, 0.3, sideV[2]])), 0.3);
+    if (!S) { var kq = Pa(A).k; ctx.strokeStyle = 'rgba(70,14,12,0.5)'; ctx.lineWidth = Math.max(0.2, 0.012 * kq); ctx.beginPath(); for (i = -2; i <= 2; i++) { var fa2 = Pa(add(top3, mul(sideV, 0.004 * i))), fb2 = Pa(add(lo3, mul(sideV, 0.03 * i))); ctx.moveTo(fa2.x, fa2.y); ctx.lineTo(fb2.x, fb2.y); } ctx.stroke(); var tie = Pa(add(lo3, mul(ax, 0.25))); ctx.strokeStyle = 'rgba(230,220,200,0.8)'; ctx.lineWidth = Math.max(0.3, 0.03 * kq); ctx.beginPath(); ctx.moveTo(tie.x - 0.1 * kq, tie.y); ctx.lineTo(tie.x + 0.1 * kq, tie.y); ctx.stroke(); }
+    return;
   }
+  // the canopy: each panel between two ribs in two halves, each half its own slope across (the paper sags between the ribs)
+  var red = [200, 46, 38], panels = [];
+  for (var i = 0; i < NR; i++) {
+    var fa = i / NR * TAU, fb = (i + 1) / NR * TAU, fm = (fa + fb) / 2;
+    for (var h = 0; h < 2; h++) {
+      var f0 = h ? fm : fa, f1 = h ? fb : fm, quads = [];
+      for (var j = 0; j < prof.length - 1; j++) {
+        var sag = 0.012 * R * (j + 1) / prof.length;   // (the paper's mid line a little lower than the ribs)
+        var a0 = pt(f0, j), a1 = pt(f1, j), b1 = pt(f1, j + 1), b0 = pt(f0, j + 1);
+        if (h) { a0 = add(a0, mul(ax, -sag)); b0 = add(b0, mul(ax, -sag * 1.4)); } else { a1 = add(a1, mul(ax, -sag)); b1 = add(b1, mul(ax, -sag * 1.4)); }
+        quads.push(j ? [a0, a1, b1, b0] : [A, b1, b0]);
+      }
+      var c = pt((f0 + f1) / 2, 3), qn = quads[3], nn = norm(cross(sub(qn[2], qn[0]), sub(qn[3], qn[1])));
+      if (dot(nn, ax) < 0) nn = mul(nn, -1);
+      panels.push({ q: quads, n: nn, c: c, d: Pa(c).d });
+    }
+  }
+  if (S) {   // the silhouette passes (the occluders, the depth map, the shadow): the whole canopy in one fill, so it is solid (its hundreds of little panels, each with its own soft edge, came out see-through at half size and let the 暖簾 behind show through)
+    var ap = Pa(A), sp = new Path2D(), rp = [];
+    for (i = 0; i <= 64; i++) rp.push(Pa(pt(i / 64 * TAU, 5)));
+    rp.forEach(function (q, qi) { if (qi) sp.lineTo(q.x, q.y); else sp.moveTo(q.x, q.y); }); sp.closePath();
+    for (i = 0; i < 64; i++) { sp.moveTo(ap.x, ap.y); sp.lineTo(rp[i].x, rp[i].y); sp.lineTo(rp[i + 1].x, rp[i + 1].y); sp.closePath(); }
+    ctx.fillStyle = '#000'; ctx.fill(sp); return;
+  }
+  panels.sort(function (a, b) { return b.d - a.d; });
+  var glow = LIT.name === 'day' || LIT.name === 'morning' ? 1 : 0.5;
+  panels.forEach(function (pn) {
+    if (!faceVisible(pn.c, pn.n) && MODE === 'n') return;
+    var col = S ? [0, 0, 0] : shade(red, pn.n, { amb: 1.05 });
+    if (!S) { var tr = Math.max(0, dot(pn.n, SUN)) * 0.16 * glow; col = mixc(col, [255, 120, 80], tr); }   // the sun glowing through the oiled paper
+    pn.q.forEach(function (q) { fillPts(ctx, q, col, 0.3); });
+  });
+  if (S) return;
+  var kA = Pa(A).k;
+  // the ribs through the paper, and the ring where the stretchers meet them
+  ctx.strokeStyle = 'rgba(70,14,12,0.42)'; ctx.lineWidth = Math.max(0.22, 0.016 * kA); ctx.beginPath();
+  for (i = 0; i < NR; i++) { var fr = i / NR * TAU, r0 = Pa(pt(fr, 1)), r1 = Pa(pt(fr, 5)); if (!faceVisible(pt(fr, 3), ax) && MODE === 'n') continue; ctx.moveTo(r0.x, r0.y); for (j = 2; j <= 5; j++) { var rq = Pa(pt(fr, j)); ctx.lineTo(rq.x, rq.y); } }
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(80,16,14,0.3)'; ctx.lineWidth = Math.max(0.3, 0.05 * kA); ctx.beginPath();
+  for (i = 0; i <= 48; i++) { var rp = Pa(pt(i / 48 * TAU, 2, 0.95)); if (i) ctx.lineTo(rp.x, rp.y); else ctx.moveTo(rp.x, rp.y); } ctx.stroke();
+  // the rim: the paper's edge a little darker, each rib's tip showing past it
+  ctx.strokeStyle = 'rgba(96,18,14,0.75)'; ctx.lineWidth = Math.max(0.3, 0.025 * kA); ctx.beginPath();
+  for (i = 0; i <= NR; i++) { var ep = Pa(pt(i / NR * TAU, 5)); if (i) ctx.lineTo(ep.x, ep.y); else ctx.moveTo(ep.x, ep.y); } ctx.stroke();
+  ctx.fillStyle = 'rgba(52,30,22,0.8)'; var ds = Math.max(0.3, 0.03 * kA);
+  for (i = 0; i < NR; i++) { var tp = Pa(pt(i / NR * TAU, 5, 1.02)); ctx.fillRect(tp.x - ds / 2, tp.y - ds / 2, ds, ds); }
+  // the crown: a black-lacquered paper cap, a glint on it, the pole's tip through it
+  var cap = []; for (i = 0; i < 16; i++) cap.push(pt(i / 16 * TAU, 1, 1.1));
+  fillPts(ctx, cap, shade([40, 30, 30], ax), 0.3);
+  var cg = Pa(add(A, mul(ax, 0.02))), tip = Pa(add(A, mul(ax, 0.12)));
+  ctx.fillStyle = 'rgba(255,240,220,0.35)'; ctx.beginPath(); ctx.ellipse(cg.x - 0.04 * kA, cg.y - 0.02 * kA, 0.05 * kA, 0.025 * kA, 0, 0, TAU); ctx.fill();
+  ctx.strokeStyle = rgb(shade([60, 44, 30], ax)); ctx.lineWidth = Math.max(0.35, 0.05 * kA); ctx.beginPath(); ctx.moveTo(cg.x, cg.y); ctx.lineTo(tip.x, tip.y); ctx.stroke();
 }
 /* 井戸: a stone well curb with a little roof, a pulley and a bucket */
 function drawWell(ctx) {
@@ -2237,27 +2317,57 @@ function drawFarm(ctx) {
   }
   drawRoof(ctx, B, { W: w / 2 + 1.1, D: d / 2 + 1.1, yE: yE - 0.2, s: 0.98, type: 'irimoya', bm: 1.0, mat: 'thatch', seed: 44, ridgeH: 0.5 });
 }
-/* 水車小屋: a board mill hut with a flume feeding the wheel (the wheel itself turns in the overlay) */
+/* 水車小屋: a board mill hut on the near bank, between the river and its race. The undershot wheel (下掛け水車) stands in the race
+   against the hut's front, its axle through the wall to the millstones inside; the current in the race catches its lower paddles
+   and turns it (the wheel itself turns in the overlay: drawWheel) */
 function millFrame() { return BF(MILL.x, MILL.z, MILL.u, 0); }
-function millWheelGeom() { var B = BF(MILL.wx, MILL.wz, MILL.u, 0); return { B: B, c: B.L(0, 0, MILL.wr - 0.55), r: MILL.wr, w: 0.7 }; }
+function millWheelGeom() { var p = millFrame().L(0, MILL.wb, 0), B = BF(p[0], p[2], MILL.u, 0); return { B: B, c: B.L(0, 0, MILL.ry - 0.45 + MILL.wr), r: MILL.wr, w: 0.7, wy: MILL.ry }; }   // (the boards' outer edges, flush with the rims, a hand and a half under the water)
+function millRaceS() { if (!MILL.rs) { var B = millFrame(); MILL.rs = smoothPoly(MILL_RACE.map(function (q) { var p = B.L(q[0], q[1], 0); return [p[0], p[2]]; }), 6); } return MILL.rs; }
+function millRaceD(x, z) { return polyD(millRaceS(), x, z) - MILL_RACE_HW; }
+function millPlank() { var B = millFrame(), a = B.L(-6.15, -1.22, 0), b = B.L(-3.75, -0.24, 0); return { a: [a[0], a[2]], b: [b[0], b[2]], w: 0.3 }; }   // the plank across the race's upstream leg to the island and the hut's back door (its two ends, its half width)
+/* the race's stone kerbs (each side's face above the water where it faces us, and its coping), and the plank across it */
+function drawMillRace(ctx) {
+  var S = sil(), R = millRaceS(), hw = MILL_RACE_HW, y0 = MILL.ry - 0.04, y1 = 0.12, st = [146, 140, 128], snow = SEA.snow, up = [0, 1, 0];
+  [-1, 1].forEach(function (sd) {
+    var E = [], O = [], i;
+    for (i = 0; i < R.length; i++) { var a = R[Math.max(0, i - 1)], b = R[Math.min(R.length - 1, i + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1; O.push([-dz / l * sd, dx / l * sd]); E.push([R[i][0] + O[i][0] * hw, R[i][1] + O[i][1] * hw]); }
+    for (i = 0; i < E.length - 1; i++) {
+      var p = E[i], q = E[i + 1]; if (riverD(p[0], p[1]) < 0.2 || riverD(q[0], q[1]) < 0.2) continue;   // (where it opens into the river, the river's own bank)
+      var on = [-(O[i][0] + O[i + 1][0]) / 2, 0, -(O[i][1] + O[i + 1][1]) / 2], fq = [[p[0], y0, p[1]], [q[0], y0, q[1]], [q[0], y1, q[1]], [p[0], y1, p[1]]];
+      if (faceVisible(centroid(fq), norm(on)) || MODE === 's') { var pf = fillPts(ctx, fq, S ? [0, 0, 0] : shade(st, norm(on)), 0.3); if (!S && MODE === 'n') { var m0 = P((p[0] + q[0]) / 2, y0 + 0.02, (p[1] + q[1]) / 2), m1 = P((p[0] + q[0]) / 2, y0 + 0.14, (p[1] + q[1]) / 2), wg = ctx.createLinearGradient(0, m0.y, 0, m1.y); wg.addColorStop(0, 'rgba(30,40,30,0.55)'); wg.addColorStop(1, 'rgba(30,40,30,0)'); ctx.save(); poly(ctx, pf); ctx.clip(); ctx.fillStyle = wg; ctx.fillRect(Math.min(pf[0].x, pf[1].x) - 2, Math.min(m0.y, m1.y) - 2, Math.abs(pf[1].x - pf[0].x) + 4, Math.abs(m0.y - m1.y) + 4); if (hash2(i, sd + 7) < 0.6) { var jp = P(lerp(p[0], q[0], 0.5), y0, lerp(p[1], q[1], 0.5)), jq = P(lerp(p[0], q[0], 0.5), y1, lerp(p[1], q[1], 0.5)); ctx.strokeStyle = rgb(scl(shade(st, norm(on)), 0.6)); ctx.lineWidth = 0.3; ctx.beginPath(); ctx.moveTo(jp.x, jp.y); ctx.lineTo(jq.x, jq.y); ctx.stroke(); } ctx.restore(); } }   // the wet dark line at the water, a joint between the stones
+      var cw = 0.26, cq = [[p[0], y1, p[1]], [q[0], y1, q[1]], [q[0] + O[i + 1][0] * cw, y1, q[1] + O[i + 1][1] * cw], [p[0] + O[i][0] * cw, y1, p[1] + O[i][1] * cw]];   // the coping, its stones laid along the edge
+      fillPts(ctx, cq, S ? [0, 0, 0] : shade(snow ? SNOW : scl(st, 1.08 + 0.1 * (hash2(i, sd + 3) - 0.5)), up), 0.3);
+    }
+  });
+  if (S && MODE === 'k') return;
+  // the plank: two weathered boards side by side, their ends bedded on the copings
+  var pk = millPlank(), dx = pk.b[0] - pk.a[0], dz = pk.b[1] - pk.a[1], L = Math.hypot(dx, dz), ux = dx / L, uz = dz / L, nx = -uz * pk.w, nz = ux * pk.w, yp = 0.17, wood = [170, 152, 126];
+  if (!S && MODE === 'n') { var sh = [[pk.a[0] + ux * 0.3 - nx, MILL.ry, pk.a[1] + uz * 0.3 - nz], [pk.b[0] - ux * 0.3 - nx, MILL.ry, pk.b[1] - uz * 0.3 - nz], [pk.b[0] - ux * 0.3 + nx, MILL.ry, pk.b[1] - uz * 0.3 + nz], [pk.a[0] + ux * 0.3 + nx, MILL.ry, pk.a[1] + uz * 0.3 + nz]].map(function (v) { return [v[0] + SX * 0.3, v[1], v[2] + SZ * 0.3]; }); fillPts(ctx, sh, [30, 40, 44], 0); }   // its shadow on the water
+  [[-1, -0.04], [0.04, 1]].forEach(function (h, hi) { var q = [[pk.a[0] + nx * h[0], yp, pk.a[1] + nz * h[0]], [pk.b[0] + nx * h[0], yp, pk.b[1] + nz * h[0]], [pk.b[0] + nx * h[1], yp, pk.b[1] + nz * h[1]], [pk.a[0] + nx * h[1], yp, pk.a[1] + nz * h[1]]]; fillPts(ctx, q, S ? [0, 0, 0] : shade(snow ? SNOW : scl(wood, hi ? 0.95 : 1.05), up), 0.3); });
+  var sideN = norm([-nx, 0, -nz]), sq = [[pk.a[0] - nx, yp - 0.09, pk.a[1] - nz], [pk.b[0] - nx, yp - 0.09, pk.b[1] - nz], [pk.b[0] - nx, yp, pk.b[1] - nz], [pk.a[0] - nx, yp, pk.a[1] - nz]];
+  if (!faceVisible(centroid(sq), sideN)) { sideN = mul(sideN, -1); sq = sq.map(function (v, j) { return [v[0] + nx * 2, v[1], v[2] + nz * 2]; }); }
+  fillPts(ctx, sq, S ? [0, 0, 0] : shade(scl(wood, 0.7), sideN), 0.3);
+}
 function drawMill(ctx) {
-  var B = millFrame(), w = 5, d = 4.4, yE = 2.5, S = sil();
+  var B = millFrame(), w = 5, d = 4.4, yE = 2.5, S = sil(), G = millWheelGeom(), cy = G.c[1];
+  // the island's stone footing along the race, under the hut's front
+  stoneBox(ctx, B, -w / 2 - 0.3, w / 2 + 0.3, -d / 2 - 0.35, -d / 2 + 0.2, MILL.ry, 0.18, [140, 134, 122], null, { seed: 31, ch: 0.3, moss: 1 });
   var Wl = boxWalls(B, w, d, 0, yE);
   [Wl.f, Wl.l, Wl.r].forEach(function (q) {
     if (!q.vis) return;
     paintWall(ctx, q, [104, 84, 64], { gable: q === Wl.f ? undefined : yE + 0.5 * d / 2, eave: 0.4, seed: 16, tex: 0.5 });
     if (S) return;
     ctx.strokeStyle = rgb(scl(lit([104, 84, 64], q.n), 0.6)); ctx.lineWidth = 0.35; ctx.beginPath(); for (var s = 0.25; s < q.len; s += 0.25) wline(ctx, q, s, 0, s, yE, 0.01); ctx.stroke();
-    if (q === Wl.f) { doorway(ctx, q, 1.2, 2.4, 0, 1.9, LIT.name === 'night' && LIT.lit); lattice(ctx, q, 3.0, 4.3, 1.0, 1.7, { col: [80, 62, 46], out: 0.04, sp: 0.15 }); }
+    if (q === Wl.f) { lattice(ctx, q, 0.35, 1.2, 1.0, 1.7, { col: [80, 62, 46], out: 0.04, sp: 0.15 }); lattice(ctx, q, 3.8, 4.65, 1.0, 1.7, { col: [80, 62, 46], out: 0.04, sp: 0.15 }); }   // (a barred window each side of the wheel)
+    if (q === Wl.l) doorway(ctx, q, 1.6, 2.6, 0, 1.9, LIT.name === 'night' && LIT.lit);   // the door, where the plank lands
   });
   drawRoof(ctx, B, { W: w / 2 + 0.4, D: d / 2 + 0.6, yE: yE - 0.2, s: 0.5, type: 'gable', mat: 'board', seed: 18, ridgeH: 0.18 });
-  // the axle housing and the flume on trestles from upstream
-  var G = millWheelGeom(), Bw = G.B, c = G.c;
-  [-0.55, 0.55].forEach(function (b) { var p = Bw.L(0, b, 0); prism(ctx, p[0], p[2], WL - 0.3, c[1] + 0.15, 0.09, 0.09, 6, 0.3, [76, 60, 46], { snow: 0 }); });
-  var f0 = Bw.L(-1.2, -0.2, c[1] + G.r + 0.15), f1 = Bw.L(-6.5, -0.2, c[1] + G.r + 0.45);
-  var fl = BF((f0[0] + f1[0]) / 2, (f0[2] + f1[2]) / 2, MILL.u, 0);
-  [-2.2, 0.2, 2.2].forEach(function (a) { var pp = fl.L(a, 0, 0); prism(ctx, pp[0], pp[2], WL - 0.3, c[1] + G.r + 0.2, 0.06, 0.06, 6, 0, [80, 64, 48], { snow: 0 }); });
-  boxIn(ctx, fl, -2.65, 2.65, -0.3, 0.3, c[1] + G.r + 0.15, c[1] + G.r + 0.55, [100, 80, 60], SEA.snow ? null : [90, 110, 120]);
+  // where the axle goes in: a heavy bearing frame on the wall, and the axle itself out to the wheel's hub
+  var fw = wallOf(B, [-0.55, -d / 2], [0.55, -d / 2], cy - 0.55, cy + 0.55);
+  if (fw.vis) { wquad(ctx, fw, 0, 1.1, cy - 0.55, cy + 0.55, S ? [0, 0, 0] : shade([62, 48, 38], fw.n), 0.05); if (!S) { wquad(ctx, fw, 0.25, 0.85, cy - 0.3, cy + 0.3, [26, 20, 18], 0.07); wquad(ctx, fw, -0.2, 1.3, cy - 0.68, cy - 0.55, shade([84, 66, 50], fw.n), 0.09); } }
+  var a0 = Pa(B.L(0, -d / 2 - 0.05, cy)), a1 = Pa(B.L(0, MILL.wb + G.w / 2 + 0.1, cy)), ka = a0.k;
+  ctx.lineCap = 'round'; ctx.strokeStyle = S ? '#000' : rgb(shade([54, 42, 32], norm([LS[0], 0.6, LS[1]]))); ctx.lineWidth = Math.max(0.7, 0.24 * ka); ctx.beginPath(); ctx.moveTo(a0.x, a0.y); ctx.lineTo(a1.x, a1.y); ctx.stroke(); ctx.lineCap = 'butt';
+  if (!S) { ctx.strokeStyle = 'rgba(150,122,92,0.35)'; ctx.lineWidth = Math.max(0.25, 0.04 * ka); ctx.beginPath(); ctx.moveTo(a0.x, a0.y - 0.07 * ka); ctx.lineTo(a1.x, a1.y - 0.07 * ka); ctx.stroke(); }
 }
 /* 祠 and 鳥居: a small shrine in a cedar grove, a vermilion torii facing the path */
 function drawHokora(ctx) {
@@ -2882,7 +2992,7 @@ function drawBuke(ctx, sp) {
 /* 石垣: the castle's stone base after 彦根城 -- a fan-curved (扇の勾配) face of large irregular fitted stones, smaller toward the
    top, the corners in long-and-short 算木積み; its foot sinks into the castle hill, and scrub and low trees grow against it so
    the join is hidden. On top, a white 塀 with a tiled cap along the edge. */
-function ishiGeom() { return { B: BF(CASTLE.x, CASTLE.z, [1, -0.06], 0), w: 13, d: 9.6, h: 5.6, y0: CASTLE.top - 1.6 }; }
+function ishiGeom() { return { B: BF(CASTLE.x, CASTLE.z, KR_DIR, 0), w: 13, d: 9.6, h: 5.6, y0: CASTLE.top - 1.6 }; }   // (facing down the main street)
 function ishiFaces(G) {   // [outward normal (a, b), tangent (a, b), half depth along the normal, half width along the tangent]
   return [[[0, -1], [1, 0], G.d / 2, G.w / 2], [[1, 0], [0, 1], G.w / 2, G.d / 2], [[-1, 0], [0, -1], G.w / 2, G.d / 2]];
 }
@@ -2951,39 +3061,88 @@ function drawIshigaki(ctx) {
   if (!F.keep && !S) { [[-4.5, 1.5], [4.5, 2.5]].forEach(function (q) { var p = B.L(q[0], q[1], 0); drawPine(ctx, genPine(500 + q[0] | 0, p[0], p[2], 2.2, yt)); }); }
 }
 /* ================= 大手門: the castle's approach at the head of the main street =================
-   The street ends at the foot of the castle mound in a 枡形: a 高麗門 across the street (two great posts under a small tiled
-   roof, heavy leaves studded with iron, little roofs over the rear posts), white 塀 on stone footings round a small court, the
-   mound cut back behind it as a 石垣 retaining wall; a stone stair (石段) climbs along that wall from the left, a right-angle
-   turn from the way in, to a landing, and the 櫓門 stands on the terrace above it, its white upper storey over the passage.
-   Frame O: a across the street (toward the keep's side), b up the street; the 高麗門 at b = 0. With the 石垣 (SI.ishigaki):
-   the court, the walls, the stair and the terrace; with the 天守 (SI.keep): the two gates and the guards. */
-var OTE_T = 33, OTE_W = 0;
+   The main street runs on past the 木戸 into a little open ground (大手前) and ends at the 内堀, a broad moat lined with stone.
+   A plank bridge (大手橋) on piles crosses it to the 高麗門 (two great posts under a small tiled roof, heavy leaves studded with
+   iron, little roofs over the rear posts), set in a gap in the castle's outer wall: a tall 石垣 rising straight out of the moat
+   to the level of the enclosure (二の丸) behind it, a white 塀 along its top, a two-storey 隅櫓 on its corner where the moat
+   turns north. Through the gate, the 枡形: a square court sunk in the enclosure, walled round in stone with 塀 on its rims; a
+   stone stair (石段) climbs its back wall from the left, a right-angle turn from the way in, to a landing, and the 櫓門 stands
+   over the stair's head on the enclosure, its white upper storey over the passage. Beyond, on its own higher mound, the keep.
+   Frame O: a across the street (toward the keep's right side), b up the street; the 高麗門 at b = 0. With the 石垣 (SI.ishigaki):
+   the moat, the walls, the bridge, the court, the stair; with the 天守 (SI.keep): the two gates, the 隅櫓 and the guards. */
+var OTE_T = 47, OTE_W = 0;   // (well back from the 木戸: the open ground before the moat, and the moat itself, clear of the street's roofs in front)
 var OTE_O = null;
 function oteFrame() { if (!OTE_O) { var p = stPt(OTE_T, OTE_W); OTE_O = BF(p[0], p[1], KR_DIR, 0); } return OTE_O; }
-var OTE = { court: [-3.2, 6.2, 0, 3.6], wall: [-3.6, 6.6], stair: [-2.4, 3.0, 2.0, 3.6], land: [3.0, 6.2, 1.6, 3.6], yagura: [0.6, 6.4, 3.8, 6.2], pass: [3.25, 6.0], top: 3.6, kG: 2.0 };
+var OTE = {
+  top: 2.4,                                // the enclosure's level: the top of the walls, the terrace the 櫓門 stands on
+  moat: [-5.6, -0.4], moatA: [-18.5, 21.0], arm: [16.0, 21.0, 20.0],   // the moat's front run (b), its west end and the east arm's outer bank (a); the east arm (a, a, how far it runs up in b)
+  encl: [-15.9, 16.0],                     // the enclosure between its west corner and the east arm (a), from the moat's inner bank (b = moat[1]) back to the hill; west of it an earthen bank (土塁) falls away to the ground
+  gate: [-2.0, 2.0],                       // the passage through the outer wall (a), the 高麗門 at b = 0
+  court: [-3.2, 6.2, 1.2, 4.8],            // the 枡形's court (a0, a1, b0, b1), at the street's level
+  wall: [-3.6, 6.6],                       // the back wall's ends (a)
+  stair: [-2.4, 3.0, 3.2, 4.8], land: [3.0, 6.2, 2.8, 4.8],   // the stair along the back wall, rising to the right, and its landing (a0, a1, b0, b1)
+  yagura: [0.6, 6.4, 5.0, 7.4], pass: [3.25, 6.0],             // the 櫓門 on the terrace over the landing, and its passage (a)
+  bridge: [-1.7, 1.7, -6.6, -0.4, 0.42],   // 大手橋 (a0, a1, b0, b1, its deck's height)
+  kG: 2.0
+};
 function oteLocal(x, z) { var O = oteFrame(), dx = x - O.x, dz = z - O.z; return [dx * O.u[0] + dz * O.u[1], dx * O.v[0] + dz * O.v[1]]; }
-function oteGround(x, z, h) {   // the court cut flat, the terrace behind it built up level with the mound (its front the retaining wall), its sides falling away
+function sdRect(a, b, a0, a1, b0, b1) { var da = Math.max(a0 - a, a - a1), db = Math.max(b0 - b, b - b1); return da > 0 && db > 0 ? Math.hypot(da, db) : Math.max(da, db); }   // signed distance to a rectangle (negative inside)
+function oteMoatD(a, b) {   // signed distance to the moat's water (frame O): the front run and the east arm, their far ends rounded
+  var M = OTE.moat, A = OTE.arm, r = Math.min(sdRect(a, b, OTE.moatA[0] + 2.6, A[1], M[0], M[1]), sdRect(a, b, A[0], A[1], M[0], A[2] - 2.5));
+  r = Math.min(r, Math.hypot(a - (OTE.moatA[0] + 2.6), b - (M[0] + M[1]) / 2) - 2.6, Math.hypot(a - (A[0] + A[1]) / 2, b - (A[2] - 2.5)) - 2.5);
+  return r;
+}
+function moatD(x, z) { var q = oteLocal(x, z); return oteMoatD(q[0], q[1]); }
+function oteNotch(a, b) { var C = OTE.court; return (a > C[0] && a < C[1] && b > C[2] && b < C[3]) || (a > OTE.gate[0] && a < OTE.gate[1] && b > OTE.moat[1] - 0.01 && b <= C[2]); }   // the court and the passage into it
+function oteInEncl(a, b) { return a >= OTE.encl[0] && a <= OTE.encl[1] && b >= OTE.moat[1]; }
+function oteGround(x, z, h) {   // the moat at the street's level (its water is the ground's own), the enclosure behind it built up level with the walls' tops, the court sunk in it
   var q = oteLocal(x, z), a = q[0], b = q[1];
-  if (a < -7 || a > 10 || b < -1 || b > 12) return h;
-  var C = OTE.court, Wl = OTE.wall;
-  if (a >= C[0] && a <= C[1] && b >= -0.3 && b < C[3]) return Math.min(h, 0.02);
-  var fa = sstep(Wl[0] - 2.5, Wl[0], a) * (1 - sstep(Wl[1], Wl[1] + 2.5, a)), inW = a >= Wl[0] && a <= Wl[1], fb = inW ? (b >= C[3] ? 1 : 0) : sstep(C[3] - 2, C[3], b) * (1 - sstep(10.5, 12, b));
-  return Math.max(h, OTE.top * Math.min(fa, fb));
+  if (a < OTE.moatA[0] - 2 || a > OTE.moatA[1] + 2 || b < OTE.moat[0] - 2) return h;
+  if (oteMoatD(a, b) < 0) return Math.min(h, 0);
+  if (oteInEncl(a, b)) return oteNotch(a, b) ? 0 : Math.max(h, OTE.top);
+  if (a < OTE.encl[0] && b >= OTE.moat[1]) return Math.max(h, OTE.top * sstep(OTE.encl[0] - 7, OTE.encl[0], a) * sstep(OTE.moat[1], OTE.moat[1] + 1.2, b));   // (the 土塁 west of the enclosure)
+  return h;
+}
+function castlePines() {   // pines about the castle hill; with the castle's walls, in its enclosure either side of the keep and by the 櫓門 (the moat now runs where two of them stood)
+  if (!F.ishigaki && !F.buke) return [];
+  var L = F.ishigaki ? [[-11.5, 3], [11, 4.5], [13, 11]].map(function (q) { var p = oteFrame().L(q[0], q[1], 0); return [p[0], p[2]]; }) : [[22, 80.5], [44, 81], [28, 95]];
+  return L;   // (the lone pine that stood on the open ground east of the eastern compounds gave way to the second 武家屋敷: see BUKE)
 }
 function oteL3(a, b, f) { return [lerp(a[0], b[0], f), lerp(a[1], b[1], f), lerp(a[2], b[2], f)]; }
-function oteClear(x, z) { var q = oteLocal(x, z); return q[0] > -5 && q[0] < 8.5 && q[1] > -1.5 && q[1] < 9; }
+function oteClear(x, z) { var q = oteLocal(x, z); return q[0] > OTE.encl[0] - 1.5 && q[0] < OTE.moatA[1] + 1.5 && q[1] > OTE.moat[0] - 1 && q[1] < 17; }   // (no wood on the moat's banks or in the enclosure; the 土塁 west of it wooded)
+/* the hill mesh where it meets the castle: a vertex in the moat, in the court or just outside the walls is drawn onto the walls'
+   top edge (so the enclosure's ground runs right up to them and no slope of it hangs over the water); returns null where nothing
+   changes, else [x, y, z, kind] with kind 1 the enclosure, 2 drawn to its edge, 3 a hole (the court) */
+var OTE_RIM = null;
+function oteRim() {   // the enclosure's outline round its notch (frame O), corner points from its west wall round to the east arm
+  if (OTE_RIM) return OTE_RIM;
+  var e0 = OTE.encl[0], e1 = OTE.encl[1], m = OTE.moat[1], C = OTE.court, g = OTE.gate;
+  return (OTE_RIM = [[e0, 60], [e0, m], [g[0], m], [g[0], C[2]], [C[0], C[2]], [C[0], C[3]], [C[1], C[3]], [C[1], C[2]], [g[1], C[2]], [g[1], m], [e1, m], [e1, 60]]);
+}
+function oteMeshV(x, z, h) {
+  if (!F || !F.ishigaki) return null;
+  var q = oteLocal(x, z), a = q[0], b = q[1];
+  if (a < OTE.moatA[0] - 4 || a > OTE.moatA[1] + 4 || b < OTE.moat[0] - 4) return null;
+  if (oteNotch(a, b)) return [x, 0, z, 3];
+  if (oteInEncl(a, b)) return [x, h, z, 1];
+  if (oteMoatD(a, b) > 0.3) return null;   // (only what lies in the moat is drawn to the walls' edge)
+  var R = oteRim(), best = null, bd = 1e9;
+  for (var i = 0; i < R.length - 1; i++) { var A = R[i], B2 = R[i + 1], ea = B2[0] - A[0], eb = B2[1] - A[1], L2 = ea * ea + eb * eb, f = clamp(((a - A[0]) * ea + (b - A[1]) * eb) / L2), pa = A[0] + ea * f, pb = A[1] + eb * f, d = Math.hypot(a - pa, b - pb); if (d < bd) { bd = d; best = [pa, pb]; } }
+  if (bd > 2.7 || h > OTE.top - 0.1) return null;
+  var w = oteFrame().L(best[0], best[1], 0); return [w[0], OTE.top - 0.05, w[2], 2];
+}
 /* a dressed stone face: rows of fitted stones over the dark of the joints, the long and short ends alternating at the corners;
    E(u, t): u -1..1 across, t 0..1 up, a point on the face */
-function stoneFace(ctx, E, nC, widthM, heightM, seed) {
-  var S = sil(), face = [], k; for (k = 0; k <= 4; k++) face.push(E(-1, k / 4)); for (k = 4; k >= 0; k--) face.push(E(1, k / 4));
+function stoneFace(ctx, E, nC, widthM, heightM, seed, sz) {   // (sz: the stones' size, 1 by default)
+  var S = sil(), face = [], k; sz = sz || 1; for (k = 0; k <= 4; k++) face.push(E(-1, k / 4)); for (k = 4; k >= 0; k--) face.push(E(1, k / 4));
   var pf = fillPts(ctx, face, shade([52, 50, 46], nC), 0.35); if (S) return;
   ctx.save(); poly(ctx, pf); ctx.clip();
   var r = mulberry32(seed), t = 0, row = 0, kk = Pa(E(0, 0.5)).k;
   while (t < 0.999) {
-    var rh = Math.min(1 - t, (0.36 + r() * 0.22) / heightM), t1 = t + rh, u = -1;
+    var rh = Math.min(1 - t, (0.36 + r() * 0.22) * sz * (1 - 0.3 * t * (sz > 1 ? 1 : 0)) / heightM), t1 = t + rh, u = -1;
     while (u < 0.999) {
-      var corner = u <= -0.999, wu = corner ? ((row % 2 ? 0.9 : 0.45) / widthM) * 2 : ((0.4 + r() * 0.55) / widthM) * 2;
-      if (1 - u - wu < 0.5 / widthM) wu = 1 - u;
+      var corner = u <= -0.999, wu = corner ? ((row % 2 ? 0.9 : 0.45) * sz / widthM) * 2 : ((0.4 + r() * 0.55) * sz / widthM) * 2;
+      if (1 - u - wu < 0.5 * sz / widthM) wu = 1 - u;
       var u1 = Math.min(1, u + wu), g = 0.035 / widthM * 2, gt = 0.035 / heightM, base = scl(mixc(mixc([146, 140, 128], [108, 104, 96], r()), [130, 118, 98], r() * 0.4), 0.72 + 0.34 * r());
       var q = [E(u + g, t + gt), E(u1 - g, t + gt * 0.6), E(u1 - g * 0.6, t1 - gt), E(u + g * 0.7, t1 - gt * 0.7)];
       fillPts(ctx, q, shade(base, nC), 0);
@@ -2999,8 +3158,9 @@ function stoneFace(ctx, E, nC, widthM, heightM, seed) {
 function drawOteBack(ctx) {
   var O = oteFrame(), S = sil(), up = [0, 1, 0], Y = OTE.top, Wl = OTE.wall, C = OTE.court, st = OTE.stair, ld = OTE.land, snow = SEA.snow, i;
   var nW = O.N(0, -1, 0), bat = 0.35;   // (the wall leans back a little: 勾配)
-  fillPts(ctx, [O.L(C[0], 0, 0.02), O.L(C[1], 0, 0.02), O.L(C[1], C[3], 0.02), O.L(C[0], C[3], 0.02)], shade(snow ? SNOW : [176, 168, 152], up), 0.3);   // the court paved with flat stones, pale against the street
-  if (!S && !snow) { ctx.strokeStyle = rgb(shade([128, 122, 110], up), 0.6); ctx.lineWidth = Math.max(0.25, 0.02 * Pa(O.L(0, 1.8, 0)).k); ctx.beginPath(); for (i = 1; i < 5; i++) { var jy = C[3] * i / 5, a0 = Pa(O.L(C[0], jy, 0.03)), a1 = Pa(O.L(C[1], jy, 0.03)); ctx.moveTo(a0.x, a0.y); ctx.lineTo(a1.x, a1.y); } for (i = 1; i < 8; i++) { var jx = lerp(C[0], C[1], i / 8), b0 = Pa(O.L(jx, (i % 2) * 0.7, 0.03)), b1 = Pa(O.L(jx, C[3], 0.03)); ctx.moveTo(b0.x, b0.y); ctx.lineTo(b1.x, b1.y); } ctx.stroke(); }
+  var G = OTE.gate, m = OTE.moat[1];
+  fillPts(ctx, [O.L(C[0], C[2], 0.02), O.L(G[0], C[2], 0.02), O.L(G[0], m, 0.02), O.L(G[1], m, 0.02), O.L(G[1], C[2], 0.02), O.L(C[1], C[2], 0.02), O.L(C[1], C[3], 0.02), O.L(C[0], C[3], 0.02)], shade(snow ? SNOW : [176, 168, 152], up), 0.3);   // the court and the passage in, paved with flat stones, pale against the street
+  if (!S && !snow) { ctx.strokeStyle = rgb(shade([128, 122, 110], up), 0.6); ctx.lineWidth = Math.max(0.25, 0.02 * Pa(O.L(0, 1.8, 0)).k); ctx.beginPath(); for (i = 1; i < 5; i++) { var jy = lerp(C[2], C[3], i / 5), a0 = Pa(O.L(C[0], jy, 0.03)), a1 = Pa(O.L(C[1], jy, 0.03)); ctx.moveTo(a0.x, a0.y); ctx.lineTo(a1.x, a1.y); } for (i = 1; i < 8; i++) { var jx = lerp(C[0], C[1], i / 8), b0 = Pa(O.L(jx, C[2] + (i % 2) * 0.7, 0.03)), b1 = Pa(O.L(jx, C[3], 0.03)); ctx.moveTo(b0.x, b0.y); ctx.lineTo(b1.x, b1.y); } for (i = 1; i < 3; i++) { var py = lerp(m, C[2], i / 3), p0 = Pa(O.L(G[0], py, 0.03)), p1 = Pa(O.L(G[1], py, 0.03)); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); } ctx.stroke(); }
   stoneFace(ctx, function (u, t) { return O.L(lerp(Wl[0], Wl[1], (u + 1) / 2), C[3] + bat * t, Y * t); }, norm(add(nW, [0, 0.12, 0])), Wl[1] - Wl[0], Y, 777);
   if (snow && !S) { var s0 = Pa(O.L(Wl[0], C[3] + bat, Y)), s1 = Pa(O.L(Wl[1], C[3] + bat, Y)); ctx.strokeStyle = rgb(shade(SNOW, up)); ctx.lineWidth = Math.max(0.5, 0.12 * s0.k); ctx.beginPath(); ctx.moveTo(s0.x, s0.y); ctx.lineTo(s1.x, s1.y); ctx.stroke(); }
   // the 塀 along the wall's top, from the left end to the head of the stair
@@ -3067,36 +3227,162 @@ function oteHei(ctx, O, run, h) {   // a 塀 on a footing of dressed stone
   }
   castleHei(ctx, O, run, 0.4, h);
 }
-function drawOteSides(ctx) { var O = oteFrame(), C = OTE.court; oteHei(ctx, O, [[C[0], 0], [C[0], C[3]]], 1.3); oteHei(ctx, O, [[C[1], 0], [C[1], OTE.land[2]]], 1.3); }
+function drawOteSides(ctx) {   // the court's side walls: stone faces up to the enclosure's level (the left one toward us; the right one, behind the landing, seen only from beyond), a 塀 along each rim
+  var O = oteFrame(), C = OTE.court, Y = OTE.top, bat = 0.3, m = OTE.moat[1];
+  stoneFace(ctx, function (u, t) { return O.L(C[0] - bat * t, lerp(C[2], C[3], (u + 1) / 2), Y * t); }, norm(add(O.N(1, 0, 0), [0, 0.12, 0])), C[3] - C[2], Y, 781);
+  if (MODE !== 'n') stoneFace(ctx, function (u, t) { return O.L(C[1] + bat * t, lerp(C[3], C[2], (u + 1) / 2), Y * t); }, norm(add(O.N(-1, 0, 0), [0, 0.12, 0])), C[3] - C[2], Y, 782);
+  castleHei(ctx, O, [[C[0] - bat - 0.2, m + 0.3], [C[0] - bat - 0.2, C[3] + 0.5]], Y, 1.3);
+  castleHei(ctx, O, [[C[1] + bat + 0.2, m + 0.3], [C[1] + bat + 0.2, OTE.yagura[2] - 0.1]], Y, 1.3);
+}
 function drawOteFront(ctx) {
-  var O = oteFrame(), S = sil(), C = OTE.court, kg = OTE.kG, dark = [64, 50, 40], h = 4.1, shut = LIT.name === 'night', i;
-  oteHei(ctx, O, [[C[0], 0], [-kg - 0.25, 0]], 1.2); oteHei(ctx, O, [[kg + 0.25, 0], [C[1], 0]], 1.2);   // (low enough that the court and the stair show over them)
+  var O = oteFrame(), S = sil(), C = OTE.court, G = OTE.gate, m = OTE.moat[1], Y = OTE.top, kg = OTE.kG, dark = [64, 50, 40], h = 4.5, shut = LIT.name === 'night', i;
+  // the passage's stone cheeks (the left one toward us)
+  stoneFace(ctx, function (u, t) { return O.L(G[0], lerp(C[2], m, (u + 1) / 2), Y * t); }, norm(add(O.N(1, 0, 0), [0, 0.1, 0])), C[2] - m, Y, 783);
+  if (MODE !== 'n') stoneFace(ctx, function (u, t) { return O.L(G[1], lerp(m, C[2], (u + 1) / 2), Y * t); }, norm(add(O.N(-1, 0, 0), [0, 0.1, 0])), C[2] - m, Y, 784);
   if (!F.keep) return;   // (the opening stands empty till the gate is raised with the keep)
   // the rear posts (控柱) and their little roofs
-  [-1, 1].forEach(function (sg) { postIn(ctx, O, sg * kg, 1.35, 0, 2.6, 0.12, dark); boxIn(ctx, O, sg * kg - 0.08, sg * kg + 0.08, 0, 1.35, 2.2, 2.38, dark); var rp = O.L(sg * kg, 0.7, 0); drawRoof(ctx, BF(rp[0], rp[2], [O.v[0], O.v[1]], 0), { W: 0.95, D: 0.5, yE: 2.62, s: 0.55, type: 'gable', mat: 'kawara', col: [64, 68, 78], seed: 140 + sg, ridgeH: 0.1 }); });
-  // the leaves: heavy boards with iron bands and studs; swung back by day, shut at night
+  [-1, 1].forEach(function (sg) { postIn(ctx, O, sg * (kg - 0.12), 1.35, 0, 2.8, 0.12, dark); boxIn(ctx, O, sg * (kg - 0.12) - 0.08, sg * (kg - 0.12) + 0.08, 0, 1.35, 2.4, 2.58, dark); var rp = O.L(sg * (kg - 0.12), 0.7, 0); drawRoof(ctx, BF(rp[0], rp[2], [O.v[0], O.v[1]], 0), { W: 0.95, D: 0.42, yE: 2.82, s: 0.55, type: 'gable', mat: 'kawara', col: [64, 68, 78], seed: 140 + sg, ridgeH: 0.1 }); });
+  // the leaves: heavy boards with iron bands and studs; swung back against the cheeks by day, shut at night
   function leaf(a0, a1, b0, b1) {
-    var q = [O.L(a0, b0, 0.05), O.L(a1, b1, 0.05), O.L(a1, b1, 3.35), O.L(a0, b0, 3.35)], c = centroid(q), n = norm([q[1][2] - q[0][2], 0, -(q[1][0] - q[0][0])]);
+    var q = [O.L(a0, b0, 0.05), O.L(a1, b1, 0.05), O.L(a1, b1, 3.6), O.L(a0, b0, 3.6)], c = centroid(q), n = norm([q[1][2] - q[0][2], 0, -(q[1][0] - q[0][0])]);
     if (!faceVisible(c, n)) n = mul(n, -1);
     fillPts(ctx, q, S ? [0, 0, 0] : shade([84, 62, 46], n), 0.35); if (S) return;
     ctx.strokeStyle = rgb(shade([40, 40, 44], n)); ctx.lineWidth = Math.max(0.35, 0.06 * Pa(c).k);
-    ctx.beginPath(); [0.7, 1.7, 2.7].forEach(function (y) { var p0 = Pa([q[0][0], y, q[0][2]]), p1 = Pa([q[1][0], y, q[1][2]]); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); }); ctx.stroke();   // iron bands
+    ctx.beginPath(); [0.7, 1.8, 2.9].forEach(function (y) { var p0 = Pa([q[0][0], y, q[0][2]]), p1 = Pa([q[1][0], y, q[1][2]]); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); }); ctx.stroke();   // iron bands
     ctx.fillStyle = rgb(shade([30, 30, 34], n)); var kk = Pa(c).k, ds = Math.max(0.35, 0.05 * kk);
-    for (var y = 0.45; y < 3.2; y += 0.5) for (var f = 0.15; f < 0.95; f += 0.23) { var sp = Pa([lerp(q[0][0], q[1][0], f), y, lerp(q[0][2], q[1][2], f)]); ctx.fillRect(sp.x - ds / 2, sp.y - ds / 2, ds, ds); }   // the studs
+    for (var y = 0.45; y < 3.45; y += 0.5) for (var f = 0.15; f < 0.95; f += 0.23) { var sp = Pa([lerp(q[0][0], q[1][0], f), y, lerp(q[0][2], q[1][2], f)]); ctx.fillRect(sp.x - ds / 2, sp.y - ds / 2, ds, ds); }   // the studs
   }
   if (shut) { leaf(-kg + 0.12, 0, 0.05, 0.05); leaf(0, kg - 0.12, 0.05, 0.05); } else { leaf(-kg + 0.15, -kg + 0.15, 0.15, 1.95); leaf(kg - 0.15, kg - 0.15, 0.15, 1.95); }
-  [-kg, kg].forEach(function (a) { postIn(ctx, O, a, 0, 0, h, 0.2, dark); });
-  boxIn(ctx, O, -kg - 0.55, kg + 0.55, -0.16, 0.16, h - 0.45, h - 0.08, dark);   // the 冠木
-  drawRoof(ctx, O, { W: kg + 0.85, D: 0.75, yE: h, s: 0.6, type: 'gable', mat: 'kawara', col: [64, 68, 78], seed: 142, ridgeH: 0.16, hon: true });
-  // night: a tall 高張提灯 on a pole by each post, lit
-  if (LIT.name === 'night' || LIT.name === 'dusk') [-1, 1].forEach(function (sg) {
-    var pb = O.L(sg * (kg + 0.75), -0.55, 0), pt = P(pb[0], 3.3, pb[2]), p0 = P(pb[0], 0, pb[2]), k = pt.k;
-    if (S) return;
+  [-kg, kg].forEach(function (a) { postIn(ctx, O, a, 0, 0, h, 0.21, dark); });
+  boxIn(ctx, O, -kg - 0.6, kg + 0.6, -0.17, 0.17, h - 0.48, h - 0.08, dark);   // the 冠木
+  drawRoof(ctx, O, { W: kg + 0.95, D: 0.8, yE: h, s: 0.6, type: 'gable', mat: 'kawara', col: [64, 68, 78], seed: 142, ridgeH: 0.18, hon: true });
+}
+/* the castle's outer wall: a tall 石垣 out of the moat (or the ground) to the enclosure's level, leaning back as it rises, a 塀 along
+   its top. q: [a0, b0, a1, b1, foot, corner at the start, corner at the end, 塀] in frame O, the face on the right going from
+   (a0, b0) to (a1, b1) */
+function drawMoatWall(ctx, q) {
+  var O = oteFrame(), Y = OTE.top, bat = 0.35, ea = q[2] - q[0], eb = q[3] - q[1], L = Math.hypot(ea, eb), na = eb / L, nb = -ea / L, foot = q[4], snow = SEA.snow;
+  var nC = norm(add(O.N(na, nb, 0), [0, 0.12, 0]));
+  function E(u, t) { var f = (u + 1) / 2; return O.L(lerp(q[0], q[2], f) - na * bat * t, lerp(q[1], q[3], f) - nb * bat * t, lerp(foot, Y, t)); }
+  if (faceVisible(E(0, 0.5), nC) || MODE !== 'n') {
+    stoneFace(ctx, E, nC, L, Y - foot, 790 + Math.round(q[0] * 3 + q[1] * 7), 1.6);   // (big stones low down, smaller toward the top)
+    if (!sil() && MODE === 'n') {   // the corners' long and short stones (算木積み), a little paler; the damp line at the water
+      var k0 = Pa(E(0, 0.5)).k, hh = Y - foot;
+      [-1, 1].forEach(function (cu) { if ((cu < 0 ? q[5] : q[6]) !== 1) return; ctx.fillStyle = rgb(shade([166, 160, 148], nC), 0.55); for (var t = 0, j = 0; t < 1; t += 0.5 / hh, j++) { var w2 = (j % 2 ? 0.9 : 0.45) / L * 2, t2 = Math.min(1, t + 0.46 / hh), p0 = Pa(E(cu, t)), p1 = Pa(E(cu - cu * w2, t)), p2 = Pa(E(cu - cu * w2, t2)), p3 = Pa(E(cu, t2)); ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p3.x, p3.y); ctx.closePath(); ctx.fill(); } });
+      if (foot < 0) { var w0 = Pa(E(0, 0)), w1 = Pa(E(0, (WL + 0.45 - foot) / hh)), wg = ctx.createLinearGradient(0, w0.y, 0, w1.y); wg.addColorStop(0, 'rgba(30,44,34,0.55)'); wg.addColorStop(1, 'rgba(30,44,34,0)'); ctx.save(); var fp = [E(-1, 0), E(1, 0), E(1, 1), E(-1, 1)].map(Pa); poly(ctx, fp); ctx.clip(); ctx.fillStyle = wg; ctx.fillRect(Math.min(fp[0].x, fp[1].x, fp[2].x, fp[3].x) - 2, Math.min(w0.y, w1.y) - 2, Math.abs(fp[1].x - fp[0].x) + Math.abs(fp[2].x - fp[1].x) + 4, Math.abs(w0.y - w1.y) + 4); ctx.restore(); }   // weed and damp where the water laps
+      if (snow) { var s0 = Pa(E(-1, 1)), s1 = Pa(E(1, 1)); ctx.strokeStyle = rgb(shade(SNOW, [0, 1, 0])); ctx.lineWidth = Math.max(0.5, 0.1 * k0); ctx.beginPath(); ctx.moveTo(s0.x, s0.y); ctx.lineTo(s1.x, s1.y); ctx.stroke(); }
+    }
+  }
+  if (q[7] !== 0) castleHei(ctx, O, [[q[0] - na * (bat + 0.28), q[1] - nb * (bat + 0.28)], [q[2] - na * (bat + 0.28), q[3] - nb * (bat + 0.28)]], Y, 1.45);
+}
+function moatWalls() {   // the outer wall's pieces (frame O), short enough to sort among their neighbours
+  var m = OTE.moat[1], e0 = OTE.encl[0], e1 = OTE.encl[1], G = OTE.gate, A = OTE.arm, W = WL - 0.1, out = [];
+  function run(a0, b0, a1, b1, foot, c0, c1, n) { for (var i = 0; i < n; i++) out.push([lerp(a0, a1, i / n), lerp(b0, b1, i / n), lerp(a0, a1, (i + 1) / n), lerp(b0, b1, (i + 1) / n), foot, i === 0 ? c0 : 0, i === n - 1 ? c1 : 0, 1]); }
+  run(e0, m, G[0], m, W, 1, 1, 2);            // west of the gate
+  run(G[1], m, e1, m, W, 1, 1, 3);            // east of it, to the corner
+  run(e1, m, e1, A[2], W, 1, 0, 3);           // up the east arm
+  run(e1, A[2], e1, A[2] + 6, -0.4, 0, 0, 1); // (on past the arm's end, into the hill)
+  return out;
+}
+/* the moat's low banks: on the town's side and round its ends, a stone revetment from the water to the ground, and its coping;
+   at its west end, past the enclosure, the inner bank the same */
+function moatBankPts() {
+  var M = OTE.moat, A = OTE.arm, pts = [], i, xw = OTE.moatA[0] + 2.6, cw = (M[0] + M[1]) / 2, rw = (M[1] - M[0]) / 2, ca = (A[0] + A[1]) / 2, ra = (A[1] - A[0]) / 2, nend = A[2] - 2.5;
+  pts.push([OTE.encl[0], M[1]], [xw, M[1]]);
+  for (i = 1; i < 8; i++) { var an = Math.PI / 2 + i / 8 * Math.PI; pts.push([xw + Math.cos(an) * rw, cw + Math.sin(an) * rw]); }   // round the west end
+  pts.push([xw, M[0]], [A[1], M[0]], [A[1], nend]);
+  for (i = 1; i <= 8; i++) { var an2 = i / 8 * Math.PI; pts.push([ca + Math.cos(an2) * ra, nend + Math.sin(an2) * ra]); }   // up the east arm's outer bank and round its end
+  return pts;
+}
+function drawMoatBanks(ctx) {
+  var O = oteFrame(), S = sil(), M = OTE.moat, st = [146, 140, 128], up = [0, 1, 0], snow = SEA.snow, pts = moatBankPts(), i;
+  for (i = 0; i < pts.length - 1; i++) {
+    var p = pts[i], q = pts[i + 1], ma = (p[0] + q[0]) / 2, mb = (p[1] + q[1]) / 2, ea = q[0] - p[0], eb = q[1] - p[1], L = Math.hypot(ea, eb); if (L < 0.01) continue;
+    var na = -eb / L, nb = ea / L; if (oteMoatD(ma + na * 0.4, mb + nb * 0.4) > 0) { na = -na; nb = -nb; }   // (facing the water)
+    var n = O.N(na, nb, 0), fq = [O.L(p[0], p[1], WL - 0.2), O.L(q[0], q[1], WL - 0.2), O.L(q[0], q[1], 0.15), O.L(p[0], p[1], 0.15)];
+    if (faceVisible(centroid(fq), n) || MODE === 's') { var pf = fillPts(ctx, fq, S ? [0, 0, 0] : shade(st, n), 0.3); if (!S && MODE === 'n') { ctx.save(); poly(ctx, pf); ctx.clip(); ctx.strokeStyle = rgb(scl(shade(st, n), 0.62)); ctx.lineWidth = 0.3; ctx.beginPath(); for (var y = WL; y < 0.15; y += 0.33) { var a0 = Pa(O.L(p[0], p[1], y)), a1 = Pa(O.L(q[0], q[1], y)); ctx.moveTo(a0.x, a0.y); ctx.lineTo(a1.x, a1.y); } ctx.stroke(); var w0 = Pa(O.L(ma, mb, WL - 0.1)), w1 = Pa(O.L(ma, mb, WL + 0.4)), wg = ctx.createLinearGradient(0, w0.y, 0, w1.y); wg.addColorStop(0, 'rgba(30,44,34,0.55)'); wg.addColorStop(1, 'rgba(30,44,34,0)'); ctx.fillStyle = wg; ctx.fillRect(Math.min(pf[0].x, pf[1].x) - 2, Math.min(w0.y, w1.y) - 2, Math.abs(pf[1].x - pf[0].x) + 4, Math.abs(w0.y - w1.y) + 4); ctx.restore(); } }
+    var cq = [O.L(p[0], p[1], 0.15), O.L(q[0], q[1], 0.15), O.L(q[0] - na * 0.3, q[1] - nb * 0.3, 0.15), O.L(p[0] - na * 0.3, p[1] - nb * 0.3, 0.15)];
+    fillPts(ctx, cq, S ? [0, 0, 0] : shade(snow ? SNOW : scl(st, 1.08 + 0.08 * (hash2(i, 5) - 0.5)), up), 0.3);
+  }
+}
+/* the moat's water, laid over the ground's own (which, so far off, reads as pale as the ground about it): dark and green, still
+   enough to give back its walls (the dark stone, the white 塀 along their tops) and a little of the sky; frozen at its edges in
+   the snow, and at night only the faintest gleam */
+function drawMoatWater(ctx) {
+  if (MODE !== 'n' || sil()) return;
+  var O = oteFrame(), M = OTE.moat, A = OTE.arm, Y = OTE.top, lt = lightTint(1), night = LIT.name === 'night', snow = SEA.snow, i;
+  var pts = moatBankPts(); pts.push([A[0], M[1]]);
+  var pp = pts.map(function (q) { return Pa(O.L(q[0], q[1], 0)); });
+  ctx.save(); poly(ctx, pp); ctx.clip();
+  var base = mulc(snow ? [70, 86, 92] : [38, 58, 52], lt);
+  poly(ctx, pp); ctx.fillStyle = rgb(base, 0.82); ctx.fill();
+  // the walls given back: their stone dark, the 塀 a pale band below it, broken a little by the ripples
+  function refl(a0, b0, a1, b1, y0, y1, col, al) { var q = [O.L(a0, b0, 2 * WL - y0), O.L(a1, b1, 2 * WL - y0), O.L(a1, b1, 2 * WL - y1), O.L(a0, b0, 2 * WL - y1)].map(Pa); poly(ctx, q); ctx.fillStyle = rgb(col, al); ctx.fill(); }
+  var runs = [[OTE.encl[0], M[1], OTE.gate[0], M[1]], [OTE.gate[1], M[1], A[0], M[1]], [A[0], M[1], A[0], A[2]]];
+  runs.forEach(function (r) { refl(r[0], r[1], r[2], r[3], WL, Y, mulc([52, 54, 50], lt), 0.55); if (F.ishigaki) refl(r[0], r[1], r[2], r[3], Y + 0.35, Y + 1.25, mulc(night ? [120, 124, 130] : [196, 196, 188], lt), 0.32); });
+  // the sky in it: a few long faint streaks across, more where the wind ruffles it
+  var r0 = mulberry32(611); ctx.lineWidth = Math.max(0.4, 0.05 * pp[0].k || 0.4);
+  for (i = 0; i < 26; i++) { var a = lerp(OTE.moatA[0] + 1, A[1] - 0.5, r0()), b = lerp(M[0] + 0.3, M[1] - 0.6, r0()), L2 = 0.6 + r0() * 1.8; if (r0() < 0.3) { a = lerp(A[0] + 0.4, A[1] - 0.4, r0()); b = lerp(M[1], A[2] - 2, r0()); } var p0 = Pa(O.L(a - L2 / 2, b, 0)), p1 = Pa(O.L(a + L2 / 2, b, 0)); ctx.strokeStyle = rgb(mulc(night ? [150, 160, 190] : [214, 222, 226], lt), (night ? 0.12 : 0.22) * (0.5 + r0() * 0.5)); ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.stroke(); }
+  if (snow) {   // ice along the walls and the banks
+    ctx.globalAlpha = 0.55; ctx.lineWidth = Math.max(1, 0.5 * Pa(O.L(0, M[1], 0)).k); ctx.strokeStyle = rgb(snowLt(lt)); poly(ctx, pp); ctx.stroke(); ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+}
+/* 大手橋: a plank bridge on piles over the moat to the 高麗門, a 高欄 on either side, 擬宝珠 on its end posts.
+   part 'main': the piles, the deck and the far railing; part 'near': the near railing from b0 to b1 (its own pieces, each at its depth) */
+function oteDeckY(b) { var B2 = OTE.bridge, f = clamp((b - B2[2]) / (B2[3] - B2[2])); return 0.18 + (B2[4] - 0.18) * Math.sin(f * Math.PI); }
+function drawOteBridge(ctx, part, b0, b1) {
+  var O = oteFrame(), S = sil(), B2 = OTE.bridge, wood = [132, 108, 82], dark = [84, 64, 48], snow = SEA.snow, i, n = 10;
+  function rail(a, c0, c1) {   // a 高欄 along a (frame O) from b = c0 to c1: posts, the top rail, the middle rail
+    var nP = Math.max(1, Math.round((c1 - c0) / 1.25)), hR = 0.95;
+    for (var j = 0; j <= nP; j++) { var bq = lerp(c0, c1, j / nP), y0 = oteDeckY(bq), end = Math.abs(bq - B2[2]) < 0.01 || Math.abs(bq - B2[3]) < 0.01; postIn(ctx, O, a, bq, y0 - 0.05, y0 + hR + (end ? 0.1 : 0), end ? 0.085 : 0.055, dark);
+      if (end && !S) { var gp = Pa(O.L(a, bq, y0 + hR + 0.1)), gk = gp.k; ctx.fillStyle = rgb(shade([108, 112, 90], norm([LS[0], 0.6, LS[1]]))); ctx.beginPath(); ctx.ellipse(gp.x, gp.y - 0.08 * gk, 0.1 * gk, 0.09 * gk, 0, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.moveTo(gp.x - 0.04 * gk, gp.y - 0.14 * gk); ctx.lineTo(gp.x, gp.y - 0.26 * gk); ctx.lineTo(gp.x + 0.04 * gk, gp.y - 0.14 * gk); ctx.fill(); } }   // 擬宝珠
+    [hR, hR * 0.5].forEach(function (yy, ri) { var pts = []; for (var j2 = 0; j2 <= 10; j2++) { var bq2 = lerp(c0, c1, j2 / 10); pts.push(Pa(O.L(a, bq2, oteDeckY(bq2) + yy))); } ctx.strokeStyle = S ? '#000' : rgb(shade(ri ? dark : [104, 82, 60], norm([0, 0.6, -1]))); ctx.lineWidth = Math.max(S ? 0.5 : 0.35, (ri ? 0.05 : 0.08) * pts[5].k); ctx.beginPath(); pts.forEach(function (p, j3) { if (j3) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y); }); ctx.stroke(); if (!ri && snow && !S) { ctx.strokeStyle = rgb(snowLt(lightTint(1))); ctx.lineWidth = Math.max(0.3, 0.05 * pts[5].k); ctx.stroke(); } });
+  }
+  if (part === 'near') { rail(B2[1], b0, b1); return; }
+  // the piles, braced across under the deck
+  [-5.2, -3.5, -1.8].forEach(function (bq) { [B2[0] + 0.35, B2[1] - 0.35].forEach(function (a) { postIn(ctx, O, a, bq, WL - 0.4, oteDeckY(bq) - 0.1, 0.12, dark); }); boxIn(ctx, O, B2[0] + 0.2, B2[1] - 0.2, bq - 0.09, bq + 0.09, oteDeckY(bq) - 0.32, oteDeckY(bq) - 0.12, dark); });
+  // the deck: the beams along its edges, the planks across it
+  var dk = [];
+  for (i = 0; i <= n; i++) { var bq = lerp(B2[2], B2[3], i / n); dk.push([bq, oteDeckY(bq)]); }
+  for (i = 0; i < n; i++) {
+    var p = dk[i], q = dk[i + 1], nn = norm(cross(sub(O.L(B2[1], q[0], q[1]), O.L(B2[1], p[0], p[1])), sub(O.L(B2[0], p[0], p[1]), O.L(B2[1], p[0], p[1])))); if (nn[1] < 0) nn = mul(nn, -1);
+    fillPts(ctx, [O.L(B2[0], p[0], p[1]), O.L(B2[1], p[0], p[1]), O.L(B2[1], q[0], q[1]), O.L(B2[0], q[0], q[1])], S ? [0, 0, 0] : shade(snow ? SNOW : scl(wood, 0.95 + 0.1 * hash2(i, 3)), nn), 0.3);
+    [B2[0], B2[1]].forEach(function (a) { var fq = [O.L(a, p[0], p[1] - 0.24), O.L(a, q[0], q[1] - 0.24), O.L(a, q[0], q[1]), O.L(a, p[0], p[1])], fn = O.N(a > 0 ? 1 : -1, 0, 0); if (faceVisible(centroid(fq), fn) || MODE !== 'n') fillPts(ctx, fq, S ? [0, 0, 0] : shade(dark, fn), 0.3); });
+  }
+  if (!S && !snow) { ctx.strokeStyle = 'rgba(60,44,32,0.35)'; ctx.lineWidth = 0.3; ctx.beginPath(); for (var bq3 = B2[2] + 0.3; bq3 < B2[3]; bq3 += 0.3) { var y2 = oteDeckY(bq3) + 0.01, a0 = Pa(O.L(B2[0], bq3, y2)), a1 = Pa(O.L(B2[1], bq3, y2)); ctx.moveTo(a0.x, a0.y); ctx.lineTo(a1.x, a1.y); } ctx.stroke(); }
+  rail(B2[0], B2[2], B2[3]);
+  if (MODE !== 'n') rail(B2[1], B2[2], B2[3]);
+  // at dusk and at night a tall 高張提灯 on a pole either side of the bridge's head, lit
+  if ((LIT.name === 'night' || LIT.name === 'dusk') && F.keep && !S) [-1, 1].forEach(function (sg) {
+    var pb = O.L(sg * (B2[1] + 0.55), B2[2] - 0.45, 0), pt = P(pb[0], 3.3, pb[2]), p0 = P(pb[0], 0, pb[2]), k = pt.k;
     ctx.strokeStyle = rgb([70, 56, 44]); ctx.lineWidth = Math.max(0.35, 0.06 * k); ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(pt.x, pt.y - 0.2 * k); ctx.stroke();
     var lit2 = LIT.lit; ctx.fillStyle = lit2 ? 'rgb(255,214,150)' : rgb([236, 226, 206]); ctx.beginPath(); ctx.ellipse(pt.x, pt.y + 0.25 * k, 0.2 * k, 0.33 * k, 0, 0, TAU); ctx.fill();
     ctx.fillStyle = rgb([40, 34, 30]); ctx.fillRect(pt.x - 0.2 * k, pt.y - 0.12 * k, 0.4 * k, 0.07 * k); ctx.fillRect(pt.x - 0.2 * k, pt.y + 0.55 * k, 0.4 * k, 0.07 * k);
     if (lit2) { ctx.fillStyle = 'rgba(150,40,30,0.85)'; ctx.beginPath(); ctx.arc(pt.x, pt.y + 0.25 * k, 0.08 * k, 0, TAU); ctx.fill(); addGlow(P(pb[0], 3.55, pb[2]), 5, 0.75); }   // (the crest on it)
   });
+}
+/* 隅櫓: a two-storey turret on the corner of the outer wall where the moat turns: white plaster over a black weatherboard skirt,
+   barred windows, a hipped skirt roof and an 入母屋 roof over the upper storey */
+function sumiFrame() { var c = oteFrame().L(OTE.encl[1] - 2.55, OTE.moat[1] + 2.45, 0); return BF(c[0], c[2], oteFrame().u, OTE.top); }
+function drawSumiYagura(ctx) {
+  var G = sumiFrame(), S = sil(), w1 = 4.4, d1 = 4.0, h1 = 2.7, w2 = 3.2, d2 = 2.8, h2 = 2.3, tile = [64, 68, 78];
+  function storey(w, d, y0, y1, seed, top) {
+    var Wl = boxWalls(G, w, d, y0, y1);
+    [Wl.f, Wl.l, Wl.r].forEach(function (q, qi) {
+      if (!q.vis) return;
+      paintWall(ctx, q, [238, 236, 228], { eave: 0.35, seed: seed + qi, lo: { amb: 1.2 } });
+      if (S) return;
+      wquad(ctx, q, 0, q.len, y0, y0 + (top ? 0.55 : 1.0), shade([44, 40, 40], q.n), 0.01);   // 下見板
+      var nw = Math.max(1, Math.round(q.len / 1.7)); for (var j = 0; j < nw; j++) { var sm = (j + 0.5) * q.len / nw, s0 = sm - 0.32, s1 = sm + 0.32, wy0 = y1 - 1.05, wy1 = y1 - 0.45, on = LIT.lit && hash2(seed + j, qi) < LIT.win * 0.4; wquad(ctx, q, s0, s1, wy0, wy1, on ? scl(WIN_ON, 0.85) : [34, 30, 30], 0.02); if (on) addGlow(Pa(q.at(sm, (wy0 + wy1) / 2)), 4, 0.3, false); else { ctx.strokeStyle = rgb(shade([200, 196, 186], q.n)); ctx.lineWidth = 0.3; ctx.beginPath(); for (var b2 = 1; b2 < 4; b2++) wline(ctx, q, s0 + (s1 - s0) * b2 / 4, wy0, s0 + (s1 - s0) * b2 / 4, wy1, 0.03); ctx.stroke(); } }   // barred windows
+    });
+  }
+  storey(w1, d1, 0, h1, 160, false);
+  var g = d1 / 2 + 0.85 - d2 / 2;
+  drawRoof(ctx, G, { W: w1 / 2 + 0.85, D: d1 / 2 + 0.85, yE: h1, s: 0.55, type: 'hip', mat: 'kawara', col: tile, seed: 161, sori: 0.45, ridgeH: 0.2, noRidge: true, hon: true, age: 0.06 });
+  var y2 = h1 + 0.55 * g;
+  storey(w2, d2, y2, y2 + h2, 170, true);
+  drawRoof(ctx, G, { W: w2 / 2 + 0.75, D: d2 / 2 + 0.75, yE: y2 + h2, s: 0.6, type: 'irimoya', bm: 0.5, mat: 'kawara', col: tile, seed: 171, sori: 0.5, ridgeH: 0.3, gableWhite: true, hon: true, age: 0.06 });
 }
 /* the castle stands far off: veil it (and whatever farther stands behind it in its box) a little in the air's colour */
 function castleHaze(ctx) {
@@ -3291,7 +3577,7 @@ function doorList() {
   function add(W0, s0, s1, top, kind) { if (W0.vis) out.push({ W: W0, s0: s0, s1: s1, top: top, kind: kind || 'house' }); }
   if (F.teahouse) add(boxWalls(teaFrame(), 5.6, 4.2, 0, 2.5).f, 0.45, 2.35, 2.2, 'tea');
   if (F.farm) add(boxWalls(farmFrame(), 11.5, 7.6, 0, 2.7).f, 0.7, 2.6, 2.15, 'farm');
-  if (F.mill) add(boxWalls(millFrame(), 5, 4.4, 0, 2.5).f, 1.2, 2.4, 1.9, 'mill');
+  if (F.mill) out.push({ W: boxWalls(millFrame(), 5, 4.4, 0, 2.5).l, s0: 1.6, s1: 2.6, top: 1.9, kind: 'mill' });   // (its door in the upstream gable, where the plank comes over the race: listed even though that wall is turned from us, so every door after it keeps its place in the list, and its props)
   townPlan(F).forEach(function (b) {
     var B = BF(b.x, b.z, b.u, 0);
     if (b.type === 'nagaya') { var f = boxWalls(B, b.units * 2.75, 4.6, 0, 2.75).f; for (var i = 0; i < b.units; i += 2) add(f, i * 2.75 + 0.3, i * 2.75 + 1.2, 1.8, 'nagaya'); return; }
@@ -3932,6 +4218,8 @@ function buildGrid() {
     if (dV) { q = dV[i] - vw; if (q < p) p = q; }
     path[i] = p; chan[i] = dC[i] - RIVER_HW; trk[i] = F.street ? Math.min(dT[i], dV ? dV[i] : 99) : 99;
   }
+  var race = null; if (F.mill) { race = distField(nx, nz, millRaceS(), 4); for (i = 0; i < N; i++) race[i] -= MILL_RACE_HW; }   // the mill race: signed distance to its kerbs
+  var moat = null; if (F.ishigaki) { moat = new Float32Array(N); moat.fill(9); for (j = Math.max(0, Math.floor((60 - GG.z0) / GG.st)); j < Math.min(nz, Math.ceil((112 - GG.z0) / GG.st)); j++) for (i = Math.max(0, Math.floor((-2 - GG.x0) / GG.st)); i < Math.min(nx, Math.ceil((64 - GG.x0) / GG.st)); i++) moat[j * nx + i] = Math.min(9, moatD(GG.x0 + i * GG.st, GG.z0 + j * GG.st)); }   // the castle's moat: signed distance to its stone banks
   // worn yards around buildings and the market square
   for (var y = 0; y < YARDS.length; y++) {
     var Y = YARDS[y], pad = Y.pad || 1.5, ext = Math.max(Y.w, Y.d) / 2 + pad + 1;
@@ -3955,7 +4243,7 @@ function buildGrid() {
   if (F.market) {
     for (j = 0; j < nz; j++) for (i = 0; i < nx; i++) { var ex = (GG.x0 + i * GG.st - MARKET.x) / MARKET.rx, ez = (GG.z0 + j * GG.st - MARKET.z) / MARKET.rz, e = Math.sqrt(ex * ex + ez * ez), mv = 1 - sstep(0.85, 1.15, e); if (mv > yard[j * nx + i]) yard[j * nx + i] = mv; }
   }
-  return { nx: nx, nz: nz, soil: soil, grass: grass, snow: snow, gnz: gnz, path: path, chan: chan, yard: yard, patch: patch, trk: trk };
+  return { nx: nx, nz: nz, soil: soil, grass: grass, snow: snow, gnz: gnz, path: path, chan: chan, race: race, moat: moat, yard: yard, patch: patch, trk: trk };
 }
 /* scalar ramp into out[0..2] */
 function rampS(p, t, out) { t = t < 0 ? 0 : t > 1 ? 1 : t; t *= p.length - 1; var i = t | 0; if (i > p.length - 2) i = p.length - 2; var f = t - i, a = p[i], b = p[i + 1]; out[0] = a[0] + (b[0] - a[0]) * f; out[1] = a[1] + (b[1] - a[1]) * f; out[2] = a[2] + (b[2] - a[2]) * f; }
@@ -3964,7 +4252,7 @@ function groundRows(D, M, PW, y0, y1, S) {
   var s0 = SEA.soil[0], s1 = SEA.soil[1], g0 = SEA.grass[0], g1 = SEA.grass[1], grassAmt = SEA.grassAmt, flw = SEA.flowers;
   var rc = SEA.river, haze = LIT.haze, hazeK = LIT.hazeK, pmode = SEA.paddy, paddyOn = F.paddy, town = F.town, street = F.street, gutter = F.machiya;
   var n2 = NZ.n2, fbm = NZ.fbm;
-  var GD = S.grid, gnx = GD.nx, gst = GD.nz, Gsoil = GD.soil, Ggrass = GD.grass, Gsnow = GD.snow, Ggnz = GD.gnz, Gpath = GD.path, Gchan = GD.chan, Gyard = GD.yard, Gpatch = GD.patch, Gtrk = GD.trk, ist = 1 / GG.st;
+  var GD = S.grid, gnx = GD.nx, gst = GD.nz, Gsoil = GD.soil, Ggrass = GD.grass, Gsnow = GD.snow, Ggnz = GD.gnz, Gpath = GD.path, Gchan = GD.chan, Grace = GD.race, Gmoat = GD.moat, Gyard = GD.yard, Gpatch = GD.patch, Gtrk = GD.trk, ist = 1 / GG.st;
   var sdM = 0, wet = F.wet || F.after, damp = F.wet ? 1 : 0.35,typh = F.wx === 'typhoon', bliz = F.wx === 'blizzard' && snow, puddle = 0, iceA = 0; var rutW = 0, gutW = 0;
   var dryK = SEA.name === 'autumn' ? 1 : SEA.name === 'summer' ? 0.55 : SEA.name === 'spring' ? 0.4 : 0.8, dryC = mixc(SEA.soil[1], [196, 176, 120], 0.5), pcO = { i: 0, j: 0, fu: 0, fv: 0, e: 0 };
   for (var py = y0; py < y1; py++) {
@@ -4213,23 +4501,26 @@ function groundRows(D, M, PW, y0, y1, S) {
         r += (sR - r) * snA; g += (sG - g) * snA; bl += (sB - bl) * snA;
       }
       // the river and the mill race
-      var w = 0, isCh = false;
+      var w = 0, isCh = false, isMoat = false;
       var wd = Gchan[i00] * w00 + Gchan[i10] * w10 + Gchan[i01] * w01 + Gchan[i11] * w11;
       if (wd < 2 && wd > -2.5) wd += (n2(x * 0.5, z * 0.5) - 0.5) * 0.9;
+      if (Grace) { var rcd = Grace[i00] * w00 + Grace[i10] * w10 + Grace[i01] * w01 + Grace[i11] * w11; if (rcd < 0.9 && rcd < wd) { wd = rcd + (n2(x * 3.1, z * 3.1) - 0.5) * 0.04; isCh = true; } }   // (the race between its stone kerbs: a crisp edge)
+      if (Gmoat) { var mtd = Gmoat[i00] * w00 + Gmoat[i10] * w10 + Gmoat[i01] * w01 + Gmoat[i11] * w11; if (mtd < 0.9 && mtd < wd) { wd = mtd; isMoat = true; } }   // (the moat between its stone banks)
       if (wd < 1.6) {
         // pebbly bank
-        if (wd > -0.2 && !isCh) { var bk = (1 - sstep(0.4, 1.6, wd)) * 0.85, pbv = hash2(px >> 1, (py >> 1) + 5), bb2 = 0.85 + 0.3 * pbv; r += ((150 + 20 * nn2) * bb2 - r) * bk; g += ((142 + 18 * nn2) * bb2 - g) * bk; bl += ((128 + 16 * nn2) * bb2 - bl) * bk; }
+        if (wd > -0.2 && !isCh && !isMoat) { var bk = (1 - sstep(0.4, 1.6, wd)) * 0.85, pbv = hash2(px >> 1, (py >> 1) + 5), bb2 = 0.85 + 0.3 * pbv; r += ((150 + 20 * nn2) * bb2 - r) * bk; g += ((142 + 18 * nn2) * bb2 - g) * bk; bl += ((128 + 16 * nn2) * bb2 - bl) * bk; }
         if (wd > -0.25) { var dk = 0.7 + 0.3 * sstep(-0.25, 0.5, wd); r *= dk; g *= dk; bl *= dk; }
-        w = 1 - sstep(-fp * 0.6, fp * 0.6, typh ? wd - 0.9 : wd);
+        w = 1 - sstep(-fp * 0.6, fp * 0.6, typh && !isCh && !isMoat ? wd - 0.9 : wd);
         if (w > 0) {
-          var dep = clamp(-wd / (isCh ? 0.5 : 4.5)), rip = fbm(x * 0.35 + 30, z * 2.2, 2), dp = Math.pow(dep, 0.7);
+          var dep = isMoat ? 0.62 + 0.25 * clamp(-wd / 2.4) : clamp(-wd / (isCh ? 1.4 : 4.5)), rip = fbm(x * 0.35 + 30, z * 2.2, 2), dp = Math.pow(dep, 0.7);
           var wr = rc[0] + (24 - rc[0]) * dp, wg = rc[1] + (48 - rc[1]) * dp, wb = rc[2] + (54 - rc[2]) * dp;
           if (typh) { wr = 118 - 18 * dp; wg = 100 - 16 * dp; wb = 74 - 12 * dp; }   // swollen and brown
+          if (isMoat && !typh) { wr = 48 + 14 * rip; wg = 66 + 14 * rip; wb = 62 + 10 * rip; }   // (the moat's still water: dark and green, its tall stone walls given back in it)
           if (dep < 0.15) { var sh2 = (0.15 - dep) * 4; wr += (120 - wr) * sh2; wg += (112 - wg) * sh2; wb += (92 - wb) * sh2; }
-          var fres = clamp(0.3 + 0.18 * (rip - 0.5) + 0.12 * Math.sin(x * 0.9 + z * 0.3 + rip * 6) * (1 - clamp(fp / 0.3)));
+          var fres = clamp(0.3 + 0.18 * (rip - 0.5) + 0.12 * Math.sin(x * 0.9 + z * 0.3 + rip * 6) * (1 - clamp(fp / 0.3))) * (isMoat ? 0.45 : 1);   // (the moat, deep between its walls, gives back less of the sky)
           wr += (sky[0] - wr) * fres; wg += (sky[1] - wg) * fres; wb += (sky[2] - wb) * fres;
           iceA = 0;
-          if (bliz) {   // shelves of ice out from both banks, snow drifted over them; pans of ice in the dark open water
+          if (bliz && !isCh) {   // shelves of ice out from both banks, snow drifted over them; pans of ice in the dark open water
             var edgeN = (n2(x * 0.7 + 3, z * 1.9) - 0.5) * 1.2 + (n2(x * 2.6, z * 5.2) - 0.5) * 0.5, shelf = sstep(-2.3 + edgeN, -1.9 + edgeN, wd);
             var pan = n2(x * 0.42 - z * 0.3 + 17, z * 1.5 + x * 0.12) + (n2(x * 2.4, z * 4.1) - 0.5) * 0.16, panA = sstep(0.74, 0.77, pan) * (1 - shelf), rim = sstep(0.71, 0.74, pan) * (1 - sstep(0.74, 0.77, pan)) * (1 - shelf);
             wr *= 0.82; wg *= 0.86; wb *= 0.92;   // cold, dark open water
@@ -4239,14 +4530,14 @@ function groundRows(D, M, PW, y0, y1, S) {
             if (shelf > 0 && shelf < 0.9) { ir -= 50 * (1 - shelf) * shelf * 4 * 0.25; ig -= 40 * (1 - shelf) * shelf; ib -= 26 * (1 - shelf) * shelf; }   // the shelf's broken edge
             wr += (ir - wr) * iceA; wg += (ig - wg) * iceA; wb += (ib - wb) * iceA;
             wr += (150 - wr) * rim * 0.5; wg += (168 - wg) * rim * 0.5; wb += (186 - wb) * rim * 0.5;
-          } else if (snow) {
+          } else if (snow && !isCh) {   // (the race runs too fast to freeze)
             var ice = sstep(-1.6, -0.9, wd) * 0.85;
             if (ice > 0) { var icf = clamp(0.5 + (n2(x * 2, z * 0.8) - 0.5) * 0.8), ir = 186 + 46 * icf, ig = 200 + 38 * icf, ib = 214 + 34 * icf; wr += (ir - wr) * ice; wg += (ig - wg) * ice; wb += (ib - wb) * ice; }
           }
           if (!typh && !bliz) {
             // the far bank given back by the water: a soft darker band under it, the colour of the bank
             var gzc = Gchan[i01] - Gchan[i00];
-            if (gzc > 0 && wd > -2.4) { var rf2 = (1 - clamp(-wd / 2.4)) * 0.34, bcr = snow ? 170 : (g0[0] + g1[0]) * 0.36, bcg = snow ? 180 : (g0[1] + g1[1]) * 0.36, bcb = snow ? 196 : (g0[2] + g1[2]) * 0.36; wr += (bcr - wr) * rf2; wg += (bcg - wg) * rf2; wb += (bcb - wb) * rf2; }
+            if (gzc > 0 && wd > -2.4 && !isCh && !isMoat) { var rf2 = (1 - clamp(-wd / 2.4)) * 0.34, bcr = snow ? 170 : (g0[0] + g1[0]) * 0.36, bcg = snow ? 180 : (g0[1] + g1[1]) * 0.36, bcb = snow ? 196 : (g0[2] + g1[2]) * 0.36; wr += (bcr - wr) * rf2; wg += (bcg - wg) * rf2; wb += (bcb - wb) * rf2; }
             // stones on the bed, seen through the shallows near the banks
             if (dep < 0.32 && fp < 0.4) {
               var bcs = 0.6, bci = Math.floor(x / bcs), bcj = Math.floor(z / bcs), bsh = hash2(bci + 313, bcj + 71);
@@ -4264,7 +4555,7 @@ function groundRows(D, M, PW, y0, y1, S) {
       if (moonSnow && snA > 0) { var ms = snA * (1 - w) * (1 - iceA * 0.5) * 0.5 * moonSnow * (0.85 + 0.15 * gr); r += (196 - r) * ms; g += (210 - g) * ms; bl += (236 - bl) * ms; }   // moonlit snow: pale silver-blue, the brightest surface
       if (hz > 0) { r += (haze[0] - r) * hz; g += (haze[1] - g) * hz; bl += (haze[2] - bl) * hz; }
       D[k] = r; D[k + 1] = g; D[k + 2] = bl; D[k + 3] = alphaRow;
-      if (M) { var mw = Math.max(w * (bliz ? 1 - iceA : snow ? clamp((-wd - 0.9) * 2) : 1), puddle * 0.9, pmode === 'flood' && !snow ? pw * 0.8 : 0); if (mw > 0) M[k + 3] = 255 * mw; }   // (the flooded paddies mirror what stands by them)
+      if (M && !isCh) { var mw = Math.max(w * (bliz ? 1 - iceA : snow ? clamp((-wd - 0.9) * 2) : 1), puddle * 0.9, pmode === 'flood' && !snow ? pw * 0.8 : 0); if (mw > 0) M[k + 3] = 255 * mw; }   // (the flooded paddies mirror what stands by them)
       iceA = 0;
     }
   }
@@ -4359,7 +4650,8 @@ function townPlan(Fx) {
     // the riverside street: a continuous row of townhouses facing the water
     [[19.6, 5.6, 4.7], [25.5, 6.0, 5.4], [31.6, 6.2, 4.9], [37.7, 5.8, 5.6]].forEach(function (a, k) { add({ type: 'machiya', u: uR, w: a[1], d: 8, seed: 230 + k, yuya: k === 3, joinL: k > 0, joinR: false, doorLeft: k % 2 === 1, sign: k % 2 === 0, yE: a[2], roofCol: [[96, 100, 108], [82, 84, 90], [104, 104, 110], [88, 92, 98], [100, 98, 102]][k], udatsu: k === 2, upper: k === 1 ? 'koshi' : k === 3 ? 'shoji' : 'mushiko', ncol: NC[(k + 2) % NC.length], hang: k % 2 === 1 }, st(3.9 + 4, a[0])); });
     // the main street, east side: low single-storey shops, so the street stays open to view; their backs to us
-    [[9.6, 6.0, 210], [15.8, 6.2, 211], [22.0, 5.8, 212], [28.6, 6.0, 213]].forEach(function (a, k) { add({ type: 'machiya', u: uE, w: a[1], d: 7, seed: a[2], joinL: k < 3, joinR: k > 0, yE: 3.4, low: true, back: true, ncol: NC[(k + 4) % NC.length] }, st(a[0], -(hw + 3.5))); });
+    // (with the castle's moat the last is pulled down: the head of the street left open before the 大手橋, so the moat and the bridge show)
+    [[9.6, 6.0, 210], [15.8, 6.2, 211], [22.0, 5.8, 212], [28.6, 6.0, 213]].filter(function (a) { return !(Fx.ishigaki && a[2] === 213); }).forEach(function (a, k) { add({ type: 'machiya', u: uE, w: a[1], d: 7, seed: a[2], joinL: k < (Fx.ishigaki ? 2 : 3), joinR: k > 0, yE: 3.4, low: true, back: true, ncol: NC[(k + 4) % NC.length] }, st(a[0], -(hw + 3.5))); });
   }
   if (Fx.kura) [[30.9, 3.3, 6.6, 301], [37.5, 3.6, 5.8, 302], [44.1, 3.2, 6.4, 303]].forEach(function (a) { add({ type: 'kura', u: KR_DIR, w: a[2], d: a[1] * 2, seed: a[3], door: a[3] === 302, sideWin: true }, krPt(a[0], RIVER_HW + 2.4 + a[1])); });
   return L;
@@ -4419,7 +4711,7 @@ function groundStrokes(ctx) {
   for (var sy = Math.max(0, hz + 2); sy < H; sy += 1.7) {
     for (var sx = -2; sx < W + 2; sx += 2.6) {
       var x = sx + (r() - 0.5) * 2.4, y = sy + (r() - 0.5) * 1.6, gp = groundAt(x, y); if (!gp || gp.z > GROUND_FAR - 6) continue;
-      if (riverD(gp.x, gp.z) < 0.3) continue;
+      if (riverD(gp.x, gp.z) < 0.3 || (F.mill && gp.z > 30 && gp.z < 50 && millRaceD(gp.x, gp.z) < 0.35) || (F.ishigaki && gp.z > 70 && gp.x > 0 && moatD(gp.x, gp.z) < 0.4)) continue;
       if (F.paddy && gp.z < 24 && (paddyAt(PADDY_L, gp.x, gp.z) || paddyAt(PADDY_R, gp.x, gp.z))) continue;
       var k = CAM.F / gp.t, L = clamp(0.3 * k, 1.6, 7) * (0.6 + r() * 0.8), a = (r() - 0.5) * 0.5, th = clamp(0.045 * k, 0.5, 1.6) * (0.7 + r() * 0.6), ca = Math.cos(a) * L / 2, sa = Math.sin(a) * L / 2, P2 = r() < 0.5 ? lt : dk;
       P2.moveTo(x - ca, y - sa); P2.quadraticCurveTo(x, y - th, x + ca, y + sa); P2.quadraticCurveTo(x, y + th * 0.4, x - ca, y - sa); n++;
@@ -4477,7 +4769,7 @@ function nearField(ctx, z0, z1) {
   }
   for (var z = z0; z < z1; z += 0.42) for (var x = -50; x < 50; x += 0.42) {
     var jx = x + (r() - 0.5) * 0.48, jz = z + (r() - 0.5) * 0.48, rd = polyD(ROAD_S, jx, jz) - rw, q = r();
-    if (rd < 0.45 || riverD(jx, jz) < 1.5) continue;
+    if (rd < 0.45 || riverD(jx, jz) < 1.5 || (F.mill && jz > 30 && jz < 50 && jx > -28 && jx < -5 && millRaceD(jx, jz) < 0.6)) continue;
     var pdc = paddyAt(PADDY_L, jx, jz) || paddyAt(PADDY_R, jx, jz);
     if (pdc) { if (hig && F.paddy && pdc.e < 0.22 && r() < 0.55 * sstep(0.42, 0.66, NZ.n2(jx * 0.1 + 60, jz * 0.1 - 4))) higan(jx, jz, 2); continue; }   // (on the paddies only the 畦, the banks between them, where the 彼岸花 come up in red lines at the equinox)
     if ((F.sign && polyD(SIDE_S, jx, jz) < 0.9) || (F.shrine && polyD(SHR_S, jx, jz) < 1.2) || Math.hypot(jx - SIGN.x, jz - SIGN.z) < 0.9 || Math.hypot(jx - WELL.x, jz - WELL.z) < 2 || Math.hypot(jx - TREE0.x, jz - TREE0.z) < 1.4 || (F.farm && jx > FIELDN.x0 - 0.2 && jx < FIELDN.x1 + 0.2 && jz > FIELDN.z0 - 0.2 && jz < FIELDN.z1 + 0.2) || (F.paddy && jz < 0 && polyD(FOOT_S, jx, jz) < 0.45) || (F.paddy && jx > 7.6 && Math.abs(jz - ditchZ(jx)) < 0.62) || (jx > FIELD.x0 - 0.5 && jx < FIELD.x1 + 0.5 && jz > FIELD.z0 - 0.5) || (F.tea && jx > CHA.x0 - 0.6 && jx < CHA.x1 + 0.6 && jz > CHA.z0 - 0.9 && jz < CHA.z1 + 0.3)) continue;   // (clear of the paths, the signpost, the well, the lone tree, the field)
@@ -4582,6 +4874,7 @@ function buildScene() {
   function circAO(x, z, r) { return function (c) { var p = P(x, 0, z); c.beginPath(); c.ellipse(p.x, p.y, r * p.k, r * p.k * CAM.s, 0, 0, TAU); c.fill(); }; }
   if (F.sign) simple(SIGN.x, SIGN.z, drawSignpost, { ao: circAO(SIGN.x + 0.4, SIGN.z, 0.7), drift: 0.5 });
   if (F.teahouse) { var tb = teaFrame(); YARDS.push({ x: TEA.x, z: TEA.z - 1, u: tb.u, v: tb.v, w: 8, d: 9, pad: 1.5, k: 0.7 }); simple(TEA.x, TEA.z, drawTeahouse, { ao: function (c) { footAO(c, { x: TEA.x, z: TEA.z, u: tb.u, w: 5.6, d: 4.2 }); }, key: P(TEA.x + 1, 0, TEA.z - 2).d, foot: { x: TEA.x, z: TEA.z, u: tb.u, w: 5.6, d: 4.2 } }); }
+  if (F.teahouse && !SEA.snow) { var tq = teaParasol(), tc = add(tq.base, [tq.dir[0] * tq.H * Math.sin(tq.tilt), 0, tq.dir[1] * tq.H * Math.sin(tq.tilt)]); var tnw = boxWalls(teaFrame(), 5.6, 4.2, 0, 2.5).f; put(tc[0], tc[2], { draw: drawTeaParasol, key: P(tc[0], 0, tc[2]).d, okey: Pa(tnw.at(1.4, 2.2, 0.15)).d - 0.1 }); }   // the 野点傘 over the bench (among the moving things' occluders it counts as just in front of the 暖簾 under the eaves behind it, which it cuts; not of those sitting on the bench in front of it)
   if (F.well) simple(WELL.x, WELL.z, drawWell, { ao: circAO(WELL.x, WELL.z, 0.9), drift: 0.9 });
   if (F.farm) {
     var fb = farmFrame(); YARDS.push({ x: FARM.x, z: FARM.z - 2, u: fb.u, v: fb.v, w: 16, d: 13, pad: 2, k: 0.8 });
@@ -4591,7 +4884,8 @@ function buildScene() {
   }
   if (F.mill) {
     var mb = millFrame(); YARDS.push({ x: MILL.x, z: MILL.z, u: mb.u, v: mb.v, w: 7, d: 7, pad: 1.5, k: 0.6 });
-    simple(MILL.x, MILL.z, drawMill, { ao: function (c) { footAO(c, { x: MILL.x, z: MILL.z, u: mb.u, w: 5, d: 4.4 }); }, refl: true, key: P(MILL.wx, 0, MILL.wz - 0.5).d - 0.5, foot: { x: MILL.x, z: MILL.z, u: mb.u, w: 5, d: 4.4 } });
+    simple(MILL.x, MILL.z, drawMill, { ao: function (c) { footAO(c, { x: MILL.x, z: MILL.z, u: mb.u, w: 5, d: 4.4 }); }, refl: true, key: P(MILL.x, 0, MILL.z).d, foot: { x: MILL.x, z: MILL.z, u: mb.u, w: 5, d: 4.4 } });
+    flat.push({ draw: drawMillRace, key: 0 });   // the race's kerbs and the plank (with the ground: the water itself is the ground's)
   }
   if (F.shrine) {
     YARDS.push({ x: SHRINE.x, z: SHRINE.z, u: [1, 0], v: [0, 1], w: 5, d: 5, pad: 1.2, k: 0.7 });
@@ -4623,8 +4917,19 @@ function buildScene() {
     put(bk.x, bk.z, { draw: function (c) { drawBuke(c, sp); }, ao: function (c) { footAO(c, { x: bk.x, z: bk.z, u: KR_DIR, w: bk.w, d: bk.d }, 0.4); }, key: bkey, foot: { x: bk.x, z: bk.z, u: KR_DIR, w: bk.w, d: bk.d } });
     put(pq[0], pq[2], { draw: function (c) { drawPine(c, pn); }, key: bkey - 1e-4, sway: swayTree('pine', pn), tap: 'pine' });
   });
-  if (F.ishigaki) { var oq = oteFrame(), ob = oq.L(1.5, 3.7, 0), os = oq.L(1.5, 1.6, 0), of = oq.L(0, -0.05, 0); put(ob[0], ob[2], { draw: drawOteBack, key: P(ob[0], 0, ob[2]).d, noShadow: false }); put(os[0], os[2], { draw: drawOteSides, key: P(os[0], 0, os[2]).d }); put(of[0], of[2], { draw: drawOteFront, key: P(of[0], 0, of[2]).d }); }   // 大手門: the back of the 枡形 (wall, stair, 櫓門), its sides, the 高麗門
-  if (F.ishigaki) { var ig = ishiGeom(); put(CASTLE.x, CASTLE.z, { draw: function (c) { drawIshigaki(c); if (F.keep) drawKeep(c); castleFront(c); castleHaze(c); }, key: P(CASTLE.x, 0, CASTLE.z - 6).d, ao: function (c) { footAO(c, { x: CASTLE.x, z: CASTLE.z, u: ig.B.u, w: ig.w + 3, d: ig.d + 3 }, 0.6); } }); }
+  if (F.ishigaki) {   // 大手門: the moat's banks; its walls, the bridge and the gates; the back of the 枡形 (the wall, the stair, the 櫓門) and its sides; the 隅櫓
+    var oq = oteFrame(), oKey = function (aa, bb) { var w = oq.L(aa, bb, 0); return P(w[0], 0, w[2]).d; }, OB = [0, 1];   // (none of it among the town band's occluders: the guards and whoever goes in are cut per pixel instead, by what truly stands in front of them)
+    flat.push({ draw: drawMoatBanks, key: 0 });
+    var mwk = oq.L(0, OTE.moat[1], 0); put(mwk[0], mwk[2], { draw: drawMoatWater, key: P(mwk[0], 0, mwk[2]).d + 0.6, noShadow: true, noRefl: true, ob: [] });   // (its water over the ground's, under the walls, the bridge and the guards)
+    put(oq.L(1.5, 4.9, 0)[0], oq.L(1.5, 4.9, 0)[2], { draw: drawOteBack, key: oKey(1.5, 4.9), noShadow: false, ob: OB, refl: true });
+    put(oq.L(1.5, 3.0, 0)[0], oq.L(1.5, 3.0, 0)[2], { draw: drawOteSides, key: oKey(1.5, 3.0), ob: OB });
+    put(oq.L(0, -0.05, 0)[0], oq.L(0, -0.05, 0)[2], { draw: drawOteFront, key: oKey(0, -0.05), ob: OB, refl: true });
+    moatWalls().forEach(function (q) { var ma = (q[0] + q[2]) / 2, mb = (q[1] + q[3]) / 2, w = oq.L(ma, mb, 0); put(w[0], w[2], { draw: function (c) { drawMoatWall(c, q); }, key: oKey(ma, mb), ob: OB, refl: true }); });
+    var B2 = OTE.bridge, bm = oq.L(0, (B2[2] + B2[3]) / 2, 0); put(bm[0], bm[2], { draw: function (c) { drawOteBridge(c, 'main'); }, key: oKey(0, (B2[2] + B2[3]) / 2), dval: oKey(0, B2[3]), ob: OB, refl: true });   // (its deck never cuts whoever stands on it)
+    for (var nri = 0; nri < 3; nri++) (function (c0, c1) { var w = oq.L(B2[1], (c0 + c1) / 2, 0); put(w[0], w[2], { draw: function (c) { drawOteBridge(c, 'near', c0, c1); }, key: oKey(B2[1], (c0 + c1) / 2), ob: OB, refl: true }); })(lerp(B2[2], B2[3], nri / 3), lerp(B2[2], B2[3], (nri + 1) / 3));
+    if (F.keep) { var sf = sumiFrame(); put(sf.x, sf.z, { draw: drawSumiYagura, key: P(sf.x, 0, sf.z).d, ob: OB, refl: true }); }
+  }
+  if (F.ishigaki) { var ig = ishiGeom(), igk = ig.B.L(0, -6, 0); put(CASTLE.x, CASTLE.z, { draw: function (c) { drawIshigaki(c); if (F.keep) drawKeep(c); castleFront(c); castleHaze(c); }, key: P(igk[0], 0, igk[2]).d, ao: function (c) { footAO(c, { x: CASTLE.x, z: CASTLE.z, u: ig.B.u, w: ig.w + 3, d: ig.d + 3 }, 0.6); } }); }
   // ---- the later additions
   if (F.tea) teaRows().forEach(function (r) { var e = teaRowEnds(r), xm = (e[0] + e[1]) / 2; put(xm, r.z, { draw: function (c) { drawTeaRow(c, r); }, ao: function (c) { teaRowAO(c, r); }, key: P(xm, 0, r.z - 0.6).d, drift: 0.6 }); });
   if (F.smithy) { var smB = smithyFrame(); YARDS.push({ x: SMITHY.x, z: SMITHY.z - 1.2, u: smB.u, v: smB.v, w: 9, d: 8, pad: 1.4, k: 0.7 }); simple(SMITHY.x, SMITHY.z, drawSmithy, { ao: function (c) { footAO(c, { x: SMITHY.x, z: SMITHY.z, u: smB.u, w: SMITH_W, d: SMITH_D }); }, key: P.apply(null, smB.L(0, -SMITH_D / 2 - 0.9, 0)).d, foot: { x: SMITHY.x, z: SMITHY.z, u: smB.u, w: SMITH_W, d: SMITH_D } }); }
@@ -4635,7 +4940,7 @@ function buildScene() {
   // the 竹林 at the edge of the wood west of the temple (in the full view's wider frame)
   var bmb = makeBamboo(771, BAMBOO); put(BAMBOO.x, BAMBOO.z, { draw: function (c) { drawBamboo(c, bmb); }, ao: function (c) { var p = P(BAMBOO.x, 0, BAMBOO.z); c.beginPath(); c.ellipse(p.x, p.y, BAMBOO.ru * p.k, BAMBOO.rv * p.k * CAM.s * 1.4, 0, 0, TAU); c.fill(); } });
   // pines about the castle hill; with the 武家屋敷, one more on the open ground between the eastern compounds and the wood
-  if (F.ishigaki || F.buke) [F.ishigaki ? [20.85, 85.66] : [22, 80.5], [44, 81], [28, 95]].concat(F.buke ? [[58.5, 83.6]] : []).forEach(function (a, ii) { var pn = genPine(600 + ii, a[0], a[1], 3.0, hillH(a[0], a[1])); put(a[0], a[1], { draw: function (c) { drawPine(c, pn); }, sway: swayTree('pine', pn), tap: 'pine' }); });
+  castlePines().forEach(function (a, ii) { var pn = genPine(600 + ii, a[0], a[1], 3.0, hillH(a[0], a[1])); put(a[0], a[1], { draw: function (c) { drawPine(c, pn); }, sway: swayTree('pine', pn), tap: 'pine' }); });
   placeProps(put);
   // seasonal events
   if (F.event) {
@@ -4655,7 +4960,7 @@ function buildScene() {
 /* ---- 06a_land.js ---- */
 /* ================= the land beyond the town: sky and clouds, the far ranges, the wooded foothills =================
    Far ranges and sky are painted in screen space; the foothills are a terrain mesh covered tree by tree. */
-var TERRACES = [{ x: -27, z: 107.5, rx: 10.5, rz: 3.6 }, { x: 39.5, z: 97.6, rx: 6.5, rz: 2.6 }];
+var TERRACES = [{ x: -27, z: 107.5, rx: 10.5, rz: 3.6 }, { x: 54, z: 101.5, rx: 6.5, rz: 2.6 }];   // (the second east of the castle's hill, clear of its enclosure)
 var HILL_SHRINE = { x: -7.5, z: 98.4, top: [-7.2, 101.6] };
 var HAMLET = [[17.5, 108.5, 0.25], [22.8, 109.6, -0.1], [-50, 113, 0.15]];
 function hillH(x, z) {
@@ -4667,16 +4972,16 @@ function hillH(x, z) {
     if (r2 < 1) hm = Math.max(hm, q.h * Math.pow(1 - r2, 1.4) * (0.85 + 0.3 * NZ.n2(x * 0.06 + 5, z * 0.06)));
   }
   h += hm;
-  var c = CASTLE, dc = Math.hypot((x - c.x) / 11, (z - c.z) / 7);
+  var c = CASTLE, cdx = x - c.x, cdz = z - c.z, dc = Math.hypot((cdx * KR_DIR[0] + cdz * KR_DIR[1]) / 11, (cdx * STREET_DIR[0] + cdz * STREET_DIR[1]) / 8);   // (the keep's mound, square to the street)
   if (dc < 1.25) h = lerp(c.top, h, sstep(0.95, 1.25, dc));
   if (F && F.ishigaki) h = oteGround(x, z, h);   // (the 大手門's court cut flat and its terrace built up)
   return h;
 }
 function inEll(x, z, e, k) { var dx = (x - e.x) / (e.rx * (k || 1)), dz = (z - e.z) / (e.rz * (k || 1)); return dx * dx + dz * dz < 1; }
 function hillClear(x, z) { // places where the forest gives way: castle plateau, temple grounds, terraces, the hill shrine, the hamlet
-  var dc = Math.hypot((x - CASTLE.x) / 13, (z - CASTLE.z) / 8.5);
-  if (dc < (F.ishigaki ? 0.86 : 0.55)) return true;
-  if (F.ishigaki && oteClear(x, z)) return true;   // (no wood on the 大手門's court and terrace)   // (the wood comes up close round the castle's stones)
+  var cdx = x - CASTLE.x, cdz = z - CASTLE.z, dc = Math.hypot((cdx * KR_DIR[0] + cdz * KR_DIR[1]) / 13, (cdx * STREET_DIR[0] + cdz * STREET_DIR[1]) / 9.5);
+  if (dc < (F.ishigaki ? 0.86 : 0.55)) return true;   // (the wood comes up close round the castle's stones)
+  if (F.ishigaki && oteClear(x, z)) return true;   // (none on the moat's banks or in the enclosure)
   if (F.temple && inPrecinct(x, z, 2.5) && z < 108) return true;
   if (F.pagoda && Math.hypot((x - PAGODA.x) / 6, (z - PAGODA.z) / 5) < 1) return true;
   for (var i = 0; i < TERRACES.length; i++) if (inEll(x, z, TERRACES[i], 1.05)) return true;  if (Math.hypot(x - HILL_SHRINE.x, (z - HILL_SHRINE.z - 1.6) * 0.75) < 2.1) return true;
@@ -5178,13 +5483,16 @@ function forestCrowns() {
   return out;
 }
 function drawHills(ctx) {
-  var x0 = -100, x1 = 100, z0 = 88, z1 = 118, sx = 2.0, sz = 1.3, nx = Math.ceil((x1 - x0) / sx), nz = Math.ceil((z1 - z0) / sz), i, j, S = sil();
+  var x0 = -100, x1 = 100, z0 = F.ishigaki ? 75.4 : 88, z1 = 118, sx = 2.0, sz = 1.3, nx = Math.ceil((x1 - x0) / sx), nz = Math.ceil((z1 - z0) / sz), i, j, S = sil();   // (from the castle's walls on: from the moat back, for its enclosure)
   var V = [];
-  for (j = 0; j <= nz; j++) for (i = 0; i <= nx; i++) { var x = x0 + i * sx, z = z0 + j * sz; V.push([x, hillH(x, z) - 0.1, z]); }
+  for (j = 0; j <= nz; j++) for (i = 0; i <= nx; i++) { var x = x0 + i * sx, z = z0 + j * sz, hv = hillH(x, z), mv = oteMeshV(x, z, hv); V.push(mv ? [mv[0], mv[1] - 0.1, mv[2], mv[3]] : [x, hv - 0.1, z, 0]); }
   var tris = [];
   for (j = 0; j < nz; j++) for (i = 0; i < nx; i++) {
     var a = j * (nx + 1) + i, b = a + 1, c = a + nx + 1, d = c + 1;
-    [[a, c, b], [b, c, d]].forEach(function (t) { var A = V[t[0]], B2 = V[t[1]], C = V[t[2]]; if (A[1] < 0.05 && B2[1] < 0.05 && C[1] < 0.05) return; var n = norm(cross(sub(B2, A), sub(C, A))); if (n[1] < 0) n = mul(n, -1); var cc = centroid([A, B2, C]), e = 0.8, hx = (hillH(cc[0] + e, cc[2]) - hillH(cc[0] - e, cc[2])) / (2 * e), hz = (hillH(cc[0], cc[2] + e) - hillH(cc[0], cc[2] - e)) / (2 * e); n = norm(add(mul(n, 0.35), mul(norm([-hx, 1, -hz]), 0.65))); tris.push({ p: [A, B2, C], n: n, c: cc, d: Pa(cc).d }); });   // (the shading from the smooth surface, not the facet: no low-poly look)
+    [[a, c, b], [b, c, d]].forEach(function (t) { var A = V[t[0]], B2 = V[t[1]], C = V[t[2]]; if (A[1] < 0.05 && B2[1] < 0.05 && C[1] < 0.05) return;
+      var kd = A[3] | B2[3] | C[3]; if (kd & 3) { if (A[3] === 3 || B2[3] === 3 || C[3] === 3) return; if ((kd & 2) && [A, B2, C].some(function (v) { return !v[3] && v[1] < OTE.top - 0.3; })) return; }   // (by the castle: not over the court, nor from its walls down over the moat)
+      var n = norm(cross(sub(B2, A), sub(C, A))); if (n[1] < 0) n = mul(n, -1); if (kd & 2) { if (Math.abs(n[1]) < 0.2) return; tris.push({ p: [A, B2, C], n: n, c: centroid([A, B2, C]), d: Pa(centroid([A, B2, C])).d }); return; }
+      var cc = centroid([A, B2, C]), e = 0.8, hx = (hillH(cc[0] + e, cc[2]) - hillH(cc[0] - e, cc[2])) / (2 * e), hz = (hillH(cc[0], cc[2] + e) - hillH(cc[0], cc[2] - e)) / (2 * e); n = norm(add(mul(n, 0.35), mul(norm([-hx, 1, -hz]), 0.65))); tris.push({ p: [A, B2, C], n: n, c: cc, d: Pa(cc).d }); });   // (the shading from the smooth surface, not the facet: no low-poly look)
   }
   tris.sort(function (p, q) { return q.d - p.d; });
   var floor = SEA.snow ? [196, 202, 214] : mixc(SEA.forest[5], [22, 30, 22], 0.6), lt = lightTint(1);
@@ -6034,7 +6342,7 @@ function stringList() {
   var out = [];
   function along(fn, a0, a1, off, y) { for (var a = a0; a < a1 - 0.5; a += 8) { var p0 = fn(a, off), p1 = fn(Math.min(a1, a + 8), off); out.push({ a: [p0[0], y, p0[1]], b: [p1[0], y, p1[1]], sag: 0.45, n: 7, ph: a * 0.37, band: 2 }); } }
   along(rvPt, 13, 41, 3.4, 3.9);   // (the riverside row's fronts; the strings end where the temple's wall begins)
-  along(stPt, 14, F.ishigaki ? OTE_T - 1 : 37, STREET_HW - 0.8, 3.9);
+  along(stPt, 14, F.ishigaki ? OTE_T + OTE.moat[0] - 1.2 : 37, STREET_HW - 0.8, 3.9);
   along(stPt, 6, 32, -(STREET_HW - 0.8), 3.0);
   return out;
 }
@@ -6045,10 +6353,10 @@ function walkPaths() {
   if (F.sign) P0.push({ pts: SIDE_S.slice(), band: 0, spread: 0.3, w: 0.35 });
   if (F.shrine) P0.push({ pts: SHR_S.slice(), band: 0, spread: 0.2, w: 0.2 });
   if (F.rivst || F.street) P0.push({ pts: RIVST_S.slice(0), band: 2, spread: 2.0, w: F.machiya ? 1.6 : 0.8 });
-  if (F.street && !F.kido) P0.push({ pts: [stPt(-1), stPt(14), stPt(28), stPt(F.ishigaki ? OTE_T - 1.8 : 35)], band: 2, spread: F.machiya ? 3.2 : 2.0, w: 1.6 });
+  if (F.street && !F.kido) P0.push({ pts: [stPt(-1), stPt(14), stPt(28), stPt(F.ishigaki ? OTE_T + OTE.moat[0] - 1.1 : 35)], band: 2, spread: F.machiya ? 3.2 : 2.0, w: 1.6 });
   if (F.kido) {   // the street as far as the 番屋 the whole width; through the 木戸 in single file, and at night not at all
     P0.push({ pts: [stPt(-1), stPt(14), stPt(26.6)], band: 2, spread: 3.2, w: 1.3 });
-    if (LIT.name !== 'night') P0.push({ pts: [stPt(23.5), stPt(30.6), stPt(F.ishigaki ? OTE_T - 1.8 : 35)], band: 2, spread: 1.15, w: 0.4 });   // (with the castle's walls the way ends at the 大手門)
+    if (LIT.name !== 'night') P0.push({ pts: [stPt(23.5), stPt(30.6), stPt(F.ishigaki ? OTE_T + OTE.moat[0] - 1.1 : 35)], band: 2, spread: 1.15, w: 0.4 });   // (with the castle's walls the way ends at the moat, before the 大手橋)
   }
   if (F.landing) P0.push({ pts: [krPt(5, RIVER_HW + 1.3), krPt(19, RIVER_HW + 1.3), krPt(34, RIVER_HW + 1.5), krPt(46, RIVER_HW + 1.5)], band: 2, spread: 0.4, w: 0.5 });
   if (F.market) P0.push({ pts: [[MARKET.x - 7, MARKET.z + 1.5], [MARKET.x - 1, MARKET.z - 2], [MARKET.x + 5, MARKET.z + 0.5], [MARKET.x + 9, MARKET.z + 3]], band: 2, spread: 1.2, w: 0.8 });
@@ -6065,7 +6373,7 @@ function animAnchors() {
   norenList().forEach(function (n, i) { var W0 = n.W; add({ id: 'n' + i, band: n.band, key: Pa(W0.at((n.s0 + n.s1) / 2, n.top, 0.15)).d, bb: screenBox([W0.at(n.s0 - 0.4, n.top + 0.3, 0.6), W0.at(n.s1 + 0.4, n.top - n.len - 0.3, 0.6), W0.at(n.s0 - 0.4, n.top - n.len - 0.3, -0.2)]) }); });
   noboriList().forEach(function (q, i) { add({ id: 'b' + i, band: q.band, key: P(q.x, 0, q.z).d, bb: screenBox([[q.x - 1.4, 0, q.z - 1.4], [q.x + 1.4, q.h + 0.4, q.z + 1.4]]) }); });
   stringList().forEach(function (q, i) { add({ id: 's' + i, band: q.band, key: Pa(mixc(q.a, q.b, 0.5)).d - 0.3, bb: screenBox([q.a, q.b, add3(q.a, [0, -1.6, 0]), add3(q.b, [0, -1.6, 0])], 4) }); });
-  if (F.mill) { var G = millWheelGeom(), c = G.c; add({ id: 'wheel', band: 1, key: P(c[0], 0, c[2]).d, bb: screenBox([[c[0] - 2.8, c[1] - 2.8, c[2] - 2.8], [c[0] + 2.8, c[1] + 2.8, c[2] + 2.8]]) }); }
+  if (F.mill) { var G = millWheelGeom(), c = G.c; add({ id: 'wheel', band: 0, key: P(c[0], 0, c[2]).d, bb: screenBox([[c[0] - 4.2, c[1] - 2.8, c[2] - 4.2], [c[0] + 4.2, c[1] + 2.8, c[2] + 4.2]]) }); }   // (and its wake, and the race streaming past)
   if (F.landing) { var bp = boatPath(), pts = bp.p.map(function (q) { return [q[0], 2.6, q[1]]; }).concat(bp.p.map(function (q) { return [q[0], WL, q[1]]; })); add({ id: 'boat', band: 1, key: P(BR.x, 0, BR.z + 0.6).d, bb: screenBox(pts, 6) }); }
   RARE_DEFS.forEach(function (d) { if (F.s < d.minStage || d.loose) return; var a = rareAnchor(d); add({ id: 'rare_' + d.id, band: a.band, key: a.key, bb: a.bb }); });
   lifeSites().forEach(function (q, i) { add({ id: 'life' + i, band: P(q.x, 0, q.z).d < P(0, 0, 36).d ? 0 : 2, key: P(q.x, 0, q.z).d - 0.3, bb: screenBox([[q.x - q.r, 0, q.z - q.r], [q.x + q.r, q.h, q.z + q.r]], 4) }); });
@@ -6138,7 +6446,7 @@ function animGeo(o) {
   if (fair && o.stage >= SI.mill) { var hk = take(function () { return true; }); if (hk) { hk.hikyaku = true; hk.load = null; hk.woman = false; hk.umb = null; hk.lantern = false; hk.sp = 2.7; hk.pauseK = 0; hk.hat = null; } }
   if (fair && o.stage >= SI.temple) { var km = take(function (w2) { return !w2.load; }); if (km) { km.komuso = true; km.woman = false; km.sp = 0.42; km.hat = null; km.lantern = false; km.umb = null; } }
   if (fair && o.stage >= SI.farm) { var hs = take(function (w2) { return g.paths[w2.pi].band === 0 || g.paths[w2.pi].spread >= 2; }); if (hs) { hs.horse = { col: rng() < 0.5 ? [120, 84, 56] : [72, 58, 50] }; hs.load = null; hs.woman = false; hs.sp = 0.62; hs.lantern = false; } }
-  if (o.stage >= SI.stoneBridge && !wxSnowy(g.wx)) { var ct = take(function (w2) { return g.paths[w2.pi].band === 2 && g.paths[w2.pi].spread >= 2; }); /* (on the streets: the bridge's railings would cut the cart wrongly) */ if (ct) { ct.cart = true; ct.load = null; ct.woman = false; ct.umb = null; ct.sp = 0.7; ct.lantern = false; } }
+  if (o.stage >= SI.stoneBridge && !wxSnowy(g.wx)) { var ct = take(function (w2) { return g.paths[w2.pi].band === 2 && g.paths[w2.pi].spread >= 2; }); /* (on the streets: the bridge's railings would cut the cart wrongly) */ if (ct) { ct.cart = true; ct.load = null; ct.woman = false; ct.umb = null; ct.sp = 0.7; ct.lantern = false; var cl0 = g.paths[ct.pi].pa.len; if (cl0 > 14) ct.s = clamp(ct.s, 6, cl0 - 6); ct.lat *= 0.4; } }   // (set off well clear of the way's ends and near its middle: one that started on the bridge's foot at the street's edge stood there all day, its tail out over the water)
   g.walkers.forEach(function (w) { if (w.load === 'pole') w.goods = rng() < 0.5 ? 'fish' : 'veg'; });
   if (g.walkers.length > 1 && !wxWet(g.wx) && g.wx !== 'blizzard') { var pw = g.walkers[1]; pw.load = 'pole'; pw.woman = false; pw.child = false; pw.umb = null; }   // a peddler with his shoulder pole
   // smoke from kitchens and hearths
@@ -6522,7 +6830,7 @@ function fkShapes() {
   GROVES.forEach(function (gv, gi) { if (F.s >= gv[2]) return; var gr = mulberry32(900 + gi); for (var n = 0; n < gv[3]; n++) { var tx = gv[0] + (gr() - 0.5) * 7, tz = gv[1] + (gr() - 0.5) * 5; gr(); circ(tx, tz, 0.35); } });   // (as buildScene draws them)
   var bb = BAMBOO; box(BF(bb.x, bb.z, bb.u, 0), -bb.ru * 0.85, bb.ru * 0.85, -bb.rv * 0.85, bb.rv * 0.85);
   if (F.sign) circ(SIGN.x, SIGN.z, 0.22);
-  if (F.teahouse) { var tb = teaFrame(), hp = tb.L(-4.6, -1.5, 0); rect(TEA.x, TEA.z, TEA.u, 5.6, 4.2); box(BF(hp[0], hp[2], [Math.cos(0.9), Math.sin(0.9)], 0), -1.4, 1.0, -0.65, 0.65); }   // (and its handcart)
+  if (F.teahouse) { var tb = teaFrame(), hp = tb.L(-4.6, -1.5, 0); rect(TEA.x, TEA.z, TEA.u, 5.6, 4.2); box(BF(hp[0], hp[2], [Math.cos(0.9), Math.sin(0.9)], 0), -1.4, 1.0, -0.65, 0.65); if (!SEA.snow) { var tpq = teaParasol().base; circ(tpq[0], tpq[2], 0.08); } }   // (and its handcart)
   if (F.well) circ(WELL.x, WELL.z, 0.7);
   if (F.farm) {
     rect(FARM.x, FARM.z, [1, 0.08], 11.5, 7.6); seg([FARM.x - 8.5, FARM.z - 8], [FARM.x - 2.5, FARM.z - 8.3], 0.06); seg([FARM.x + 1.5, FARM.z - 8.4], [FARM.x + 6.5, FARM.z - 8.2], 0.06);
@@ -6550,8 +6858,8 @@ function fkShapes() {
   if (F.theatre) { var th = theatreFrame(); rect(th.x, th.z, th.u, 9.5, 11); }
   if (F.market) { [[-5, -1.5, 0.35], [-1.2, 1.4, 0.3], [2.8, -1.0, 0.4], [5.6, 2.0, 0.3], [-4.2, 3.0, 0.25]].forEach(function (q) { rect(MARKET.x + q[0], MARKET.z + q[1], [Math.cos(q[2]), Math.sin(q[2])], 2.3, 1.6); }); box(BF(MARKET.x + 7, MARKET.z - 2, [Math.cos(-0.4), Math.sin(-0.4)], 0), -1.4, 1.0, -0.65, 0.65); }
   if (F.buke) BUKE.forEach(function (bk) { rect(bk.x, bk.z, KR_DIR, bk.w, bk.d); var pq = bk.seed > 402 ? BF(bk.x, bk.z, KR_DIR, 0).L(bk.seed === 403 ? -bk.w * 0.34 : bk.w * 0.36, bk.d * 0.28, 0) : BF(bk.x, bk.z, KR_DIR, 0).L(bk.w * 0.3, 1.5, 0); circ(pq[0], pq[2], 0.4); });
-  if (F.ishigaki) { var ig = ishiGeom(); rect(CASTLE.x, CASTLE.z, ig.B.u, ig.w + 2.6, ig.d + 2.6); box(oteFrame(), OTE.court[0] - 0.35, OTE.court[1] + 0.35, -0.35, 9); }   // (and the 大手門: no one through but the guards' own)
-  if (F.ishigaki || F.buke) [F.ishigaki ? [20.85, 85.66] : [22, 80.5], [44, 81], [28, 95]].concat(F.buke ? [[58.5, 83.6]] : []).forEach(function (a) { circ(a[0], a[1], 0.4); });
+  if (F.ishigaki) { var ig = ishiGeom(), oO = oteFrame(); rect(CASTLE.x, CASTLE.z, ig.B.u, ig.w + 2.6, ig.d + 2.6); box(oO, OTE.encl[0] - 0.3, OTE.encl[1] + 0.3, OTE.moat[1] - 0.3, 30); box(oO, OTE.bridge[0] - 0.25, OTE.bridge[1] + 0.25, OTE.bridge[2] - 0.6, OTE.moat[1]); }   // (and the castle's walls, and its bridge: no one over but the guards' own)   // (and the 大手門: no one through but the guards' own)
+  castlePines().forEach(function (a) { circ(a[0], a[1], 0.4); });
   if (F.landing) { var lb = landingGeom().B; [[-2.8, -1.8], [2.8, -1.8], [-1.5, -3.6], [3.4, -3.4]].forEach(function (q) { var p = lb.L(q[0], q[1], 0); circ(p[0], p[2], 0.1); }); var bp = lb.L(4.6, 1.6, 0); rect(bp[0], bp[2] + 0.05, [1, 0], 1.9, 0.8); }
   if (F.kura) { var kp = krPt(28.4, RIVER_HW + 1.8); rect(kp[0], kp[1] + 0.05, [1, 0], 1.9, 0.8); }
   if (F.nagaya) [stPt(13.3, 24.4), stPt(13.1, 27.7)].forEach(function (q) { circ(q[0], q[1], 0.08); });
@@ -6597,7 +6905,7 @@ function fkZones(life) {
     else if (k === 'brewer') box(sakaguraFrame(), SAKE_W / 2 + 1.1, SAKE_W / 2 + 2.3, -2.9, 2.9);
     else if (k === 'chatsumi' || k === 'smith') circ(X, Z, 0.6);
     else if (k === 'joya') lifeJoyaSpots(a).forEach(function (q) { circ(q[0], q[1], 0.35); });
-    else if (k === 'mikoshi') { box(BF(STREET0[0], STREET0[1], STREET_DIR, 0), 1, 35.5, -1.7, 1.7); mikoshiCrowd(a).forEach(function (q) { circ(q.x, q.z, 0.35); }); }   // (the procession up the middle of the street, the crowd along the sides)
+    else if (k === 'mikoshi') { box(BF(STREET0[0], STREET0[1], STREET_DIR, 0), 1, F.ishigaki ? OTE_T + OTE.moat[0] - 0.3 : 35.5, -1.7, 1.7); mikoshiCrowd(a).forEach(function (q) { circ(q.x, q.z, 0.35); }); }   // (the procession up the middle of the street, the crowd along the sides)
     else if (k === 'momiji' || k === 'harvest' || k === 'hasa' || k === 'plant' || k === 'weed') circ(X, Z, 1.6);
   });
   return S;
@@ -6625,6 +6933,8 @@ function fkWet(x, z) {   // water, a field, the 用水路, the wood, or off the 
     if (b < (F.stoneBridge ? BR.w / 2 : 1.1) + 0.8) return true;   // (its railings, its edge and the air beside it)
   }
   if (F.landing) { var L = landingGeom().B, ex = x - L.x, ez = z - L.z, la = ex * L.u[0] + ez * L.u[1], lb = ex * L.v[0] + ez * L.v[1]; if (la > -2.4 - FK.R && la < 2.4 + FK.R && lb > -3.6 && lb < -0.3 + FK.R) return true; }   // (the steps down to the water)
+  if (F.mill && x > -26 && x < -6 && z > 30 && z < 49 && millRaceD(x, z) < FK.R + 0.15) return true;   // the mill race
+  if (F.ishigaki && x > 0 && x < 64 && z > 66 && z < 112 && moatD(x, z) < FK.R + 0.3) return true;   // the castle's moat
   if (fkRiver(x, z, 0.2)) return true;
   if (F.paddy && (paddyAt(PADDY_L, x, z) || paddyAt(PADDY_R, x, z))) return true;
   if (F.paddy && x > 8.6 && x < 62 && Math.abs(z - ditchZ(x)) < 0.45 + FK.R) { var cx = x - 12.87, cz = z - ditchZ(12.87); if (!(Math.abs(cx * 0.946 + cz * 0.324) < 0.9 && Math.abs(-cx * 0.324 + cz * 0.946) < 0.3)) return true; }   // (but on its plank)
@@ -7145,28 +7455,92 @@ function drawString(ctx, g, q, t) {
     if (lit) { var fl = 0.75 + 0.25 * NZ.n2(t * 3 + i * 7.1, q.ph); ctx.globalCompositeOperation = 'lighter'; stamp(ctx, spr, lp.x, lp.y, 1.4 * k, 1.4 * k, 0.5 * fl * (g.LIT.name === 'night' ? 1 : 0.7)); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
   }
 }
-/* the mill wheel, turning; water spills from its paddles */
+/* the mill wheel, turning in its race: an undershot wheel, the current pressing on its lowest paddles. Below the race's surface only
+   a ghost of it shows through the water; the water heaps and churns white where the paddles plough through it, sheets and drips
+   fall from the paddles rising out on the downstream side, a white wake runs on below it, and the race's current streams past.
+   In front, the outer bearing on the near kerb carries the axle's end. */
 function drawWheel(ctx, g, t, still) {
-  var G = g.wheel, B = G.B, c = G.c, r = G.r, tint = g.tint, ang = still ? (g.wheelAng || 0) : g.wheelAng !== undefined ? g.wheelAng : t * 0.55 * (g.SEA.snow ? 0.4 : 1), N = 12;
-  function pt(rr, a, side) { return P(c[0] + B.u[0] * Math.cos(a) * rr + B.v[0] * side, c[1] + Math.sin(a) * rr, c[2] + B.u[1] * Math.cos(a) * rr + B.v[1] * side); }
-  var wood = mulc([92, 70, 50], tint), woodD = mulc([60, 46, 36], tint), woodL = mulc([132, 104, 76], tint), i, k = Pa(c).k;
-  // far rim, paddles, near rim, spokes, hub
-  [[G.w / 2, woodD], [-G.w / 2, wood]].forEach(function (rim, ri) {
-    ctx.strokeStyle = rgb(rim[1]); ctx.lineWidth = Math.max(0.6, 0.16 * k); ctx.beginPath();
-    for (var j = 0; j <= 36; j++) { var p = pt(r, j / 36 * TAU, rim[0]); if (j) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y); } ctx.stroke();
-    if (ri === 0) for (i = 0; i < N; i++) { var a = ang + i / N * TAU, p0 = pt(r * 1.08, a, G.w / 2), p1 = pt(r * 1.08, a, -G.w / 2), p2 = pt(r * 0.78, a, -G.w / 2), p3 = pt(r * 0.78, a, G.w / 2); ctx.fillStyle = rgb(i % 2 ? wood : woodL); ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p3.x, p3.y); ctx.closePath(); ctx.fill(); }
-  });
-  ctx.strokeStyle = rgb(wood); ctx.lineWidth = Math.max(0.4, 0.09 * k); ctx.beginPath();
-  for (i = 0; i < N / 2; i++) { var a2 = ang + i / (N / 2) * TAU, q0 = pt(r * 0.98, a2, -G.w / 2), q1 = pt(r * 0.98, a2 + Math.PI, -G.w / 2); ctx.moveTo(q0.x, q0.y); ctx.lineTo(q1.x, q1.y); } ctx.stroke();
-  var hub = pt(0, 0, -G.w / 2 - 0.1); ctx.fillStyle = rgb(woodD); ctx.beginPath(); ctx.arc(hub.x, hub.y, 0.28 * k, 0, TAU); ctx.fill();
-  if (still || g.SEA.snow) return;
-  // water: a sheet off the flume onto the top paddles, drips falling from the rising side, foam where it meets the river
-  var top = pt(r * 1.02, Math.PI * 0.55, 0), fl = P(c[0] - B.u[0] * 1.2, c[1] + r + 0.15, c[2] - B.u[1] * 1.2);
-  ctx.strokeStyle = 'rgba(226,240,246,0.55)'; ctx.lineWidth = Math.max(0.5, 0.25 * k); ctx.beginPath(); ctx.moveTo(fl.x, fl.y); ctx.quadraticCurveTo((fl.x + top.x) / 2, fl.y, top.x, top.y + 0.5); ctx.stroke();
-  ctx.fillStyle = 'rgba(232,244,250,0.75)';
-  for (i = 0; i < 14; i++) { var u = ((t * 0.9 + i / 14) % 1), a3 = -0.2 + i * 0.13, sp = pt(r * 1.05, a3 + ang * 0.0, (i % 3 - 1) * 0.25); ctx.beginPath(); ctx.arc(sp.x + u * 0.6 * k * 0.2, sp.y + u * u * 1.6 * k, Math.max(0.3, 0.06 * k), 0, TAU); ctx.fill(); }
-  var bot = pt(r * 0.95, -Math.PI / 2, 0), foam = sprite('soft');
-  for (i = 0; i < 4; i++) stamp(ctx, foam, bot.x + (i - 1.5) * 0.4 * k, bot.y + 0.1 * k, 0.5 * k * (0.8 + 0.3 * Math.sin(t * 3 + i)), 0.18 * k, 0.4);
+  var G = g.wheel, B = G.B, c = G.c, r = G.r, tint = g.tint, ang = still ? (g.wheelAng || 0) : g.wheelAng !== undefined ? g.wheelAng : t * 0.55 * (g.SEA.snow ? 0.4 : 1), N = 16, wy = G.wy === undefined ? WL : G.wy, i, j;
+  var hw = G.w / 2, k = Pa(c).k, night = g.light === 'night', wk = (night ? 0.45 : g.light === 'dusk' ? 0.8 : 1) * (g.SEA.snow ? 0.75 : 1), rt = r, h = c[1] - wy, x0 = Math.sqrt(Math.max(0, rt * rt - h * h));
+  function W3(rr, a, side) { return [c[0] + B.u[0] * Math.cos(a) * rr + B.v[0] * side, c[1] + Math.sin(a) * rr, c[2] + B.u[1] * Math.cos(a) * rr + B.v[1] * side]; }
+  function pt(rr, a, side) { return Pa(W3(rr, a, side)); }
+  function WP(uu, side, y) { return P(c[0] + B.u[0] * uu + B.v[0] * side, y === undefined ? wy : y, c[2] + B.u[1] * uu + B.v[1] * side); }   // a point on the race's surface (u along it, side across: + toward the hut)
+  function clipAt(side, below) { var a0 = WP(-rt - 1.5, side), a1 = WP(rt + 1.5, side), e = (below ? 1 : -1) * 6 * r * k; ctx.beginPath(); ctx.moveTo(a0.x, a0.y); ctx.lineTo(a1.x, a1.y); ctx.lineTo(a1.x, a1.y + e); ctx.lineTo(a0.x, a0.y + e); ctx.closePath(); ctx.clip(); }
+  var wood = mulc([92, 70, 50], tint), woodD = mulc([58, 44, 34], tint), woodL = mulc([134, 106, 78], tint), wet = mulc([62, 50, 40], tint);
+  var foamC = [236, 244, 246].map(function (v, q) { return Math.round(v * Math.min(1.1, tint[q])); }), foam = tintedSprite(foamC), fs = 'rgba(' + foamC.join(',') + ',';
+  function streaks(s0, s1, n, seed) {   // the race's current streaming past: pale streaks drifting downstream on the surface
+    ctx.lineCap = 'round'; ctx.lineWidth = Math.max(0.3, 0.035 * k);
+    for (var q = 0; q < n; q++) { var hs = hash2(q + seed, 17), side = lerp(s0, s1, hash2(q + seed, 5)), len = 0.4 + 0.6 * hash2(q + seed, 9), sp = 1.1 + 0.4 * hash2(q + seed, 3), u0 = ((t * sp + hs * 6.4) % 6.4) - 3.2, f = clamp(Math.min(u0 + 3.2, 3.0 - u0) / 0.8); if (f <= 0.02) continue;
+      var a = WP(u0, side), b = WP(u0 + len, side + (hash2(q, 4) - 0.5) * 0.06); ctx.strokeStyle = fs + (0.32 * f * wk) + ')'; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
+    ctx.lineCap = 'butt';
+  }
+  var Ri = r * 0.7, TH = 0.05;   // the inner ring the boards' feet are pinned to; half a board's thickness
+  function lit2(col, n) { var l = 0.78 + 0.22 * n[1] + 0.18 * (n[0] * LS[0] - n[2] * LS[1] > 0 ? 1 : -1) * Math.abs(n[0] * LS[0] - n[2] * LS[1]); return scl(col, l); }   // (a board's face lit by its slope to the light)
+  function quad(q, col) { ctx.fillStyle = rgb(col); ctx.beginPath(); ctx.moveTo(q[0].x, q[0].y); for (var j2 = 1; j2 < q.length; j2++) ctx.lineTo(q[j2].x, q[j2].y); ctx.closePath(); ctx.fill(); }
+  function board(a, col, ghost) {   // a 羽根板: a flat board set radially between the rims, from the inner ring out flush with the rims, square-ended
+    var ca = Math.cos(a), sa = Math.sin(a), tn = [-sa * B.u[0], ca, -sa * B.u[1]], dA = TH / Math.max(0.5, r), s0 = -hw + 0.03, s1 = hw - 0.03;
+    var face = faceVisible(W3(r * 0.85, a, 0), tn) ? 1 : -1, fa = a + face * dA, nf = mul(tn, face);
+    var q = [pt(Ri, fa, s0), pt(r, fa, s0), pt(r, fa, s1), pt(Ri, fa, s1)]; quad(q, ghost ? col : lit2(col, nf));
+    if (ghost) return;
+    var nr = [ca * B.u[0], sa, ca * B.u[1]];   // its outer end, the end grain: a narrow square face at the rim
+    if (faceVisible(W3(r, a, 0), nr)) quad([pt(r, a - dA, s0), pt(r, a + dA, s0), pt(r, a + dA, s1), pt(r, a - dA, s1)], lit2(scl(col, 1.18), nr));
+    ctx.strokeStyle = rgb(scl(col, 0.6)); ctx.lineWidth = Math.max(0.45, 0.035 * k); ctx.beginPath(); ctx.moveTo(q[0].x, q[0].y); ctx.lineTo(q[1].x, q[1].y); ctx.stroke();   // (its edge against the near rim: at a small size each board is this line)
+  }
+  function ring(side, rr, col, lw) { ctx.strokeStyle = rgb(col); ctx.lineWidth = Math.max(0.7, lw * k); ctx.beginPath(); for (var q = 0; q <= 60; q++) { var p = pt(rr, q / 60 * TAU, side); if (q) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y); } ctx.stroke(); }
+  function spokes(side, col, w) { ctx.strokeStyle = rgb(col); ctx.lineWidth = Math.max(0.5, w * k); ctx.beginPath(); for (var q = 0; q < 8; q++) { var a3 = ang + (q + 0.5) / 8 * TAU, e0 = pt(0.3, a3, side), e1 = pt(Ri + 0.04, a3, side); ctx.moveTo(e0.x, e0.y); ctx.lineTo(e1.x, e1.y); } ctx.stroke(); }
+  // behind the wheel: the race between it and the hut
+  streaks(hw + 0.15, 0.95, 7, 40);
+  // under the water: only a ghost of the lowest boards
+  ctx.save(); clipAt(0, true); ctx.globalAlpha = 0.16; for (i = 0; i < N; i++) { var ag = ang + i / N * TAU; if (Math.sin(ag) < -0.4) board(ag, wet, true); } ctx.restore(); ctx.globalAlpha = 1;
+  // above the water, from the far side forward: the far rims and spokes, the boards between the rims (darker where they have just come up wet), the near rims, spokes and hub
+  ctx.save(); clipAt(hw); ring(hw, r - 0.06, woodD, 0.13); ring(hw, Ri, woodD, 0.09); spokes(hw, woodD, 0.1); ctx.restore();
+  ctx.save(); clipAt(0);
+  var bo = []; for (i = 0; i < N; i++) { var a = ang + i / N * TAU; bo.push({ a: a, d: Pa(W3(r * 0.85, a, 0)).d }); } bo.sort(function (p1, p2) { return p2.d - p1.d; });
+  bo.forEach(function (o, oi) { var ca = Math.cos(o.a), sa = Math.sin(o.a), wt = ca > 0 && sa < 0.3 ? clamp((0.3 - sa) * 1.2) : 0; board(o.a, mixc(scl(wood, 0.95 + 0.1 * hash2(oi, 3)), wet, wt * 0.7), false); });
+  ctx.restore();
+  ctx.save(); clipAt(-hw);
+  ring(-hw, r - 0.06, wood, 0.14); ring(-hw, Ri, scl(wood, 0.92), 0.1);
+  ctx.globalAlpha = 0.5; ring(-hw, r - 0.01, woodL, 0.03); ctx.globalAlpha = 1;   // (the rim's lit outer edge)
+  spokes(-hw, wood, 0.11);
+  ctx.globalAlpha = 0.6; spokes(-hw - 0.01, woodL, 0.03); ctx.globalAlpha = 1;
+  ctx.restore();
+  // the hub: a solid drum of timber banded in iron, the axle's end through it
+  var hb = pt(0, 0, -hw - 0.12), hk = 0.34 * k; ctx.fillStyle = rgb(woodD); ctx.beginPath(); ctx.arc(hb.x, hb.y - 0.02 * k, hk, 0, TAU); ctx.fill(); ctx.fillStyle = rgb(wood); ctx.beginPath(); ctx.arc(hb.x, hb.y, hk * 0.82, 0, TAU); ctx.fill();
+  ctx.strokeStyle = rgb(mulc([40, 38, 40], tint)); ctx.lineWidth = Math.max(0.4, 0.05 * k); ctx.beginPath(); ctx.arc(hb.x, hb.y, hk * 0.7, 0, TAU); ctx.stroke();
+  // the water at the wheel
+  if (!still) {
+    // sheets and drips falling from the paddles rising out on the downstream side; a spatter thrown up where they go in upstream
+    for (i = 0; i < N; i++) {
+      var ap = ang + i / N * TAU, cp = Math.cos(ap), spp = Math.sin(ap), tip = W3(rt, ap, 0);
+      if (cp > 0.1 && tip[1] > wy + 0.02 && spp < 0.45) {
+        var fall = tip[1] - wy, lift = clamp((0.45 - spp) / 1.1), tp = P(tip[0], tip[1], tip[2]), wp = P(tip[0] + B.u[0] * 0.12, wy, tip[2] + B.u[1] * 0.12), sh = ctx.createLinearGradient(tp.x, tp.y, wp.x, wp.y);
+        sh.addColorStop(0, fs + (0.5 * lift * wk) + ')'); sh.addColorStop(1, fs + '0)'); ctx.strokeStyle = sh; ctx.lineWidth = Math.max(0.4, 0.22 * k * lift); ctx.beginPath(); ctx.moveTo(tp.x, tp.y); ctx.lineTo(wp.x, wp.y); ctx.stroke();
+        ctx.strokeStyle = fs + (0.55 * wk) + ')'; ctx.lineWidth = Math.max(0.25, 0.028 * k); ctx.lineCap = 'round'; ctx.beginPath();
+        for (j = 0; j < 4; j++) { var u2 = (t * 1.7 + hash2(i, j) + j / 4) % 1, ox = (hash2(j, i) - 0.5) * 0.6, dq0 = P(tip[0] + B.u[0] * (0.05 + u2 * 0.25) + B.v[0] * ox, tip[1] - u2 * u2 * fall, tip[2] + B.u[1] * (0.05 + u2 * 0.25) + B.v[1] * ox), dq1 = P(tip[0] + B.u[0] * (0.05 + u2 * 0.25) + B.v[0] * ox, tip[1] - u2 * u2 * fall + 0.05 + 0.12 * u2, tip[2] + B.u[1] * (0.05 + u2 * 0.25) + B.v[1] * ox); ctx.moveTo(dq0.x, dq0.y); ctx.lineTo(dq1.x, dq1.y); }   // (drops, drawn out by their fall)
+        ctx.stroke(); ctx.lineCap = 'butt';
+      }
+      if (cp < -0.2 && spp < -0.55 && tip[1] > wy - 0.1 && tip[1] < wy + 0.5) { ctx.fillStyle = fs + (0.45 * wk) + ')'; for (j = 0; j < 3; j++) { var u3 = (t * 2.3 + hash2(i + 9, j)) % 1, sq = P(tip[0] - B.u[0] * u3 * 0.35 + B.v[0] * (hash2(j + 3, i) - 0.5) * 0.6, wy + Math.sin(u3 * Math.PI) * 0.28, tip[2] - B.u[1] * u3 * 0.35 + B.v[1] * (hash2(j + 3, i) - 0.5) * 0.6); ctx.beginPath(); ctx.arc(sq.x, sq.y, Math.max(0.25, 0.025 * k), 0, TAU); ctx.fill(); } }
+    }
+  }
+  // where the paddles plough through: the water heaped and churned white along the waterline, most where they come out
+  var tt = still ? 0 : t;
+  for (i = 0; i < 14; i++) { var f = i / 13, uu = lerp(-x0 - 0.25, x0 + 0.35, f), side = (hash2(i, 31) - 0.5) * (G.w + 0.5), fl = 0.75 + 0.25 * Math.sin(tt * 6 + i * 1.7), fq = WP(uu, side, wy + 0.04); stamp(ctx, foam, fq.x, fq.y, (0.22 + 0.2 * f) * k * fl, (0.1 + 0.07 * f) * k * fl, (0.45 + 0.35 * f) * wk); }
+  ctx.globalAlpha = 1;
+  // the wake: white water carried on downstream, breaking up and fading; and in front of the wheel the race streaming on
+  for (i = 0; i < 12; i++) { var uw = ((tt * 1.25 + i / 12) % 1), uq = x0 + 0.2 + uw * 2.4, sd = (hash2(i, 77) - 0.5) * 1.5 + Math.sin(tt * 2 + i) * 0.1, wq = WP(uq, sd, wy + 0.02); stamp(ctx, foam, wq.x, wq.y, (0.18 + 0.25 * uw) * k, (0.07 + 0.08 * uw) * k, 0.42 * (1 - uw) * wk); }
+  ctx.globalAlpha = 1;
+  streaks(-1.0, -hw - 0.1, 9, 80);
+  // the outer bearing: a squat dressed-stone pier on the near kerb, a wooden bearing block on its head, the axle's end resting in it
+  var sb = -hw - 0.95, by = c[1], st = [150, 144, 132], hwP = 0.26, top = by - 0.16;
+  function SP(a3, b3, y3) { return WP(a3, sb + b3, y3); }
+  var fF = [SP(-hwP, -hwP, 0.1), SP(hwP, -hwP, 0.1), SP(hwP, -hwP, top), SP(-hwP, -hwP, top)], fS = [SP(hwP, -hwP, 0.1), SP(hwP, hwP, 0.1), SP(hwP, hwP, top), SP(hwP, -hwP, top)], fT = [SP(-hwP, -hwP, top), SP(hwP, -hwP, top), SP(hwP, hwP, top), SP(-hwP, hwP, top)];
+  var nS = norm([B.u[0], 0, B.u[1]]), sideLit = nS[0] * LS[0] - nS[2] * LS[1] > 0;
+  quad(fS, mulc(scl(st, sideLit ? 0.95 : 0.7), tint)); quad(fF, mulc(scl(st, sideLit ? 0.78 : 0.92), tint)); quad(fT, mulc(scl(st, g.SEA.snow ? 1.45 : 1.1), tint));
+  ctx.strokeStyle = rgb(mulc([90, 86, 80], tint)); ctx.lineWidth = Math.max(0.3, 0.025 * k); ctx.beginPath(); for (var cy2 = 0.45; cy2 < top - 0.1; cy2 += 0.38) { var j0 = SP(-hwP, -hwP, cy2), j1 = SP(hwP, -hwP, cy2), j2 = SP(hwP, hwP, cy2); ctx.moveTo(j0.x, j0.y); ctx.lineTo(j1.x, j1.y); ctx.lineTo(j2.x, j2.y); } ctx.stroke();   // (its courses)
+  var ax0 = WP(0, -hw - 0.12, by), ax1 = SP(0, -0.05, by); ctx.strokeStyle = rgb(woodD); ctx.lineWidth = Math.max(0.6, 0.2 * k); ctx.beginPath(); ctx.moveTo(ax0.x, ax0.y); ctx.lineTo(ax1.x, ax1.y); ctx.stroke();
+  quad([SP(-0.3, -0.2, top), SP(0.3, -0.2, top), SP(0.3, 0.2, top + 0.12), SP(-0.3, 0.2, top + 0.12)].map(function (q, qi) { return qi < 2 ? q : q; }), mulc([112, 90, 68], tint));
+  quad([SP(-0.3, -0.2, top), SP(0.3, -0.2, top), SP(0.3, -0.2, top + 0.12), SP(-0.3, -0.2, top + 0.12)], mulc([88, 70, 54], tint));   // (the wooden bearing block)
+  ctx.fillStyle = rgb(mulc([34, 30, 30], tint)); ctx.beginPath(); ctx.arc(ax1.x, ax1.y, 0.11 * k, 0, TAU); ctx.fill();   // (the axle's iron-capped end, resting in the block)
   ctx.globalAlpha = 1;
 }
 function boatState(g, t) { var b = g.boat, L = b.pa.len, s = ((t * b.sp + b.off) % (L + 30)) - 15; if (s < 0 || s > L) return null; var a = polyAt(b.pa, s); return { x: a.x, z: a.z, dx: a.dx, dz: a.dz, s: s, L: L }; }
@@ -7315,7 +7689,7 @@ function itemBox(g, q) {
     var bx0 = 1e9, by0 = 1e9, bx1 = -1e9, by1 = -1e9; P3.forEach(function (p) { var m = 1.6 * p.k; bx0 = Math.min(bx0, p.x - m); by0 = Math.min(by0, p.y - m * 1.2); bx1 = Math.max(bx1, p.x + m); by1 = Math.max(by1, p.y + m * 0.5); });
     return [bx0, by0, bx1, by1];
   }
-  if (q.k === 'wheel') { if (!g.wheel.box) { var c = Pa(g.wheel.c), kw = c.k * (g.wheel.r + 1.2); g.wheel.box = [c.x - kw, c.y - kw, c.x + kw, c.y + kw]; } return g.wheel.box; }
+  if (q.k === 'wheel') { if (!g.wheel.box) { var c = Pa(g.wheel.c), kw = c.k * (g.wheel.r + 1.2); g.wheel.box = [c.x - kw - 3.4 * c.k, c.y - kw, c.x + kw + 3.4 * c.k, c.y + kw + 0.6 * c.k]; } return g.wheel.box; }
   return null;
 }
 function pBounds(pts, pad) { var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; pts.forEach(function (p) { x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y); }); return [x0 - pad, y0 - pad, x1 + pad, y1 + pad]; }
@@ -7341,7 +7715,7 @@ function bandItems(g, band) {   // (a walker only once placed on its way, see st
   for (i = 0; i < g.nobori.length; i++) if (g.nobori[i].band === band && g.wx !== 'typhoon') it.push({ d: P(g.nobori[i].x, 0, g.nobori[i].z).d, k: 'b', o: g.nobori[i] });
   for (i = 0; i < g.strings.length; i++) if (g.strings[i].band === band) it.push({ d: Pa(mixc(g.strings[i].a, g.strings[i].b, 0.5)).d - 0.5, k: 's', o: g.strings[i] });
   for (i = 0; i < g.walkers.length; i++) { var w = g.walkers[i]; if (g.paths[w.pi].band !== band || w.cl === undefined) continue; if (AQ.walk && !w.temp && !w.react && ((w.ph * 1.6180339) % 1) < AQ.walk) continue; var wp = walkerPos(g, w); it.push({ d: P(wp.x, 0, wp.z).d, k: 'w', o: w }); }
-  if (band === 1 && g.wheel) it.push({ d: Pa(g.wheel.c).d, k: 'wheel' });
+  if (band === 0 && g.wheel) it.push({ d: Pa(g.wheel.c).d, k: 'wheel' });   // (in the near band: it turns in front of its hut, which stands nearer than the river's own things and so cuts the river band)
   for (i = 0; i < g.koi.length && g.wx !== 'typhoon'; i++) { var kb = P(g.koi[i][0], 0, g.koi[i][1]).d < P(0, 0, 36).d ? 0 : 2; if (kb === band) it.push({ d: P(g.koi[i][0], 0, g.koi[i][1]).d, k: 'koi', o: g.koi[i], i: i }); }
   for (i = 0; i < g.tana.length; i++) { var tb = Pa(g.tana[i].base).d < P(0, 0, 36).d ? 0 : 2; if (tb === band) it.push({ d: Pa(g.tana[i].base).d - 0.1, k: 'tana', o: g.tana[i] }); }
   if (band === 1 && g.fwOn) it.push({ d: 1e5 - 1, k: 'yakata' });
@@ -7901,7 +8275,7 @@ function rwBuild() {
   if (F.theatre) { var th = theatreFrame(); rect(th.x, th.z, th.u, 9.5, 11); }
   if (F.market) [[-5, -1.5, 0.35], [-1.2, 1.4, 0.3], [2.8, -1.0, 0.4], [5.6, 2.0, 0.3], [-4.2, 3.0, 0.25]].forEach(function (q) { rect(MARKET.x + q[0], MARKET.z + q[1], [Math.cos(q[2]), Math.sin(q[2])], 2.3, 1.6, 0.15); });
   if (F.buke) BUKE.forEach(function (bk) { rect(bk.x, bk.z, KR_DIR, bk.w, bk.d, 0.3); });
-  if (F.ishigaki) { var ig = ishiGeom(); rect(CASTLE.x, CASTLE.z, ig.B.u, ig.w + 3, ig.d + 3, 0.3); box(oteFrame(), OTE.court[0] - 0.4, OTE.court[1] + 0.4, -0.4, 9); }
+  if (F.ishigaki) { var ig = ishiGeom(), oO = oteFrame(); rect(CASTLE.x, CASTLE.z, ig.B.u, ig.w + 3, ig.d + 3, 0.3); box(oO, OTE.moatA[0] - 0.4, OTE.moatA[1] + 0.4, OTE.moat[0] - 0.4, 30); }   // (the moat and everything behind it)
   if (F.landing) { var lg = landingGeom().B; box(lg, -2.6, 2.6, -3.4, 0.2); }
   if (F.tea) rect((CHA.x0 + CHA.x1) / 2, (CHA.z0 + CHA.z1) / 2 + 0.2, [1, 0], CHA.x1 - CHA.x0, CHA.z1 - CHA.z0 + 0.4, 0.2);   // (the hedges; the pickers keep to the paths between)
   if (F.smithy) { var smb = smithyFrame(); box(smb, -SMITH_W / 2 - 1.2, SMITH_W / 2 + 0.3, -SMITH_D / 2 - 1.3, SMITH_D / 2 + 0.3); }   // (the house, the charcoal stack, the anvil and the tub)
@@ -12463,7 +12837,7 @@ function spectatorPaths() {
   var out = [], deck = [BR_NEAR, [BR.x, BR.z], BR_FAR];
   out.push({ pts: deck, band: 0, spread: 1.4, w: 0, still: true });
   if (F.rivst) out.push({ pts: [stPt(-2.2, 4), stPt(-2.2, 18), stPt(-2.4, 32)], band: 2, spread: 0.6, w: 0, still: true });
-  out.push({ pts: [[BR_NEAR[0] - (F.kosatsu ? 6.5 : 3), BR_NEAR[1] + (F.kosatsu ? 1.0 : -1.5)], [BR_NEAR[0] - 14, BR_NEAR[1] + 3.5], [BR_NEAR[0] - 24, BR_NEAR[1] + 8.5]], band: 0, spread: 0.8, w: 0, still: true });   // (with the 高札場 there, the line of watchers starts behind it)
+  out.push({ pts: [[BR_NEAR[0] - (F.kosatsu ? 6.5 : 3), BR_NEAR[1] + (F.kosatsu ? 1.0 : -1.5)], [BR_NEAR[0] - (F.mill ? 9 : 10), BR_NEAR[1] + (F.mill ? 1.4 : 2.2)]].concat(F.mill ? [millFrame().L(0.8, -5.6, 0), millFrame().L(-4.6, -5.0, 0), millFrame().L(-7.6, -2.4, 0)].map(function (q) { return [q[0], q[2]]; }) : [[BR_NEAR[0] - 14, BR_NEAR[1] + 3.5]]).concat([[BR_NEAR[0] - 24, BR_NEAR[1] + 8.5]]), band: 0, spread: 0.8, w: 0, still: true });   // (round the front of the mill race, not through it)   // (with the 高札場 there, the line of watchers starts behind it)
   out.forEach(function (q) { q.pa = polyLen(q.pts); });
   return out;
 }
@@ -12879,7 +13253,7 @@ function lifeSites() {   // every place an activity might happen at this stage (
   if (F.street) for (var s = 8; s <= 26; s += 6) { var p = rvPt(s, -2.6); add(p[0], p[1], 1.6, 2.8); }
   if (F.street) { var sbp = rvPt(18, -2.2); add(sbp[0], sbp[1], 1.8, 2.4); var dpp = rvPt(24, -2.3); add(dpp[0], dpp[1], 2.4, 3.2); }
   var fr = lifeFronts(6); fr.forEach(function (q) { add(q[0], q[2], 2.6, 2.6); });   // (the shop fronts' people: sweeping, the shutters, 打ち水 and its wet patches, snow cleared to a heap beside the door)
-  if (F.ishigaki) { var oq2 = oteFrame().L(0.6, 2.4, 0); add(oq2[0], oq2[2], 6.5, 8.5); }   // the 大手門: the guards, and the one let through up the stair
+  if (F.ishigaki) { var oq2 = oteFrame().L(0.6, -0.4, 0); add(oq2[0], oq2[2], 7.5, 8.5); }   // the 大手門: the guards on the bridge's end, and the one let through, over the bridge and up the stair
   if (!F.street && F.teahouse) add(-4.0, 17.0, 2.4, 2.2); else if (F.street) { var kpp = stPt(10, 0.5); add(kpp[0], kpp[1], 2.4, 2.2); }   // the children at play
   if (F.shrine) add(SHRINE.x - 0.35, SHRINE.z - 3.35, 3);
   if (F.temple) { var tf = templeFrame().L(0, -11.6, 0); add(tf[0], tf[2], 4.6); var bqs = bellFrame().L(-3.7, 0.3, 0); add(bqs[0], bqs[2], 3.6); }   // (the hall's forecourt; the queue for the bell on 大晦日)
@@ -13115,7 +13489,7 @@ function mikoshiCrowd(a) {   // the crowd along the way: both sides, a little ap
   return out;
 }
 function lifeMikoshi(ctx, g, a, t, tint, h) {
-  var per = 110, u = (t % per) / per, tTop = F.ishigaki ? OTE_T - 3.5 : 32, tt = u < 0.5 ? 4 + u * 2 * (tTop - 4) : tTop - (u - 0.5) * 2 * (tTop - 4), dir = u < 0.5 ? 1 : -1, bob = Math.abs(Math.sin(t * 3.4)), i;   // (it turns back before the 大手門)
+  var per = 110, u = (t % per) / per, tTop = F.ishigaki ? OTE_T + OTE.moat[0] - 3.5 : 32, tt = u < 0.5 ? 4 + u * 2 * (tTop - 4) : tTop - (u - 0.5) * 2 * (tTop - 4), dir = u < 0.5 ? 1 : -1, bob = Math.abs(Math.sin(t * 3.4)), i;   // (it turns back before the moat at the 大手橋)
   var crowd = a.crowd || [], CS = a.cs || (a.cs = mikoshiCrowd(a));
   if (!F.festival) { if (!a.nb) { a.nb = []; for (var t2 = 5; t2 <= 26; t2 += 7) { var m2 = stPt(t2, -(STREET_HW - 0.9)); a.nb.push({ x: m2[0], z: m2[1], h: 4.4, side: STREET_DIR, col: [236, 232, 220], edge: [196, 52, 40], ph: t2 * 0.7, band: 2, mark: true, text: '奉納' }); } } a.nb.forEach(function (q) { drawNobori(ctx, g, q, t); }); }   // (the shrine's 奉納 幟 put up along the street for the 秋祭り's weekend)
   crowd.forEach(function (f, j) {   // the crowd: along both sides, a little apart, watching
@@ -13599,15 +13973,15 @@ function lifeOte(ctx, g, a, t, tint, h) {
     var w = O.L(pt[0], pt[1], 0), p = P(w[0], pt[2] || 0, w[2]), k = p.k, d = P(w[0], 0, w[2]).d, hh = 1.6 * k;
     drawCut(ctx, g, [p.x - 0.9 * k, p.y - 2.2 * k, p.x + 0.9 * k, p.y + 0.3 * k], d - 0.05, function (c) { var fs = figure(c, p.x, p.y, hh, f, tint, o); if (extra) extra(c, fs, p, k); });
   }
-  if (day || g.light === 'dusk') [-1, 1].forEach(function (sg, i) {   // the guards, either side of the way in (where they show through the 木戸 in front), half turned to the street
-    var f = oteFolk(a.folk[i], 'guard'), pt = [sg * 1.0 + 0.3, -0.7, 0], wq = O.L(pt[0], pt[1], 0), cx = P(wq[0], 0, wq[2]).x, mid = P(O.L(0, -2, 0)[0], 0, O.L(0, -2, 0)[2]).x, idle = Math.sin(t * 0.3 + f.ph) * 0.05;
+  if (day || g.light === 'dusk') [-1, 1].forEach(function (sg, i) {   // the guards, on the bridge's end either side of the way in, half turned to the street
+    var f = oteFolk(a.folk[i], 'guard'), pt = [sg * 1.1, -0.9, oteDeckY(-0.9)], wq = O.L(pt[0], pt[1], 0), cx = P(wq[0], 0, wq[2]).x, mid = P(O.L(0, -2, 0)[0], 0, O.L(0, -2, 0)[2]).x, idle = Math.sin(t * 0.3 + f.ph) * 0.05;
     cutFig(pt, f, { face: mid > cx ? 1 : -1, arms: [[0.55 + idle, 1], [1.25, -1]] }, function (c, fs, p, k) {   // the 六尺棒, held upright beside him
       var hd = fs.hand || [p.x, p.y - 0.9 * k]; c.strokeStyle = rgb(mulc([150, 116, 74], tint)); c.lineWidth = Math.max(0.8 / dv, 0.035 * k); c.lineCap = 'round'; c.beginPath(); c.moveTo(hd[0], p.y - 0.02 * k); c.lineTo(hd[0], p.y - 1.95 * k); c.stroke(); c.lineCap = 'butt';
     });
   });
   if (!day || !a.folk[2]) return;
   // the one let through: every minute or so
-  var T = 58, u = (t + a.folk[2].ph * 9) % T, sp = 1.05, R = [[0.5, -5.2, 0], [0.3, -0.3, 0], [-1.5, 1.3, 0], [-2.7, 2.8, 0], [OTE.stair[1] + 0.1, 2.8, OTE.top], [4.6, 2.6, OTE.top], [4.6, 5.0, OTE.top]], L = [0], i;
+  var B2 = OTE.bridge, sb = (OTE.stair[2] + OTE.stair[3]) / 2, T = 58, u = (t + a.folk[2].ph * 9) % T, sp = 1.05, R = [[0.5, B2[2] - 2.6, 0], [0.4, B2[2], oteDeckY(B2[2])], [0.3, (B2[2] + B2[3]) / 2, B2[4]], [0.15, B2[3], oteDeckY(B2[3])], [0, OTE.court[2] - 0.6, 0], [-1.2, OTE.court[2] + 1.0, 0], [OTE.stair[0] - 0.3, sb, 0], [OTE.stair[1] + 0.1, sb, OTE.top], [4.6, sb - 0.2, OTE.top], [4.6, OTE.yagura[3] - 1.0, OTE.top], [4.6, OTE.yagura[3] + 0.8, OTE.top]], L = [0], i;   // (over the bridge, in at the gate, left across the court to the stair's foot, up it to the landing, and in through the 櫓門)
   for (i = 1; i < R.length; i++) L.push(L[i - 1] + Math.hypot(R[i][0] - R[i - 1][0], R[i][1] - R[i - 1][1], R[i][2] - R[i - 1][2]));
   var s = u * sp; if (s > L[L.length - 1]) return;
   for (i = 1; i < R.length - 1 && L[i] < s; i++);
@@ -14196,7 +14570,7 @@ function sparrowHome() {   // a quiet patch of grass on the river bank, clear of
     if (!faunaVisible(x, z) || faunaHidden(x, z) || Math.hypot(x - BR.x, z - BR.z) < 12) continue;
     var dp = 1e9; paths.forEach(function (q) { dp = Math.min(dp, polyD(q.pts, x, z)); }); if (dp < 3) continue;
     if (feet.some(function (f) { return Math.hypot(f.x - x, f.z - z) < Math.max(f.w, f.d) * 0.75 + 2.5; })) continue;
-    if (F.mill && Math.hypot(x - MILL.x, z - MILL.z) < 7) continue; if (F.teahouse && Math.hypot(x - TEA.x, z - TEA.z) < 6) continue; if (F.landing && Math.hypot(x - landingGeom().B.x, z - landingGeom().B.z) < 9) continue; if (F.kura && z > 20 && x > 5) continue;
+    if (F.mill && Math.hypot(x - MILL.x, z - MILL.z) < 9.5) continue; if (F.teahouse && Math.hypot(x - TEA.x, z - TEA.z) < 6) continue; if (F.landing && Math.hypot(x - landingGeom().B.x, z - landingGeom().B.z) < 9) continue; if (F.kura && z > 20 && x > 5) continue;
     var sc = dp - Math.abs(z - 40) * 0.2; if (!best || sc > best.sc) best = { sc: sc, p: [x, z] };
   }
   return best ? best.p : null;
@@ -14207,7 +14581,7 @@ function heronSpot() {   // a shallow by the near bank, clear of the bridge and 
     var a = RIVER_S[i], b = RIVER_S[i + 1], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l; if ((nz > 0) !== !!far) { nx = -nx; nz = -nz; }   // the near bank first, else the far one
     var x = a[0] + nx * (RIVER_HW - 0.9), z = a[1] + nz * (RIVER_HW - 0.9);
     if (Math.hypot(x - BR.x, z - BR.z) < 13 || !faunaVisible(x, z) || faunaHidden(x, z)) continue;
-    if (F.mill && Math.hypot(x - MILL.wx, z - MILL.wz) < 8) continue; if (F.landing && Math.hypot(x - landingGeom().B.x, z - landingGeom().B.z) < 9) continue;
+    if (F.mill && Math.hypot(x - MILL.x, z - MILL.z) < 10) continue;   // (clear of the race's mouths) if (F.landing && Math.hypot(x - landingGeom().B.x, z - landingGeom().B.z) < 9) continue;
     var sc = -Math.abs(z - 36) - Math.abs(x + 8) * 0.3 - far * 6; if (!best || sc > best.sc) best = { sc: sc, p: [x, z, dx > 0 ? -1 : 1] };
   }
   return best ? best.p : null;
@@ -14411,7 +14785,7 @@ function drawFaunaGround(ctx, g, FA, band, t) {
 
 /* ---- 09_runtime.js ---- */
 /* ================= public API & controller ================= */
-var VERSION = '1.3.12';
+var VERSION = '1.3.13';
 var SEASON_KEYS = ['spring', 'summer', 'autumn', 'winter'], LIGHT_KEYS = ['morning', 'day', 'dusk', 'night'];
 var WEATHERS = ['clear', 'cloudy', 'rain', 'storm', 'snow', 'typhoon', 'blizzard'];
 var EVENTS = ['shogatsu', 'setsubun', 'hinamatsuri', 'kodomo', 'tanabata', 'obon', 'tsukimi'];
