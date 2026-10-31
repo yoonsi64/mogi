@@ -6557,7 +6557,7 @@
             if (!t) return '<div class="zk-card locked" data-id="' + escapeHtml(r.id) + '">' + rarePicTag(w, r.id, true) + '<b>？？？</b><small>' + escapeHtml(rareText(w, r, true)) + '</small></div>';
             var d = new Date(t), c = Math.max(1, (counts[k] || 0));
             return '<div class="zk-card' + (GD.zkNew && GD.zkNew[k] ? ' new' : '') + '" data-id="' + escapeHtml(r.id) + '">' + rarePicTag(w, r.id, false) +
-                '<b>' + escapeHtml(r.name) + '</b><span class="zk-meta">' + (d.getFullYear() !== now.getFullYear() ? d.getFullYear() + '年' : '') + (d.getMonth() + 1) + '月' + d.getDate() + '日に出会う・' + c + '回</span>' +
+                '<b>' + escapeHtml(r.name) + '</b><span class="zk-meta">' + (d.getFullYear() !== now.getFullYear() ? d.getFullYear() + '年' : '') + (d.getMonth() + 1) + '月' + d.getDate() + '日に出会った・' + c + '回</span>' +
                 '<small>' + escapeHtml(rareText(w, r, false)) + '</small></div>';
         }).join('');
         el.querySelector('.zk-main').scrollTop = 0;
@@ -7099,7 +7099,7 @@
         }
         el.querySelector('.gf-time').textContent = t;
         el.querySelector('.gf-phase').textContent = !f.running ? gdWorld(f.world).title + '・集中モード' : f.paused ? '一時停止中' : f.phase === 'work' ? '集中' : '休憩';
-        el.querySelector('.gf-sub').textContent = !f.running ? '紙の教材で勉強するときにも。集中の時間は学習時間になります。' :
+        el.querySelector('.gf-sub').textContent = !f.running ? '紙の教材で勉強するときにも。集中した時間は学習時間に加わります。' :
             '今日の学習 ' + gdFmt(Math.floor((studyTotals().days[getTodayDateString()] || 0) / 60)) + (f.worked ? '　・この集中 ' + f.worked + '分' : '');
         el.querySelector('.gf-plans').hidden = f.running;
         el.querySelectorAll('.gf-plans button').forEach(function(b, i) { b.classList.toggle('active', i === (getSetting('focusPlan', 0) || 0)); });
@@ -7521,7 +7521,7 @@
         sanitizeStoredData();
         try {
             var dataIssues = validateQuizData();
-            if (dataIssues.length) console.warn('[モギ] 問題データのチェックで ' + dataIssues.length + ' 件見つかりました', dataIssues);
+            if (dataIssues.length) console.warn('[モギ] 問題データのチェックで ' + dataIssues.length + ' 件の問題が見つかりました', dataIssues);
         } catch (e) { console.warn('[モギ] 問題データのチェックに失敗しました', e); }
 
         welcomeView.style.display = 'flex';
@@ -8157,7 +8157,7 @@
         var rg = standardPaceRange();
         document.getElementById('rsgoal-note').textContent = cpm
             ? 'すべての本の内容理解で、1分に' + cpm + '字のペースを目標にします。'
-            : 'すべての文章で最低' + READ_GOAL_FLOOR + '字/分（本番のJLPTの時間配分の目安）。本の目標解答時間のほうが速い日は、そのペースにします' + (rg ? '（いまは約' + rg[0] + (rg[1] !== rg[0] ? '〜' + rg[1] : '') + '字/分）' : '') + '。';
+            : 'すべての文章で最低' + READ_GOAL_FLOOR + '字/分（本番のJLPTの時間配分の目安）。本の目標解答時間から計算したペースのほうが速い場合は、そちらに合わせます' + (rg ? '（いまは約' + rg[0] + (rg[1] !== rg[0] ? '〜' + rg[1] : '') + '字/分）' : '') + '。';
     }
     function setReadingGoal(cpm) {
         setSetting('readingGoal', cpm ? Math.max(READ_GOAL_MIN, Math.min(READ_GOAL_MAX, cpm)) : 0);
@@ -8214,7 +8214,7 @@
             var card = document.getElementById('dev-card'), was = getSetting('devMenu', false);
             setSetting('devMenu', true);
             card.style.display = '';
-            showToast(was ? '開発者メニューは表示されています' : '開発者メニューを表示しました');
+            showToast(was ? '開発者メニューはすでに表示されています' : '開発者メニューを表示しました');
             card.scrollIntoView({ behavior: 'smooth', block: 'center' });
         });
         document.getElementById('dev-gallery').addEventListener('click', function() { openGallery(0); });
@@ -9171,7 +9171,7 @@
         var d = new Date();
         var name = 'mogi-tangocho-' + d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + '.txt';
         var showText = function() {
-            showTextDialog('単語帳（テキスト）', '下のテキストをコピーしてください。1行に1語、「単語;意味;単語[ふりがな]」の形です（例：痴[ち]人[じん]の 愛[あい]）。', text, '閉じる', function(v, close) { close(); }, true);
+            showTextDialog('単語帳（テキスト）', '下のテキストをコピーしてください。1行に1語、「単語;意味;単語[ふりがな]」の形式です（例：痴[ち]人[じん]の 愛[あい]）。', text, '閉じる', function(v, close) { close(); }, true);
         };
         try {
             saveTextFile(name, 'text/plain', text, function(ok, cancelled) {
@@ -9180,7 +9180,7 @@
                 showToast('「' + name + '」を保存しました（' + wordList.length + '語）', 3500);
             });
         } catch (err) {
-            showTextDialog('単語帳（テキスト）', '下のテキストをコピーしてください。1行に1語、「単語;意味;単語[ふりがな]」の形です（例：痴[ち]人[じん]の 愛[あい]）。', text, '閉じる', function(v, close) { close(); }, true);
+            showTextDialog('単語帳（テキスト）', '下のテキストをコピーしてください。1行に1語、「単語;意味;単語[ふりがな]」の形式です（例：痴[ち]人[じん]の 愛[あい]）。', text, '閉じる', function(v, close) { close(); }, true);
         }
     }
 
@@ -9483,7 +9483,7 @@
     // 「メモに貼る」 in the dictionary panel: copied text goes into the word's メモ
     function addToMemo(text) {
         text = String(text || '').trim();
-        if (!text) { showToast('コピーされた文字がありません'); return; }
+        if (!text) { showToast('クリップボードにテキストがありません'); return; }
         var sheetOpen = document.getElementById('word-sheet').classList.contains('active');
         if ((dictTarget === 'sheet' || !dictTarget) && sheetOpen) {
             var area = document.getElementById('word-sheet-meaning');
@@ -9528,7 +9528,7 @@
         if (!navigator.clipboard || !navigator.clipboard.readText) { fallback(); return; }
         navigator.clipboard.readText().then(function(text) {
             text = String(text || '').trim();
-            if (!text) { showToast('コピーされた文字がありません'); return; }
+            if (!text) { showToast('クリップボードにテキストがありません'); return; }
             var cur = area.value.trim();
             var lookedUp = lookUpMeaning(sheetWordAndReading().word);
             area.value = (!cur || (cur === lookedUp && !area.dataset.edited)) ? text : cur + '\n' + text;
@@ -10090,7 +10090,7 @@
             '<button id="wp-def"' + (n ? '' : ' disabled') + '><b>意味を書く</b><span>言葉を見て、定義を書く' + (n ? '・' + (dDef ? cnt(qD) : '今日の分は完了 ✓') : '') + '</span></button>' +
             '<button id="wp-word"' + (n ? '' : ' disabled') + '><b>言葉を書く</b><span>定義を見て、日本語の言葉を書く（自動で採点）' + (n ? '・' + (dWord ? cnt(qW) : '今日の分は完了 ✓') : '') + '</span></button>' +
             (n ? '<div class="write-pick-note">' + (activeDeck ? '本の意味（または書く練習の定義）で ' + n + '語 を練習します' : '書く練習の定義がある ' + n + '語 で練習します') + '（カードと同じFSRS・それぞれ別のスケジュール）。単語帳の単語をタップすると、定義を追加・変更できます。</div>'
-               : '<div class="write-pick-note">どちらも「書く練習の定義」がある単語で練習します。まだありません。<br>単語帳の単語をタップして、「書く練習の定義」に短い定義を入れてください（「意味から入れる」で今の意味を写せます）。</div>' +
+               : '<div class="write-pick-note">どちらも「書く練習の定義」がある単語で練習します。該当する単語はまだありません。<br>単語帳の単語をタップして、「書く練習の定義」に短い定義を入れてください（「意味から入れる」で今の意味を写せます）。</div>' +
                  '<button id="wp-back"><b>単語帳に戻る</b></button>') +
             '</div>';
         v.classList.add('active');
@@ -10736,7 +10736,7 @@
         var art = wq && wq.art, artIdx = art ? GS_ART.indexOf(art) : -1;
         if (artIdx > -1 && document.getElementById('flash-view').classList.contains('game')) {
             var res = body.querySelector('.wq-result'), hint = document.createElement('button');
-            hint.className = 'wq-arthint'; hint.innerHTML = '<span>' + escapeHtml(art.title) + '</span> 絵をタップで作品について';
+            hint.className = 'wq-arthint'; hint.innerHTML = '<span>' + escapeHtml(art.title) + '</span> 絵をタップで作品の解説';
             res.appendChild(hint); res.classList.add('art-tap');
             var openArt = function() { openGallery(artIdx); };
             hint.addEventListener('click', openArt);
@@ -10785,10 +10785,10 @@
             var pools = mcPools(o.kind), n = pools.pick.length, ok = n >= 1 && pools.all.length >= o.choices;
             var q = o.count ? Math.min(o.count, n) : n;
             body.innerHTML = '<div class="wq-card mset">' +
-                seg('kind', '問題の種類', [['w2m', '言葉→意味'], ['m2w', '意味→言葉'], ['mix', 'まぜる'], ['w2r', '言葉→読み']]) +
+                seg('kind', '問題の種類', [['w2m', '言葉→意味'], ['m2w', '意味→言葉'], ['mix', 'ミックス'], ['w2r', '言葉→読み']]) +
                 seg('count', '問題数', [[5, '5問'], [10, '10問'], [20, '20問'], [0, 'すべて']]) +
                 seg('choices', '選択肢', [[3, '3つ'], [4, '4つ'], [5, '5つ']]) +
-                '<div class="wq-note">' + (ok ? '使える単語 ' + n + '語 → ' + q + '問' : '使える単語が足りません（' + pools.all.length + '語・選択肢' + o.choices + 'つには' + o.choices + '語必要）') +
+                '<div class="wq-note">' + (ok ? '使える単語 ' + n + '語 → ' + q + '問' : '使える単語が足りません（' + pools.all.length + '語・選択肢' + o.choices + 'つには' + o.choices + '語以上必要）') +
                 (o.kind === 'w2r' ? '<br>漢字のある単語の読み方を選びます' : '') + '</div>' +
                 '</div><div class="flash-actions"><button class="flash-know" id="mset-go"' + (ok ? '' : ' disabled') + '>始める</button></div>';
             body.querySelectorAll('.mset-seg button').forEach(function(b) {
@@ -11109,7 +11109,7 @@
                 seg('pairs', ta ? '1面のペア' : 'ペアの数', [[4, '4組'], [6, '6組'], [8, '8組'], [10, '10組']]) +
                 seg('peek', '最初に見る', [[0, 'なし'], [3, '3秒']]) +
                 (ta ? seg('time', '制限時間', [[60, '60秒'], [90, '90秒'], [120, '120秒']]) : '') +
-                '<div class="wq-note">' + (ok ? '使える単語 ' + pool + '語 → ' + o.pairs * 2 + '枚のカード' + (ta ? '・' + o.time + '秒' : '') : '使える単語が足りません（' + pool + '語・' + o.pairs + '組には' + o.pairs + '語必要）') +
+                '<div class="wq-note">' + (ok ? '使える単語 ' + pool + '語 → ' + o.pairs * 2 + '枚のカード' + (ta ? '・' + o.time + '秒' : '') : '使える単語が足りません（' + pool + '語・' + o.pairs + '組には' + o.pairs + '語以上必要）') +
                 (best != null ? '<br>この設定の自己ベスト：' + best + (ta ? '組' : '手') : '') +
                 (ta ? '<br>時間内にできるだけ多くのペアを見つけます。全部そろえると次の面へ（+10秒）' + (o.peek ? '<br>最初に見ている間は時計が止まります' : '')
                     : '<br>2枚ずつめくって、言葉と' + (o.side === 'reading' ? '読み' : '意味') + 'のペアを見つけます') + '</div>' +
@@ -11363,7 +11363,7 @@
                 seg('count', '問題数', [[5, '5問'], [10, '10問'], [20, '20問'], [0, 'すべて']]) +
                 seg('hint', 'ヒント', [['meaning', '意味'], ['first', '最初の字'], ['none', 'なし']]) +
                 '<div class="wq-note">' + (ok ? '使える単語 ' + pool + '語 → ' + q + '問' : '使える単語が足りません') +
-                '<br>単語を見つけた文の、その単語が空欄になります。' + (o.how === 'type' ? '漢字でも、かなでも、辞書形でも正解です。' : o.how === 'bank' ? '10問ごとの答えが語群に並びます。正しく入れた言葉は消えていきます。' : '4つから選びます。') + '</div>' +
+                '<br>単語を見つけた文が、その単語を空欄にして出題されます。' + (o.how === 'type' ? '漢字でも、かなでも、辞書形でも正解です。' : o.how === 'bank' ? '10問ごとの答えが語群に並びます。正しく入れた言葉は消えていきます。' : '4つから選びます。') + '</div>' +
                 '</div><div class="flash-actions"><button class="flash-know" id="mset-go"' + (ok ? '' : ' disabled') + '>始める</button></div>';
             body.querySelectorAll('.mset-seg button').forEach(function(b) {
                 b.addEventListener('click', function() {
@@ -11530,7 +11530,7 @@
         document.getElementById('write-start').disabled = !wordList.length;
         var withMeaning = wqPool(true).length, allMeaning = wqPool(false).length;
         var mco = matchOpts && mcOpts();
-        document.getElementById('mc-start-sub').textContent = studyDayTag() + { w2m: '言葉→意味', m2w: '意味→言葉', mix: 'まぜる', w2r: '言葉→読み' }[mco.kind] + '・' + (mco.count ? mco.count + '問' : 'すべて');
+        document.getElementById('mc-start-sub').textContent = studyDayTag() + { w2m: '言葉→意味', m2w: '意味→言葉', mix: 'ミックス', w2r: '言葉→読み' }[mco.kind] + '・' + (mco.count ? mco.count + '問' : 'すべて');
         document.getElementById('mc-start').disabled = !wordList.length;
         var cz = clozeOpts();
         document.getElementById('cloze-start-sub').textContent = studyDayTag() + ({ choose: '選ぶ', bank: '語群', type: '書く' }[cz.how]) + '・' + (cz.count ? cz.count + '問' : 'すべて');
@@ -12206,7 +12206,7 @@
 
     function updateNextButton(isAnswered) {
         if (isFinished) {
-            nextBtn.textContent = isViewingResults ? 'もう一度試験する' : '試験結果を見る';
+            nextBtn.textContent = isViewingResults ? 'もう一度受ける' : '試験結果を見る';
             nextBtn.disabled = false;
         } else if (isReviewing) {
             nextBtn.textContent = '現在の問題に戻る';
@@ -12573,7 +12573,7 @@
 
         var contentHtml = '';
         if (isReadOnly) {
-            contentHtml += '<div class="popup-notice">回答済みのため、選択肢は変更できません。</div>';
+            contentHtml += '<div class="popup-notice">解答済みのため、選択肢は変更できません。</div>';
         }
 
         blank.options.forEach(function(opt, oIdx) {
@@ -21964,7 +21964,7 @@
                 html += '<div class="rp-summary"><b class="big">' + avg + '</b><span class="rp-sum-text">字/分（直近' + Math.min(10, ents.length) + '回の平均）<br>日本人大学生の平均の約' + Math.round(avg / NATIVE_REF[0].cpm * 100) + '%</span>' +
                     '<button class="rp-link" id="rp-to-stats">記録で見る ›</button></div>';
             } else {
-                html += '<div class="rp-intro">問いは出さずに文章だけを読み、「読み終わった」を押すまでの時間から、1分に何字読めるかを測ります。母語話者の読む速さ（約650〜800字/分）とくらべられます。</div>';
+                html += '<div class="rp-intro">問いなしで文章だけを読み、「読み終わった」を押すまでの時間から、1分に何字読めるかを測ります。母語話者の読む速さ（約650〜800字/分）とくらべられます。</div>';
             }
             var unreadN = pool.filter(function(p) { return !lastRead[p.q.id]; }).length;
             html += '<button class="rp-random" id="rp-random"' + (pool.length ? '' : ' disabled') + '>🎲 おまかせで読む<small>' +
@@ -22008,7 +22008,7 @@
             body.innerHTML = '<div class="rp-ready"><div class="rp-ready-where">' + escapeHtml(p.label) + '</div>' +
                 '<div class="rp-ready-meta">' + escapeHtml(p.lib.title) + '<br>' + SIZE_NAMES[p.size] + '・' + p.chars + '字' + (reads.length ? '・前回 ' + charsPerMin(reads[reads.length - 1].chars, reads[reads.length - 1].ms) + '字/分' : '') + '</div>' +
                 '<div class="rp-ready-how">「読みはじめる」を押すと文章が表示され、計測が始まります。問いは出ません。<br>ふだんの試験のように、内容を理解しながら読んでください。読み終わったら「読み終わった」を押します。' +
-                (reads.length ? '<br>一度読んだ文章は内容を覚えているので、速く出やすくなります。' : '') + '</div></div>';
+                (reads.length ? '<br>一度読んだ文章は内容を覚えているので、速い結果が出やすくなります。' : '') + '</div></div>';
             foot.innerHTML = '<button id="rp-back">一覧へ</button><button class="primary" id="rp-go">読みはじめる</button>';
             document.getElementById('rp-back').addEventListener('click', function() { rp.state = 'list'; renderRp(); });
             document.getElementById('rp-go').addEventListener('click', function() {
@@ -22044,10 +22044,10 @@
                     return '<div class="rp-result-prev ' + (d >= 0 ? 'up' : 'down') + '">この文章の前回より ' + (d >= 0 ? '+' : '−') + Math.abs(d) + '字/分</div>';
                 })() : '') + '</div>' +
                 '<div class="rp-box"><div class="rp-box-title">母語話者とくらべる</div>' + rpCompareHtml(cpm) +
-                '<div class="stat-sub">日本人大学生の平均の約<b style="color:var(--text-main)">' + Math.round(cpm / NATIVE_REF[0].cpm * 100) + '%</b>の速さです（母語話者の数値は研究からの目安）。</div></div>' +
+                '<div class="stat-sub">日本人大学生の平均の約<b style="color:var(--text-main)">' + Math.round(cpm / NATIVE_REF[0].cpm * 100) + '%</b>の速さです（母語話者の数値は研究に基づく目安）。</div></div>' +
                 '<div class="rp-box"><div class="rp-box-title">内容はどのくらい分かりましたか？</div><div class="rp-und">' +
                 [[2, 'よく分かった'], [1, 'だいたい'], [0, 'あまり']].map(function(x) { return '<button data-v="' + x[0] + '"' + (e.und === x[0] ? ' class="active"' : '') + '>' + x[1] + '</button>'; }).join('') +
-                '</div><div class="stat-sub" style="margin-top:8px;">速さだけでなく、理解できたかも記録しておくと、無理に速く読んでいないかが分かります。</div></div>';
+                '</div><div class="stat-sub" style="margin-top:8px;">速さだけでなく理解度も記録しておくと、無理に速く読んでいないかが分かります。</div></div>';
         }
         body.innerHTML = html;
         body.scrollTop = 0;
@@ -22263,7 +22263,7 @@
         { target: '#bottom-nav [data-tab="home"]', title: 'ホーム', text: '学習プランから日を選んで始めます。「続きから」と「今日の復習」もここにあります。' },
         { target: '#bottom-nav [data-tab="review"]', title: '復習', text: '誤答ノート・ブックマーク・単語帳をまとめて見られます。' },
         { target: '#bottom-nav [data-tab="records"]', title: '記録', text: '成績表と、学習日数・苦手分野などの統計です。' },
-        { target: '#bottom-nav [data-tab="settings"]', title: '設定', text: '文字サイズ・ふりがな・テーマ・バックアップなどを変更できます。' },
+        { target: '#bottom-nav [data-tab="settings"]', title: '設定', text: '文字サイズ・ふりがな・テーマの変更や、バックアップができます。' },
         { target: null, title: '単語を長押し', text: '問題の中の単語を長押しすると、単語帳に保存できます。' }
     ];
     function startTour() {
@@ -23581,12 +23581,12 @@
             { id: 'early', cat: 'habit', icon: '🌅', name: '朝活', ok: earlyBird, hint: '朝5時〜8時に解答する' },
             { id: 'late', cat: 'habit', icon: '🌙', name: '夜更かし', ok: nb.late.length > 0, hint: '夜0時〜4時に解答する' },
             { id: 'weekend', cat: 'habit', icon: '⚔️', name: '週末戦士', value: nb.weekends.length, unit: '回', tiers: tiers([4, 12, 30, 52, 100], '回'), hint: '土曜と日曜の両方に学習した週末の数' },
-            { id: 'readdaily', cat: 'habit', icon: '📖', name: '一日一文', value: nb.readBest, unit: '日', tiers: tiers([7, 14, 30, 60, 100], '日'), hint: '毎日1つ以上の文章（内容理解・文章の文法）を解いて続けた日数（最長）' },
+            { id: 'readdaily', cat: 'habit', icon: '📖', name: '一日一文', value: nb.readBest, unit: '日', tiers: tiers([7, 14, 30, 60, 100], '日'), hint: '毎日1つ以上の文章（内容理解・文章の文法）を解き続けた日数（最長）' },
             { id: 'rush', cat: 'habit', icon: '🏁', name: '追い込み', value: nb.rush.length, unit: '日', tiers: tiers([10, 20, 25, 28, 30], '日'), hint: getSetting('examDate', '') ? '試験日までの30日間に学習した日の数（30日すべてで最高位）' : '試験日を設定すると、試験前の30日間に学習した日を数えます' },
             // 学びの庭 (only once the garden is in the app)
             { id: 'gdhours', cat: gardenLive() ? 'garden' : 'off', icon: '🌱', name: '庭づくり', value: Math.floor(gdT.total / 3600), unit: '時間', tiers: tiers([1, 10, 50, 150, 500], '時間'), hint: '問題・読解・模試・単語帳のゲームで、手を動かして学習した時間の合計（500時間で庭が完成）' },
             { id: 'gdfocus', cat: gardenLive() ? 'garden' : 'off', icon: '🍵', name: '集中', value: gdBestDay, unit: '分', tiers: [{ n: 30, label: '30分' }, { n: 60, label: '1時間' }, { n: 120, label: '2時間' }, { n: 180, label: '3時間' }, { n: 300, label: '5時間' }], hint: '1日に手を動かして学習した時間（いちばん長かった日）' },
-            { id: 'gdwater', cat: gardenLive() ? 'garden' : 'off', icon: '💧', name: '水やり', value: gdBestRun, unit: '日', tiers: tiers([3, 7, 14, 30, 100], '日'), hint: '毎日15分以上、手を動かして学習した日が続いた数（最長）' },
+            { id: 'gdwater', cat: gardenLive() ? 'garden' : 'off', icon: '💧', name: '水やり', value: gdBestRun, unit: '日', tiers: tiers([3, 7, 14, 30, 100], '日'), hint: '毎日15分以上、手を動かして学習した連続日数（最長）' },
             { id: 'gdseasons', cat: gardenLive() ? 'garden' : 'off', icon: '🍁', name: '四季の庭', value: Object.keys(gdSeasons).length, unit: '季', tiers: [{ n: 1, label: '1季' }, { n: 2, label: '2季' }, { n: 3, label: '3季' }, { n: 4, label: '四季（1年）' }, { n: 8, label: '四季を2巡（2年）' }], hint: '1日1時間以上学習した日がある季節の数。年ごとに数えるので、同じ季節も次の年にまた数えます（8季で四季を2巡）' },
             { id: 'gdrare', cat: gardenLive() ? 'garden' : 'off', icon: '🐇', name: '出会い', value: Object.keys(rareSeen()).length, unit: '種', tiers: [{ n: 1, label: '1種' }, { n: 3, label: '3種' }, { n: 6, label: '6種' }, { n: 10, label: '10種' }, { n: Math.max(12, rareList('garden').length + rareList('town').length), label: 'すべて' }], hint: '庭や町にときどき現れるめずらしい生き物に出会った数' },
             { id: 'gdsky', cat: gardenLive() ? 'garden' : 'off', icon: '🌈', name: '空の記録', value: Object.keys(skySeen()).length, unit: 'つ', tiers: [{ n: 1, label: '1つ' }, { n: 3, label: '3つ' }, { n: 5, label: '5つ' }, { n: 7, label: '7つ' }, { n: SKY_SIGHTS.length, label: 'すべて' }], hint: '庭や町で見た空模様（雨・雷雨・雪・虹・花火・流れ星・流星群・台風・吹雪）の数' },
@@ -23605,7 +23605,7 @@
             { id: 'mastery', cat: 'skill', icon: '🌳', name: '習得', value: masteredCount, unit: '問', tiers: tiers([50, 150, 300, 450, 600], '問'), hint: '2回以上続けて正解した問題の数' },
             { id: 'review', cat: 'skill', icon: '🔍', name: '復習', value: reviewCount, unit: '問', tiers: tiers([20, 100, 300, 600, 1000], '問'), hint: '「今日の復習」・苦手の練習・間違えた問題の解き直しで解いた問題の数' },
             { id: 'comeback', cat: 'skill', icon: '📈', name: 'リベンジ', ok: comeback, hint: '解き直して前回より点数を上げる' },
-            { id: 'intime', cat: 'skill', icon: '⏱️', name: '時間内', value: beatTargets, unit: '回', tiers: tiers([1, 5, 20, 50, 100], '回'), hint: '目標解答時間がある日を、時間内に75%以上の正解で終えた回数' },
+            { id: 'intime', cat: 'skill', icon: '⏱️', name: '時間内', value: beatTargets, unit: '回', tiers: tiers([1, 5, 20, 50, 100], '回'), hint: '目標解答時間がある日を、時間内に正答率75%以上で終えた回数' },
             // 読む速さ
             { id: 'pace', cat: 'speed', icon: '⚡', name: '読む速さ', value: bestPace, unit: '字/分', tiers: tiers([400, 600, 800, 900, 1000], '字/分'), hint: '文章を1分あたり何字で読めたか（内容理解・「読む速さを測る」の最高。母語話者は約650〜800字/分）' },
             { id: 'fastread', cat: 'speed', icon: '👀', name: '目標ペース', value: fastReads, unit: '回', tiers: tiers([5, 20, 50, 100, 200], '回'), hint: '内容理解の文章を目標ペース内で読んだ回数' },
@@ -24145,7 +24145,7 @@
                     }).join('') +
                     '<div class="stat-sub">文章だけを読む速さは、日本人大学生の平均の約<b style="color:var(--text-main)">' + Math.round(roMine / NATIVE_REF[0].cpm * 100) + '%</b>です。' +
                     (und[0] + und[1] + und[2] ? '内容の理解：よく分かった ' + und[2] + '・だいたい ' + und[1] + '・あまり ' + und[0] + '。' : '') +
-                    '母語話者の数値は研究からの目安です：' + NATIVE_REF.map(function(x) { return x.note; }).join('／') + '。</div>';
+                    '母語話者の数値は研究に基づく目安です：' + NATIVE_REF.map(function(x) { return x.note; }).join('／') + '。</div>';
             } else {
                 rsHtml += '<div class="stat-sub">ホームの「読む速さを測る」で文章だけを読むと、ここで母語話者の読む速さ（約650〜800字/分）とくらべられます。</div>';
             }
@@ -24168,7 +24168,7 @@
                 return '<div class="badge-cat"><span>' + c[1] + '</span><span>' + got + ' / ' + list.length + '</span></div>' +
                     '<div class="badge-grid">' + list.map(badgeTileHtml).join('') + '</div>';
             }).join('') +
-            '<div class="stat-sub" style="margin-top:10px;">バッジをタップすると、条件と獲得した日が見られます。段階のあるバッジは 銅・銀・金・朱 と上がります。</div></div>';
+            '<div class="stat-sub" style="margin-top:10px;">バッジをタップすると、条件と獲得した日が見られます。段階のあるバッジは 銅・銀・金・プラチナ・ダイヤ と上がります。</div></div>';
 
         // ---------- 11. What's counted ----------
         html += '<div class="stat-sub" style="padding: 0 4px 8px;">' +
@@ -24296,7 +24296,7 @@
             if (!q) return;
             var answered = isQuestionAnswered(q);
             var isCorrect = isQuestionCorrect(q);
-            var answerStatus = answered ? (isCorrect ? '正解' : '不正解') : '未回答';
+            var answerStatus = answered ? (isCorrect ? '正解' : '不正解') : '未解答';
             var answerClass = answered ? (isCorrect ? 'correct' : 'incorrect') : '';
 
             html += '<div class="bookmark-item" data-id="' + q.id + '">' +
@@ -24358,7 +24358,7 @@
         if (q.type === 'Text Grammar') {
             var parts = ans.split('|');
             return {
-                user: q.blanks.map(function(b, i) { return parts[i] || '未回答'; }).join(' / '),
+                user: q.blanks.map(function(b, i) { return parts[i] || '未解答'; }).join(' / '),
                 correct: q.blanks.map(function(b) { return b.options[b.correct]; }).join(' / ')
             };
         }

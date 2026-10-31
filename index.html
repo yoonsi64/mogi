@@ -124,17 +124,17 @@
 
         <div class="stat-card">
             <div class="stat-card-title">データ（リセット）</div>
-            <div class="stat-sub" style="margin-bottom:10px;">成績表リセット：すべての解答を消去します（統計・ブックマーク・単語帳は残ります）。</div>
-            <button id="reset-progress" class="btn-danger settings-danger">成績表リセット</button>
+            <div class="stat-sub" style="margin-bottom:10px;">成績表リセット：解答の記録をすべて消去します（統計・ブックマーク・単語帳は残ります）。</div>
+            <button id="reset-progress" class="btn-danger settings-danger">成績表をリセット</button>
             <div class="stat-sub" style="margin:14px 0 10px;">全データリセット：統計・ブックマーク・単語帳・バックアップ日時を含むすべてを削除します。</div>
             <button id="reset-all-data" class="btn-danger settings-danger">全データをリセット</button>
         </div>
         <div class="stat-card dev-card" id="dev-card" style="display:none">
             <div class="stat-card-title">開発者メニュー</div>
             <div class="setting-row wrap"><span>起動画面を選んで試す</span><span class="opening-controls"><select id="set-opening" class="opening-select" aria-label="起動画面の演出"><option value="auto">自動</option><optgroup label="季節"><option value="sakura">桜</option><option value="fuji">富士と桜（まれ）</option><option value="aoba">青葉</option><option value="momiji">紅葉</option><option value="snow">雪</option></optgroup><optgroup label="行事"><option value="shogatsu">お正月</option><option value="hoo">お正月・鳳凰（ごくまれ）</option><option value="setsubun">節分</option><option value="hinamatsuri">ひな祭り</option><option value="kodomo">こどもの日</option><option value="tanabata">七夕</option><option value="nagare">七夕・流れ星（まれ）</option><option value="hanabi">花火</option><option value="ootama">花火・三尺玉（まれ）</option><option value="obon">お盆</option><option value="tsukimi">お月見</option><option value="xmas">クリスマス</option><option value="omisoka">大晦日</option><option value="jlpt">JLPT 試験日</option></optgroup><option value="off">オフ</option></select><button class="opening-preview" id="set-opening-preview">見てみる</button></span><div class="stat-sub rsgoal-note" id="opening-note"></div></div>
-            <div class="setting-row wrap"><span>画廊</span><button id="dev-gallery" class="dev-btn">絵を見る</button><div class="stat-sub rsgoal-note">単語帳のゲームの後ろに出る浮世絵を、題名・作者・年とともに一枚ずつ見ます。</div></div>
+            <div class="setting-row wrap"><span>画廊</span><button id="dev-gallery" class="dev-btn">絵を見る</button><div class="stat-sub rsgoal-note">単語帳のゲームの後ろに出る浮世絵を、題名・作者・年とともに一枚ずつ見られます。</div></div>
             <div class="setting-row wrap"><span>学びの庭・町</span><button id="dev-world" class="dev-btn">すべて見る</button><div class="stat-sub rsgoal-note">庭と町を、すべての段階・季節・時間・行事・音で試せます。記録は変わりません。</div></div>
-            <div class="setting-row wrap"><span>難易度</span><button id="dev-diff" class="dev-btn">一覧を見る</button><div class="stat-sub rsgoal-note">すべての問題の難しさ（1〜5）と、その理由を見ます。</div></div>
+            <div class="setting-row wrap"><span>難易度</span><button id="dev-diff" class="dev-btn">一覧を見る</button><div class="stat-sub rsgoal-note">すべての問題の難しさ（1〜5）と、その理由を見られます。</div></div>
             <button id="dev-hide" class="dev-hide">開発者メニューを隠す</button>
         </div>
         <div class="app-credit" id="app-credit">モギ — JLPT N1 模擬問題<br>Shiori と Claude がつくりました</div>
@@ -373,7 +373,7 @@
 <script src="opening.ba01fa98.js"></script>
 <script src="omikuji.3243c2a2.js"></script>
 <script src="explain.ee87b33b.js"></script>
-<script src="app.d708e35b.js"></script>
+<script src="app.92ccfd58.js"></script>
 <script defer src="glyphs.d5166e4c.js"></script>
 <script defer src="atmos.058f8516.js"></script>
 <script defer src="garden.c68f6b7e.js"></script>
