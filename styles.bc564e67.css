@@ -1741,6 +1741,9 @@
         .kd-scroll > .notice-table { margin: 0; }
         .notice-grid.kd-tbl td.kd-long { white-space: normal; min-width: 11em; }
         .notice-grid.kd-tbl.kd-book td { text-align: center; }
+        .notice-grid.kd-tbl.kd-rent { width: 100%; table-layout: fixed; font-size: 0.72em; }
+        .notice-grid.kd-tbl.kd-rent th, .notice-grid.kd-tbl.kd-rent td { padding: 4px 1px; white-space: normal; }
+        .notice-grid.kd-tbl.kd-rent th:first-child { width: 22%; }
         .notice-grid.kd-tbl td[style*="text-align:left"], .notice-grid.kd-side th, .notice-grid.kd-wrap td { white-space: normal; }
         .notice-grid.kd-side th { text-align: left; font-weight: normal; }
         .notice-grid.kd-cal td { padding: 3px 2px; text-align: center; }
@@ -1939,6 +1942,8 @@
         .passage-lined { position: relative; }
         .reading-box.passage-lined:not(.vertical) { padding-left: 30px; }
         .passage-text.passage-lined { padding-left: 26px; }
+        /* 禁則: a line never starts with ー or a small kana (ャ・ュ・ョ・っ…) and never ends with an opening bracket */
+        .reading-box, .ar-book { line-break: strict; }
         .reading-box.vertical.passage-lined { padding-top: 26px; }
         /* a 縦書き block inside a normal passage box (e.g. a letter): column numbers along the top, and the same
            marks as in a vertical passage — underlines on the left, so they never cross the furigana on the right */
