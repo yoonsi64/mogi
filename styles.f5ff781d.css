@@ -1927,6 +1927,13 @@
         .reading-box.passage-lined:not(.vertical) { padding-left: 30px; }
         .passage-text.passage-lined { padding-left: 26px; }
         .reading-box.vertical.passage-lined { padding-top: 26px; }
+        /* a 縦書き block inside a normal passage box (e.g. a letter): column numbers along the top, and the same
+           marks as in a vertical passage — underlines on the left, so they never cross the furigana on the right */
+        .reading-box.lined-vertical { padding-top: 26px; }
+        .reading-box [style*="vertical-rl"] .footnote-word { text-underline-position: left; text-underline-offset: 0.2em; }
+        .reading-box [style*="vertical-rl"] .bousen, .reading-box [style*="vertical-rl"] .textbook-ref-underline { text-underline-position: right; }
+        .reading-box [style*="vertical-rl"] .tappable-word { border-bottom: none; border-left: 2px dotted var(--active-blue); }
+        .reading-box [style*="vertical-rl"] .mk-note-mk { top: 0; left: auto; right: 100%; margin-left: 0; }
         .reading-box.vertical { width: 100%; max-width: 100%; box-sizing: border-box; }
         .reading-box.vertical .upright { text-orientation: upright; -webkit-text-orientation: upright; }
         .reading-box.vertical .tcy { text-combine-upright: all; -webkit-text-combine: horizontal; }
