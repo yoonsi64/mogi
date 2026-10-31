@@ -24261,7 +24261,7 @@
         KO_JA_TERMS.forEach(function(p) { s = s.split(p[0]).join(p[1]); });
         return s;
     }
-    var KO_UNIT_LABEL = { '단': '短', '중': '中', '장': '長', '종': '統', '주': '主', '정': '情' };
+    var KO_UNIT_LABEL = { '단': '短', '중': '中', '장': '長', '종': '統', '주': '主', '정': '情', '파': '模' };     // 파 = 파이널 테스트, a 模擬試験 (模8 = its 問題8)
     function localizeBookLabels() {
         LIBRARIES.forEach(function(lib) {                      // lib.title / short / fullTitle / publisher: titles and names
             ['edition', 'authors'].forEach(function(k) { if (lib[k]) lib[k] = koToJa(lib[k]); });
