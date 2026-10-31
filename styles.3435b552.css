@@ -1732,6 +1732,19 @@
         .ad-table { width: 100%; font-size: 0.82rem; line-height: 1.5; margin: 8px 0; }
         .notice-grid.ad-table td { padding: 2px 4px; }
         .notice-grid.ad-table td { text-align: center; }
+        /* 콕콕 情報検索 tables: compact enough for a phone-width reading box */
+        .notice-grid.kd-tbl { width: 100%; font-size: 0.82em; line-height: 1.5; }
+        .notice-grid.kd-tbl th, .notice-grid.kd-tbl td { padding: 4px 5px; white-space: nowrap; vertical-align: middle; }
+        .notice-grid.kd-tbl th { font-weight: bold; background: rgba(128,128,128,0.12); text-align: center; }
+        .notice-grid.kd-tbl td:has(ruby), .notice-grid.kd-tbl th:has(ruby) { padding-top: 0.8em; }     /* room for furigana under the cell's top border */
+        .kd-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 10px 0; }
+        .kd-scroll > .notice-table { margin: 0; }
+        .notice-grid.kd-tbl td.kd-long { white-space: normal; min-width: 11em; }
+        .notice-grid.kd-tbl.kd-book td { text-align: center; }
+        .notice-grid.kd-tbl td[style*="text-align:left"], .notice-grid.kd-side th, .notice-grid.kd-wrap td { white-space: normal; }
+        .notice-grid.kd-side th { text-align: left; font-weight: normal; }
+        .notice-grid.kd-cal td { padding: 3px 2px; text-align: center; }
+        .notice-grid.kd-tbl td.kd-key { text-align: center; font-weight: bold; vertical-align: top; width: 1.6em; }
         .ad-plan td:nth-child(-n+3) { text-align: center; width: 1.6em; }
         .ad-plan td:nth-child(4) { text-align: left; }
         .ad-foot { font-size: 0.85rem; margin: 6px 0 0; }
