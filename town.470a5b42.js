@@ -127,7 +127,7 @@ ctx.save();ctx.clip(path);ctx.globalCompositeOperation='overlay';ctx.globalAlpha
 }
 var STAGE_DEFS=[
 [0,'一本道','草原を一本の道が川へと続いています',[-9,1,15],'road'],
-[10,'道標','分かれ道に石の道標が立ちました',[-11.4,0.8,12.6],'sign'],
+[10,'道標','分かれ道に石の道標が立ちました',[-14.2,0.8,12.2],'sign'],
 [20,'茶屋','街道沿いに茶屋が店を開きました',[-12.6,2,23],'teahouse'],
 [40,'井戸','茶屋の脇に井戸が掘られました',[-17.6,1,19.5],'well'],
 [60,'農家','茅葺きの農家が建ちました',[-31,3.5,29],'farm'],
@@ -191,7 +191,7 @@ var CASTLE=(function(){var p=stPt(47+14.5,3.5);return{x:p[0],z:p[1],top:3.6};})(
 var PADDY_L={x0:-52,x1:-20.5,z0:-4,z1:22,rot:-0.04,cw:7.8,cd:5.6};
 var PADDY_R={x0:14,x1:60,z0:-3,z1:17.6,rot:0.06,cw:8.6,cd:5.6};
 var TREE0={x:-31.5,z:6.4};
-var SIGN={x:-11.4,z:12.6};
+var SIGN={x:-14.2,z:12.2};
 var TEA={x:-12.6,z:23,u:norm2([0.9,0.42])};
 var WELL={x:-17.6,z:19.5};
 var FARM={x:-28.6,z:30};
@@ -12533,7 +12533,7 @@ drawWader(ctx,hq.x,hq.y,hq.k,'heron',{face:Hn.face,ext:Hn.ext,strike:Hn.strike,s
 if(Hn.act==='strike'&&Hn.strike>0.9){ctx.strokeStyle='rgba(232,240,246,0.5)';ctx.lineWidth=0.4;var rp=P(Hn.x+Hn.face*0.55,WL,Hn.z);ctx.beginPath();ctx.ellipse(rp.x,rp.y,0.25*rp.k,0.06*rp.k,0,0,TAU);ctx.stroke();}
 }
 }
-var VERSION='1.3.14';
+var VERSION='1.3.15';
 var SEASON_KEYS=['spring','summer','autumn','winter'],LIGHT_KEYS=['morning','day','dusk','night'];
 var WEATHERS=['clear','cloudy','rain','storm','snow','typhoon','blizzard'];
 var EVENTS=['shogatsu','setsubun','hinamatsuri','kodomo','tanabata','obon','tsukimi'];
