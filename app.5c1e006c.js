@@ -8414,7 +8414,7 @@
         return '<div class="wl-book' + (closed ? ' closed' : '') + '"><div class="wl-book-head"><img src="' + bk.cover + '" alt="">' +
             '<div><div class="wl-book-t">' + (/ N1$/.test(d.title) ? escapeHtml(d.title.replace(/ N1$/, '')) + '<b>N1</b>' : escapeHtml(d.title)) + '</div>' +
             '<div class="wl-book-m">' + escapeHtml(bk.author + ' 著 · ' + bk.publisher + ' · ' + bk.year + '年') + '</div>' +
-            '<div class="wl-book-m">学習スケジュール ' + done + ' / ' + bk.schedule.length + (bk.unit || '日') + ' 収録 · ' + d.words.length + '語</div>' +
+            '<div class="wl-book-m">学習スケジュール ' + done + ' / ' + bk.schedule.length + (bk.unit || '日分') + ' 収録 · ' + d.words.length + '語</div>' +
             '<div class="wl-book-bar"><i style="width:' + Math.round(done / bk.schedule.length * 100) + '%"></i></div></div>' +
             '<button class="wl-book-tg">' + (closed ? 'スケジュール ▾' : '閉じる ▴') + '</button></div>' +
             '<div class="wl-sd-sel">' + (deckDaySel().length ? '<span>選択中：' + escapeHtml(daySelLabel()) + '（' + wordList.filter(function(e) { return deckDaySel().indexOf(String(e.deckDay)) >= 0; }).length + '語）</span><button class="wl-sd-clear">選択を解除</button>' : '<span>' + (d.book.unit ? 'タップして選ぶ（いくつでも）' : '日をタップして選ぶ（いくつでも）') + '</span>') + '</div>' +
@@ -24241,23 +24241,23 @@
     // the rest of the app. Only book titles and people's / publishers' names stay in Korean. Applied once at start-up,
     // so the data can keep the books' wording and new units are converted the same way.
     var KO_JA_TERMS = [
-        ['Part 1 유형별 독해 문제 공략하기', 'Part 1 タイプ別 読解問題の攻略'], ['Part 2 파이널 테스트', 'Part 2 ファイナルテスト'],
-        ['출제 예상 문자・어휘', '出題予想 文字・語彙'], ['실전 모의고사', '実戦模擬試験'], ['파이널 테스트', 'ファイナルテスト'], ['파이널', 'ファイナル'],
+        ['Part 1 유형별 독해 문제 공략하기', 'Part 1 タイプ別 読解問題の攻略'], ['Part 2 파이널 테스트', 'Part 2 模擬試験'],
+        ['출제 예상 문자・어휘', '出題予想 文字・語彙'], ['실전 모의고사', '実戦模擬試験'], ['파이널 테스트', '模擬試験'], ['파이널', '模擬試験'],
         ['예상 문제', '予想問題'], ['내용 이해 - 단문', '内容理解（短文）'], ['내용 이해 - 중문', '内容理解（中文）'], ['내용 이해 - 장문', '内容理解（長文）'],
         ['종합 이해', '統合理解'], ['주장 이해', '主張理解'], ['정보 검색', '情報検索'],
         ['한자읽기', '漢字読み'], ['문맥규정', '文脈規定'], ['유의표현', '言い換え類義'], ['용법', '用法'],
-        ['서간문', '書簡文'], ['수필문', '随筆文'], ['설명문', '説明文'], ['논설문', '論説文'], ['기사문', '記事文'], ['평론문', '評論文'],
-        ['안내문', '案内文'], ['정보문', '情報文'], ['광고문', '広告文'], ['소설', '小説'], ['칼럼', 'コラム'], ['편지', '手紙'],
-        ['단문', '短文'], ['중문', '中文'], ['장문', '長文'], ['종합', '統合'], ['주장', '主張'], ['정보', '情報'],
+        ['서간문', '書簡文'], ['수필문', '随筆'], ['설명문', '説明文'], ['논설문', '論説文'], ['기사문', '記事'], ['평론문', '評論文'],
+        ['안내문', '案内文'], ['정보문', '資料'], ['광고문', '広告'], ['소설', '小説'], ['칼럼', 'コラム'], ['편지', '手紙'],
+        ['단문', '短文'], ['중문', '中文'], ['장문', '長文'], ['종합', '統合理解'], ['주장', '主張理解'], ['정보', '情報検索'],
         ['い형용사', 'い形容詞'], ['な형용사', 'な形容詞'], ['형용사', '形容詞'], ['명사', '名詞'], ['동사', '動詞'], ['부사', '副詞'],
         ['가타카나', 'カタカナ'], ['접속사', '接続詞'], ['연체사', '連体詞'], ['관용구', '慣用句'], ['기타', 'その他'],
         ['중급 학습자를 대상으로 한 독해 교재（능시 N2 수준）', '中級学習者向けの読解教材（JLPT N2レベル）'],
-        ['전자책', '電子書籍'], [' 공저', ' 共著'], [' 감수', ' 監修'], [' 엮음', ' 編'], ['문제', '問']
+        ['전자책', '電子書籍'], [' 공저', ' 共著'], [' 감수', ' 監修'], [' 엮음', ' 編'], ['문제', '題']
     ];
     function koToJa(s) {
         if (typeof s !== 'string' || !/[\uac00-\ud7a3]/.test(s)) return s;
         s = s.replace(/(\d+)년 (\d+)월 (\d+)일 발행/g, '$1年$2月$3日発行').replace(/(\d+)년 (\d+)월 (\d+)일/g, '$1年$2月$3日').replace(/(\d+)년/g, '$1年')
-             .replace(/(\d+)회/g, '第$1回').replace(/(\d+)일째/g, '$1日目').replace(/(\d+)일치/g, '$1日分');
+             .replace(/파이널(\d+)(?!\d*회)/g, '模擬試験 第$1回').replace(/(\d+)회/g, '第$1回').replace(/(\d+)일째/g, '$1日目').replace(/(\d+)일치/g, '$1日分');
         KO_JA_TERMS.forEach(function(p) { s = s.split(p[0]).join(p[1]); });
         return s;
     }
