@@ -6706,7 +6706,7 @@ else if(q.k==='boat'&&!still)drawBoatAnim(ctx,g,t);
 else if(q.k==='yakata'&&g.FW)drawYakatabune(ctx,g,g.FW,t);
 else if(q.k==='taiko')drawTaiko(ctx,g,g.I,t);
 else if(q.k==='life')drawLife(ctx,g,q.o,still?0:t);
-else if(q.k==='rare'&&!still){var R=g.rareNow;R.def.draw(ctx,g,R.st,clamp((t-R.t0)/R.def.dur),t);}
+else if(q.k==='rare'&&!still){var R=g.rareNow;RARE_LAST=null;R.def.draw(ctx,g,R.st,clamp((t-R.t0)/R.def.dur),t);if(RARE_LAST)R.scr=RARE_LAST;}
 else if(q.k==='tcat'){if(still&&g.depth)drawTownCatLoose(ctx,g,t);else if(still&&!(wxWet(g.wx)||wxSnowy(g.wx))&&g.light!=='night')drawTownCat(ctx,g,g.I,t);}
 else if(q.k==='koi')drawKoinobori(ctx,g,q.o,still?0:t,q.i);
 else if(q.k==='tana')drawTanabata(ctx,g,q.o,still?0:t);
@@ -6803,7 +6803,7 @@ drawCut(ctx,g,[pc.x-1.8*kc,pc.y-1.4*kc,pc.x+1.8*kc,pc.y+0.5*kc],P(cw.x,0,cw.z).d
 function drawLoose(ctx,g,t,rare){
 drawRoofCat(ctx,g,t);drawTownCatLoose(ctx,g,t);
 if(g.boat){var st=boatState(g,t);if(st){var c=P(st.x,WL,st.z),k=c.k;drawCut(ctx,g,[c.x-4.5*k,c.y-3.2*k,c.x+4.5*k,c.y+1.2*k],c.d-0.6,function(cx){drawBoatAnim(cx,g,t);});}}
-if(rare&&rare.def.loose&&g.rareNow===rare)rare.def.loose(ctx,g,rare.st,clamp((t-rare.t0)/rare.def.dur),t);
+if(rare&&rare.def.loose&&g.rareNow===rare){RARE_LAST=null;rare.def.loose(ctx,g,rare.st,clamp((t-rare.t0)/rare.def.dur),t);if(RARE_LAST)rare.scr=RARE_LAST;}
 }
 function drawKoinobori(ctx,g,q,t,idx){
 var Wd=gWind(g),sg=Wd.sign,tint=g.tint,top=q[2],wind=clamp(0.45+Wd.s*0.55+0.18*Math.sin(t*0.5+idx),0.35,1.08),x0=q[0],z0=q[1];
@@ -13055,7 +13055,7 @@ if(petals)drawPetals(ctx,petals,g,sc);
 if(dflies)drawDragonflies(ctx,g,dflies,t);
 if(bflies)drawButterflies(ctx,g,bflies,t);
 if(g.FA)drawSkyBirds(ctx,g,g.FA,t);
-if(rare&&!g.rareNow)rare.def.draw(ctx,g,rare.st,clamp((t-rare.t0)/rare.def.dur),t);
+if(rare&&!g.rareNow){RARE_LAST=null;rare.def.draw(ctx,g,rare.st,clamp((t-rare.t0)/rare.def.dur),t);if(RARE_LAST)rare.scr=RARE_LAST;}
 if(g.I)drawInteract(ctx,g,g.I,t);
 if(FW){drawSkyMasked(ctx,g,function(c){drawFireworks(c,FW,g);},null,fwSkyMask());if(FW.flash>0.02){ctx.globalCompositeOperation='lighter';ctx.fillStyle=rgb(mixc(FW.flashCol,[255,220,170],0.4),0.055*Math.min(1,FW.flash));ctx.fillRect(0,0,g.W,g.H);ctx.globalCompositeOperation='source-over';}}
 if(wfx){var wdt=Math.min(0.1,Math.max(0,t-(wfx.lt||t)));drawWeatherFx(ctx,g,wfx,t,wdt);wfx.lt=t;if(wfx.bz)drawBlizzard(ctx,g,wfx.bz,t,wdt);}
@@ -13409,7 +13409,25 @@ ro.observe(el);
 }catch(e){ro=null;}
 function onRM(){loopCheck();if(!running())drawFrame(true);}
 try{reducedMotion();if(REDUCED){rmq=REDUCED;if(rmq.addEventListener)rmq.addEventListener('change',onRM);else if(rmq.addListener)rmq.addListener(onRM);}}catch(e){rmq=null;}
+var RARE_SZ={shironeko:0.55,mikeneko:0.5,kitsune:0.85,shirasagi:1.2,tancho:1.6,tsubame:0.5,shika:2.0,usagi:0.7,kawasemi:0.55,tanuki:0.85,nishikigoi:1.0,inu:0.85};
+function rareAt(){
+if(!rare||!cur||dead)return null;
+var g=cur.geo,s=rare.scr||null;
+if(!s){
+var p3=rare.st&&(rare.st.now||rare.st.p0);
+if(p3&&p3.length===3){var sv=saveState();try{W=g.W;H=g.H;CAM=g.cam;KS=g.KS;var q=P(p3[0],p3[1],p3[2]);s={x:q.x,y:q.y,k:q.k};}catch(e){s=null;}finally{restoreState(sv);}}
+}
+if(!s||!isFinite(s.x)||!isFinite(s.y))return null;
+var h=(RARE_SZ[rare.def.id]||0.8)*s.k;
+return{id:rare.def.id,name:rare.def.name,x:s.x/g.W,y:(s.y-h*0.5)/g.H,r:h*0.72/g.W};
+}
+var hl=rareHL(el,rareAt);
 var api={
+rareAt:rareAt,
+highlight:function(id,ms){
+if(!rare||dead||(id&&rare.def.id!==id))return false;
+return hl.show(rare.def.id,rare.def.name,ms);
+},
 update:update,
 playStageUp:playStageUp,
 _summon:function(id){var d=rareById(id);if(!d||!cur||dead||cur.spec.stage<d.minStage)return false;var ok=false;try{ok=startRare(d);}catch(e){rare=null;cur.geo.rareNow=null;if(window.console)console.error(e);}loopCheck();return ok;},
@@ -13449,11 +13467,108 @@ get stats(){return{source:stats.source,ms:stats.ms,history:stats.history.slice()
 if(size)lastReq=refresh(false);
 return api;
 }
+var PORTRAIT={
+shironeko:[0.62,'autumn',function(c){catPaint(c,{pose:'sit',coat:'white',face:1,t:0.4});},true],
+mikeneko:[0.62,'summer',function(c){catPaint(c,{pose:'loaf',coat:'mike',face:1,t:0.4});},true],
+kitsune:[1.3,'autumn',function(c){foxPaint2(c,{t:0.4,blink:1});},true],
+shirasagi:[1.1,'summer',function(c){waderPaint(c,'sagi',{t:0.4,ext:0.5});},true],
+tancho:[1.8,'winter',function(c){waderPaint(c,'tsuru',{t:0.4,ext:0.5});},true],
+tsubame:[0.5,'spring',function(c,k){c.strokeStyle='rgb(92,70,52)';c.lineWidth=k*0.025;c.lineCap='round';c.beginPath();c.moveTo(-k*0.13,2);c.lineTo(k*0.13,2);c.stroke();drawPerched(c,0,0,k,'swallow',{face:-1,look:false,peck:0,bob:0,wings:0,tint:[1,1,1],shadow:false});},false,true],
+shika:[2.2,'autumn',function(c){sikaPaint(c,{t:0.4});},true],
+usagi:[0.8,'winter',function(c){harePaint2(c,{t:0.4,blink:1});},true],
+kawasemi:[0.75,'summer',function(c){c.strokeStyle='rgb(92,70,52)';c.lineWidth=0.03;c.lineCap='round';c.beginPath();c.moveTo(-0.16,0.012);c.lineTo(0.14,0.008);c.stroke();birdPaint2(c,'kawasemi',{t:0.4,blink:1});},false],
+tanuki:[1.1,'autumn',function(c){tanukiPaint2(c,{t:0.4,blink:1});},true],
+nishikigoi:[1.4,'summer',function(c,k){
+var pat=koiPattern('kohaku',mulberry32(5)),L=k*1.1;
+var at=function(f,v){return{x:(0.5-f)*L,y:-k*0.35+Math.sin(f*2.4-0.6)*L*0.05+v*koiHalfW(f)*L*0.85};};
+koiBody(c,at,pat,function(col,a){return rgb(col,a===undefined?1:a);},L,0,0,0,0,true);
+},false,true],
+inu:[1.0,'summer',function(c){dogPaint(c,{pose:'stand',face:1,t:0.4,wag:0.3});},true]
+};
+function rarePortrait(canvas,id,opts){
+opts=opts||{};
+var W0=canvas.width,H0=canvas.height,out=canvas.getContext('2d'),pad=opts.pad===undefined?0.08:opts.pad,E=PORTRAIT[id];
+if(!W0||!H0||!E)return false;
+out.setTransform(1,0,0,1,0,0);out.globalAlpha=1;out.globalCompositeOperation='source-over';out.clearRect(0,0,W0,H0);
+if(opts.bg){out.fillStyle=opts.bg;out.fillRect(0,0,W0,H0);}
+var S=480,c=mkCanvas(S,S),x=c.getContext('2d'),bb=null,k=S*0.62/E[0],tries=0;
+while(tries++<3){
+x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,S,S);
+var st=saveState();
+try{
+var L=LIGHTS.day;LIT=L;setLight(L);MODE='n';SEA=SEASONS[E[1]]||SEASONS.summer;
+var g={tint:lightTint(1),lum:1,light:L.id,season:E[1],SEA:SEA,LIT:L,F:{},wet:false};
+zrl(g,1);RL.lum=1;ZF_TOW=1;ZF_LDY=0;
+if(E[4]){x.setTransform(1,0,0,1,S/2,S*0.8);E[2](x,k);}
+else{x.setTransform(k,0,0,k,S/2,S*0.8);E[2](x,k);}
+}catch(e){if(window.console)console.error(e);return false;}
+finally{restoreState(st);ZF_TOW=1;ZF_LDY=0;}
+bb=portraitBox(x,S);
+if(!bb)return false;
+if(bb[0]>2&&bb[1]>2&&bb[2]<S-2&&bb[3]<S-2)break;
+k*=0.7;
+}
+portraitFit(out,c,bb,W0,H0,pad,E[3]&&opts.shadow!==false);
+return true;
+}
+function portraitBox(x,S){
+var d=x.getImageData(0,0,S,S).data,x0=S,y0=S,x1=-1,y1=-1,i,j;
+for(j=0;j<S;j++)for(i=0;i<S;i++)if(d[(j*S+i)*4+3]>24){if(i<x0)x0=i;if(i>x1)x1=i;if(j<y0)y0=j;if(j>y1)y1=j;}
+return x1<0?null:[x0,y0,x1+1,y1+1];
+}
+function portraitFit(out,c,bb,W0,H0,pad,shadow){
+var bw=bb[2]-bb[0],bh=bb[3]-bb[1],aw=W0*(1-pad*2),ah=H0*(1-pad*2)*(shadow?0.94:1),s=Math.min(aw/bw,ah/bh);
+var dw=bw*s,dh=bh*s,dx=(W0-dw)/2,dy=(H0-dh)/2+(shadow?H0*0.02:0);
+if(shadow){
+out.save();out.translate(W0/2,dy+dh-dh*0.01);out.scale(1,0.16);
+var gr=out.createRadialGradient(0,0,0,0,0,dw*0.46);gr.addColorStop(0,'rgba(20,16,12,0.32)');gr.addColorStop(1,'rgba(20,16,12,0)');
+out.fillStyle=gr;out.beginPath();out.arc(0,0,dw*0.46,0,TAU);out.fill();out.restore();
+}
+out.imageSmoothingQuality='high';out.drawImage(c,bb[0],bb[1],bw,bh,dx,dy,dw,dh);
+}
+function rareHL(el,at){
+var box=null,raf=0,until=0,want=null;
+function off(){
+if(raf)cancelAnimationFrame(raf);raf=0;
+if(box){var b=box;box=null;b.style.opacity='0';setTimeout(function(){if(b.parentNode)b.parentNode.removeChild(b);},700);}
+}
+function frame(){
+raf=0;if(!box)return;
+var p=null;try{p=at();}catch(e){p=null;}
+if(Date.now()>until||!el.isConnected){off();return;}
+if(p&&p.id===want&&(box.seen||(p.x>0.03&&p.x<0.97&&p.y>0.03&&p.y<0.97))){
+var w=el.clientWidth,h=el.clientHeight,rp=Math.max(16,Math.min(p.r*w,w*0.2)),px=p.x*w,py=p.y*h,lab=box.lastChild;
+if(!box.seen)until=Date.now()+box.ms;
+box.style.transform='translate('+px.toFixed(1)+'px,'+py.toFixed(1)+'px)';
+box.firstChild.style.width=box.firstChild.style.height=Math.round(rp*2)+'px';
+var lx=Math.max(-px+8,Math.min(w-px-8,0)),below=py-rp<34;
+lab.style.transform='translate(calc(-50% + '+lx.toFixed(1)+'px),'+(below?(rp+6)+'px)':'calc(-100% - '+(rp+6)+'px))');
+lab.style.maxWidth=(w-16)+'px';
+if(!box.seen){box.seen=true;box.style.opacity='1';}
+}else if(box.seen){off();return;}
+raf=requestAnimationFrame(frame);
+}
+return{
+show:function(id,name,ms){
+off();want=id;until=Date.now()+30000;
+box=document.createElement('div');box.className='mogi-hl';box.setAttribute('aria-hidden','true');box.ms=ms||5000;
+box.style.cssText='position:absolute;left:0;top:0;width:0;height:0;z-index:4;pointer-events:none;opacity:0;transition:opacity .6s ease;';
+var ring=document.createElement('div');ring.className='mogi-hl-ring';
+ring.style.cssText='position:absolute;left:0;top:0;transform:translate(-50%,-50%);border-radius:50%;box-sizing:border-box;';
+var lab=document.createElement('div');lab.className='mogi-hl-name';lab.textContent=name||'';
+lab.style.cssText='position:absolute;left:0;top:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+box.appendChild(ring);box.appendChild(lab);el.appendChild(box);
+raf=requestAnimationFrame(frame);return true;
+},
+stop:off
+};
+}
 var API={
 VERSION:VERSION,
 STAGES:STAGES,
 EVENTS:EVENTS,
 RARE:RARE,
+drawRarePortrait:function(canvas,id,opts){return rarePortrait(canvas,id,opts);},
 stageFor:stageFor,
 seasonFor:seasonFor,
 lightFor:lightFor,

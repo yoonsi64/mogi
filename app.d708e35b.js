@@ -6285,29 +6285,299 @@
     function rareList(w) { var E = gdEngineFor(w); return E && E.RARE ? E.RARE : []; }
     function rareRecord(w, info, inView) {
         if (!info || !info.id) return;
-        var key = w + ':' + info.id, seen = rareSeen(), first = !seen[key];
+        var key = w + ':' + info.id, seen = rareSeen(), first = !seen[key], listed = rareList(w).some(function(r) { return r.id === info.id; });
+        // the visit handed over from the home card to the view (「いま来ています」): already counted there, just shown
+        if (GD.rareHand === key) { GD.rareHand = null; rareHighlight(info.id, 8000); return; }
+        if (listed) rareBump(key);
         if (first) {
             var mine = loadJSON(RARE_KEY, {}); mine[key] = Date.now();
             try { localStorage.setItem(RARE_KEY, JSON.stringify(mine)); } catch (e) {}
-            showToast('✨ はじめて出会いました：' + (info.name || info.id));
+            if (listed) rareMeet(w, info);
+            else showToast('✨ はじめて出会いました：' + (info.name || info.id));
             if (gardenOpen()) gdRenderView();
-            setTimeout(function() { checkNewBadges(); }, 400);
-        } else if (inView) showToast((info.name || info.id) + 'が来ています');
+            // (a badge it earned waits until the notice has gone, so the two never cover each other)
+            setTimeout(function() { if (GD.meet) GD.meetBadges = true; else checkNewBadges(); }, 400);
+        } else if (inView) rareHighlight(info.id, 4500);
+        rareChipsDirty();
     }
     function rareHtml(w, dev) {
         var list = rareList(w);
         if (!list.length) return '';
-        var seen = rareSeen(), n = list.filter(function(r) { return seen[w + ':' + r.id]; }).length;
-        return '<div class="gd-list-title">出会った生き物 <span class="gd-rare-n">' + n + ' / ' + list.length + '</span></div><div class="gd-rare">' +
+        var seen = rareSeen(), met = list.filter(function(r) { return seen[w + ':' + r.id]; }), n = met.length, nu = rareUnseen(w).length;
+        met.sort(function(a, b) { return seen[w + ':' + b.id] - seen[w + ':' + a.id]; });
+        var html = '<div class="gd-list-title">出会った生き物 <span class="gd-rare-n">' + n + ' / ' + list.length + '</span></div>' +
+            '<button class="gd-zk-open" data-w="' + w + '"><span class="gd-zk-pics">' +
+            (n ? met.slice(0, 4).map(function(r) { return rarePicTag(w, r.id, false); }).join('') : rarePicTag(w, list[0].id, true)) + '</span>' +
+            '<span class="gd-zk-txt"><b>出会い図鑑</b><small>' + (n ? '出会った生き物の絵と記録' : 'まだ出会っていません。いつか来るお客さんを待ちましょう') + '</small></span>' +
+            (nu ? '<i class="gd-zk-dot" title="新しい出会い"></i>' : '') + '<span class="gd-zk-go" aria-hidden="true">›</span></button>';
+        if (!dev) return html;
+        // 開発者メニュー: every entry, with 呼ぶ (summon it into the view)
+        return html + '<div class="gd-rare">' +
             list.map(function(r) {
                 var t = seen[w + ':' + r.id];
-                if (!t && !dev) return '<div class="gd-rare-item locked"><b>？？？</b><small>' + escapeHtml((r.season || []).map(function(x) { return GD_SEASON[x]; }).join('・')) + '</small></div>';
                 var d = t ? new Date(t) : null;
                 return '<div class="gd-rare-item' + (t ? '' : ' unseen') + '"><b>' + escapeHtml(r.name) + '</b><small>' + escapeHtml(r.desc || '') +
-                    (d ? '　' + (d.getMonth() + 1) + '月' + d.getDate() + '日' : '') + '</small>' +
-                    (dev ? '<button class="gd-summon" data-id="' + escapeHtml(r.id) + '">呼ぶ</button>' : '') + '</div>';
+                    (d ? '　' + (d.getMonth() + 1) + '月' + d.getDate() + '日' : '') + '　' + rareCount(w + ':' + r.id) + '回</small>' +
+                    '<button class="gd-summon" data-id="' + escapeHtml(r.id) + '">呼ぶ</button></div>';
             }).join('') + '</div>';
     }
+    // ---------- 出会い: a first meeting you can't miss, 「いま来ています」, and the 出会い図鑑 ----------
+    // How many times each was seen: each device keeps its own count (jlptRareCount_<device> = { 'garden:kawasemi': n }),
+    // like jlptRareSeen_, and the counts of all devices are added together (each visit is counted on one device only).
+    var RARE_N_KEY = 'jlptRareCount_' + studyDevice;
+    // On this device only (not synced): what has been looked at in the 図鑑 (the badge), and the notices still to show
+    var RARE_ACK_KEY = 'mogiRareAck', RARE_PEND_KEY = 'mogiRarePending';
+    function rareCounts() {
+        var all = {};
+        try {
+            Object.keys(localStorage).forEach(function(k) {
+                if (k.indexOf('jlptRareCount_') !== 0) return;
+                var m = JSON.parse(localStorage.getItem(k) || '{}') || {};
+                Object.keys(m).forEach(function(id) { all[id] = (all[id] || 0) + (+m[id] || 0); });
+            });
+        } catch (e) {}
+        return all;
+    }
+    function rareCount(key) { var n = rareCounts()[key] || 0; return Math.max(n, rareSeen()[key] ? 1 : 0); }
+    function rareBump(key) {
+        var mine = loadJSON(RARE_N_KEY, {}); mine[key] = (+mine[key] || 0) + 1;
+        try { localStorage.setItem(RARE_N_KEY, JSON.stringify(mine)); } catch (e) {}
+    }
+    // ack: { key: the first-met time when it was looked at }; the first time, everything met so far counts as looked at
+    function rareAck() {
+        var a = loadJSON(RARE_ACK_KEY, null);
+        if (!a || typeof a !== 'object') { a = rareSeen(); try { localStorage.setItem(RARE_ACK_KEY, JSON.stringify(a)); } catch (e) {} }
+        return a;
+    }
+    function rareUnseen(w) {
+        var seen = rareSeen(), ack = rareAck(), out = [];
+        ['garden', 'town'].forEach(function(x) {
+            if (w && x !== w) return;
+            rareList(x).forEach(function(r) { var k = x + ':' + r.id; if (seen[k] && !(ack[k] && ack[k] >= seen[k])) out.push(k); });
+        });
+        return out;
+    }
+    function rareAckAll() {
+        var a = rareAck(), s = rareSeen();
+        Object.keys(s).forEach(function(k) { a[k] = s[k]; });
+        try { localStorage.setItem(RARE_ACK_KEY, JSON.stringify(a)); } catch (e) {}
+        rareChipsDirty();
+    }
+    function rareInfo(w, id) { var r = rareList(w).filter(function(x) { return x.id === id; })[0]; return r || null; }
+    // when and where each tends to come (shown once met), and a gentle hint while it is still ？？？
+    var RARE_TEXT = {
+        'garden:ooruri': ['春から夏の晴れた朝や昼、松のてっぺんでさえずります', '春から夏の晴れた朝、松のいちばん上に耳をすませて…'],
+        'garden:kawasemi': ['春から秋の朝や昼、池のほとりの岩から小魚をねらいます', '春から秋の明るいうちに、池の岩のあたりを見ていると…'],
+        'garden:rurubitaki': ['冬の朝や昼、雪の灯籠や岩の上に下りてきます', '冬の朝、雪をかぶった灯籠のあたりに小さなお客さんが…'],
+        'garden:usagi': ['冬ならいつでも。雪の上を跳ね、吹雪の日にも姿を見せます', '冬の雪の上に、小さな足あとが…'],
+        'garden:kitsune': ['秋から冬の夕方や夜、垣根に沿って静かに歩きます', '秋から冬の日暮れどき、垣根のあたりをそっと見て…'],
+        'garden:tanuki': ['春から秋の夜、茶室のそばをのんびり通ります', '暖かい季節の夜ふけ、茶室のそばで物音が…'],
+        'garden:shika': ['秋の朝や夕方、もみじのそばに現れます', '秋の朝夕、もみじが色づくころに…'],
+        'garden:sagi': ['夏の朝や昼、池の浅瀬をゆっくり歩きます', '夏の明るいうちに、池の浅いところを見ていると…'],
+        'garden:mejiro': ['春の晴れた朝や昼、桜の花の蜜を吸いに来ます', '春の晴れた日、桜の花のあいだに…'],
+        'garden:uguisu': ['春の朝から夕方まで、ツツジの茂みにちらりと姿を見せます', '春、茂みの奥から聞こえる声の主は…'],
+        'garden:hotaru': ['6月から7月の雨のない夜、池のほとりを舞います。めったに見られません', '初夏の雨のない夜、池のほとりに小さな光が…'],
+        'garden:tsuru': ['冬の朝、雪の庭にまれに舞い降ります。とてもめずらしいお客さんです', '冬の朝早く、雪の庭を見ていると、いつか…'],
+        'town:shironeko': ['一年じゅう、朝から夕方まで。商家の屋根の上を歩きます', '朝から夕方、商家の屋根の上を見上げて…'],
+        'town:mikeneko': ['一年じゅう、朝や昼に。茶屋の縁台で昼寝をしています', 'のんびりした昼下がり、茶屋の縁台に…'],
+        'town:kitsune': ['一年じゅう、夕方や夜に。祠のそばにそっと現れます', '日が暮れたら、祠のあたりを見て…'],
+        'town:shirasagi': ['夏の朝から夕方まで、青田に舞い降ります', '夏、青々とした田んぼを見ていると…'],
+        'town:tancho': ['冬の朝や昼、雪の田んぼにまれに舞い降ります。めったに見られません', '冬の明るいうちに、雪の田んぼで、いつか…'],
+        'town:tsubame': ['春の朝や昼、川面すれすれに飛び、軒先にとまります', '春の明るいうちに、川の上や軒先を見ていると…'],
+        'town:shika': ['一年じゅう、朝から夕方まで。寺の木立から現れます', '寺の木立のあたりを、静かに見守っていると…'],
+        'town:usagi': ['冬の朝から夕方まで、雪の野原を跳ねていきます', '冬、雪の野原に小さな足あとが…'],
+        'town:kawasemi': ['春から秋の朝や昼、川面を青い光のように横切ります', '春から秋の明るいうちに、川の杭のあたりを…'],
+        'town:tanuki': ['春から秋の夜、夜道をとことこ歩きます', '暖かい季節の夜、通りを見ていると…'],
+        'town:nishikigoi': ['春から秋の朝から夕方まで、石橋の近くの川で高く跳ねます', '春から秋、石橋のあたりの川面を見ていると…'],
+        'town:inu': ['一年じゅう、朝から夕方まで。通りや橋をとことこ駆けていきます', '朝から夕方、にぎやかな通りを見ていると…']
+    };
+    function rareText(w, r, hint) {
+        var t = RARE_TEXT[w + ':' + r.id];
+        if (t) return t[hint ? 1 : 0];
+        // (one the painter added later: its seasons and times of day)
+        var when = (r.season || []).map(function(x) { return GD_SEASON[x]; }).join('・') + 'の' + (r.light || []).map(function(x) { return GD_LIGHT[x]; }).join('・');
+        return hint ? when + 'に、いつか…' : when + 'に現れます';
+    }
+    // portraits, drawn by the painter (MogiGarden / MogiTown.drawRarePortrait) once and kept as pictures; sil: the dark ？？？ shape
+    var RARE_PICS = {};
+    function rarePic(w, id, sil) {
+        var k = w + ':' + id + (sil ? ':sil' : ''), E = gdEngineFor(w);
+        if (RARE_PICS[k] !== undefined) return RARE_PICS[k];
+        RARE_PICS[k] = null;
+        if (!E || !E.drawRarePortrait) return null;
+        try {
+            var c = document.createElement('canvas'); c.width = 400; c.height = 300;
+            if (!E.drawRarePortrait(c, id, { pad: 0.07 })) return null;
+            if (sil) { var x = c.getContext('2d'); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#0a0907'; x.fillRect(0, 0, c.width, c.height); }
+            RARE_PICS[k] = c.toDataURL('image/png');
+        } catch (e) {}
+        return RARE_PICS[k];
+    }
+    function rarePicTag(w, id, sil) {
+        var k = w + ':' + id + (sil ? ':sil' : ''), src = RARE_PICS[k];
+        if (src === undefined) setTimeout(rarePicsFill, 30);
+        return '<img class="rare-pic" alt="" data-w="' + w + '" data-id="' + escapeHtml(id) + '"' + (sil ? ' data-sil="1"' : '') + (src ? ' src="' + src + '"' : '') + '>';
+    }
+    // pictures not drawn yet: one at a time, so a page of them never holds the screen up
+    function rarePicsFill() {
+        var img = document.querySelector('img.rare-pic:not([src]):not([data-none])');
+        if (!img) return;
+        var src = rarePic(img.dataset.w, img.dataset.id, !!img.dataset.sil);
+        document.querySelectorAll('img.rare-pic:not([src])').forEach(function(m) {
+            if (m.dataset.w === img.dataset.w && m.dataset.id === img.dataset.id && !!m.dataset.sil === !!img.dataset.sil) { if (src) m.src = src; else m.dataset.none = '1'; }
+        });
+        setTimeout(rarePicsFill, 16);
+    }
+    // the painter now on screen (the full view, 集中モード, the view, or the card when it is in sight), or null
+    function rareCtrlNow() {
+        if (fullOpen()) return GD.full.ctrl;
+        if (focusOpen()) return GD.focus.ctrl;
+        if (gardenOpen()) return gdSkyOpen() ? null : GD.vctrl;
+        if (!GD.ctrl || !GD.el || !GD.el.isConnected || !onHomeNow() || document.hidden || zukanOpen()) return null;
+        var r = GD.el.getBoundingClientRect();
+        return r.height && r.bottom > 40 && r.top < window.innerHeight - 40 ? GD.ctrl : null;
+    }
+    function rareHighlight(id, ms) { var c = rareCtrlNow(); if (c && c.highlight) try { c.highlight(id, ms); } catch (e) {} }
+    // a first meeting: the painter rings it with its name; the notice comes now if the scene is in sight (and not during a
+    // 集中 period), else it waits for the next time the garden or town is looked at; the badge stays until the 図鑑 is opened
+    function rareMeet(w, info) {
+        var c = rareCtrlNow();
+        if (c && c.highlight) try { c.highlight(info.id, 7000); } catch (e) {}
+        var q = loadJSON(RARE_PEND_KEY, []);
+        if (!Array.isArray(q)) q = [];
+        q.push(w + ':' + info.id);
+        try { localStorage.setItem(RARE_PEND_KEY, JSON.stringify(q)); } catch (e) {}
+        rareFlush();
+    }
+    function rareFlush() {
+        if (GD.meet || !rareCtrlNow() || focusCounting()) return;
+        var q = loadJSON(RARE_PEND_KEY, []);
+        if (!Array.isArray(q) || !q.length) return;
+        var k = q.shift();
+        try { localStorage.setItem(RARE_PEND_KEY, JSON.stringify(q)); } catch (e) {}
+        var p = String(k).split(':'), r = rareInfo(p[0], p[1]);
+        if (r) rareNotice(p[0], r); else rareFlush();
+    }
+    function rareNotice(w, r) {
+        var host = fullOpen() ? GD.full.el : focusOpen() ? GD.focus.el : document.body, el = document.createElement('div'), pic = rarePic(w, r.id, false);
+        el.className = 'gd-meet'; el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite');
+        el.innerHTML = '<span class="gd-meet-pic">' + (pic ? '<img alt="" src="' + pic + '">' : '') + '</span>' +
+            '<span class="gd-meet-txt"><small>はじめての出会い</small><b>' + escapeHtml(r.name) + '</b><span>' + escapeHtml(r.desc || rareText(w, r, false)) + '</span></span>' +
+            (host === document.body ? '<button class="gd-meet-go">図鑑</button>' : '') + '<i class="gd-meet-bar"></i>';
+        host.appendChild(el);
+        GD.meet = el;
+        var done = function() {
+            if (el.gone) return; el.gone = true; clearTimeout(el.t);
+            el.classList.remove('show');
+            setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); if (GD.meet === el) { GD.meet = null; setTimeout(rareFlush, 600); } }, 400);
+            if (GD.meetBadges) { GD.meetBadges = false; setTimeout(function() { checkNewBadges(); }, 700); }
+        };
+        el.addEventListener('click', function(e) { var go = e.target.closest('.gd-meet-go'); done(); if (go) openZukan(w, r.id); });
+        requestAnimationFrame(function() { requestAnimationFrame(function() { el.classList.add('show'); }); });
+        el.t = setTimeout(done, 8000);
+        if (window.MogiSound && getSetting('gdSound', true) && gardenOpen() && MogiSound.cue) try { MogiSound.cue('reveal'); } catch (e) {}
+    }
+    // the home card: a dot while there is a meeting not yet looked at in the 図鑑, and 「いま来ています」 while a visitor is in
+    // the picture (a tap opens the view with the visitor there, zoomed in on it)
+    function rareChipsDirty() { var b = GD.el && GD.el.querySelector('.gd-chips'); if (b) b.dataset.sig = ''; }
+    function rareChips() {
+        if (!GD.el || !GD.el.isConnected) return;
+        var crop = GD.el.querySelector('.gd-crop'); if (!crop) return;
+        var box = crop.querySelector('.gd-chips');
+        if (!box) { box = document.createElement('div'); box.className = 'gd-chips'; crop.appendChild(box); }
+        var p = null;
+        try { p = GD.ctrl && !GD.away && GD.ctrl.rareAt ? GD.ctrl.rareAt() : null; } catch (e) { p = null; }
+        if (p && !(p.x > 0 && p.x < 1 && p.y > 0.04 && p.y < 0.96)) p = null;
+        var nu = rareUnseen().length, w = GD.ctrlWorld || worldActive(), sig = (p ? p.id : '') + '|' + nu;
+        if (box.dataset.sig === sig) return;
+        box.dataset.sig = sig;
+        box.innerHTML = (nu ? '<span class="gd-newdot">新しい出会い</span>' : '') +
+            (p ? '<button class="gd-here" data-w="' + w + '" data-id="' + escapeHtml(p.id) + '">いま来ています：' + escapeHtml(p.name) + '</button>' : '');
+    }
+    function rareGoSee(w, id) {
+        GD.rareHand = w + ':' + id;
+        openGarden();
+        var t0 = Date.now(), zoomed = false;
+        (function tryIt() {
+            if (!gardenOpen() || Date.now() - t0 > 9000) { GD.rareHand = null; return; }
+            var c = GD.vctrl, p = null, ok = false;
+            try { p = c && c.rareAt ? c.rareAt() : null; ok = !!(p && p.id === id) || !!(c && c._summon && c._summon(id)); } catch (e) { ok = false; }
+            if (!ok) { setTimeout(tryIt, 250); return; }
+            if (GD.rareHand) { GD.rareHand = null; rareHighlight(id, 8000); }
+            // once it is well inside the picture, zoom in on it (it may still be coming in)
+            (function zoomIt() {
+                if (zoomed || !gardenOpen() || GD.vctrl !== c || Date.now() - t0 > 30000) return;
+                var q = null; try { q = c.rareAt(); } catch (e) {}
+                if (q && q.id === id && q.x > 0.05 && q.x < 0.95 && q.y > 0.05 && q.y < 0.95) { zoomed = true; if (GD.zoomReset && GD.zoomReset.zoomTo) GD.zoomReset.zoomTo(q.x, q.y, 1.8); return; }
+                setTimeout(zoomIt, 300);
+            })();
+        })();
+    }
+    // ---- the 出会い図鑑: a page per world (庭 / 町), a card for each visitor ----
+    function zukanOpen() { return !!(GD.zk && GD.zk.classList.contains('active')); }
+    function openZukan(w, focusId) {
+        if (w !== 'garden' && w !== 'town') w = gardenOpen() ? gdViewWorld() : worldActive();
+        if (!gdEngineFor(w)) w = gdEngineFor('garden') ? 'garden' : 'town';
+        if (!GD.zk) {
+            var el = document.createElement('div');
+            el.className = 'gd-zukan'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', '出会い図鑑');
+            el.innerHTML = '<div class="gd-top"><button class="gd-close zk-close" aria-label="閉じる">✕</button><div class="gd-top-title"><span>出会い図鑑</span><small class="zk-n"></small></div>' +
+                '<span class="seg gd-world zk-world" role="group" aria-label="場所"><button data-w="garden">庭</button><button data-w="town">町</button></span></div>' +
+                '<div class="zk-main"><p class="zk-intro"></p><div class="zk-grid"></div></div>';
+            document.body.appendChild(el);
+            GD.zk = el;
+            el.querySelector('.zk-close').addEventListener('click', closeZukan);
+            el.querySelectorAll('.zk-world button').forEach(function(b) { b.addEventListener('click', function() { zukanDraw(b.dataset.w); }); });
+        }
+        GD.zkNew = {};
+        rareUnseen().forEach(function(k) { GD.zkNew[k] = 1; });
+        GD.zk.classList.add('active');
+        zukanDraw(w, focusId);
+        rareAckAll();
+        syncNavHistory();
+    }
+    function closeZukan() {
+        if (!zukanOpen()) return;
+        GD.zk.classList.remove('active');
+        if (gardenOpen()) gdRenderView();
+        rareChipsDirty();
+        syncNavHistory();
+    }
+    function zukanDraw(w, focusId) {
+        var el = GD.zk, list = rareList(w), seen = rareSeen(), counts = rareCounts(), now = new Date();
+        var n = list.filter(function(r) { return seen[w + ':' + r.id]; }).length;
+        el.dataset.w = w;
+        var ws = el.querySelector('.zk-world');
+        ws.hidden = !window.MogiTown || !window.MogiGarden;
+        ws.querySelectorAll('button').forEach(function(b) { b.classList.toggle('active', b.dataset.w === w); });
+        el.querySelector('.zk-n').textContent = gdWorld(w).k + '　' + n + ' / ' + list.length;
+        el.querySelector('.zk-intro').textContent = gdWorld(w).k + 'にときどき来る、めずらしい生き物たち。出会うと、その絵と記録がここに残ります。';
+        el.querySelector('.zk-grid').innerHTML = list.map(function(r) {
+            var k = w + ':' + r.id, t = seen[k];
+            if (!t) return '<div class="zk-card locked" data-id="' + escapeHtml(r.id) + '">' + rarePicTag(w, r.id, true) + '<b>？？？</b><small>' + escapeHtml(rareText(w, r, true)) + '</small></div>';
+            var d = new Date(t), c = Math.max(1, (counts[k] || 0));
+            return '<div class="zk-card' + (GD.zkNew && GD.zkNew[k] ? ' new' : '') + '" data-id="' + escapeHtml(r.id) + '">' + rarePicTag(w, r.id, false) +
+                '<b>' + escapeHtml(r.name) + '</b><span class="zk-meta">' + (d.getFullYear() !== now.getFullYear() ? d.getFullYear() + '年' : '') + (d.getMonth() + 1) + '月' + d.getDate() + '日に出会う・' + c + '回</span>' +
+                '<small>' + escapeHtml(rareText(w, r, false)) + '</small></div>';
+        }).join('');
+        el.querySelector('.zk-main').scrollTop = 0;
+        if (focusId) {
+            var card = el.querySelector('.zk-card[data-id="' + focusId + '"]');
+            if (card) { card.classList.add('focus'); setTimeout(function() { try { card.scrollIntoView({ block: 'center' }); } catch (e) {} }, 60); }
+        }
+    }
+    // taps: the 図鑑 from the view's 出会い section; 「いま来ています」 on the card (before the card's own tap opens the view)
+    document.addEventListener('click', function(e) {
+        var b = e.target.closest && e.target.closest('.gd-zk-open');
+        if (b) openZukan(b.dataset.w);
+    });
+    document.addEventListener('click', function(e) {
+        var h = e.target.closest && e.target.closest('.gd-here');
+        if (!h) return;
+        e.stopPropagation(); e.preventDefault();
+        rareGoSee(h.dataset.w, h.dataset.id);
+    }, true);
+    setInterval(function() { rareChips(); rareFlush(); }, 1000);
     function gardenSlotHtml() { return '<div id="home-garden-slot"></div>'; }
     function gdMountCard() {
         var slot = document.getElementById('home-garden-slot'), E = gdEngine();
@@ -6370,7 +6640,7 @@
     // the animation rests whenever the card is not on screen (another page, a reading or quiz on top, the full view)
     setInterval(function() {
         if (!GD.ctrl || !GD.el) return;
-        var away = !GD.el.isConnected || document.hidden || !!studyScreen() || gardenOpen() || !onHomeNow();
+        var away = !GD.el.isConnected || document.hidden || !!studyScreen() || gardenOpen() || !onHomeNow() || zukanOpen();
         if (away !== GD.away) { GD.away = away; if (away) GD.ctrl.pause(); else GD.ctrl.resume(); }
     }, 1000);
     window.addEventListener('load', function() {
@@ -7061,6 +7331,8 @@
         reset.addEventListener('click', function() { s = 1; tx = 0; ty = 0; apply(true); });
         var resetFn = function() { s = 1; tx = 0; ty = 0; apply(false); };
         resetFn.zoomBy = function(k) { var w = box.clientWidth, h = box.clientHeight; zoomAt(w / 2, h / 2, Math.min(MAX, Math.max(1, s * k))); apply(true); };
+        // zoomed to k with the point (fx, fy: shares of the box) brought to the middle, as far as the edges allow (出会い: 「いま来ています」)
+        resetFn.zoomTo = function(fx, fy, k) { var w = box.clientWidth, h = box.clientHeight; s = Math.min(MAX, Math.max(1, k)); tx = w / 2 - fx * w * s; ty = h / 2 - fy * h * s; apply(true); };
         if (!onTap) GD.zoomReset = resetFn;
         return resetFn;
     }
@@ -22052,6 +22324,7 @@
         if (typeof gardenOpen === 'function' && gardenOpen()) d++;
         if (typeof gdSkyOpen === 'function' && gdSkyOpen()) d++;
         if (typeof focusOpen === 'function' && focusOpen()) d++;
+        if (typeof zukanOpen === 'function' && zukanOpen()) d++;
         if (typeof fullOpen === 'function' && fullOpen()) d++;          // the 画廊 sits on top of the results (or 設定): Back closes it first
         if (typeof rpOpen === 'function' && rpOpen()) d += (rp && rp.state !== 'list') ? 2 : 1;
         if (typeof arOpen === 'function' && arOpen()) d++;
@@ -22076,6 +22349,7 @@
         }
     }
     function navBackOneLevel() {
+        if (zukanOpen()) { closeZukan(); return; }
         if (fullOpen()) { closeFullView(); return; }
         if (focusOpen()) { closeFocus(); return; }
         if (gdSkyOpen()) { gdCloseSky(); return; }
