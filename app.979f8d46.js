@@ -7523,7 +7523,7 @@
             weeksHtml += '<div class="week-row"><div class="week-head"><b>' + escapeHtml(unitTitle(lib, w)) + '</b><span class="week-sub">' + (lib.units ? escapeHtml(lib.units[w - 1].sub || '') : weekSubtitle(w, lib.id)) + '</span>' +
                 (weekMax ? '<span class="week-score">' + weekEarned + '/' + weekMax + '</span>' : '') + '</div>' +
                 '<div class="day-grid" style="grid-template-columns:repeat(' + (lib.units ? 5 : lib.days) + ',1fr)">' + cells + '</div>' +
-                (lib.units && nDays > 1 ? '<button class="unit-all-btn" data-lib="' + lib.id + '" data-week="' + w + '"><span class="ua-play" aria-hidden="true">▶</span>' + escapeHtml((lib.units[w - 1].short || unitTitle(lib, w)).replace(/^\d+회 /, '')) + 'をまとめて解く<span class="ua-sub">' + nDays + '問・順番どおり</span></button>' : '') +
+                (lib.units && nDays > 1 ? '<button class="unit-all-btn" data-lib="' + lib.id + '" data-week="' + w + '"><span class="ua-play" aria-hidden="true">▶</span>' + escapeHtml((lib.units[w - 1].short || unitTitle(lib, w)).replace(/^(?:\d+회|第\d+回) /, '')) + 'をまとめて解く<span class="ua-sub">' + nDays + '問・順番どおり</span></button>' : '') +
                 '</div>';
         }
         var open = libIsOpen(lib, last);
@@ -8367,13 +8367,13 @@
         var cells = bk.schedule.map(function(sc, i) {
             var n = cnt[i + 1] || 0; if (n) done++;
             return '<button class="wl-sd' + (n ? '' : ' empty') + (deckDaySel().indexOf(String(i + 1)) >= 0 ? ' on' : '') + '"' + (n ? ' data-day="' + (i + 1) + '"' : ' disabled') + ' title="' + escapeHtml(sc.pos + ' p.' + sc.pages) + '">' +
-                '<div class="d">' + escapeHtml(sc.label || (i + 1) + '일째') + '</div><div class="p">' + escapeHtml(sc.pos) + '</div><div class="p">p.' + escapeHtml(sc.pages) + '</div>' + (n ? '<div class="c">' + n + '語</div>' : '') + '</button>';
+                '<div class="d">' + escapeHtml(sc.label || (i + 1) + '日目') + '</div><div class="p">' + escapeHtml(sc.pos) + '</div><div class="p">p.' + escapeHtml(sc.pages) + '</div>' + (n ? '<div class="c">' + n + '語</div>' : '') + '</button>';
         }).join('');
         var closed = getSetting('wlBookClosed', false);
         return '<div class="wl-book' + (closed ? ' closed' : '') + '"><div class="wl-book-head"><img src="' + bk.cover + '" alt="">' +
             '<div><div class="wl-book-t">' + (/ N1$/.test(d.title) ? escapeHtml(d.title.replace(/ N1$/, '')) + '<b>N1</b>' : escapeHtml(d.title)) + '</div>' +
-            '<div class="wl-book-m">' + escapeHtml(bk.author + ' 지음 · ' + bk.publisher + ' · ' + bk.year) + '</div>' +
-            '<div class="wl-book-m">학습 스케줄 ' + done + ' / ' + bk.schedule.length + (bk.unit || '일째') + ' 수록 · ' + d.words.length + '語</div>' +
+            '<div class="wl-book-m">' + escapeHtml(bk.author + ' 著 · ' + bk.publisher + ' · ' + bk.year + '年') + '</div>' +
+            '<div class="wl-book-m">学習スケジュール ' + done + ' / ' + bk.schedule.length + (bk.unit || '日') + ' 収録 · ' + d.words.length + '語</div>' +
             '<div class="wl-book-bar"><i style="width:' + Math.round(done / bk.schedule.length * 100) + '%"></i></div></div>' +
             '<button class="wl-book-tg">' + (closed ? 'スケジュール ▾' : '閉じる ▴') + '</button></div>' +
             '<div class="wl-sd-sel">' + (deckDaySel().length ? '<span>選択中：' + escapeHtml(daySelLabel()) + '（' + wordList.filter(function(e) { return deckDaySel().indexOf(String(e.deckDay)) >= 0; }).length + '語）</span><button class="wl-sd-clear">選択を解除</button>' : '<span>' + (d.book.unit ? 'タップして選ぶ（いくつでも）' : '日をタップして選ぶ（いくつでも）') + '</span>') + '</div>' +
@@ -9651,8 +9651,8 @@
     function deckDaySel() { return activeDeck && wlWeek ? String(wlWeek).split(',').filter(Boolean) : []; }
     function daySelLabel() {
         var d = deckDaySel(), dk = deckById(activeDeck), bk = (dk && dk.book) || {}, sch = bk.schedule || [];
-        if (bk.unit) return d.length > 3 ? d.length + bk.unit : d.map(function(x) { var sc = sch[x - 1]; return (sc && sc.label) || x + bk.unit; }).join('・');   // e.g. 단01・단03, 5문제
-        return d.length > 3 ? d.length + '일치' : d.join('・') + '일째';
+        if (bk.unit) return d.length > 3 ? d.length + bk.unit : d.map(function(x) { var sc = sch[x - 1]; return (sc && sc.label) || x + bk.unit; }).join('・');   // e.g. 短01・短03, 5問
+        return d.length > 3 ? d.length + '日分' : d.join('・') + '日目';
     }
     function studyDay() { return deckDaySel().join(','); }
     function studyWords() { var d = deckDaySel(); return d.length ? wordList.filter(function(e) { return d.indexOf(String(e.deckDay)) >= 0; }) : wordList; }
@@ -11738,8 +11738,7 @@
             }
         } else {
             popupJp.textContent = "定義が見つかりません。";
-            popupKrContainer.style.display = 'flex';
-            popupKr.textContent = "정의를 찾을 수 없습니다.";
+            popupKrContainer.style.display = 'none';
         }
         definitionPopup.classList.add('active');
     }
@@ -21318,7 +21317,7 @@
     function renderArWords(body, r) {
         var passage = r.pages.map(function(pg) { return pg.lines.map(arPlainLine).join(''); }).join('');
         var total = 0;
-        var html = '<div class="ar-intro">本の「단어 및 표현」です。言葉をタップすると読み上げます。＋で単語帳に追加（意味は韓国語のまま入ります）。</div>';
+        var html = '<div class="ar-intro">本の「単語と表現」です。言葉をタップすると読み上げます。＋で単語帳に追加（意味は韓国語のまま入ります）。</div>';
         r.words.forEach(function(sec, si) {
             html += '<section class="ar-sec"><h3 class="ar-sec-title">' + escapeHtml(sec.sec) + '</h3><div class="aw-list">' + sec.list.map(function(w, i) {
                 total++;
@@ -21346,7 +21345,7 @@
     }
     // 文型: the 課's four patterns, the book's Korean explanation and its examples (tap an example to hear it)
     function renderArBunkei(body, r) {
-        body.innerHTML = '<div class="ar-intro">' + escapeHtml(r.bunkeiIntro || '本の「문형연습」です。例文をタップすると読み上げます。') + '</div>' + r.bunkei.map(function(b, i) {
+        body.innerHTML = '<div class="ar-intro">' + escapeHtml(r.bunkeiIntro || '本の「文型練習」です。例文をタップすると読み上げます。') + '</div>' + r.bunkei.map(function(b, i) {
             return '<section class="ar-card ab-card"><div class="ab-head"><span class="ar-qno">' + (i + 1) + '</span><b class="ab-p">' + escapeHtml(b.p) + '</b>' +
                 (b.ko ? '<span class="ab-ko" lang="ko">' + escapeHtml(b.ko) + '</span>' : '') + '</div>' +
                 (b.src ? '<button class="ab-say ab-src" data-t="' + escapeHtml(arPlainLine(b.src)) + '">' + arMarkup(b.src) + '<small>本文より</small></button>' : '') +
@@ -24196,4 +24195,60 @@
         }
     })();
 
+    // ---------- Book and deck labels in Japanese ----------
+    // The Korean books' own words for units and sections (1회, 1일째, 단문, 예상 문제, 명사 …) are shown in Japanese like
+    // the rest of the app. Only book titles and people's / publishers' names stay in Korean. Applied once at start-up,
+    // so the data can keep the books' wording and new units are converted the same way.
+    var KO_JA_TERMS = [
+        ['Part 1 유형별 독해 문제 공략하기', 'Part 1 タイプ別 読解問題の攻略'], ['Part 2 파이널 테스트', 'Part 2 ファイナルテスト'],
+        ['출제 예상 문자・어휘', '出題予想 文字・語彙'], ['실전 모의고사', '実戦模擬試験'], ['파이널 테스트', 'ファイナルテスト'], ['파이널', 'ファイナル'],
+        ['예상 문제', '予想問題'], ['내용 이해 - 단문', '内容理解（短文）'], ['내용 이해 - 중문', '内容理解（中文）'], ['내용 이해 - 장문', '内容理解（長文）'],
+        ['종합 이해', '統合理解'], ['주장 이해', '主張理解'], ['정보 검색', '情報検索'],
+        ['한자읽기', '漢字読み'], ['문맥규정', '文脈規定'], ['유의표현', '言い換え類義'], ['용법', '用法'],
+        ['서간문', '書簡文'], ['수필문', '随筆文'], ['설명문', '説明文'], ['논설문', '論説文'], ['기사문', '記事文'], ['평론문', '評論文'],
+        ['안내문', '案内文'], ['정보문', '情報文'], ['광고문', '広告文'], ['소설', '小説'], ['칼럼', 'コラム'], ['편지', '手紙'],
+        ['단문', '短文'], ['중문', '中文'], ['장문', '長文'], ['종합', '統合'], ['주장', '主張'], ['정보', '情報'],
+        ['い형용사', 'い形容詞'], ['な형용사', 'な形容詞'], ['형용사', '形容詞'], ['명사', '名詞'], ['동사', '動詞'], ['부사', '副詞'],
+        ['가타카나', 'カタカナ'], ['접속사', '接続詞'], ['연체사', '連体詞'], ['관용구', '慣用句'], ['기타', 'その他'],
+        ['중급 학습자를 대상으로 한 독해 교재（능시 N2 수준）', '中級学習者向けの読解教材（JLPT N2レベル）'],
+        ['전자책', '電子書籍'], [' 공저', ' 共著'], [' 감수', ' 監修'], [' 엮음', ' 編'], ['문제', '問']
+    ];
+    function koToJa(s) {
+        if (typeof s !== 'string' || !/[\uac00-\ud7a3]/.test(s)) return s;
+        s = s.replace(/(\d+)년 (\d+)월 (\d+)일 발행/g, '$1年$2月$3日発行').replace(/(\d+)년 (\d+)월 (\d+)일/g, '$1年$2月$3日').replace(/(\d+)년/g, '$1年')
+             .replace(/(\d+)회/g, '第$1回').replace(/(\d+)일째/g, '$1日目').replace(/(\d+)일치/g, '$1日分');
+        KO_JA_TERMS.forEach(function(p) { s = s.split(p[0]).join(p[1]); });
+        return s;
+    }
+    var KO_UNIT_LABEL = { '단': '短', '중': '中', '장': '長', '종': '統', '주': '主', '정': '情' };
+    function localizeBookLabels() {
+        LIBRARIES.forEach(function(lib) {                      // lib.title / short / fullTitle / publisher: titles and names
+            ['edition', 'authors'].forEach(function(k) { if (lib[k]) lib[k] = koToJa(lib[k]); });
+            (lib.mockSets || []).forEach(function(m) { m.title = koToJa(m.title); });
+            (lib.units || []).forEach(function(u) {
+                if (u.path) u.path = u.path.map(koToJa);
+                ['title', 'short', 'sub'].forEach(function(k) { if (u[k]) u[k] = koToJa(u[k]); });
+                (u.parts || []).forEach(function(p) { if (p.short) p.short = koToJa(p.short); });
+            });
+        });
+        WORD_DECKS.forEach(function(d) {                       // d.title: the book's title
+            d.sub = koToJa(d.sub);
+            if (d.days) d.days = d.days.map(koToJa);
+            var bk = d.book;
+            if (bk) {
+                if (bk.unit) bk.unit = koToJa(bk.unit);
+                if (bk.author) bk.author = bk.author.replace(/ 외$/, ' 他');        // the names stay; 외 (et al.) → 他
+                if (bk.edition) bk.edition = koToJa(bk.edition);
+                (bk.schedule || []).forEach(function(sc) {
+                    if (sc.pos) sc.pos = koToJa(sc.pos);
+                    if (sc.label) sc.label = sc.label.replace(/^[\uac00-\ud7a3]/, function(c) { return KO_UNIT_LABEL[c] || c; });
+                });
+            }
+            (d.words || []).forEach(function(w) { if (w.source) w.source = koToJa(w.source); });
+        });
+        if (typeof READING_BOOKS !== 'undefined') READING_BOOKS.forEach(function(b) {   // b.title / short / publisher: titles and names
+            ['edition', 'authors'].forEach(function(k) { if (b[k]) b[k] = koToJa(b[k]); });
+        });
+    }
+    localizeBookLabels();
     initApp();
