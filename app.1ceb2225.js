@@ -3793,7 +3793,7 @@
     var GS1_P8_4 = `<div class="notice" style="writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl; height: 30.5em; margin: 0 auto; line-height: 2; max-width: 100%; overflow-x: auto;">
 <p style="margin: 0 0 0 2em;">年頭のご挨拶を申し上げるべきところ、<br>　喪中につき失礼させていただきます。</p>
 <p style="margin: 1em 0 0 2em;"><u data-note="神無月"><ruby>神無月<rt>かんなづき</rt></ruby></u>に父裕之が八十三歳にて永眠いたしました。<br>平素のご交情、ご高配を深謝いたしますとともに<br>新年もよりご健勝にてご発展あらんことをお祈りいたします。</p>
-<p style="margin: 1em 0 0 0;">平成00年十二月</p>
+<p style="margin: 1em 0 0 0;">平成<span class="tcy">00</span>年十二月</p>
 </div>`;
     var GS1_N8 = { '相撲': '二人の力士が土俵の上で倒すか土俵の外に出すかによって勝負を決める、日本古来の競技', '場所': '相撲大会が行われる所', '合点がいく': '納得できる', '阻害する': '妨げる', '神無月': '陰暦10月の異称' };
     var GS1_P9_1 = `<p>ナイフなどを使った青少年による殺傷事件が、たびたびマスコミで報道されている。しかもその犯罪の対象が具体的な特定人物ではなく社会一般に向けられている。誰でもいいから殺したかった。そして自分も死にたかったと言うから始末が悪い。近年になり特に若者の<span class="bousen-num">①</span><span class="bousen">犯罪の動機が変わってきている</span>。</p>

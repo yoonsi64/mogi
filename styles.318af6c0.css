@@ -1933,6 +1933,8 @@
         .reading-box [style*="vertical-rl"] .footnote-word { text-underline-position: left; text-underline-offset: 0.2em; }
         .reading-box [style*="vertical-rl"] .bousen, .reading-box [style*="vertical-rl"] .textbook-ref-underline { text-underline-position: right; }
         .reading-box [style*="vertical-rl"] .tappable-word { border-bottom: none; border-left: 2px dotted var(--active-blue); }
+        .reading-box [style*="vertical-rl"] .tcy { text-combine-upright: all; -webkit-text-combine: horizontal; }
+        .reading-box [style*="vertical-rl"] .upright { text-orientation: upright; -webkit-text-orientation: upright; }
         .reading-box [style*="vertical-rl"] .mk-note-mk { top: 0; left: auto; right: 100%; margin-left: 0; }
         .reading-box.vertical { width: 100%; max-width: 100%; box-sizing: border-box; }
         .reading-box.vertical .upright { text-orientation: upright; -webkit-text-orientation: upright; }
