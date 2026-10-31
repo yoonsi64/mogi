@@ -3789,9 +3789,9 @@
 <p>年に６回、15日間ずつ全国の主要都市で「<u data-note="場所"><ruby>場所<rt>ばしょ</rt></ruby></u>」が行われているが、場所が開かれると国民の関心もぐっと上がってくる。プロ野球とダブる時期でもその勢いは冷めることを知らないからこそ国民の統合を象徴しているかのようにも思えるのである。</p>`;
     var GS1_P8_2 = `<p>家電製品という言葉が生まれたのは、もう随分と昔の事である。その範囲も、ラジオ・テレビ・冷蔵庫などから電子レンジ・エアコン、更にはコンピューターに至るまで品数も広がっている。「家電製品＝生活必需品」な訳で、どれもなくてはならない必須の品々であるが、中でも冷蔵庫のなかった時代はどうやって飲食を管理し、家族の健康を保ったのか不思議でならない。作って二日も常温で置いておくと味が変わってしまうのに、よくも昔の人というのは、生活の知恵があったなと思う。お祖母さんにそのコツを聞いたら、いろいろ乾燥させてはいたけどそれより、無駄なく作っていたよ、と言われ少々<u data-note="合点がいく"><ruby>合点<rt>がってん</rt></ruby>がいった</u>のである。</p>`;
     var GS1_P8_3 = `<p>離婚率の上昇が人口の成長を妨げ、行く行くは社会の安定を<u data-note="阻害する"><ruby>阻害<rt>そがい</rt></ruby>する</u>可能性が高いとの記事を読んで驚きと共になるほどといった感じがした。妊娠可能な女性の人口が減少しているという話が出たのもだいぶ前の話。ただでさえ、人口の減少が懸念されているというのに、妊娠できる女性が結婚生活を送らないことによる出生率の低下が、段々人口の減少につながっているという訳である。不景気だから離婚率が上がり、離婚率が上がるがゆえに余計子供が産まれなくなる。俗的な表現をすれば<span class="bousen">ダブルパンチ</span>を食らったようなものと言っていいだろう。悪循環の典型と云ってさしつかえないと思った。</p>`;
-    // as printed: the first line from the top, every other line one character lower; a blank line after each paragraph
+    // as printed: the first two lines from the top, the rest one character lower; a blank line after each paragraph
     var GS1_P8_4 = `<div class="notice" style="writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl; height: 30.5em; margin: 0 auto; line-height: 2; max-width: 100%; overflow-x: auto;">
-<p style="margin: 0 0 0 2em;">年頭のご挨拶を申し上げるべきところ、<br>　喪中につき失礼させていただきます。</p>
+<p style="margin: 0 0 0 2em;">年頭のご挨拶を申し上げるべきところ、<br>喪中につき失礼させていただきます。</p>
 <p style="margin: 1em 0 0 2em;"><u data-note="神無月"><ruby>神無月<rt>かんなづき</rt></ruby></u>に父裕之が八十三歳にて永眠いたしました。<br>平素のご交情、ご高配を深謝いたしますとともに<br>新年もよりご健勝にてご発展あらんことをお祈りいたします。</p>
 <p style="margin: 1em 0 0 0;">平成<span class="tcy">00</span>年十二月</p>
 </div>`;
