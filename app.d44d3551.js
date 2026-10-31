@@ -8974,6 +8974,38 @@
         if (!found) found = kanjiSplitGuess(core, coreR);          // each kanji with one of its known readings
         return found;
     }
+    // Furigana over the kanji that make each sound: a reading written for a whole compound
+    // (<ruby>二重太鼓<rt>にじゅうたいこ</rt></ruby>, {r|自分|じぶん}) is split per kanji when it is drawn
+    // (二[に]重[じゅう]太[たい]鼓[こ]) with the app's own splits. Readings that can't be split confidently
+    // (熟字訓 like 田舎・親父, or unknown ones) stay over the whole word. Applies to everything on screen.
+    function splitGroupRuby(rb) {
+        if (!rb || rb.dataset.rs) return;
+        rb.dataset.rs = '1';
+        var rts = rb.getElementsByTagName('rt');
+        if (rts.length !== 1) return;
+        var base = '', ok = true;
+        Array.prototype.forEach.call(rb.childNodes, function(n) {
+            if (n.nodeType === 3) base += n.data; else if (n.nodeName !== 'RT') ok = false;
+        });
+        base = base.trim();
+        var rd = rts[0].textContent.trim(), chars = Array.from(base);
+        if (!ok || chars.length < 2 || !chars.every(function(c) { return hasKanji(c) || c === '々'; }) || !/^[ぁ-ゟ]+$/.test(rd)) return;
+        var sp = null;
+        try { sp = rubySplitFor(base, rd); } catch (err) { sp = null; }
+        if (!sp || sp.length !== chars.length || sp.map(function(x) { return x[1]; }).join('') !== rd || sp.some(function(x) { return !x[1]; })) return;
+        rb.innerHTML = sp.map(function(x) { return escapeHtml(x[0]) + '<rt>' + escapeHtml(x[1]) + '</rt>'; }).join('');
+    }
+    function splitGroupRubyIn(root) {
+        if (!root || root.nodeType !== 1) return;
+        if (root.nodeName === 'RUBY') { splitGroupRuby(root); return; }
+        var list = root.getElementsByTagName('ruby');
+        for (var i = 0; i < list.length; i++) splitGroupRuby(list[i]);
+    }
+    if (typeof MutationObserver !== 'undefined') {
+        new MutationObserver(function(muts) {
+            muts.forEach(function(m) { Array.prototype.forEach.call(m.addedNodes, splitGroupRubyIn); });
+        }).observe(document.documentElement, { childList: true, subtree: true });
+    }
     function rubySegHtml(base, r) {
         var split = base.length > 1 ? rubySplitFor(base, r) : null;
         return '<ruby>' + (split ? split.map(function(x) { return escapeHtml(x[0]) + '<rt>' + escapeHtml(x[1]) + '</rt>'; }).join('')
