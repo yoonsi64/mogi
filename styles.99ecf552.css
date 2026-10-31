@@ -3222,11 +3222,12 @@ html.dark .home-pill.go small { color: rgba(13,17,23,.75); }
 
 /* ===== 出会い: めずらしい生き物 — the ring in the scene, the notice, the card's chips, the 出会い図鑑 ===== */
 /* the painter's ring and name over a visitor (MogiGarden / MogiTown highlight) */
-.mogi-hl-ring { border: 1.5px solid rgba(255, 238, 204, 0.9); box-shadow: 0 0 0 1px rgba(40, 24, 8, 0.18), 0 0 16px 3px rgba(255, 212, 150, 0.5), inset 0 0 12px 1px rgba(255, 226, 172, 0.35); animation: mogiHl 2.2s ease-in-out infinite; }
-@keyframes mogiHl { 0%, 100% { opacity: 0.95; scale: 1; } 50% { opacity: 0.55; scale: 1.1; } }
+.mogi-hl-ring { }
+.mogi-hl-spark { width: calc(18px * var(--k, 1)); height: calc(18px * var(--k, 1)); margin: calc(-9px * var(--k, 1)) 0 0 calc(-9px * var(--k, 1)); background: radial-gradient(circle, #fffdf6 0 12%, rgba(255, 240, 200, 0.95) 18%, rgba(255, 214, 140, 0) 60%); clip-path: polygon(50% 0, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0 50%, 42% 42%); filter: drop-shadow(0 0 3px rgba(255, 220, 150, 0.9)); opacity: 0; transform: scale(0.3) rotate(0deg); animation: mogiSpark 1.9s ease-in-out infinite; }
+@keyframes mogiSpark { 0%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); } 35% { opacity: 1; transform: scale(1) rotate(20deg); } 60% { opacity: 0.85; transform: scale(0.8) rotate(35deg); } }
 .mogi-hl-name { font-family: var(--mincho); font-weight: 700; font-size: 0.8rem; letter-spacing: 0.08em; color: #fff8ec; background: rgba(28, 20, 10, 0.58); padding: 2px 11px; border-radius: 999px; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
 .gd-card .mogi-hl-name { font-size: 0.7rem; padding: 1px 9px; }
-@media (prefers-reduced-motion: reduce) { .mogi-hl-ring { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .mogi-hl-spark { animation: none; opacity: 0.9; transform: none; } }
 /* はじめての出会い: a card at the top, until tapped or about 8 s */
 .gd-meet { position: fixed; left: 50%; top: calc(12px + env(safe-area-inset-top)); z-index: 4090; box-sizing: border-box; width: min(380px, calc(100% - 24px)); display: flex; align-items: center; gap: 12px; padding: 10px 12px 12px 10px; border-radius: 14px; overflow: hidden;
     background: var(--surface, #fff); color: var(--text-main); border: 1px solid rgba(214, 140, 84, 0.55); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22); cursor: pointer;

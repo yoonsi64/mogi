@@ -8552,6 +8552,11 @@ box=document.createElement('div');box.className='mogi-hl';box.setAttribute('aria
 box.style.cssText='position:absolute;left:0;top:0;width:0;height:0;z-index:4;pointer-events:none;opacity:0;transition:opacity .6s ease;';
 var ring=document.createElement('div');ring.className='mogi-hl-ring';
 ring.style.cssText='position:absolute;left:0;top:0;transform:translate(-50%,-50%);border-radius:50%;box-sizing:border-box;';
+[[0.08,0.30,1,0],[0.88,0.16,0.8,0.5],[0.96,0.66,0.65,1.1],[0.22,0.90,0.7,1.6],[0.52,-0.04,0.6,0.8],[0.62,0.96,0.55,2.0],[-0.02,0.62,0.5,1.35]].forEach(function(s){
+var sp=document.createElement('i');sp.className='mogi-hl-spark';
+sp.style.cssText='position:absolute;left:'+(s[0]*100)+'%;top:'+(s[1]*100)+'%;--k:'+s[2]+';animation-delay:'+s[3]+'s;';
+ring.appendChild(sp);
+});
 var lab=document.createElement('div');lab.className='mogi-hl-name';lab.textContent=name||'';
 lab.style.cssText='position:absolute;left:0;top:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
 box.appendChild(ring);box.appendChild(lab);el.appendChild(box);
