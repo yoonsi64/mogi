@@ -4107,6 +4107,7 @@ if(u<7.95)return tip+0.03*Math.sin((u-7.6)*30)*(1-(u-7.6)/0.35);
 if(u<8.25){var b=(u-7.95)/0.3;return lerp(tip,rest,1-Math.pow(1-b,2));}
 var c=(u-8.25)/0.95;return rest+0.05*Math.sin(c*Math.PI*3)*(1-c);
 }
+function shishiWinterAng(g,t){var d=t-(g.shTap===undefined?-1e9:g.shTap);return d>=0&&d<1.75?shishiAngle(7.45+d):-0.62;}
 function drawAnchorLayer(ctx,g,t,still,sh){
 var F0=g.F,i,lt=g.tint,night=g.LIT.id==='night';
 if(g.fall&&sh!==true){
@@ -4181,7 +4182,7 @@ else{var ra=(dt-0.22)/1.3,c=P(tg.basin[0]-0.03,0.326,tg.basin[2]),r=(0.015+ra*0.
 }
 }
 if(F0.shishi&&sh!==false){
-var ts=t+(g.shPh||0),ang=still?-0.62:shishiAngle(ts),sg=shishiGeom(),ends=drawShishiTube(ctx,ang),sp=P(sg.spout[0],sg.spout[1],sg.spout[2]),op=Pa(ends.open);
+var ts=t+(g.shPh||0),ang=still?-0.62:g.SEA.snow?shishiWinterAng(g,t):shishiAngle(ts),sg=shishiGeom(),ends=drawShishiTube(ctx,ang),sp=P(sg.spout[0],sg.spout[1],sg.spout[2]),op=Pa(ends.open);
 if(!g.SEA.snow){
 var cA=Math.cos(ang)*sg.m,sA=Math.sin(ang),tq=(sg.spout[0]-sg.pivot[0])/(Math.abs(cA)>1e-3?cA:1e-3),ey0=tq>-sg.len0&&tq<sg.len1?sg.pivot[1]+tq*sA+sg.r*0.4/Math.max(0.3,Math.abs(Math.cos(ang))):WL;
 var sp1=P(sg.spout[0]+0.03*sg.m,Math.min(sg.spout[1]-0.03,ey0),sg.spout[2]),lp0=P(sg.spout[0]+0.006*sg.m,sg.spout[1]-0.012,sg.spout[2]),wcl=night?[170,190,230]:mulc([236,244,248],lt);
@@ -8497,7 +8498,7 @@ g.feed={x:hit.w[0],z:hit.w[1],t0:t,dur:6.5+rng()*1.5};
 o.pellets=[];for(i=0;i<5;i++)o.pellets.push({x:hit.w[0]+(rng()-0.5)*0.3,z:hit.w[1]+(rng()-0.5)*0.22,d:rng()*0.3});
 o.nibbles=[2.4,3.3,4.4,5.6].map(function(s){return s+rng()*0.5;});o.dur=g.feed.dur;cue('splash');break;
 case'water':o.w=hit.w;o.dur=2.4;cue('drip');break;
-case'shishi':g.shPh=(7.45-(t%9.2)+9.2)%9.2;o.dur=0.1;break;
+case'shishi':if(g.SEA.snow)g.shTap=t;else g.shPh=(7.45-(t%9.2)+9.2)%9.2;o.dur=0.1;break;
 case'tsukubai':o.dur=4.2;o.poured=false;break;
 case'lantern':
 o.lit=!!g.LIT.lit;o.dur=o.lit?1.6:2.6;o.top=[LAY.lantern.x,1.45,LAY.lantern.z];o.dir=rng()<0.5?1:-1;
@@ -10158,7 +10159,7 @@ if(sway)stepSway(sway,g,dt,wfx);
 if(g.snowVar&&fallers.length)g.snowK=0.3+0.7*vnoise1(91,clock/18);
 if(rare){rare.t+=dt;if(rare.cueSplash){rare.cueSplash=false;cue('splash');}}
 else if(!reveal&&clock>nextRoll){nextRoll=clock+20+frng()*20;rollRare(g);}
-if(g.F.shishi&&crossed(prev+(g.shPh||0),clock+(g.shPh||0),9.2,8.25))cue('shishi');
+if(g.F.shishi&&(g.SEA.snow?g.shTap!==undefined&&prev-g.shTap<0.8&&clock-g.shTap>=0.8:crossed(prev+(g.shPh||0),clock+(g.shPh||0),9.2,8.25)))cue('shishi');
 if(g.F.tsukubai&&!g.SEA.snow&&crossed(prev,clock,DRIP_PER*4,0.22))cue('drip');
 if(g.koi&&g.koi.length){
 if(g.nextSplash===undefined)g.nextSplash=clock+12+frng()*18;
