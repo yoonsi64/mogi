@@ -7819,7 +7819,10 @@
         var ws = gdWeeds();
         [GD.ctrl, GD.vctrl, GD.full && GD.full.ctrl].forEach(function(c) { if (c && c.update) try { c.update({ weeds: ws }); } catch (e) {} });
     }
-    var GD_CUE_ALIAS = { bees: 'fuji', startle: 'birdtap' };   // birdtap: a bird you touched (always answers, whatever the weather)       // painter cue names that share a sound
+    // the weeds grow while a garden is on screen, and a new one comes up every few hours: the gardens shown are told every ten minutes
+    // (before, only when the home card was drawn again, the view opened or a weed pulled)
+    setInterval(function() { if (document.hidden) return; var ws = null; [GD.ctrl, GD.vctrl, GD.full && GD.full.ctrl].forEach(function(c) { if (c && c.update) try { c.update({ weeds: ws || (ws = gdWeeds()) }); } catch (e) {} }); }, 600000);
+    var GD_CUE_ALIAS = { bees: 'fuji', startle: 'birdtap', shoji: 'noren' };   // birdtap: a bird you touched (always answers, whatever the weather)       // painter cue names that share a sound
     function gdCueName(n) { return GD_CUE_ALIAS[n] || n; }
     function gdSceneTap(x, y) {
         if (!GD.vctrl || !GD.vctrl.tap || gdSkyOpen()) return;
