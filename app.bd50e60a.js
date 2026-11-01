@@ -7627,7 +7627,8 @@
         if (GD.el && GD.el.isConnected) { var sl = document.createElement('div'); sl.id = 'home-garden-slot'; GD.el.replaceWith(sl); gdMountCard(); }
     }
     // 開発者メニュー (the garden): one of the seasonal flowers on show, by the season and a date in its best week
-    var GD_FLOWERS = { ume: ['梅', 'winter', 1, 22], sho: ['花菖蒲', 'summer', 5, 18], hima: ['ひまわり', 'summer', 7, 5], hig: ['彼岸花', 'autumn', 8, 21], kiku: ['菊', 'autumn', 10, 10], yuki: ['雪吊り', 'winter', 0, 15] };
+    // ([name, season, month, day, hour]: the hour matters for the 蓮 and 朝顔, open only in the morning, and the ひまわり turning with the sun)
+    var GD_FLOWERS = { ume: ['梅', 'winter', 1, 22, 11], tsu: ['椿', 'winter', 0, 25, 11], aji: ['紫陽花', 'summer', 5, 20, 11], sho: ['花菖蒲', 'summer', 5, 18, 11], hasu: ['蓮', 'summer', 6, 25, 7], asa: ['朝顔', 'summer', 6, 28, 7], hima: ['ひまわり', 'summer', 7, 5, 9], hig: ['彼岸花', 'autumn', 8, 21, 11], kiku: ['菊', 'autumn', 10, 10, 11], yuki: ['雪吊り', 'winter', 0, 15, 11] };
     function gdViewOpts(s) {
         var d = GD.dev || {}, fl = d.flower && GD_FLOWERS[d.flower];
         return { stage: d.stage != null ? d.stage : GD.preview != null ? GD.preview : s.stage,
@@ -7635,7 +7636,7 @@
                  event: d.event !== undefined ? (d.event || null) : s.event,
                  weather: d.weather || s.weather,
                  fireworks: d.fireworks !== undefined ? d.fireworks === 'on' : s.fireworks,
-                 date: fl ? new Date(new Date().getFullYear(), fl[2], fl[3]) : d.season && d.season !== s.season ? ({ spring: new Date(new Date().getFullYear(), 3, 20), summer: new Date(new Date().getFullYear(), 6, 20), autumn: new Date(new Date().getFullYear(), 9, 25), winter: new Date(new Date().getFullYear(), 0, 20) })[d.season] : new Date(),
+                 date: fl ? new Date(new Date().getFullYear(), fl[2], fl[3], fl[4] || 11) : d.season && d.season !== s.season ? ({ spring: new Date(new Date().getFullYear(), 3, 20), summer: new Date(new Date().getFullYear(), 6, 20), autumn: new Date(new Date().getFullYear(), 9, 25), winter: new Date(new Date().getFullYear(), 0, 20) })[d.season] : new Date(),
                  quality: 'full', animate: true,
                  weeds: gdWeeds(), onWeed: weedPulled,
                  onCue: function(name, info) {
