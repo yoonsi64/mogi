@@ -11362,7 +11362,7 @@ return out;
 var TAIKO=function(){var p=stPt(5.2,-(STREET_HW-1.2));return{x:p[0],z:p[1]};};
 function townCatSpot(){
 if(F.shoka){var p=stPt(8,STREET_HW+0.8);return{x:p[0],z:p[1],y:0};}
-if(F.teahouse){var tb=teaFrame(),q=tb.L(1.6,-2.6,0);return{x:q[0],z:q[2],y:0};}
+if(F.teahouse){var tb=teaFrame(),q=tb.L(2.6,-4.2,0);return{x:q[0],z:q[2],y:0};}
 return null;
 }
 function tapTreeList(){
