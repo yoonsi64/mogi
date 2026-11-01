@@ -7184,6 +7184,26 @@ function snBonsho(E, t, out, f, a, len) {
   snStop(srcs, t + len * 1.1);
   return t + len;
 }
+/* 鈴: the shrine bell, a cluster of small bronze crotal bells on a rope: shaken three times, each shake a rattle of pellets,
+   every tinkle a few bright inharmonic partials ringing away (the rope's swing in a soft rustle under them) */
+function snSuzu(E, t, out, a) {
+  var c = E.ctx, srcs = [], end = t;
+  snNoise(E, t, out, { kind: 'pink', type: 'bandpass', f: 1800, q: 0.7, att: 0.04, hold: 0.5, dec: 0.4, peak: a * 0.05 });
+  for (var sh = 0; sh < 3; sh++) {
+    var t0 = t + sh * 0.24 + snR(E, -0.02, 0.02), n = 5 + Math.floor(snR(E, 0, 3)), k = sh === 2 ? 0.75 : 1;
+    for (var i = 0; i < n; i++) {
+      var ti = t0 + snR(E, 0, 0.11), f = snR(E, 2300, 3500), av = a * k * snR(E, 0.5, 1) * 0.06, dec = snR(E, 0.25, 0.55);
+      [[1, 1], [2.32, 0.45], [4.26, 0.2], [6.1, 0.08]].forEach(function (q) {
+        var g = snGain(c, 0, out), o = snOsc(c, 'sine', f * q[0] * snR(E, 0.997, 1.003));
+        g.gain.setValueAtTime(0, ti); g.gain.linearRampToValueAtTime(av * q[1], ti + 0.002); g.gain.setTargetAtTime(0, ti + 0.004, dec / (q[0] * 1.6));
+        o.connect(g); o.start(ti); srcs.push(o);
+      });
+      end = Math.max(end, ti + dec * 3);
+    }
+  }
+  snStop(srcs, end + 0.1);
+  return end;
+}
 function snRin(E, t, out, f, a) { // おりん: a small singing bowl
   var c = E.ctx, parts = [[1, 1, 9], [2.71, 0.5, 5], [5.15, 0.25, 2.6], [8.4, 0.1, 1.2]], srcs = [];
   parts.forEach(function (q, i) {
@@ -7490,6 +7510,7 @@ function sndCue(E, name, arg, focus, at) {
     case 'birdtap': (E.rnd() < 0.5 ? BIRD.shijukara : BIRD.hiyodori)(E, t, out(0.18, R(-0.7, 0.7), 9000)); return;
     case 'gust': snNoise(E, t, out(0.07, R(-0.5, 0.5)), { kind: 'pink', type: 'bandpass', f: 2600, q: 0.5, att: 1.0, hold: 1.2, dec: 2.2 }); snNoise(E, t + 0.4, out(0.05, R(-0.5, 0.5)), { kind: 'brown', type: 'lowpass', f: 500, att: 0.9, hold: 1, dec: 2 }); return;
     case 'bell': snBonsho(E, t, out(0.45, 0, 3000), R(118, 128), 1, focus ? 16 : 24); return;
+    case 'shrine': snSuzu(E, t, out(0.5, R(-0.2, 0.2)), 1); return;   // the roadside 祠 touched: its 鈴 rung
     case 'wheel': // the water wheel: a wooden creak and spill
       var o1 = out(0.16, R(-0.4, 0.4), 4000), j; for (j = 0; j < 14; j++) snNoise(E, t + j * 0.035 + R(0, 0.01), o1, { f: R(700, 950), q: 8, dec: 0.02, peak: 0.6 + Math.sin(j / 3) * 0.3 }); snNoise(E, t + 0.5, out(0.18, 0.2, 5000), { kind: 'pink', f: 1300, q: 0.6, att: 0.1, hold: 0.6, dec: 0.6 }); return;
     case 'crow': BIRD.hashibuto(E, t, out(0.22 * (SND.birdK || 1), R(-0.6, 0.6), 7000)); return;
