@@ -1686,7 +1686,7 @@
         .reading-box.vertical * { font-family: inherit; }
         .reading-box.vertical .reading-source { text-align: left; margin: 0 0 0 0; padding-top: 1em; }
         .vertical-hint { font-size: 0.7rem; color: var(--text-sub); margin: -12px 0 14px; text-align: right; }
-        .reading-source { font-size: 0.75rem; color: var(--text-sub); text-align: right; text-indent: 0 !important; margin-top: 4px; line-height: 1.5; }
+        .reading-source { font-size: 0.75rem; color: var(--text-sub); text-align: right; text-indent: 0 !important; margin-top: 4px; line-height: 1.5; overflow-wrap: anywhere; }
         .reading-notes { font-size: 0.75rem; color: var(--text-sub); margin: -10px 0 16px; line-height: 1.6; }
         /* Book footnote words in reading passages: dashed underline, tap for the footnote */
         .footnote-word { cursor: pointer; text-decoration: underline dashed; text-decoration-thickness: 1px; text-underline-offset: 0.3em; text-decoration-color: var(--text-sub); border-radius: 2px; -webkit-tap-highlight-color: transparent; }
