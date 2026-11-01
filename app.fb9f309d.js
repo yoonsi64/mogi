@@ -7626,14 +7626,16 @@
         // the home card shows the world chosen in the view (庭 or 町), straight away
         if (GD.el && GD.el.isConnected) { var sl = document.createElement('div'); sl.id = 'home-garden-slot'; GD.el.replaceWith(sl); gdMountCard(); }
     }
+    // 開発者メニュー (the garden): one of the seasonal flowers on show, by the season and a date in its best week
+    var GD_FLOWERS = { ume: ['梅', 'winter', 1, 22], sho: ['花菖蒲', 'summer', 5, 18], hima: ['ひまわり', 'summer', 7, 5], hig: ['彼岸花', 'autumn', 8, 21], kiku: ['菊', 'autumn', 10, 10], yuki: ['雪吊り', 'winter', 0, 15] };
     function gdViewOpts(s) {
-        var d = GD.dev || {};
+        var d = GD.dev || {}, fl = d.flower && GD_FLOWERS[d.flower];
         return { stage: d.stage != null ? d.stage : GD.preview != null ? GD.preview : s.stage,
                  season: d.season || s.season, light: d.light || s.light,
                  event: d.event !== undefined ? (d.event || null) : s.event,
                  weather: d.weather || s.weather,
                  fireworks: d.fireworks !== undefined ? d.fireworks === 'on' : s.fireworks,
-                 date: d.season && d.season !== s.season ? ({ spring: new Date(new Date().getFullYear(), 3, 20), summer: new Date(new Date().getFullYear(), 6, 20), autumn: new Date(new Date().getFullYear(), 9, 25), winter: new Date(new Date().getFullYear(), 0, 20) })[d.season] : new Date(),
+                 date: fl ? new Date(new Date().getFullYear(), fl[2], fl[3]) : d.season && d.season !== s.season ? ({ spring: new Date(new Date().getFullYear(), 3, 20), summer: new Date(new Date().getFullYear(), 6, 20), autumn: new Date(new Date().getFullYear(), 9, 25), winter: new Date(new Date().getFullYear(), 0, 20) })[d.season] : new Date(),
                  quality: 'full', animate: true,
                  weeds: gdWeeds(), onWeed: weedPulled,
                  onCue: function(name, info) {
@@ -7759,12 +7761,15 @@
             sel('fireworks', [['off', '花火なし'], ['on', '花火']], o.fireworks ? 'on' : 'off') +
             sel('weather', Object.keys(GD_WEATHER).map(function(k) { return [k, GD_WEATHER[k]]; }), o.weather || 'clear') +
             sel('event', [['', '行事なし']].concat(Object.keys(GD_EVENTS).map(function(k) { return [k, GD_EVENTS[k]]; })), o.event || '') +
+            (gdViewWorld() === 'garden' ? sel('flower', [['', '花：日付どおり']].concat(Object.keys(GD_FLOWERS).map(function(k) { return [k, GD_FLOWERS[k][0]]; })), (GD.dev && GD.dev.flower) || '') : '') +
             '<button data-k="up">段階アップを見る</button><button data-k="reset">いまに戻す</button>';
         devBox.querySelectorAll('select').forEach(function(x) {
             x.addEventListener('change', function() {
                 if (x.dataset.k === 'world') { GD.devWorld = x.value; GD.dev = null; gdRenderView(); gdMountView(true); return; }
                 GD.dev = GD.dev || {};
                 GD.dev[x.dataset.k] = x.dataset.k === 'stage' ? +x.value : x.value;
+                if (x.dataset.k === 'flower' && GD_FLOWERS[x.value]) GD.dev.season = GD_FLOWERS[x.value][1];   // (the flower's own season with it)
+                if (x.dataset.k === 'season' && GD.dev.flower && GD_FLOWERS[GD.dev.flower] && GD_FLOWERS[GD.dev.flower][1] !== x.value) GD.dev.flower = '';   // (another season: that flower is over)
                 if (GD.vctrl) GD.vctrl.update(gdViewOpts(gdState(gdViewWorld())));
                 gdRenderView(); gdSoundUpdate();
             });

@@ -8514,7 +8514,10 @@ var TAPCOL={leaf:LEAF_COLS.momiji,sleaf:[[176,52,32],[206,84,38],[222,126,50],[1
 o.mode=mode;var n={petal:26,leaf:14,sleaf:10,green:3,sgreen:3,needle:4,snow:10,none:0}[mode],c=P(hit.c[0],hit.c[1],hit.c[2]),cols=TAPCOL[mode]||[[0,0,0]];
 for(i=0;i<n;i++)o.parts.push({x:c.x+(rng()-0.5)*hit.R*c.k*1.4,y:c.y+(rng()-0.6)*hit.R*c.k*0.8,vy:(mode==='needle'?10:6)+rng()*6,vx:(rng()-0.5)*3,ph:rng()*TAU,rot:rng()*TAU,sz:mode==='petal'?1+rng()*0.6:mode==='sleaf'||mode==='sgreen'?1.5+rng()*0.7:1.4+rng()*0.8,d:rng()*(n<5?1.2:0.6),floor:c.y+hit.R*c.k*(1.1+rng()*0.8),col:cols[(rng()*cols.length)|0]});
 cue('gust');break;
-case'fuji':o.dur=4.5;o.bees=[];for(i=0;i<3;i++)o.bees.push({ph:rng()*TAU,w:1.5+rng(),r:6+rng()*6,dx:(rng()-0.5)*30});cue('bees');break;
+case'fuji':
+var fsea=seasonName(),fb=fsea==='spring'?knots([[0,0],[40,0],[50,0.45],[57,1],[74,1],[84,0.5],[91,0.3]],CAL*91):0;
+o.dur=4.5;o.bees=[];if(fb>0.3){for(i=0;i<3;i++)o.bees.push({ph:rng()*TAU,w:1.5+rng(),r:6+rng()*6,dx:(rng()-0.5)*30});cue('bees');}else{if(fsea==='winter')o.still=true;cue('gust');}
+break;
 case'bridge':case'stone':o.perch=hit.perch;o.dur=4.2;o.dir=rng()<0.5?1:-1;cue('birdtap');break;
 case'rare':if(rare){rareStartle(rare,g);cue(rare.id==='usagi'||rare.id==='kitsune'||rare.id==='tanuki'||rare.id==='shika'?'startle':'birdtap',{id:rare.id});}o.dur=0.1;break;
 }
@@ -8557,7 +8560,7 @@ else if(o.mode==='petal'){ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ct
 });
 ctx.globalAlpha=1;
 }
-if(o.kind==='fuji'&&g.img){
+if(o.kind==='fuji'&&g.img&&!o.still){
 var w=LAY.wis,a=P(w.x0-0.2,w.h+0.1,w.z0),bb=P(w.x1+0.2,w.h-1.0,w.z0),kk=g.img.width/g.W,sw=Math.sin(u*3.2)*Math.exp(-u*0.7)*1.2;
 var fw=bb.x-a.x,fh=bb.y-a.y;
 if(!o.fp){var fc=mkCanvas(Math.max(1,Math.round(fw*kk)),Math.max(1,Math.round(fh*kk))),fx=fc.getContext('2d');fx.drawImage(g.img,a.x*kk,a.y*kk,fw*kk,fh*kk,0,0,fc.width,fc.height);fx.globalCompositeOperation='destination-in';
