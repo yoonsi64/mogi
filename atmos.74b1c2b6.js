@@ -1205,7 +1205,7 @@ var u=(yy-CAM.y)*CAM.c+(z-CAM.z)*CAM.s;y=Math.min(y,CAM.cy-CAM.F*u/d);
 return y;
 }
 function moonSpot(big,night){
-var key=[W,H,CAM.cy,CAM.F,CAM.x,big,night].join();
+var key=[W,H,CAM.cy,CAM.F,CAM.x,CAM.z,CAM.s,big,night].join();
 if(MOON_SPOT&&MOON_SPOT.key===key)return MOON_SPOT;
 var W16=Math.min(W,H*16/9),o16=(W-W16)/2;
 var yo=skyBand(),top=3,tx=o16+W16*(big?(night?0.4:0.33):0.42),best=null;
