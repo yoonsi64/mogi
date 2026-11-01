@@ -5360,6 +5360,48 @@ if(Math.abs(b)>(F.stoneBridge?BR.w/2:1.1)+0.2||Math.abs(a)>BR.len/2)return 0;
 if(F.stoneBridge)return archH(a);
 return Math.abs(a)<8.5?plankH(a):0;
 }
+function nearDeck(x,z,m){
+var a=(x-BR.x)*BR.ax[0]+(z-BR.z)*BR.ax[1],b=-(x-BR.x)*BR.ax[1]+(z-BR.z)*BR.ax[0];
+return Math.abs(b)<(F.stoneBridge?BR.w/2:1.1)+0.6&&Math.abs(a)<(F.stoneBridge?BR.len/2:8.5)+(m||0);
+}
+function horseOpen(K,q,s){
+var hw=Math.max(0.4,q.spread*0.5);
+for(var c=-hw;c<=hw+1e-6;c+=0.2)if(!fkBlocked(K,s,c,true))return true;
+return false;
+}
+function horseSpot(g,w,q,K){
+var runs=[],r0=null,s,ok,fr;
+for(s=K.s0;s<=K.s1+1e-6;s+=0.25){
+fr=pathFrame(q.pa,s);ok=!nearDeck(fr.x,fr.z,2);
+if(ok)ok=horseOpen(K,q,s);
+if(ok&&r0===null)r0=s;else if(!ok&&r0!==null){runs.push([r0,s-0.25]);r0=null;}
+}
+if(r0!==null)runs.push([r0,K.s1]);
+var best=null;runs.forEach(function(r){if(!best||r[1]-r[0]>best[1]-best[0])best=r;});
+if(!best||best[1]-best[0]<20){
+var j2=-1;if(!w.hMoved)g.paths.forEach(function(p2,j){if(j!==w.pi&&p2.band===0&&!p2.still&&p2.pa.len>30&&(j2<0||p2.pa.len>g.paths[j2].pa.len))j2=j;});
+if(j2>=0){w.pi=j2;w.s=g.paths[j2].pa.len*0.3;w.hMoved=true;return false;}
+w.horse=null;w.sp=1;return true;
+}
+var free=function(s2){return!g.walkers.some(function(o){return o!==w&&o.pi===w.pi&&Math.abs(o.s-s2)<4.5;});};
+for(var i=0;i<runs.length;i++)if(runs[i][1]-runs[i][0]>=20&&w.s>runs[i][0]+2.6&&w.s<runs[i][1]-2.6&&free(w.s))return true;
+var mid=(best[0]+best[1])/2;w.s=mid;
+for(var k=0;k<=(best[1]-best[0])/2-2.6;k+=0.5){if(free(mid+k)){w.s=mid+k;break;}if(free(mid-k)){w.s=mid-k;break;}}
+return true;
+}
+function horseEnd(w,q,K,em){
+var d=w.dir,sE=d>0?K.s1-em:K.s0+em,lim=sE,a0=null,a1=null,s,op,fr;
+for(s=w.s+d*0.25;d>0?s<sE:s>sE;s+=d*0.25){
+var sf=s+d*2.1;op=false;
+op=sf>K.s0&&sf<K.s1?horseOpen(K,q,sf):true;
+if(!op){lim=s-d*2.5;break;}
+fr=pathFrame(q.pa,s+d*1.5);
+if(nearDeck(fr.x,fr.z,0.5)){if(a0===null)a0=s;a1=s;}
+}
+var f0=pathFrame(q.pa,w.s+d*1.5),f1=pathFrame(q.pa,w.s),onNow=nearDeck(f0.x,f0.z,0.5)||nearDeck(f1.x,f1.z,0.5);
+if(a0!==null&&!onNow&&(lim-a1)*d<1.5)lim=a0-d*1.5;
+return d>0?Math.min(lim,sE):Math.max(lim,sE);
+}
 function screenBox(pts3,m){
 var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
 pts3.forEach(function(q){var p=Pa(q);x0=Math.min(x0,p.x);x1=Math.max(x1,p.x);y0=Math.min(y0,p.y);y1=Math.max(y1,p.y);});
@@ -5505,7 +5547,7 @@ var fair=!wxWet(g.wx)&&g.wx!=='blizzard'&&o.light!=='night',cand=g.walkers.filte
 function take(fn){for(var i2=0;i2<cand.length;i2++){var w2=cand[i2];if(!w2.trade&&fn(w2)){w2.trade=true;return w2;}}return null;}
 if(fair&&o.stage>=SI.mill){var hk=take(function(){return true;});if(hk){hk.hikyaku=true;hk.load=null;hk.woman=false;hk.umb=null;hk.lantern=false;hk.sp=2.7;hk.pauseK=0;hk.hat=null;}}
 if(fair&&o.stage>=SI.temple){var km=take(function(w2){return!w2.load;});if(km){km.komuso=true;km.woman=false;km.sp=0.42;km.hat=null;km.lantern=false;km.umb=null;}}
-if(fair&&o.stage>=SI.farm){var hs=take(function(w2){return g.paths[w2.pi].band===0||g.paths[w2.pi].spread>=2;});if(hs){hs.horse={col:rng()<0.5?[120,84,56]:[72,58,50]};hs.load=null;hs.woman=false;hs.sp=0.62;hs.lantern=false;}}
+if(fair&&o.stage>=SI.farm){var hs=take(function(w2){return g.paths[w2.pi].band===0||g.paths[w2.pi].spread>=2;});if(hs){hs.horse={col:rng()<0.5?[120,84,56]:[72,58,50]};hs.load=null;hs.woman=false;hs.sp=0.62;hs.lantern=false;var hq=g.paths[hs.pi],hf;for(var hk2=0;hk2<40&&hs.s>3;hk2++){hf=pathFrame(hq.pa,hs.s);if(!nearDeck(hf.x,hf.z,4))break;hs.s-=1;}}}
 if(o.stage>=SI.stoneBridge&&!wxSnowy(g.wx)){var ct=take(function(w2){return g.paths[w2.pi].band===2&&g.paths[w2.pi].spread>=2;});if(ct){ct.cart=true;ct.load=null;ct.woman=false;ct.umb=null;ct.sp=0.7;ct.lantern=false;var cl0=g.paths[ct.pi].pa.len;if(cl0>14)ct.s=clamp(ct.s,6,cl0-6);ct.lat*=0.4;}}
 g.walkers.forEach(function(w){if(w.load==='pole')w.goods=rng()<0.5?'fish':'veg';});
 if(g.walkers.length>1&&!wxWet(g.wx)&&g.wx!=='blizzard'){var pw=g.walkers[1];pw.load='pole';pw.woman=false;pw.child=false;pw.umb=null;}
@@ -5883,12 +5925,15 @@ return false;
 }
 function rigTurnStep(g,w,q,dt,rng){
 var T=w.turn,a=rigTurnAt(w,T.u),ah=rigTurnAt(w,Math.min(1,T.u+0.35/T.T));
-if(!rigNear(g,w,ah[0],ah[1],0.6)){T.t+=dt;T.u=Math.min(1,T.t/T.T);}
+if(T.back){T.t=Math.max(0,T.t-dt);T.u=T.t/T.T;}
+else if(w.horse||!rigNear(g,w,ah[0],ah[1],0.6)){T.t+=dt;T.u=Math.min(1,T.t/T.T);T.stall=0;}
+else if((T.stall=(T.stall||0)+dt)>3)T.back=true;
 var b=rigTurnAt(w,T.u),d=Math.hypot(b[0]-a[0],b[1]-a[1]);
 if(w.cart){w.dist=(w.dist||0)+d;var ux=b[0]-T.px,uz=b[1]-T.pz,ul=Math.hypot(ux,uz)||1;rigSet(w,[T.px,T.pz,ux/ul,uz/ul],dt);}
 else{var ph=b[2]+T.side*Math.PI/2*Math.sin(Math.PI*T.u);w.dist=(w.dist||0)+d*0.3;rigSet(w,[b[0],b[1],Math.cos(ph),Math.sin(ph)],dt);}
 w.v=0;w.vx=w.vz=0;
 if(T.u>=1){w.dir=T.dN;w.s=T.sN;if(w.cart)w.cl=w.rcl=T.lN;w.turn=null;w.pause=0.4+rng()*1.6;w.lt=0;w.tl=undefined;w.wt=0;}
+else if(T.back&&T.u<=0){w.turn=null;w.dir=-w.dir;w.push=!w.push;w.pause=0.4+rng()*1.2;w.lt=0;w.tl=undefined;w.wt=0;}
 faceWalker(g,w,q,dt);
 }
 function stepWalkers(g,dt,rng){
@@ -5896,7 +5941,7 @@ if(!g.fkG||g.fkLife!==g.life){fkPrepare(g);if((g.life||[]).some(function(a){retu
 var WK=g.walkers,i,w,q,K,until=now()+6;
 for(i=0;i<WK.length;i++){
 w=WK[i];q=g.paths[w.pi];
-if(w.cl===undefined){K=fkLanes(g,q,until);if(!K)continue;fkSettle(g,w,q,K);}
+if(w.cl===undefined){K=fkLanes(g,q,until);if(!K)continue;if(w.horse&&!horseSpot(g,w,q,K))continue;fkSettle(g,w,q,K);}
 var p0=walkerPos(g,w),f0=pathFrame(q.pa,w.s);w.fx=p0.x;w.fz=p0.z;w.nx=f0.nx;w.nz=f0.nz;w.hx=f0.dx*w.dir;w.hz=f0.dz*w.dir;w.bp=fkBodyPts(g,w);if(w.still||w.turn||(w.v!==undefined?w.v<0.02:w.pause>0||w.tl===null))w.vx=w.vz=0;
 }
 for(i=0;i<WK.length;i++){
@@ -5906,15 +5951,18 @@ w.vx=w.vz=0;
 if(w.still)continue;
 if(w.v===undefined)w.v=w.pause>0?0:wkSpeed(w);
 var em=(w.cart||w.horse)&&K.s1-K.s0>8?2.4:0;
+if(em&&w.horse){var fe=pathFrame(q.pa,(w.dir>0?K.s1:K.s0)-w.dir*5.6);if(nearDeck(fe.x,fe.z,0))em=1.5;}
 if(w.turn){rigTurnStep(g,w,q,dt,rng);continue;}
 var going=!(w.pause>0);
 if(!going){w.pause-=dt;if(w.v<0.02){w.v=0;w.lt=0;rigFollow(g,w,q,0,dt);faceWalker(g,w,q,dt);continue;}}
-w.lt=(w.lt||0)-dt;
+w.lt=(w.lt||0)-dt;if(w.thruT>0)w.thruT-=dt;
 if(w.lt<=0||w.tl===undefined){w.lt=0.2+rng()*0.1;w.tl=fkChoose(g,w,q,K);}
-var vt=going?wkSpeed(w):0,rem=w.dir>0?K.s1-em-w.s:w.s-K.s0-em,brk=WK_DEC*(w.cart?0.5:w.horse?0.7:1);
+if(w.horse&&em&&(w.hEndK!==K||w.hEndD!==w.dir||(w.hEndT=(w.hEndT||0)-dt)<=0)){w.hEnd=horseEnd(w,q,K,em);w.hEndK=K;w.hEndD=w.dir;w.hEndT=0.5;}
+var vt=going?wkSpeed(w):0,rem=w.horse&&em&&w.hEnd!==undefined?Math.max(0,(w.hEnd-w.s)*w.dir):w.dir>0?K.s1-em-w.s:w.s-K.s0-em,brk=WK_DEC*(w.cart?0.5:w.horse?0.7:1);
 if(w.tl===null){
 vt=0;brk=Math.max(WK_STOP,w.v*w.v/(2*0.12));
 w.wt=(w.wt||0)+dt;
+if(w.horse&&w.wt>0.8&&!(w.thruT>0)){w.thruT=4;w.lt=0;}
 if(w.wt>(1.4+(i%4)*0.4)*(1+1.5*Math.min(3,w.nrev||0))&&w.v<0.05){if(rigTurnStart(g,w,q,K,em)){w.wt=0;continue;}w.dir=-w.dir;w.wt=0;w.lt=0;w.v=0;w.nrev=(w.nrev||0)+1;w.drev=w.dist||0;if(w.horse||w.cart)w.push=!w.push;}
 }else{w.wt=0;if(w.nrev&&(w.dist||0)-(w.drev||0)>1)w.nrev=0;if(going)vt=Math.min(vt,Math.sqrt(2*brk*Math.max(0,rem)));}
 w.v=vt<w.v?Math.max(vt,w.v-brk*dt):Math.min(vt,w.v+wkAcc(w)*dt);
@@ -5933,7 +5981,7 @@ w.dir=-w.dir;if(w.horse||w.cart)w.push=!w.push;
 var pw=walkerPos(g,w);for(var oi=0;oi<WK.length;oi++){var ow=WK[oi];if(ow===w||ow.cl===undefined)continue;var po=walkerPos(g,ow);if(Math.hypot(po.x-pw.x,po.z-pw.z)<0.6){w.pause=0;break;}}
 }
 }
-else if(going&&rng()<dt*0.02*(w.pauseK===undefined?1:w.pauseK))w.pause=1.5+rng()*3;
+else if(going&&rng()<dt*0.02*(w.pauseK===undefined?1:w.pauseK)&&!nearDeck(w.fx,w.fz,w.horse||w.cart?3:0)&&!(w.rig&&nearDeck(w.rig[0],w.rig[1],3)))w.pause=1.5+rng()*3;
 faceWalker(g,w,q,dt);
 if(w.prints&&ds>0)stepPrints(g,w);
 }
@@ -6142,9 +6190,10 @@ for(var n=0;n<order.length;n++){
 var c2=K.lat0+order[n]*0.2,ok=true;
 for(var e=0;e<=A+0.01&&ok;e+=0.25){
 var lat=w.cl+clamp(c2-w.cl,-(WK_LAT*e+0.06),WK_LAT*e+0.06);
-for(var b=0;b<body.length;b++){if(here&&e<0.7&&body[b]===0)continue;if(fkBlocked(K,w.s+w.dir*(e+body[b]),lat,wide&&body[b]!==0)){ok=false;break;}}
+for(var b=0;b<body.length;b++){if(here&&e<0.7&&body[b]===0)continue;if(w.horse&&Math.abs(w.s+w.dir*(e+body[b])-(K.s0+K.s1)/2)>(K.s1-K.s0)/2)continue;if(fkBlocked(K,w.s+w.dir*(e+body[b]),lat,wide&&body[b]!==0)){ok=false;break;}}
 }
-for(var b2=0;b2<body.length&&ok;b2++){
+var thru=w.horse&&(w.thruT>0||nearDeck(w.fx,w.fz,3)||(w.rig&&nearDeck(w.rig[0],w.rig[1],3)));
+for(var b2=0;b2<body.length&&ok&&!thru;b2++){
 var tr=[],mx0=me[b2*3],mz0=me[b2*3+1];
 for(var e2=0;e2<=2.01;e2+=0.25){var lat2=w.cl+clamp(c2-w.cl,-(WK_LAT*e2+0.06),WK_LAT*e2+0.06),fr=pathFrame(q.pa,w.s+w.dir*(e2+body[b2]));tr.push(fr.x+fr.nx*lat2,fr.z+fr.nz*lat2,e2/Math.max(0.3,w.sp*(w.child?0.8:1)));}
 for(var m=0;m<near.length&&ok;m++){
@@ -10812,10 +10861,10 @@ st.a=st.b=st.now;
 }},
 {id:'mikeneko',name:'三毛猫',season:ALL_S,light:['morning','day'],minStage:SI.teahouse,w:1,dur:48,desc:'縁台で三毛猫が気持ちよさそうに昼寝をしています',
 setup:function(){
-var tb=teaFrame(),bb=tb.L(0.2,-2.1-2.0,0.55),fr=tb.L(0.2,-4.95,0),back=tb.L(-1.2,3.9,0),side=tb.L(-4.0,-1.0,0);
+var tb=teaFrame(),bb=tb.L(0.2,-2.1-2.0,0.55),fr=tb.L(0.2,-4.95,0),from=tb.L(6.2,-6.8,0),mid=tb.L(3.0,-5.6,0),away=tb.L(-6.2,-6.8,0);
 var dn=tb.L(-0.6,-4.8,0);
-var pl=landPlan([back[0],back[2]],[{go:[side[0],side[2]],v:0.75},{go:[fr[0],fr[2]],v:0.7},{wait:0.7,act:'crouch',fill:false},{hop:[bb[0],bb[2]],h:0.55,t:0.5},{wait:14,act:'nap'},{wait:2.4,act:'stretch',fill:false},{wait:0.4,act:'crouch',fill:false},{hop:[dn[0],dn[2]],h:0,t:0.45},{wait:0.35,act:'land',fill:false},{go:[back[0]+0.6,back[2]],v:0.85}],48);
-pl.bench=bb;return pl;
+var pl=landPlan([from[0],from[2]],[{go:[mid[0],mid[2]],v:0.75},{go:[fr[0],fr[2]],v:0.7},{wait:0.7,act:'crouch',fill:false},{hop:[bb[0],bb[2]],h:0.55,t:0.5},{wait:14,act:'nap'},{wait:2.4,act:'stretch',fill:false},{wait:0.4,act:'crouch',fill:false},{hop:[dn[0],dn[2]],h:0,t:0.45},{wait:0.35,act:'land',fill:false},{go:[away[0],away[2]],v:0.85}],48);
+pl.bench=bb;pl.fadeEnd=true;return pl;
 },
 draw:function(){},
 loose:function(ctx,g,st,u,t){
@@ -11003,9 +11052,9 @@ for(var r=0;r<3;r++){var rr=(0.05+su*0.5-r*0.09)*c.k;if(rr<=0)continue;ctx.strok
 loose:function(ctx,g,st,u,t){townKingfisher(ctx,g,st,u*22,t);}},
 {id:'tanuki',name:'狸',season:['spring','summer','autumn'],light:['night'],minStage:SI.teahouse,w:0.9,dur:50,desc:'夜道を、狸がとことこ歩いていきます',
 setup:function(){
-var tb=teaFrame(),n=(RARE_N.tanuki=(RARE_N.tanuki||0)+1),A=tb.L(-1.0,3.9,0),s1=tb.L(1.2+(n%2),-5.4,0),s2=tb.L(3.6,-6.4,0);
-var pl=landPlan([A[0],A[2]],[{go:[s1[0],s1[2]],v:0.7},{wait:6,act:'forage'},{go:[s2[0],s2[2]],v:0.7},{wait:5,act:'sit'},{go:[-12,6],v:0.85}],50);
-pl.seed=60+n;return pl;
+var tb=teaFrame(),n=(RARE_N.tanuki=(RARE_N.tanuki||0)+1),A=tb.L(7.6,1.5,0),A2=tb.L(6.2,-4.0,0),s1=tb.L(1.2+(n%2),-5.4,0),s2=tb.L(3.6,-6.4,0);
+var pl=landPlan([A[0],A[2]],[{go:[A2[0],A2[2]],v:0.7},{go:[s1[0],s1[2]],v:0.7},{wait:6,act:'forage'},{go:[s2[0],s2[2]],v:0.7},{wait:5,act:'sit'},{go:[-12,6],v:0.85}],50);
+pl.seed=60+n;pl.fadeEnd=true;return pl;
 },
 draw:function(){},
 loose:function(ctx,g,st,u,t){
