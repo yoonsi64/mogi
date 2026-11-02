@@ -164,6 +164,9 @@
         .lib-cover.small span { font-size: 0.5rem; }
         .lib-cover.has-img { width: 44px; height: 62px; padding: 0; background: #f6eedc; overflow: hidden; border-radius: 2px 4px 4px 2px; box-shadow: 0 1px 4px rgba(0,0,0,0.25); }
         .lib-cover.has-img::before { display: none; }
+        .lib-cover.wg-cover { background-repeat: repeat; box-shadow: inset 3px 0 0 rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.25); }
+        .lib-cover.wg-cover::before { display: none; }
+        .lib-cover.wg-cover span { padding: 1px 4px; border-radius: 3px; line-height: 1.2; }
         .lib-cover.has-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .lib-cover.has-img.small { width: 24px; height: 34px; }
         .lib-head-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
@@ -1732,6 +1735,19 @@
         .ad-table { width: 100%; font-size: 0.82rem; line-height: 1.5; margin: 8px 0; }
         .notice-grid.ad-table td { padding: 2px 4px; }
         .notice-grid.ad-table td { text-align: center; }
+        /* 漢検 typed answers */
+        .kk-sentence { font-size: 1.15rem; line-height: 2; }
+        .kk-sentence u { text-decoration: none; border-bottom: 2px solid currentColor; padding: 0 1px; }
+        .kk-big { display: block; text-align: center; font-size: 3.4rem; line-height: 1.3; font-family: var(--mincho, serif); }
+        .kk-form { display: flex; gap: 8px; margin: 14px 0 6px; }
+        .kk-input { flex: 1; min-width: 0; font-size: 1.2rem; padding: 10px 12px; border: 1.5px solid var(--border-light, #ccc); border-radius: 10px; background: var(--surface, #fff); color: inherit; }
+        .kk-input:focus { outline: none; border-color: var(--lib-color, #5e9e3a); }
+        .kk-form .check-btn { flex: none; margin: 0; }
+        .kk-answer { display: flex; align-items: baseline; gap: 10px; margin: 14px 0 6px; padding: 10px 12px; border-radius: 10px; border: 1.5px solid; }
+        .kk-answer.ok { border-color: var(--correct-color, #2e9d5b); }
+        .kk-answer.ng { border-color: var(--incorrect-color, #d9534f); }
+        .kk-lab { font-size: 0.75rem; color: var(--text-sub); }
+        .kk-val { font-size: 1.2rem; }
         /* 콕콕 情報検索 tables: compact enough for a phone-width reading box */
         .notice-grid.kd-tbl { width: 100%; font-size: 0.82em; line-height: 1.5; }
         .notice-grid.kd-tbl th, .notice-grid.kd-tbl td { padding: 4px 5px; white-space: nowrap; vertical-align: middle; }
