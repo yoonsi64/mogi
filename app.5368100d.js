@@ -13880,37 +13880,21 @@
             }
 
         } else if (q.input) {
-            // 漢検 読み・書き取り, laid out like the book: the sentence in vertical type with the line beside the target,
-            // and the answer written into the box (書き取り) or the curved bracket (読み) under it.
-            // A transparent input sits over the box so the phone's Japanese keyboard (and its conversion) works as usual.
+            // 漢検 読み・書き取り: type the answer (options[0] is the answer, so it is checked like a choice)
             var typed = userAnswers[q.id], okT = isAnswered && typed === q.options[0];
-            var num = String(q.label || '').replace(/\D/g, '');
-            var kindCls = q.input === 'kana' ? 'kana' : 'kanji';
-            var cellT = '<div class="kk-cell ' + kindCls + (isAnswered ? (okT ? ' ok' : ' ng') : '') + '" id="kk-cell">' +
-                '<span class="kk-cell-text" id="kk-cell-text">' + escapeHtml(typed || '') + '</span>' + (isAnswered ? '' : '<span class="kk-caret"></span>') +
-                (isAnswered ? '<span class="pen-mini kk-pen">' + penMark(okT ? 'ok' : 'ng', justAnsweredId === q.id) + '</span>' : '<input class="kk-ghost" id="kk-input" type="text" lang="ja" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" aria-label="' + (q.input === 'kana' ? 'ひらがなで答えを入力' : '漢字で答えを入力') + '">') +
-                '</div>';
-            var fixT = isAnswered && !okT ? '<div class="kk-cell ' + kindCls + ' fix"><span class="kk-cell-text">' + escapeHtml(q.options[0]) + '</span></div>' : '';
             var fbT = !isAnswered ? '' : '<div class="feedback ' + (okT ? 'correct' : 'incorrect') + '" id="feedback">' + (okT ? '正解！' : '不正解… 正解は「' + q.options[0] + '」です。') + '</div>';
             var noteT = isAnswered && q.note ? '<div class="explain-card"><div class="explain-title">解説</div><div>' + q.note + '</div></div>' : '';
             quizContainer.innerHTML = '<div class="question-card">' +
                 renderHeader(q, qTypeName(q)) +
-                '<div class="kk-page">' +
-                    '<div class="kk-tate"><span class="kk-no">' + num + '</span>' + sentenceHtml + '</div>' +
-                    '<div class="kk-cells">' + cellT + fixT + '</div>' +
-                    (isAnswered ? '' : '<div class="kk-hint">' + (q.input === 'kana' ? '枠をタップして、読みをひらがなで' : '枠をタップして、漢字で') + '</div>') +
-                '</div>' +
-                (isAnswered ? '' : '<div class="btn-group"><button class="check-btn" id="kk-check" disabled>解答する</button></div>') +
+                '<div class="sentence kk-sentence"><span class="sentence-text">' + sentenceHtml + '</span></div>' +
+                (isAnswered
+                    ? '<div class="kk-answer ' + (okT ? 'ok' : 'ng') + '"><span class="kk-lab">あなたの答え</span><span class="kk-val">' + escapeHtml(typed || '') + '</span></div>'
+                    : '<form class="kk-form" id="kk-form" autocomplete="off"><input class="kk-input" id="kk-input" type="text" lang="ja" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="' + (q.input === 'kana' ? 'ひらがなで入力' : '漢字で入力') + '"><button class="check-btn" id="kk-check" type="submit" disabled>解答する</button></form>') +
                 fbT + noteT + '</div>';
             if (!isAnswered) {
-                var inp = document.getElementById('kk-input'), btnT = document.getElementById('kk-check'), cellEl = document.getElementById('kk-cell'), txt = document.getElementById('kk-cell-text');
-                var sync = function() { txt.textContent = inp.value; btnT.disabled = !inp.value.trim(); };
-                inp.addEventListener('input', sync);
-                inp.addEventListener('compositionupdate', function() { setTimeout(sync, 0); });
-                inp.addEventListener('focus', function() { cellEl.classList.add('focus'); });
-                inp.addEventListener('blur', function() { cellEl.classList.remove('focus'); });
-                inp.addEventListener('keydown', function(ev) { if (ev.key === 'Enter' && !ev.isComposing && ev.keyCode !== 229 && inp.value.trim()) { ev.preventDefault(); handleTypedAnswer(q, inp.value); } });
-                btnT.addEventListener('click', function() { handleTypedAnswer(q, inp.value); });
+                var inp = document.getElementById('kk-input'), btnT = document.getElementById('kk-check');
+                inp.addEventListener('input', function() { btnT.disabled = !inp.value.trim(); });
+                document.getElementById('kk-form').addEventListener('submit', function(ev) { ev.preventDefault(); handleTypedAnswer(q, inp.value); });
                 setTimeout(function() { try { inp.focus({ preventScroll: true }); } catch (e) {} }, 50);
             }
         } else {
