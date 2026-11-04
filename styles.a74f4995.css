@@ -1735,19 +1735,30 @@
         .ad-table { width: 100%; font-size: 0.82rem; line-height: 1.5; margin: 8px 0; }
         .notice-grid.ad-table td { padding: 2px 4px; }
         .notice-grid.ad-table td { text-align: center; }
-        /* 漢検 typed answers */
-        .kk-sentence { font-size: 1.15rem; line-height: 2; }
-        .kk-sentence u { text-decoration: none; border-bottom: 2px solid currentColor; padding: 0 1px; }
+        /* 漢検 typed answers: the book page — vertical sentence, side line on the target, answer box / bracket under it */
+        .kk-page { display: flex; flex-direction: column; align-items: center; gap: 14px; margin: 14px 0 8px; }
+        .kk-tate { writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl; font-family: var(--mincho, serif); font-size: 1.4rem; line-height: 2; letter-spacing: 0.06em; max-height: 15em; max-width: 100%; overflow-x: auto; }
+        .kk-tate u { text-decoration: none; border-right: 2px solid currentColor; padding-right: 1px; }
+        .kk-tate rt { font-size: 0.45em; }
+        .kk-no { font-family: var(--gothic, sans-serif); font-weight: bold; font-size: 0.8em; margin-bottom: 0.7em; text-combine-upright: all; -webkit-text-combine: horizontal; }
         .kk-big { display: block; text-align: center; font-size: 3.4rem; line-height: 1.3; font-family: var(--mincho, serif); }
-        .kk-form { display: flex; gap: 8px; margin: 14px 0 6px; }
-        .kk-input { flex: 1; min-width: 0; font-size: 1.2rem; padding: 10px 12px; border: 1.5px solid var(--border-light, #ccc); border-radius: 10px; background: var(--surface, #fff); color: inherit; }
-        .kk-input:focus { outline: none; border-color: var(--lib-color, #5e9e3a); }
-        .kk-form .check-btn { flex: none; margin: 0; }
-        .kk-answer { display: flex; align-items: baseline; gap: 10px; margin: 14px 0 6px; padding: 10px 12px; border-radius: 10px; border: 1.5px solid; }
-        .kk-answer.ok { border-color: var(--correct-color, #2e9d5b); }
-        .kk-answer.ng { border-color: var(--incorrect-color, #d9534f); }
-        .kk-lab { font-size: 0.75rem; color: var(--text-sub); }
-        .kk-val { font-size: 1.2rem; }
+        .kk-cells { display: flex; flex-direction: row-reverse; gap: 10px; align-items: flex-start; }
+        .kk-cell { position: relative; writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl; width: 2.4em; min-height: 5.6em; padding: 0.45em 0; font-family: var(--mincho, serif); font-size: 1.45rem; line-height: 2.4em; text-align: start; color: var(--text-main); background: var(--surface, #fff); cursor: text; }
+        .kk-cell.kanji { border: 1.5px solid var(--text-sub); }
+        .kk-cell.kana { min-height: 7.5em; border: 1.5px solid var(--text-sub); border-top-color: transparent; border-bottom-color: transparent; border-radius: 1.1em / 2.4em; background: transparent; }
+        .kk-cell.focus { border-color: var(--lib-color, #5e9e3a); box-shadow: 0 0 0 3px color-mix(in srgb, var(--lib-color, #5e9e3a) 18%, transparent); }
+        .kk-cell.kana.focus { border-top-color: transparent; border-bottom-color: transparent; box-shadow: none; }
+        .kk-cell.ok { border-color: var(--correct-color, #2e9d5b); }
+        .kk-cell.ng .kk-cell-text { text-decoration: line-through; text-decoration-color: rgba(217, 83, 79, 0.7); }
+        .kk-cell.fix { border-color: var(--incorrect-color, #d9534f); color: var(--incorrect-color, #d9534f); }
+        .kk-cell.kana.fix, .kk-cell.kana.ok { border-top-color: transparent; border-bottom-color: transparent; }
+        .kk-caret { display: none; width: 1.1em; height: 2px; margin: 2px auto 0; background: var(--lib-color, #5e9e3a); animation: kk-blink 1s steps(1) infinite; }
+        .kk-cell.focus .kk-caret { display: block; }
+        @keyframes kk-blink { 50% { opacity: 0; } }
+        .kk-ghost { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.01; font-size: 16px; border: 0; background: transparent; color: transparent; caret-color: transparent; writing-mode: horizontal-tb; }
+        .kk-cell .kk-pen { position: absolute !important; top: -0.7em !important; right: -0.7em !important; left: auto !important; bottom: auto !important; width: 1.5em; height: 1.5em; margin: 0 !important; writing-mode: horizontal-tb; }
+        .kk-pen .pen-mark { width: 100%; height: 100%; }
+        .kk-hint { font-size: 0.75rem; color: var(--text-sub); }
         /* 콕콕 情報検索 tables: compact enough for a phone-width reading box */
         .notice-grid.kd-tbl { width: 100%; font-size: 0.82em; line-height: 1.5; }
         .notice-grid.kd-tbl th, .notice-grid.kd-tbl td { padding: 4px 5px; white-space: nowrap; vertical-align: middle; }
