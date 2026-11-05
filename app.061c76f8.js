@@ -3394,7 +3394,7 @@
 
     // ===== 新完全マスター読解 N1 — 第3部 4. 統合理解 (練習63) =====
     var SKD63_P = `<p class="ab-label">A</p>
-<div class="notice">
+<div class="notice wr-frame">
 <p class="notice-title">賃貸借契約書</p>
 <p>貸主　サクラ不動産（以下、「甲」という。）及び借主　キム・スヨン（以下、「乙」という。）、乙の連帯保証人　山田一郎（以下、「丙」という。）は、本日、以下のとおり賃貸借契約を締結した。</p>
 <p class="wr-cap">（契約の締結）</p>
@@ -3414,12 +3414,12 @@
 <p class="wr-art"><b>第６条</b>甲又は乙が、本賃貸借契約を解約するときは、相手方に対し前もって解約の申し入れをしなければならない。この場合、甲が解約の申し入れをする場合には６か月前にしなければならず、乙が解約の申し入れをする場合には２か月前にしなければならない。</p>
 </div>
 <p class="ab-label">B</p>
-<div class="notice">
+<div class="notice wr-frame">
 <p class="notice-title wr-check-title">契約書にサインする前に以下の項目を確認しよう</p>
 <div class="wr-check"><span>□ ①契約期間</span><span>□ ②家賃の値上げ</span><span>□ ③家賃の金額・支払い方法</span><span>□ ④敷金の金額</span><span>□ ⑤更新料</span><span>□ ⑥禁止事項</span><span>□ ⑦同居人の追加</span><span>□ ⑧解約の方法</span></div>
 </div>
 <p class="ab-label">C</p>
-<div class="notice">
+<div class="notice wr-frame">
 <p class="notice-title">賃貸契約Ｑ＆Ａ</p>
 <p class="wr-qa">Ｑ１　敷金って何？</p>
 <p>敷金は、部屋の契約後、解約して引っ越すときまで貸主に預けておくお金で、家賃２か月分が一般的です。家賃の滞納、入居者負担で部屋の修理をするときに、ここから引かれますが、基本的には戻ってくるお金です。</p>
