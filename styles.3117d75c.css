@@ -1722,6 +1722,67 @@
         .notice-grid th, .notice-grid td { border: 1px solid var(--text-sub); padding: 1px 10px; font-weight: normal; }
         .notice-grid td + td, .notice-grid th { text-align: center; }
         .notice-note { padding-left: 4.5em; margin: 4px 0 2px; }
+        /* handwritten digits (Caveat, SIL Open Font License; digits only) for dates filled in by hand on forms */
+        @font-face { font-family: 'CaveatHand'; src: url(data:font/woff;base64,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) format('woff'); font-weight: 400; unicode-range: U+0030-0039; }
+        .hand, .reading-box .notice .hand, .reading-box .notice td .hand { font-family: 'CaveatHand', cursive !important; font-size: 1.45em; line-height: 1; padding: 0 0.15em; }
+        /* 練習60 reviews, 練習63 contract and checklist */
+        .reading-box .notice p.wr-who { font-weight: bold; margin-bottom: 2px; }
+        .reading-box .notice + .notice { margin-top: 12px; }
+        .reading-box .notice.wr-frame { border: 1px solid var(--text-sub); padding: 6px 12px; }
+        .wr-check { font-size: 0.9em; }
+        .wr-check span { padding-left: 1.2em; text-indent: -1.2em; }
+        .wr-art b, .wr-qa, .wr-check-title { font-family: var(--gothic, sans-serif); }
+        .wr-head2 { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+        .wr-head2 .notice-title { margin: 0; }
+        .reading-box .notice p.wr-cap { font-weight: normal; margin-top: 4px; }
+        .reading-box .notice p.wr-art { padding-left: 3.6em; text-indent: -3.6em; }
+        .reading-box .notice p.wr-art b { display: inline-block; width: 3.6em; text-indent: 0; }
+        .reading-box .notice p.wr-item { padding-left: 2em; text-indent: -2em; }
+        .wr-check { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 12px; margin: 4px 0; }
+        .wr-qa { font-weight: bold; font-family: var(--gothic, sans-serif); margin-top: 8px; }
+        /* 例題27 申込方法: bold gothic headings, ○label： lines with the text hanging under the label */
+        .reading-box .notice p.wr-h { font-family: var(--gothic, sans-serif); font-weight: bold; margin-top: 6px; }
+        .reading-box .notice p.wr-lab { padding-left: 5em; text-indent: -5em; }
+        .reading-box .notice p.wr-lab b, .reading-box .notice b.g { font-family: var(--gothic, sans-serif); }
+        /* 例題28 restaurant table: names and categories break as printed, 特徴・行き方 wrap */
+        .notice-grid.kd-tbl.wr-shop td { vertical-align: top; text-align: left; }
+        .notice-grid.kd-tbl.wr-shop th { text-align: left; }
+        .notice-grid.kd-tbl.wr-shop td:first-child { text-align: center; }
+        .notice-grid.kd-tbl.wr-shop td.kd-long { min-width: 8.5em; }
+        .reading-box .notice p.wr-tcap { text-align: center; font-weight: bold; font-family: var(--gothic, sans-serif); margin-bottom: 4px; }
+        /* 練習64・65 notices: right-aligned date/sender, 記 items with a label column, ＊ and ⑴ notes */
+        .reading-box .notice p.wr-r { text-align: right; }
+        .wr-ib { display: inline-block; }
+        .reading-box .notice p.wr-c { text-align: center; }
+        .reading-box .notice p.wr-k { padding-left: 6.5em; text-indent: -6.5em; }
+        .reading-box .notice p.wr-k b { display: inline-block; width: 6.5em; text-indent: 0; font-family: var(--gothic, sans-serif); }
+        .reading-box .notice p.wr-k2 { padding-left: 6.5em; }
+        .reading-box .notice p.wr-star { padding-left: 2.5em; text-indent: -1em; }
+        .reading-box .notice p.wr-n { padding-left: 3em; text-indent: -2em; }
+        .reading-box .notice p.wr-f { padding-left: 6em; text-indent: -6em; }
+        .reading-box .notice p.wr-f span.wr-fl { display: inline-block; width: 6em; text-indent: 0; }
+        /* 練習66–68 */
+        .reading-box .notice p.wr-in2 { padding-left: 2em; }
+        .reading-box .notice .wr-box.round p { font-family: var(--gothic, sans-serif); font-weight: bold; }
+        .notice-grid.kd-tbl.wr-shop td.wr-w { white-space: normal; min-width: 10em; }
+        .notice-grid.kd-tbl.wr-shop.wr-cal th { text-align: center; }
+        .notice-grid.kd-tbl.wr-shop.wr-cal td:first-child { text-align: left; }
+        .wr-url { word-break: break-all; }
+        .notice-grid.kd-tbl.wr-shop.wr-kara td:first-child { text-align: left; min-width: 10em; }
+        .notice-grid.kd-tbl.wr-shop.wr-kara td:nth-child(2) { white-space: normal; min-width: 12.5em; }
+        /* 保証書・説明書 boxes (例題26) */
+        .wr-box { border: 1px solid var(--text-sub); padding: 6px 12px; margin: 8px 0; }
+        .wr-box.round { border-radius: 10px; text-align: center; }
+        .wr-tag { display: inline-block; border: 1px solid var(--text-sub); padding: 0 8px; line-height: 1.7; }
+        .wr-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .wr-head + .notice-title { margin-top: 0; }
+        .wr-nw { white-space: nowrap; }
+        .wr-tbl td, .wr-tbl th { white-space: nowrap; }
+        .wr-box.round p span { display: inline-block; }
+        .reading-box .notice p.wr-sub { padding-left: 2em; }
+        .reading-box .notice p.wr-note { padding-left: 3em; text-indent: -1em; }
+        .reading-box .notice p.wr-hang { padding-left: 1em; text-indent: -1em; }
+        .wr-tbl { width: 100%; font-size: 0.9em; }
         .notice-note b { display: inline-block; width: 3.5em; margin-left: -3.5em; }
         .ad-rules td:first-child { white-space: normal; min-width: 4.5em; }
         .ad-rules { margin: 6px 0; }
