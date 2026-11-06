@@ -8446,6 +8446,7 @@
             var mine = loadJSON(RARE_KEY, {}); mine[key] = Date.now();
             try { localStorage.setItem(RARE_KEY, JSON.stringify(mine)); } catch (e) {}
             if (listed) rareMeet(w, info);
+            else if (info.moment) showToast('✨ 季節の贈りもの：' + (info.name || info.id));
             else showToast('✨ はじめて出会いました：' + (info.name || info.id));
             if (gardenOpen()) gdRenderView();
             // (a badge it earned waits until the notice has gone, so the two never cover each other)
@@ -8753,6 +8754,7 @@
         GD.el.querySelector('.gd-tag').textContent = GD_SEASON[s.season] + '・' + GD_LIGHT[s.light] + (s.weather && s.weather !== 'clear' ? '・' + GD_WEATHER[s.weather] : '') + (s.event ? '・' + GD_EVENTS[s.event] : '') + (s.fireworks ? '・花火' : '');
         var o = { stage: s.stage, season: s.season, light: s.light, event: s.event, weather: s.weather, fireworks: s.fireworks, date: new Date(), quality: 'card', animate: true, weeds: gdWeeds(),
                   onCue: function(name, info) { if (name === 'rare' && GD.el && GD.el.isConnected && onHomeNow()) rareRecord(GD.ctrlWorld || worldActive(), info, false); } };
+        gdPlayOpts(o, false);
         if (!GD.ctrl) {
             o.onReady = gdCheckStageUp;
             GD.ctrl = E.mount(GD.el.querySelector('.gd-scene'), o);
@@ -8835,7 +8837,7 @@
         box.innerHTML = '';
         GD.zoomReset && GD.zoomReset();
         var E = gdEngineFor(gdViewWorld());
-        if (E) { var o = gdViewOpts(gdState(gdViewWorld())); if (xf) o.onReady = function() { gdXfOff(xf, 650); }; GD.vctrl = E.mount(box, o); if (fullOpen()) GD.vctrl.pause(); }
+        if (E) { var o = gdViewOpts(gdState(gdViewWorld())); if (xf) o.onReady = function() { gdXfOff(xf, 650); }; GD.vctrl = E.mount(box, o); if (fullOpen()) GD.vctrl.pause(); gdEngawaBtn(o); }
         else gdXfOff(xf, 0);
         gdSoundUpdate();
     }
@@ -8852,7 +8854,7 @@
                 '<div class="gd-main">' +
                 '<div class="gd-stagebox"><div class="gd-zoom"><div class="gd-zoom-inner"><div class="gd-scene gd-scene-full"></div></div>' +
                 '<button class="gd-zoom-reset" hidden>元の大きさ</button><div class="gd-hint">ピンチで拡大・ドラッグで移動</div>' +
-                '<button class="gd-lookup" hidden>☾ 見上げる</button><button class="gd-fullbtn" aria-label="全画面">⛶ 全画面</button>' +
+                '<button class="gd-lookup" hidden>☾ 見上げる</button><button class="gd-lookup gd-engawa" hidden style="left:auto;right:10px">縁側から</button><button class="gd-fullbtn" aria-label="全画面">⛶ 全画面</button>' +
                 '<div class="gd-sky" aria-hidden="true"><div class="gd-sky-canvas"></div><button class="gd-sky-back">↓ 戻る</button></div></div></div>' +
                 '<div class="gd-side"><div class="gd-info"></div><button class="gd-focus-btn">🍵 集中モード</button><div class="gd-back" hidden><button></button></div>' +
                 '<div class="gd-dev"></div><div class="gd-list-title"></div><div class="gd-list"></div><div class="gd-rare-box"></div></div>' +
@@ -8880,6 +8882,7 @@
                 if (sm && GD.vctrl && GD.vctrl._summon) GD.vctrl._summon(sm.dataset.id);
             });
             GD.view.querySelector('.gd-lookup').addEventListener('click', gdOpenSky);
+            GD.view.querySelector('.gd-engawa').addEventListener('click', gdEngawaToggle);
             GD.view.querySelector('.gd-fullbtn').addEventListener('click', openFullView);
             GD.view.querySelector('.gd-focus-btn').addEventListener('click', function() { openFocus(); });
             GD.view.querySelector('.gd-sky-back').addEventListener('click', gdCloseSky);
@@ -8911,7 +8914,7 @@
         if (GD.vctrl) { GD.vctrl.destroy(); GD.vctrl = null; }
         GD.view.querySelector('.gd-scene-full').innerHTML = '';
         if (window.MogiSound) MogiSound.stop(true);      // silent the moment the home screen is back
-        GD.devMode = false;
+        GD.devMode = false; GD.engawa = false;
         syncNavHistory();
         // the home card shows the world chosen in the view (庭 or 町), straight away
         if (GD.el && GD.el.isConnected) { var sl = document.createElement('div'); sl.id = 'home-garden-slot'; GD.el.replaceWith(sl); gdMountCard(); }
@@ -8921,7 +8924,7 @@
     var GD_FLOWERS = { senryo: ['千両', 'winter', 0, 8, 11], yuki: ['雪吊り', 'winter', 0, 15, 11], suisen: ['水仙', 'winter', 0, 20, 11], tsu: ['椿', 'winter', 0, 25, 11], fuku: ['福寿草', 'winter', 1, 5, 12], ume: ['梅', 'winter', 1, 22, 11], nano: ['菜の花', 'spring', 2, 25, 11], yamabuki: ['山吹', 'spring', 3, 15, 11], botan: ['牡丹', 'spring', 4, 1, 11], shaku: ['芍薬', 'spring', 4, 20, 11], sho: ['花菖蒲', 'summer', 5, 18, 11], aji: ['紫陽花', 'summer', 5, 20, 11], kikyo: ['桔梗', 'summer', 6, 15, 9], hasu: ['蓮', 'summer', 6, 25, 7], asa: ['朝顔', 'summer', 6, 28, 7], hima: ['ひまわり', 'summer', 7, 5, 9], hig: ['彼岸花', 'autumn', 8, 21, 11], hagi: ['萩', 'autumn', 8, 22, 11], susu: ['すすき', 'autumn', 8, 25, 11], kinmo: ['金木犀', 'autumn', 9, 1, 11], kaki: ['柿', 'autumn', 10, 5, 11], kiku: ['菊', 'autumn', 10, 10, 11], sazan: ['山茶花', 'autumn', 10, 15, 11], nanten: ['南天', 'winter', 11, 20, 11] };   // (in the order of the year)
     function gdViewOpts(s) {
         var d = GD.dev || {}, fl = d.flower && GD_FLOWERS[d.flower];
-        return { stage: d.stage != null ? d.stage : GD.preview != null ? GD.preview : s.stage,
+        return gdPlayOpts({ stage: d.stage != null ? d.stage : GD.preview != null ? GD.preview : s.stage,
                  season: d.season || s.season, light: d.light || s.light,
                  event: d.event !== undefined ? (d.event || null) : s.event,
                  weather: d.weather || s.weather,
@@ -8934,7 +8937,7 @@
                      if (name === 'rare' && !GD.devMode) rareRecord(gdViewWorld(), info, true);
                      if (name === 'rainbow' && !GD.devMode) skyRecord('rainbow');
                      if (window.MogiSound && getSetting('gdSound', true) && (!gdSkyOpen() || name === 'thunder' || name === 'firework')) MogiSound.cue(gdCueName(name), name === 'thunder' || name === 'firework' ? info && info.delay : info && info.id);
-                 } };
+                 } }, true);
     }
     function gdShowStage(i) {
         var s = gdState();
@@ -8953,7 +8956,7 @@
         if (!window.MogiSound) return;
         if (!on || !gardenOpen() || document.hidden) { MogiSound.stop(true); return; }
         var w = gdViewWorld(), o = gdViewOpts(gdState(w));
-        MogiSound.play({ world: w, season: o.season, light: o.light, stage: skyStage(w, o.stage), event: o.event, weather: o.weather, fireworks: o.fireworks, sky: gdSkyOpen() });
+        MogiSound.play({ world: w, season: o.season, light: o.light, stage: skyStage(w, o.stage), event: o.event, weather: o.weather, fireworks: o.fireworks, sky: gdSkyOpen(), date: o.date });
     }
     document.addEventListener('visibilitychange', function() { if (gardenOpen()) gdSoundUpdate(); });
     // The garden and town grew from 24 to 30 stages. An ambience.js built for the old numbering (no MogiSky.STAGES30)
@@ -9022,6 +9025,7 @@
         GD.view.querySelector('.gd-list-title').textContent = gdWorld(w).k + 'の歩み';
         GD.view.querySelector('.gd-back button').textContent = 'いまの' + gdWorld(w).k + 'に戻る';
         GD.view.querySelector('.gd-lookup').hidden = !window.MogiSky;
+        gdEngawaBtn(o);
         var ws = GD.view.querySelector('.gd-world');
         ws.hidden = !window.MogiTown || !window.MogiGarden;
         ws.querySelectorAll('button').forEach(function(b) { b.classList.toggle('active', b.dataset.w === (dev ? gdViewWorld() : worldActive())); });
@@ -9038,7 +9042,7 @@
                 '<span class="gd-st-min">' + (st.min ? gdFmt(st.min) : '—') + '</span>' +
                 '<span class="gd-st-mark">' + (cls === 'done' ? '✓' : cls === 'now' ? 'いま' : cls === 'next' ? 'あと' + gdFmt(st.min - s.min) : '') + '</span></button>';
         }).join('');
-        GD.view.querySelector('.gd-rare-box').innerHTML = rareHtml(w, dev) + skyHtml();
+        GD.view.querySelector('.gd-rare-box').innerHTML = rareHtml(w, dev) + momentHtml(w) + skyHtml();
         GD.view.querySelector('.gd-focus-btn').hidden = dev;
         var devBox = GD.view.querySelector('.gd-dev');
         if (!dev) { devBox.innerHTML = ''; return; }
@@ -9114,6 +9118,38 @@
     setInterval(function() { if (document.hidden) return; var ws = null; [GD.ctrl, GD.vctrl, GD.full && GD.full.ctrl].forEach(function(c) { if (c && c.update) try { c.update({ weeds: ws || (ws = gdWeeds()) }); } catch (e) {} }); }, 600000);
     var GD_CUE_ALIAS = { bees: 'fuji', startle: 'birdtap', shoji: 'noren' };   // birdtap: a bird you touched (always answers, whatever the weather)       // painter cue names that share a sound
     function gdCueName(n) { return GD_CUE_ALIAS[n] || n; }
+    // (b5) what the garden keeps through the app: the 砂紋 raked into the gravel, the lanterns lit this evening, the study streak's moments;
+    // handed back on every mount with the streak (days in a row studied: a short streak just brings the usual garden, never a reminder)
+    var GD_KEEP = { rake: 'jlptGardenRake', lamps: 'jlptGardenLamps', reward: 'jlptGardenReward' };
+    function gdPlayOpts(o, inView) {
+        var st = 0; try { st = typeof computeStreaks === 'function' ? computeStreaks().current : 0; } catch (e) { st = 0; }
+        o.streak = st;
+        Object.keys(GD_KEEP).forEach(function(k) { var v = loadJSON(GD_KEEP[k], null); if (v != null) o[k] = v; });
+        o.onKeep = gdKeep;
+        if (inView) o.view = GD.engawa && gdViewWorld() === 'garden' ? 'engawa' : null;
+        return o;
+    }
+    function gdKeep(k, v) {
+        if (!GD_KEEP[k] || GD.devMode) return;
+        try { localStorage.setItem(GD_KEEP[k], JSON.stringify(v)); } catch (e) {}
+        var u = {}; u[k] = v;
+        [GD.ctrl, GD.vctrl, GD.full && GD.full.ctrl, GD.focus && GD.focus.ctrl].forEach(function(c) { if (c && c.update) try { c.update(u); } catch (e) {} });
+    }
+    // (b5) 縁側から: the garden seen sitting on the teahouse's veranda (its own painting from there), from the 茶室 stage on
+    function gdEngawaStage() { var E = window.MogiGarden, i = -1; if (E && E.STAGES) E.STAGES.forEach(function(st, k) { if (i < 0 && st.name === '茶室') i = k; }); return i; }
+    function gdEngawaBtn(o) {
+        var b = GD.view && GD.view.querySelector('.gd-engawa'); if (!b) return;
+        var t = gdEngawaStage(), ok = gdViewWorld() === 'garden' && t >= 0 && o && o.stage >= t && !!(GD.vctrl && GD.vctrl.setView);
+        if (!ok && GD.engawa) { GD.engawa = false; if (GD.vctrl && GD.vctrl.setView) try { GD.vctrl.setView(null); } catch (e) {} }
+        b.hidden = !ok; b.textContent = GD.engawa ? '↩ 庭を見渡す' : '縁側から'; b.setAttribute('aria-pressed', GD.engawa ? 'true' : 'false');
+    }
+    function gdEngawaToggle() {
+        if (!GD.vctrl || !GD.vctrl.setView) return;
+        GD.engawa = !GD.engawa;
+        try { GD.vctrl.setView(GD.engawa ? 'engawa' : null); } catch (e) {}
+        if (GD.zoomReset) GD.zoomReset();
+        gdEngawaBtn(gdViewOpts(gdState(gdViewWorld())));
+    }
     function gdSceneTap(x, y) {
         if (!GD.vctrl || !GD.vctrl.tap || gdSkyOpen()) return;
         var r = GD.view.querySelector('.gd-scene-full').getBoundingClientRect();
@@ -9151,6 +9187,19 @@
         if (!st || GD.devMode) return;
         if (st.weather && /^(rain|storm|snow|typhoon|blizzard)$/.test(st.weather)) skyRecord(st.weather);
         if (st.fireworks) skyRecord('fireworks');
+    }
+    // (b5) 季節の贈りもの: the season's best mornings a study streak brings (the garden's MOMENTS, logged as the visitors are: garden:<id>)
+    function momentHtml(w) {
+        var E = gdEngineFor(w), list = E && E.MOMENTS ? E.MOMENTS : [];
+        if (!list.length) return '';
+        var seen = rareSeen(), n = list.filter(function(m) { return seen[w + ':' + m.id]; }).length;
+        return '<div class="gd-list-title">季節の贈りもの <span class="gd-rare-n">' + n + ' / ' + list.length + '</span></div><div class="gd-rare">' +
+            list.map(function(m) {
+                var t = seen[w + ':' + m.id];
+                if (!t) return '<div class="gd-rare-item locked"><b>？？？</b><small>' + (GD_SEASON[m.season] || '') + 'の朝</small></div>';
+                var d = new Date(t);
+                return '<div class="gd-rare-item"><b>' + escapeHtml(m.name) + '</b><small>' + escapeHtml(m.desc || '') + '　' + (d.getMonth() + 1) + '月' + d.getDate() + '日</small></div>';
+            }).join('') + '</div>';
     }
     function skyHtml() {
         var seen = skySeen(), n = SKY_SIGHTS.filter(function(x) { return seen[x[0]]; }).length;
@@ -9205,13 +9254,13 @@
         document.body.classList.add('gd-on');
         var s = gdState(w);
         var box = f.el.querySelector('.gf-scene'); box.innerHTML = '';
-        f.ctrl = E.mount(box, { stage: s.stage, season: s.season, light: s.light, event: s.event, weather: s.weather, fireworks: s.fireworks,
+        f.ctrl = E.mount(box, gdPlayOpts({ stage: s.stage, season: s.season, light: s.light, event: s.event, weather: s.weather, fireworks: s.fireworks,
             date: new Date(), quality: 'full', animate: true,
             onCue: function(name, info) {
                 if (name === 'rare') rareRecord(w, info, true);
                 if (name === 'rainbow') skyRecord('rainbow');
                 if (window.MogiSound && getSetting('gdSound', true)) MogiSound.cue(gdCueName(name), name === 'thunder' || name === 'firework' ? info && info.delay : info && info.id);
-            } });
+            } }, false));
         if (window.MogiSound) {
             MogiSound.unlock();
             if (getSetting('gdSound', true)) MogiSound.play({ world: w, season: s.season, light: s.light, stage: skyStage(w, s.stage), event: s.event, weather: s.weather, fireworks: s.fireworks, focus: true });
@@ -9330,7 +9379,12 @@
                 var nx = el.classList.contains('rot') ? (y - r.top) / r.height : (x - r.left) / r.width;
                 var ny = el.classList.contains('rot') ? 1 - (x - r.left) / r.width : (y - r.top) / r.height;
                 try { c.tap(nx, ny); } catch (e) {}
-            }, function() { return el.classList.contains('rot'); });
+            }, function() { return el.classList.contains('rot'); }, function(x, y) {
+                var c = GD.full.ctrl; if (!c || !c.drag) return null;
+                var r = el.querySelector('.gfv-scene').getBoundingClientRect(); if (!r.width) return null;
+                var rot = el.classList.contains('rot');
+                return { c: c, nx: rot ? (y - r.top) / r.height : (x - r.left) / r.width, ny: rot ? 1 - (x - r.left) / r.width : (y - r.top) / r.height };
+            });
             el.querySelectorAll('.gfv-world button').forEach(function(b) { b.addEventListener('click', function(e) { e.stopPropagation(); fullWake(); gdSwitchWorld(b.dataset.w); }); });
             el.querySelector('.gfv-zin').addEventListener('click', function() { GD.full.zoomReset.zoomBy(1.5); });
             el.querySelector('.gfv-zout').addEventListener('click', function() { GD.full.zoomReset.zoomBy(1 / 1.5); });
@@ -9424,8 +9478,12 @@
     }
     // two fingers zoom (up to 4×) around the point between them, one finger moves it once zoomed, double-tap zooms in
     // or out; on a computer the wheel zooms and dragging moves
-    function gdPinch(box, el, reset, onTap, rotated) {
+    function gdPinch(box, el, reset, onTap, rotated, toScene) {
         var s = 1, tx = 0, ty = 0, MAX = 4, pinch = null, pan = null, lastTap = 0, drag = null, touch0 = null, tapTimer = null, mouse0 = null;
+        // (b5) a drag that starts on the raked gravel rakes it (the garden's drag(): true only on the open gravel); any other touch is a tap, a pan or a pinch as before
+        var rk = null, mrk = null, sceneAt = toScene || function(x, y) { if (!GD.vctrl || !GD.vctrl.drag || gdSkyOpen()) return null; var r = GD.view.querySelector('.gd-scene-full').getBoundingClientRect(); if (!r.width) return null; return { c: GD.vctrl, nx: (x - r.left) / r.width, ny: (y - r.top) / r.height }; };
+        var rakeStart = function(x, y) { var q = sceneAt(x, y); try { return q && q.c.drag && q.c.drag('start', q.nx, q.ny) ? q.c : null; } catch (e) { return null; } };
+        var rakeTo = function(c, phase, x, y) { var q = x === undefined ? null : sceneAt(x, y); try { if (q) c.drag(phase, q.nx, q.ny); else c.drag(phase); } catch (e) {} };
         // a single short tap (not a pan, a pinch or the first half of a double-tap) touches the scene: feed the koi…
         var sceneTap = function(x, y) { clearTimeout(tapTimer); tapTimer = setTimeout(function() { (onTap || gdSceneTap)(x, y); }, 280); };
         var apply = function(animate) {
@@ -9448,7 +9506,7 @@
             if (e.touches.length === 2) {
                 var a = e.touches[0], b = e.touches[1];
                 pinch = { d: dist(a, b), s: s, tx: tx, ty: ty, m: local({ clientX: (a.clientX + b.clientX) / 2, clientY: (a.clientY + b.clientY) / 2 }) };
-                pan = null; e.preventDefault();
+                pan = null; if (rk) { rakeTo(rk, 'cancel'); rk = null; } e.preventDefault();
             } else if (e.touches.length === 1) {
                 var now = Date.now(), p = local(e.touches[0]);
                 if (now - lastTap < 300) {
@@ -9458,10 +9516,12 @@
                 }
                 lastTap = now;
                 touch0 = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: now };
-                if (s > 1) pan = { x: e.touches[0].clientX, y: e.touches[0].clientY, tx: tx, ty: ty };
+                rk = rakeStart(e.touches[0].clientX, e.touches[0].clientY);
+                if (s > 1 && !rk) pan = { x: e.touches[0].clientX, y: e.touches[0].clientY, tx: tx, ty: ty };
             }
         }, { passive: false });
         box.addEventListener('touchmove', function(e) {
+            if (rk && e.touches.length === 1) { rakeTo(rk, 'move', e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); return; }
             if (pinch && e.touches.length === 2) {
                 var a = e.touches[0], b = e.touches[1], m = local({ clientX: (a.clientX + b.clientX) / 2, clientY: (a.clientY + b.clientY) / 2 });
                 var ns = Math.min(MAX, Math.max(1, pinch.s * dist(a, b) / pinch.d));
@@ -9476,19 +9536,20 @@
         box.addEventListener('touchend', function(e) {
             var c = e.changedTouches && e.changedTouches[0];
             if (touch0 && c && !e.touches.length && Math.hypot(c.clientX - touch0.x, c.clientY - touch0.y) < 10 && Date.now() - touch0.t < 400) sceneTap(c.clientX, c.clientY);
+            if (rk && !e.touches.length) { rakeTo(rk, 'end'); rk = null; }
             if (e.touches.length < 2) pinch = null; if (!e.touches.length) { pan = null; touch0 = null; } apply(false);
         });
         box.addEventListener('wheel', function(e) {
             e.preventDefault();
             var p = local(e); zoomAt(p.x, p.y, Math.min(MAX, Math.max(1, s * Math.exp(-e.deltaY / (e.ctrlKey ? 100 : 300))))); apply(false);
         }, { passive: false });
-        box.addEventListener('mousedown', function(e) { mouse0 = { x: e.clientX, y: e.clientY }; if (s > 1) { drag = { x: e.clientX, y: e.clientY, tx: tx, ty: ty }; e.preventDefault(); } });
+        box.addEventListener('mousedown', function(e) { mouse0 = { x: e.clientX, y: e.clientY }; if (e.button === 0 && !(e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents) && (mrk = rakeStart(e.clientX, e.clientY))) { e.preventDefault(); return; } if (s > 1) { drag = { x: e.clientX, y: e.clientY, tx: tx, ty: ty }; e.preventDefault(); } });
         box.addEventListener('click', function(e) {
             if (e.target.closest('button') || !mouse0 || (e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents)) return;
             if (Math.hypot(e.clientX - mouse0.x, e.clientY - mouse0.y) < 5) sceneTap(e.clientX, e.clientY);
         });
-        window.addEventListener('mousemove', function(e) { if (drag) { var dm = mv(drag.x, drag.y, e.clientX, e.clientY); tx = drag.tx + dm[0]; ty = drag.ty + dm[1]; apply(false); } });
-        window.addEventListener('mouseup', function() { drag = null; });
+        window.addEventListener('mousemove', function(e) { if (mrk) { rakeTo(mrk, 'move', e.clientX, e.clientY); return; } if (drag) { var dm = mv(drag.x, drag.y, e.clientX, e.clientY); tx = drag.tx + dm[0]; ty = drag.ty + dm[1]; apply(false); } });
+        window.addEventListener('mouseup', function() { drag = null; if (mrk) { rakeTo(mrk, 'end'); mrk = null; } });
         box.addEventListener('dblclick', function(e) { clearTimeout(tapTimer); var p = local(e); if (s > 1) { s = 1; tx = 0; ty = 0; } else zoomAt(p.x, p.y, 2.5); apply(true); });
         reset.addEventListener('click', function() { s = 1; tx = 0; ty = 0; apply(true); });
         var resetFn = function() { s = 1; tx = 0; ty = 0; apply(false); };

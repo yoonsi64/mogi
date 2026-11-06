@@ -1667,25 +1667,33 @@ function weepingCherry(S, b, se, seed) {
     }
   }
   P.limbs(S, T, BARK.cherry, { snow: L.snow });
-  var cols = se === 'spring' ? [[250, 200, 218], [244, 178, 202], [255, 222, 232], [252, 210, 224], [236, 160, 190]] : se === 'summer' ? [[70, 118, 52], [88, 136, 60], [60, 104, 46]] : se === 'autumn' ? [[220, 150, 50], [200, 96, 44], [230, 186, 80]] : null;
-  var wc = rgbs(shade(L, [74, 54, 50], top, [0, 0, -1], 0.5)), ci = { c: v3(top, [0, 0, 1], 0.3), R: 3.2 }, nodes = [], groups = [];
-  origins.forEach(function (o) {
+  var cols = se === 'spring' ? [[250, 200, 218], [244, 178, 202], [255, 222, 232], [252, 210, 224], [236, 160, 190]] : se === 'summer' ? [[70, 118, 52], [88, 136, 60], [60, 104, 46]] : se === 'autumn' ? [[222, 118, 48], [200, 82, 40], [236, 160, 70], [178, 62, 36], [214, 140, 62]] : null;   // (sky5: autumn as the painting's curtain, orange to red)
+  var wc = shade(L, cols ? [118, 94, 78] : [142, 122, 106], top, nrm3(vsc(top, -1)), 0.5), wa = cols ? 0.5 : 0.8, ci = { c: v3(top, [0, 0, 1], 0.3), R: 3.2 }, nodes = [], groups = [];   // (sky5: the strands are fine twigs, pale grey-brown, in leaf mostly hidden by their leaves)
+  origins.forEach(function (o, oi) {
+    var grp = [], z0 = vlen(o.p), drop = o.p[2] - GZ;
     for (var w = 0; w < 4; w++) {
-      var ang = Math.atan2(o.d[1], o.d[0]) + (rnd() - 0.5) * 1.6, out = 0.05 + rnd() * 0.15, len = Math.max(0.6, o.p[2] - GZ - 0.4 - rnd() * 0.9), pts = [o.p], n = 12;
+      var ang = Math.atan2(o.d[1], o.d[0]) + (rnd() - 0.5) * 1.6, out = 0.05 + rnd() * 0.15, brush = rnd() < 0.12, len = brush ? Math.max(0.6, drop - 0.12 - rnd() * 0.25) : Math.max(0.5, drop * (0.3 + 0.42 * rnd())), bow = (rnd() - 0.5) * 0.3, pts = [o.p], n = 12, ca = Math.cos(ang), sa = Math.sin(ang);   // (lengths vary: most stop well above the ground, a few just brush it)
       for (k = 1; k <= n; k++) {
-        var t = k / n, h = out * (1 - Math.exp(-4 * t)), z = o.p[2] + 0.025 * Math.sin(Math.min(1, t * 4) * Math.PI) - len * Math.pow(t, 1.15);
-        var q = [o.p[0] + Math.cos(ang) * h, o.p[1] + Math.sin(ang) * h, z]; pts.push(q); if (k > 1) nodes.push(q);
+        var t = k / n, h = out * (1 - Math.exp(-4 * t)) + Math.abs(bow) * 0.4 * t * t, sw = bow * Math.sin(t * Math.PI * 0.9) * len * 0.12, z = o.p[2] + 0.025 * Math.sin(Math.min(1, t * 4) * Math.PI) - len * Math.pow(t, 1.15);   // (each hangs in a slight curve, not plumb)
+        var q = [o.p[0] + ca * h - sa * sw, o.p[1] + sa * h + ca * sw, z]; pts.push(q); if (k > 1) nodes.push(q);
       }
-      groups.push(pts.slice(2));
-      var z0 = vlen(o.p);
-      (function (pts) { P.add(z0 + 0.4, function () { var g = S.ctx(z0); g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); g.strokeStyle = wc; g.lineWidth = clamp(0.007 * S.cam.F / z0, 0.45, 2); g.beginPath(); for (var t2 = 0; t2 < pts.length - 1; t2++) S.bl(pts[t2], pts[t2 + 1], g); g.stroke(); }); })(pts);
+      groups.push(pts.slice(2)); grp.push(pts);
     }
+    P.add(z0 + 0.4, function () { // the four strands from this point: tapering from the branch, broken where their leaves (or the light) hide them
+      var g = S.ctx(z0), lw = clamp(0.006 * S.cam.F / z0, 0.4, 1.8), gap = cols ? 0.3 : 0.12; g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); g.lineCap = 'round';
+      for (var pc = 0; pc < 3; pc++) {
+        g.strokeStyle = rgbas(wc, wa * [1, 0.75, 0.5][pc]); g.lineWidth = Math.max(0.35, lw * [1, 0.72, 0.5][pc]); g.beginPath();
+        for (var si = 0; si < grp.length; si++) { var sp = grp[si]; for (var t2 = pc * 4; t2 < pc * 4 + 4 && t2 < sp.length - 1; t2++) if (t2 < 2 || hash2(oi * 4 + si, t2) >= gap) S.bl(sp[t2], sp[t2 + 1], g); }
+        g.stroke();
+      }
+      g.lineCap = 'butt';
+    });
   });
   if (!cols) return P.draw();
   if (se === 'spring') addBlossoms(S, P, groups, { seed: seed + 3, per: 7, spread: 0.1, size: 0.018, cols: cols, occ: function (q) { return occOf(ci, q); } });
   else {
-    var fake = { tips: nodes.filter(function (_, i2) { return se === 'summer' ? true : i2 % 3 === 0; }).map(function (q) { return { p: q, d: [0, 0, -1], limb: { pts: [v3(q, [0, 0, 1], 0.15), q] } }; }) };
-    addLeaves(S, P, fake, { seed: seed + 4, per: se === 'summer' ? 6 : 3, spread: 0.16, size: 0.05, tilt: 1.6, cols: cols, shape: 'leaf' });
+    var fake = { tips: nodes.filter(function (_, i2) { return se === 'summer' ? true : i2 % 3 !== 2; }).map(function (q) { return { p: q, d: [0, 0, -1], limb: { pts: [v3(q, [0, 0, 1], 0.15), q] } }; }) };   // (sky5: in autumn too the strands in leaf, a curtain, not bare wires)
+    addLeaves(S, P, fake, { seed: seed + 4, per: se === 'summer' ? 6 : 4, spread: 0.12, size: se === 'summer' ? 0.06 : 0.075, tilt: 1.6, cols: cols, shape: 'leaf' });
   }
   P.draw();
 }
@@ -2195,6 +2203,89 @@ function clumpTree(S, T, g, se, kd) {
       if (T.real && rq > 2.6 && sh !== 'take') { for (var lf = 0; lf < 3; lf++) { var an2 = a5[q + 3] * 2.1 + lf * 2.1, ox = a5[q] + Math.cos(an2) * rq * 0.45, oy = a5[q + 1] + Math.sin(an2) * rq * 0.4, lr = rq * (0.62 + 0.1 * lf), ca = Math.cos(an2 + 0.5), sa = Math.sin(an2 + 0.5);   // near to, a dab is a little spray of pointed leaves, not a disc
         g.moveTo(ox - ca * lr, oy - sa * lr); g.quadraticCurveTo(ox - sa * lr * 0.42, oy + ca * lr * 0.42, ox + ca * lr, oy + sa * lr); g.quadraticCurveTo(ox + sa * lr * 0.42, oy - ca * lr * 0.42, ox - ca * lr, oy - sa * lr); } continue; }
       g.moveTo(a5[q] + rq, a5[q + 1]); g.ellipse(a5[q], a5[q + 1], rq, rq * (sh === 'take' ? 0.45 : 0.75), a5[q + 3], 0, TAU); } g.fill(); });
+}
+
+/* (sky5) イチョウ: the ginkgo over the 築山, as the painting grows it (makeLayered 702: 9 m tall, its crown 2.5 m out from the trunk): a straight grey trunk
+   carrying its leader to the top, limbs rising from it in tiers, the leaves in separate pads at the ends of the limbs and their side shoots,
+   each pad lit on its sunward top and in shade beneath, the sky showing between them. Pads and limbs are drawn at their own depths, so the near
+   ones stand in front of the far ones and the trunk shows through. Gold in autumn as the painting turns it (by the date: green in September),
+   green in summer, fresh light green in spring (bare until early April), bare in winter */
+var GINKGO_PAL = {
+  spring: [[44, 66, 20], [82, 112, 34], [132, 160, 56], [176, 196, 92], [210, 222, 140]],
+  summer: [[18, 40, 16], [36, 70, 26], [64, 104, 40], [104, 140, 60], [150, 176, 92]],
+  autumn: [[80, 60, 16], [132, 100, 22], [186, 146, 34], [226, 190, 64], [246, 220, 120], [255, 240, 180]]
+};
+var GINKGO_BARK = { alb: [104, 94, 80], fis: [58, 50, 44], fl: [146, 134, 116], kind: 'furrow' };
+function ginkgoTone(pal, t) { var f = clamp(t, 0, 1) * (pal.length - 1), i = Math.min(pal.length - 2, Math.floor(f)); return mix(pal[i], pal[i + 1], f - i); }
+function ginkgo3D(S, b, H, seed, se, ms) {
+  var L = S.L, rnd = mulberry(seed), Pq = new Prims(), kz = H / 9, R = 2.6 * kz, i, j, k;
+  // the palette by the date, as the painting's seasonAt has it
+  var pal = GINKGO_PAL[se] || null, dd = new Date(ms);
+  if (se === 'autumn') { var c = clamp(gardenTurn('autumn', ms) * 1.15, 0, 1); pal = GINKGO_PAL.autumn.map(function (q, ii) { return mix(ginkgoTone(GINKGO_PAL.summer, ii / 5), q, c); }); }
+  if (se === 'spring' && !isNaN(dd.getTime()) && seasonForDate(dd) === 'spring' && (dd - new Date(dd.getFullYear(), 2, 1)) / 86400000 < 34) pal = null;   // (the painting's lf < 0.4: bare until early April)
+  // the skeleton: the trunk and its leader, then the limbs in tiers round it, each with a few side shoots
+  var tr = [b], trR = [0.25 * kz], p = b, lean = [(rnd() - 0.5) * 0.06, (rnd() - 0.5) * 0.06];
+  for (i = 1; i <= 12; i++) { var fz = i / 12; p = [b[0] + lean[0] * fz * H + (rnd() - 0.5) * 0.05, b[1] + lean[1] * fz * H + (rnd() - 0.5) * 0.05, b[2] + H * 0.94 * fz]; tr.push(p); trR.push(0.25 * kz * (1 - 0.86 * fz)); }
+  var T = { limbs: [{ pts: tr, rs: trR }], tips: [] }, pads = [], NT = 12, az0 = rnd() * TAU;
+  function trunkAt(h) { var f = clamp(h / (H * 0.94), 0, 1) * 12, ii = Math.min(11, Math.floor(f)); return lerp3(tr[ii], tr[ii + 1], f - ii); }
+  for (i = 0; i < NT; i++) {
+    var f = i / (NT - 1), h = H * (0.3 + 0.58 * f), nl = i % 3 === 2 ? 1 : 2;
+    for (j = 0; j < nl; j++) {
+      var az = az0 + (i * 2 + j) * 2.39996 + (rnd() - 0.5) * 0.5, len = R * (1.12 - 0.62 * f) * (0.8 + rnd() * 0.35), el = (32 + 22 * f + (rnd() - 0.5) * 12) * D2R;
+      var dir = [Math.cos(az) * Math.cos(el), Math.sin(az) * Math.cos(el), Math.sin(el)], q = trunkAt(h), pts = [q], rs = [0.085 * kz * (1 - 0.55 * f)];
+      for (k = 1; k <= 4; k++) { dir = nrm3([dir[0] + (rnd() - 0.5) * 0.18, dir[1] + (rnd() - 0.5) * 0.18, dir[2] - 0.07]); q = v3(q, dir, len / 4); pts.push(q); rs.push(rs[0] * (1 - 0.8 * k / 4)); }
+      T.limbs.push({ pts: pts, rs: rs }); T.tips.push({ p: q, d: dir });
+      pads.push({ c: v3(q, [0, 0, 1], 0.12), r: (0.78 + 0.25 * rnd()) * kz * (1.15 - 0.35 * f), alt: rnd() < 0.35 });
+      for (k = 1; k <= 3; k++) { // side shoots from the outer half, each with its own pad
+        var a2 = Math.atan2(dir[1], dir[0]) + (rnd() < 0.5 ? -1 : 1) * (0.6 + rnd() * 0.6), sl = len * (0.32 + rnd() * 0.18), s0 = pts[k], sd = nrm3([Math.cos(a2), Math.sin(a2), 0.45 + rnd() * 0.4]), s1 = v3(s0, sd, sl * 0.55), s2 = v3(s1, nrm3(v3(sd, [0, 0, -1], 0.25)), sl * 0.45);
+        T.limbs.push({ pts: [s0, s1, s2], rs: [rs[k] * 0.55, rs[k] * 0.35, rs[k] * 0.15] }); T.tips.push({ p: s2, d: sd });
+        pads.push({ c: v3(s2, [0, 0, 1], 0.1), r: (0.55 + 0.22 * rnd()) * kz * (1.1 - 0.3 * f), alt: rnd() < 0.35 });
+      }
+    }
+  }
+  pads.push({ c: v3(tr[12], [0, 0, 1], 0.2), r: 0.62 * kz, alt: false }); T.tips.push({ p: tr[12], d: [0, 0, 1] });
+  var snow = L.snow;
+  Pq.limbs(S, T, GINKGO_BARK, { snow: snow });
+  if (!pal) { twigSpray(S, Pq, T, seed, GINKGO_BARK, snow); Pq.draw(); return; }
+  // the leaves: each pad a flattened lens of small fans, lit by the sun from its own centre outward, darker toward the trunk and underneath
+  var kd = L.key ? L.key.d : [0.3, -0.5, 0.8], cen = trunkAt(H * 0.6), dB = vlen(b), aer = clamp((dB - 12) / 120, 0.06, 0.42) * L.hazeK;
+  var palW = pal.map(function (q) { return [Math.min(255, q[0] * 1.14 + 6), Math.min(255, q[1] * 1.06 + 4), q[2] * 0.82]; });   // (the painting's warmAlt: some pads warmer and sunnier)
+  var cam = S.cam, F = cam.F, dab = 0.08 * kz, slabs = {}, dk = mix(fog(L, shade(L, vsc(pal[0], 0.85), cen, [0, 0, 1], 0.3), dB), L.haze, aer);
+  function slab(z) { var key = Math.round(z / 0.45), s = slabs[key]; if (!s) s = slabs[key] = { z: key * 0.45, B: {}, mass: [] }; return s; }
+  pads.forEach(function (pd, pi) {
+    var pc = cam.p(pd.c); if (!pc) return; var rpx = pd.r * F / pc[2]; if (!S.onScreen(pc[0], pc[1], rpx * 1.5 + 6)) return;
+    var pr = mulberry(seed * 131 + pi * 7 + 1);   // (each pad its own draw: the same leaves on every cube face it crosses)
+    var zc = vlen(pd.c), occ0 = clamp(0.55 + 0.45 * vlen(vsub(pd.c, cen)) / R + 0.15 * (pd.c[2] - cen[2]) / R, 0.35, 1), pp = pd.alt ? palW : pal;
+    slab(zc + pd.r * 0.3).mass.push(pc[0], pc[1] + rpx * 0.12, rpx * 0.62, rpx * 0.3);   // (the pad's shaded underside, inset: its edge stays leaves and sky)
+    var n = Math.round(clamp(Math.pow(pd.r / dab, 2) * 0.9, 18, 120) * S.lod);
+    for (k = 0; k < n; k++) {
+      var u = pr() * TAU, cv = 2 * pr() - 1, sv = Math.sqrt(1 - cv * cv), rr = Math.pow(pr(), 0.4), nn = [sv * Math.cos(u), sv * Math.sin(u), cv * 0.55 + 0.2];
+      var q2 = [pd.c[0] + nn[0] * rr * pd.r, pd.c[1] + nn[1] * rr * pd.r, pd.c[2] + cv * rr * pd.r * 0.42 - rr * rr * pd.r * 0.16];   // (a pad droops a little at its rim)
+      var nl2 = nrm3(nn), lit = clamp(dot3(nl2, kd) * 0.55 + 0.42 + nl2[2] * 0.22, 0, 1) * (0.45 + 0.55 * rr) * occ0 * 0.9;   // (the palest tone only on the sunniest tips: the painting's gold, not lemon)
+      var alb = ginkgoTone(pp, clamp(lit + (pr() - 0.5) * 0.16, 0, 1)), hj = pr(); alb = [alb[0] * (0.92 + 0.16 * hj), alb[1] * (0.95 + 0.1 * hj), alb[2] * (1.05 - 0.1 * hj)];
+      if (snow && nl2[2] > 0.5) alb = mix(alb, [226, 230, 238], 0.6);
+      var col = mix(fog(L, shade(L, alb, q2, nrm3(v3(nl2, [0, 0, 1], 0.4)), 0.4, 0.85), dB), L.haze, aer);
+      var pq = cam.p(q2), ra = pr(), rs2 = pr(); if (!pq) continue;
+      var sz = Math.max(0.5, dab * (0.65 + ra * 0.7) * F / pq[2]), s = slab(vlen(q2)), key = ((col[0] >> 3) << 10) | ((col[1] >> 3) << 5) | (col[2] >> 3), Bk = s.B[key] || (s.B[key] = { c: col, a: [] });
+      Bk.a.push(pq[0], pq[1], sz, rs2 * TAU);
+    }
+  });
+  Object.keys(slabs).forEach(function (key) {
+    var s = slabs[key];
+    Pq.add(s.z, function () {
+      var g = S.ctx(s.z); g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+      if (s.mass.length) { g.fillStyle = rgbs(dk); g.globalAlpha = 0.8; g.beginPath(); for (var m = 0; m < s.mass.length; m += 4) { g.moveTo(s.mass[m] + s.mass[m + 2], s.mass[m + 1]); g.ellipse(s.mass[m], s.mass[m + 1], s.mass[m + 2], s.mass[m + 3], 0, 0, TAU); } g.fill(); g.globalAlpha = 1; }
+      Object.keys(s.B).forEach(function (kk) {
+        var Bk = s.B[kk], a = Bk.a, ii; g.fillStyle = rgbs(Bk.c); g.beginPath();
+        for (ii = 0; ii < a.length; ii += 4) { var x = a[ii], y = a[ii + 1], rq = a[ii + 2], an = a[ii + 3];
+          if (rq < 1.3) { g.rect(x - rq, y - rq, rq * 2, rq * 2); continue; }
+          if (rq < 2.6) { g.moveTo(x + rq, y); g.ellipse(x, y, rq, rq * 0.75, an, 0, TAU); continue; }
+          g.moveTo(x, y); g.arc(x, y, rq * 1.25, an, an + 1.85); g.closePath(); }   // near enough, a leaf is a little fan on its stalk
+        g.fill();
+      });
+    });
+  });
+  Pq.draw();
 }
 
 /* things far enough away are painted once into a sprite (seen from the eye, toward their centre) and then placed with
@@ -3744,7 +3835,7 @@ function gardenItems(o, S0) {
   var er = mulberry(500), er2 = mulberry(501), ex;
   for (i = -2; i < 22; i++) { ex = i < 0 || i > 18 ? er2 : er; (function (x, z, R, Hh, k) { put(dist(x, z), function (S) { var b = gP(x, 0, z); groundAO(S, b, R * 1.2, R * 1.1, 0.75); S.g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); clumpTree(S, { b: b, d: dist(x, z), type: 'bush', h: Hh * 1.15, seed: 600 + k, real: true }, S.g, se, kd0); }); })(GD.LX(-8.6 + i * 0.95 + (ex() - 0.5) * 0.7), GD.LZ(11.55 + ex() * 0.6), (ex(), 0.55 + ex() * 0.55), 0.875 + ex() * 1.0, i); }   // (1.4.2: two more at each end for the wider plot)
   put(dist(GD.LX(-6.9), GD.LZ(12.15)), function (S) { sugi3D(S, gP(GD.LX(-6.9), 0, GD.LZ(12.15)), 13, 701, se); });
-  put(dist(GD.LX(7.9), GD.LZ(11.95)), function (S) { S.g.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); clumpTree(S, { b: gP(GD.LX(7.9), 0, GD.LZ(11.95)), d: dist(GD.LX(7.9), GD.LZ(11.95)), type: 'keyaki', h: 9, seed: 702, real: true }, S.g, se, kd0); });   // the ginkgo: gold in autumn, bare in winter
+  put(dist(GD.LX(7.9), GD.LZ(11.95)), function (S) { ginkgo3D(S, gP(GD.LX(7.9), 0, GD.LZ(11.95)), 9, 702, se, o.baseMs); }, { sway: 1 });   // the ginkgo over the 築山 (sky5: its limbs and lit pads of leaves in depth, not a flat blob; gold in autumn by the date, bare in winter)
   // beyond the fence: the cherry avenue
   if (F.namiki) LAY.namiki.forEach(function (q, k) { put(dist(q[0], q[1]), function (S) { midTree(S, gP(q[0], 0, q[1]), 77 + k, 'cherry', se, dist(q[0], q[1]), true); }, { sway: 1 }); });
   // the enclosure
@@ -7135,7 +7226,8 @@ var GLSL_MAIN = GLSL_P + GLSL_COMMON + '\n' + GLSL_DOME + '\n' + [
   'vec4 koiAt(vec2 P) {',
   '  vec4 o = vec4(0.0);',
   '  for (int i = 0; i < 6; i++) { vec4 k = uKoi[i]; if (k.w <= 0.0) continue;',
-  '    vec2 q = P - k.xy; float cs = cos(k.z), sn = sin(k.z); q = vec2(cs * q.x + sn * q.y, -sn * q.x + cs * q.y) / k.w;',
+  '    vec2 q = P - k.xy; if (dot(q, q) > k.w * k.w * 0.74) continue;',   // (sky5) out of reach of this fish (its body and tail lie within 0.86 of its size): no turning it
+  '    float cs = cos(k.z), sn = sin(k.z); q = vec2(cs * q.x + sn * q.y, -sn * q.x + cs * q.y) / k.w;',
   '    if (abs(q.x) > 0.8 || abs(q.y) > 0.3) continue;',
   '    float fi = float(i); q.y -= sin(q.x * 4.0 - uTime * 5.0 + fi * 2.0) * 0.05 * clamp(0.3 - q.x, 0.0, 1.0);',
   '    float hw = 0.115 * sqrt(max(0.0, 1.0 - pow(abs(q.x + 0.05) / 0.5, 2.0))) * (q.x > 0.0 ? 1.0 : 0.85);',
@@ -7182,7 +7274,11 @@ var GLSL_MAIN = GLSL_P + GLSL_COMMON + '\n' + GLSL_DOME + '\n' + [
   '    float rd = 1e9; for (int i = 0; i < 10; i++) { vec4 sg = uRv[i]; vec2 ab = sg.zw - sg.xy; float t = clamp(dot(P - sg.xy, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0); rd = min(rd, length(P - sg.xy - ab * t)); }',
   '    gm.r = max(gm.r * (1.0 - smoothstep(uGMR.x * 0.95, uGMR.x, max(abs(P.x), abs(P.y)))), clamp(0.5 - (rd - uRvK.x) / max(0.3, foot * 3.0), 0.0, 1.0)); }',
   '#endif',
-  '  if (uG.x < 0.5) {',
+  '  bool deepW = false;',
+  '#ifdef F_GPOND',
+  '  deepW = gm.r > 0.63;',   // (sky5) well out in the pond the water below covers the land entirely (its edge noise is under 0.16), so the lawn, moss and litter under it are not worked out
+  '#endif',
+  '  if (deepW) gc = vec3(0.0); else if (uG.x < 0.5) {',
   '    float mn = vn2(P * 1.3) * 0.55 + mix(vn2(P * 6.0), 0.5, smoothstep(0.05, 0.2, foot)) * 0.45;',
   '    float fine = mix(vn2(P * 31.0) * 0.6 + vn2(P * 83.0) * 0.4, 0.5, smoothstep(0.01, 0.04, foot));',
   '    float inG = step(0.5, gm.a), shore = gm2.g * inG;',
@@ -7330,15 +7426,15 @@ var GLSL_MAIN = GLSL_P + GLSL_COMMON + '\n' + GLSL_DOME + '\n' + [
   '#endif',
   '  vec3 c = gc * l;',
   '  c = mix(c, mir.rgb, mir.a);',   // the flooded paddies mirror the sky
-  '  if (uG.y > 0.5) { vec2 sc2 = floor(P * 60.0); float sp = step(0.995, hash12(sc2 + floor(d.xy * 260.0) * 0.37)) * smoothstep(-0.02, -0.25, d.z) * smoothstep(14.0, 4.0, length(P));',   // (near at hand only: further off one in a hundred pixels lit read as falling snow; snow crystals glinting as the eye moves)
+  '  if (uG.y > 0.5 && !deepW) { vec2 sc2 = floor(P * 60.0); float sp = step(0.995, hash12(sc2 + floor(d.xy * 260.0) * 0.37)) * smoothstep(-0.02, -0.25, d.z) * smoothstep(14.0, 4.0, length(P));',   // (near at hand only: further off one in a hundred pixels lit read as falling snow; snow crystals glinting as the eye moves)
   '    c += sp * (uKeyK * 1.6 + uAmb * 0.4); }',
   '#ifdef F_WET',
-  '  if (wetK > 0.0) {',
+  '  if (wetK > 0.0 && !deepW) {',
   '    float pn = vn2(P * 0.5 + vec2(11.0, -4.0)) * 0.8 + vn2(P * 2.3 + 5.0) * 0.2, pdl = smoothstep(0.64, 0.76, pn) * 0.8 * (uG.z > 0.5 ? 1.0 : 0.16);',   // (puddles with ragged, soft shores: hard-edged ones read as patches of snow)   // (in dry weather only a damp sheen, not standing water)
   '    c *= mix(1.0, 0.72, uG.z);',
   '    vec3 rd = vec3(d.xy, -d.z), rc = vec3(rd.x, rd.z, rd.y);',
   '    vec4 fr = uFgOn > 0.5 ? textureCube(uCS, rc) : vec4(0.0);',
-  '    vec3 refl = tone(skyLin(rd)) * (1.0 - fr.a) + fr.rgb;',
+  '    vec3 refl = (fr.a < 0.996 ? tone(skyLin(rd)) * (1.0 - fr.a) : vec3(0.0)) + fr.rgb;',   // (sky5) where the painted world fills the mirror the sky behind it is not worked out
   '    float fres = 0.04 + 0.96 * pow(1.0 - min(-dz * 1.0, 1.0), 5.0);',
   '    float rip = uG.z > 0.5 ? 0.82 + 0.18 * vn2(P * 9.0 + uTime * 2.0) : 1.0;',   // rain rings breaking up the mirror
   '    c = mix(c, refl * vec3(0.62, 0.6, 0.58) * rip, clamp(pdl * 0.7 + fres * 0.22 * uG.z, 0.0, 0.85)); }',   // (muddy water: the sky in it a shade darker and browner than the sky)
@@ -7363,9 +7459,9 @@ var GLSL_MAIN = GLSL_P + GLSL_COMMON + '\n' + GLSL_DOME + '\n' + [
   '#ifdef F_FG',
   '    fr = textureCube(uCS, rc) * faceA(rc); vec4 fw = textureCube(uCW, rc) * faceA(rc); fr = fw + fr * (1.0 - fw.a);',
   '#endif',
-  '    vec3 refl = (tone(skyLin(rd)) * (1.0 - fr.a) + fr.rgb * 0.9) * mix(1.0, 0.9, brz);',
+  '    vec3 refl = ((fr.a < 0.996 ? tone(skyLin(rd)) * (1.0 - fr.a) : vec3(0.0)) + fr.rgb * 0.9) * mix(1.0, 0.9, brz);',   // (sky5) the sky in the mirror only where the painted world leaves it open
   '    float cI = clamp(-dot(d, wnN), 0.0, 1.0), fres = 0.04 + 0.96 * pow(1.0 - cI, 4.0);',   // (a little more than glass gives: the painting's pond holds the bridge clearly)
-  '    float bed = vn2(P * 1.7 + 3.0) * 0.6 + vn2(P * 5.3) * 0.4;',   // the bed under the shallows: silt, and stones showing through
+  '    float bed = dm < 0.6 ? vn2(P * 1.7 + 3.0) * 0.6 + vn2(P * 5.3) * 0.4 : 0.5;',   // the bed under the shallows: silt, and stones showing through
   '    vec3 shal = mix(vec3(58., 56., 38.), vec3(88., 82., 56.), bed) / 255.0, dpc = (uGS.w > 1.5 ? vec3(22., 40., 30.) : uGS.w > 0.5 ? vec3(26., 36., 26.) : vec3(16., 34., 28.)) / 255.0;',
   '    if (fd > 0.0 && dm < 0.6) { vec2 bq = P * 5.5 + vec2(vn2(P * 1.3), vn2(P * 1.3 + 4.0)) * 0.7, bcl = floor(bq); vec2 bf = fract(bq) - 0.5 - (vec2(hash12(bcl + 2.2), hash12(bcl + 6.1)) - 0.5) * 0.35; float br = length(bf * vec2(1.0, 1.25)), bh = hash12(bcl + 9.4);',   // the stones of the bed, seen through the shallows by the bank, fading as it deepens
   '      float bR = 0.22 + 0.2 * fract(bh * 7.3), stn = smoothstep(bR, bR - 0.1, br) * step(0.42, bh) * (1.0 - smoothstep(0.1, 0.6, dm)) * fd; shal = mix(shal, mix(vec3(70., 68., 56.), vec3(110., 104., 86.), bh) / 255.0 * (0.8 + 0.35 * smoothstep(bR, 0.0, br + dot(bf, vec2(0.3, -0.3)))), stn * 0.55); }',
@@ -7376,11 +7472,11 @@ var GLSL_MAIN = GLSL_P + GLSL_COMMON + '\n' + GLSL_DOME + '\n' + [
   '#ifdef F_MOON',
   '    { float ca = dot(normalize(vec3(d.xy, -d.z)), uMoonDir); if (ca > 0.97) wc += uMoonC * exp(-(1.0 - ca) / (0.0007 + 0.0016 * brz + 0.004 * uG.z)) * (0.25 + 0.75 * smoothstep(0.45, 0.8, vn2(vec2(P.x * 30.0 + P.y * 6.0, P.y * 30.0 - P.x * 6.0) + vec2(uTime * 1.3, -uTime * 0.9)) * 0.6 + vn2(P * 11.0 - uTime * 0.7) * 0.4)) * 0.45 * uMoon.z * (1.0 - fr.a); }',   // the moon's road on the water: its reflection broken by the ripples into a glittering path (the disc itself is too small for a rippled mirror to hold)
   '#endif',
-  '    vec2 lq = P * 2.4, lc = floor(lq); float lh = hash12(lc + 31.0); vec2 lf = fract(lq) - 0.5 - (vec2(hash12(lc + 3.0), lh) - 0.5) * 0.4; float lr = 0.15 + 0.08 * lh, ld = length(lf), la = atan(lf.y, lf.x);',
+  '    vec2 lq = P * 2.4, lc = floor(lq); if (hash12(lc + 17.0) >= 0.78 && dm > 0.35 && uGS.z > 0.5 && uG.y < 0.5) { float lh = hash12(lc + 31.0); vec2 lf = fract(lq) - 0.5 - (vec2(hash12(lc + 3.0), lh) - 0.5) * 0.4; float lr = 0.15 + 0.08 * lh, ld = length(lf), la = atan(lf.y, lf.x);',   // (sky5) only in the cells that have a pad
   '    float pad = smoothstep(lr, lr - 0.015, ld) * step(0.78, hash12(lc + 17.0)) * step(0.05, abs(fract((la + lh * 6.0) / 6.2832) - 0.5) * 2.0) * smoothstep(0.35, 0.6, dm) * uGS.z * (1.0 - uG.y);',   // 睡蓮: pads with their notch (none in winter)
   '    vec3 padC = (uGS.w > 0.5 && uGS.w < 1.5 ? mix(vec3(96., 92., 44.), vec3(138., 118., 58.), lh) : mix(vec3(46., 82., 34.), vec3(86., 120., 52.), smoothstep(lr, 0.0, ld) * 0.6 + lh * 0.3)) / 255.0 * l;',
   '    float pvn = abs(fract((la + lh * 6.0) / 6.2832 * 11.0) - 0.5); padC *= (1.0 - 0.32 * smoothstep(lr * 0.78, lr, ld)) * (1.0 + 0.16 * smoothstep(0.43, 0.49, pvn) * smoothstep(0.01, lr * 0.85, ld) * fd); padC = mix(padC, refl, 0.06 + 0.2 * fres);',   // a darker rim, the veins out from the stem, the sky's sheen on the waxy face
-  '    wc *= 1.0 - 0.3 * step(0.78, hash12(lc + 17.0)) * smoothstep(0.35, 0.6, dm) * uGS.z * (1.0 - uG.y) * smoothstep(lr + 0.05, lr, length(lf - vec2(0.03, -0.03))); wc = mix(wc, padC, pad * 0.95);',   // (each pad's shadow on the water under it)
+  '    wc *= 1.0 - 0.3 * step(0.78, hash12(lc + 17.0)) * smoothstep(0.35, 0.6, dm) * uGS.z * (1.0 - uG.y) * smoothstep(lr + 0.05, lr, length(lf - vec2(0.03, -0.03))); wc = mix(wc, padC, pad * 0.95); }',   // (each pad's shadow on the water under it)
   '#ifdef F_FALL',
   '    if (fallR < 3.0 && uFall3.z > 0.0) {',   // the white water where it lands: churned foam and bubbles under the fall, foam lines drifting out over the pool
   '      float ch = 1.0 - smoothstep(0.12, 0.5 + 0.15 * uFall3.w, fallR + (vn2(fallQ * 6.0 + uTime * vec2(0.8, -1.2)) - 0.5) * 0.28);',
@@ -7397,12 +7493,14 @@ var GLSL_MAIN = GLSL_P + GLSL_COMMON + '\n' + GLSL_DOME + '\n' + [
   '      ic = mix(ic, vec3(240., 244., 250.) / 255.0, drf * 0.8); ic *= 1.0 - smoothstep(0.035, 0.0, abs(vn2(P * vec2(5.5, 8.0) + 21.0) * 2.0 - 1.0)) * 0.16 * (1.0 - drf);',   // and the odd fine crack
   '      ic = mix(ic, vec3(246., 248., 252.) / 255.0, 0.6 * (1.0 - smoothstep(0.04, 0.1, dm)));',
   '      wc = mix(wc, mix(ic * l, refl, 0.04 + 0.08 * (1.0 - drf)), ice); }',
+  '    if (deepW) c = wc; else {',   // (sky5) out in the pond nothing of the margin shows
   '    float we = gm.r + (vn2(P * 7.0) - 0.5) * 0.22 + (vn2(P * 23.0) - 0.5) * 0.08;',
   '    we = max(we, gm.b * 0.7 * smoothstep(0.45, 0.6, vn2(P * 2.5)) + (vn2(P * 7.0) - 0.5) * 0.22);',
   '    vec2 sq = P * 15.0, sc2 = floor(sq); vec2 sf = fract(sq) - 0.5; float sto = smoothstep(0.5, 0.25, length(sf)) * (0.6 + 0.4 * hash12(sc2));',   // the margin: wet dark stones and moss where water meets land
   '    vec3 marg = mix(vec3(38., 44., 30.), vec3(92., 88., 78.), sto * step(0.45, hash12(sc2 + 2.0))) / 255.0 * l * 0.9;',
   '    float mk = smoothstep(0.18, 0.34, we) * (1.0 - smoothstep(0.42, 0.47, we)) * (1.0 - 0.75 * uG.y);',
   '    c = mix(c, marg, mk * 0.85); c = mix(c, wc, smoothstep(0.42, 0.47, we));',
+  '    }',
   '#else',
   '    vec2 rp = P * 2.2 + vec2(uTime * 0.11, uTime * 0.07), fk = vec2(1.0) - vec2(smoothstep(0.03, 0.2, foot));',
   '    vec2 wn = (vec2(vn2(rp), vn2(rp + 17.0)) - 0.5) * 0.05 + (vec2(vn2(P * 8.0 + uTime * 0.35), vn2(P * 8.0 + 31.0 - uTime * 0.3)) - 0.5) * 0.03 * fk.x;',
@@ -7412,7 +7510,7 @@ var GLSL_MAIN = GLSL_P + GLSL_COMMON + '\n' + GLSL_DOME + '\n' + [
   '#ifdef F_FG',
   '    fr = textureCube(uCS, rc) * faceA(rc); vec4 fw = textureCube(uCW, rc) * faceA(rc); fr = fw + fr * (1.0 - fw.a);',
   '#endif',
-  '    vec3 refl = tone(skyLin(rd)) * (1.0 - fr.a) + fr.rgb * 0.85;',
+  '    vec3 refl = (fr.a < 0.996 ? tone(skyLin(rd)) * (1.0 - fr.a) : vec3(0.0)) + fr.rgb * 0.85;',
   '    float fres = 0.025 + 0.975 * pow(1.0 - clamp(-rd.z, 0.0, 1.0), 5.0);',
   '    vec3 deep = (uG.x > 0.5 ? vec3(34., 42., 36.) : vec3(26., 44., 38.)) / 255.0 * l * (0.75 + 0.25 * vn2(P * 0.8));',
   '    vec4 kc = uGS.z > 0.5 ? koiAt(P) : vec4(0.0); deep = mix(deep, kc.rgb * l * 0.7, kc.a * 0.85);',
@@ -9533,8 +9631,8 @@ function snMakeNoise(ctx, kind, secs, rnd) {
   buf._loopEnd = (n - Math.min(2048, n >> 3)) / sr;   // d[0] now continues d[loopEnd - 1]
   return buf;
 }
-function snMakeIR(ctx, secs, rnd) {
-  var sr = ctx.sampleRate, n = Math.floor(sr * secs), buf = ctx.createBuffer(2, n, sr), ch, i;
+function snMakeIR(ctx, secs, rnd) {   // (1.5) the buffer stops at 2.1 s: the tail beyond is below -60 dB, and the convolver's cost goes with its length
+  var sr = ctx.sampleRate, n = Math.floor(sr * Math.min(secs, 2.1)), buf = ctx.createBuffer(2, n, sr), ch, i;
   for (ch = 0; ch < 2; ch++) {
     var d = buf.getChannelData(ch), lp = 0, pre = Math.floor(sr * 0.012);
     for (i = pre; i < n; i++) {
@@ -9562,6 +9660,51 @@ function snMakeClicks(ctx, secs, perSec, rnd, dec, tilt) {
   buf._loopEnd = (n - Math.min(4096, n >> 3)) / sr;
   return buf;
 }
+/* (1.5) bubbles: little sines whose pitch rises as they ring away (a stream over stones, rain on a pond); with click > 0 each starts with a drop's tick */
+function snMakeBubbles(ctx, secs, perSec, rnd, fLo, fHi, decLo, decHi, click) {
+  var sr = ctx.sampleRate, n = Math.floor(sr * secs), buf = ctx.createBuffer(2, n, sr), d = buf.getChannelData(0), d2 = buf.getChannelData(1), k, i;
+  var TN = 2048, TB = new Float32Array(TN + 1); for (i = 0; i <= TN; i++) TB[i] = Math.sin(2 * Math.PI * i / TN);   // a sine table: far quicker than Math.sin per sample
+  var cnt = Math.floor(perSec * secs);
+  for (k = 0; k < cnt; k++) {
+    var p = Math.floor(rnd() * n), a = Math.pow(rnd(), 2.2) * (rnd() < 0.5 ? 1 : -1), f = fLo * Math.pow(fHi / fLo, Math.pow(rnd(), 1.3)), dec = decLo + (decHi - decLo) * rnd();
+    var L = Math.min(n - p, Math.floor(sr * dec * 4)), rise = 0.25 + rnd() * 0.5, ph = 0, ed = Math.exp(-1 / (sr * dec)), env = a, inc = f * TN / sr, rk = rise / (sr * dec * 2.5), R2 = sr * dec * 2.5;
+    for (i = 0; i < L; i++) { ph += inc * (1 + (i < R2 ? i * rk : rise)); env *= ed; d[p + i] += env * TB[(ph | 0) & (TN - 1)] * (i < 12 ? i / 12 : 1); }
+    if (click) { var cl = Math.min(n - p, Math.floor(sr * 0.0012)), lp = 0; for (i = 0; i < cl; i++) { lp += ((rnd() * 2 - 1) - lp) * 0.55; d[p + i] += lp * a * click * (1 - i / cl); } }
+  }
+  var X = Math.min(4096, n >> 3); for (k = 0; k < X; k++) { var w = k / X; d[k] = d[k] * w + d[n - X + k] * (1 - w); }
+  var e = 0; for (i = 0; i < n; i += 4) e += d[i] * d[i];
+  e = 0.15 / Math.sqrt(e / (n / 4) + 1e-9);   // an RMS of 0.15, like the noises
+  var h = (n - X) >> 1;   // the right channel: the same bubbles half a loop later (different enough to sound wide)
+  for (i = 0; i < n; i++) d[i] *= e;
+  for (i = 0; i < n - X; i++) d2[i] = d[(i + h) % (n - X)];
+  for (i = n - X; i < n; i++) d2[i] = d2[i - (n - X)];
+  buf._loopEnd = (n - X) / sr;
+  return buf;
+}
+/* single drops, a few of each kind, mono: into water (a tick, then the bubble's rising ring), on stone (a soft tick and a tiny spatter), on a leaf */
+function snMakeDrops(ctx, rnd) {
+  var sr = ctx.sampleRate, out = { water: [], stone: [], leaf: [] }, v, i;
+  function mk(secs, fill) { var b = ctx.createBuffer(1, Math.floor(sr * secs), sr), d = b.getChannelData(0); fill(d); var pk = 0; for (i = 0; i < d.length; i++) pk = Math.max(pk, Math.abs(d[i])); for (i = 0; i < d.length; i++) d[i] *= 0.9 / (pk || 1); for (i = 0; i < 16; i++) d[d.length - 1 - i] *= i / 16; return b; }
+  for (v = 0; v < 4; v++) {
+    out.water.push(mk(0.16, function (d) {
+      var f = 650 + rnd() * 900, dec = 0.012 + rnd() * 0.018, ph = 0, lp = 0, t0 = Math.floor(sr * 0.004);
+      for (i = 0; i < Math.floor(sr * 0.003); i++) { lp += ((rnd() * 2 - 1) - lp) * 0.3; d[i] += lp * 0.6 * Math.sin(Math.PI * i / (sr * 0.003)); }
+      for (i = 0; i < d.length - t0; i++) { var tt = i / sr; ph += 2 * Math.PI * f * (1 + 0.4 * Math.min(1, tt / (dec * 2.2))) / sr; d[t0 + i] += 0.7 * Math.exp(-tt / dec) * Math.sin(ph) * Math.min(1, i / 20); }
+    }));
+    out.stone.push(mk(0.07, function (d) {
+      var lp = 0, lp2 = 0, f = 1600 + rnd() * 1400, ph = 0, j, L0 = Math.floor(sr * 0.004);   // (a soft tick: wet stone, not a click)
+      for (i = 0; i < L0; i++) { lp += ((rnd() * 2 - 1) - lp) * 0.3; lp2 += (lp - lp2) * 0.3; d[i] += lp2 * Math.sin(Math.PI * i / L0); }
+      for (i = 0; i < Math.floor(sr * 0.015); i++) { ph += 2 * Math.PI * f / sr; d[i] += 0.3 * Math.sin(ph) * Math.exp(-i / (sr * 0.003)) * Math.min(1, i / 30); }
+      for (j = 0; j < 4; j++) { var p = Math.floor(sr * (0.006 + rnd() * 0.03)), a = 0.1 + rnd() * 0.15, L1 = Math.floor(sr * 0.002); lp = 0; lp2 = 0; for (i = 0; i < L1 && p + i < d.length; i++) { lp += ((rnd() * 2 - 1) - lp) * 0.35; lp2 += (lp - lp2) * 0.35; d[p + i] += lp2 * a * Math.sin(Math.PI * i / L1); } }
+    }));
+    out.leaf.push(mk(0.05, function (d) {
+      var lp = 0, f = 1800 + rnd() * 1500, ph = 0;
+      for (i = 0; i < Math.floor(sr * 0.004); i++) { lp += ((rnd() * 2 - 1) - lp) * 0.35; d[i] += lp * (1 - i / (sr * 0.004)); }
+      for (i = 0; i < Math.floor(sr * 0.02); i++) { ph += 2 * Math.PI * f / sr; d[i] += 0.25 * Math.sin(ph) * Math.exp(-i / (sr * 0.004)); }
+    }));
+  }
+  return out;
+}
 function SnEngine(ctx, seed) {
   this.ctx = ctx; this.rnd = mulberry(seed || ((Date.now() & 0xffffff) + 1));
   this.white = snMakeNoise(ctx, 'white', 5, this.rnd); this.pink = snMakeNoise(ctx, 'pink', 5, this.rnd); this.brown = snMakeNoise(ctx, 'brown', 5, this.rnd);
@@ -9578,6 +9721,28 @@ function SnEngine(ctx, seed) {
   this.cueWet = ctx.createGain(); this.cueWet.gain.value = 0.5; this.cueBus.connect(this.cueWet); this.cueWet.connect(this.verbIn);
 }
 SnEngine.prototype.r = function (a, b) { return a + (b - a) * this.rnd(); };
+function snNormal(b, rms, lim) { // scale a texture to an RMS; with lim, round off its few loudest grains (tanh) and scale again
+  var e = 0, n = 0, ch, i, d, pass;
+  for (pass = 0; pass < (lim ? 2 : 1); pass++) {
+    e = 0; n = 0; for (ch = 0; ch < b.numberOfChannels; ch++) { d = b.getChannelData(ch); for (i = 0; i < d.length; i += 3) { e += d[i] * d[i]; n++; } }
+    e = rms / Math.sqrt(e / Math.max(1, n) + 1e-12);
+    for (ch = 0; ch < b.numberOfChannels; ch++) { d = b.getChannelData(ch); for (i = 0; i < d.length; i++) d[i] = lim && !pass ? lim * Math.tanh(d[i] * e / lim) : d[i] * e; }
+  }
+  return b;
+}
+/* (1.5) the garden's textures, rendered once per engine when first wanted (a few seconds each, looped from a random point) */
+SnEngine.prototype.tex = function (name) {
+  var T = this._tex || (this._tex = {}), c = this.ctx, r = this.rnd;
+  if (T[name]) return T[name];
+  if (name === 'babble') T[name] = snMakeBubbles(c, 4, 520, r, 300, 2400, 0.0015, 0.006, 0);
+  else if (name === 'rain') { T[name] = snMakeClicks(c, 6, 4500, r, 0.0005, 0.5); snNormal(T[name], 0.15, 0.6); }   // countless tiny impacts, most of them soft: a fine, even grain
+  else if (name === 'rainc') { T[name] = snMakeClicks(c, 5, 1400, r, 0.0007, 1); snNormal(T[name], 0.15, 0.5); }   // the thatch's and the eaves' crisper patter
+  else if (name === 'sizzle') T[name] = snMakeClicks(c, 3, 2400, r, 0.0007, 1);
+  else if (name === 'gravel') { T[name] = snMakeClicks(c, 2.5, 420, r, 0.006, 0.6); snNormal(T[name], 0.15, 0.45); }
+  else if (name === 'drops') T[name] = snMakeDrops(c, r);
+  else return this[name] || this.white;
+  return T[name];
+};
 /* ---- node helpers ---- */
 function snGain(c, v, dest) { var g = c.createGain(); g.gain.value = v === undefined ? 1 : v; if (dest) g.connect(dest); return g; }
 function snFilt(c, type, f, q, dest) { var b = c.createBiquadFilter(); b.type = type; b.frequency.value = f; if (q !== undefined) b.Q.value = q; if (dest) b.connect(dest); return b; }
@@ -9587,7 +9752,7 @@ function snPan(c, pan, dest) {
 }
 function snOsc(c, type, f, dest) { var o = c.createOscillator(); o.type = type; o.frequency.value = f; if (dest) o.connect(dest); return o; }
 function snSrc(E, kind, t, dur, dest, rate) {
-  var s = E.ctx.createBufferSource(); s.buffer = E[kind]; s.loop = true; if (s.buffer._loopEnd) { s.loopStart = 0; s.loopEnd = s.buffer._loopEnd; }
+  var s = E.ctx.createBufferSource(); s.buffer = E[kind] || E.tex(kind); s.loop = true; if (s.buffer._loopEnd) { s.loopStart = 0; s.loopEnd = s.buffer._loopEnd; }
   if (rate) s.playbackRate.value = rate;
   s.connect(dest); s.start(t, E.rnd() * ((s.buffer._loopEnd || s.buffer.duration) - 0.05)); if (dur) s.stop(t + dur);
   return s;
@@ -9924,6 +10089,307 @@ function snBoom(E, t, out, delay, kind, whistle) {
   return tb + 3;
 }
 
+/* ---- 21b_garden_voices.js ---- */
+/* ================= MogiSound: the garden's own voices (1.5) =================
+   Nearer the living things than the voices above (which the town keeps): each bird an individual with its own pitch and timing (k),
+   a little unevenness in every note, songs that are still unformed early in the spring; cicadas and bush crickets from pulsed bands of
+   noise rather than pure tones; drops of water from a few small recorded-once textures. Each voice schedules one song at t into out
+   and returns the time it ends. */
+/* a pulsed band of noise (cicadas, bush crickets): noise -> bandpass (its centre moved note by note) -> tymbal pulsing -> envelope.
+   notes as for snPhrase ({t, d, f: [..], a, s}); o: {src (texture), q, am: [hz, depth, type], tone (a sine riding the band's centre), att, rel} */
+function snBuzz(E, t, out, notes, o) {
+  var c = E.ctx, s = c.createBufferSource(), bp = snFilt(c, 'bandpass', notes[0].f[0], o.q || 4), env = snGain(c, 0, out), srcs = [s], dest = env, end = t, osc = null;
+  s.buffer = E.tex(o.src || 'white'); s.loop = true; if (s.buffer._loopEnd) s.loopEnd = s.buffer._loopEnd;
+  if (o.am) { var amg = snGain(c, 1 - o.am[1] * 0.5, env), lfo = snOsc(c, o.am[2] || 'sine', o.am[0]), lg = snGain(c, o.am[1] * 0.5, amg.gain); lfo.connect(lg); srcs.push(lfo); dest = amg; }
+  s.connect(bp); bp.connect(dest);
+  if (o.tone) { osc = c.createOscillator(); osc.connect(snGain(c, o.tone, dest)); srcs.push(osc); }
+  if (o.lp) { var lpo = snFilt(c, 'lowpass', o.lp, 0.5, out); env.disconnect(); env.connect(lpo); }   // the leaves between: the top of the buzz dulled
+  notes.forEach(function (n) {
+    var ts = t + n.t, d = Math.max(0.015, n.d), a = n.a === undefined ? 1 : n.a, at = Math.min(o.att || 0.01, d * 0.3), rl = Math.min(o.rel || 0.02, d * 0.4), f = n.f, k;
+    bp.frequency.setValueAtTime(f[0], ts); if (osc) osc.frequency.setValueAtTime(f[0], ts);
+    for (k = 1; k < f.length; k++) { var tk = ts + d * k / (f.length - 1); bp.frequency.exponentialRampToValueAtTime(f[k], tk); if (osc) osc.frequency.exponentialRampToValueAtTime(f[k], tk); }
+    env.gain.setValueAtTime(0, ts); env.gain.linearRampToValueAtTime(a, ts + at);
+    if (n.s !== undefined) env.gain.linearRampToValueAtTime(a * n.s, ts + d - rl); else env.gain.setValueAtTime(a, ts + d - rl);
+    env.gain.linearRampToValueAtTime(0, ts + d);
+    end = Math.max(end, ts + d);
+  });
+  s.start(t, E.rnd() * 2); for (var i = 1; i < srcs.length; i++) srcs[i].start(t);
+  snStop(srcs, end + 0.05);
+  return end;
+}
+/* a long, steady song from a looped texture (アブラゼミ, ニイニイゼミ): noise -> band -> a slow uneven flutter -> envelope */
+function snDrone(E, t, out, o) {
+  var c = E.ctx, D = o.dur, s = c.createBufferSource(), bp = snFilt(c, 'bandpass', o.f, o.q), env = snGain(c, 0, out), am = snGain(c, 1 - (o.flut || 0) * 0.5, env), srcs = [s];
+  s.buffer = E.tex(o.src || 'sizzle'); s.loop = true; if (s.buffer._loopEnd) s.loopEnd = s.buffer._loopEnd;
+  if (o.hp) { var hp = snFilt(c, 'highpass', o.hp, 0.7, bp); s.connect(hp); } else s.connect(bp);
+  if (o.lp) bp.connect(snFilt(c, 'lowpass', o.lp, 0.5, am)); else bp.connect(am);
+  if (o.flut) srcs.push(snSrc(E, 'white', t, D + 0.2, snGain(c, o.flut, am.gain), o.flutR || 0.0004));
+  if (o.wav) srcs.push(snSrc(E, 'white', t, D + 0.2, snGain(c, o.f * o.wav, bp.frequency), 0.00015));
+  var tt = t, i;
+  for (i = 0; i < (o.starts || 0); i++) { env.gain.setValueAtTime(0, tt); env.gain.linearRampToValueAtTime(0.55, tt + 0.03); env.gain.linearRampToValueAtTime(0, tt + snR(E, 0.12, 0.25)); tt += snR(E, 0.35, 0.7); }
+  env.gain.setValueAtTime(0, tt); env.gain.linearRampToValueAtTime(1, tt + (o.att || 1));
+  env.gain.setValueAtTime(1, Math.max(tt + (o.att || 1), t + D - (o.rel || 2) * 1.5)); env.gain.linearRampToValueAtTime(0.45, t + D - (o.rel || 2) * 0.5); env.gain.linearRampToValueAtTime(0, t + D);
+  s.start(t, E.rnd() * 2); s.stop(t + D + 0.1);
+  return t + D;
+}
+/* ---------- birds ---------- */
+var GSB = {
+  uguisu: function (E, t, out, k) { // ホーーホケキョ: a long clear whistle that swells, a breath, the quick ホケ and the bright falling キョ
+    k = k || {}; if (E.rnd() < (k.runP || 0)) return GSB.tani(E, t, out, k);
+    var r = function (a, b) { return snR(E, a, b); }, p = (k.p || 1) * r(0.988, 1.012), q = (k.q || 1) * r(0.97, 1.03), imm = k.imm || 0, f1 = 1060 * p, d1 = (k.d1 || 1.2) * r(0.9, 1.1), n = [], b, u;
+    n.push({ t: 0, d: d1, f: [f1 * 0.965, f1, f1 * 1.025, f1 * 1.015], a: 0.2, s: 4 });
+    b = d1 + r(0.08, 0.14) * q;
+    if (imm > 0 && E.rnd() < imm) { // early in the year: the second half stumbles, or stops short
+      u = E.rnd();
+      if (u < 0.3) n.push({ t: b, d: 0.075, f: [1500 * p, 1950 * p], a: 0.5 });
+      else if (u < 0.65) n.push({ t: b, d: 0.07, f: [1550 * p, 2000 * p], a: 0.5 }, { t: b + 0.12, d: 0.1, f: [2350 * p, 2950 * p, 2500 * p], a: 0.55 });
+      else n.push({ t: b, d: 0.07, f: [1550 * p, 2000 * p], a: 0.5 }, { t: b + 0.115, d: 0.055, f: [2300 * p, 3200 * p], a: 0.55 }, { t: b + 0.2, d: 0.22, f: [3250 * p, 2650 * p, 2950 * p, 2150 * p], a: 0.55, s: 0.5 });
+    } else {
+      n.push({ t: b, d: 0.065, f: [1550 * p, 2000 * p], a: 0.55 }, { t: b + 0.115 * q, d: 0.055, f: [2350 * p, 3500 * p], a: 0.75 },
+        { t: b + 0.2 * q, d: r(0.26, 0.34), f: [3400 * p, 3800 * p, 3100 * p, 2200 * p], a: 0.95, s: 0.45 });
+      if (E.rnd() < 0.1) { var b2 = b + 0.2 * q + 0.62; n.push({ t: b2, d: 0.055, f: [2350 * p, 3450 * p], a: 0.6 }, { t: b2 + 0.085, d: 0.28, f: [3400 * p, 3700 * p, 2250 * p], a: 0.8, s: 0.45 }); }   // …ケキョ
+    }
+    return snPhrase(E, t, out, n, { harm: [[1, 1], [2, 0.04]], att: 0.03, rel: 0.03 });
+  },
+  tani: function (E, t, out, k) { // 谷渡り: ケキョケキョケキョ…, ringing, quickening a little and slowing into the last long ケキョー
+    var p = (k && k.p || 1), n = [], m = 7 + (E.rnd() * 9 | 0), per = snR(E, 0.2, 0.23), b = 0, i;
+    for (i = 0; i < m; i++) {
+      var u = i / (m - 1), a = 0.55 + 0.4 * Math.min(1, i / 3);
+      n.push({ t: b, d: 0.055, f: [2300 * p, 3300 * p], a: a * 0.75 }, { t: b + 0.075, d: 0.095, f: [3500 * p, 3200 * p, 2300 * p], a: a, s: 0.6 });
+      b += per * (1 - 0.1 * Math.sin(Math.PI * u)) * snR(E, 0.99, 1.02);
+    }
+    n.push({ t: b + 0.06, d: 0.06, f: [2300 * p, 3400 * p], a: 0.7 }, { t: b + 0.14, d: 0.3, f: [3500 * p, 3800 * p, 2200 * p], a: 0.85, s: 0.45 });
+    return snPhrase(E, t, out, n, { harm: [[1, 1], [2, 0.04]], att: 0.008, rel: 0.02 });
+  },
+  sasa: function (E, t, out) { // 笹鳴き: the warbler's winter call deep in the bushes, a dry チャッ
+    snNoise(E, t, out, { f: snR(E, 3200, 4200), q: 2.2, att: 0.002, dec: 0.022, peak: 0.55 });
+    return snPhrase(E, t, out, [{ t: 0, d: 0.035, f: [3900, 2700], a: 0.32 }], { harm: [[1, 1], [2, 0.3]], att: 0.002, rel: 0.01 });
+  },
+  shijukara: function (E, t, out, k) { // ツツピー ツツピー: two high, quick, falling ツ and a clear lower ピー; some birds sing it in two
+    k = k || {}; var p = (k.p || 1) * snR(E, 0.99, 1.01), two = !!k.two, per = (k.per || 0.47) * snR(E, 0.97, 1.03), m = 3 + (E.rnd() * 5 | 0), n = [], i;
+    for (i = 0; i < m; i++) {
+      var b = i * per + snR(E, -0.008, 0.008), a = (i === 0 ? 0.75 : 1) * (i === m - 1 ? 0.85 : 1);
+      if (!two) n.push({ t: b, d: 0.04, f: [6700 * p, 5100 * p], a: 0.5 * a });
+      n.push({ t: b + (two ? 0 : 0.075), d: 0.045, f: [6500 * p, 4900 * p], a: 0.6 * a });
+      n.push({ t: b + (two ? 0.08 : 0.155), d: snR(E, 0.13, 0.16), f: [4000 * p, 3950 * p, 3850 * p], a: 0.85 * a, s: 0.85 });
+    }
+    return snPhrase(E, t, out, n, { harm: [[1, 1], [2, 0.03]], att: 0.006, rel: 0.02 });
+  },
+  mejiro: function (E, t, out, k) { // the flock's thin チー and チュイ, one to three from one bird as it feeds
+    var n = [], m = 1 + (E.rnd() * 3 | 0), b = 0, i, p = (k && k.p || 1) * snR(E, 0.96, 1.04);
+    for (i = 0; i < m; i++) { var d = snR(E, 0.07, 0.12); n.push(E.rnd() < 0.6 ? { t: b, d: d, f: [7000 * p, 6600 * p, 6000 * p], a: snR(E, 0.45, 0.7), s: 0.7 } : { t: b, d: d, f: [5400 * p, 6900 * p, 6400 * p], a: snR(E, 0.45, 0.7), s: 0.7 }); b += d + snR(E, 0.08, 0.3); }
+    return snPhrase(E, t, out, n, { att: 0.008, rel: 0.02 });
+  },
+  mejiroSong: function (E, t, out) { // the spring song: a fast, tumbling warble (チーチュルチーチュル)
+    var n = [], m = 16 + (E.rnd() * 14 | 0), b = 0, f = snR(E, 4800, 5600), i;
+    for (i = 0; i < m; i++) { var d = snR(E, 0.04, 0.075), f2 = clamp(f * snR(E, 0.8, 1.25), 3600, 7400); n.push({ t: b, d: d, f: [f, (f + f2) / 2 * snR(E, 0.92, 1.1), f2], a: snR(E, 0.45, 0.85), s: 0.7 }); f = f2; b += d + snR(E, 0.008, 0.03); }
+    return snPhrase(E, t, out, n, { att: 0.004, rel: 0.01 });
+  },
+  hiyodori: function (E, t, out, k) { // ピーヨ ピーヨ: loud and a little rasping, one to three
+    var p = (k && k.p || 1) * snR(E, 0.97, 1.03), m = 1 + (E.rnd() * 3 | 0), n = [], b = 0, i;
+    for (i = 0; i < m; i++) {
+      var d1 = snR(E, 0.26, 0.36), d2 = snR(E, 0.18, 0.26);
+      n.push({ t: b, d: d1, f: [2400 * p, 3300 * p, 3650 * p, 3500 * p], a: 0.7, s: 0.85 }, { t: b + d1 + 0.04, d: d2, f: [3350 * p, 2900 * p, 2250 * p], a: 0.62, s: 0.6 });
+      b += d1 + d2 + snR(E, 0.35, 0.7);
+    }
+    return snPhrase(E, t, out, n, { harm: [[1, 1], [2, 0.12], [3, 0.03]], att: 0.015, rel: 0.03, am: [snR(E, 55, 75), 0.16] });
+  },
+  mozu: function (E, t, out, k) { // モズの高鳴き: キーッ キーッ, then a fast キチキチキチ, from the top of a tree
+    var p = (k && k.p || 1) * snR(E, 0.97, 1.03), n = [], b = 0, i, m = 2 + (E.rnd() * 4 | 0), q = E.rnd() < 0.75 ? 5 + (E.rnd() * 8 | 0) : 0;
+    for (i = 0; i < m; i++) { var d = snR(E, 0.12, 0.17); n.push({ t: b, d: d, f: [3300 * p, 4100 * p, 3000 * p], a: 0.85, s: 0.6 }); b += d + snR(E, 0.16, 0.26); }
+    for (i = 0; i < q; i++) { n.push({ t: b, d: 0.04, f: [3000 * p, 3800 * p, 2900 * p], a: 0.7 }); b += snR(E, 0.075, 0.09); }
+    return snPhrase(E, t, out, n, { harm: [[1, 1], [2, 0.22], [3, 0.08]], att: 0.004, rel: 0.02, am: [snR(E, 70, 90), 0.25] });
+  },
+  kijibato: function (E, t, out, k) { // キジバト: デーデー ポッポー, soft, low and hollow, said over and over
+    var p = (k && k.p || 1) * snR(E, 0.99, 1.01), q = (k && k.q || 1);
+    return snPhrase(E, t, out, [
+      { t: 0, d: 0.34 * q, f: [560 * p, 590 * p, 540 * p], a: 0.55, s: 0.75 },
+      { t: 0.46 * q, d: 0.36 * q, f: [550 * p, 585 * p, 530 * p], a: 0.62, s: 0.75 },
+      { t: 0.95 * q, d: 0.12 * q, f: [600 * p, 590 * p], a: 0.5 },
+      { t: 1.14 * q, d: 0.5 * q, f: [610 * p, 630 * p, 560 * p, 500 * p], a: 0.62, s: 0.5 }], { harm: [[1, 1], [2, 0.1], [3, 0.03]], att: 0.06, rel: 0.1 });
+  },
+  hototogisu: function (E, t, out) { // ホトトギス: キョッ キョキョキョキョ, piercing, from far off (特許許可局)
+    var p = snR(E, 0.96, 1.04), n = [{ t: 0, d: 0.17, f: [1250 * p, 1650 * p, 1500 * p], a: 0.85, s: 0.7 }], b = 0.3, i;
+    for (i = 0; i < 4; i++) { n.push({ t: b, d: 0.1, f: [1700 * p, 1900 * p, 1550 * p], a: 0.75 }); b += 0.14; }
+    n.push({ t: b + 0.02, d: 0.2, f: [1800 * p, 1950 * p, 1450 * p], a: 0.8, s: 0.5 });
+    return snPhrase(E, t, out, n, { harm: [[1, 1], [2, 0.08]], att: 0.01, rel: 0.03 });
+  },
+  jobitaki: function (E, t, out) { // ジョウビタキ: ヒッ ヒッ and the dry カッカッ (火焚き)
+    var p = snR(E, 0.97, 1.03), n = [], m = 1 + (E.rnd() * 2 | 0), i, b = 0;
+    for (i = 0; i < m; i++) { n.push({ t: b, d: 0.1, f: [5200 * p, 6100 * p, 5900 * p], a: 0.55, s: 0.7 }); b += snR(E, 0.3, 0.45); }
+    var end = snPhrase(E, t, out, n, { att: 0.01, rel: 0.02 });
+    if (E.rnd() < 0.7) { var tc = t + b + 0.05; snNoise(E, tc, out, { f: 2600, q: 3, dec: 0.02, peak: 0.5 }); snNoise(E, tc + 0.11, out, { f: 2700, q: 3, dec: 0.02, peak: 0.42 }); end = tc + 0.2; }
+    return end;
+  },
+  suzume: function (E, t, out) { return BIRD.suzume(E, t, out); },
+  karasu: function (E, t, out) { return BIRD.hashibuto(E, t, out); },
+  fukurou: function (E, t, out) { return BIRD.fukurou(E, t, out); },
+  wings: function (E, t, out, a) { // a small bird taking off: a quick flutter of wings
+    var c = E.ctx, g = snGain(c, 0, out), f = snFilt(c, 'bandpass', snR(E, 900, 1500), 0.8, g), s = c.createBufferSource(), i, tt = t;
+    s.buffer = E.pink; s.loop = true; s.connect(f);
+    for (i = 0; i < 5 + (E.rnd() * 4 | 0); i++) { g.gain.setValueAtTime(0, tt); g.gain.linearRampToValueAtTime((a || 1) * (1 - i * 0.08), tt + 0.012); g.gain.linearRampToValueAtTime(0, tt + 0.045); tt += snR(E, 0.05, 0.065); }
+    s.start(t, E.rnd() * 3); s.stop(tt + 0.05);
+    return tt;
+  }
+};
+/* ---------- cicadas, bush crickets, frogs ---------- */
+var GSI = {
+  minmin: function (E, t, out, k) { // ミーン ミンミンミンミン ミー…: a swelling first note, the pulsing ミン, a long falling ミー
+    var p = (k && k.p || 1) * snR(E, 0.98, 1.02), n = [], b, m = 6 + (E.rnd() * 9 | 0), per = snR(E, 0.27, 0.33), i;
+    n.push({ t: 0, d: snR(E, 0.9, 1.4), f: [3600 * p, 4300 * p, 4500 * p], a: 0.25, s: 3.2 }); b = n[0].d + 0.03;
+    for (i = 0; i < m; i++) { n.push({ t: b, d: per - 0.04, f: [3900 * p, 4700 * p, 4300 * p], a: 0.9 * snR(E, 0.88, 1), s: 0.55 }); b += per * snR(E, 0.98, 1.03); }
+    n.push({ t: b, d: snR(E, 1.2, 1.8), f: [4500 * p, 4100 * p, 3500 * p], a: 0.8, s: 0.1 });
+    return snBuzz(E, t, out, n, { q: 5, am: [snR(E, 150, 175), 0.7, 'sawtooth'], tone: 0.1, lp: 7000, att: 0.04, rel: 0.05 });
+  },
+  higurashi: function (E, t, out, k) { // カナカナカナ…: a ringing, metallic trill that starts high and strong, then slowly falls and fades
+    var p = (k && k.p || 1) * snR(E, 0.98, 1.02), n = [], m = 22 + (E.rnd() * 30 | 0), per0 = snR(E, 0.105, 0.125), b = 0, i;
+    for (i = 0; i < m; i++) {
+      var u = i / m, f0 = 4700 * p * (1 - 0.13 * u), a = Math.min(1, (i + 1) / 3) * (1 - 0.75 * Math.pow(u, 1.4)), per = per0 * (1 + 0.25 * u);
+      n.push({ t: b, d: per * 0.72, f: [f0 * 1.04, f0, f0 * 0.93], a: a * snR(E, 0.9, 1), s: 0.5 });
+      b += per;
+    }
+    return snBuzz(E, t, out, n, { q: 9, am: [snR(E, 200, 240), 0.6], tone: 0.05, att: 0.008, rel: 0.02 });
+  },
+  tsukutsuku: function (E, t, out, k) { // ツクツクボーシ: ジー, then ツクツク ボーシ over and over, ウイヨース, and a last ジー
+    var p = (k && k.p || 1) * snR(E, 0.98, 1.02), n = [], b, i, j, m = 8 + (E.rnd() * 9 | 0), w = 3 + (E.rnd() * 4 | 0);
+    n.push({ t: 0, d: snR(E, 1.2, 2.4), f: [5200 * p, 5600 * p], a: 0.2, s: 3 }); b = n[0].d + 0.15;
+    for (i = 0; i < m; i++) {
+      for (j = 0; j < 4; j++) { n.push({ t: b, d: 0.045, f: [5800 * p, 5400 * p], a: 0.7 }); b += 0.085; }
+      n.push({ t: b + 0.02, d: 0.42, f: [4600 * p, 6000 * p, 5600 * p, 5000 * p], a: 0.85, s: 0.6 }); b += 0.44 + snR(E, 0.12, 0.18);
+    }
+    for (i = 0; i < w; i++) { n.push({ t: b, d: 0.24, f: [4200 * p, 5600 * p], a: 0.6, s: 1.3 }, { t: b + 0.26, d: 0.5, f: [5800 * p, 5200 * p, 4400 * p], a: 0.85, s: 0.4 }); b += 0.95 * snR(E, 0.96, 1.05); }
+    n.push({ t: b + 0.1, d: snR(E, 1.2, 2), f: [5000 * p, 4600 * p], a: 0.6, s: 0.1 });
+    return snBuzz(E, t, out, n, { q: 5, am: [snR(E, 170, 200), 0.65, 'sawtooth'], tone: 0.09, lp: 8000, att: 0.02, rel: 0.03 });
+  },
+  abura: function (E, t, out) { // アブラゼミ: ジジッ… ジーーー ジリジリ…: a sizzle like oil in a pan, for half a minute or so
+    return snDrone(E, t, out, { dur: snR(E, 14, 38), f: snR(E, 4400, 5200), q: 1.8, hp: 2600, lp: 7500, flut: 0.45, flutR: 0.0004, starts: 2 + (E.rnd() * 3 | 0), att: 1.2, rel: 2 });
+  },
+  niinii: function (E, t, out) { // ニイニイゼミ: a thin, steady チィーー that seems to come from everywhere
+    return snDrone(E, t, out, { dur: snR(E, 25, 60), f: snR(E, 3700, 4100), q: 7, flut: 0.15, flutR: 0.002, wav: 0.03, att: 3, rel: 3 });
+  },
+  suzumushi: function (E, t, out, k) { // リーン リーン: a clear, bell-like ring, each a quick roll of pulses, in an uneven rhythm
+    k = k || {}; var p = (k.p || 1) * snR(E, 0.997, 1.003), f = 4450 * p, n = [], m = 3 + (E.rnd() * 7 | 0), b = 0, i;
+    for (i = 0; i < m; i++) {
+      var d = snR(E, 0.32, 0.5) * (k.d || 1);
+      if (E.rnd() < 0.15) { n.push({ t: b, d: 0.06, f: [f * 0.99, f], a: 0.5 }, { t: b + 0.09, d: 0.06, f: [f * 0.99, f], a: 0.6 }); b += 0.18; }   // now and then リリリーン
+      n.push({ t: b, d: d, f: [f * 0.985, f * 1.003, f], a: snR(E, 0.75, 1), s: 0.75 }); b += d + snR(E, 0.35, 0.75) * (k.gap || 1);
+    }
+    return snPhrase(E, t, out, n, { harm: [[1, 1], [2, 0.012]], att: 0.02, rel: 0.06, am: [snR(E, 36, 44) * (k.am || 1), 0.85] });
+  },
+  matsumushi: function (E, t, out, k) { // チンチロリン: a sharp チン, a quick チロ, the rolling リン
+    var p = (k && k.p || 1) * snR(E, 0.995, 1.005), f = 3900 * p, n = [], reps = 1 + (E.rnd() * 3 | 0), b = 0, i;
+    for (i = 0; i < reps; i++) {
+      n.push({ t: b, d: 0.06, f: [f * 1.02, f], a: 0.85 }, { t: b + 0.13, d: 0.04, f: [f * 0.98, f * 0.98], a: 0.55 }, { t: b + 0.2, d: 0.04, f: [f * 0.98, f * 0.98], a: 0.55 }, { t: b + 0.28, d: snR(E, 0.16, 0.22), f: [f * 1.03, f], a: 0.75, s: 0.5 });
+      b += snR(E, 1.2, 2.2);
+    }
+    return snPhrase(E, t, out, n, { harm: [[1, 1], [2, 0.05]], att: 0.003, rel: 0.03 });
+  },
+  korogi: function (E, t, out, k) { // エンマコオロギ: コロコロリー, soft and round, a few in a row
+    var p = (k && k.p || 1) * snR(E, 0.99, 1.01), f = 4100 * p, n = [], m = 2 + (E.rnd() * 4 | 0), b = 0, i, j;
+    for (i = 0; i < m; i++) {
+      var pul = i === m - 1 ? 8 + (E.rnd() * 6 | 0) : 3 + (E.rnd() * 2 | 0);
+      for (j = 0; j < pul; j++) { n.push({ t: b, d: 0.018, f: [f, f * 0.98], a: (0.5 + 0.5 * j / pul) * (i === m - 1 ? 0.8 : 1) }); b += 0.034; }
+      b += snR(E, 0.16, 0.3);
+    }
+    return snPhrase(E, t, out, n, { att: 0.003, rel: 0.006 });
+  },
+  tsuzure: function (E, t, out) { // ツヅレサセコオロギ: リー リー リー, quiet, at the end of the autumn
+    var p = snR(E, 0.97, 1.03), n = [], m = 3 + (E.rnd() * 6 | 0), b = 0, i;
+    for (i = 0; i < m; i++) { n.push({ t: b, d: 0.16, f: [4700 * p, 4700 * p], a: 0.6 }); b += snR(E, 0.42, 0.5); }
+    return snPhrase(E, t, out, n, { am: [snR(E, 55, 65), 0.9], att: 0.01, rel: 0.02 });
+  },
+  kanetataki: function (E, t, out) { // カネタタキ: チン チン チン, a tiny bell struck in the hedge
+    var p = snR(E, 0.98, 1.02), n = [], m = 3 + (E.rnd() * 6 | 0), per = snR(E, 0.3, 0.42), b = 0, i;
+    for (i = 0; i < m; i++) { n.push({ t: b, d: 0.03, f: [6300 * p, 6150 * p], a: 0.7 }); b += per * snR(E, 0.96, 1.04); }
+    return snPhrase(E, t, out, n, { att: 0.002, rel: 0.02 });
+  },
+  kutsuwa: function (E, t, out) { // クツワムシ: ガチャガチャガチャ, from beyond the fence
+    var n = [], m = 10 + (E.rnd() * 16 | 0), b = 0, i;
+    for (i = 0; i < m; i++) { n.push({ t: b, d: 0.05, f: [5200, 4600], a: 0.8 }, { t: b + 0.075, d: 0.06, f: [4800, 4200], a: 0.9 }); b += snR(E, 0.17, 0.2); }
+    return snBuzz(E, t, out, n, { src: 'sizzle', q: 1.2, att: 0.005, rel: 0.02 });
+  },
+  amagaeru: function (E, t, out, k) { // ニホンアマガエル: ケロケロケロ…, a run of short nasal croaks, quickening a little
+    var p = (k && k.p || 1) * snR(E, 0.98, 1.02), n = [], m = 4 + (E.rnd() * 12 | 0), rate = snR(E, 4.2, 5.6), b = 0, i;
+    for (i = 0; i < m; i++) { var d = snR(E, 0.07, 0.1); n.push({ t: b, d: d, f: [430 * p, 470 * p, 450 * p], a: (i < 2 ? 0.7 : 1) * snR(E, 0.85, 1), s: 0.7 }); b += Math.max(d + 0.04, 1 / (rate * (1 + 0.15 * i / m))); }
+    return snPhrase(E, t, out, n, { type: 'sawtooth', att: 0.006, rel: 0.02, am: [snR(E, 80, 100), 0.75, 'square'], bp: [snR(E, 2000, 2400) * p, 3] });
+  },
+  kajika: function (E, t, out) { // カジカガエル: フィ フィ フィフィフィ… ヒョロロロ: clear rising whistles by the stream, quickening into a trill
+    var p = snR(E, 0.97, 1.03), n = [], m = 5 + (E.rnd() * 6 | 0), b = 0, per = 0.36, i;
+    for (i = 0; i < m; i++) { var d = Math.max(0.05, per * 0.55); n.push({ t: b, d: d, f: [2100 * p, 2900 * p, 3000 * p], a: 0.5 + 0.4 * i / m, s: 0.8 }); b += per; per = Math.max(0.1, per * 0.84); }
+    if (E.rnd() < 0.7) for (i = 0; i < 10; i++) { n.push({ t: b, d: 0.05, f: [2900 * p, 2600 * p], a: 0.8 * (1 - i / 14) }); b += 0.07; }
+    return snPhrase(E, t, out, n, { harm: [[1, 1], [2, 0.05]], att: 0.01, rel: 0.015 });
+  },
+  tonosama: function (E, t, out) { return BUG.tonosama(E, t, out); }
+};
+/* ---------- water ---------- */
+/* one drop from the textures: 'water' (into the pond or a puddle: a plop and its bubble), 'stone' (a tick on wet stone), 'leaf' */
+function gsDrop(E, t, out, kind, a, rate) {
+  var c = E.ctx, set = E.tex('drops')[kind] || E.tex('drops').water, b = set[(E.rnd() * set.length) | 0], s = c.createBufferSource(), g = snGain(c, a === undefined ? 1 : a, out);
+  s.buffer = b; s.playbackRate.value = rate || snR(E, 0.88, 1.15); s.connect(g); s.start(t); s.stop(t + b.duration / s.playbackRate.value + 0.01);
+  return t + b.duration;
+}
+/* ---------- the garden's things (cues) ---------- */
+/* a wooden rake drawn through gravel: the stones rolling over one another and the tines' dry scrape, the pull a little uneven.
+   The garden cues each piece of a stroke as the finger goes (len 0..1): while a stroke goes on, the one sound is carried further,
+   a little louder when the hand moves faster; it fades out when the cues stop */
+function snRake(E, t, out, len) {
+  var c = E.ctx, R = E.rake, seg = 0.3 + 0.9 * clamp(len, 0, 1);
+  if (!R || R.end < t + 0.03) { // a new stroke: the tines bite into the gravel
+    var s = c.createBufferSource(), bp = snFilt(c, 'bandpass', snR(E, 1700, 2400), 0.7), env = snGain(c, 0, out), am = snGain(c, 0.7, env), s2 = c.createBufferSource(), bp2 = snFilt(c, 'bandpass', snR(E, 520, 700), 1.2, null);
+    s.buffer = E.tex('gravel'); s.loop = true; s.loopEnd = s.buffer._loopEnd; s.playbackRate.value = snR(E, 0.85, 1.05); s.connect(bp); bp.connect(snFilt(c, 'lowpass', 6500, 0.5, am));
+    s2.buffer = E.pink; s2.loop = true; s2.connect(bp2); bp2.connect(snGain(c, 0.3, am));
+    var m = snSrc(E, 'white', t, 0, snGain(c, 0.6, am.gain), 0.0009);
+    s.start(t, E.rnd() * 1.5); s2.start(t, E.rnd() * 3);
+    snNoise(E, t, out, { f: 2200, q: 0.8, att: 0.008, dec: 0.08, peak: 0.12 });
+    R = E.rake = { env: env, srcs: [s, s2, m], t: t - 0.3, end: t };
+  }
+  var v = clamp(len / Math.max(0.08, t - R.t), 0.3, 3), lv = clamp(0.55 + v * 0.25, 0.6, 1.15);
+  R.end = Math.max(R.end, t + seg); R.t = t;
+  R.env.gain.cancelScheduledValues(t); R.env.gain.setTargetAtTime(lv, t, 0.06); R.env.gain.setTargetAtTime(0, R.end - 0.12, 0.07);
+  R.srcs.forEach(function (x) { try { x.stop(R.end + 0.5); } catch (e) { } });
+  return R.end;
+}
+function snFurinGlass(E, t, out, a, f) { // 江戸風鈴: the clapper strikes the glass rim: a bright ring of a few inharmonic partials with a slow beat, one to four times
+  var c = E.ctx, n = 1 + (a > 0.55 ? 1 : 0) + (E.rnd() * (1 + a * 2.2) | 0), i, end = t, tt = t;
+  for (i = 0; i < n; i++) {
+    var av = a * (i === 0 ? 1 : snR(E, 0.35, 0.8)) * 0.5;
+    [[1, 1, 2.2], [2.32, 0.34, 1.1], [3.86, 0.2, 0.6], [5.6, 0.1, 0.32]].forEach(function (q, j) {
+      var g = snGain(c, 0, out), o = snOsc(c, 'sine', f * q[0] * snR(E, 0.999, 1.001)); o.connect(g);
+      g.gain.setValueAtTime(0, tt); g.gain.linearRampToValueAtTime(av * q[1], tt + 0.0015); g.gain.setTargetAtTime(0, tt + 0.002, q[2] / 4.5);
+      o.start(tt); o.stop(tt + q[2] * 1.4);
+      if (j === 0) { var o2 = snOsc(c, 'sine', f * 1.0021); o2.connect(snGain(c, 0.55, g)); o2.start(tt); o2.stop(tt + q[2] * 1.4); }   // the slow beat of a hand-blown bell
+    });
+    snNoise(E, tt, out, { f: f * 2.6, q: 2, att: 0.0005, dec: 0.006, peak: av * 0.25 });
+    end = Math.max(end, tt + 2.4);
+    tt += snR(E, 0.12, 0.4);
+  }
+  return end;
+}
+function snLanternLight(E, t, out) { // lighting a stone lantern: the 火袋's little shoji slid aside, a soft strike, the wick taking with a breath of flame, the shoji closed
+  snNoise(E, t, out, { kind: 'pink', type: 'bandpass', f: 1300, q: 1.4, att: 0.04, hold: 0.14, dec: 0.08, peak: 0.22 });
+  var ts = t + snR(E, 0.5, 0.65), i;
+  for (i = 0; i < 6; i++) snNoise(E, ts + i * snR(E, 0.012, 0.02), out, { f: snR(E, 2500, 4800), q: 2, att: 0.001, dec: 0.008, peak: snR(E, 0.25, 0.5) });
+  snNoise(E, ts + 0.08, out, { kind: 'pink', type: 'bandpass', f: 2600, q: 0.7, att: 0.01, hold: 0.05, dec: 0.22, peak: 0.35 });
+  snNoise(E, ts + 0.75, out, { kind: 'brown', type: 'lowpass', f: 650, q: 0.6, att: 0.3, hold: 0.35, dec: 0.7, peak: 0.6 });
+  snKnock(E, ts + 2.1, out, snR(E, 900, 1100), 0.22, 0.04);
+  return ts + 2.3;
+}
+var REWARD_YO = [587.3, 659.3, 784, 880, 987.8, 1174.7], REWARD_IN = [587.3, 622.3, 784, 880, 932.3, 1174.7];   // the 陽 and 都節 scales on D
+/* a rare moment of grace (the streak's rewards): far off, a few slow notes of a koto, or the small bell of a temple, the air ringing after.
+   By the moment: snow from a clear sky, dew and fireflies a bell alone; the autumn morning in the 都節 scale; the others in the brighter 陽 */
+function snReward(E, t, out, id) {
+  var s = String(id || ''), i, tt = t, sc = /momiji|shika/.test(s) ? REWARD_IN : REWARD_YO;
+  if (/kaza|snow|yuki|hotaru|tsuyu/.test(s)) { snRin(E, t, out, /hotaru/.test(s) ? 1570 : 1180, 0.32); snRin(E, t + 3.4, out, 1770, 0.16); return t + 12; }
+  if (/sagi|ruri/.test(s)) { snRin(E, t, out, 1400, 0.32); return t + 9; }
+  var m = /tsuru|hana|momiji/.test(s) ? 4 + (E.rnd() * 2 | 0) : 3, idx = 2 + (E.rnd() * 3 | 0), slow = /tsuru/.test(s) ? 1.35 : 1;
+  for (i = 0; i < m; i++) { snKoto(E, tt, out, sc[idx], 0.9 * (1 - i * 0.1), 0); idx = clamp(idx + (E.rnd() < 0.6 ? -1 : 1) * (1 + (E.rnd() * 2 | 0)), 0, sc.length - 1); tt += snR(E, 0.75, 1.15) * slow; }
+  snRin(E, tt + 0.7, out, 1180, 0.2);
+  return tt + 10;
+}
+/* (1.5) which bird the garden's 'bird' cue is, by the season */
+var GS_BIRDS = { spring: [['shijukara', 0.4], ['mejiro', 0.3], ['hiyodori', 0.2], ['suzume', 0.1]], summer: [['shijukara', 0.45], ['hiyodori', 0.35], ['suzume', 0.2]], autumn: [['hiyodori', 0.5], ['shijukara', 0.25], ['mozu', 0.12], ['mejiro', 0.13]], winter: [['hiyodori', 0.4], ['mejiro', 0.3], ['jobitaki', 0.2], ['shijukara', 0.1]] };
+function gsBirdOf(se, u) { var L = GS_BIRDS[se] || GS_BIRDS.spring, i; for (i = 0; i < L.length; i++) { u -= L[i][1]; if (u <= 0) return L[i][0]; } return L[0][0]; }
+
 /* ---- 22_scenes.js ---- */
 /* ================= MogiSound: scenes and the public API =================
    A scene = continuous beds (filtered noise, slowly modulated so nothing loops audibly) + event generators that
@@ -9934,6 +10400,7 @@ function SnScene(E, o, t0) {
   this.mufLP = snFilt(c, 'lowpass', 20000, 0.5, this.bus);
   this.nat = snGain(c, 1, this.mufLP);
   this.gndLP = snFilt(c, 'lowpass', 20000, 0.5, this.mufLP); this.gnd = snGain(c, 1, this.gndLP);
+  this.wet = snGain(c, 0, E.verbIn);   // (1.5) the voices' own reverb sends, by distance (SnScene.far)
   this.date0 = o.date ? +new Date(o.date) : Date.now();
   this.build();
   this.setSky(!!o.sky, t0, true);
@@ -9944,8 +10411,10 @@ SnScene.prototype.setSky = function (sky, t, now) { // looking up: the ground re
   this.gndLP.frequency.setTargetAtTime(sky ? 900 : 20000, t, k); this.gnd.gain.setTargetAtTime(sky ? 0.42 : 1, t, k);
   this.nat.gain.setTargetAtTime(sky ? 1.08 : 1, t, k);
 };
-SnScene.prototype.fade = function (to, t, secs) { this.bus.gain.cancelScheduledValues(t); this.bus.gain.setValueAtTime(this.bus.gain.value, t); this.bus.gain.linearRampToValueAtTime(to, t + secs); };
-SnScene.prototype.stop = function (t) { var self = this; this.dead = true; this.srcs.forEach(function (s) { try { s.stop(t); } catch (e) { } }); setTimeout(function () { try { self.trim.disconnect(); self.send.disconnect(); } catch (e) { } }, Math.max(0, (t - this.E.ctx.currentTime) * 1000 + 200)); };
+SnScene.prototype.fade = function (to, t, secs) {
+  var self = this; [[this.bus.gain, to], [this.wet.gain, to * 2.6]].forEach(function (q) { q[0].cancelScheduledValues(t); q[0].setValueAtTime(q[0].value, t); q[0].linearRampToValueAtTime(q[1], t + secs); });
+};
+SnScene.prototype.stop = function (t) { var self = this; this.dead = true; this.srcs.forEach(function (s) { try { s.stop(t); } catch (e) { } }); setTimeout(function () { try { self.trim.disconnect(); self.send.disconnect(); self.wet.disconnect(); } catch (e) { } }, Math.max(0, (t - this.E.ctx.currentTime) * 1000 + 200)); };
 /* an event generator: mean interval (s) may be a function of time; voice(t) schedules one event */
 SnScene.prototype.gen = function (mean, voice, first) {
   var self = this; this.gens.push({ next: this.t0 + (first === undefined ? this.r(0.3, 1) * (typeof mean === 'function' ? mean(this.t0) : mean) : first), fn: function (t) {
@@ -9964,6 +10433,7 @@ SnScene.prototype.out = function (group, level, pan, lp) { return snVoiceOut(thi
 SnScene.prototype.windAt = function (t) { var w = envWind(this.date0 + (t - this.t0) * 1000), wx = this.o.weather; if ((wx === 'typhoon' || wx === 'blizzard') && w.base < 0.9) { var k = 0.9 / Math.max(0.05, w.base); w.base *= k; w.strength *= k; } return w; };
 
 SnScene.prototype.build = function () {
+  if (this.o.world !== 'town') return this.buildGarden();   // (1.5) the garden has its own soundscape (below); the town keeps this one
   var S = this, E = this.E, c = E.ctx, o = this.o, se = o.season, L = o.light, w = o.world, st = stageEq(w, o.stage === undefined ? STAGE_TOP : +o.stage), ev = o.event, wx = o.weather || 'clear';
   var day = L === 'day' || L === 'morning', night = L === 'night', dusk = L === 'dusk', town = w === 'town', focus = !!o.focus;
   var wet = wx === 'rain' || wx === 'storm' || wx === 'typhoon', snowy = wx === 'snow' || wx === 'blizzard';
@@ -10062,8 +10532,7 @@ SnScene.prototype.build = function () {
     var lF = snFilt(c, 'lowpass', 300, 0.5), lG = snGain(c, 0.012 * k, S.gnd); lF.connect(lG); S.src('brown', lF, 1);
     var pF = snFilt(c, 'bandpass', 3200, 0.5), pG = snGain(c, 0.12 * k, S.nat); pF.connect(pG); S.src('patter', pF, 1); S.mod(pG.gain, 0.03 * k, 0.003);
     if (wx === 'typhoon') { S.mod(hG.gain, 0.03, 0.004); S.mod(pG.gain, 0.1, 0.005); } // lashing in waves
-    S.gen(1.1 / k, function (t) { snPlink(E, t, S.out('gnd', 0.009, r(-0.9, 0.9), 5000), r(900, 2600), r(0.4, 1), r(0.03, 0.06)); });            // drops on leaves and eaves (a few, soft: the patter carries the rain)
-    S.gen(0.16 / k, function (t) { snPlink(E, t, S.out('gnd', 0.005, r(-0.9, 0.9), 5000), r(1800, 4200), r(0.3, 1), 0.02); });               // rain on the pond / river
+    S.gen(9 / k, function (t) { snNoise(E, t, S.out('gnd', 0.03, r(-0.8, 0.8), 1200), { kind: 'brown', type: 'lowpass', f: r(450, 750), q: 0.6, att: 0.003, dec: r(0.03, 0.05), peak: r(0.5, 1) }); });   // (1.5) now and then a heavier drop off the eaves, a dull tap: the patter carries the rain, no ringing drops
     var gF = snFilt(c, 'bandpass', 1700, 1.8), gG = snGain(c, 0.012, S.gnd), gA = snGain(c, 0.6); gF.connect(gA); gA.connect(gG); S.src('pink', gF, 1);
     var gl = snOsc(c, 'sine', 6.3), gLg = snGain(c, 0.4, gA.gain); gl.connect(gLg); gl.start(S.t0); S.srcs.push(gl); S.mod(gl.frequency, 3, 0.003);   // gutter trickle
     if (wx === 'storm' || wx === 'typhoon') S.gen(wx === 'storm' ? 40 : 70, function (t) { if (S.E.lastThunder && t - S.E.lastThunder < 30) return; snThunder(E, t, S.out('nat', focus ? 0.15 : 0.28, r(-0.6, 0.6)), r(2.5, 9)); });
@@ -10072,8 +10541,240 @@ SnScene.prototype.build = function () {
       S.gen(3.5, function (t) { snKnock(E, t, S.out('gnd', 0.05, r(-0.9, 0.9)), r(320, 520), 1, 0.16); });   // bamboo knocking
     }
   }
-  if (snowy) { var sF2 = snFilt(c, 'highpass', 5200, 0.5), sG2 = snGain(c, wx === 'blizzard' ? 0.03 : 0.006, S.nat); sF2.connect(sG2); S.src('white', sF2, 1); S.mod(sG2.gain, wx === 'blizzard' ? 0.02 : 0.003, 0.004); }
+  if (wx === 'blizzard') { var sF2 = snFilt(c, 'highpass', 5200, 0.5), sG2 = snGain(c, wx === 'blizzard' ? 0.03 : 0.006, S.nat); sF2.connect(sG2); S.src('white', sF2, 1); S.mod(sG2.gain, wx === 'blizzard' ? 0.02 : 0.003, 0.004); }
   if (o.fireworks) { S.gen(0.4, function (t) { snVoice(E, t, S.out('gnd', 0.006, r(-1, 1), 1100), 1, r(0.6, 2.2)); }); }
+};
+
+/* ---- 22b_garden_scene.js ---- */
+/* ================= MogiSound: the garden's soundscape (1.5) =================
+   The calendar decides who is about: the day of the year and the hour (from the scene's date, moving on as the scene plays) set each
+   singer's activity. A singer keeps to one place for a bout of songs, then falls quiet; each layer (birds, cicadas, insects, frogs) has
+   only a few bouts going at once, so the garden is never busy. The water runs fuller in the rains and after them, thinner in winter,
+   muffled under snow; rain falls on the thatch, the leaves and the pond and drips from the eaves. */
+var GS_MD = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+function gsDoy(m, d) { return GS_MD[m - 1] + d - 1; }
+function gsS(u) { return u * u * (3 - 2 * u); }
+/* a window: nothing before a, rising to full at b, full until c, nothing again at d (wrapping round the period P when needed) */
+function gsWin(x, a, b, c, d, P) {
+  if (b < a) b += P; if (c < b) c += P; if (d < c) d += P; if (x < a) x += P;
+  return x <= a || x >= d ? 0 : x < b ? gsS((x - a) / (b - a)) : x <= c ? 1 : gsS((d - x) / (d - c));
+}
+function gsPh(doy, w) { return gsWin(doy, gsDoy(w[0], w[1]), gsDoy(w[2], w[3]), gsDoy(w[4], w[5]), gsDoy(w[6], w[7]), 365); }
+function gsHr(h, a, b, c, d) { return gsWin(h, a, b, c, d, 24); }
+/* the date the sounds follow: the scene's own, if it agrees with the season and the light; otherwise a typical day and hour for them */
+function gsCal(date0, se, L) {
+  var d = new Date(date0), y = d.getFullYear();
+  if (seasonFor(d) !== se) d = { spring: new Date(y, 3, 22, d.getHours(), d.getMinutes()), summer: new Date(y, 6, 28, d.getHours(), d.getMinutes()), autumn: new Date(y, 8, 22, d.getHours(), d.getMinutes()), winter: new Date(y, 0, 18, d.getHours(), d.getMinutes()) }[se] || d;
+  if (lightForDate(d) !== L) { var H = { morning: 6.5, day: 11.5, dusk: 17.6, night: 21.5 }[L] || 11.5; d = new Date(d.getFullYear(), d.getMonth(), d.getDate(), Math.floor(H), Math.round((H % 1) * 60)); }
+  return d;
+}
+/* how long since the rain stopped (hours, looked for back to 4 h; 99 if longer), as the painting reckons it for its wet stones */
+function gsRainGone(D) {
+  var k, t = D.getTime(), w;
+  for (k = 0; k <= 16; k++) { w = envWeather(new Date(t - k * 900000)); if (w === 'rain' || w === 'storm' || w === 'typhoon') return k * 0.25; }
+  return 99;
+}
+/* how much snow lies (0..1), from the last two days' weather: it builds while it snows, melts slowly by day, faster in rain */
+function gsSnowCover(D) {
+  var k, dep = 0, t = D.getTime();
+  for (k = 48; k >= 1; k--) {
+    var d = new Date(t - k * 3600000), w = envWeather(d), h = d.getHours(), sun = h >= 8 && h < 16;
+    if (w === 'snow') dep += 0.21; else if (w === 'blizzard') dep += 0.34; else if (w === 'rain' || w === 'storm') dep -= 0.16; else dep -= sun ? (w === 'cloudy' ? 0.025 : 0.05) : 0.01;
+    dep = clamp(dep, 0, 1.5);
+  }
+  return clamp(dep / 0.72, 0, 1);
+}
+/* a place in the garden: the level falls with distance, the air dulls the highs, and the farther it is the more of it is reverb */
+SnScene.prototype.far = function (group, dist, pan, lv) {
+  var c = this.E.ctx, d = Math.max(2, dist), dest = group === 'gnd' ? this.gnd : this.nat;
+  var p = snPan(c, pan, dest), lp = snFilt(c, 'lowpass', Math.min(18000, 15000 / (1 + d / 50)) * (this.airK || 1), 0.5, p), g = snGain(c, (lv || 1) * this.evK * 10 / d, lp);
+  lp.connect(snGain(c, (this.wetK || 1) * 0.1 * Math.pow(d / 10, 0.6), this.wet));
+  return g;
+};
+/* a singer: one bird (or insect, or frog) singing bouts of songs from one place, then quiet for a while.
+   o: {lay, v: voice(E, t, out, k), act: fn(t) -> 0..1, rest (s, at full activity), n: [a, b] songs a bout, gap: [a, b] s after each song,
+       dist: [a, b] m, pan: [a, b], lv, grp, ind: fn(t) -> the individual's traits, relay (each song from another singer: a chorus in turn),
+       move (the flock drifts), ans (the chance another answers from farther off), ansDist} */
+SnScene.prototype.singer = function (o) {
+  var S = this, st = { left: 0, until: 0 }, lays = S.lays || (S.lays = {}), Ls = lays[o.lay] || (lays[o.lay] = []);
+  Ls.push(st);
+  var place = function (t) { st.d = S.r(o.dist[0], o.dist[1]); st.pan = S.r(o.pan ? o.pan[0] : -0.85, o.pan ? o.pan[1] : 0.85); st.k = o.ind ? o.ind(t) : null; };
+  var a0 = o.act(S.t0), first = S.t0 + S.r(1, 8) + (a0 < 0.02 ? 30 : Math.pow(S.E.rnd(), 2) * -Math.log(1 - S.E.rnd() * 0.98) * o.rest / Math.max(0.06, a0) * (S.restK || 1) * (o.soon || 1));
+  S.gens.push({ next: first, fn: function (t) {
+    if (st.left <= 0) {
+      var a = o.act(t), busy = 0;
+      if (a < 0.02) return t + S.r(20, 40);
+      Ls.forEach(function (q) { if (q !== st && q.until > t) busy++; });
+      if (busy >= (S.layMax[o.lay] || 2)) return t + S.r(4, 12);
+      st.left = Math.max(1, Math.round(S.r(o.n[0] - 0.49, o.n[1] + 0.49))); place(t); st.until = Infinity;
+    } else if (o.relay) place(t);
+    else if (o.move) st.pan = clamp(st.pan + S.r(-o.move, o.move), -0.95, 0.95);
+    var end = t + 1;
+    try { end = o.v(S.E, t, S.far(o.grp || 'nat', st.d, st.pan, o.lv), st.k) || t + 1; } catch (e) { }
+    if (o.ans && S.E.rnd() < o.ans) { // another answers, from farther off (now and then before the first has finished)
+      var ad = o.ansDist || [o.dist[0] * 1.6, o.dist[1] * 2];
+      try { end = Math.max(end, o.v(S.E, end + S.r(-0.5, 2), S.far(o.grp || 'nat', S.r(ad[0], ad[1]), S.r(-0.9, 0.9), o.lv), o.ind ? o.ind(t) : null) || end); } catch (e) { }
+    }
+    st.left--;
+    if (st.left > 0) return end + S.r(o.gap[0], o.gap[1]);
+    st.until = end;
+    return end + Math.max(o.rest * 0.2, -Math.log(1 - S.E.rnd() * 0.98) * o.rest / Math.max(0.06, o.act(end))) * (S.restK || 1);
+  } });
+};
+SnScene.prototype.buildGarden = function () {
+  var S = this, E = this.E, c = E.ctx, o = this.o, se = o.season, L = o.light, sp = stageEq('garden', o.stage === undefined ? STAGE_TOP : +o.stage), ev = o.event, wx = o.weather || 'clear';
+  var night = L === 'night', dusk = L === 'dusk', focus = !!o.focus;
+  var wet = wx === 'rain' || wx === 'storm' || wx === 'typhoon', snowy = wx === 'snow' || wx === 'blizzard';
+  var D = gsCal(this.date0, se, L), own = D.getTime() === this.date0;
+  var doy0 = gsDoy(D.getMonth() + 1, D.getDate()), h0 = D.getHours() + D.getMinutes() / 60 + D.getSeconds() / 3600;
+  var hAt = function (t) { return (h0 + (t - S.t0) / 3600) % 24; }, dAt = function (t) { return (doy0 + Math.floor((h0 + (t - S.t0) / 3600) / 24)) % 365; };
+  var ph = function (t, w) { return gsPh(dAt(t), w); }, hr = function (t, a, b, c2, d) { return gsHr(hAt(t), a, b, c2, d); };
+  var tsuyu = gsPh(doy0, [6, 3, 6, 10, 7, 14, 7, 22]) > 0.5;
+  var real = own && envWeather(D) === wx, gone = o.after !== undefined ? (o.after ? 0.3 : 99) : real && !wet && !snowy ? gsRainGone(D) : 99, after = gone <= 2;
+  var cover = snowy ? 1 : o.snowCover !== undefined ? +o.snowCover : real && se === 'winter' ? gsSnowCover(D) : 0, mute = o.mute || '';
+  var F = { pond: sp >= 7, stream: sp >= 9.5, house: sp >= 13, fall: sp >= 15, bamboo: sp >= 18.5 };
+  var birdK = (wet ? 0.05 : snowy ? 0.05 : wx === 'cloudy' ? 0.7 : 1) * (after ? 1.4 : 1) * (se === 'winter' ? 0.6 * (1 - 0.5 * cover) : 1);   // winter: a call now and then; in snow hardly ever
+  var r = function (a, b) { return S.r(a, b); };
+  this.evK = focus ? 0.7 : 1; this.restK = focus ? 1.8 : 1;
+  this.airK = snowy ? 0.45 : cover > 0.2 ? 0.75 : 1; this.wetK = snowy ? 0.3 : cover > 0.2 ? 0.6 : 1;   // snow takes the highs and the echoes
+  this.send.gain.value = 0.1 * this.wetK;            // the beds keep only a little room; the voices bring their own
+  this.layMax = { bird: focus || snowy || cover > 0.3 ? 1 : 2, cicada: 1, abura: 1, kana: 1, insect: focus ? 2 : 3, frog: focus ? 1 : 2 };
+  if (snowy) this.mufLP.frequency.value = wx === 'blizzard' ? 5000 : 2000; else if (cover > 0.2) this.mufLP.frequency.value = 4500;
+  var M = function (k) { return mute.indexOf(k) >= 0; };   // (for checking: o.mute names the parts left out)
+  var sing = function (lay, v, act, rest, n, gap, dist, lv, more) { if (M(lay)) return; var q = { lay: lay, v: v, act: act, rest: rest, n: n, gap: gap, dist: dist, lv: lv }, key; if (more) for (key in more) q[key] = more[key]; S.singer(q); };
+  // ---------- wind: the shared wind, in the season's leaves (in winter, with the grove, the bamboo's dry rustle) ----------
+  var wBase = { spring: 0.6, summer: 0.4, autumn: 0.7, winter: 0.85 }[se] || 0.6, bam = se === 'winter' && F.bamboo, beds = [];
+  var roarF = snFilt(c, 'lowpass', 420, 0.6), roar = snGain(c, 0, S.nat); roarF.connect(roar); S.src('brown', roarF, 1); S.mod(roarF.frequency, 160, 0.0011);
+  var rustF = snFilt(c, 'bandpass', bam ? 5200 : se === 'autumn' ? 4200 : 3000, bam ? 0.9 : 0.7), rust = snGain(c, 0, S.nat); rustF.connect(rust); S.src('pink', rustF, 1); S.mod(rustF.frequency, bam ? 1300 : 900, 0.0013);
+  var howl = null;
+  if (se === 'winter' || wx === 'typhoon' || wx === 'blizzard' || wx === 'storm') { // whistling corners and eaves
+    howl = snGain(c, 0, S.nat);
+    [[wx === 'blizzard' ? 1300 : 640, 9], [wx === 'blizzard' ? 1750 : 900, 11], [470, 5]].forEach(function (q, i) { var f = snFilt(c, 'bandpass', q[0], q[1]), fg2 = snGain(c, 0.5, howl); f.connect(fg2); S.src('pink', f, 1); S.mod(f.frequency, q[0] * 0.25, 0.0016 + i * 0.0004); S.mod(fg2.gain, 0.5, 0.004 + i * 0.001); });
+  }
+  var heavy = wx === 'typhoon' ? 0.55 : wx === 'blizzard' ? 0.5 : wx === 'storm' ? 0.3 : 0, hush = snowy && wx !== 'blizzard' ? 0.4 : 1 - 0.4 * cover;   // falling or lying, snow hushes the air
+  S.gens.push({ next: S.t0, fn: function (t) {
+    var W = S.windAt(t), s = Math.min(3, W.strength), q = (focus ? 0.7 : 1) * hush * (M('wind') ? 0 : 1);
+    roar.gain.setTargetAtTime((0.012 + 0.04 * s * wBase + heavy * 0.09 * s) * q, t, 0.9);
+    roarF.frequency.setTargetAtTime(240 + 260 * Math.min(2, s) + heavy * 300, t, 1.2);
+    rust.gain.setTargetAtTime((0.004 + 0.016 * s * (se === 'autumn' ? 1.5 : 1) * (se === 'winter' ? (bam ? 0.8 : 0.4) : 1) + heavy * 0.025 * s) * q * hush, t, 0.7);
+    if (howl) howl.gain.setTargetAtTime((se === 'winter' ? 0.012 * Math.max(0, s - 0.75) * hush * hush : 0) + heavy * 0.045 * s * q, t, 0.5);
+    S.windNow = W;
+    for (var i = 0; i < beds.length; i++) beds[i].g.gain.setTargetAtTime(beds[i].lv(t), t, 2.5);
+    return t + 1;
+  } });
+  if (!focus || heavy) S.gen(function () { return 26 / hush / Math.max(0.3, (S.windNow ? S.windNow.strength : 0.5) * (1 + heavy * 3)); }, function (t) { // a gust through the leaves
+    snNoise(E, t, S.out('nat', 1, r(-0.6, 0.6)), { kind: 'pink', type: 'bandpass', f: bam ? r(3500, 6500) : r(1800, 4500), q: 0.6, att: r(0.6, 1.4), hold: r(0.4, 1.5), dec: r(1, 2.5), peak: (0.012 + 0.03 * heavy) * hush * S.evK });
+  });
+  if (F.bamboo && !focus && !snowy && cover < 0.3) S.gen(function () { return 60 / Math.max(0.2, (S.windNow ? S.windNow.strength : 0.5) - 0.3); }, function (t) { // two culms knocking in the wind
+    var w = S.windNow ? S.windNow.strength : 0.5; if (w < 0.8) return;
+    var o1 = S.far('nat', r(18, 30), r(-0.9, -0.3), 0.3), f = r(340, 480), i; for (i = 0; i < 2 + (E.rnd() * 3 | 0); i++) snKnock(E, t + i * r(0.18, 0.4), o1, f * r(0.97, 1.03), r(0.4, 1) * hush * (i ? 0.7 : 1), 0.09);
+  });
+  // ---------- water: the stream and its babble over the stones, the waterfall; fuller in the rains, thinner in winter, muffled under snow ----------
+  var wF = Math.min(1.45, (tsuyu ? 1.3 : 1) * (wet ? (wx === 'rain' ? 1.15 : 1.4) : after ? 1.25 : 1)) * (se === 'winter' ? 0.7 : 1) * (!wet && gsPh(doy0, [8, 1, 8, 10, 8, 31, 9, 10]) > 0.5 ? 0.9 : 1);
+  var wMuf = snowy ? 0.4 : 1 - 0.5 * cover, wD = snowy ? 0.45 : 1 - 0.4 * cover;   // under snow the water is muffled and softer
+  if (wet) wF = 1 + (wF - 1) * 0.3;   // (in the rain itself the rain is the sound: the water only a little fuller under it)
+  if (F.pond && !M('water')) {
+    var sLP = snFilt(c, 'lowpass', (2400 + 1600 * clamp(wF - 0.7, 0, 1)) * wMuf, 0.5, S.gnd);
+    var sF = snFilt(c, 'bandpass', se === 'winter' ? 1500 : 1250, 0.55), sg = snGain(c, 0.012 * wF * wD, sLP); sF.connect(sg); S.src('pink', sF, 1); S.mod(sg.gain, 0.004 * wF, 0.004);
+    var bF = snFilt(c, 'bandpass', 950, 0.45), bg = snGain(c, (F.stream ? 0.018 : 0.011) * (wet ? 1 : Math.min(wF, 1.15)) * wD, sLP); bF.connect(bg); S.src('babble', bF, se === 'winter' ? 1.1 : 1); S.mod(bg.gain, 0.006 * wD, 0.003);
+  }
+  if (F.fall && !M('water')) {
+    var fF = snFilt(c, 'lowpass', (1900 + 900 * Math.min(1.3, wF)) * wMuf, 0.5), fH = snFilt(c, 'highpass', 140, 0.5, fF), fg = snGain(c, 0.02 * (0.5 + 0.5 * wF) * wD, S.gnd); fF.connect(fg); S.src('pink', fH, 1); S.mod(fg.gain, 0.004, 0.003);
+    var fpF = snFilt(c, 'bandpass', 1400, 0.6), fpG = snGain(c, 0.02 * wF * wMuf * wD, S.gnd); fpF.connect(fpG); S.src('rain', fpF, 0.7); S.mod(fpG.gain, 0.006 * wD, 0.004);   // the plunge pool's spatter
+  }
+  // ---------- birds ----------
+  sing('bird', GSB.uguisu, function (t) { return birdK * ph(t, [2, 18, 3, 22, 6, 15, 7, 31]) * (hr(t, 4.6, 5.4, 9.5, 12.5) + 0.6 * hr(t, 12.5, 13.5, 16.5, 18.6)); }, 80, [3, 8], [6, 11], [16, 45], 0.09,
+    { ind: function (t) { return { p: r(0.92, 1.08), q: r(0.92, 1.08), d1: r(0.95, 1.5), runP: 0.06, imm: clamp((gsDoy(4, 1) - dAt(t)) / 38, 0, 0.9) }; }, ans: 0.12, ansDist: [45, 90], soon: 0.3 });
+  sing('bird', GSB.sasa, function (t) { return birdK * ph(t, [11, 15, 12, 10, 2, 15, 3, 10]) * hr(t, 7, 8, 15, 16.5); }, 260, [3, 9], [0.6, 2.2], [7, 16], 0.03);
+  sing('bird', GSB.shijukara, function (t) { return birdK * Math.max(ph(t, [1, 25, 2, 25, 6, 5, 7, 10]), 0.35 * ph(t, [9, 1, 9, 20, 10, 25, 11, 20]), se === 'winter' ? 0.05 : 0.15) * (hr(t, 5, 6, 10, 12) + 0.4 * hr(t, 12, 12.5, 15.5, 17)); }, 240, [2, 4], [5, 10], [14, 40], 0.04,
+    { ind: function () { return { p: r(0.95, 1.05), two: E.rnd() < 0.3, per: r(0.44, 0.52) }; }, ans: 0.15 });
+  sing('bird', GSB.mejiro, function (t) { return birdK * (0.25 + 0.75 * ph(t, [10, 25, 11, 25, 4, 10, 5, 20])) * hr(t, 6, 7, 15.5, 17); }, 300, [5, 12], [0.25, 1.4], [8, 22], 0.03, { move: 0.12 });
+  sing('bird', GSB.mejiroSong, function (t) { return birdK * ph(t, [3, 1, 3, 25, 6, 10, 7, 5]) * hr(t, 5, 6, 9.5, 11.5); }, 320, [1, 3], [4, 9], [15, 30], 0.035);
+  sing('bird', GSB.hiyodori, function (t) { return birdK * (0.35 + 0.65 * ph(t, [9, 25, 10, 20, 4, 10, 5, 10])) * hr(t, 5.5, 6.5, 16, 17.5); }, 200, [1, 3], [5, 16], [35, 90], 0.11);
+  sing('bird', GSB.mozu, function (t) { return birdK * (ph(t, [9, 15, 10, 1, 11, 10, 12, 15]) + 0.25 * ph(t, [12, 1, 12, 20, 2, 10, 3, 1])) * (hr(t, 6, 6.5, 10, 12) + 0.35 * hr(t, 12, 12.5, 15.5, 16.5)); }, 260, [1, 3], [8, 20], [50, 100], 0.13);
+  sing('bird', GSB.kijibato, function (t) { return birdK * (se === 'winter' ? 0.25 : 0.45 + 0.55 * ph(t, [3, 20, 4, 15, 8, 20, 9, 20])) * (hr(t, 4.8, 5.5, 9, 11) + 0.3 * hr(t, 11, 12, 16, 17.5)); }, 280, [3, 6], [1.2, 2.2], [35, 70], 0.1,
+    { ind: function () { return { p: r(0.95, 1.05), q: r(0.94, 1.06) }; } });
+  sing('bird', GSB.suzume, function (t) { return birdK * hr(t, 5, 6, 16.5, 18); }, 200, [1, 3], [2, 6], [14, 35], 0.03);
+  if (!focus) sing('bird', GSB.karasu, function (t) { return birdK * (se === 'winter' ? 1 : 0.5) * hr(t, 5, 6, 16.5, 18); }, 420, [1, 2], [3, 8], [80, 160], 0.18);
+  sing('bird', GSB.jobitaki, function (t) { return birdK * ph(t, [10, 25, 11, 15, 3, 1, 3, 31]) * hr(t, 7, 8, 15.5, 16.5); }, 420, [3, 6], [1.5, 4], [10, 28], 0.035);
+  sing('bird', GSB.hototogisu, function (t) { return birdK * ph(t, [5, 15, 6, 1, 7, 5, 7, 31]) * (hr(t, 3.5, 4, 6.5, 8) + 0.5 * hr(t, 19.5, 20.5, 23, 24)); }, 420, [2, 5], [3, 8], [90, 160], 0.25);
+  sing('bird', GSB.fukurou, function (t) { return birdK * ph(t, [10, 15, 11, 15, 2, 15, 3, 20]) * hr(t, 18.5, 19.5, 4, 5); }, 320, [1, 3], [6, 15], [70, 140], 0.3);
+  // ---------- cicadas: by the month and the hour, from the trees at a distance ----------
+  var cicK = wet || snowy ? 0 : wx === 'cloudy' ? 0.55 : 1;
+  var aburaA = function (t) { return cicK * ph(t, [7, 12, 7, 26, 8, 25, 9, 15]) * hr(t, 7.5, 9.5, 16.8, 18.3); }, minA = function (t) { return cicK * ph(t, [7, 18, 8, 1, 8, 31, 9, 20]) * (hr(t, 6.5, 8, 12, 14) + 0.35 * hr(t, 14, 14.5, 16, 17)); };
+  sing('cicada', GSI.niinii, function (t) { return cicK * ph(t, [6, 22, 7, 5, 7, 25, 8, 15]) * hr(t, 6.5, 8, 16.5, 18.5); }, 70, [1, 2], [3, 20], [25, 60], 0.22);
+  sing('cicada', GSI.minmin, minA, 70, [1, 3], [6, 16], [25, 70], 0.32);
+  sing('abura', GSI.abura, aburaA, 45, [1, 2], [3, 15], [25, 60], 0.24);
+  sing('abura', GSI.abura, aburaA, 60, [1, 2], [3, 15], [50, 100], 0.24);
+  sing('kana', GSI.higurashi, function (t) { return (wet || snowy ? 0 : 1) * ph(t, [6, 25, 7, 10, 8, 31, 9, 20]) * (hr(t, 3.9, 4.4, 5.6, 6.6) + hr(t, 16.6, 17.4, 18.7, 19.4) + (wx === 'cloudy' ? 0.25 * hr(t, 10, 12, 15, 16.6) : 0)); }, 25, [3, 7], [0.3, 3], [55, 140], 0.55, { relay: true });
+  sing('cicada', GSI.tsukutsuku, function (t) { return cicK * ph(t, [8, 5, 8, 20, 9, 20, 10, 5]) * hr(t, 9, 11, 16, 17.5); }, 110, [1, 2], [10, 30], [30, 70], 0.35);
+  var soon = function (fn) { for (var k = 0; k <= 4; k++) if (fn(S.t0 + k * 2700) > 0.01) return true; return false; };   // (a bed is made only if it will be heard in the next few hours)
+  if (cicK && soon(function (t) { return Math.max(aburaA(t), minA(t)); })) { // the far trees: a faint shimmer of many cicadas, under the few nearer ones
+    var cbF = snFilt(c, 'bandpass', 4600, 0.9), cbL = snFilt(c, 'lowpass', 6500, 0.5, null), cbG = snGain(c, 0, S.nat); cbF.connect(cbL); cbL.connect(cbG); S.src('sizzle', cbF, 0.93); S.mod(cbG.gain, 0.002, 0.0008);
+    beds.push({ g: cbG, lv: function (t) { return 0.016 * S.evK * Math.max(aburaA(t), minA(t)); } });
+  }
+  // ---------- insects of the autumn nights ----------
+  var bugK = wet ? 0.15 : snowy ? 0 : 1, many = ev === 'tsukimi' ? 1.6 : 1, nightH = function (t) { return hr(t, 17, 18.5, 3, 4.5); };
+  var suzA = function (t) { return bugK * many * ph(t, [8, 12, 8, 28, 9, 28, 10, 25]) * nightH(t); };
+  var suzK = function () { return { p: r(0.985, 1.015), d: r(0.9, 1.1), gap: r(0.8, 1.2), am: r(0.95, 1.05) }; };
+  sing('insect', GSI.suzumushi, suzA, 22, [3, 8], [0.4, 2.5], [4, 9], 0.013, { ind: suzK, grp: 'gnd' });
+  sing('insect', GSI.suzumushi, suzA, 26, [3, 8], [0.4, 2.5], [12, 22], 0.013, { ind: suzK, grp: 'gnd' });
+  sing('insect', GSI.matsumushi, function (t) { return bugK * many * ph(t, [8, 22, 9, 8, 10, 10, 11, 5]) * nightH(t); }, 30, [4, 12], [1.5, 4], [14, 32], 0.02, { grp: 'gnd' });
+  var koroA = function (t) { return bugK * ph(t, [8, 8, 9, 1, 10, 25, 11, 28]) * (nightH(t) + 0.12 * hr(t, 9, 10, 16, 17)); };
+  sing('insect', GSI.korogi, koroA, 20, [4, 12], [0.8, 2.5], [6, 15], 0.012, { grp: 'gnd' });
+  sing('insect', GSI.korogi, koroA, 24, [4, 12], [0.8, 2.5], [15, 30], 0.012, { grp: 'gnd' });
+  sing('insect', GSI.tsuzure, function (t) { return bugK * ph(t, [9, 25, 10, 20, 11, 20, 12, 10]) * (nightH(t) + 0.3 * hr(t, 10, 11, 15, 16)); }, 40, [3, 8], [1, 4], [5, 14], 0.01, { grp: 'gnd' });
+  sing('insect', GSI.kanetataki, function (t) { return bugK * ph(t, [9, 1, 9, 20, 11, 5, 11, 30]) * (0.6 + 0.4 * nightH(t)); }, 70, [2, 5], [2, 6], [6, 15], 0.007);
+  if (!focus) sing('insect', GSI.kutsuwa, function (t) { return bugK * ph(t, [8, 12, 8, 25, 9, 20, 10, 5]) * hr(t, 19, 19.5, 22.5, 23.5); }, 320, [1, 1], [5, 10], [60, 110], 0.035, { grp: 'gnd' });
+  if (bugK && soon(function (t) { return Math.max(suzA(t), koroA(t) * nightH(t)); })) { // and beyond the fence, countless more: a faint ringing shimmer
+    var ibF = snFilt(c, 'bandpass', 4450, 18), ibF2 = snFilt(c, 'bandpass', 4100, 14), ibA = snGain(c, 0.6), ibG = snGain(c, 0, S.gnd); ibF.connect(ibA); ibF2.connect(ibA); ibA.connect(ibG); S.src('pink', ibF, 1); S.src('pink', ibF2, 0.97);
+    var ibL = snOsc(c, 'sine', 38), ibLg = snGain(c, 0.4, ibA.gain); ibL.connect(ibLg); ibL.start(S.t0); S.srcs.push(ibL); S.mod(ibG.gain, 0.004, 0.0009);
+    beds.push({ g: ibG, lv: function (t) { return 0.009 * S.evK * Math.max(suzA(t), 0.6 * koroA(t) * nightH(t)); } });
+  }
+  // ---------- frogs by the pond, and the stream's kajika ----------
+  if (F.pond) {
+    var frogK = snowy ? 0 : wet ? 1.4 : 1;
+    var amaA = function (t) { return frogK * (tsuyu ? 1.3 : 1) * ph(t, [4, 18, 5, 8, 7, 10, 8, 15]) * hr(t, 17, 18.5, 1, 3); };
+    sing('frog', GSI.amagaeru, amaA, 45, [2, 7], [0.4, 2.8], [6, 14], 0.016, { pan: [-0.1, 0.6], grp: 'gnd' });
+    sing('frog', GSI.amagaeru, amaA, 55, [2, 7], [0.4, 2.8], [10, 22], 0.016, { pan: [-0.5, 0.7], grp: 'gnd' });
+    sing('frog', GSI.tonosama, function (t) { return frogK * ph(t, [5, 1, 5, 20, 7, 15, 8, 15]) * hr(t, 19, 20, 2, 4); }, 220, [1, 3], [2, 6], [8, 18], 0.03, { grp: 'gnd' });
+    if (F.stream) sing('frog', GSI.kajika, function (t) { return (snowy ? 0 : 1) * ph(t, [4, 28, 5, 18, 7, 5, 7, 31]) * (hr(t, 16, 17.5, 22, 23.5) + 0.35 * hr(t, 9, 10, 16, 17)); }, 80, [2, 6], [3, 10], [8, 18], 0.035, { pan: [-0.7, 0.1], grp: 'gnd' });
+  }
+  // ---------- events ----------
+  if (ev === 'obon' && (night || dusk)) { S.gen(2.6, function (t) { var o1 = S.out('gnd', 0.04, r(-0.2, 0.2), 700); [0, 0.65, 1.3, 1.62, 1.95].forEach(function (x, i) { snTaiko(E, t + x, o1, i === 0 ? 1 : 0.7, 62); }); }, 0.3); }
+  if (ev === 'shogatsu') S.gen(focus ? 22 : 14, function (t) { snKotoPhrase(E, t, S.out('gnd', 0.06, r(-0.3, 0.3), 5000), 1); });
+  if (o.fireworks) { S.gen(0.4, function (t) { snVoice(E, t, S.out('gnd', 0.006, r(-1, 1), 1100), 1, r(0.6, 2.2)); }); }
+  // ---------- drops: now and then a heavier drop from the eaves or a leaf onto stone or moss: a dull, low tap, never a ringing one ----------
+  var taps = function (n, per, lv, rate) {
+    for (var i = 0; i < n; i++) (function () {
+      var spot = S.far('gnd', r(5, 10), r(-0.7, 0.5), lv), p0 = per * r(0.7, 1.5);
+      S.gens.push({ next: S.t0 + r(1, p0), fn: function (t) { var q = rate ? rate(t) : 1; if (q > 0.03) snNoise(E, t, spot, { kind: 'brown', type: 'lowpass', f: r(450, 750), q: 0.6, att: 0.003, dec: r(0.03, 0.05), peak: r(0.5, 1) }); return t + p0 * r(0.6, 1.7) / Math.max(0.03, q); } });
+    })();
+  };
+  // ---------- weather ----------
+  E.gsHush = { rain: 0, after: after ? Math.exp(-gone / 0.6) : 0, cover: cover };   // (the cues read it: how hushed the garden is just now)
+  if (wet && !M('rain')) {
+    // rain: a soft, dense, even wash of countless tiny impacts on the leaves, the moss and the gravel, wide across the garden; a crisper patter on the
+    // thatch and the near eaves; a hush from farther off. Drizzle soft and fine, a downpour fuller and lower; nothing that rings, nothing harsh
+    var k = wx === 'rain' ? (tsuyu ? 0.2 : 0.4) : wx === 'storm' ? 0.62 : 0.78, full = clamp((k - 0.28) / 0.5, 0, 1), fine = clamp((0.4 - k) / 0.2, 0, 1);   // 梅雨's drizzle .. a typhoon's downpour
+    E.gsHush.rain = k;
+    var wHP = snFilt(c, 'highpass', 320 - 150 * full + 160 * fine, 0.5), wLP = snFilt(c, 'lowpass', 6000 - 2800 * full, 0.5, null), wG = snGain(c, 0.06 * k, S.nat);
+    wHP.connect(wLP); wLP.connect(wG); S.src('rain', wHP, 1); S.mod(wG.gain, 0.012 * k, 0.0012);   // the wash and its fine grain
+    S.src('brown', snGain(c, 0.05 * k, wG.gain), 0.0015);   // swelling and easing slowly, over a few seconds
+    var w2F = snFilt(c, 'bandpass', 1200 - 350 * full, 0.5), w2G = snGain(c, 0.04 * k * (1 - 0.5 * fine), S.nat); w2F.connect(w2G); S.src('rain', w2F, 0.83); S.mod(w2G.gain, 0.009 * k, 0.0017);
+    var hzF = snFilt(c, 'lowpass', 800 + 500 * full, 0.5), hzG = snGain(c, 0.014 * k * (1 + full), S.nat); hzF.connect(hzG); S.src('pink', hzF, 1);   // the hush beyond the wall
+    if (full > 0.2) { var dF = snFilt(c, 'lowpass', 320, 0.5), dG = snGain(c, 0.02 * k * full, S.gnd); dF.connect(dG); S.src('brown', dF, 1); S.mod(dG.gain, 0.006 * k * full, 0.0015); }   // the weight of a downpour
+    if (F.house) { var thF = snFilt(c, 'bandpass', 3000 - 900 * full, 0.6), thL = snFilt(c, 'lowpass', 6500 - 2000 * full, 0.5, S.far('gnd', 7, -0.3, 0.035 * k)); thF.connect(thL); S.src('rainc', thF, 1); }   // on the thatch and the near eaves
+    taps(F.house ? 2 : 1, 24, 0.03 * Math.min(1, k));   // (rare: a few a minute)
+    if (wx === 'storm' || wx === 'typhoon') S.gen(wx === 'storm' ? 40 : 70, function (t) { if (S.E.lastThunder && t - S.E.lastThunder < 30) return; snThunder(E, t, S.out('nat', focus ? 0.15 : 0.28, r(-0.6, 0.6)), r(2.5, 9)); });
+    if (wx === 'typhoon') {
+      S.gen(5, function (t) { var o1 = S.out('gnd', 0.05, r(-0.9, 0.9), 4000), n = 4 + (E.rnd() * 14 | 0), f = r(380, 700), i; for (i = 0; i < n; i++) snKnock(E, t + i * r(0.03, 0.06), o1, f * r(0.95, 1.05), r(0.4, 1), 0.03); });   // shutters rattling
+      S.gen(3.5, function (t) { snKnock(E, t, S.out('gnd', 0.05, r(-0.9, 0.9)), r(320, 520), 1, 0.16); });   // bamboo knocking
+    }
+  } else if (after) { // after the rain: a last few drops from the eaves and the leaves, dull and soft, fewer and fewer
+    var aK = function (t) { return Math.exp(-(gone + (t - S.t0) / 3600) / 0.6); };
+    taps(2, 15, 0.022, aK);
+  }
 };
 
 /* ================= the engine wrapper and window.MogiSound ================= */
@@ -10087,7 +10788,7 @@ function sndEnsure() {
   return SND.E;
 }
 function sndApplyVol() { if (!SND.E) return; var v = SND.muted ? 0 : SND.vol; SND.E.out.gain.setTargetAtTime(0.75 * v, SND.ctx.currentTime, 0.08); }
-function sndKey(o) { return [o.world, o.season, o.light, o.stage, o.event || '', o.weather || '', o.fireworks ? 1 : 0, o.focus ? 1 : 0].join('|'); }
+function sndKey(o) { return [o.world, o.season, o.light, o.stage, o.event || '', o.weather || '', o.fireworks ? 1 : 0, o.focus ? 1 : 0, o.after === undefined ? '' : o.after ? 1 : 0, o.snowCover === undefined ? '' : Math.round(o.snowCover * 3)].join('|'); }
 function sndTick() {
   if (!SND.E) return;
   var t = SND.ctx.currentTime + 1.4;
@@ -10099,6 +10800,9 @@ function sndNorm(o) {
   n.season = ['spring', 'summer', 'autumn', 'winter'].indexOf(o.season) >= 0 ? o.season : seasonOfDate(d);
   n.light = ['morning', 'day', 'dusk', 'night'].indexOf(o.light) >= 0 ? o.light : lightForDate(d);
   n.stage = o.stage === undefined ? STAGE_TOP : +o.stage; n.event = o.event || null; n.sky = !!o.sky; n.focus = !!o.focus; n.date = o.date || null;
+  if (o.after !== undefined && o.after !== null) n.after = !!o.after;   // (1.5) the garden may say it has just rained, or how much snow lies (0..1)
+  if (o.snowCover !== undefined && o.snowCover !== null) n.snowCover = clamp(+o.snowCover || 0, 0, 1);
+  if (o.mute) n.mute = String(o.mute);
   var wx = WX_ALL.indexOf(o.weather) >= 0 ? o.weather : envWeather(d);
   if ((wx === 'snow' || wx === 'blizzard') && n.season !== 'winter') wx = 'rain';
   n.weather = wx;
@@ -10106,10 +10810,45 @@ function sndNorm(o) {
   return n;
 }
 /* cues: short, gentle sounds on their own bus (with a little room) */
-function sndCue(E, name, arg, focus, at) {
+function sndCue(E, name, arg, focus, at, so) {
   var c = E.ctx, t = at !== undefined ? at : c.currentTime + 0.03, k = focus ? 0.55 : 1, out = function (lv, pan, lp) { var p = snPan(c, pan || 0, E.cueBus), h = lp ? snFilt(c, 'lowpass', lp, 0.5, p) : p; return snGain(c, lv * k, h); };
   var R = function (a, b) { return snR(E, a, b); };
   if (name.slice(0, 3) === '_v:') { var nm = name.slice(3), fn = BIRD[nm] || BUG[nm] || RARE[nm]; if (fn) fn(E, t, out(0.3, 0)); return; }
+  if (!so || so.world !== 'town') { // (1.5) the garden's own sounds
+    var chz = E.gsHush || {}, cwet = chz.rain || 0, caft = chz.after || 0, ccov = chz.cover || 0, chush = cwet > 0 || caft > 0.05 || ccov > 0.2;   // in the rain, just after it, or in snow
+    var gse = so && so.season, muf = so && (so.weather === 'snow' || so.weather === 'blizzard') ? 2600 : ccov > 0.2 ? 4000 : cwet ? 4500 : 0, gid = arg && typeof arg === 'object' ? arg.id : arg;
+    var num = function (v, d) { if (v && typeof v === 'object') v = v.len !== undefined ? v.len : v.strength !== undefined ? v.strength : v.k !== undefined ? v.k : v.id; v = parseFloat(v); return isFinite(v) ? clamp(v, 0, 1) : d; };
+    switch (name) {
+      case 'rake': // the rake drawn through the gravel, piece by piece as the finger goes (arg: the piece's length, 0..1)
+        snRake(E, t, E.rake && E.rake.end >= t + 0.03 ? null : out(0.42, R(-0.3, 0.1), 9000), num(arg, 0.3)); return;
+      case 'furin': // the 風鈴 at the eave (arg: how hard the breeze swung it, 0..1); one bell, one pitch
+        var fa = num(arg, 0.6); snFurinGlass(E, t, out(0.1 * (0.45 + 0.55 * fa), R(0.25, 0.45), 12000), 0.45 + 0.55 * fa, E.furinF || (E.furinF = R(2150, 2550))); return;
+      case 'lantern-light': snLanternLight(E, t, out(0.32, R(-0.25, -0.05), 6500)); return;
+      case 'reward': snReward(E, t + 0.4, out(0.32, R(-0.3, 0.3), 6000), gid); return;
+      case 'shishi': // 鹿威し: the bamboo strikes its stone, a hollow カーン, never quite the same twice; the water poured out after it
+        var shk = cwet ? 0.55 : ccov > 0.2 ? 0.7 : 1, so1 = out(R(0.095, 0.115) * shk, R(0, 0.2), muf || 9000), sf = R(530, 600);   // (softer under the rain or the snow)
+        snNoise(E, t, so1, { f: sf * 2.2, q: 4, dec: 0.02, peak: 0.5 });
+        snPhrase(E, t, so1, [{ t: 0, d: 0.26, f: [sf * 1.03, sf], a: 1, s: 0.05 }], { harm: [[1, 1], [2.74, 0.25], [4.1, 0.06]], att: 0.001, rel: 0.08 });
+        snNoise(E, t + 0.05, out(0.08 * shk, 0.1, muf || 3000), { kind: 'pink', f: 1300, q: 0.7, att: 0.05, hold: 0.25, dec: 0.4 }); return;
+      case 'drip': // a drop from the spout into the tsukubai's basin, a small ring in the stone (or a touch on the water); in the rain, just after it or in snow only a soft, dull touch
+        if (chush) { snNoise(E, t, out(cwet ? 0.05 : 0.07, R(-0.5, -0.3), 1500), { kind: 'pink', type: 'lowpass', f: R(700, 950), q: 0.5, att: 0.002, dec: R(0.04, 0.06), peak: 1 }); return; }
+        var dbs = snFilt(E.ctx, 'peaking', R(700, 820), 6, out(0.12, R(-0.5, -0.3), muf || 0)); dbs.gain.value = 5; gsDrop(E, t, dbs, 'water', 1, R(0.92, 1.08)); return;
+      case 'splash': // a koi at the surface: a soft slap, the drops falling back (in the rain, just after it or in snow softer, and the drops dull)
+        var spo = out(0.18 * (cwet ? 0.5 : chush ? 0.75 : 1), R(-0.4, 0.4), muf || 0), si; snNoise(E, t, spo, { kind: 'pink', type: 'lowpass', f: 1800, q: 0.6, att: 0.004, dec: 0.12, peak: 0.7 });
+        for (si = 0; si < 4 + (E.rnd() * 4 | 0); si++) {
+          if (chush) snNoise(E, t + 0.06 + si * R(0.03, 0.09), spo, { kind: 'pink', type: 'lowpass', f: R(900, 1500), q: 0.5, att: 0.002, dec: 0.02, peak: R(0.15, 0.35) });
+          else gsDrop(E, t + 0.06 + si * R(0.03, 0.09), spo, 'water', R(0.25, 0.6), R(1.1, 1.6));
+        }
+        return;
+      case 'bird': case 'birdtap': // a bird in the garden: the season's own; touched, it flies off with a whir of wings (a startled animal rustles away)
+        if (name === 'birdtap' && /^(usagi|tanuki|kitsune|shika)$/.test(gid || '')) { snNoise(E, t, out(0.08, R(-0.5, 0.5), 6000), { kind: 'pink', type: 'bandpass', f: R(2500, 4000), q: 0.7, att: 0.02, hold: 0.25, dec: 0.4 }); if (RARE[gid] && E.rnd() < 0.5) RARE[gid](E, t + 0.6, out(0.1, R(-0.5, 0.5), 7000)); return; }
+        if (name === 'birdtap') GSB.wings(E, t, out(0.05, R(-0.4, 0.4), 7000), 1);
+        GSB[gsBirdOf(gse, E.rnd())](E, t + (name === 'birdtap' ? 0.15 : 0), out(0.15 * (name === 'bird' ? SND.birdK || 1 : 1) * (ccov > 0.2 ? 0.7 : 1), R(-0.7, 0.7), muf || 9000)); return;
+      case 'rare': if (gid === 'uguisu' || gid === 'mejiro') { GSB[gid](E, t, out(0.24, R(-0.5, 0.5), 11000)); return; }
+        if (/^(hanafubuki|momiji-asa|kazahana|asatsuyu)$/.test(gid || '')) return;   // a moment, not a visitor: its 'reward' cue sounds for it
+        break;
+    }
+  }
   switch (name) {
     case 'shishi': // 鹿威し: the bamboo tips, knocks on the stone, the water pours
       snKnock(E, t, out(0.13, R(-0.3, 0.3)), R(520, 600), 1, 0.25); snNoise(E, t + 0.04, out(0.12, 0.1, 3000), { kind: 'pink', f: 1400, q: 0.7, att: 0.05, hold: 0.25, dec: 0.4 }); return;
@@ -10182,7 +10921,7 @@ var MogiSound = {
       var cwx = SND.opts && SND.opts.weather, badWx = cwx === 'rain' || cwx === 'storm' || cwx === 'typhoon' || cwx === 'snow' || cwx === 'blizzard';
       SND.birdK = 1;
       if (badWx && (name === 'bird' || name === 'crow')) { if (Math.random() > 0.25) return; SND.birdK = 0.35; }
-      sndCue(SND.E, String(name || ''), id, SND.opts && SND.opts.focus); } catch (e) { }
+      sndCue(SND.E, String(name || ''), id, SND.opts && SND.opts.focus, undefined, SND.opts); } catch (e) { }
   },
   stop: function (instant) {
     try {
@@ -10200,11 +10939,13 @@ var MogiSound = {
   setVolume: function (v) { try { SND.vol = clamp(+v || 0, 0, 1); sndApplyVol(); } catch (e) { } },
   windAt: envWind, weatherAt: envWeather, fireworksAt: envFireworks,
   /* offline rendering, for checking: resolves to an AudioBuffer */
-  _render: function (opts, secs, cues, sr) {
+  _render: function (opts, secs, cues, sr, live) {
     var OAC = typeof window !== 'undefined' && (window.OfflineAudioContext || window.webkitOfflineAudioContext); if (!OAC) return Promise.reject(new Error('no OfflineAudioContext'));
     sr = sr || 44100; var ctx = new OAC(2, Math.ceil(secs * sr), sr), E = new SnEngine(ctx, 12345); E.out.gain.value = 0.75 * 0.8;
-    var o = sndNorm(opts), sc = new SnScene(E, o, 0); sc.bus.gain.value = 1; sc.scheduleUntil(secs);
-    (cues || []).forEach(function (q) { sndCue(E, q[1], q[2], o.focus, q[0]); });
+    var o = sndNorm(opts), sc = new SnScene(E, o, 0), k; sc.bus.gain.value = 1; sc.wet.gain.value = 2.6;
+    if (live) { sc.scheduleUntil(1.4); for (k = 1; k * 0.25 < secs; k++) (function (tt) { ctx.suspend(tt).then(function () { sc.scheduleUntil(Math.min(secs, tt + 1.4)); ctx.resume(); }); })(k * 0.25); }   // (1.5) live: voices made a little ahead as the clock runs, as in real time (a fair measure of the cost)
+    else sc.scheduleUntil(secs);
+    (cues || []).forEach(function (q) { sndCue(E, q[1], q[2], o.focus, q[0], o); });
     return ctx.startRendering();
   }
 };
