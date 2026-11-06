@@ -10675,12 +10675,14 @@ SnScene.prototype.buildGarden = function () {
   if (wet) wF = 1 + (wF - 1) * 0.3;   // (in the rain itself the rain is the sound: the water only a little fuller under it)
   if (F.pond && !M('water')) {
     var sLP = snFilt(c, 'lowpass', (2400 + 1600 * clamp(wF - 0.7, 0, 1)) * wMuf, 0.5, S.gnd);
-    var sF = snFilt(c, 'bandpass', se === 'winter' ? 1500 : 1250, 0.55), sg = snGain(c, 0.012 * wF * wD, sLP); sF.connect(sg); S.src('pink', sF, 1); S.mod(sg.gain, 0.004 * wF, 0.004);
-    var bF = snFilt(c, 'bandpass', 950, 0.45), bg = snGain(c, (F.stream ? 0.018 : 0.011) * (wet ? 1 : Math.min(wF, 1.15)) * wD, sLP); bF.connect(bg); S.src('babble', bF, se === 'winter' ? 1.1 : 1); S.mod(bg.gain, 0.006 * wD, 0.003);
+    // (1.4.17) the water from the fall (the stream's babble and the pond's wash) half as loud: with the fall it was the loudest thing in the garden
+    var sF = snFilt(c, 'bandpass', se === 'winter' ? 1500 : 1250, 0.55), sg = snGain(c, 0.007 * wF * wD, sLP); sF.connect(sg); S.src('pink', sF, 1); S.mod(sg.gain, 0.0023 * wF, 0.004);
+    var bF = snFilt(c, 'bandpass', 950, 0.45), bg = snGain(c, (F.stream ? 0.009 : 0.0065) * (wet ? 1 : Math.min(wF, 1.15)) * wD, sLP); bF.connect(bg); S.src('babble', bF, se === 'winter' ? 1.1 : 1); S.mod(bg.gain, 0.003 * wD, 0.003);
   }
   if (F.fall && !M('water')) {
-    var fF = snFilt(c, 'lowpass', (1900 + 900 * Math.min(1.3, wF)) * wMuf, 0.5), fH = snFilt(c, 'highpass', 140, 0.5, fF), fg = snGain(c, 0.02 * (0.5 + 0.5 * wF) * wD, S.gnd); fF.connect(fg); S.src('pink', fH, 1); S.mod(fg.gain, 0.004, 0.003);
-    var fpF = snFilt(c, 'bandpass', 1400, 0.6), fpG = snGain(c, 0.02 * wF * wMuf * wD, S.gnd); fpF.connect(fpG); S.src('rain', fpF, 0.7); S.mod(fpG.gain, 0.006 * wD, 0.004);   // the plunge pool's spatter
+    // (1.4.17) the fall about a third as loud and softer (it was far too loud over the rest): a low rush across the garden, the spatter faint
+    var fF = snFilt(c, 'lowpass', (1500 + 700 * Math.min(1.3, wF)) * wMuf, 0.5), fH = snFilt(c, 'highpass', 140, 0.5, fF), fg = snGain(c, 0.007 * (0.5 + 0.5 * wF) * wD, S.gnd); fF.connect(fg); S.src('pink', fH, 1); S.mod(fg.gain, 0.0014, 0.003);
+    var fpF = snFilt(c, 'bandpass', 1300, 0.6), fpG = snGain(c, 0.005 * wF * wMuf * wD, S.gnd); fpF.connect(fpG); S.src('rain', fpF, 0.7); S.mod(fpG.gain, 0.0015 * wD, 0.004);   // the plunge pool's spatter
   }
   // ---------- birds ----------
   sing('bird', GSB.uguisu, function (t) { return birdK * ph(t, [2, 18, 3, 22, 6, 15, 7, 31]) * (hr(t, 4.6, 5.4, 9.5, 12.5) + 0.6 * hr(t, 12.5, 13.5, 16.5, 18.6)); }, 80, [3, 8], [6, 11], [16, 45], 0.09,

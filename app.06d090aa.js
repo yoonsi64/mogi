@@ -8854,7 +8854,7 @@
                 '<div class="gd-main">' +
                 '<div class="gd-stagebox"><div class="gd-zoom"><div class="gd-zoom-inner"><div class="gd-scene gd-scene-full"></div></div>' +
                 '<button class="gd-zoom-reset" hidden>元の大きさ</button><div class="gd-hint">ピンチで拡大・ドラッグで移動</div>' +
-                '<button class="gd-lookup" hidden>☾ 見上げる</button><button class="gd-lookup gd-engawa" hidden style="left:auto;right:10px">縁側から</button><button class="gd-lookup gd-rakereset" hidden style="left:50%;transform:translateX(-50%)" aria-label="砂紋を元に戻す">↺ 砂紋を戻す</button><button class="gd-fullbtn" aria-label="全画面">⛶ 全画面</button>' +
+                '<button class="gd-lookup" hidden>☾ 見上げる</button><button class="gd-lookup gd-engawa" hidden style="left:auto;right:10px">縁側から</button><button class="gd-fullbtn" aria-label="全画面">⛶ 全画面</button>' +
                 '<div class="gd-sky" aria-hidden="true"><div class="gd-sky-canvas"></div><button class="gd-sky-back">↓ 戻る</button></div></div></div>' +
                 '<div class="gd-side"><div class="gd-info"></div><button class="gd-focus-btn">🍵 集中モード</button><div class="gd-back" hidden><button></button></div>' +
                 '<div class="gd-dev"></div><div class="gd-list-title"></div><div class="gd-list"></div><div class="gd-rare-box"></div></div>' +
@@ -8883,7 +8883,6 @@
             });
             GD.view.querySelector('.gd-lookup').addEventListener('click', gdOpenSky);
             GD.view.querySelector('.gd-engawa').addEventListener('click', gdEngawaToggle);
-            GD.view.querySelector('.gd-rakereset').addEventListener('click', gdRakeReset);
             GD.view.querySelector('.gd-fullbtn').addEventListener('click', openFullView);
             GD.view.querySelector('.gd-focus-btn').addEventListener('click', function() { openFocus(); });
             GD.view.querySelector('.gd-sky-back').addEventListener('click', gdCloseSky);
@@ -9119,9 +9118,10 @@
     setInterval(function() { if (document.hidden) return; var ws = null; [GD.ctrl, GD.vctrl, GD.full && GD.full.ctrl].forEach(function(c) { if (c && c.update) try { c.update({ weeds: ws || (ws = gdWeeds()) }); } catch (e) {} }); }, 600000);
     var GD_CUE_ALIAS = { bees: 'fuji', startle: 'birdtap', shoji: 'noren' };   // birdtap: a bird you touched (always answers, whatever the weather)       // painter cue names that share a sound
     function gdCueName(n) { return GD_CUE_ALIAS[n] || n; }
-    // (b5) what the garden keeps through the app: the 砂紋 raked into the gravel, the lanterns lit this evening, the study streak's moments;
+    // (b5) what the garden keeps through the app: the lanterns lit this evening, the study streak's moments;
     // handed back on every mount with the streak (days in a row studied: a short streak just brings the usual garden, never a reminder)
-    var GD_KEEP = { rake: 'jlptGardenRake', lamps: 'jlptGardenLamps', reward: 'jlptGardenReward' };
+    var GD_KEEP = { lamps: 'jlptGardenLamps', reward: 'jlptGardenReward' };
+    try { localStorage.removeItem('jlptGardenRake'); } catch (e) {}   // (raking by hand was taken out: the strokes kept before are let go)
     function gdPlayOpts(o, inView) {
         var st = 0; try { st = typeof computeStreaks === 'function' ? computeStreaks().current : 0; } catch (e) { st = 0; }
         o.streak = st;
@@ -9135,7 +9135,6 @@
         try { localStorage.setItem(GD_KEEP[k], JSON.stringify(v)); } catch (e) {}
         var u = {}; u[k] = v;
         [GD.ctrl, GD.vctrl, GD.full && GD.full.ctrl, GD.focus && GD.focus.ctrl].forEach(function(c) { if (c && c.update) try { c.update(u); } catch (e) {} });
-        if (k === 'rake') gdRakeBtn();
     }
     // (b5) 縁側から: the garden seen sitting on the teahouse's veranda (its own painting from there), from the 茶室 stage on
     function gdEngawaStage() { var E = window.MogiGarden, i = -1; if (E && E.STAGES) E.STAGES.forEach(function(st, k) { if (i < 0 && st.name === '茶室') i = k; }); return i; }
@@ -9144,18 +9143,6 @@
         var t = gdEngawaStage(), ok = gdViewWorld() === 'garden' && t >= 0 && o && o.stage >= t && !!(GD.vctrl && GD.vctrl.setView);
         if (!ok && GD.engawa) { GD.engawa = false; if (GD.vctrl && GD.vctrl.setView) try { GD.vctrl.setView(null); } catch (e) {} }
         b.hidden = !ok; b.textContent = GD.engawa ? '↩ 庭を見渡す' : '縁側から'; b.setAttribute('aria-pressed', GD.engawa ? 'true' : 'false');
-        gdRakeBtn();
-    }
-    // the 砂紋 smoothed back to the gardener's pattern: the button shows only in the garden while something is raked
-    function gdRakeBtn() {
-        var b = GD.view && GD.view.querySelector('.gd-rakereset'); if (!b) return;
-        var n = 0; try { n = gdViewWorld() === 'garden' && GD.vctrl && GD.vctrl.rakeClear ? +GD.vctrl.raked || 0 : 0; } catch (e) { n = 0; }
-        b.hidden = !(n > 0);
-    }
-    function gdRakeReset() {
-        if (GD.vctrl && GD.vctrl.rakeClear) try { GD.vctrl.rakeClear(); } catch (e) {}
-        if (GD.devMode) [GD.ctrl, GD.full && GD.full.ctrl].forEach(function(c) { if (c && c.update) try { c.update({ rake: [] }); } catch (e) {} });
-        gdRakeBtn();
     }
     function gdEngawaToggle() {
         if (!GD.vctrl || !GD.vctrl.setView) return;
