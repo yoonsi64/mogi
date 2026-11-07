@@ -12256,7 +12256,7 @@
     }
     function buildFlashView() {
         var ex = document.getElementById('flash-view');
-        if (ex) { ex.classList.remove('game'); return; }          // the learning modes have no scene; wqOpen turns it back on for the games
+        if (ex) { ex.classList.remove('game'); flashUndoBtn(false); return; }          // the learning modes have no scene; wqOpen turns it back on for the games
         var v = document.createElement('div');
         v.id = 'flash-view'; v.className = 'flash-view';
         v.setAttribute('role', 'dialog'); v.setAttribute('aria-label', 'カードで復習');
@@ -12270,9 +12270,10 @@
             '<feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="2" seed="11" result="g"/><feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -3.6 2.95" result="sp"/><feComposite in="r" in2="sp" operator="in" result="s"/>' +
             '<feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="17" result="p"/><feColorMatrix in="p" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1.4 0.3" result="pr"/><feComposite in="s" in2="pr" operator="in"/></filter></svg>' +
             '<div class="flash-head"><button class="flash-close" aria-label="閉じる">✕</button>' +
-            '<span class="flash-title">カードで復習</span><span class="flash-progress"></span></div>' +
+            '<span class="flash-title">カードで復習</span><button class="flash-undo" hidden aria-label="ひとつ前の採点をやり直す">↶ やり直す</button><span class="flash-progress"></span></div>' +
             '<div class="flash-body"></div>';
         v.querySelector('.flash-close').addEventListener('click', closeFlashcards);
+        v.querySelector('.flash-undo').addEventListener('click', flashUndo);
         document.body.appendChild(v);
     }
     function startFlashcards(write) {
@@ -12292,6 +12293,7 @@
     function closeFlashcards() {
         var v = document.getElementById('flash-view');
         if (v) { v.classList.remove('active'); v._gsPick = null; }          // the next game picks a new print
+        flashUndoBtn(false);
         if (wq && wq.timer) clearInterval(wq.timer);
         flash = null; wq = null; sceneStop();
         var fx = document.querySelector('#flash-view .wq-fx'); if (fx) fx.innerHTML = '';
@@ -12300,6 +12302,7 @@
     function renderFlash() {
         var v = document.getElementById('flash-view'), body = v.querySelector('.flash-body');
         var remaining = flash.queue.length - flash.pos;
+        flashUndoBtn(!!(flash.undo && flash.undo.length));
         v.querySelector('.flash-progress').textContent = remaining > 0 ? 'のこり ' + remaining : '';
         if (remaining <= 0) {
             var tot = flash.known + flash.again, missedE = (flash.missedIds || []).map(function(id) { return wordList.find(function(w) { return w.id === id; }); }).filter(Boolean);
@@ -12327,18 +12330,123 @@
                 '<div class="flash-meaning' + (e.meaning ? '' : ' empty') + '">' + (e.meaning ? escapeHtml(e.meaning) : '（意味・メモなし）') + '</div>' +
                 (e.context ? '<div class="flash-context">' + highlightIn(e.context, e.word) + '</div>' : '') +
                 '<button class="flash-speak" aria-label="読み上げ">🔊</button>'
-                : '<div class="flash-hint">読みと意味を思い出してから、めくってください</div>') +
+                : '<div class="flash-hint">読みと意味を思い出したら、カードをタップしてめくる</div>') +
+            '<div class="flash-stamp good" aria-hidden="true">普通</div><div class="flash-stamp again" aria-hidden="true">もう一度</div>' +
+            '<div class="flash-swipe-hint" aria-hidden="true"><span>← もう一度</span><span>普通 →</span></div>' +
             '</div>' +
             '<div class="flash-actions">' + (flash.revealed ? srsButtonsHtml(e) : '<button class="flash-reveal">答えを見る</button>') + '</div>';
+        var card = body.querySelector('.flash-card');
         if (flash.revealed) {
             body.querySelectorAll('.srs-btn').forEach(function(b) { b.addEventListener('click', function() { gradeCard(+b.dataset.g); }); });
-            body.querySelector('.flash-speak').addEventListener('click', function() { speakText(escapeHtml(ttsWord(e.word, e.reading))); });
+            body.querySelector('.flash-speak').addEventListener('click', function(ev) { ev.stopPropagation(); speakText(escapeHtml(ttsWord(e.word, e.reading))); });
         } else {
-            var reveal = function() { flash.revealed = true; renderFlash(); };
-            body.querySelector('.flash-reveal').addEventListener('click', reveal);
-            body.querySelector('.flash-card').addEventListener('click', reveal);
+            body.querySelector('.flash-reveal').addEventListener('click', function() { flashFlip(card); });
         }
+        // a tap turns the card over, either way; a swipe grades it (flashSwipe)
+        card.addEventListener('click', function(ev) { if (Date.now() < flashSwipeQuiet || ev.target.closest('button, a')) return; flashFlip(card); });
+        flashSwipe(card);
     }
+    // the card turns over with a quick 3D flip (none with reduced motion): front ⇄ back
+    var flashSwipeQuiet = 0;
+    function flashFlip(card) {
+        if (!flash || flash.flipping) return;
+        var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (still || !card) { flash.revealed = !flash.revealed; renderFlash(); return; }
+        flash.flipping = true;
+        card.classList.add('flip-out');
+        setTimeout(function() {
+            if (!flash) return;
+            flash.flipping = false; flash.revealed = !flash.revealed; renderFlash();
+            var c = document.querySelector('#flash-view .flash-card');
+            if (c) { c.classList.add('flip-in'); void c.offsetWidth; c.classList.remove('flip-in'); }
+        }, 150);
+    }
+    // swipe the card: right = 普通 (remembered), left = もう一度; it follows the finger and tilts, its stamp shows,
+    // and past a third of its width (or a quick flick) it flies off and the next card comes; otherwise it springs back
+    function flashSwipe(card) {
+        if (!card || !flash || flash.write) return;
+        var x0 = 0, y0 = 0, t0 = 0, dx = 0, on = false, pid = null, gone = false;
+        var stA = card.querySelector('.flash-stamp.again'), stG = card.querySelector('.flash-stamp.good');
+        var show = function(d) {
+            var w = card.offsetWidth || 300, k = Math.min(1, Math.abs(d) / (w * 0.33));
+            card.style.transform = d ? 'translateX(' + d + 'px) rotate(' + (d / w * 9).toFixed(2) + 'deg)' : '';
+            if (stA) stA.style.opacity = d < 0 ? k : 0;
+            if (stG) stG.style.opacity = d > 0 ? k : 0;
+        };
+        card.addEventListener('pointerdown', function(ev) {
+            if (gone || !ev.isPrimary || (ev.pointerType === 'mouse' && ev.button !== 0) || ev.target.closest('button, a')) return;
+            x0 = ev.clientX; y0 = ev.clientY; t0 = Date.now(); dx = 0; on = false; pid = ev.pointerId;
+        });
+        card.addEventListener('pointermove', function(ev) {
+            if (pid !== ev.pointerId || gone) return;
+            var mx = ev.clientX - x0, my = ev.clientY - y0;
+            if (!on) {
+                if (Math.abs(my) > 14 && Math.abs(my) > Math.abs(mx)) { pid = null; return; }   // a scroll: leave it to the page
+                if (Math.abs(mx) < 10) return;
+                on = true; card.classList.add('dragging');
+                try { card.setPointerCapture(ev.pointerId); } catch (err) {}
+            }
+            dx = mx; show(dx); ev.preventDefault();
+        });
+        var end = function(ev) {
+            if (pid !== ev.pointerId) return;
+            pid = null;
+            if (!on) return;
+            on = false; card.classList.remove('dragging'); flashSwipeQuiet = Date.now() + 350;
+            var w = card.offsetWidth || 300, v = Math.abs(dx) / Math.max(1, Date.now() - t0);
+            if (ev.type !== 'pointercancel' && (Math.abs(dx) > w * 0.33 || (Math.abs(dx) > 48 && v > 0.55))) {
+                gone = true;
+                var g = dx > 0 ? 3 : 1;
+                card.classList.add('fly'); show((dx > 0 ? 1 : -1) * (w * 1.3 + 60));
+                setTimeout(function() { if (flash && !flash.write) gradeCard(g); }, 190);
+            } else {
+                card.classList.add('settle'); show(0);
+                setTimeout(function() { card.classList.remove('settle'); }, 230);
+            }
+        };
+        card.addEventListener('pointerup', end);
+        card.addEventListener('pointercancel', end);
+    }
+    // やり直す: take back the last grade (a swipe the wrong way, a slip on a button): the card's schedule, the day's
+    // new-card count and the session are put back as they were, and the card comes back turned over to grade again
+    function flashUndoBtn(on) {
+        var b = document.querySelector('#flash-view .flash-undo'); if (b) b.hidden = !on;
+    }
+    function flashUndoPush(e, k) {
+        if (!flash) return;
+        var snap = { queue: flash.queue.slice(), pos: flash.pos, known: flash.known, again: flash.again, missed: (flash.missedIds || []).slice(),
+            typed: flash.typed || '', id: e ? e.id : null, k: k, newDay: JSON.stringify(getSetting(k.newDay, null)) };
+        if (e) snap.fields = JSON.stringify({ srs: e[k.srs], due: e[k.due], lastReviewed: e.lastReviewed, wrote: e.wrote, wroteWord: e.wroteWord });
+        (flash.undo = flash.undo || []).push(snap);
+        if (flash.undo.length > 30) flash.undo.shift();
+    }
+    function flashUndo() {
+        if (!flash || !flash.undo || !flash.undo.length || flash.flipping) return;
+        var s = flash.undo.pop(), e = s.id ? wordList.find(function(w) { return w.id === s.id; }) : null;
+        var put = function(o, key, v) { if (v === undefined) delete o[key]; else o[key] = v; };
+        if (e && s.fields) {
+            var f = JSON.parse(s.fields);
+            put(e, s.k.srs, f.srs); put(e, s.k.due, f.due); put(e, 'lastReviewed', f.lastReviewed); put(e, 'wrote', f.wrote); put(e, 'wroteWord', f.wroteWord);
+        }
+        setSetting(s.k.newDay, JSON.parse(s.newDay));
+        flash.queue = s.queue; flash.pos = s.pos; flash.known = s.known; flash.again = s.again; flash.missedIds = s.missed;
+        flash.typed = s.typed; flash.revealed = true;
+        if (!flash.practiceAll) saveWordList();
+        renderFlash();
+        showToast('ひとつ前の採点を取り消しました。もう一度えらんでください');
+    }
+    // on a keyboard: space / Enter turns the card, → 普通, ← もう一度, 1–4 the four grades once it is turned, Backspace or Z takes the last grade back
+    document.addEventListener('keydown', function(ev) {
+        if (!flash || !flashOpen() || ev.ctrlKey || ev.metaKey || ev.altKey || ev.isComposing) return;
+        var t = ev.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+        if ((ev.key === 'Backspace' || ev.key === 'z' || ev.key === 'Z') && flash.undo && flash.undo.length) { ev.preventDefault(); flashUndo(); return; }
+        if (flash.write) return;
+        if (flash.pos >= flash.queue.length || !document.querySelector('#flash-view .flash-card')) return;
+        if (ev.key === ' ' || ev.key === 'Enter') { if (t && t.tagName === 'BUTTON') return; ev.preventDefault(); flashFlip(document.querySelector('#flash-view .flash-card')); }
+        else if (ev.key === 'ArrowRight') { ev.preventDefault(); gradeCard(3); }
+        else if (ev.key === 'ArrowLeft') { ev.preventDefault(); gradeCard(1); }
+        else if (flash.revealed && /^[1-4]$/.test(ev.key)) { ev.preventDefault(); gradeCard(+ev.key); }
+    });
     // 意味を書く: first choose which way round
     function pickWriteDirection() {
         buildFlashView();
@@ -12428,6 +12536,7 @@
     function gradeCard(g) {
         var e = wordList.find(function(w) { return w.id === flash.queue[flash.pos]; });
         var mode = srsMode(), k = srsK(mode);
+        flashUndoPush(e, k);
         if (e && flash.write && (flash.typed || '').trim()) e[flash.write === 'word' ? 'wroteWord' : 'wrote'] = flash.typed.trim();
         if (e && !flash.practiceAll) {
             var wasNew = srsIsNew(e, mode), o = srsOutcomes(e, mode)[g];
