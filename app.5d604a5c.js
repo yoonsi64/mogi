@@ -10066,21 +10066,24 @@
     // ===================== Navigation (bottom bar, sub-tabs, quiz mode) =====================
     var bottomNav = document.getElementById('bottom-nav');
     var subnav = document.getElementById('subnav');
-    var currentReviewSub = 'mistakes';
+    var currentReviewSub = 'library';   // the sub-tab of 学ぶ: 'library' (教材) | 'mistakes' | 'bookmarks' (the name is from when the lists were 復習's)
     var currentRecordsSub = 'dashboard';
     var pendingOrigin = 'home';      // where × returns to after a quiz started from a list
     var sessionOrigin = 'home';
     var pendingTitle = '';
-    var reviewReturnScroll = null;   // {sub, y}: scroll position of a 復習 list to return to
+    var reviewReturnScroll = null;   // {sub, y}: scroll position of a list in 学ぶ (or of 単語, sub 'words') to return to
 
     // Home keeps its place: whatever you open from the home screen (a book's day, a reading, 模擬試験, 読む速さ),
     // coming back puts the same item in the same spot on screen
     var homeReturn = null;
+    // 学ぶ › 教材 keeps its place the same way (a book's day or unit, a reading): homeReturn remembers which page it is for
     function onHomeNow() { return navActiveTab() === 'home' && !document.body.classList.contains('in-quiz'); }
+    function onLibraryNow() { return navActiveTab() === 'learn' && currentReviewSub === 'library' && !document.body.classList.contains('in-quiz'); }
     function rememberHomeSpot(sel) {
-        if (!onHomeNow()) return;
+        var onLib = onLibraryNow();
+        if (!onHomeNow() && !onLib) return;
         var el = sel ? document.querySelector(sel) : null;
-        homeReturn = { y: window.scrollY, sel: sel, top: el && el.offsetParent ? el.getBoundingClientRect().top : null };
+        homeReturn = { tab: onLib ? 'learn' : 'home', sub: onLib ? 'library' : undefined, y: window.scrollY, sel: sel, top: el && el.offsetParent ? el.getBoundingClientRect().top : null };
     }
     function restoreHomeSpot() {
         if (!homeReturn) return;
@@ -10092,23 +10095,30 @@
         };
         go(); requestAnimationFrame(go);          // again once the page has laid out
     }
+    // The bar: ホーム / 学ぶ (教材・誤答ノート・ブックマーク) / 単語 / 記録. 設定 opens from the gear on home and has no button
+    // of its own: the bar shows ホーム while it is open, and leaving it goes home.
+    var navTab = 'home';
+    var homeGear = document.getElementById('home-settings');
     function setNav(tab, sub) {
-        if (activeDeck && !(tab === 'review' && sub === 'words')) switchDeck(null);
-        if (tab !== 'home') homeReturn = null;
+        if (tab === 'review') { if (sub === 'words') { tab = 'words'; sub = undefined; } else tab = 'learn'; }     // the old 復習 tab
+        if (activeDeck && tab !== 'words') switchDeck(null);
+        if (homeReturn && !(homeReturn.tab === tab && homeReturn.sub === sub)) homeReturn = null;
+        navTab = tab;
         document.body.classList.remove('in-quiz');
         bottomNav.style.display = 'flex';
-        bottomNav.querySelectorAll('button').forEach(function(b) { b.classList.toggle('active', b.dataset.tab === tab); });
+        bottomNav.querySelectorAll('button').forEach(function(b) { b.classList.toggle('active', b.dataset.tab === (tab === 'settings' ? 'home' : tab)); });
+        if (homeGear) homeGear.hidden = tab !== 'home';
         renderSubnav(tab, sub);
-        if (!(tab === 'home' && homeReturn)) window.scrollTo(0, 0);       // coming back home: the old spot is restored instead
+        if (!homeReturn) window.scrollTo(0, 0);       // coming back home or to 教材: the old spot is restored instead
     }
 
     function renderSubnav(tab, sub) {
         var items = null;
-        if (tab === 'review') {
+        if (tab === 'learn') {
             items = [
+                ['library', '教材'],
                 ['mistakes', '誤答ノート', getMistakeQuestions().length + getAllModeMistakeIds().length + getRetakeMistakeIds().length],
-                ['bookmarks', 'ブックマーク', bookmarkedQuestions.length],
-                ['words', '単語帳', wordList.length]
+                ['bookmarks', 'ブックマーク', bookmarkedQuestions.length]
             ];
         } else if (tab === 'records') {
             items = [['dashboard', '成績表'], ['stats', '統計']];
@@ -10125,15 +10135,18 @@
     }
 
     function openSub(tab, sub) {
-        if (tab === 'review') {
-            currentReviewSub = sub;
+        if (tab === 'review') tab = sub === 'words' ? 'words' : 'learn';      // the old 復習 tab: its lists are in 学ぶ now, its 単語帳 is 単語
+        if (tab === 'learn') {
+            currentReviewSub = sub === 'mistakes' || sub === 'bookmarks' ? sub : 'library';
             if (sub === 'mistakes') showMistakes();
             else if (sub === 'bookmarks') showBookmarks();
-            else showWordList();
+            else showLibrary();
+        } else if (tab === 'words') {
+            showWordList();
         } else if (tab === 'records') {
             currentRecordsSub = sub;
             if (sub === 'dashboard') showDashboard(); else showStats();
-        }
+        } else returnHome();          // ホーム, and 設定 too: it opens from home's gear, never as a place to come back to
     }
 
     function enterQuizMode(title) {
@@ -10152,15 +10165,17 @@
         closePopup();
         var origin = sessionOrigin;
         sessionOrigin = 'home';
-        if (origin === 'review') {
-            openSub('review', currentReviewSub);
+        if (origin === 'review') origin = 'learn';          // the old 復習 tab
+        if (origin === 'learn' || origin === 'words') {
+            if (origin === 'words') showWordList(); else openSub('learn', currentReviewSub);
             var back = reviewReturnScroll;
             reviewReturnScroll = null;
-            if (back && back.sub === currentReviewSub) {
+            if (back && back.sub === (origin === 'words' ? 'words' : currentReviewSub)) {
                 window.scrollTo(0, back.y);
                 requestAnimationFrame(function() { window.scrollTo(0, back.y); });   // again once the list has laid out
             }
         }
+        else if (origin === 'library') showLibrary();
         else if (origin === 'records') openSub('records', 'stats');
         else returnHome();
     }
@@ -10170,11 +10185,15 @@
         b.addEventListener('click', function() {
             var tab = b.dataset.tab;
             if (tab === 'home') returnHome();
-            else if (tab === 'review') openSub('review', currentReviewSub);
+            else if (tab === 'learn') openSub('learn', currentReviewSub);
+            else if (tab === 'words') showWordList();
             else if (tab === 'records') openSub('records', currentRecordsSub);
-            else showSettings();
         });
     });
+    // 設定: the gear at the top right of home; × (and Back) go home again
+    if (homeGear) homeGear.addEventListener('click', showSettings);
+    var settingsClose = document.getElementById('settings-close');
+    if (settingsClose) settingsClose.addEventListener('click', returnHome);
 
     // Answer history: collapsed by default, remembers the choice
     var historyContainer = document.getElementById('history-container');
@@ -10246,7 +10265,7 @@
         selectedDay = String(d);
         setAnswerMode(w === 'all');
         if (w !== 'all' && d !== 'unit') localStorage.setItem('jlptLastSession', JSON.stringify({ lib: selectedLib, week: w, day: d }));
-        sessionOrigin = 'home';
+        sessionOrigin = onLibraryNow() ? 'library' : 'home';
         startQuiz();
     }
 
@@ -10348,7 +10367,7 @@
         var last = getLastSession();
 
         // Home, top to bottom: today (goal, week, streak, exam countdown), start / review, the garden, a row of
-        // tools (模擬試験 opens its panel below the row), today's word, then the books under two tabs.
+        // tools (模擬試験 opens its panel below the row), today's word. The books are in 学ぶ › 教材 (showLibrary).
         var examN = examDaysLeft();
         // with an exam date: the full countdown card (days left, date, pace, a quote) above everything;
         // without one: a small chip in the today card to set it
@@ -10391,6 +10410,74 @@
             })() +
             '';
 
+        html += '</div>';
+        quizContainer.innerHTML = html;
+        gdMountCard();
+        restoreHomeSpot();          // in the same frame as the new page, so it never shows at the top first
+        bindMockSection(quizContainer);
+        setTimeout(function() { checkNewBadges(); }, 350);
+
+        if (last) document.getElementById('home-resume').addEventListener('click', function() { startDay(last.week, last.day, last.lib); });
+        var startB = document.getElementById('home-start');
+        if (startB) startB.addEventListener('click', function() { startDay(1, 1, first.id); });
+        document.getElementById('rp-home').addEventListener('click', openReadingPractice);
+        var mockTile = document.getElementById('home-mock-tile');
+        if (mockTile) mockTile.addEventListener('click', function() {
+            homeMockOpen = !homeMockOpen;
+            mockTile.classList.toggle('on', homeMockOpen);
+            mockTile.setAttribute('aria-expanded', homeMockOpen);
+            var panel = document.getElementById('home-mock-panel');
+            panel.hidden = !homeMockOpen;
+            if (homeMockOpen) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+        document.getElementById('home-sky').addEventListener('click', function() {
+            if (!window.MogiSky || !gdEngine()) { showToast('空はまだ読み込み中です', 1600); return; }
+            openGarden(false, true);
+        });
+        if (due) document.getElementById('home-review').addEventListener('click', function() { pendingOrigin = 'home'; startReviewPractice(); });
+        bindOmikujiHome();
+        var wordCard = document.getElementById('home-word');
+        if (wordCard) {
+            // 意味を見る: quick self-check right here; anywhere else on the card: open it in the 単語帳
+            document.getElementById('home-word-reveal').addEventListener('click', function(e) {
+                e.stopPropagation();
+                wordCard.classList.add('revealed');
+            });
+            var goToWord = function() { showWordInList(wordCard.dataset.id); };
+            wordCard.addEventListener('click', goToWord);
+            wordCard.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goToWord(); } });
+        }
+        bindExamCard();
+        bindBackupReminder();
+        stopQuoteRotation();
+    }
+
+    // ===================== 学ぶ › 教材 =====================
+    // The books, one card per book under the JLPT 教材 / 漢検 / 読解 tabs, as they were at the foot of the home screen.
+    // A book's day or unit, or a reading, opened here comes back to the same spot (homeReturn); × returns here (sessionOrigin 'library').
+    function showLibrary() {
+        setAnswerMode(false);
+        speechSession++;
+        window.speechSynthesis.cancel();
+        dashboardView.style.display = 'none'; statsView.style.display = 'none'; bookmarksView.style.display = 'none';
+        mistakesView.style.display = 'none'; wordlistView.style.display = 'none'; settingsView.style.display = 'none';
+        quizView.style.display = 'flex';
+        closePopup();
+        blankPopup.classList.remove('active');
+        isBookmarkMode = false; isMistakeMode = false;
+        selectedWeek = '1';
+        selectedDay = '1';
+        weekButtons.forEach(function(b) { b.classList.remove('active'); });
+        dayButtons.forEach(function(b) { b.classList.remove('active'); });
+        daySelector.style.display = 'none';
+        currentQuestions = [];
+        quizFooter.style.display = 'none';
+        historyContainer.style.display = 'none';
+        currentReviewSub = 'library';
+        setNav('learn', 'library');
+
+        var last = getLastSession();
+        var html = '<div class="home">';
         var dueMap = dueByDay();
         // Shelves: JLPT books, 漢検 books (lib.shelf === 'kanken') and the 読解 books, each on its own tab
         var jlptLibs = LIBRARIES.filter(function(l) { return l.shelf !== 'kanken'; }), kankenLibs = LIBRARIES.filter(function(l) { return l.shelf === 'kanken'; });
@@ -10409,10 +10496,7 @@
         READING_BOOKS.forEach(function(b) { html += readingBookCardHtml(b); });
         html += '</div></div>';
         quizContainer.innerHTML = html;
-        gdMountCard();
         restoreHomeSpot();          // in the same frame as the new page, so it never shows at the top first
-        bindMockSection(quizContainer);
-        setTimeout(function() { checkNewBadges(); }, 350);
 
         quizContainer.querySelectorAll('.day-cell:not([disabled])').forEach(function(c) {
             c.addEventListener('click', function() { startDay(parseInt(c.dataset.week, 10), parseInt(c.dataset.day, 10), c.dataset.lib); });
@@ -10439,23 +10523,6 @@
                 libOpenNow[card.dataset.lib] = open;
             });
         });
-        if (last) document.getElementById('home-resume').addEventListener('click', function() { startDay(last.week, last.day, last.lib); });
-        var startB = document.getElementById('home-start');
-        if (startB) startB.addEventListener('click', function() { startDay(1, 1, first.id); });
-        document.getElementById('rp-home').addEventListener('click', openReadingPractice);
-        var mockTile = document.getElementById('home-mock-tile');
-        if (mockTile) mockTile.addEventListener('click', function() {
-            homeMockOpen = !homeMockOpen;
-            mockTile.classList.toggle('on', homeMockOpen);
-            mockTile.setAttribute('aria-expanded', homeMockOpen);
-            var panel = document.getElementById('home-mock-panel');
-            panel.hidden = !homeMockOpen;
-            if (homeMockOpen) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        });
-        document.getElementById('home-sky').addEventListener('click', function() {
-            if (!window.MogiSky || !gdEngine()) { showToast('空はまだ読み込み中です', 1600); return; }
-            openGarden(false, true);
-        });
         quizContainer.querySelectorAll('.home-shelf-tabs button').forEach(function(t) {
             t.addEventListener('click', function() {
                 setSetting('homeShelf', t.dataset.shelf);
@@ -10463,21 +10530,6 @@
                 quizContainer.querySelectorAll('.home-shelf').forEach(function(sh) { sh.hidden = sh.dataset.shelf !== t.dataset.shelf; });
             });
         });
-        if (due) document.getElementById('home-review').addEventListener('click', function() { pendingOrigin = 'home'; startReviewPractice(); });
-        bindOmikujiHome();
-        var wordCard = document.getElementById('home-word');
-        if (wordCard) {
-            // 意味を見る: quick self-check right here; anywhere else on the card: open it in the 単語帳
-            document.getElementById('home-word-reveal').addEventListener('click', function(e) {
-                e.stopPropagation();
-                wordCard.classList.add('revealed');
-            });
-            var goToWord = function() { showWordInList(wordCard.dataset.id); };
-            wordCard.addEventListener('click', goToWord);
-            wordCard.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goToWord(); } });
-        }
-        bindExamCard();
-        bindBackupReminder();
         stopQuoteRotation();
     }
 
@@ -12359,7 +12411,7 @@
 
     // Open the 単語帳 at one word and make it stand out for a moment
     function showWordInList(id) {
-        openSub('review', 'words');
+        showWordList();
         var item = document.querySelector('.word-item[data-id="' + id + '"]');
         if (!item) return;
         requestAnimationFrame(function() {
@@ -14214,7 +14266,7 @@
 
     function showWordList() {
         setAnswerMode(false);
-        setNav('review', 'words'); currentReviewSub = 'words';
+        setNav('words');
         quizView.style.display = 'none'; dashboardView.style.display = 'none'; statsView.style.display = 'none'; bookmarksView.style.display = 'none'; mistakesView.style.display = 'none';
         wordlistView.style.display = 'block';
         closePopup();
@@ -14302,7 +14354,7 @@
                 var qid = parseInt(btn.dataset.qid, 10);
                 var entry = wordList.find(function(w) { return w.id === btn.closest('.word-item').dataset.id; });
                 wordHighlight = entry ? { qid: qid, word: entry.word, scrolled: false } : null;
-                pendingOrigin = 'review'; pendingTitle = '問題を見る';
+                pendingOrigin = 'words'; pendingTitle = '問題を見る';
                 startListQuiz([qid], qid, false, 'practice');
             });
         });
@@ -23397,6 +23449,7 @@
         ar = null;
         hideFootnote();
         if (navActiveTab() === 'home' && !document.body.classList.contains('in-quiz')) showHomePlaceholder();
+        else if (onLibraryNow()) showLibrary();          // opened from 学ぶ › 教材 (the 読解 shelf): its chips show the new progress
     }
     function arStopAudio() { document.querySelectorAll('#ar-view audio').forEach(function(a) { try { a.pause(); } catch (e) {} }); }
     function arSetTab(t) {
@@ -24949,10 +25002,11 @@
 
     // ---------- First-time tour ----------
     var TOUR_STEPS = [
-        { target: '#bottom-nav [data-tab="home"]', title: 'ホーム', text: '学習プランから日を選んで始めます。「続きから」と「今日の復習」もここにあります。' },
-        { target: '#bottom-nav [data-tab="review"]', title: '復習', text: '誤答ノート・ブックマーク・単語帳をまとめて見られます。' },
+        { target: '#bottom-nav [data-tab="home"]', title: 'ホーム', text: '今日の目標と「続きから」「今日の復習」、学びの庭はここにあります。' },
+        { target: '#bottom-nav [data-tab="learn"]', title: '学ぶ', text: '教材から日を選んで始めます。誤答ノートとブックマークもここにあります。' },
+        { target: '#bottom-nav [data-tab="words"]', title: '単語', text: '単語帳です。カードやゲームで覚えられます。' },
         { target: '#bottom-nav [data-tab="records"]', title: '記録', text: '成績表と、学習日数・苦手分野などの統計です。' },
-        { target: '#bottom-nav [data-tab="settings"]', title: '設定', text: '文字サイズ・ふりがな・テーマの変更や、バックアップができます。' },
+        { target: '#home-settings', title: '設定', text: '右上の歯車から、文字サイズ・ふりがな・テーマの変更やバックアップができます。' },
         { target: null, title: '単語を長押し', text: '問題の中の単語を長押しすると、単語帳に保存できます。' }
     ];
     function startTour() {
@@ -24997,8 +25051,7 @@
             definitionPopup.classList.contains('active');
     }
     function navActiveTab() {
-        var b = bottomNav.querySelector('button.active');
-        return b ? b.dataset.tab : 'home';
+        return navTab || 'home';          // set by setNav: 'home' | 'learn' | 'words' | 'records' | 'settings' (設定 has no button in the bar)
     }
     function navDepth() {
         var d = 0;
@@ -27112,7 +27165,7 @@
 
     function showBookmarks() {
         setAnswerMode(false);
-        setNav('review', 'bookmarks'); currentReviewSub = 'bookmarks';
+        setNav('learn', 'bookmarks'); currentReviewSub = 'bookmarks';
         quizView.style.display = 'none'; dashboardView.style.display = 'none'; statsView.style.display = 'none'; mistakesView.style.display = 'none'; wordlistView.style.display = 'none'; settingsView.style.display = 'none'; bookmarksView.style.display = 'block'; closePopup();
         if (bookmarkedQuestions.length === 0) {
             bookmarksContent.innerHTML = '<div class="empty-bookmarks">ブックマークした問題はありません。<br>問題の星をタップして追加してください。</div>';
@@ -27137,7 +27190,7 @@
         document.querySelectorAll('.bookmark-item').forEach(function(item) {
             item.addEventListener('click', function(e) {
                 if (e.target.closest('.bookmark-delete-btn')) return;
-                pendingOrigin = 'review';
+                pendingOrigin = 'learn';
                 startListQuiz(bookmarkedQuestions, parseInt(item.dataset.id), true);
             });
         });
@@ -27202,7 +27255,7 @@
 
     function showMistakes() {
         setAnswerMode(false);
-        setNav('review', 'mistakes'); currentReviewSub = 'mistakes';
+        setNav('learn', 'mistakes'); currentReviewSub = 'mistakes';
         quizView.style.display = 'none'; dashboardView.style.display = 'none'; statsView.style.display = 'none'; bookmarksView.style.display = 'none'; mistakesView.style.display = 'block'; wordlistView.style.display = 'none'; settingsView.style.display = 'none'; closePopup();
 
         // One entry per (question, source)
@@ -27264,7 +27317,7 @@
             item.addEventListener('click', function(e) {
                 if (e.target.closest('.mistake-delete-btn')) return;
                 var id = parseInt(item.dataset.id);
-                pendingOrigin = 'review';
+                pendingOrigin = 'learn';
                 if (item.dataset.source === 'all') {
                     startListQuiz(getAllModeMistakeIds(), id, false, 'allMistakes');
                 } else {
@@ -27286,8 +27339,10 @@
     function startListQuiz(ids, startId, bookmarkMode, mode) {
         var index = ids.indexOf(startId);
         if (index === -1) return;
-        // Opened from a 復習 list: remember where the list was scrolled to, for when you come back
-        reviewReturnScroll = pendingOrigin === 'review' ? { sub: currentReviewSub, y: window.scrollY } : null;
+        // Opened from a list in 学ぶ or from 単語: remember where the list was scrolled to, for when you come back
+        // (a retry from the results screen keeps the spot the list was left at)
+        if (pendingOrigin === 'review') pendingOrigin = wordlistView.style.display === 'block' ? 'words' : 'learn';      // the old 復習 tab
+        if (!document.body.classList.contains('in-quiz')) reviewReturnScroll = pendingOrigin === 'learn' || pendingOrigin === 'words' ? { sub: pendingOrigin === 'words' ? 'words' : currentReviewSub, y: window.scrollY } : null;
         sessionOrigin = pendingOrigin; pendingOrigin = 'home';
         sessionStartedAt = Date.now();
         var title = pendingTitle || (bookmarkMode ? 'ブックマーク' : (mode === 'practice' ? '練習' : '誤答ノート'));

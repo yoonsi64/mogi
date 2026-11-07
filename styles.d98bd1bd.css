@@ -88,6 +88,11 @@
         .bottom-nav svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
         .bottom-nav button.active { color: var(--active-blue); }
         .bottom-nav button.active svg { stroke-width: 2.2; }
+        /* 設定: a gear at the right of home's header row (the row keeps its height: the 44px target overhangs it) */
+        .header-gear { width: 44px; height: 44px; margin: -8px -10px -8px auto; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: none; border: none; color: var(--text-sub); }
+        .header-gear[hidden] { display: none; }
+        .header-gear svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        .settings-topbar { display: flex; align-items: center; gap: 8px; margin: -4px 0 10px; }
         body.in-quiz .bottom-nav { display: none !important; }
 
         .subnav { display: none; gap: 0; margin: 0 0 16px; border: 1px solid var(--border-dark); }
