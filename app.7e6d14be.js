@@ -24903,6 +24903,7 @@
             '</div>' +
             (missed.length ? '<button class="practice-btn" id="retry-missed">間違えた問題だけ解き直す（' + missed.length + '問）</button>' : '') +
             '<div class="stat-card" style="margin-top:14px;"><div class="stat-card-title">分野別</div>' + typeRows + '</div>' +
+            libTestReportHtml() +
             '<div class="stat-card"><div class="stat-card-title">間違えた問題</div>' + missedHtml + '</div>' +
             '</div>';
 
@@ -25388,6 +25389,28 @@
         if (!c.v.n || !c.g.n || !c.r.n) return '';
         var total = c.v.n + c.g.n + c.r.n;
         if (answered < total) return '<div class="mk-rep-wait">全問に解答すると、JLPTの成績表の形で得点（目安）が表示されます（未解答 ' + (total - answered) + '問）。</div>';
+        return jlptReportHtml(c, '');
+    }
+    // 教材 (library) results: a book that is a practice test gets the same report once every question of that
+    // test (文字・語彙・文法・読解, however it was solved: by 問題, by section, or 模擬試験 aside) has been answered.
+    function libTestReportHtml() {
+        if (isBookmarkMode || isMistakeMode || selectedWeek === 'all' || userAnswers !== reportAnswers) return '';
+        var lib = getLib(selectedLib), w = parseInt(selectedWeek, 10);
+        if (!lib || !lib.practiceTest || !lib.units || !(w >= 1)) return '';
+        var range = [1, lib.units.length], title = lib.mockTitle || lib.title;
+        (lib.mockSets || []).forEach(function(ms) { if (w >= ms.weeks[0] && w <= ms.weeks[1]) { range = ms.weeks; title = ms.title; } });
+        var c = { v: { ok: 0, n: 0 }, g: { ok: 0, n: 0 }, r: { ok: 0, n: 0 } }, left = 0;
+        quizData.forEach(function(q) {
+            if (q.lib !== selectedLib || q.week < range[0] || q.week > range[1]) return;
+            var k = MOCK_CAT[q.type]; if (!k) return;
+            var r = earnedFrom(q, reportAnswers);
+            c[k].ok += r.earned; c[k].n += r.max; left += r.max - r.answered;
+        });
+        if (!c.v.n || !c.g.n || !c.r.n) return '';
+        if (left > 0) return '<div class="mk-rep-wait">' + escapeHtml(title) + 'の文字・語彙・文法・読解をすべて解くと、JLPTの成績表の形で得点（目安）が表示されます（未解答 ' + left + '問）。</div>';
+        return jlptReportHtml(c, title);
+    }
+    function jlptReportHtml(c, title) {
         var lang = Math.round((c.v.ok + c.g.ok) / (c.v.n + c.g.n) * 60), read = Math.round(c.r.ok / c.r.n * 60), sum = lang + read;
         var grade = function(x) { var r = x.ok / x.n; return r >= 0.67 ? 'A' : r >= 0.34 ? 'B' : 'C'; };
         var rb = function(t, r) { return '<ruby>' + t + '<rt>' + r + '</rt></ruby>'; };
@@ -25401,7 +25424,7 @@
                 : '言語知識・読解とも基準点（19点）以上です。合格（総合100点以上）には、聴解で <b>' + need + '点</b> 以上が必要です。';
         }
         return '<div class="mk-rep">' +
-            '<div class="mk-rep-head">日本語能力試験 N1　成績（目安）</div>' +
+            '<div class="mk-rep-head">日本語能力試験 N1　成績（目安）' + (title ? '<small>' + escapeHtml(title) + '</small>' : '') + '</div>' +
             '<table class="mk-rep-tbl">' +
                 '<tr><th rowspan="3" class="mk-rep-k">' + rb('得点区分別得点', 'とくてんくぶんべつとくてん') + '</th><td>' + rb('言語知識', 'げんごちしき') + '（' + rb('文字', 'もじ') + '・' + rb('語彙', 'ごい') + '・' + rb('文法', 'ぶんぽう') + '）</td><td class="mk-rep-n">' + lang + ' ／ 60</td></tr>' +
                 '<tr><td>' + rb('読解', 'どっかい') + '</td><td class="mk-rep-n">' + read + ' ／ 60</td></tr>' +

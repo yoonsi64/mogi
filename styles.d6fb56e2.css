@@ -3439,3 +3439,5 @@ body.gd-on .gd-meet { top: calc(62px + env(safe-area-inset-top)); }
 .mk-rep-judge .ng { color: var(--incorrect-color); }
 .mk-rep-note { font-size: 0.72rem; color: var(--text-sub); line-height: 1.6; margin: 0 2px; }
 .mk-rep-wait { font-size: 0.8rem; color: var(--text-sub); background: var(--surface); border: 1px dashed var(--border-light); border-radius: 8px; padding: 8px 10px; margin: 0 0 14px; line-height: 1.6; }
+.mk-rep-head small { display: block; font-size: 0.78em; font-weight: 500; color: var(--text-sub); margin-top: 2px; }
+.results-screen .mk-rep, .results-screen .mk-rep-wait { margin: 0 0 14px; }
