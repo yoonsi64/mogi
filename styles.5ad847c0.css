@@ -92,7 +92,7 @@
         .header-gear { width: 44px; height: 44px; margin: -8px -10px -8px auto; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: none; border: none; color: var(--text-sub); }
         .header-gear[hidden] { display: none; }
         .header-gear svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-        .settings-topbar { display: flex; align-items: center; gap: 8px; margin: -4px 0 10px; }
+        .settings-topbar { display: flex; align-items: center; gap: 8px; min-height: 44px; margin: -4px 0 10px; }
         body.in-quiz .bottom-nav { display: none !important; }
 
         .subnav { display: none; gap: 0; margin: 0 0 16px; border: 1px solid var(--border-dark); }
@@ -1715,6 +1715,10 @@
         .sort-controls { display: flex; gap: 6px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed var(--border-light); }
         .sort-controls button { background: #f0f0f0; border: 1px solid var(--border-light); padding: 6px 12px; font-size: 0.8rem; font-weight: bold; cursor: pointer; color: var(--text-sub); }
         .sort-controls button.active { background: var(--border-dark); color: #fff; border-color: var(--border-dark); }
+        .lib-sort { align-items: center; flex-wrap: wrap; gap: 6px 5px; margin: -4px 0 10px; padding-bottom: 0; border-bottom: none; }
+        .lib-sort button { white-space: nowrap; padding: 6px 9px; }
+        .lib-sort-label { font-size: 0.72rem; font-weight: bold; color: var(--text-sub); margin-right: 2px; white-space: nowrap; }
+        @media (max-width: 399px) { .lib-sort-label { display: none; } }
         .mistake-timestamp { position: absolute; bottom: 10px; right: 10px; font-size: 0.65rem; color: #aaa; font-weight: bold; z-index: 10; }
 
         .definition-popup, .blank-popup { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--popup-bg); border-top: 2px solid var(--border-dark); padding: 20px; transform: translateY(100%); transition: transform 0.3s ease-out; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }

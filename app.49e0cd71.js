@@ -10190,10 +10190,8 @@
             else if (tab === 'records') openSub('records', currentRecordsSub);
         });
     });
-    // 設定: the gear at the top right of home; × (and Back) go home again
+    // 設定: the gear at the top right of home; the bar's ホーム (and Back) go home again
     if (homeGear) homeGear.addEventListener('click', showSettings);
-    var settingsClose = document.getElementById('settings-close');
-    if (settingsClose) settingsClose.addEventListener('click', returnHome);
 
     // Answer history: collapsed by default, remembers the choice
     var historyContainer = document.getElementById('history-container');
@@ -10455,6 +10453,60 @@
     // ===================== 学ぶ › 教材 =====================
     // The books, one card per book under the JLPT 教材 / 漢検 / 読解 tabs, as they were at the foot of the home screen.
     // A book's day or unit, or a reading, opened here comes back to the same spot (homeReturn); × returns here (sessionOrigin 'library').
+    // 並び替え: 標準 (the order the books are listed in), 最近使った順 (the newest answer given in the book, from the answer
+    // history; a 読解 book: the last time one of its readings was opened), 進んでいる順 (the % on the card), 名前順 (the title).
+    // One choice for every shelf, kept in jlptLibSort (and in memory, so it still works when storage is full or blocked).
+    // Books that tie (never studied, the same %) keep the 標準 order.
+    var LIB_SORTS = [['std', '標準'], ['recent', '最近使った順'], ['progress', '進んでいる順'], ['name', '名前順']];
+    var libSortBy = null;
+    // { book id: place } as last shown: coming back from a day or a reading keeps it
+    var libShownOrder = null;
+    function libSortGet() {
+        if (libSortBy === null) {
+            var v = null;
+            try { v = localStorage.getItem('jlptLibSort'); } catch (e) {}
+            libSortBy = LIB_SORTS.some(function(s) { return s[0] === v; }) ? v : 'std';
+        }
+        return libSortBy;
+    }
+    function libSortSet(v) {
+        libSortBy = v;
+        try { localStorage.setItem('jlptLibSort', v); } catch (e) {}
+    }
+    function libSortHtml(cur) {
+        return '<div class="sort-controls lib-sort" role="group" aria-label="並び替え"><span class="lib-sort-label" aria-hidden="true">並び替え</span>' +
+            LIB_SORTS.map(function(s) { return '<button data-sort="' + s[0] + '" class="' + (s[0] === cur ? 'active' : '') + '" aria-pressed="' + (s[0] === cur) + '">' + s[1] + '</button>'; }).join('') + '</div>';
+    }
+    function eachReading(b, fn) { b.toc.forEach(function(sec) { sec.chapters.forEach(function(ch) { ch.items.forEach(function(it) { if (it.id && READINGS[it.id]) fn(it.id); }); }); }); }
+    function libLastStudied() {
+        var qLib = {}, at = {};
+        quizData.forEach(function(q) { qLib[q.id] = q.lib || DEFAULT_LIB; });
+        attemptLog.forEach(function(a) { var l = qLib[a.id]; if (l && (a.t || 0) > (at[l] || 0)) at[l] = a.t; });
+        READING_BOOKS.forEach(function(b) {
+            eachReading(b, function(id) { var t = advStore[id] && advStore[id].at; if (t && t > (at[b.id] || 0)) at[b.id] = t; });
+        });
+        return at;
+    }
+    // as on the book's card: a 読解 book, the mean of its readings' progress; a book, answered / all
+    function libProgress(b) {
+        var max = 0, done = 0;
+        if (b.toc) eachReading(b, function(id) { max += 100; done += arProgress(id).pct; });
+        else for (var w = 1; w <= b.weeks; w++) for (var d = 1; d <= daysIn(b, w); d++) { var st = homeDayStatus(w, d, b.id); max += st.max; done += st.answered; }
+        return max ? done / max : 0;
+    }
+    function libSorted(list, by) {
+        if (by === 'std') return list;
+        var key = {}, at = by === 'recent' ? libLastStudied() : null;
+        list.forEach(function(b) { key[b.id] = by === 'recent' ? -(at[b.id] || 0) : by === 'progress' ? -libProgress(b) : 0; });
+        return list.map(function(b, i) { return [b, i]; }).sort(function(x, y) {
+            if (by === 'name') return x[0].title.localeCompare(y[0].title, 'ja', { numeric: true }) || x[1] - y[1];
+            return key[x[0].id] - key[y[0].id] || x[1] - y[1];
+        }).map(function(p) { return p[0]; });
+    }
+    function libKeepShownOrder(list) {
+        var at = function(p) { var k = libShownOrder[p[0].id]; return k === undefined ? 1e6 + p[1] : k; };
+        return list.map(function(b, i) { return [b, i]; }).sort(function(x, y) { return at(x) - at(y); }).map(function(p) { return p[0]; });
+    }
     function showLibrary() {
         setAnswerMode(false);
         speechSession++;
@@ -10483,19 +10535,27 @@
         var jlptLibs = LIBRARIES.filter(function(l) { return l.shelf !== 'kanken'; }), kankenLibs = LIBRARIES.filter(function(l) { return l.shelf === 'kanken'; });
         var shelfIds = ['jlpt'].concat(kankenLibs.length ? ['kanken'] : [], READING_BOOKS.length ? ['read'] : []);
         var shelf = getSetting('homeShelf', 'jlpt'); if (shelfIds.indexOf(shelf) < 0) shelf = 'jlpt';
+        // 並び替え: back from a day or a reading (setNav keeps homeReturn only for 教材), the books stay where they were left
+        var sortBy = libSortGet(), keepOrder = !!homeReturn && !!libShownOrder;
+        var ordered = function(list) { return keepOrder ? libKeepShownOrder(list) : libSorted(list, sortBy); };
+        jlptLibs = ordered(jlptLibs); kankenLibs = ordered(kankenLibs);
+        var readBooks = ordered(READING_BOOKS);
         if (shelfIds.length > 1) html += '<div class="home-shelf-tabs" role="tablist">' +
             '<button role="tab" data-shelf="jlpt" aria-selected="' + (shelf === 'jlpt') + '">JLPT 教材<small>' + jlptLibs.length + '冊</small></button>' +
             (kankenLibs.length ? '<button role="tab" data-shelf="kanken" aria-selected="' + (shelf === 'kanken') + '">漢検<small>' + kankenLibs.length + '冊</small></button>' : '') +
             (READING_BOOKS.length ? '<button role="tab" data-shelf="read" aria-selected="' + (shelf === 'read') + '">読解<small>' + READING_BOOKS.length + '冊</small></button>' : '') + '</div>';
         else html += '<div class="home-section"><span>JLPT 教材</span><span>' + jlptLibs.length + '冊</span></div>';
+        html += libSortHtml(sortBy);
         html += '<div class="home-shelf" data-shelf="jlpt"' + (shelf === 'jlpt' ? '' : ' hidden') + '>';
         jlptLibs.forEach(function(lib) { html += libCardHtml(lib, last, dueMap); });
         html += '</div><div class="home-shelf" data-shelf="kanken"' + (shelf === 'kanken' ? '' : ' hidden') + '>';
         kankenLibs.forEach(function(lib) { html += libCardHtml(lib, last, dueMap); });
         html += '</div><div class="home-shelf" data-shelf="read"' + (shelf === 'read' ? '' : ' hidden') + '>';
-        READING_BOOKS.forEach(function(b) { html += readingBookCardHtml(b); });
+        readBooks.forEach(function(b) { html += readingBookCardHtml(b); });
         html += '</div></div>';
         quizContainer.innerHTML = html;
+        libShownOrder = {};
+        [].forEach.call(quizContainer.querySelectorAll('.home-shelf > .lib-card'), function(c, i) { libShownOrder[c.dataset.lib] = i; });
         restoreHomeSpot();          // in the same frame as the new page, so it never shows at the top first
 
         quizContainer.querySelectorAll('.day-cell:not([disabled])').forEach(function(c) {
@@ -10528,6 +10588,18 @@
                 setSetting('homeShelf', t.dataset.shelf);
                 quizContainer.querySelectorAll('.home-shelf-tabs button').forEach(function(x) { x.setAttribute('aria-selected', String(x === t)); });
                 quizContainer.querySelectorAll('.home-shelf').forEach(function(sh) { sh.hidden = sh.dataset.shelf !== t.dataset.shelf; });
+            });
+        });
+        // 並び替え: re-sorted in place, so the row stays under the finger and an open book stays open (libOpenNow);
+        // tapping the chosen order again sorts the books again (after coming back from a day they are left as they were)
+        quizContainer.querySelectorAll('.lib-sort button[data-sort]').forEach(function(b) {
+            b.addEventListener('click', function() {
+                var y = window.scrollY, by = b.dataset.sort;
+                libSortSet(by);
+                showLibrary();
+                window.scrollTo(0, y);
+                var nb = quizContainer.querySelector('.lib-sort button[data-sort="' + by + '"]');
+                if (nb) nb.focus({ preventScroll: true });
             });
         });
         stopQuoteRotation();
@@ -23431,6 +23503,8 @@
         rememberHomeSpot('.ar-item[data-id="' + id + '"]');
         buildArView();
         var st = advState(id);
+        // when it was last opened: 学ぶ › 教材's 最近使った順 for the 読解 books
+        st.at = Date.now(); saveAdv();
         ar = { id: id, r: READINGS[id], tab: tab || st.tab || 'text' };
         var tabs = ar.r.tabs || AR_TABS;
         if (!tabs.some(function(t) { return t[0] === ar.tab; })) ar.tab = 'text';
