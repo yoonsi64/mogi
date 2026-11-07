@@ -3423,3 +3423,19 @@ body.gd-on .gd-meet-txt span, .gd-full .gd-meet-txt span, .gd-focus .gd-meet-txt
 .gd-zoom.zoomed .mogi-hl-name, .gfv-zoom.zoomed .mogi-hl-name { font-size: 0.55rem; padding: 1px 8px; }
 body.gd-on .gd-meet { top: calc(62px + env(safe-area-inset-top)); }
 .gd-full .gd-meet, .gd-focus .gd-meet { top: 56px; }
+/* 模擬試験: JLPT-style score report (目安) */
+.mk-rep { border: 1px solid var(--border-dark); border-radius: 10px; background: var(--surface); padding: 12px 12px 10px; margin: 4px 0 16px; }
+.mk-rep-head { font-weight: bold; font-size: 0.95rem; text-align: center; margin-bottom: 10px; }
+.mk-rep-tbl { width: 100%; border-collapse: collapse; font-size: 0.86rem; table-layout: fixed; }
+.mk-rep-tbl th, .mk-rep-tbl td { border: 1px solid var(--border-dark); padding: 9px 6px 6px; vertical-align: middle; line-height: 1.5; }
+.mk-rep-tbl rt { font-size: 0.55em; color: var(--text-sub); }
+.mk-rep-k { background: color-mix(in srgb, var(--active-blue) 9%, transparent); font-weight: normal; text-align: left; width: 31%; font-size: 0.8rem; }
+.mk-rep-k small { display: block; font-size: 0.72rem; color: var(--text-sub); }
+.mk-rep-n { text-align: center; width: 27%; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mk-rep-n b { font-size: 1.15rem; }
+.mk-rep-g { font-weight: bold; font-size: 1.05rem; }
+.mk-rep-na { color: var(--text-sub); font-size: 0.8rem; }
+.mk-rep-judge { font-size: 0.85rem; line-height: 1.7; margin: 10px 2px 6px; }
+.mk-rep-judge .ng { color: var(--incorrect-color); }
+.mk-rep-note { font-size: 0.72rem; color: var(--text-sub); line-height: 1.6; margin: 0 2px; }
+.mk-rep-wait { font-size: 0.8rem; color: var(--text-sub); background: var(--surface); border: 1px dashed var(--border-light); border-radius: 8px; padding: 8px 10px; margin: 0 0 14px; line-height: 1.6; }
