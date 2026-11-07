@@ -71,10 +71,13 @@ function rareBlock(kind, block) {
   if (kind === 'blizzard') return block <= 3 ? 'snow' : 'blizzard';
   return null;
 }
+/* (rains less) the table's rain was the chance a dry spell turns wet in each 3-hour block, and wet spells carry on half the time, so
+   it rained 30-57% of the time from spring to autumn. Now about as often as in Tokyo, a little drier: wet 3% of the time in
+   midwinter, 6-10% in spring and autumn, 14-15% in 梅雨, 9% in high summer (typhoons included); spells of about 6-8 hours */
 var WX_TABLE = {
-  jan: [0.65, 0.20, 0.05, 0, 0.10], feb: [0.55, 0.20, 0.10, 0, 0.15], mar: [0.45, 0.25, 0.30, 0, 0], apr: [0.45, 0.25, 0.30, 0, 0], may: [0.55, 0.25, 0.20, 0, 0],
-  jun: [0.45, 0.25, 0.30, 0, 0], tsuyu: [0.20, 0.35, 0.45, 0, 0], midsummer: [0.60, 0.15, 0.10, 0.15, 0], sep: [0.40, 0.25, 0.30, 0.05, 0], oct: [0.55, 0.25, 0.20, 0, 0],
-  nov: [0.65, 0.20, 0.15, 0, 0], dec: [0.65, 0.20, 0.05, 0, 0.10]
+  jan: [0.70, 0.18, 0.02, 0, 0.10], feb: [0.63, 0.19, 0.03, 0, 0.15], mar: [0.60, 0.35, 0.05, 0, 0], apr: [0.61, 0.34, 0.05, 0, 0], may: [0.64, 0.32, 0.04, 0, 0],
+  jun: [0.56, 0.39, 0.05, 0, 0], tsuyu: [0.36, 0.55, 0.09, 0, 0], midsummer: [0.70, 0.265, 0.015, 0.02, 0], sep: [0.57, 0.38, 0.04, 0.01, 0], oct: [0.62, 0.33, 0.05, 0, 0],
+  nov: [0.68, 0.29, 0.03, 0, 0], dec: [0.70, 0.18, 0.02, 0, 0.10]
 };
 var WX_KINDS = ['clear', 'cloudy', 'rain', 'storm', 'snow'];
 function wxRow(d) {
