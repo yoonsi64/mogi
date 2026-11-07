@@ -24907,6 +24907,7 @@
             '<div class="stat-card"><div class="stat-card-title">間違えた問題</div>' + missedHtml + '</div>' +
             '</div>';
 
+        armRepStamp(quizContainer);
         quizContainer.querySelectorAll('.missed-item').forEach(function(b) {
             b.addEventListener('click', function() {
                 currentIndex = parseInt(b.dataset.idx, 10);
@@ -25389,7 +25390,7 @@
         if (!c.v.n || !c.g.n || !c.r.n) return '';
         var total = c.v.n + c.g.n + c.r.n;
         if (answered < total) return '<div class="mk-rep-wait">全問に解答すると、JLPTの成績表の形で得点（目安）が表示されます（未解答 ' + (total - answered) + '問）。</div>';
-        return jlptReportHtml(c, '');
+        return jlptReportHtml(c, '', mk.s.end);
     }
     // 教材 (library) results: a book that is a practice test gets the same report once every question of that
     // test (文字・語彙・文法・読解, however it was solved: by 問題, by section, or 模擬試験 aside) has been answered.
@@ -25399,18 +25400,54 @@
         if (!lib || !lib.practiceTest || !lib.units || !(w >= 1)) return '';
         var range = [1, lib.units.length], title = lib.mockTitle || lib.title;
         (lib.mockSets || []).forEach(function(ms) { if (w >= ms.weeks[0] && w <= ms.weeks[1]) { range = ms.weeks; title = ms.title; } });
-        var c = { v: { ok: 0, n: 0 }, g: { ok: 0, n: 0 }, r: { ok: 0, n: 0 } }, left = 0;
+        var c = { v: { ok: 0, n: 0 }, g: { ok: 0, n: 0 }, r: { ok: 0, n: 0 } }, left = 0, ids = {};
         quizData.forEach(function(q) {
             if (q.lib !== selectedLib || q.week < range[0] || q.week > range[1]) return;
             var k = MOCK_CAT[q.type]; if (!k) return;
+            ids[q.id] = 1;
             var r = earnedFrom(q, reportAnswers);
             c[k].ok += r.earned; c[k].n += r.max; left += r.max - r.answered;
         });
         if (!c.v.n || !c.g.n || !c.r.n) return '';
         if (left > 0) return '<div class="mk-rep-wait">' + escapeHtml(title) + 'の文字・語彙・文法・読解をすべて解くと、JLPTの成績表の形で得点（目安）が表示されます（未解答 ' + left + '問）。</div>';
-        return jlptReportHtml(c, title);
+        // the stamp is dated with the last answer given in this test
+        var last = 0;
+        attemptLog.forEach(function(a) { if (ids[a.id] && a.t > last) last = a.t; });
+        return jlptReportHtml(c, title, last || Date.now());
     }
-    function jlptReportHtml(c, title) {
+    // モギの日付印: pressed on the report when it comes into view (top モギ, the date in the band, 採点済 below)
+    function repStampHtml(ts) {
+        var d = new Date(ts || Date.now()), p2 = function(n) { return (n < 10 ? '0' : '') + n; };
+        return '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="mk-hanko" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB">' +
+            '<feTurbulence type="fractalNoise" baseFrequency="0.3" numOctaves="1" seed="7" result="w"/><feDisplacementMap in="SourceGraphic" in2="w" scale="0.9" xChannelSelector="R" yChannelSelector="G" result="r"/>' +
+            '<feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="2" seed="13" result="g"/><feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -3.6 2.95" result="sp"/><feComposite in="r" in2="sp" operator="in" result="s"/>' +
+            '<feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="19" result="pr0"/><feColorMatrix in="pr0" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1.4 0.3" result="pr"/><feComposite in="s" in2="pr" operator="in"/></filter></svg>' +
+            '<div class="mk-rep-stamp" aria-label="モギ 採点済 ' + d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日" role="img">' +
+            '<span class="st-top">モギ</span><span class="st-mid">' + p2(d.getFullYear() % 100) + '.' + p2(d.getMonth() + 1) + '.' + p2(d.getDate()) + '</span><span class="st-bot">採点済</span></div>';
+    }
+    // press it once the report is on screen: the seal lands, the report jolts, a thud
+    function armRepStamp(root) {
+        var st = root && root.querySelector('.mk-rep-stamp');
+        if (!st) return;
+        var rep = st.closest('.mk-rep');
+        var press = function() {
+            if (st.classList.contains('hit')) return;
+            st.classList.add('hit');
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            setTimeout(function() {
+                if (!document.body.contains(st)) return;
+                rep.classList.remove('jolt'); void rep.offsetWidth; rep.classList.add('jolt');
+                try { if (typeof omkSound === 'function') omkSound('thud', 0.8); } catch (e) {}
+                if (navigator.vibrate && getSetting('vibrate', true)) { try { navigator.vibrate([60, 30, 20]); } catch (err) {} }
+            }, 260);
+        };
+        if (!('IntersectionObserver' in window)) { setTimeout(press, 400); return; }
+        var io = new IntersectionObserver(function(es) {
+            es.forEach(function(e) { if (e.isIntersecting) { io.disconnect(); setTimeout(press, 250); } });
+        }, { threshold: 0.55 });
+        io.observe(rep);
+    }
+    function jlptReportHtml(c, title, ts) {
         var lang = Math.round((c.v.ok + c.g.ok) / (c.v.n + c.g.n) * 60), read = Math.round(c.r.ok / c.r.n * 60), sum = lang + read;
         var grade = function(x) { var r = x.ok / x.n; return r >= 0.67 ? 'A' : r >= 0.34 ? 'B' : 'C'; };
         var rb = function(t, r) { return '<ruby>' + t + '<rt>' + r + '</rt></ruby>'; };
@@ -25423,7 +25460,7 @@
             judge = need > 60 ? '言語知識・読解とも基準点（19点）以上ですが、総合得点が合格点（100点）に届くには聴解が満点でも足りません。'
                 : '言語知識・読解とも基準点（19点）以上です。合格（総合100点以上）には、聴解で <b>' + need + '点</b> 以上が必要です。';
         }
-        return '<div class="mk-rep">' +
+        return '<div class="mk-rep">' + repStampHtml(ts) +
             '<div class="mk-rep-head">日本語能力試験 N1　成績（目安）' + (title ? '<small>' + escapeHtml(title) + '</small>' : '') + '</div>' +
             '<table class="mk-rep-tbl">' +
                 '<tr><th rowspan="3" class="mk-rep-k">' + rb('得点区分別得点', 'とくてんくぶんべつとくてん') + '</th><td>' + rb('言語知識', 'げんごちしき') + '（' + rb('文字', 'もじ') + '・' + rb('語彙', 'ごい') + '・' + rb('文法', 'ぶんぽう') + '）</td><td class="mk-rep-n">' + lang + ' ／ 60</td></tr>' +
@@ -25471,6 +25508,7 @@
         document.querySelectorAll('#mk-body .mk-key tbody tr').forEach(function(tr) {
             tr.addEventListener('click', function() { mk.s.idx = parseInt(tr.dataset.i, 10); renderMockItem(); });
         });
+        armRepStamp(document.getElementById('mk-body'));
         document.getElementById('mk-foot').innerHTML = '<button id="mk-close2">閉じる</button><button id="mk-again" class="primary">もう一度受ける</button>';
         document.getElementById('mk-close2').addEventListener('click', closeMock);
         document.getElementById('mk-again').addEventListener('click', function() {

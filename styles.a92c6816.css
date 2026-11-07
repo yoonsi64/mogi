@@ -3441,3 +3441,15 @@ body.gd-on .gd-meet { top: calc(62px + env(safe-area-inset-top)); }
 .mk-rep-wait { font-size: 0.8rem; color: var(--text-sub); background: var(--surface); border: 1px dashed var(--border-light); border-radius: 8px; padding: 8px 10px; margin: 0 0 14px; line-height: 1.6; }
 .mk-rep-head small { display: block; font-size: 0.78em; font-weight: 500; color: var(--text-sub); margin-top: 2px; }
 .results-screen .mk-rep, .results-screen .mk-rep-wait { margin: 0 0 14px; }
+/* モギの日付印 on the score report */
+.mk-rep { position: relative; }
+.mk-rep-stamp { position: absolute; top: -18px; right: -12px; z-index: 2; width: 72px; height: 72px; box-sizing: border-box; border: 3px solid #c8372d; border-radius: 50%; overflow: hidden; color: #c8372d; font-family: var(--mincho); display: flex; flex-direction: column; justify-content: center; text-align: center; transform: rotate(-12deg); mix-blend-mode: multiply; filter: url(#mk-hanko); opacity: 0; pointer-events: none; }
+.mk-rep-stamp .st-top { font-weight: 900; font-size: 1.02rem; line-height: 1.05; letter-spacing: 0.06em; padding-bottom: 2px; }
+.mk-rep-stamp .st-mid { border-top: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; font-family: var(--reading-font, inherit); font-weight: 800; font-size: 0.66rem; line-height: 1.55; letter-spacing: 0.04em; }
+.mk-rep-stamp .st-bot { font-weight: 800; font-size: 0.6rem; line-height: 1.1; padding-top: 3px; letter-spacing: 0.08em; }
+.mk-rep-stamp.hit { animation: mkRepStamp 0.42s cubic-bezier(.2, .9, .3, 1.3) both; }
+@keyframes mkRepStamp { 0% { opacity: 0; transform: rotate(-12deg) scale(2.6); } 62% { opacity: 1; transform: rotate(-12deg) scale(0.94); } 100% { opacity: 0.92; transform: rotate(-12deg) scale(1); } }
+.mk-rep.jolt { animation: mkRepJolt 0.28s ease-out; }
+@keyframes mkRepJolt { 0% { transform: translateY(0); } 30% { transform: translateY(2px) scale(0.997); } 100% { transform: none; } }
+html.dark .mk-rep-stamp { mix-blend-mode: normal; color: #e0574b; border-color: #e0574b; }
+@media (prefers-reduced-motion: reduce) { .mk-rep-stamp.hit { animation: none; opacity: 0.92; } .mk-rep.jolt { animation: none; } }
