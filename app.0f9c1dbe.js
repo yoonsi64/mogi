@@ -8595,12 +8595,24 @@
     function gdFireworksAt(w, d) { var E = gdEngineFor(w) || window.MogiGarden; try { return !!(E && E.fireworksAt && E.fireworksAt(d)); } catch (e) { return false; } }
     var GD_EVENTS = { shogatsu: 'お正月', setsubun: '節分', hinamatsuri: 'ひな祭り', kodomo: 'こどもの日', tanabata: '七夕', obon: 'お盆', tsukimi: 'お月見' };
     function gdMoonPhase(d) { var p = ((d.getTime() - Date.UTC(2000, 0, 6, 18, 14)) / 86400000 / 29.530588853) % 1; return p < 0 ? p + 1 : p; }
-    function gdTsukimi(y) {         // 十五夜: the first full moon from about 7 September
-        for (var i = 0; i < 40; i++) {
-            var d = new Date(y, 8, 7 + i, 21), p = gdMoonPhase(d), p2 = gdMoonPhase(new Date(y, 8, 8 + i, 21));
-            if (p <= 0.5 && p2 > 0.5) return Math.abs(p - 0.5) <= Math.abs(p2 - 0.5) ? new Date(y, 8, 7 + i) : new Date(y, 8, 8 + i);
-        }
-        return new Date(y, 8, 21);
+    // 十五夜 (中秋の名月): the 15th day of the lunar month that holds 秋分, its 1st day being the day (JST) of the new moon at or
+    // before the end of 秋分の日. Known years from the table (worked out with the sky file's moon, which is accurate to minutes,
+    // and checked against the published dates); other years worked out the same way, with the mean moon until the sky file loads.
+    // (It took the first full moon after 7 September, which some years is a month early: 2025's came on 9/07, the real one 10/06.)
+    var GD_TSUKIMI_MD = { 2024: 917, 2025: 1006, 2026: 925, 2027: 915, 2028: 1003, 2029: 922, 2030: 912, 2031: 1001, 2032: 919,
+        2033: 908, 2034: 927, 2035: 916, 2036: 1004, 2037: 924, 2038: 913, 2039: 1002, 2040: 921, 2041: 910, 2042: 928, 2043: 917, 2044: 1005, 2045: 925 };
+    var GD_TSUKIMI = {};   // 2033: the old calendar's rules clash that autumn (2033年問題); 9/8 is the date commonly given
+    function gdTsukimi(y) {
+        if (GD_TSUKIMI_MD[y]) return new Date(y, Math.floor(GD_TSUKIMI_MD[y] / 100) - 1, GD_TSUKIMI_MD[y] % 100);
+        if (GD_TSUKIMI[y]) return new Date(GD_TSUKIMI[y]);
+        var sky = typeof MogiSky !== 'undefined' && MogiSky.moonPhase, ph = sky ? MogiSky.moonPhase : gdMoonPhase;
+        var eq = Math.floor(23.2488 + 0.242194 * (y - 1980) - Math.floor((y - 1980) / 4));   // 秋分の日, September (1980–2099)
+        var H = 3600000, t = Date.UTC(y, 8, eq, 15), i, a, b;                                // the end of that day in JST
+        for (i = 0; i < 31 * 24; i++) if (ph(new Date(t - H)) > 0.5 && ph(new Date(t)) < 0.5) break; else t -= H;
+        for (a = t - H, b = t, i = 0; i < 24; i++) { var c = (a + b) / 2; if (ph(new Date(c)) > 0.5) a = c; else b = c; }
+        var j = new Date(b + 9 * H), day = new Date(j.getUTCFullYear(), j.getUTCMonth(), j.getUTCDate() + 14);
+        if (sky) GD_TSUKIMI[y] = day.getTime();
+        return day;
     }
     function gdEventFor(now) {
         var m = now.getMonth() + 1, d = now.getDate(), md = m * 100 + d;

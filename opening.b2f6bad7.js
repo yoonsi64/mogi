@@ -2,7 +2,8 @@
     // 起動画面の演出: auto (season, or the event on its dates) / sakura / aoba / momiji / snow /
     //   shogatsu / setsubun / hinamatsuri / kodomo / tanabata / hanabi / obon / tsukimi / xmas / omisoka / jlpt / off
     // 十五夜 (中秋の名月) moves with the lunar calendar: month * 100 + day (bestcalendar.jp)
-    var TSUKIMI_DATES = { 2025: 1006, 2026: 925, 2027: 915, 2028: 1003, 2029: 922, 2030: 912, 2031: 1001 };
+    var TSUKIMI_DATES = { 2025: 1006, 2026: 925, 2027: 915, 2028: 1003, 2029: 922, 2030: 912, 2031: 1001, 2032: 919, 2033: 908, 2034: 927,
+        2035: 916, 2036: 1004, 2037: 924, 2038: 913, 2039: 1002, 2040: 921, 2041: 910, 2042: 928, 2043: 917, 2044: 1005, 2045: 925 };   // (the same as the app's GD_TSUKIMI_MD)
     function seasonForToday(now) {
         now = now || new Date();
         var y = now.getFullYear(), m = now.getMonth() + 1, d = now.getDate(), md = m * 100 + d, today = Date.UTC(y, m - 1, d);
