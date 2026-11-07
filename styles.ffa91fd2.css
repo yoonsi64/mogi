@@ -1639,6 +1639,43 @@
         .wl-sd.empty { opacity: .4; cursor: default; }
         .wl-sd.on { border-color: var(--bk-red); box-shadow: inset 0 0 0 1px var(--bk-red); }
         .wl-book.closed .wl-sched { display: none; }
+        /* 単語帳を選ぶ as library cards */
+        .wl-shelf-list { display: flex; flex-direction: column; }
+        .wl-shelf.lib-card { margin-bottom: 8px; --bk-red: var(--lib-color); --bk-yel: var(--lib-color); }
+        .wl-shelf .lib-head { padding: 10px 12px; }
+        .wl-shelf.on { border-color: var(--active-blue); box-shadow: 0 0 0 1px var(--active-blue), var(--shadow); }
+        .wl-shelf-on { display: inline-block; margin-left: 7px; padding: 1px 8px; border-radius: 999px; background: var(--active-blue); color: #fff; font-size: 0.66rem; font-weight: bold; vertical-align: 2px; letter-spacing: .04em; }
+        html.dark .wl-shelf-on { color: #0d1117; }
+        .wl-shelf-lv { display: inline-block; background: #E60012; color: #fff; padding: 0 5px; border-radius: 3px; margin-left: 5px; font-size: 0.76rem; vertical-align: 1px; }
+        .wl-shelf-check { flex-shrink: 0; color: var(--active-blue); font-weight: bold; font-size: 1.15rem; line-height: 1; }
+        .wl-shelf .lib-body { padding: 8px 10px 10px; }
+        .wl-shelf .wl-sched { padding: 0; }
+        .wl-shelf .lib-info { margin-top: 10px; }
+        /* the day line keeps one height whether days are chosen or not; the chosen days beside the 学習 label */
+        .wl-sd-sel { height: 28px; min-height: 28px; }
+        .wl-sd-sel span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .wl-sd-clear { padding: 2px 10px; line-height: 1.5; }
+        .wl-modes-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .wl-scope { margin-left: 8px; color: var(--active-blue); letter-spacing: 0.02em; }
+        .flash-starts .flash-start-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        /* the review card as in Anki: the front where it was, a rule, the answer under it; solid grade buttons in one bar */
+        .flash-card.anki { justify-content: flex-start; gap: 0; padding-top: clamp(44px, 11vh, 110px); }
+        .flash-card.anki .flash-word { font-size: clamp(2.4rem, 11vw, 3.4rem); font-weight: 600; line-height: 1.45; }
+        .flash-card.anki .flash-hint { margin-top: 18px; font-size: 0.76rem; opacity: .8; }
+        .fc-answer { width: 88%; height: 0; border: none; border-top: 1px solid color-mix(in srgb, var(--text-main) 30%, transparent); margin: 16px auto 18px; }
+        .flash-card.anki .flash-meaning { font-size: clamp(1.25rem, 5.4vw, 1.65rem); line-height: 1.5; font-weight: 500; }
+        .flash-card.anki .flash-context { margin-top: 18px; border-top: none; padding-top: 0; text-align: center; font-size: 0.95rem; }
+        .flash-view .srs-btns { gap: 0; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+        .flash-view .srs-btn { border: none; border-radius: 0; color: #fff; padding: 9px 2px 12px; }
+        .flash-view .srs-btn small { color: rgba(255,255,255,.88); }
+        .flash-view .srs-btn.g1 { background: #d32f2f; color: #fff; }
+        .flash-view .srs-btn.g2 { background: #546e7a; color: #fff; }
+        .flash-view .srs-btn.g3 { background: #43a047; color: #fff; }
+        .flash-view .srs-btn.g4 { background: #039be5; color: #fff; }
+        .fc-n { margin-left: 9px; font-size: 0.95rem; font-weight: bold; font-variant-numeric: tabular-nums; }
+        .fc-n.fresh { color: #1e5fc4; } .fc-n.learn { color: #c62828; } .fc-n.review { color: #2e7d32; }
+        html.dark .fc-n.fresh { color: #7fb0ff; } html.dark .fc-n.learn { color: #ff8a80; } html.dark .fc-n.review { color: #81c784; }
+        .fc-n.cur { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
         #wordlist-view.deck-on .word-item-delete, #wordlist-view.deck-on #wordlist-export { display: none; }
         .word-item-meta { display: flex; justify-content: space-between; align-items: center; font-size: 0.7rem; color: #999; font-weight: bold; gap: 8px; }
         .word-item-open { background: none; border: 1px solid var(--border-light); color: var(--active-blue); font-size: 0.75rem; font-weight: bold; padding: 4px 8px; white-space: nowrap; flex-shrink: 0; }

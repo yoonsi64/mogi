@@ -10916,35 +10916,59 @@
         wlWeek = ''; buildWordListWeekOptions();
         renderDeckPicker();
     }
-    function deckBookPanel() {
-        var d = activeDeck ? deckById(activeDeck) : null; if (!d || !d.book) return '';
-        var bk = d.book, cnt = {}, done = 0;
+    // 単語帳を選ぶ: the word books shown like the home screen's library, one card per book (cover, title, what is in it,
+    // how much of it has been studied, the reviews due); the one in use is marked, and a book opens on its study schedule
+    // (tap its head again to fold it). Tap another card to switch to that book.
+    var DECK_INK = ['#c2412d', '#2f7d4f', '#2b5fa8', '#8a4f9e', '#b07a12'];
+    function deckStudyStats(list) {
+        var today = getTodayDateString(), seen = 0, due = 0;
+        (list || []).forEach(function(e) {
+            var st = e && e.srs; if (!st || !st.state || st.state === 'new') return;
+            seen++; if (e.due && e.due <= today) due++;
+        });
+        return { seen: seen, due: due };
+    }
+    function deckTitleHtml(t) { return / N1$/.test(t) ? escapeHtml(t.replace(/ N1$/, '')) + '<b class="wl-shelf-lv">N1</b>' : escapeHtml(t); }
+    function deckSchedHtml(d) {
+        var bk = d.book, cnt = {}, sel = deckDaySel();
         d.words.forEach(function(w) { cnt[w.deckDay] = (cnt[w.deckDay] || 0) + 1; });
         var cells = bk.schedule.map(function(sc, i) {
-            var n = cnt[i + 1] || 0; if (n) done++;
-            return '<button class="wl-sd' + (n ? '' : ' empty') + (deckDaySel().indexOf(String(i + 1)) >= 0 ? ' on' : '') + '"' + (n ? ' data-day="' + (i + 1) + '"' : ' disabled') + ' title="' + escapeHtml(sc.pos + ' p.' + sc.pages) + '">' +
+            var n = cnt[i + 1] || 0;
+            return '<button class="wl-sd' + (n ? '' : ' empty') + (sel.indexOf(String(i + 1)) >= 0 ? ' on' : '') + '"' + (n ? ' data-day="' + (i + 1) + '"' : ' disabled') + ' title="' + escapeHtml(sc.pos + ' p.' + sc.pages) + '">' +
                 '<div class="d">' + escapeHtml(sc.label || (i + 1) + '日目') + '</div><div class="p">' + escapeHtml(sc.pos) + '</div><div class="p">p.' + escapeHtml(sc.pages) + '</div>' + (n ? '<div class="c">' + n + '語</div>' : '') + '</button>';
         }).join('');
-        var closed = getSetting('wlBookClosed', false);
-        return '<div class="wl-book' + (closed ? ' closed' : '') + '"><div class="wl-book-head"><img src="' + bk.cover + '" alt="">' +
-            '<div><div class="wl-book-t">' + (/ N1$/.test(d.title) ? escapeHtml(d.title.replace(/ N1$/, '')) + '<b>N1</b>' : escapeHtml(d.title)) + '</div>' +
-            '<div class="wl-book-m">' + escapeHtml((bk.author ? bk.author + ' 著 · ' : '') + bk.publisher + (bk.year ? ' · ' + bk.year + '年' : '')) + '</div>' +
-            '<div class="wl-book-m">学習スケジュール ' + done + ' / ' + bk.schedule.length + (bk.unit || '日分') + ' 収録 · ' + d.words.length + '語</div>' +
-            '<div class="wl-book-bar"><i style="width:' + Math.round(done / bk.schedule.length * 100) + '%"></i></div></div>' +
-            '<button class="wl-book-tg">' + (closed ? 'スケジュール ▾' : '閉じる ▴') + '</button></div>' +
-            '<div class="wl-sd-sel">' + (deckDaySel().length ? '<span>選択中：' + escapeHtml(daySelLabel()) + '（' + wordList.filter(function(e) { return deckDaySel().indexOf(String(e.deckDay)) >= 0; }).length + '語）</span><button class="wl-sd-clear">選択を解除</button>' : '<span>' + (d.book.unit ? 'タップして選ぶ（いくつでも）' : '日をタップして選ぶ（いくつでも）') + '</span>') + '</div>' +
-            '<div class="wl-sched">' + cells + '</div></div>';
+        return '<div class="wl-sd-sel">' + (sel.length ? '<span>選択中：' + escapeHtml(daySelLabel()) + '（' + wordList.filter(function(e) { return sel.indexOf(String(e.deckDay)) >= 0; }).length + '語）</span><button class="wl-sd-clear">選択を解除</button>'
+                : '<span>' + (bk.unit ? 'タップして選ぶ（いくつでも）' : '日をタップして選ぶ（いくつでも）') + '</span>') + '</div>' +
+            '<div class="wl-sched">' + cells + '</div>' +
+            '<div class="lib-info">' + escapeHtml(d.title) + (bk.author ? '<br>' + escapeHtml(bk.author) + ' 著' : '') + '<br>' + escapeHtml(bk.publisher || '') + (bk.year ? '　' + escapeHtml(bk.year) + '年' : '') + '</div>';
     }
     function renderDeckPicker() {
         var box = document.getElementById('wl-decks'); if (!box) return;
-        var mine = activeDeck ? (myWordList || []).length : wordList.length;
-        box.innerHTML = '<div class="wl-modes-label">単語帳を選ぶ</div><div class="wl-deck-row">' +
-            '<button class="wl-deck' + (activeDeck ? '' : ' on') + '" data-deck=""><span class="wl-deck-t">マイ単語帳</span><span class="wl-deck-n">' + mine + '語</span></button>' +
-            WORD_DECKS.map(function(d) {
-                var cv = d.book && d.book.cover ? '<img class="wl-deck-cover" src="' + d.book.cover + '" alt="">' : '';
-                return '<button class="wl-deck curated' + (cv ? ' has-cover' : '') + (activeDeck === d.id ? ' on' : '') + '" data-deck="' + d.id + '">' + cv + '<span class="wl-deck-txt"><span class="wl-deck-t">' + escapeHtml(d.title) + '</span><span class="wl-deck-n">' + escapeHtml(d.sub) + '・' + d.words.length + '語</span></span></button>';
-            }).join('') + '</div>' + deckBookPanel();
-        box.querySelectorAll('.wl-deck').forEach(function(b) { b.addEventListener('click', function() { switchDeck(b.dataset.deck); renderWordListItems(); }); });
+        var mine = activeDeck ? (myWordList || []) : wordList, closed = getSetting('wlBookClosed', false);
+        var card = function(id, title, meta, cover, ink, list, total, sched) {
+            var on = (activeDeck || '') === id, st = deckStudyStats(list), pct = total ? Math.round(st.seen / total * 100) : 0, open = on && sched && !closed;
+            return '<section class="lib-card wl-shelf' + (on ? ' on' : '') + (open ? ' open' : '') + '" data-deck="' + id + '" style="--lib-color:' + ink + '">' +
+                '<button class="lib-head wl-shelf-head"' + (on && sched ? ' aria-expanded="' + open + '"' : '') + (on ? ' aria-current="true"' : '') + '>' + cover +
+                    '<span class="lib-head-text"><span class="lib-title">' + title + (on ? '<span class="wl-shelf-on">使用中</span>' : '') + '</span>' +
+                    '<span class="lib-meta">' + meta + (st.due ? '・<b class="lib-due">復習' + st.due + '</b>' : '') + '</span>' +
+                    '<span class="lib-progress"><span class="lib-progress-track"><i style="width:' + pct + '%"></i></span><span class="lib-progress-num">' + pct + '%</span></span></span>' +
+                    (on && !sched ? '<span class="wl-shelf-check" aria-hidden="true">✓</span>' : '<span class="lib-chevron" aria-hidden="true">›</span>') +
+                '</button>' + (open ? '<div class="lib-body">' + deckSchedHtml(deckById(id)) + '</div>' : '') + '</section>';
+        };
+        var html = card('', 'マイ単語帳', '自分で集めた言葉・' + mine.length + '語', '<span class="lib-cover wl-my-cover" aria-hidden="true"><span>マイ</span></span>', 'var(--active-blue)', mine, mine.length, false);
+        WORD_DECKS.forEach(function(d, i) {
+            var bk = d.book || {}, saved = activeDeck === d.id ? wordList : loadJSON(deckStoreKey(d.id), []);
+            var cover = bk.cover ? libCoverHtml({ cover: bk.cover }, '') : '<span class="lib-cover" aria-hidden="true"><span>' + escapeHtml(d.title.slice(0, 2)) + '</span></span>';
+            var meta = escapeHtml((bk.publisher ? bk.publisher + '・' : '') + (bk.schedule && bk.schedule.length ? bk.schedule.length + (bk.unit || '日分') + '・' : '') + d.words.length + '語');
+            html += card(d.id, deckTitleHtml(d.title), meta, cover, bk.color || DECK_INK[i % DECK_INK.length], saved, d.words.length, !!(bk.schedule && bk.schedule.length));
+        });
+        box.innerHTML = '<div class="wl-modes-label">単語帳を選ぶ</div><div class="wl-shelf-list">' + html + '</div>';
+        box.querySelectorAll('.wl-shelf-head').forEach(function(h) { h.addEventListener('click', function() {
+            var id = h.parentNode.dataset.deck, d = deckById(id);
+            if (id === (activeDeck || '')) { if (d && d.book) { setSetting('wlBookClosed', !getSetting('wlBookClosed', false)); renderDeckPicker(); } return; }
+            if (getSetting('wlBookClosed', false)) setSetting('wlBookClosed', false);   // a book you switch to opens on its schedule
+            switchDeck(id); renderWordListItems();
+        }); });
         box.querySelectorAll('.wl-sd[data-day]').forEach(function(b) { b.addEventListener('click', function() {
             var cur = deckDaySel(), d = b.dataset.day, at = cur.indexOf(d);
             if (at >= 0) cur.splice(at, 1); else cur.push(d);
@@ -10952,7 +10976,6 @@
             wlWeek = cur.join(','); syncDaySelect(); renderWordListItems(); renderDeckPicker();
         }); });
         var clr = box.querySelector('.wl-sd-clear'); if (clr) clr.addEventListener('click', function() { wlWeek = ''; syncDaySelect(); renderWordListItems(); renderDeckPicker(); });
-        var tg = box.querySelector('.wl-book-tg'); if (tg) tg.addEventListener('click', function() { setSetting('wlBookClosed', !getSetting('wlBookClosed', false)); renderDeckPicker(); });
         document.getElementById('wordlist-view').classList.toggle('deck-on', !!activeDeck);
         var nb = document.querySelector('#wordlist-sort-controls button[data-sort="new"]'); if (nb) nb.textContent = activeDeck ? '本の順' : '新しい順';
     }
@@ -12232,7 +12255,13 @@
     }
     function studyDay() { return deckDaySel().join(','); }
     function studyWords() { var d = deckDaySel(); return d.length ? wordList.filter(function(e) { return d.indexOf(String(e.deckDay)) >= 0; }) : wordList; }
-    function studyDayTag() { return deckDaySel().length ? daySelLabel() + '・' : ''; }
+    function studyDayTag() { return ''; }   // the chosen days are said once, beside the 学習 label (wlScopeLabel), so the buttons keep their size
+    function wlScopeLabel() {
+        var lab = document.querySelector('#wordlist-view .wl-modes .wl-modes-label'); if (!lab) return;
+        var sp = lab.querySelector('.wl-scope');
+        if (!sp) { sp = document.createElement('span'); sp.className = 'wl-scope'; lab.appendChild(sp); }
+        sp.textContent = deckDaySel().length ? daySelLabel() + '・' + studyWords().length + '語' : '';
+    }
     // the filter menu shows a multi-day pick as one extra option
     function syncDaySelect() {
         var sel = document.getElementById('wordlist-week'); if (!sel) return;
@@ -12303,7 +12332,17 @@
         var v = document.getElementById('flash-view'), body = v.querySelector('.flash-body');
         var remaining = flash.queue.length - flash.pos;
         flashUndoBtn(!!(flash.undo && flash.undo.length));
-        v.querySelector('.flash-progress').textContent = remaining > 0 ? 'のこり ' + remaining : '';
+        var prog = v.querySelector('.flash-progress');
+        if (remaining > 0 && !flash.practiceAll && !flash.write) {   // as in Anki: new · learning · review still to come, the current card's kind underlined
+            var seenQ = {}, nQ = { fresh: 0, learn: 0, review: 0 }, curQ = '';
+            flash.queue.slice(flash.pos).forEach(function(id, i) {
+                if (seenQ[id]) return; seenQ[id] = 1;
+                var w = wordList.find(function(x) { return x.id === id; }); if (!w) return;
+                var kd = srsKind(w); nQ[kd]++; if (i === 0) curQ = kd;
+            });
+            prog.innerHTML = ['fresh', 'learn', 'review'].map(function(kd) { return '<span class="fc-n ' + kd + (kd === curQ ? ' cur' : '') + '">' + nQ[kd] + '</span>'; }).join('');
+            prog.setAttribute('aria-label', '新' + nQ.fresh + '・学習' + nQ.learn + '・復習' + nQ.review);
+        } else { prog.textContent = remaining > 0 ? 'のこり ' + remaining : ''; prog.removeAttribute('aria-label'); }
         if (remaining <= 0) {
             var tot = flash.known + flash.again, missedE = (flash.missedIds || []).map(function(id) { return wordList.find(function(w) { return w.id === id; }); }).filter(Boolean);
             wqResult({ title: flash.practiceAll ? 'ひととおり復習しました' : '今日の復習はおわりです', pct: tot ? flash.known / tot * 100 : 100,
@@ -12322,11 +12361,12 @@
         if (!e) { flash.pos++; renderFlash(); return; }
         var label = textbookLabel(e.qid) || e.source || '';
         if (flash.write) { renderWriteCard(e, label, body); return; }
-        body.innerHTML = '<div class="flash-card' + (flash.revealed ? ' revealed' : '') + '">' +
+        body.innerHTML = '<div class="flash-card anki' + (flash.revealed ? ' revealed' : '') + '">' +
             (label ? '<div class="flash-source">' + escapeHtml(label) + '</div>' : '') +
             srsKindHtml(e) +
             '<div class="flash-word">' + (flash.revealed ? entryWordHtml(e) : escapeHtml(e.word)) + '</div>' +
             (flash.revealed ?
+                '<hr class="fc-answer">' +
                 '<div class="flash-meaning' + (e.meaning ? '' : ' empty') + '">' + (e.meaning ? escapeHtml(e.meaning) : '（意味・メモなし）') + '</div>' +
                 (e.context ? '<div class="flash-context">' + highlightIn(e.context, e.word) + '</div>' : '') +
                 '<button class="flash-speak" aria-label="読み上げ">🔊</button>'
@@ -13911,6 +13951,7 @@
         document.getElementById('mem-start-sub').textContent = studyDayTag() + (mmo.side === 'reading' ? '読み・' : '') + mmo.pairs + '組' + (mmo.peek ? '・最初に見る' : '');
         document.getElementById('mem-start').disabled = !wordList.length;
         var mo = matchOpts();
+        wlScopeLabel();
         document.getElementById('match-start-sub').textContent = studyDayTag() + (mo.side === 'reading' ? '読み・' : '') + mo.pairs + '組ずつ・' + (mo.rounds ? mo.rounds + '回' : 'すべて');
         document.getElementById('match-start').disabled = !wordList.length;
     }
