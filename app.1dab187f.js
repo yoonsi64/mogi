@@ -9074,7 +9074,7 @@
         box.innerHTML = '';
         GD.zoomReset && GD.zoomReset();
         var E = gdEngineFor(gdViewWorld());
-        if (E) { var o = gdViewOpts(gdState(gdViewWorld())); if (xf) o.onReady = function() { gdXfOff(xf, 650); }; GD.vctrl = E.mount(box, o); if (fullOpen()) GD.vctrl.pause(); gdEngawaBtn(o); }
+        if (E) { var o = gdViewOpts(gdState(gdViewWorld())); if (xf) o.onReady = function() { gdXfOff(xf, 650); }; if (GD.hand) { o.visitor = GD.hand; GD.hand = null; } GD.vctrl = E.mount(box, o); if (fullOpen()) GD.vctrl.pause(); gdEngawaBtn(o); }
         else gdXfOff(xf, 0);
         gdSoundUpdate();
     }
@@ -9126,6 +9126,7 @@
             gdPinch(GD.view.querySelector('.gd-zoom'), GD.view.querySelector('.gd-zoom-inner'), GD.view.querySelector('.gd-zoom-reset'));
         }
         if (!devMode) skyRecordState(gdState());
+        if (!gardenOpen()) { GD.hand = null; if (!devMode && GD.ctrl && GD.ctrl.visitorState && GD.ctrlWorld === worldActive()) try { GD.hand = GD.ctrl.visitorState(); } catch (e) { GD.hand = null; } }   // (the visitor on the card goes on in the view)
         GD.preview = null; GD.dev = null; GD.devMode = devMode; GD.devWorld = devMode ? worldActive() : null;
         if (devMode && !gdEngineFor(GD.devWorld)) GD.devWorld = window.MogiGarden ? 'garden' : 'town';
         GD.view.classList.toggle('dev', devMode);
@@ -9148,6 +9149,7 @@
         gdCloseSky(true);
         GD.view.classList.remove('active');
         document.body.classList.remove('gd-on');
+        var hand; if (!GD.devMode) { hand = GD.hand || null; try { if (GD.vctrl) hand = GD.vctrl.visitorState ? GD.vctrl.visitorState() : null; } catch (e) { hand = null; } } GD.hand = null;   // (the visitor in the view goes back to the card)
         if (GD.vctrl) { GD.vctrl.destroy(); GD.vctrl = null; }
         GD.view.querySelector('.gd-scene-full').innerHTML = '';
         if (window.MogiSound) MogiSound.stop(true);      // silent the moment the home screen is back
@@ -9155,6 +9157,7 @@
         syncNavHistory();
         // the home card shows the world chosen in the view (庭 or 町), straight away
         if (GD.el && GD.el.isConnected) { var sl = document.createElement('div'); sl.id = 'home-garden-slot'; GD.el.replaceWith(sl); gdMountCard(); }
+        if (hand !== undefined && GD.ctrl && GD.ctrl.adopt) try { GD.ctrl.adopt(hand); } catch (e) {}   // (the card's own copy gives way to it, or goes)
     }
     // 開発者メニュー (the garden): one of the seasonal flowers on show, by the season and a date in its best week
     // ([name, season, month, day, hour]: the hour matters for the 蓮 and 朝顔, open only in the morning, and the ひまわり turning with the sun)
@@ -9492,7 +9495,11 @@
         document.body.classList.add('gd-on');
         var s = gdState(w);
         var box = f.el.querySelector('.gf-scene'); box.innerHTML = '';
-        f.ctrl = E.mount(box, gdPlayOpts({ stage: s.stage, season: s.season, light: s.light, event: s.event, weather: s.weather, fireworks: s.fireworks,
+        f.from = gardenOpen() ? (gdViewWorld() === w && !gdSkyOpen() && !fullOpen() ? 'view' : null) : (GD.ctrlWorld === w ? 'card' : null); f.hand = null;   // (the visitor showing where it opens from goes on in 集中モード, and back there after)
+        var fsrc = f.from === 'view' ? GD.vctrl : f.from === 'card' ? GD.ctrl : null;
+        if (fsrc && fsrc.visitorState) try { f.hand = fsrc.visitorState(); } catch (e) { f.hand = null; }
+        if (f.from === 'view' && GD.vctrl) GD.vctrl.pause();
+        f.ctrl = E.mount(box, gdPlayOpts({ visitor: f.hand, stage: s.stage, season: s.season, light: s.light, event: s.event, weather: s.weather, fireworks: s.fireworks,
             date: new Date(), quality: 'full', animate: true,
             onCue: function(name, info) {
                 if (name === 'rare') rareRecord(w, info, true);
@@ -9640,6 +9647,7 @@
         gdLandscape(f, true, fullOpen);
         f.zoomReset && f.zoomReset();
         if (GD.vctrl) GD.vctrl.pause();
+        if (GD.vctrl && GD.vctrl.visitorState && w === gdViewWorld() && !gdSkyOpen()) try { o.visitor = GD.vctrl.visitorState(); } catch (e) {}   // (the visitor in the view goes on in 全画面)
         fullMount(f, w, o);
         fullDrawBar(); fullWake();
         syncNavHistory();
@@ -9684,6 +9692,7 @@
     }
     function closeFullView() {
         var f = GD.full; if (!f || !fullOpen() || f.leaving) return;
+        if (GD.vctrl && GD.vctrl.adopt && f.world === gdViewWorld()) { var fh = null; try { fh = f.ctrl && f.ctrl.visitorState ? f.ctrl.visitorState() : null; } catch (e) { fh = null; } try { GD.vctrl.adopt(fh); } catch (e) {} }   // (全画面's visitor goes back into the view; the view's own copy gives way to it)
         if (GD.vctrl) GD.vctrl.resume();          // the normal view is there underneath, still showing its picture
         f.leaving = true; f.el.classList.add('leaving');
         f.finishLeave = function() {
@@ -9705,7 +9714,12 @@
         var p = focusPlan(), mins = f.worked;
         if (f.running && f.phase === 'work') mins += Math.floor((f.end ? p[0] * 60000 - Math.max(0, (f.paused ? f.left : f.end - Date.now())) : (f.paused ? f.upTo : Date.now() - f.start)) / 60000);
         clearInterval(f.timer); f.running = false; focusWake(false);
+        var fvh = null; try { fvh = f.ctrl && f.ctrl.visitorState ? f.ctrl.visitorState() : null; } catch (e) { fvh = null; }
+        var fto = f.from === 'view' && gardenOpen() && gdViewWorld() === f.world ? GD.vctrl : f.from === 'card' && GD.ctrlWorld === f.world ? GD.ctrl : null;
         if (f.ctrl) { f.ctrl.destroy(); f.ctrl = null; }
+        if (fto && fto.adopt) try { fto.adopt(fvh); } catch (e) {}   // (the visitor in 集中モード goes back where it came from)
+        if (fto && fto === GD.vctrl && !gdSkyOpen() && !fullOpen()) GD.vctrl.resume();
+        f.from = null; f.hand = null;
         f.el.querySelector('.gf-scene').innerHTML = '';
         f.el.classList.remove('active');
         if (!gardenOpen()) document.body.classList.remove('gd-on');

@@ -13770,7 +13770,7 @@ return{w:w,h:h,a:a};
 function present(res,fade){
 if(dead)return;
 if(reveal&&fade)finishReveal();
-var first=!cur;
+var first=!cur,keepR=rare&&cur&&handSig(cur.spec)===handSig(res.spec)?rare:null;
 if(fade&&cur&&!reducedMotion()){
 if(cvBg)swayBase(false);
 sizeCanvas(tv,Math.min(cv.width,ovW()),Math.min(cv.height,ovH()));var tx=tv.getContext('2d');tx.globalCompositeOperation='source-over';tx.drawImage(cv,0,0,tv.width,tv.height);
@@ -13780,6 +13780,8 @@ sizeCanvas(cv,res.spec.bw,res.spec.bh);
 cv.getContext('2d').drawImage(res.img,0,0);cvBg=false;
 cur={spec:res.spec,img:res.img,mask:res.mask,clouds:res.clouds,sky:res.sky,occ:res.occ,glows:res.glows,sway:res.sway||null,geo:makeGeo(res)};
 setupFx();
+if(keepR)handLet(keepR);
+if(HAND.pend)handApply();
 stats.source=res.src;stats.ms=Math.round(res.ms);if(first)stats.firstAt=Math.round(now()-mountT0);
 if(phAnim){try{phAnim.cancel();}catch(e){}phAnim=null;}
 if(first||fade){
@@ -14382,16 +14384,50 @@ if(!s||!isFinite(s.x)||!isFinite(s.y))return null;
 var h=(RARE_SZ[rare.def.id]||0.8)*s.k;
 return{id:rare.def.id,name:rare.def.name,x:s.x/g.W,y:(s.y-h*0.5)/g.H,r:h*0.72/g.W};
 }
+var HAND={pend:null};
+function handSig(sp){return[sp.stage,sp.season,sp.light,sp.event||'-',sp.wx||'-'].join('|');}
+function handClone(x,dp){if(x===null||typeof x!=='object')return typeof x==='function'?undefined:x;dp=(dp||0)+1;if(dp>16)throw new Error('town: visitor state too deep');if(ArrayBuffer.isView(x))return x.slice();var y=Array.isArray(x)?[]:{},k,v;for(k in x)if(Object.prototype.hasOwnProperty.call(x,k)){v=handClone(x[k],dp);if(v!==undefined)y[k]=v;}return y;}
+function handLet(r){
+var sp=cur.spec,a=withScene({W:sp.W,H:sp.H,KS:sp.KS,stage:sp.stage,season:sp.season,light:sp.light,event:sp.event},function(){return rareAnchor(r.def,r.st);});
+r.band=a.band;r.key=a.key;r.scr=null;rare=r;cur.geo.rareNow=r;rareRoll=Math.max(rareRoll,clock+20);
+}
+function visitorState(){
+if(dead)return null;
+if(HAND.pend)return HAND.pend;
+if(!cur)return null;
+var s={v:1,town:true,scene:handSig(cur.spec),frame:{W:cur.spec.W,H:cur.spec.H},rare:null};
+if(rare&&rare.def&&clock<rare.t0+rare.def.dur){try{s.rare={id:rare.def.id,el:clock-rare.t0,st:handClone(rare.st)};}catch(e){s.rare=null;}}
+return s;
+}
+function adopt(s){
+if(dead)return false;
+rare=null;if(cur)cur.geo.rareNow=null;looseOff();
+HAND.pend=s&&s.v===1&&s.town?s:null;
+if(HAND.pend&&cur)handApply();
+if(cur&&!running()&&!reveal)drawFrame(true);
+loopCheck();
+return!!HAND.pend;
+}
+function handApply(){
+var s=HAND.pend;if(!s||!cur||dead)return;
+if(handSig(cur.spec)!==s.scene){if(cur.spec.key===wantKey())HAND.pend=null;return;}
+HAND.pend=null;
+var d=s.rare?rareById(s.rare.id):null;if(!d)return;
+var r=null;try{r={def:d,t0:clock-(+s.rare.el||0),st:handClone(s.rare.st),hand:1};handLet(r);}catch(e){rare=null;cur.geo.rareNow=null;if(window.console)console.warn('town: handover',e);}
+loopCheck();
+}
 var hl=rareHL(el,rareAt);
 var api={
 rareAt:rareAt,
+visitorState:visitorState,
+adopt:adopt,
 highlight:function(id,ms){
 if(!rare||dead||(id&&rare.def.id!==id))return false;
 return hl.show(rare.def.id,rare.def.name,ms);
 },
 update:update,
 playStageUp:playStageUp,
-_summon:function(id){var d=rareById(id);if(!d||!cur||dead||cur.spec.stage<d.minStage)return false;var ok=false;try{ok=startRare(d);}catch(e){rare=null;cur.geo.rareNow=null;if(window.console)console.error(e);}loopCheck();return ok;},
+_summon:function(id){var d=rareById(id);if(!d||!cur||dead||cur.spec.stage<d.minStage)return false;if(rare&&rare.hand&&rare.def.id===id)return true;var ok=false;try{ok=startRare(d);}catch(e){rare=null;cur.geo.rareNow=null;if(window.console)console.error(e);}loopCheck();return ok;},
 tap:function(nx,ny){
 if(!cur||dead||!isFinite(nx)||!isFinite(ny))return null;
 var g=cur.geo,st=saveState(),hit=null;
@@ -14413,7 +14449,7 @@ pause:function(){user.paused=true;loopCheck();return api;},
 resume:function(){user.paused=false;loopCheck();return api;},
 destroy:function(){
 if(dead)return;
-dead=true;cancelOthers([]);clearTimeout(pendingTimer);clearTimeout(rsTimer);
+dead=true;HAND.pend=null;cancelOthers([]);clearTimeout(pendingTimer);clearTimeout(rsTimer);
 if(raf)cancelAnimationFrame(raf);raf=0;
 document.removeEventListener('visibilitychange',onVis);
 try{if(io)io.disconnect();if(ro)ro.disconnect();if(rmq){if(rmq.removeEventListener)rmq.removeEventListener('change',onRM);else if(rmq.removeListener)rmq.removeListener(onRM);}}catch(e){}
@@ -14425,6 +14461,7 @@ cur=null;reveal=null;fallers=[];petals=null;dflies=null;bflies=null;
 get _dbg(){return{fv:fv,sv:sv,cv:cv,tv:tv,rv:rv,av:av,get rareLast(){return RARE_LAST;},get aq(){return aq;},cur:cur,wl:wl,bl:bl,petals:petals,clock:clock,frame:function(n){for(var i=0;i<(n||1);i++){clock+=1/30;tickFx(1/30);}drawFrame(false);},setClock:function(c){clock=c;},redraw:function(){drawFrame(false);},clearRare:function(){rare=null;if(cur)cur.geo.rareNow=null;},bolt:function(){lightning={t0:clock,bolt:makeBolt(cur.geo,frng)};cues.next.thunder=clock;},get wfx(){return wfx;},get fallers(){return fallers;},get cloudX(){return cloudX;},get leafGust(){return leafGust;},forceGust:function(){if(petals)petals.nextGust=clock;cues.next.gust=clock;},smokeDrift:function(){var g=cur.geo;return gWind(g).h;},get dflies(){return dflies;},get bflies(){return bflies;},worldScreen:function(x,y,z){var g=cur.geo,st=saveState();try{W=g.W;H=g.H;CAM=g.cam;var c=P(x,y,z);return[c.x/g.W,c.y/g.H];}finally{restoreState(st);}},walkerScreen:function(w){var g=cur.geo,st=saveState();try{W=g.W;H=g.H;CAM=g.cam;F=g.F;var q=walkerPos(g,w),f=P(q.x,q.y+0.8,q.z);return[f.x/g.W,f.y/g.H];}finally{restoreState(st);}},norenScreen:function(n){var g=cur.geo,st=saveState();try{W=g.W;H=g.H;CAM=g.cam;var c=Pa(n.W.at((n.s0+n.s1)/2,n.top-0.5,0.3));return[c.x/g.W,c.y/g.H];}finally{restoreState(st);}},get wind(){return cur&&cur.geo.wind;},set swayOnly(v){dbgSwayOnly=!!v;},tapTruth:function(){var sp=cur.spec,g=cur.geo;return withScene({W:sp.W,H:sp.H,KS:1,stage:sp.stage,season:sp.season,light:sp.light,event:sp.event,sp:sp.sp,wx:sp.wx,wsign:sp.wsign},function(){return tapTruth(g);});},resetTaps:function(){var g=cur.geo,I=g.I;if(!I)return;I.trees=[];I.birds=[];I.lamps=[];I.koi=I.paddy=I.bell=I.taiko=I.cat=null;I.wheel=0;g.walkers=g.walkers.filter(function(w){return!w.temp;});g.walkers.forEach(function(w){w.react=null;});g.noren.forEach(function(n){n.boost=null;});},set noSway(v){if(v){dbgSway=swayFx||dbgSway;swayFx=null;}else if(dbgSway)swayFx=dbgSway;},get sway(){return swayFx;},still:function(){drawFrame(true);},sky:function(kind){var g=cur.geo,b=newSkyBird(g,frng,kind);if(b){if(kind==='kite')b.birds.forEach(function(q){q.x=g.W*0.5;});g.FA.sky.push(b);}return!!b;},setGustIn:function(sec){cues.next.gust=clock+sec;if(sec>100)cues.gust=null;},swayDraw:function(o){if(swayFx){var S=swayFx;S.prof=o||null;drawSwayLayer(S);S.prof=null;}},rare:function(){return rare;},walk:function(fn){var sp=cur.spec;return withScene({W:sp.W,H:sp.H,KS:sp.KS,stage:sp.stage,season:sp.season,light:sp.light,event:sp.event},function(){return fn({build:rwBuild,route:rwRoute,P:P,RW:RW,koiFrame:koiFrame,WL:WL,riverAt:riverAt,plan:townPlan,F:F,BF:BF,planFoot:planFoot});});},hideBugs:function(){var a=dflies,b=bflies;dflies=bflies=null;drawFrame(false);dflies=a;bflies=b;}};},
 get stats(){return{source:stats.source,ms:stats.ms,history:stats.history.slice(),running:running(),aq:stats.aq,aqMs:Math.round(aq.ema*10)/10,still:stats.still||null,stillAt:stats.stillAt||null,quickMs:stats.quickMs||null,firstAt:stats.firstAt||null};}
 };
+if(opts&&opts.visitor)adopt(opts.visitor);
 if(size)lastReq=refresh(false);
 return api;
 }
