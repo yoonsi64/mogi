@@ -14243,7 +14243,7 @@ return true;
 // morning or by day, in fair weather, it comes 14–24 s after the view opens. The visit runs on the wall clock from t0,
 // so every view open at the time (the home card, the larger view, 全画面) shows the same moment of it, and a view
 // opened mid-visit joins in. In: 9 s flying in; 1.6 s landing; 95 s at rest (the rainbow); 9 s flying off.
-var HOOU_IN=9,HOOU_LAND=1.6,HOOU_STAY=95,HOOU_OUT=9,HOOU_ALL=HOOU_IN+HOOU_LAND+HOOU_STAY+HOOU_OUT;
+var HOOU_IN=9,HOOU_LAND=1.6,HOOU_STAY=95,HOOU_OUT=12,HOOU_ALL=HOOU_IN+HOOU_LAND+HOOU_STAY+HOOU_OUT;
 var hoou=null,hoouWait=0,hoouSp=[],hoouLT=-1,hoouSnd=null;
 function hoouRec(){return o.hoou&&typeof o.hoou==='object'?o.hoou:null;}
 function hoouOK(g){return!!(g&&g.F&&g.F.pagoda&&(g.light==='morning'||g.light==='day')&&(g.wx==='clear'||g.wx==='cloudy'));}
@@ -14268,12 +14268,26 @@ if(clock<hoouWait)return;
 hoouWait=0;hoouStart(true);
 }
 // the rainbow, in the sky only (behind the hills, the 五重塔 and everything else), from the 五重塔 out over the town
+function hoouBowGeo(g){
+var fin=hoouFin(),side=fin.x<g.W*0.5?1:-1,xa=fin.x+side*g.W*0.02,xb=side>0?g.W*0.78:g.W*0.22,yh=fin.y+12,yt=Math.max(4,fin.y-34),h=yh-yt,c0=Math.abs(xb-xa),R=(c0*c0/4+h*h)/(2*h);
+return{xa:xa,xb:xb,yh:yh,yt:yt,R:R,cx:(xa+xb)/2,cy:yt+R};
+}
+// where the far hills meet the sky above screen x (read once a visit from the sky's own mask)
+function hoouRidge(g,x){
+if(hoou&&hoou.ridge!==undefined&&hoou.ridgeX===x)return hoou.ridge;
+var top=g.H*0.62,ry=Math.min(top,g.ridgeY||top);
+try{var m=cur&&cur.sky;if(m&&m.width){var N=120,c=mkCanvas(1,N),x2=c.getContext('2d');x2.drawImage(m,clamp(x/g.W,0,0.999)*m.width,0,1,m.height,0,0,1,N);var d=x2.getImageData(0,0,1,N).data;for(var i=4;i<N;i++)if(d[i*4+3]<128){ry=i/N*top;break;}}}catch(e){}
+if(hoou){hoou.ridge=ry;hoou.ridgeX=x;}
+return ry;
+}
+function hoouUnP(sx,sy,d){var rx=(sx-CAM.cx)*d/CAM.F,u=-(sy-CAM.cy)*d/CAM.F;return[CAM.x+rx,CAM.y+u*CAM.c-d*CAM.s,CAM.z+u*CAM.s+d*CAM.c];}
 function hoouBow(ctx,g,el){
-var r0=HOOU_IN+HOOU_LAND,k=sstep(r0+0.4,r0+6,el)*(1-sstep(r0+HOOU_STAY-8,r0+HOOU_STAY+2,el));
+var r0=HOOU_IN+HOOU_LAND,k=sstep(r0+0.4,r0+6,el)*(1-sstep(HOOU_ALL-4.5,HOOU_ALL-0.2,el));          // it stays while the bird flies off through it, and fades as the bird is lost in the distance
 if(k<=0.002)return;
-var fin=hoouFin(),side=fin.x<g.W*0.5?1:-1,xa=fin.x+side*g.W*0.02,xb=side>0?g.W*0.78:g.W*0.22,yh=fin.y+12,yt=Math.max(4,fin.y-34),h=yh-yt,c0=Math.abs(xb-xa),R=(c0*c0/4+h*h)/(2*h),cx=(xa+xb)/2,cy=yt+R;
+var bg=hoouBowGeo(g),xa=bg.xa,xb=bg.xb,yh=bg.yh,yt=bg.yt,R=bg.R,cx=bg.cx,cy=bg.cy,lw=g.W*0.0085,pk=0;
+if(el>r0+HOOU_STAY){var ob=hoouState(g,el,el),bq=P(ob.B[0],ob.B[1],ob.B[2]),dd=Math.hypot(bq.x-cx,bq.y-cy)-R;if(bq.y<cy)pk=Math.exp(-Math.pow(dd/(lw*7),2));}          // as the bird passes through the bow, the bow brightens
 if(!hoou.bow&&k>0.15){hoou.bow=true;if(!hoou.joined||el<r0+8)cue('rainbow',null,true);}
-drawSkyMasked(ctx,g,function(c){paintHoouBow(c,cx,cy,R,0.4*k,g.W*0.0085);});
+drawSkyMasked(ctx,g,function(c){paintHoouBow(c,cx,cy,R,0.4*k*(1+0.9*pk),lw);});
 }
 // where the bird is and how it holds itself el seconds into the visit (world space: it banks, turns and flies off in depth)
 function hoouAng(a,b,u){var d=((b-a)%TAU+TAU*1.5)%TAU-TAU*0.5;return a+d*u;}
@@ -14308,11 +14322,11 @@ if(fe>0.001){var fph=fcy*0.75*TAU,fcs=Math.cos(fph),fsn=Math.sin(fph),W0=o.wings
 o.wings={a1:lerp(W0.a1,0.5+0.9*fcs,fe),a2:lerp(W0.a2,0.62+0.9*fcs+0.3*fsn,fe),sw:lerp(W0.sw,0.18,fe),fold:lerp(W0.fold,Math.max(0,fsn)*0.45,fe)};
 o.droop=1-0.3*fe;o.look=lerp(o.look,0,fe);o.glow=0.6+0.25*fe;o.pitch+=0.05*fe*Math.max(0,-fcs);}
 }else{
-var s3=clamp((el-HOOU_IN-HOOU_LAND-HOOU_STAY)/HOOU_OUT),Q0=Br,Q1=[Br[0]+side*6,Br[1]+10,Br[2]+6],Q2=[fin[0]+side*30,fin[1]+30,fin[2]+60],Q3=[fin[0]+side*70,fin[1]+48,fin[2]+190];
+var s3=clamp((el-HOOU_IN-HOOU_LAND-HOOU_STAY)/HOOU_OUT),bw=hoouBowGeo(g),rdg=hoouRidge(g,bw.cx),Q0=Br,Q1=[Br[0]+side*6,Br[1]+10,Br[2]+6],Q2=hoouUnP(lerp(bw.xa,bw.cx,0.6),lerp(bw.yt,rdg,0.5),420),Q3=hoouUnP(bw.cx,rdg-0.14*(rdg-bw.yt),1400);          // it leaves through its rainbow: up off the spire, out through the bow and away under it, to the horizon
 var ua=Math.pow(s3,1.35),h3=head(Q0,Q1,Q2,Q3,Math.max(0.02,ua)),go=sstep(0,0.18,s3),R3=rest(),tk=s3*HOOU_OUT,F3=function(){var ph=tk*0.7*TAU,c=Math.cos(ph),sn=Math.sin(ph),amp=0.86*(1+0.25*Math.exp(-tk*0.8));return{a1:0.25+amp*c,a2:0.25+amp*c+0.32*amp*sn,sw:0.22,fold:Math.max(0,-sn)*0.55*amp};}(),cr=Math.sin(Math.PI*clamp(s3/0.06));          // it crouches, then its raised wings come down in one deep stroke
 o.B=bez(Q0,Q1,Q2,Q3,ua);o.B[1]-=0.035*S*cr;o.yaw=hoouAng(yawR,h3.yaw,sstep(0.05,0.3,s3));o.pitch=lerp(pitR,h3.pitch*0.7,go);o.roll=0;
 o.wings={a1:lerp(R3.a1,F3.a1,go),a2:lerp(R3.a2,F3.a2,go),sw:lerp(R3.sw,F3.sw,go),fold:lerp(R3.fold,F3.fold,go)};
-o.droop=1-sstep(0,0.35,s3);o.legs=1-sstep(0,0.15,s3);o.head=(1-sstep(0,0.3,s3))*(1-0.2*cr);o.glow=0.6-0.4*s3;o.alpha=1-sstep(0.72,1,s3);
+o.droop=1-sstep(0,0.35,s3);o.legs=1-sstep(0,0.15,s3);o.head=(1-sstep(0,0.3,s3))*(1-0.2*cr);o.glow=0.6-0.4*s3;o.alpha=1-sstep(0.8,1,s3);
 }
 return o;
 }
@@ -14322,7 +14336,7 @@ function hoouVoice(el,dt,o,bp){
 var s=hoouSnd,a=o.wings.a1;
 if(!s||s.t0!==hoou.t0){hoouSnd={t0:hoou.t0,pe:el,a:a,up:false,top:0,hs:el+10};cue('houou-hush',{id:+(HOOU_ALL-el+0.5).toFixed(1)},true);return;}          // the town's birds and people fall quiet while it is here (said again every 10 s, so a sound turned on late hears it)
 if(el>=s.hs){s.hs=el+10;cue('houou-hush',{id:+(HOOU_ALL-el+0.5).toFixed(1)},true);}
-var fk=hoouFin().k,near=clamp(fk?bp.k/fk:1,0.3,1.2);
+var fk=hoouFin().k,near=clamp(fk?bp.k/fk:1,0.08,1.2);          // (far off over the hills its wings are barely heard)
 if(dt>0){var v=(a-s.a)/dt;
 if(v>0.5&&!s.up){s.up=true;s.top=a;}
 if(s.up)s.top=Math.max(s.top,a);
