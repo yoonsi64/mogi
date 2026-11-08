@@ -13810,6 +13810,11 @@ for(var row=0;row<3;row++)for(var tf=0;tf<5;tf++){
 var fr2=row/2,u=tf/4-0.5,base=[lerp(hip[0],kn[0],fr2*0.75)+hx*u*0.045,lerp(hip[1],kn[1],fr2*0.75)+hy*u*0.045],ang=Math.atan2(gy,gx)+u*0.9-0.25*(tf%2?1:-1)*0.3,len=(0.05+0.03*fr2)*(0.5+0.5*lp);
 hoouFeather(c,hoouSame,base[0],base[1],base[0]+Math.cos(ang)*len,base[1]+Math.sin(ang)*len,0.026,'point',(tf%2?0.005:-0.005),fc,false);
 }
+// and a full tuft of long pointed feathers flaring out and down at the bottom of the trousers, over the top of the shank
+for(var tq=0;tq<9;tq++){
+var v=tq/8-0.5,ang2=Math.atan2(gy,gx)+v*2.1+(tq%2?0.05:-0.05),len2=(0.075+0.045*Math.cos(v*2.4))*(0.4+0.6*lp),r1=[kn[0]-gx*0.025+hx*v*0.035,kn[1]-gy*0.025+hy*v*0.035];
+hoouFeather(c,hoouSame,r1[0],r1[1],r1[0]+Math.cos(ang2)*len2,r1[1]+Math.sin(ang2)*len2,0.022,'point',(tq%2?0.007:-0.007),fc,false);
+}
 });
 }
 var bg=c.createRadialGradient(0.1,0.07,0,0.02,0,0.36);
