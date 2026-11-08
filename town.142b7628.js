@@ -14555,6 +14555,11 @@ o.droop=1-sstep(0.5,3,tk);o.legs=1-sstep(0.8,2.6,tk);o.head=(1-sstep(0.2,1.6,tk)
 }
 if(hoou&&hoou.cry!==undefined){var CP=HOOU_CRIES[hoou.cryPart||0],cd=el-hoou.cry;if(cd>=0&&cd<CP.len){var ce=(hoou.cryCont?Math.max(sstep(0,0.45,cd),Math.min(1,(hoou.cryPrev||0)/CP.pose)):sstep(0,0.45,cd))*(hoou.cryQ?1:1-sstep(CP.len-1.1,CP.len,cd))*CP.pose,still=(o.legs||0)>0.9;          // its long cry (tapped): the head lifts on a craned neck, the bill opens with the song, the wings lift a little and it glows (held up between parts when one follows another)
 o.cry=ce;o.cryT=cd;o.cryW=CP.waves;o.gape=(ce/CP.pose)*hoouGape(CP.gape,cd);o.tilt=(still?0.5:0.2)*ce;if(still){o.crane=ce;o.head=Math.max(o.head||0,1);o.look=lerp(o.look||0,0,ce);o.wings={a1:o.wings.a1+0.12*ce,a2:o.wings.a2+0.1*ce,sw:o.wings.sw,fold:o.wings.fold*(1-ce)};o.glow=Math.max(o.glow||0,0.6+0.3*ce);}}}
+if(hoou&&hoou.mv&&(o.legs||0)>0.9){var MV=HOOU_MOVES[hoou.mv.i],md=el-hoou.mv.t0;if(md>=0&&md<MV.len){var me=sstep(0,0.15,md)*(1-sstep(MV.len-0.3,MV.len,md)),W0=o.wings;          // a movement (tapped): head, wings, all its feathers, or a display
+if(MV.k==='shake'){var sp3=Math.sin(md*TAU*6.5);o.look=(o.look||0)*(1-me)+me*0.34*sp3;o.tilt=(o.tilt||0)+0.05*me*Math.sin(md*TAU*6.5+1.2);}          // a quick shake of the head
+else if(MV.k==='flutter'){var fp=md*TAU*3.3,fc=Math.cos(fp),fs=Math.sin(fp);o.wings={a1:lerp(W0.a1,0.62+0.42*fc,me),a2:lerp(W0.a2,0.82+0.46*fc+0.15*fs,me),sw:lerp(W0.sw,0.16,me),fold:lerp(W0.fold,Math.max(0,fs)*0.3,me)};o.B=[o.B[0],o.B[1]+0.012*o.L*me*Math.max(0,-fc),o.B[2]];o.droop=(o.droop||1)-0.12*me;}          // a flutter of its wings where it stands
+else if(MV.k==='rouse'){var rs=Math.sin(md*TAU*9.5),rs2=Math.sin(md*TAU*8.3+1);o.wings={a1:W0.a1+0.1*me*rs+0.12*me,a2:W0.a2+0.1*me*rs2+0.1*me,sw:W0.sw,fold:W0.fold*(1-me)};o.B=[o.B[0]+0.006*o.L*me*rs,o.B[1],o.B[2]];o.droop=(o.droop||1)-0.25*me;o.look=(o.look||0)+0.12*me*rs2;o.glow=(o.glow||0)+0.12*me;}          // it shakes out all its feathers
+else if(MV.k==='display'){o.wings={a1:lerp(W0.a1,0.38+0.03*Math.sin(md*2.4),me),a2:lerp(W0.a2,0.56+0.03*Math.sin(md*2.4+0.4),me),sw:lerp(W0.sw,-0.08,me),fold:lerp(W0.fold,0,me)};o.droop=(o.droop||1)-0.45*me;o.crane=Math.max(o.crane||0,0.5*me);o.tilt=(o.tilt||0)+0.18*me;o.glow=(o.glow||0)+0.3*me;o.aurora=(o.aurora||0)*(1+0.5*me);}}}          // it spreads its wings out wide, lifts its tail, and shines
 return o;
 }
 // its song comes in four parts: the intro as it settles on the spire; the first part when it is tapped; the second when it is
@@ -14567,10 +14572,23 @@ var HOOU_CRIES=[{len:4.8,gape:[[0,0],[0.15,0.4],[0.55,0.45],[0.9,0.7],[1.9,0.65]
 {len:6.5,gape:[[0,0],[0.15,0.4],[0.5,0.45],[0.8,0.8],[1.6,0.7],[1.95,0.6],[2.75,0.5],[3.3,0.45],[3.8,0.42],[4.3,0.4],[4.6,0.3],[5,0.3],[5.4,0.45],[6.2,0]],waves:[0.8,5.4],cue:'houou-outro',pose:0.35}];
 function hoouGape(G,cd){var i=1;while(i<G.length-1&&G[i][0]<cd)i++;var a=G[i-1],b=G[i],v=lerp(a[1],b[1],clamp((cd-a[0])/((b[0]-a[0])||1)));return clamp(v*(1+0.06*Math.sin(cd*31)));}          // how wide the bill opens through the cry, following its song, with a little tremble
 // tapped, it cries: a long, rising, falling cry (once at a time, and not once it is going)
-function hoouCry(){if(!hoou)return false;var el=(Date.now()-hoou.t0)/1000;if(el<0||el>HOOU_TW-1)return false;
-var part=hoou.lastTap===1?2:1,CP=hoou.cry!==undefined?HOOU_CRIES[hoou.cryPart||0]:null,end=CP?hoou.cry+CP.len:-1e9;
-if(CP&&el<end){if(hoou.cryQ)return false;hoou.cryQ={at:end-0.15,part:part};hoou.lastTap=part;return true;}          // tapped while it sings: that part follows on
-hoou.lastTap=part;hoouCrySing(part,el,false);return true;}
+// tapped: at rest, the first tap gets the first part of its song and the second the second; after that it answers with a
+// movement, in turn: it shakes its head, flutters its wings, shakes out all its feathers, or spreads wings and tail and shines.
+// Tapped as it flies, it gives off a shower of sparkles. Tapped while it sings or moves, what comes next follows on.
+var HOOU_MOVES=[{k:'shake',len:1.1,cue:'houou-ruffle'},{k:'flutter',len:1.6},{k:'rouse',len:1.3,cue:'houou-rouse'},{k:'display',len:2.4}];
+function hoouCry(){if(!hoou)return false;var el=(Date.now()-hoou.t0)/1000;if(el<0||el>HOOU_TW-0.6)return false;
+var r0=HOOU_IN+HOOU_LAND,resting=el>=r0+0.4&&el<r0+HOOU_STAY,near=+clamp(hoou.near||1,0.15,1.2).toFixed(2);
+if(!resting){if(hoou.burst!==undefined&&el-hoou.burst<0.35)return false;hoou.burst=el;hoou.burstDone=false;cue('houou-sparkle',{id:near},true);loopCheck();return true;}
+var n=hoou.taps||0,be=hoouBusyEnd();
+if(be>el){if(hoou.cryQ||hoou.moveQ)return false;hoou.taps=n+1;if(n<2)hoou.cryQ={at:be-0.15,part:n+1};else hoou.moveQ={at:be,i:(n-2)%HOOU_MOVES.length};return true;}
+hoou.taps=n+1;if(n<2)hoouCrySing(n+1,el,false);else hoouMove((n-2)%HOOU_MOVES.length,el);return true;}
+function hoouBusyEnd(){var e=-1e9;if(hoou.cry!==undefined)e=Math.max(e,hoou.cry+HOOU_CRIES[hoou.cryPart||0].len);if(hoou.mv)e=Math.max(e,hoou.mv.t0+HOOU_MOVES[hoou.mv.i].len);return e;}
+function hoouMove(i,el){hoou.mv={i:i,t0:el};hoou.moveQ=null;var M=HOOU_MOVES[i];if(M.cue)cue(M.cue,{id:+clamp(hoou.near||1,0.1,1.2).toFixed(2)},true);loopCheck();}
+// a shower of sparkles from it, and a flash of light where it is
+function hoouBurst(S,x,y,k){for(var i=0;i<150&&S.length<900;i++){var a=Math.random()*TAU,sp=(1.5+Math.random()*5)*k,life=1.2+Math.random()*1.8,bg=Math.random()<0.18;S.push({x:x+Math.cos(a)*k*0.6,y:y+Math.sin(a)*k*0.6,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-0.8*k,life:life,max:life,r:(bg?0.45+Math.random()*0.4:0.15+Math.random()*0.35)*k,tw:Math.random()*6.3,big:bg});}}
+function hoouFlash(c,x,y,px,bd){var a=Math.pow(1-clamp(bd/1.1),2);if(a<0.01)return;var R=Math.max(5,px*(0.45+0.9*bd));c.save();c.globalCompositeOperation='lighter';var gg=c.createRadialGradient(x,y,0,x,y,R);gg.addColorStop(0,'rgba(255,248,226,'+(0.55*a)+')');gg.addColorStop(0.3,'rgba(255,222,160,'+(0.25*a)+')');gg.addColorStop(1,'rgba(255,200,120,0)');c.fillStyle=gg;c.beginPath();c.arc(x,y,R,0,TAU);c.fill();
+var Rr=Math.max(7,px*0.9)*(0.6+0.6*Math.sin(Math.PI*clamp(bd/0.5))),ra=a*clamp(1-bd/0.6);if(ra>0.01)for(var i=0;i<4;i++){var an=i*Math.PI/2+0.3,ux=Math.cos(an),uy=Math.sin(an),lg=c.createLinearGradient(x,y,x+ux*Rr,y+uy*Rr);lg.addColorStop(0,'rgba(255,252,236,'+ra+')');lg.addColorStop(1,'rgba(255,220,160,0)');c.fillStyle=lg;c.beginPath();c.moveTo(x-uy*Rr*0.05,y+ux*Rr*0.05);c.lineTo(x+ux*Rr,y+uy*Rr);c.lineTo(x+uy*Rr*0.05,y-ux*Rr*0.05);c.closePath();c.fill();}
+c.restore();}
 function hoouCrySing(part,el,cont){hoou.cryPrev=cont&&hoou.cryPart!==undefined?HOOU_CRIES[hoou.cryPart].pose:0;hoou.cry=el;hoou.cryPart=part;hoou.cryCont=!!cont;hoou.cryQ=null;cue(HOOU_CRIES[part].cue,{id:+clamp(hoou.near||1,0.15,1.2).toFixed(2)},true);loopCheck();}
 // its voice (and the hush it brings): a soft beat of the wings on each downstroke (louder the stronger the stroke and the nearer it is), and a calm call
 // as it settles on the spire and again as it rises to leave (it calls first as it comes, with the visit's own 'rare' cue)
@@ -14582,9 +14600,11 @@ var fk=hoouFin().k,near=clamp(fk?bp.k/fk:1,0.08,1.2);          // (far off over 
 if(dt>0){var v=(a-s.a)/dt;
 if(v>0.5&&!s.up){s.up=true;s.top=a;}
 if(s.up)s.top=Math.max(s.top,a);
+var shk=hoou.mv&&/^(shake|rouse)$/.test(HOOU_MOVES[hoou.mv.i].k)&&el-hoou.mv.t0<HOOU_MOVES[hoou.mv.i].len;          // (a shake of its feathers is not a wingbeat)
+if(v<-0.5&&s.up&&shk)s.up=false;
 if(v<-0.5&&s.up){s.up=false;cue('houou-wing',{id:+(clamp((s.top-0.2)/1.1,0.3,1)*near).toFixed(2)},true);}}
 s.a=a;
-hoou.near=near;if(hoou.cryQ&&el>=hoou.cryQ.at)hoouCrySing(hoou.cryQ.part,el,true);          // the next part of its cry, when the last ends
+hoou.near=near;if(hoou.cryQ&&el>=hoou.cryQ.at)hoouCrySing(hoou.cryQ.part,el,true);if(hoou.moveQ&&el>=hoou.moveQ.at)hoouMove(hoou.moveQ.i,el);          // the next part of its cry, when the last ends
 var CPn=hoou.cry!==undefined?HOOU_CRIES[hoou.cryPart||0]:null,cEnd=CPn?hoou.cry+CPn.len:-1e9,r0=HOOU_IN+HOOU_LAND;
 if(s.pe<r0+3.2&&el>=r0+3.2){if(el>=cEnd&&!hoou.cryQ)hoouCrySing(0,el,false);}          // the intro, as it settles (unless it is already singing)
 if(s.pe<r0+HOOU_STAY+0.15&&el>=r0+HOOU_STAY+0.15){if(el<cEnd)hoou.cryQ={at:cEnd-0.15,part:3};else hoouCrySing(3,el,false);}          // and its farewell as it lifts off, after whatever it is singing
@@ -14621,6 +14641,7 @@ var px=o.L*bp.k;if((o.aurora||0)>0.02||(o.cry||0)>0.02)hoouLens(ctx,g,o,bp,px);
 hoou.tapP=o.alpha>0.3&&bp.x>-0.3*px&&bp.x<g.W+0.3*px&&bp.y>-0.3*px?{x:bp.x,y:bp.y-0.12*px,r:Math.max(9,0.6*px),at:Date.now()}:null;          // where a tap finds it
 var E=hoouPaint3D(ctx,o);          // drawn whole, never cut by the depth of the scene: it is in front of everything it passes
 if(o.twk>0)hoouTwinkle(ctx,bp,o.twk,g);
+if(hoou.burst!==undefined&&el-hoou.burst<1.2){var bx=bp.x,by=bp.y-0.1*px;if(!hoou.burstDone){hoou.burstDone=true;hoouBurst(hoouSp,bx,by,Math.max(k,0.35));}hoouFlash(ctx,bx,by,px,el-hoou.burst);}          // tapped in flight: a shower of sparkles
 if(E&&o.alpha>0.15)hoouSparksEmit(hoouSp,E,(el<HOOU_IN+HOOU_LAND?150:el<HOOU_IN+HOOU_LAND+HOOU_STAY?8:150)*dt,k);          // a thick trail of sparks while it flies
 }
 var reveal=null,dbgSwayOnly=false,dbgSway=null,cvBg=false,townKeep=null;
