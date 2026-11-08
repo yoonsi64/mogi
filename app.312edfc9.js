@@ -10341,7 +10341,7 @@
             weeksHtml += '<div class="week-row"><div class="week-head"><b>' + escapeHtml(unitTitle(lib, w)) + '</b><span class="week-sub">' + (lib.units ? escapeHtml(lib.units[w - 1].sub || '') : weekSubtitle(w, lib.id)) + '</span>' +
                 (weekMax ? '<span class="week-score">' + weekEarned + '/' + weekMax + '</span>' : '') + '</div>' +
                 '<div class="day-grid" style="grid-template-columns:repeat(' + (lib.units ? 5 : lib.days) + ',1fr)">' + cells + '</div>' +
-                (lib.units && nDays > 1 ? '<button class="unit-all-btn" data-lib="' + lib.id + '" data-week="' + w + '"><span class="ua-play" aria-hidden="true">▶</span>' + escapeHtml((lib.units[w - 1].short || unitTitle(lib, w)).replace(/^(?:\d+회|第\d+回) /, '')) + 'をまとめて解く<span class="ua-sub">' + nDays + '問・順番どおり</span></button>' : '') +
+                (lib.units && nDays > 1 ? '<button class="unit-all-btn" data-lib="' + lib.id + '" data-week="' + w + '" aria-label="' + escapeHtml((lib.units[w - 1].short || unitTitle(lib, w)).replace(/^(?:\d+회|第\d+回) /, '')) + 'をまとめて解く（' + nDays + '問・順番どおり）"><span class="ua-play" aria-hidden="true">▶</span><span class="ua-label">まとめて解く</span><span class="ua-sub">' + nDays + '問・順番どおり</span></button>' : '') +
                 '</div>';
         }
         var open = libIsOpen(lib, last);
