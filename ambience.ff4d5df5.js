@@ -9995,6 +9995,19 @@ function snHoouSparkle(E, t, out) {
     snPhrase(E, t1, out, [{ t: 0, d: r(0.25, 0.6), f: [f, f * 1.002], a: r(0.25, 0.55) * (1 - i / 18), s: 0.05 }], { harm: [[1, 1], [2.76, 0.12]], att: 0.003, rel: 0.2 }); }
   return t + 1.6;
 }
+/* it spreads its wings and its aurora blazes: a slow, shimmering swell of glassy tones on the 都節 scale, E A B E, two voices
+   a hair apart, and a sweep of air as the wings open */
+function snHoouAurora(E, t, out) {
+  var c = E.ctx, fs = [659, 880, 988, 1319, 1760], i;
+  snNoise(E, t, out, { kind: 'pink', type: 'bandpass', f: 900, f1: 2400, q: 0.6, att: 0.35, hold: 0.2, dec: 0.6, peak: 0.35, dur: 1.2 });
+  for (i = 0; i < fs.length; i++) [-4, 5].forEach(function (dt, k) {
+    var o1 = c.createOscillator(), g = snGain(c, 0, out), t1 = t + 0.12 * i, pk = (0.16 - 0.02 * i) * (k ? 0.8 : 1);
+    o1.type = 'sine'; o1.frequency.value = fs[i]; o1.detune.value = dt; o1.connect(g);
+    g.gain.setValueAtTime(0, t1); g.gain.linearRampToValueAtTime(pk, t1 + 0.7); g.gain.setTargetAtTime(0, t1 + 1.1, 0.7);
+    o1.start(t1); o1.stop(t1 + 4.4);
+  });
+  return t + 4.4;
+}
 /* it shakes itself: a quick rustle of feathers (o: how long, 0.5 a toss of the head .. 1.2 a shake of its whole body) */
 function snHoouRuffle(E, t, out, len) {
   var n = Math.round(4 + 6 * len), i;
@@ -11028,6 +11041,7 @@ function sndCue(E, name, arg, focus, at, so) {
     case 'reveal': snChime(E, t, out(0.1, 0), 1); return;
     case 'houou-hush': var hs = Math.max(0, +arg || 0), h0 = E.hush; E.hush = { from: h0 && h0.until > t ? h0.from : t, until: t + hs }; (E.scenes || []).forEach(function (s) { if (!s.dead) s.hushTo(E.hush, t); }); return;   // the 鳳凰 has come: the town's birds and people fall quiet (arg: seconds it will stay)
     case 'houou-call': snHoouCall(E, t, out(0.2 * clamp(+arg || 0.8, 0.2, 1.2), R(-0.15, 0.15), 9000)); return;   // the 鳳凰 calls (arg: how near)
+    case 'houou-aurora': snHoouAurora(E, t, out(0.16 * clamp(+arg || 0.8, 0.2, 1.2), R(-0.1, 0.1), 9000)); return;   // its wings spread wide and its aurora blazes
     case 'houou-sparkle': snHoouSparkle(E, t, out(0.13 * clamp(+arg || 0.8, 0.3, 1.2), R(-0.2, 0.2), 12000)); return;   // touched in flight: a shower of sparkles
     case 'houou-ruffle': snHoouRuffle(E, t, out(0.2 * clamp(+arg || 0.8, 0.1, 1.2), R(-0.15, 0.15), 8000), 0.55); return;   // it tosses its head
     case 'houou-rouse': snHoouRuffle(E, t, out(0.24 * clamp(+arg || 0.8, 0.1, 1.2), R(-0.15, 0.15), 8000), 1.2); return;   // it shakes out all its feathers
