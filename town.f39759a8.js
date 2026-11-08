@@ -13762,7 +13762,7 @@ c.strokeStyle='rgba(240,216,150,.6)';c.lineWidth=Math.max(0.12,0.007*px);c.begin
 pts.slice(0,pts.length-2).forEach(function(q,j){if(j)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);});c.stroke();
 if(!eye)return;
 var n=pts.length,ep=pts[Math.round(n*0.85)],en=pts[Math.round(n*0.85)+1],ang=Math.atan2(en[1]-ep[1],en[0]-ep[0]);
-[[0.078,0.05,'#d8bc78'],[0.06,0.039,'#7e3424'],[0.045,0.029,'#b88a40'],[0.03,0.02,'#3e6458'],[0.014,0.01,'#16201c']].forEach(function(r){c.fillStyle=r[2];c.beginPath();c.ellipse(ep[0],ep[1],r[0]*px,r[1]*px,ang,0,TAU);c.fill();});
+[[0.086,0.04,'#d8bc78'],[0.067,0.031,'#7e3424'],[0.05,0.023,'#b88a40'],[0.034,0.016,'#3e6458'],[0.016,0.008,'#16201c']].forEach(function(r){c.fillStyle=r[2];c.beginPath();c.ellipse(ep[0],ep[1],r[0]*px,r[1]*px,ang,0,TAU);c.fill();});
 c.fillStyle='rgba(255,250,230,.8)';c.beginPath();c.arc(ep[0]+0.006*px,ep[1]-0.006*px,0.006*px,0,TAU);c.fill();
 }
 function hoouPaint3D(c,o){
@@ -13882,11 +13882,16 @@ c.fillStyle=hg;c.beginPath();c.arc(hc[0],hc[1],hr,0,TAU);c.fill();
 var bm=function(q){return Hm(q[0],q[1],0);},bt=Hm(0.64,-0.34,0),bk=c.createLinearGradient(Hm(0.61,-0.37,0)[0],Hm(0.61,-0.37,0)[1],Hm(0.69,-0.32,0)[0],Hm(0.69,-0.32,0)[1]);bk.addColorStop(0,'#e8c070');bk.addColorStop(1,'#7a5014');
 hoouPath(c,[[0.592,-0.358],[0.65,-0.356],[0.7,-0.342],[0.728,-0.322],[0.716,-0.318],[0.69,-0.33],[0.64,-0.328],[0.596,-0.322]],bm);c.fillStyle=bk;c.fill();          // a long, fine hooked beak
 var vis=Math.min(1,Math.max(0,side3*1.4));
-if(vis>0.05){var ec=Hm(0.585,-0.338,zs*0.045),sq=0.45+0.55*vis;
-c.strokeStyle='#a8322a';c.lineWidth=Math.max(0.15,0.006*hs*px);c.beginPath();c.ellipse(ec[0],ec[1],0.02*hs*px*sq,0.019*hs*px,0,0,TAU);c.stroke();          // a fine vermilion ring
-c.fillStyle='#f2c64a';c.beginPath();c.ellipse(ec[0],ec[1],0.015*hs*px*sq,0.015*hs*px,0,0,TAU);c.fill();
-c.fillStyle='#1c1004';c.beginPath();c.ellipse(ec[0],ec[1],0.01*hs*px*sq,0.01*hs*px,0,0,TAU);c.fill();
-c.fillStyle='#fffbe8';c.beginPath();c.arc(ec[0]+0.003*hs*px,ec[1]-0.004*hs*px,0.0035*hs*px,0,TAU);c.fill();}
+if(vis>0.05){var ez=zs*0.045,e1=Hm(0.608,-0.334,ez),e2=Hm(0.554,-0.348,ez),eu=Hm(0.583,-0.351,ez),ed=Hm(0.583,-0.327,ez),mx=(e1[0]+e2[0])/2,my=(e1[1]+e2[1])/2,cu=[2*eu[0]-mx,2*eu[1]-my],cd=[2*ed[0]-mx,2*ed[1]-my];
+c.save();c.globalAlpha=A*Math.min(1,vis*2);
+var almond=function(){c.beginPath();c.moveTo(e1[0],e1[1]);c.quadraticCurveTo(cu[0],cu[1],e2[0],e2[1]);c.quadraticCurveTo(cd[0],cd[1],e1[0],e1[1]);c.closePath();};          // an almond eye, its outer corner swept up toward the back of the head
+almond();c.fillStyle='#e6b444';c.fill();
+c.save();almond();c.clip();var pc=Hm(0.586,-0.339,ez);c.fillStyle='#1c1004';c.beginPath();c.ellipse(pc[0],pc[1],0.0085*hs*px,0.011*hs*px,0,0,TAU);c.fill();c.restore();
+var fl=Hm(0.532,-0.356,ez);c.strokeStyle='#a8322a';c.lineWidth=Math.max(0.15,0.0055*hs*px);c.lineJoin='round';almond();c.stroke();          // a fine vermilion line round it
+c.beginPath();c.moveTo(e2[0],e2[1]);c.lineTo(fl[0],fl[1]);c.stroke();          // flicked out behind, as in the old paintings
+c.fillStyle='#fffbe8';c.beginPath();c.arc(pc[0]+0.003*hs*px,pc[1]-0.004*hs*px,0.0028*hs*px,0,TAU);c.fill();
+c.restore();}
+
 };
 // a soft glow about it, and at rest a faint halo of golden rays behind it, turning slowly
 c.save();c.globalCompositeOperation='screen';
