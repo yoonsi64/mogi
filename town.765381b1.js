@@ -13789,7 +13789,7 @@ var on=function(th,rr,lat){var d0=-Math.cos(th),d1=Math.sin(th);return[Cb[0]+rr*
 c.lineCap='round';c.lineJoin='round';
 [[0,-0.012,'#2e1c0a',['#4e3410','#8a6022','#b88c44']],[0.05,0.014,'#3a2410',['#6a4816','#b07e2c','#dcb45e']]].forEach(function(Lg){
 var hip=[Lg[0],0.05],lat=Lg[1],ink=Lg[2],fc=Lg[3],ft=[Fm[0]+hx*lat,Fm[1]+hy*lat];
-var kn=[hip[0]+gx*0.075*lp+hx*0.012,hip[1]+gy*0.075*lp+hy*0.012];
+var kn=[hip[0]+gx*0.085*lp-hx*0.055*lp,hip[1]+gy*0.085*lp-hy*0.055*lp];          // the hock is behind the foot: the leg bends backwards there, as a bird's does
 // the shank and toes: fine dark lines
 c.strokeStyle=ink;c.lineWidth=0.006;c.beginPath();c.moveTo(kn[0],kn[1]);c.lineTo(ft[0],ft[1]);c.stroke();
 [[0.08,0.85*lp,-0.01,0.75],[0.22,1.15*lp,0.008,0.8],[-0.14,-0.7*lp,0,1.0]].forEach(function(Tq){          // knuckled toes clenched round the ball, each ending in a long black hooked claw
