@@ -13772,10 +13772,29 @@ hoouPlume(c,pts,function(s){return s<0.7?0.04*(1-0.5*s):0.026*(1-(s-0.7)/0.3)+0.
 var pts=[];for(var i=0;i<=12;i++){var s=i/12,hang=droop*s*s*cv2[0]*0.6;pts.push([-0.2-s*cv2[0]*(1-0.3*droop)+gx*hang,0.02+s*cv2[1]+s*s*0.05*Math.sin(t*2.4+k)*(1-0.6*droop)+gy*hang]);}
 hoouPlume(c,pts,function(s){return 0.045*Math.sin(Math.PI*Math.min(1,s*1.05+0.1));},false,k+1);
 });
-// the legs, gripping the perch (only once it is coming in to land)
+// the legs and talons, gripping the 宝珠 at the top of the spire (they come down as it lands and tuck up as it leaves):
+// feathered thighs, scaled golden shanks, three toes curled forward over the ball and one behind, dark hooked claws
 if(o.legs>0){
-var lp=o.legs;c.strokeStyle='rgba(110,58,22,'+lp+')';c.lineWidth=0.034;c.lineCap='round';
-[[-0.03,0.07],[0.07,0.07]].forEach(function(q,i){var fx=q[0]*0.4+gx*0.15,fy=0.07+gy*0.15;c.beginPath();c.moveTo(q[0],q[1]);c.lineTo(lerp(q[0],fx+(i?0.03:-0.03),lp),lerp(q[1]+0.05,fy,lp));c.stroke();});
+var lp=o.legs,hx=gy,hy=-gx,R0=0.072;          // (hx, hy): level and forward, in the bird's frame
+var Fm=[lerp(0.025,0.008+0.15*gx,lp),lerp(0.08,0.07+0.15*gy,lp)],Cb=[Fm[0]+gx*(R0+0.012),Fm[1]+gy*(R0+0.012)];
+var on=function(th,rr,lat){var d0=-Math.cos(th),d1=Math.sin(th);return[Cb[0]+rr*(gx*d0+hx*d1)+hx*lat*0.4,Cb[1]+rr*(gy*d0+hy*d1)+hy*lat*0.4];};
+c.lineCap='round';c.lineJoin='round';
+[[0,-0.014,['#4a2c0c','#8a5c1c','#24160a']],[0.05,0.016,['#5a3410','#cf9636','#1c1008']]].forEach(function(L){
+var hip=[L[0],0.055],lat=L[1],col=L[2],ft=[Fm[0]+hx*lat,Fm[1]+hy*lat];
+var kn=[hip[0]+gx*0.05*lp+hx*0.022,hip[1]+gy*0.05*lp+hy*0.022];
+c.fillStyle=col[1];c.beginPath();c.ellipse((hip[0]+kn[0])/2,(hip[1]+kn[1])/2,0.04,0.026,Math.atan2(kn[1]-hip[1],kn[0]-hip[0]),0,7);c.fill();          // feathered thigh
+var dx=ft[0]-kn[0],dy=ft[1]-kn[1],l=Math.hypot(dx,dy)||1,nx=-dy/l,ny=dx/l;          // the shank, tapering, with scales across it
+c.fillStyle=col[1];c.strokeStyle=col[0];c.lineWidth=0.005;c.beginPath();c.moveTo(kn[0]+nx*0.017,kn[1]+ny*0.017);c.lineTo(ft[0]+nx*0.012,ft[1]+ny*0.012);c.lineTo(ft[0]-nx*0.012,ft[1]-ny*0.012);c.lineTo(kn[0]-nx*0.017,kn[1]-ny*0.017);c.closePath();c.fill();c.stroke();
+c.strokeStyle=col[0];c.lineWidth=0.004;c.beginPath();for(var sc=0.2;sc<0.95;sc+=0.16){var w=0.013-0.005*sc,qx=kn[0]+dx*sc,qy=kn[1]+dy*sc;c.moveTo(qx+nx*w,qy+ny*w);c.quadraticCurveTo(qx+dx/l*0.008,qy+dy/l*0.008,qx-nx*w,qy-ny*w);}c.stroke();
+// toes: two forward ones seen side by side, the long middle one, and the hind toe; each ends in a claw
+[[0.05,1.25*lp,0.026],[0.18,1.5*lp,0.03],[-0.12,-1.05*lp,0.026]].forEach(function(T){
+var a0=T[0],a1=T[1],n=7,pts=[];for(var k=0;k<=n;k++)pts.push(on(a0+(a1-a0)*k/n,R0+0.011,lat));
+c.beginPath();pts.forEach(function(q,k){if(k)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);});c.strokeStyle=col[0];c.lineWidth=T[2]+0.01;c.stroke();c.strokeStyle=col[1];c.lineWidth=T[2];c.stroke();          // outlined, so it reads against the gilt ball
+c.strokeStyle=col[0];c.lineWidth=0.004;c.beginPath();for(var k2=1;k2<n;k2+=2){var q=pts[k2],r=pts[k2+1],tx=r[0]-q[0],ty=r[1]-q[1],tl=Math.hypot(tx,ty)||1;c.moveTo(q[0]-ty/tl*T[2]*0.5,q[1]+tx/tl*T[2]*0.5);c.lineTo(q[0]+ty/tl*T[2]*0.5,q[1]-tx/tl*T[2]*0.5);}c.stroke();
+var e0=pts[n],sg=a1>=a0?1:-1,e1=on(a1+sg*0.6,R0-0.004,lat),ex=e1[0]-e0[0],ey=e1[1]-e0[1],el2=Math.hypot(ex,ey)||1,w2=T[2]*0.5;
+c.fillStyle=col[2];c.beginPath();c.moveTo(e0[0]-ey/el2*w2,e0[1]+ex/el2*w2);c.quadraticCurveTo(e0[0]+ex*0.6+ey/el2*w2*0.2,e0[1]+ey*0.6-ex/el2*w2*0.2,e1[0],e1[1]);c.lineTo(e0[0]+ey/el2*w2,e0[1]-ex/el2*w2);c.closePath();c.fill();
+});
+});
 }
 var bg=c.createRadialGradient(0.1,0.07,0,0.02,0,0.36);
 bg.addColorStop(0,'#fff0c0');bg.addColorStop(0.35,'#e9b85a');bg.addColorStop(0.75,'#b07a26');bg.addColorStop(1,'#6e4612');
@@ -14174,9 +14193,9 @@ drawSkyMasked(ctx,g,function(c){paintHoouBow(c,cx,cy,R,0.4*k,g.W*0.0085);});
 function hoouDraw(ctx,g,t){
 var el=(Date.now()-hoou.t0)/1000;if(el<0||el>HOOU_ALL)return;
 var dt=hoouLT<0?0:Math.min(0.1,Math.max(0,t-hoouLT));hoouLT=t;
-var q=hoouPose(g,el,el),E=null,L=q.Ls,bb=[q.x-3.6*L,q.y-2.4*L,q.x+3.6*L,q.y+2.6*L];
+var q=hoouPose(g,el,el),E=null,L=q.Ls;
 hoouSparksStep(ctx,hoouSp,dt,el,L*0.12);
-drawCut(ctx,g,bb,q.fin.d-3,function(c){E=paintHoou(c,q.x,q.y,L,q.o);});
+E=paintHoou(ctx,q.x,q.y,L,q.o);          // drawn whole, never cut by the depth of the scene: it is in front of everything it passes, wings and tail and all
 if(E)hoouSparksEmit(hoouSp,E,(el<HOOU_IN+HOOU_LAND?70:el<HOOU_IN+HOOU_LAND+HOOU_STAY?12:60)*dt,L*0.12);
 }
 var reveal=null,dbgSwayOnly=false,dbgSway=null,cvBg=false,townKeep=null;
