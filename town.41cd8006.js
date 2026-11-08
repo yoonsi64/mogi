@@ -13840,7 +13840,7 @@ function hoouFeather(c,map,c0,r0,c1,r1,w,kind,bend,cols,detail,px){
 var dx=c1-c0,dy=r1-r0,l=Math.hypot(dx,dy)||1,nx=-dy/l,ny=dx/l,L=[],R=[];
 HOOU_SS.forEach(function(s,i){var hw=w*0.5*HOOU_PROF[kind][i],b=bend*Math.sin(Math.PI*s),qx=c0+dx*s+nx*b,qy=r0+dy*s+ny*b;L.push([qx+nx*hw,qy+ny*hw]);R.push([qx-nx*hw,qy-ny*hw]);});
 var a=map([c0,r0]),z=map([c1,r1]),gr=c.createLinearGradient(a[0],a[1],z[0],z[1]);
-gr.addColorStop(0,cols[0]);gr.addColorStop(0.55,cols[1]);gr.addColorStop(1,cols[2]);
+if(cols.length>3){gr.addColorStop(0,cols[0]);gr.addColorStop(0.42,cols[1]);gr.addColorStop(0.7,cols[2]);gr.addColorStop(1,cols[3]);}else{gr.addColorStop(0,cols[0]);gr.addColorStop(0.55,cols[1]);gr.addColorStop(1,cols[2]);}          // (a fourth colour: the tip's own)
 hoouPath(c,L.concat(R.reverse()),map);c.fillStyle=gr;c.fill();
 if(!detail)return;
 c.strokeStyle=kind==='round'?'rgba(120,76,20,.12)':'rgba(110,70,18,.18)';c.lineWidth=Math.max(0.1,0.004*px);c.stroke();          // a soft edge
@@ -13858,7 +13858,7 @@ L2.push([pts[i][0]-ty*w,pts[i][1]+tx*w]);R2.push([pts[i][0]+ty*w,pts[i][1]-tx*w]
 if(i%2===0)barbs.push([pts[i],[pts[i][0]-ty*w*0.92+tx*w*1.2,pts[i][1]+tx*w*0.92+ty*w*1.2],[pts[i][0]+ty*w*0.92+tx*w*1.2,pts[i][1]-tx*w*0.92+ty*w*1.2]]);
 }
 var f=pts[0],g=pts[pts.length-1],vg=c.createLinearGradient(f[0],f[1],g[0],g[1]);
-vg.addColorStop(0,'#b4842e');vg.addColorStop(0.4,k%2?'#d4a448':'#dcae52');vg.addColorStop(0.72,'#f0ca86');vg.addColorStop(1,'#f3b48e');
+vg.addColorStop(0,'#b4842e');vg.addColorStop(0.4,k%2?'#d4a448':'#dcae52');vg.addColorStop(0.72,'#f0c886');vg.addColorStop(1,'#fab191');
 hoouPath(c,L2.concat(R2.reverse()),hoouSame);var ga=c.globalAlpha;c.globalAlpha=ga*0.93;c.fillStyle=vg;c.fill();c.globalAlpha=ga;
 c.strokeStyle='rgba(255,230,170,.14)';c.lineWidth=Math.max(0.1,0.0032*px);c.beginPath();
 barbs.forEach(function(b){c.moveTo(b[0][0],b[0][1]);c.lineTo(b[1][0],b[1][1]);c.moveTo(b[0][0],b[0][1]);c.lineTo(b[2][0],b[2][1]);});c.stroke();
@@ -13908,9 +13908,10 @@ webP.push([-0.085+(-0.47+0.085)*0.7,0.56+(0.71-0.56)*0.7]);
 for(var jw=6;jw>=0;jw--){var u2=0.72;webP.push([-0.08+(-0.5+jw*0.015+0.08)*u2,0.05+jw*0.075+(0.1+jw*0.082-0.05-jw*0.075)*u2]);}
 webP.push([-0.1,0.0]);
 hoouPath(c,webP,map);c.fillStyle=hxk('#c99a4a',kw*0.97);c.fill();
-for(var j=6;j>=0;j--)hoouFeather(c,map,-0.08,0.05+j*0.075,-0.5+j*0.015,0.1+j*0.082,0.11,'round',0.015,Pc,!isFar,px);
-hoouFeather(c,map,-0.085,0.56,-0.47,0.71,0.11,'round',0.012,Pc,!isFar,px);
-var Pt=['#b08030','#e0b05c','#f7be98'].map(function(h){return hxk(h,kw);});          // the flight feathers' tips warm to a rose-gold, as if the light shone through them
+var Ps=['#a87a2a','#d8a84c','#f0cc94','#fbc0a0'].map(function(h){return hxk(h,kw);});          // the secondaries along the trailing edge: their tips rose-gold too, so the whole outer edge of the wing is
+for(var j=6;j>=0;j--)hoouFeather(c,map,-0.08,0.05+j*0.075,-0.5+j*0.015,0.1+j*0.082,0.11,'round',0.015,Ps,!isFar,px);
+hoouFeather(c,map,-0.085,0.56,-0.47,0.71,0.11,'round',0.012,Ps,!isFar,px);
+var Pt=['#b08030','#e0b05c','#f2c890','#fdbb9b'].map(function(h){return hxk(h,kw);});          // the flight feathers' tips warm to a rose-gold, as if the light shone through them
 HOOU_PRIM.forEach(function(fp,k){var ko=k/7;hoouFeather(c,map,fp[0],fp[1],fp[2]-0.04*ko-0.03*ko*ko,fp[3]+0.08+0.1*ko*ko,0.1-0.012*ko,'point',-0.035-0.04*ko,Pt,!isFar,px);if(k>3)tips.push(map([fp[2],fp[3]]));});
 // the coverts: rows of overlapping rounded feathers over the bases of the long ones, the outer rows longest; then a narrow
 // smooth band along the leading edge (the small coverts), catching the light
@@ -13924,7 +13925,7 @@ hoouPath(c,LE,map);c.fillStyle=cg;c.fill();
 c.strokeStyle='rgba(150,104,34,.16)';c.lineWidth=Math.max(0.1,0.003*px);c.beginPath();for(var rr=0.08;rr<0.95;rr+=0.09){var k0=map([0.15,rr]),k1=map([0.09,rr+0.045]),k2=map([0.13,rr+0.09]);c.moveTo(k0[0],k0[1]);c.quadraticCurveTo(k1[0],k1[1],k2[0],k2[1]);}c.stroke();          // the small coverts' scalloped edge
 if(isFar)return;
 var sh0=map([0.08,0.12]);c.save();c.globalCompositeOperation='screen';var shg=c.createRadialGradient(sh0[0],sh0[1],0,sh0[0],sh0[1],0.2*px);shg.addColorStop(0,'rgba(255,228,170,.22)');shg.addColorStop(1,'rgba(255,220,160,0)');c.fillStyle=shg;c.beginPath();c.arc(sh0[0],sh0[1],0.2*px,0,TAU);c.fill();
-HOOU_PRIM.forEach(function(fp,k){if(k<3)return;var tp2=map([fp[2]-0.03*k/7,fp[3]+0.06]),tg=c.createRadialGradient(tp2[0],tp2[1],0,tp2[0],tp2[1],0.07*px);tg.addColorStop(0,'rgba(255,208,180,.13)');tg.addColorStop(1,'rgba(255,200,170,0)');c.fillStyle=tg;c.beginPath();c.arc(tp2[0],tp2[1],0.07*px,0,TAU);c.fill();});c.restore();          // warmth at the shoulder; the wingtips glowing faintly
+HOOU_PRIM.forEach(function(fp,k){if(k<3)return;var tp2=map([fp[2]-0.03*k/7,fp[3]+0.06]),tg=c.createRadialGradient(tp2[0],tp2[1],0,tp2[0],tp2[1],0.07*px);tg.addColorStop(0,'rgba(255,206,182,.16)');tg.addColorStop(1,'rgba(255,198,172,0)');c.fillStyle=tg;c.beginPath();c.arc(tp2[0],tp2[1],0.07*px,0,TAU);c.fill();});c.restore();          // warmth at the shoulder; the wingtips glowing faintly
 c.lineCap='round';c.strokeStyle='rgba(255,244,214,.45)';c.lineWidth=Math.max(0.15,0.008*px);c.beginPath();
 HOOU_COV.slice(0,5).forEach(function(q,i){var m=map(q);if(i)c.lineTo(m[0],m[1]);else c.moveTo(m[0],m[1]);});c.stroke();          // light along the leading edge
 };
@@ -14086,17 +14087,20 @@ c.restore();}
 // a soft glow about it, and at rest a faint halo of golden rays behind it, turning slowly
 c.save();c.globalCompositeOperation='screen';
 // at rest on the spire (o.aurora 0..1): its field. Faint lines of force loop out of it from crown to foot and back, as round
-// a lodestone, in shells that turn slowly about it in depth and breathe; a bead of light drifts along each, and their hues
-// shift along them like an aurora's. Its cry (o.cry 0..1) swells them. (The town bends the light behind it as well.)
+// a lodestone, in shells that turn slowly about it in depth and breathe; along each hangs a faint band of rainbow light, an
+// aurora on its field, with a fine bright heart and a bead of light drifting along it. Its cry (o.cry 0..1) swells them. (The
+// town bends the light behind it as well.)
 var au=o.aurora||0;
 if(au>0.01){var ac=M(0.1,-0.16,0),cy=o.cry||0,tl=0.2*Math.sin(t*0.11)+0.1,ctl=Math.cos(tl),stl=Math.sin(tl),br=1+0.045*Math.sin(t*0.47+0.6*Math.sin(t*0.19));
 c.globalCompositeOperation='screen';c.lineCap='round';c.lineJoin='round';
 [0.6,0.9,1.25].forEach(function(sh,si){for(var ai=0;ai<6;ai++){
 var phi=ai/6*TAU+t*(0.045+0.012*si)+si*0.52,cp=Math.cos(phi),sp=Math.sin(phi),Lk=sh*br*(1+0.1*cy*(si+1)/3)*px,pts=[];
 for(var q=0;q<=30;q++){var th=0.2+(Math.PI-0.4)*q/30,s2=Math.sin(th),rr=Lk*s2*s2,xx=rr*s2*cp,yy=-rr*Math.cos(th)*1.08;pts.push([ac[0]+xx*ctl-yy*stl,ac[1]+xx*stl+yy*ctl]);}
-var fr=0.62+0.38*Math.max(0,-sp),aa=au*(0.085-0.018*si)*fr*(1+0.9*cy),h0=(196+si*34+ai*17+t*9)%360;          // the near side of each shell brighter than the far
-var lg=c.createLinearGradient(pts[0][0],pts[0][1],pts[30][0],pts[30][1]);lg.addColorStop(0,'hsla('+h0.toFixed(0)+',80%,64%,1)');lg.addColorStop(0.5,'hsla('+((h0+70)%360).toFixed(0)+',74%,68%,1)');lg.addColorStop(1,'hsla('+((h0+140)%360).toFixed(0)+',80%,64%,1)');
-c.strokeStyle=lg;[[0.034,0.3],[0.009,1]].forEach(function(lw){c.globalAlpha=A*aa*lw[1];c.lineWidth=Math.max(0.2,lw[0]*px);c.beginPath();pts.forEach(function(p,i){if(i)c.lineTo(p[0],p[1]);else c.moveTo(p[0],p[1]);});c.stroke();});          // a soft line with a finer, brighter heart
+var fr=0.62+0.38*Math.max(0,-sp),aa=au*(0.11-0.022*si)*fr*(1+0.7*cy),h0=(196+si*34+ai*17+t*9)%360;          // the near side of each shell brighter than the far
+var hb=(h0+t*14)%360,ag=function(sat,lt){if(!c.createConicGradient)return'hsla('+hb.toFixed(0)+','+sat+'%,'+lt+'%,0.8)';var g2=c.createConicGradient(tl,ac[0],ac[1]);for(var gi=0;gi<=24;gi++){var u=gi/24,fa=Math.pow(Math.abs(Math.cos(u*TAU)),0.8);g2.addColorStop(u,'hsla('+((hb+Math.abs(Math.sin(u*TAU*0.5))*300)%360).toFixed(0)+','+sat+'%,'+lt+'%,'+fa.toFixed(3)+')');}return g2;};          // a rainbow along each line (round it, from pole to pole), fading out at the poles
+var path=function(){c.beginPath();pts.forEach(function(p,i){if(i)c.lineTo(p[0],p[1]);else c.moveTo(p[0],p[1]);});};
+c.globalCompositeOperation='source-over';c.strokeStyle=ag(88,62);[[0.085,0.42],[0.04,0.75]].forEach(function(lw){c.globalAlpha=A*aa*lw[1];c.lineWidth=Math.max(0.3,lw[0]*px);path();c.stroke();});          // its aurora: a soft band of colour along it, like the curtain of an aurora hung on the field
+c.globalCompositeOperation='screen';c.strokeStyle=ag(70,80);c.globalAlpha=A*aa*1.1;c.lineWidth=Math.max(0.2,0.009*px);path();c.stroke();          // and a fine bright heart
 var bs=(t*0.06+ai/6+si*0.37)%1,bi=bs*30,b0i=Math.floor(bi),bp2=pts[b0i],bq2=pts[Math.min(30,b0i+1)],bx=lerp(bp2[0],bq2[0],bi-b0i),by=lerp(bp2[1],bq2[1],bi-b0i),ba=au*0.26*fr*Math.sin(Math.PI*bs)*(1+cy),bR=Math.max(0.5,0.03*px);
 if(ba>0.004){c.globalAlpha=A*ba;var bgr=c.createRadialGradient(bx,by,0,bx,by,bR);bgr.addColorStop(0,'rgba(255,250,236,1)');bgr.addColorStop(1,'rgba(220,236,255,0)');c.fillStyle=bgr;c.beginPath();c.arc(bx,by,bR,0,TAU);c.fill();}          // a bead of light running along it
 }});
@@ -14588,8 +14592,8 @@ src(fv,sc,sc);if(ctx.canvas!==fv)src(ctx.canvas,ctx.canvas.width/g.W,ctx.canvas.
 var N=10,r0=0.32*Rd,ph=clock/3.4,ct=o.cryT||0,dk=fv.width/Math.max(1,size.cssW);
 ctx.save();
 for(var i=0;i<N;i++){var ra=r0+(Rd-r0)*i/N,rb=r0+(Rd-r0)*(i+1)/N,rm=(ra+rb)/2,u=(rm-r0)/(Rd-r0),env=Math.pow(Math.sin(Math.PI*u),1.3);
-var d=0.9*au*Math.sin(TAU*(rm/(0.42*Rd)-ph))+0.35*au*Math.sin(TAU*(rm/(0.23*Rd)-ph*1.7)+1.3);          // two slow ripples running outward (in css pixels: under one)
-if(cr>0.02)[0.35,1.5,2.9,4.3,5.6].forEach(function(te){var a2=ct-te;if(a2<0)return;var rw=r0+a2*0.5*(Rd-r0);d+=2.0*cr*Math.exp(-Math.pow((rm-rw)/(0.11*Rd),2))*(1-clamp(a2/2.2));});          // and as it cries, a stronger wave with each breath of its song
+var d=0.6*au*Math.sin(TAU*(rm/(0.42*Rd)-ph))+0.23*au*Math.sin(TAU*(rm/(0.23*Rd)-ph*1.7)+1.3);          // two slow ripples running outward (in css pixels: well under one)
+if(cr>0.02)[0.35,1.5,2.9,4.3,5.6].forEach(function(te){var a2=ct-te;if(a2<0)return;var rw=r0+a2*0.5*(Rd-r0);d+=1.33*cr*Math.exp(-Math.pow((rm-rw)/(0.11*Rd),2))*(1-clamp(a2/2.2));});          // and as it cries, a stronger wave with each breath of its song
 d*=env*dk;if(Math.abs(d)<0.05)continue;var s=1+d/(rm*sc);
 ctx.save();ctx.beginPath();ctx.arc(cx,cy,rb,0,TAU);ctx.arc(cx,cy,ra,0,TAU,true);ctx.clip();ctx.drawImage(c,cx-Rd*s,cy-Rd*s,2*Rd*s,2*Rd*s);ctx.restore();}
 ctx.restore();
