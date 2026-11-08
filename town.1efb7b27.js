@@ -14370,7 +14370,7 @@ return{B:posAt(s),yaw:h.yaw,pitch:h.pitch,roll:clamp(hoouAng(h.yaw,h2.yaw,1)-h.y
 }
 // how far it has gone on its way out: s3, the time (0..1), and ua, along its path (slow off the spire, then on and on, more and
 // more slowly, into the distance, where it lingers before it is gone)
-function hoouOutU(el){var s3=clamp((el-HOOU_IN-HOOU_LAND-HOOU_STAY)/HOOU_OUT),k=4.5;return{s3:s3,ua:(1-Math.exp(-k*Math.pow(s3,1.6)))/(1-Math.exp(-k))};}
+function hoouOutU(el){var tk=Math.max(0,el-HOOU_IN-HOOU_LAND-HOOU_STAY),s3=clamp(tk/HOOU_OUT),sp=clamp((tk-0.8)/(HOOU_OUT-0.8)),k=5.5;return{s3:s3,tk:tk,ua:(1-Math.exp(-k*Math.pow(sp,1.6)))/(1-Math.exp(-k))};}          // (the way out begins once it has lifted off; then on and on, more and more slowly)
 // it is gone in a twinkle: a star of light where it was, flaring and fading
 function hoouTwinkle(c,bp,q,g){
 var a=Math.pow(Math.sin(Math.PI*clamp(q*1.1)),0.8);if(a<0.01)return;
@@ -14413,11 +14413,16 @@ if(fe>0.001){var fph=fcy*0.75*TAU,fcs=Math.cos(fph),fsn=Math.sin(fph),W0=o.wings
 o.wings={a1:lerp(W0.a1,0.5+0.9*fcs,fe),a2:lerp(W0.a2,0.62+0.9*fcs+0.3*fsn,fe),sw:lerp(W0.sw,0.18,fe),fold:lerp(W0.fold,Math.max(0,fsn)*0.45,fe)};
 o.droop=1-0.3*fe;o.look=lerp(o.look,0,fe);o.glow=0.6+0.25*fe;o.pitch+=0.05*fe*Math.max(0,-fcs);}
 }else{
-var OU=hoouOutU(el),s3=OU.s3,bw=hoouBowGeo(g),rdg=hoouRidge(g,bw.cx),Q0=Br,Q1=[Br[0]+side*6,Br[1]+10,Br[2]+6],Q2=hoouUnP(lerp(bw.xa,bw.cx,0.6),lerp(bw.yt,rdg,0.5),420),Q3=hoouUnP(bw.cx,rdg-0.14*(rdg-bw.yt),900);          // it leaves through its rainbow: up off the spire, out through the bow and away under it, to the horizon
-var ua=OU.ua,h3=head(Q0,Q1,Q2,Q3,Math.max(0.02,ua)),go=sstep(0,0.18,s3),R3=rest(),tk=s3*HOOU_OUT,F3=function(){var ph=tk*0.7*TAU,c=Math.cos(ph),sn=Math.sin(ph),amp=0.86*(1+0.25*Math.exp(-tk*0.8));return{a1:0.25+amp*c,a2:0.25+amp*c+0.32*amp*sn,sw:0.22,fold:Math.max(0,-sn)*0.55*amp};}(),cr=Math.sin(Math.PI*clamp(s3/0.06));          // it crouches, then its raised wings come down in one deep stroke
-o.B=bez(Q0,Q1,Q2,Q3,ua);o.B[1]-=0.035*S*cr;o.yaw=hoouAng(yawR,h3.yaw,sstep(0.05,0.3,s3));o.pitch=lerp(pitR,h3.pitch*0.7,go);o.roll=0;
+// it leaves through its rainbow: a crouch, then it beats its wings hard and lifts straight up off the spire, legs hanging; as it
+// rises it turns out along its way, up through the bow and on under it, far off over the hills, where it is seen a long while
+var OU=hoouOutU(el),s3=OU.s3,tk=OU.tk,bw=hoouBowGeo(g),rdg=hoouRidge(g,bw.cx),Q0=Br,Q1=[Br[0]+side*6,Br[1]+10,Br[2]+6],Q2=hoouUnP(lerp(bw.xa,bw.cx,0.6),lerp(bw.yt,rdg,0.45),420),Q3=hoouUnP(bw.cx,rdg-0.32*(rdg-bw.yt),900);
+var ua=OU.ua,h3=head(Q0,Q1,Q2,Q3,Math.max(0.02,ua)),go=sstep(0.05,0.6,tk),R3=rest(),cr=Math.sin(Math.PI*clamp(tk/0.6));
+var lf=sstep(0.3,1,tk)*(1-sstep(2.6,4.5,tk)),ph=TAU*(0.7*tk+0.35*3.25*(1-Math.exp(-tk/3.25))),fc=Math.cos(ph),fs=Math.sin(ph),amp=0.86+0.2*Math.exp(-tk*0.45);          // the wingbeats quicker and deeper while it lifts (1 Hz, easing to 0.7)
+var F3={a1:0.25+amp*fc,a2:0.25+amp*fc+0.32*amp*fs,sw:0.22-0.12*lf,fold:Math.max(0,-fs)*0.55*amp};
+o.B=bez(Q0,Q1,Q2,Q3,ua);o.B[1]+=4*sstep(0.35,2.6,tk)*(1-sstep(2.2,6,tk))-0.035*S*cr+0.06*S*fs*lf;          // lifted on each downstroke
+o.yaw=hoouAng(yawR,h3.yaw,sstep(1,4,tk));o.pitch=lerp(pitR,h3.pitch*0.7,sstep(0.6,4,tk))+0.22*lf;o.roll=0;
 o.wings={a1:lerp(R3.a1,F3.a1,go),a2:lerp(R3.a2,F3.a2,go),sw:lerp(R3.sw,F3.sw,go),fold:lerp(R3.fold,F3.fold,go)};
-o.droop=1-sstep(0,0.35,s3);o.legs=1-sstep(0,0.15,s3);o.head=(1-sstep(0,0.3,s3))*(1-0.2*cr);o.glow=0.35+0.25*(1-ua);o.alpha=1-sstep(HOOU_ALL-1.15,HOOU_ALL-0.85,el);o.twk=el>HOOU_ALL-1.2?clamp((el-HOOU_ALL+1.2)/1.2):0;          // a golden glimmer far off; then gone in a twinkle
+o.droop=1-sstep(0.5,3,tk);o.legs=1-sstep(0.8,2.6,tk);o.head=(1-sstep(0.2,1.6,tk))*(1-0.2*cr);o.glow=0.35+0.25*(1-ua);o.alpha=1-sstep(HOOU_ALL-1.15,HOOU_ALL-0.85,el);o.twk=el>HOOU_ALL-1.2?clamp((el-HOOU_ALL+1.2)/1.2):0;          // a golden glimmer far off; then gone in a twinkle
 }
 return o;
 }
@@ -15122,7 +15127,7 @@ raf=requestAnimationFrame(frame);return true;
 stop:off
 };
 }
-var HOOU_IN=10,HOOU_LAND=1.6,HOOU_STAY=95,HOOU_OUT=20,HOOU_ALL=HOOU_IN+HOOU_LAND+HOOU_STAY+HOOU_OUT;          // the 鳳凰's visit (s): flying in, landing, resting, flying off
+var HOOU_IN=10,HOOU_LAND=1.6,HOOU_STAY=95,HOOU_OUT=28,HOOU_ALL=HOOU_IN+HOOU_LAND+HOOU_STAY+HOOU_OUT;          // the 鳳凰's visit (s): flying in, landing, resting, flying off
 var API={
 VERSION:VERSION,
 HOOU:{IN:HOOU_IN,LAND:HOOU_LAND,STAY:HOOU_STAY,OUT:HOOU_OUT,ALL:HOOU_ALL},
