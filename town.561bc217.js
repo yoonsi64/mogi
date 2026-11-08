@@ -13754,7 +13754,7 @@ L2.push([pts[i][0]-ty*w,pts[i][1]+tx*w]);R2.push([pts[i][0]+ty*w,pts[i][1]-tx*w]
 barbs.push([pts[i],[pts[i][0]-ty*w*1.18+tx*w*0.9,pts[i][1]+tx*w*1.18+ty*w*0.9],[pts[i][0]+ty*w*1.18+tx*w*0.9,pts[i][1]-tx*w*1.18+ty*w*0.9]]);
 }
 var f=pts[0],g=pts[pts.length-1],vg=c.createLinearGradient(f[0],f[1],g[0],g[1]);
-vg.addColorStop(0,'#b4842e');vg.addColorStop(0.4,k%2?'#d4a448':'#dcae52');vg.addColorStop(0.8,'#f0cd84');vg.addColorStop(1,'#f6c496');
+vg.addColorStop(0,'#b4842e');vg.addColorStop(0.4,k%2?'#d4a448':'#dcae52');vg.addColorStop(0.72,'#f0ca86');vg.addColorStop(1,'#f3b48e');
 hoouPath(c,L2.concat(R2.reverse()),hoouSame);var ga=c.globalAlpha;c.globalAlpha=ga*0.93;c.fillStyle=vg;c.fill();c.globalAlpha=ga;
 c.strokeStyle='rgba(255,226,160,.18)';c.lineWidth=Math.max(0.1,0.004*px);c.beginPath();
 barbs.forEach(function(b){c.moveTo(b[0][0],b[0][1]);c.lineTo(b[1][0],b[1][1]);c.moveTo(b[0][0],b[0][1]);c.lineTo(b[2][0],b[2][1]);});c.stroke();
@@ -13797,7 +13797,7 @@ var wing=function(map,isFar){
 var kw=(map.k||1)*(isFar?0.88:1),Pc=['#a87a2a','#d8a84c','#f2d28e'].map(function(h){return hxk(h,kw);});          // the same golds as the body, lit by how the wing faces the sun
 for(var j=6;j>=0;j--)hoouFeather(c,map,-0.08,0.05+j*0.075,-0.5+j*0.015,0.1+j*0.082,0.11,'round',0.015,Pc,!isFar,px);
 hoouFeather(c,map,-0.085,0.56,-0.47,0.71,0.11,'round',0.012,Pc,!isFar,px);
-var Pt=['#b08030','#dcae52','#f6c896'].map(function(h){return hxk(h,kw);});          // the flight feathers' tips warm to a rose-gold, as if the light shone through them
+var Pt=['#b08030','#dfad58','#f4b892'].map(function(h){return hxk(h,kw);});          // the flight feathers' tips warm to a rose-gold, as if the light shone through them
 HOOU_PRIM.forEach(function(fp,k){hoouFeather(c,map,fp[0],fp[1],fp[2]-0.04*k/7,fp[3]+0.08,0.1,'point',-0.035,Pt,!isFar,px);if(k>3)tips.push(map([fp[2],fp[3]]));});
 // the coverts: rows of overlapping rounded feathers over the bases of the long ones, the outer rows longest; then a narrow
 // smooth band along the leading edge (the small coverts), catching the light
