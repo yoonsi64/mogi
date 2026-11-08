@@ -3500,3 +3500,4 @@ html.dark .mk-rep { background-color: #24211b; background-image: url("data:image
 @keyframes mkRepJolt { 0% { transform: translateY(0); } 30% { transform: translateY(2px) scale(0.997); } 100% { transform: none; } }
 html.dark .mk-rep-stamp { mix-blend-mode: normal; color: #e0574b; border-color: #e0574b; }
 @media (prefers-reduced-motion: reduce) { .mk-rep-stamp.hit { animation: none; opacity: 0.92; } .mk-rep.jolt { animation: none; } }
+.lib-body .week-row.toc-top { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-light); }

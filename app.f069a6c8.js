@@ -3899,7 +3899,7 @@
             correct: 0
         },
         {
-            id: 10160, lib: SKD, week: 20, day: 7, label: '問題7 問1', size: 'long', type: 'Comprehension', group: 'skd-mock-7', qnum: 1, notes: { '更地': '建物などが何も建っていない土地', '河川敷': '洪水に備えて川と堤防の間の作られた土地' },
+            id: 10160, lib: SKD, week: 20, day: 7, label: '問題7 問1', size: 'long', type: 'Comprehension', group: 'skd-mock-7', qnum: 1, notes: { '更地': '建物などが何も建っていない土地', '河川敷': '洪水に備えて川と堤防の間に作られた土地' },
             direction: "次の文章を読んで、後の問いに対する答えとして最もよいものを、1・2・3・4から一つ選びなさい。",
             passage: `<p>最近、近所に「河川緑地」というのができた。「緑地ができた」というと、緑のないところに、緑ができた、と思われるかもしれないが、駐車場のコンクリートを剥がして木を植えたとか、つぶれたデパート跡地を<u data-note="更地"><ruby>更地<rt>さらち</rt></ruby></u>にして芝生を植えたという話は聞かない。たいていは普通の山林や、<u data-note="河川敷"><ruby>河川敷<rt>かせんしき</rt></ruby></u>を「<span class="bousen-num">①</span><span class="bousen">整備</span>」し、なぜか「緑地」になる以前の方が、<ruby>遥<rt>はる</rt></ruby>かに豊かな生態系が保たれていたりする。</p>
 <p>その河川緑地も、もともとは「ただの河川敷」だった。「ただの河川敷」には、<ruby>葦<rt>あし</rt></ruby>や菊芋、野いばら、野かんぞう、ネコヤナギ、等々の植物が生い茂り、その中に数本のニセアカシアの木があって小さな林を作っていた。人や犬が通った跡は、<ruby>窪地<rt>くぼち</rt></ruby>や<ruby>陽溜<rt>ひだま</rt></ruby>まりを<ruby>繋<rt>つな</rt></ruby>いで曲がりくねった小道になり、冬は寒風から、夏は強い<ruby>陽射<rt>ひざ</rt></ruby>しから人々を守って、<span class="bousen-num">②</span><span class="bousen">水辺に誘う</span>。（中略）</p>
@@ -3911,7 +3911,7 @@
             correct: 3
         },
         {
-            id: 10161, lib: SKD, week: 20, day: 7, label: '問題7 問2', size: 'long', type: 'Comprehension', group: 'skd-mock-7', qnum: 2, notes: { '更地': '建物などが何も建っていない土地', '河川敷': '洪水に備えて川と堤防の間の作られた土地' },
+            id: 10161, lib: SKD, week: 20, day: 7, label: '問題7 問2', size: 'long', type: 'Comprehension', group: 'skd-mock-7', qnum: 2, notes: { '更地': '建物などが何も建っていない土地', '河川敷': '洪水に備えて川と堤防の間に作られた土地' },
             direction: "次の文章を読んで、後の問いに対する答えとして最もよいものを、1・2・3・4から一つ選びなさい。",
             passage: `<p>最近、近所に「河川緑地」というのができた。「緑地ができた」というと、緑のないところに、緑ができた、と思われるかもしれないが、駐車場のコンクリートを剥がして木を植えたとか、つぶれたデパート跡地を<u data-note="更地"><ruby>更地<rt>さらち</rt></ruby></u>にして芝生を植えたという話は聞かない。たいていは普通の山林や、<u data-note="河川敷"><ruby>河川敷<rt>かせんしき</rt></ruby></u>を「<span class="bousen-num">①</span><span class="bousen">整備</span>」し、なぜか「緑地」になる以前の方が、<ruby>遥<rt>はる</rt></ruby>かに豊かな生態系が保たれていたりする。</p>
 <p>その河川緑地も、もともとは「ただの河川敷」だった。「ただの河川敷」には、<ruby>葦<rt>あし</rt></ruby>や菊芋、野いばら、野かんぞう、ネコヤナギ、等々の植物が生い茂り、その中に数本のニセアカシアの木があって小さな林を作っていた。人や犬が通った跡は、<ruby>窪地<rt>くぼち</rt></ruby>や<ruby>陽溜<rt>ひだま</rt></ruby>まりを<ruby>繋<rt>つな</rt></ruby>いで曲がりくねった小道になり、冬は寒風から、夏は強い<ruby>陽射<rt>ひざ</rt></ruby>しから人々を守って、<span class="bousen-num">②</span><span class="bousen">水辺に誘う</span>。（中略）</p>
@@ -3923,7 +3923,7 @@
             correct: 1
         },
         {
-            id: 10162, lib: SKD, week: 20, day: 7, label: '問題7 問3', size: 'long', type: 'Comprehension', group: 'skd-mock-7', qnum: 3, notes: { '更地': '建物などが何も建っていない土地', '河川敷': '洪水に備えて川と堤防の間の作られた土地' },
+            id: 10162, lib: SKD, week: 20, day: 7, label: '問題7 問3', size: 'long', type: 'Comprehension', group: 'skd-mock-7', qnum: 3, notes: { '更地': '建物などが何も建っていない土地', '河川敷': '洪水に備えて川と堤防の間に作られた土地' },
             direction: "次の文章を読んで、後の問いに対する答えとして最もよいものを、1・2・3・4から一つ選びなさい。",
             passage: `<p>最近、近所に「河川緑地」というのができた。「緑地ができた」というと、緑のないところに、緑ができた、と思われるかもしれないが、駐車場のコンクリートを剥がして木を植えたとか、つぶれたデパート跡地を<u data-note="更地"><ruby>更地<rt>さらち</rt></ruby></u>にして芝生を植えたという話は聞かない。たいていは普通の山林や、<u data-note="河川敷"><ruby>河川敷<rt>かせんしき</rt></ruby></u>を「<span class="bousen-num">①</span><span class="bousen">整備</span>」し、なぜか「緑地」になる以前の方が、<ruby>遥<rt>はる</rt></ruby>かに豊かな生態系が保たれていたりする。</p>
 <p>その河川緑地も、もともとは「ただの河川敷」だった。「ただの河川敷」には、<ruby>葦<rt>あし</rt></ruby>や菊芋、野いばら、野かんぞう、ネコヤナギ、等々の植物が生い茂り、その中に数本のニセアカシアの木があって小さな林を作っていた。人や犬が通った跡は、<ruby>窪地<rt>くぼち</rt></ruby>や<ruby>陽溜<rt>ひだま</rt></ruby>まりを<ruby>繋<rt>つな</rt></ruby>いで曲がりくねった小道になり、冬は寒風から、夏は強い<ruby>陽射<rt>ひざ</rt></ruby>しから人々を守って、<span class="bousen-num">②</span><span class="bousen">水辺に誘う</span>。（中略）</p>
@@ -3937,7 +3937,7 @@
         {
             id: 10163, lib: SKD, week: 20, day: 8, label: '問題8 問1', size: 'long', type: 'Comprehension', group: 'skd-mock-8', qnum: 1,
             direction: "次の文章を読んで、後の問いに対する答えとして最もよいものを、1・2・3・4から一つ選びなさい。",
-            passage: `<p>いまの映画館は超満員か超閑散かの両極端なのでどうかよくわからないが、ひとむかし前の映画館では、客がまばらなときでも、いつも最前列にどっかと腰を下ろしている男がいたものだ。そこに先客があると、居心地わるるそうに、男は二、三列目の端っこに座る。なぜかぎりぎりの場所に座る男。</p>
+            passage: `<p>いまの映画館は超満員か超閑散かの両極端なのでどうかよくわからないが、ひとむかし前の映画館では、客がまばらなときでも、いつも最前列にどっかと腰を下ろしている男がいたものだ。そこに先客があると、居心地わるそうに、男は二、三列目の端っこに座る。なぜかぎりぎりの場所に座る男。</p>
 <p>どうしてそんな見にくい場所に、ともおもうのだが、たぶん、スクリーン以外に眼に入るものがないということが大事なんだろうとおもう。つまり、世界にまるでじぶんひとりしか存在しないようなそんな気分で。</p>
 <p>この男ほどではないにしても、ひとは多少なりともそんな気分に浸りたくて映画館に入るのではないか。他人とともにいながら他人にみせられないですむ、あるいは他人をみないですむ、そんな空間。コーヒーショップというともうその<ruby>風情<rt>ふぜい</rt></ruby>はないが、かつての喫茶店が<span class="bousen-num">①</span><span class="bousen">そうだった</span>。他人が間近にいるのにだれとも話さないでいられる空間、そこでひとりっきりになれるという想いが、知らない喫茶店のドアを開けるときにはあった。</p>
 <p>さて、映画館で、ひとはなぜかシートに深く身を沈める。背もたれに頭をあずけ、腰をぐっと前に出して、まるでその場に陥没するかのような座り方をする。そして画面にじっと見入る。まるでカンガルーのお母さんのお腹のなかに入り込んで、そこからひょいと顔だけを出し、眼だけの存在になって外を見るかのように。</p>
@@ -3952,7 +3952,7 @@
         {
             id: 10164, lib: SKD, week: 20, day: 8, label: '問題8 問2', size: 'long', type: 'Comprehension', group: 'skd-mock-8', qnum: 2,
             direction: "次の文章を読んで、後の問いに対する答えとして最もよいものを、1・2・3・4から一つ選びなさい。",
-            passage: `<p>いまの映画館は超満員か超閑散かの両極端なのでどうかよくわからないが、ひとむかし前の映画館では、客がまばらなときでも、いつも最前列にどっかと腰を下ろしている男がいたものだ。そこに先客があると、居心地わるるそうに、男は二、三列目の端っこに座る。なぜかぎりぎりの場所に座る男。</p>
+            passage: `<p>いまの映画館は超満員か超閑散かの両極端なのでどうかよくわからないが、ひとむかし前の映画館では、客がまばらなときでも、いつも最前列にどっかと腰を下ろしている男がいたものだ。そこに先客があると、居心地わるそうに、男は二、三列目の端っこに座る。なぜかぎりぎりの場所に座る男。</p>
 <p>どうしてそんな見にくい場所に、ともおもうのだが、たぶん、スクリーン以外に眼に入るものがないということが大事なんだろうとおもう。つまり、世界にまるでじぶんひとりしか存在しないようなそんな気分で。</p>
 <p>この男ほどではないにしても、ひとは多少なりともそんな気分に浸りたくて映画館に入るのではないか。他人とともにいながら他人にみせられないですむ、あるいは他人をみないですむ、そんな空間。コーヒーショップというともうその<ruby>風情<rt>ふぜい</rt></ruby>はないが、かつての喫茶店が<span class="bousen-num">①</span><span class="bousen">そうだった</span>。他人が間近にいるのにだれとも話さないでいられる空間、そこでひとりっきりになれるという想いが、知らない喫茶店のドアを開けるときにはあった。</p>
 <p>さて、映画館で、ひとはなぜかシートに深く身を沈める。背もたれに頭をあずけ、腰をぐっと前に出して、まるでその場に陥没するかのような座り方をする。そして画面にじっと見入る。まるでカンガルーのお母さんのお腹のなかに入り込んで、そこからひょいと顔だけを出し、眼だけの存在になって外を見るかのように。</p>
@@ -3967,7 +3967,7 @@
         {
             id: 10165, lib: SKD, week: 20, day: 8, label: '問題8 問3', size: 'long', type: 'Comprehension', group: 'skd-mock-8', qnum: 3,
             direction: "次の文章を読んで、後の問いに対する答えとして最もよいものを、1・2・3・4から一つ選びなさい。",
-            passage: `<p>いまの映画館は超満員か超閑散かの両極端なのでどうかよくわからないが、ひとむかし前の映画館では、客がまばらなときでも、いつも最前列にどっかと腰を下ろしている男がいたものだ。そこに先客があると、居心地わるるそうに、男は二、三列目の端っこに座る。なぜかぎりぎりの場所に座る男。</p>
+            passage: `<p>いまの映画館は超満員か超閑散かの両極端なのでどうかよくわからないが、ひとむかし前の映画館では、客がまばらなときでも、いつも最前列にどっかと腰を下ろしている男がいたものだ。そこに先客があると、居心地わるそうに、男は二、三列目の端っこに座る。なぜかぎりぎりの場所に座る男。</p>
 <p>どうしてそんな見にくい場所に、ともおもうのだが、たぶん、スクリーン以外に眼に入るものがないということが大事なんだろうとおもう。つまり、世界にまるでじぶんひとりしか存在しないようなそんな気分で。</p>
 <p>この男ほどではないにしても、ひとは多少なりともそんな気分に浸りたくて映画館に入るのではないか。他人とともにいながら他人にみせられないですむ、あるいは他人をみないですむ、そんな空間。コーヒーショップというともうその<ruby>風情<rt>ふぜい</rt></ruby>はないが、かつての喫茶店が<span class="bousen-num">①</span><span class="bousen">そうだった</span>。他人が間近にいるのにだれとも話さないでいられる空間、そこでひとりっきりになれるという想いが、知らない喫茶店のドアを開けるときにはあった。</p>
 <p>さて、映画館で、ひとはなぜかシートに深く身を沈める。背もたれに頭をあずけ、腰をぐっと前に出して、まるでその場に陥没するかのような座り方をする。そして画面にじっと見入る。まるでカンガルーのお母さんのお腹のなかに入り込んで、そこからひょいと顔だけを出し、眼だけの存在になって外を見るかのように。</p>
@@ -3982,7 +3982,7 @@
         {
             id: 10166, lib: SKD, week: 20, day: 8, label: '問題8 問4', size: 'long', type: 'Comprehension', group: 'skd-mock-8', qnum: 4,
             direction: "次の文章を読んで、後の問いに対する答えとして最もよいものを、1・2・3・4から一つ選びなさい。",
-            passage: `<p>いまの映画館は超満員か超閑散かの両極端なのでどうかよくわからないが、ひとむかし前の映画館では、客がまばらなときでも、いつも最前列にどっかと腰を下ろしている男がいたものだ。そこに先客があると、居心地わるるそうに、男は二、三列目の端っこに座る。なぜかぎりぎりの場所に座る男。</p>
+            passage: `<p>いまの映画館は超満員か超閑散かの両極端なのでどうかよくわからないが、ひとむかし前の映画館では、客がまばらなときでも、いつも最前列にどっかと腰を下ろしている男がいたものだ。そこに先客があると、居心地わるそうに、男は二、三列目の端っこに座る。なぜかぎりぎりの場所に座る男。</p>
 <p>どうしてそんな見にくい場所に、ともおもうのだが、たぶん、スクリーン以外に眼に入るものがないということが大事なんだろうとおもう。つまり、世界にまるでじぶんひとりしか存在しないようなそんな気分で。</p>
 <p>この男ほどではないにしても、ひとは多少なりともそんな気分に浸りたくて映画館に入るのではないか。他人とともにいながら他人にみせられないですむ、あるいは他人をみないですむ、そんな空間。コーヒーショップというともうその<ruby>風情<rt>ふぜい</rt></ruby>はないが、かつての喫茶店が<span class="bousen-num">①</span><span class="bousen">そうだった</span>。他人が間近にいるのにだれとも話さないでいられる空間、そこでひとりっきりになれるという想いが、知らない喫茶店のドアを開けるときにはあった。</p>
 <p>さて、映画館で、ひとはなぜかシートに深く身を沈める。背もたれに頭をあずけ、腰をぐっと前に出して、まるでその場に陥没するかのような座り方をする。そして画面にじっと見入る。まるでカンガルーのお母さんのお腹のなかに入り込んで、そこからひょいと顔だけを出し、眼だけの存在になって外を見るかのように。</p>
@@ -8279,11 +8279,11 @@
                 { path: ['実力養成編', '第2部 広告・お知らせ・説明書きなど', '2. 情報を探し出す―部分的な内容を尋ねる問い'], title: '2) お知らせ', short: 'お知らせ', sub: '', page: 92, parts: [{ short: '例題17' }, { short: '例題18' }, { short: '練習44' }, { short: '練習45' }, { short: '練習46' }] },
                 { path: ['実力養成編', '第2部 広告・お知らせ・説明書きなど', '2. 情報を探し出す―部分的な内容を尋ねる問い'], title: '3) 説明書き', short: '説明書き', sub: '', page: 102, parts: [{ short: '例題19' }, { short: '練習47' }, { short: '練習48' }, { short: '練習49' }] },
                 { path: ['実力養成編', '第2部 広告・お知らせ・説明書きなど', '2. 情報を探し出す―部分的な内容を尋ねる問い'], title: '4) 表・リスト', short: '表・リスト', sub: '', page: 108, parts: [{ short: '例題20' }, { short: '練習50' }] },
-                { path: ['', '第3部 実戦問題'], title: '1. 内容理解（中文）', short: '内容理解（中文）', sub: '', page: 116, parts: [{ short: '例題21' }, { short: '練習51' }, { short: '練習52' }, { short: '練習53' }, { short: '練習54' }] },
-                { path: ['', '第3部 実戦問題'], title: '2. 内容理解（長文）', short: '内容理解（長文）', sub: '', page: 128, parts: [{ short: '例題22' }, { short: '例題23' }, { short: '練習55' }, { short: '練習56' }] },
-                { path: ['', '第3部 実戦問題'], title: '3. 主張理解（長文）', short: '主張理解（長文）', sub: '', page: 142, parts: [{ short: '例題24' }, { short: '練習57' }, { short: '練習58' }, { short: '練習59' }] },
-                { path: ['', '第3部 実戦問題'], title: '4. 統合理解', short: '統合理解', sub: '', page: 153, parts: [{ short: '例題25' }, { short: '例題26' }, { short: '練習60' }, { short: '練習61' }, { short: '練習62' }, { short: '練習63' }] },
-                { path: ['', '第3部 実戦問題'], title: '5. 情報検索', short: '情報検索', sub: '', page: 171, parts: [{ short: '例題27' }, { short: '例題28' }, { short: '練習64' }, { short: '練習65' }, { short: '練習66' }, { short: '練習67' }, { short: '練習68' }] },
+                { path: ['実力養成編', '第3部 実戦問題'], title: '1. 内容理解（中文）', short: '内容理解（中文）', sub: '', page: 116, parts: [{ short: '例題21' }, { short: '練習51' }, { short: '練習52' }, { short: '練習53' }, { short: '練習54' }] },
+                { path: ['実力養成編', '第3部 実戦問題'], title: '2. 内容理解（長文）', short: '内容理解（長文）', sub: '', page: 128, parts: [{ short: '例題22' }, { short: '例題23' }, { short: '練習55' }, { short: '練習56' }] },
+                { path: ['実力養成編', '第3部 実戦問題'], title: '3. 主張理解（長文）', short: '主張理解（長文）', sub: '', page: 142, parts: [{ short: '例題24' }, { short: '練習57' }, { short: '練習58' }, { short: '練習59' }] },
+                { path: ['実力養成編', '第3部 実戦問題'], title: '4. 統合理解', short: '統合理解', sub: '', page: 153, parts: [{ short: '例題25' }, { short: '例題26' }, { short: '練習60' }, { short: '練習61' }, { short: '練習62' }, { short: '練習63' }] },
+                { path: ['実力養成編', '第3部 実戦問題'], title: '5. 情報検索', short: '情報検索', sub: '', page: 171, parts: [{ short: '例題27' }, { short: '例題28' }, { short: '練習64' }, { short: '練習65' }, { short: '練習66' }, { short: '練習67' }, { short: '練習68' }] },
                 { path: ['模擬試験'], title: '模擬試験', short: '模擬試験', sub: '', page: 190, parts: [
                     { short: '問題1' }, { short: '問題2' }, { short: '問題3' }, { short: '問題4' }, { short: '問題5' }, { short: '問題6' }, { short: '問題7' }, { short: '問題8' }, { short: '問題9' }, { short: '問題10' }, { short: '問題11' }
                 ] }
@@ -10794,8 +10794,10 @@
             // 目次 headings (実力養成編 › 第1部 › 1.) whenever they change from the section before
             if (lib.units) {
                 var path = lib.units[w - 1].path || [], prevPath = w > 1 ? (lib.units[w - 2].path || []) : [];
+                var tocTop = false;
                 path.forEach(function(h, lvl) {
-                    if (!h) return;      // an empty level: the heading sits at this depth without a heading above it (第3部 is not part of 実力養成編)
+                    if (!h) return;      // an empty level: the heading sits at this depth without a heading above it
+                    if (lvl === path.length - 1 && h === lib.units[w - 1].title) { tocTop = true; return; }   // an entry that is its own unit (模擬試験): the unit row is the heading
                     if (prevPath[lvl] === h && path.slice(0, lvl).join('|') === prevPath.slice(0, lvl).join('|')) return;
                     weeksHtml += '<div class="toc-head toc-l' + lvl + '">' + escapeHtml(h) + '</div>';
                 });
@@ -10805,7 +10807,7 @@
                     continue;
                 }
             }
-            weeksHtml += '<div class="week-row"><div class="week-head"><b>' + escapeHtml(unitTitle(lib, w)) + '</b><span class="week-sub">' + (lib.units ? escapeHtml(lib.units[w - 1].sub || '') : weekSubtitle(w, lib.id)) + '</span>' +
+            weeksHtml += '<div class="week-row' + (tocTop ? ' toc-top' : '') + '"><div class="week-head"><b>' + escapeHtml(unitTitle(lib, w)) + '</b><span class="week-sub">' + (lib.units ? escapeHtml(lib.units[w - 1].sub || '') : weekSubtitle(w, lib.id)) + '</span>' +
                 (weekMax ? '<span class="week-score">' + weekEarned + '/' + weekMax + '</span>' : '') + '</div>' +
                 '<div class="day-grid" style="grid-template-columns:repeat(' + (lib.units ? 5 : lib.days) + ',1fr)">' + cells + '</div>' +
                 (lib.units && nDays > 1 ? '<button class="unit-all-btn" data-lib="' + lib.id + '" data-week="' + w + '" aria-label="' + escapeHtml((lib.units[w - 1].short || unitTitle(lib, w)).replace(/^(?:\d+회|第\d+回) /, '')) + 'をまとめて解く（' + nDays + '問・順番どおり）"><span class="ua-play" aria-hidden="true">▶</span><span class="ua-label">まとめて解く</span><span class="ua-sub">' + nDays + '問・順番どおり</span></button>' : '') +
