@@ -13792,8 +13792,9 @@ var hip=[Lg[0],0.05],lat=Lg[1],ink=Lg[2],fc=Lg[3],ft=[Fm[0]+hx*lat,Fm[1]+hy*lat]
 var kn=[hip[0]+gx*0.06*lp+hx*0.012*lp,hip[1]+gy*0.06*lp+hy*0.012*lp];
 var hk=[(kn[0]+ft[0])/2-hx*0.042*lp,(kn[1]+ft[1])/2-hy*0.042*lp];          // the crook: the bare leg runs back to the hock, then bends forward down to the foot
 // the shank and toes: fine dark lines
-c.strokeStyle=ink;c.lineWidth=0.006;c.beginPath();c.moveTo(kn[0],kn[1]);c.lineTo(hk[0],hk[1]);c.lineTo(ft[0],ft[1]);c.stroke();
-c.fillStyle=ink;c.beginPath();c.arc(hk[0],hk[1],0.0058,0,7);c.fill();          // the joint
+c.strokeStyle=ink;c.lineWidth=0.013;c.beginPath();c.moveTo(kn[0],kn[1]);c.lineTo(hk[0],hk[1]);c.lineTo(ft[0],ft[1]);c.stroke();
+c.fillStyle=ink;c.beginPath();c.arc(hk[0],hk[1],0.0105,0,7);c.fill();
+c.strokeStyle='rgba(150,104,40,.55)';c.lineWidth=0.0045;c.beginPath();c.moveTo(kn[0],kn[1]);c.lineTo(hk[0],hk[1]);c.lineTo(ft[0],ft[1]);c.stroke();          // a little warm light down the front of the leg          // the joint
 [[0.08,0.85*lp,-0.01,0.75],[0.22,1.15*lp,0.008,0.8],[-0.14,-0.7*lp,0,1.0]].forEach(function(Tq){          // knuckled toes clenched round the ball, each ending in a long black hooked claw
 var a0=Tq[0],a1=Tq[1],tl0=lat+Tq[2],n=8,pts=[];for(var k=0;k<=n;k++)pts.push(on(a0+(a1-a0)*k/n,R0+0.008,tl0));
 c.beginPath();pts.forEach(function(q,k){if(k)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);});
