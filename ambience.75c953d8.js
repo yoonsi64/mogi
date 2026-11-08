@@ -10003,10 +10003,10 @@ function snHoouAurora(E, t, out) {
   for (i = 0; i < fs.length; i++) [-4, 5].forEach(function (dt, k) {
     var o1 = c.createOscillator(), g = snGain(c, 0, out), t1 = t + 0.12 * i, pk = (0.16 - 0.02 * i) * (k ? 0.8 : 1);
     o1.type = 'sine'; o1.frequency.value = fs[i]; o1.detune.value = dt; o1.connect(g);
-    g.gain.setValueAtTime(0, t1); g.gain.linearRampToValueAtTime(pk, t1 + 0.7); g.gain.setTargetAtTime(0, t1 + 1.1, 0.7);
-    o1.start(t1); o1.stop(t1 + 4.4);
+    g.gain.setValueAtTime(0, t1); g.gain.linearRampToValueAtTime(pk, t1 + 0.7); g.gain.setValueAtTime(pk, t1 + 2.6); g.gain.setTargetAtTime(0, t1 + 2.6, 0.75);          // (held while the aurora blazes, some five seconds)
+    o1.start(t1); o1.stop(t1 + 6.4);
   });
-  return t + 4.4;
+  return t + 6.4;
 }
 /* it shakes itself: a quick rustle of feathers (o: how long, 0.5 a toss of the head .. 1.2 a shake of its whole body) */
 function snHoouRuffle(E, t, out, len) {
