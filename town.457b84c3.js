@@ -11630,6 +11630,7 @@ function tapScene(g,I,x,y,t,rng,api){
 var best=null;
 function cand(sc,fn){if(sc<1&&(!best||sc<best.s))best={s:sc,fn:fn};}
 function circ(p,r){return Math.hypot(p.x-x,(p.y-y)*1.15)/r;}
+if(api.feather){var fq=P(api.feather.x+0.3,1.8,api.feather.z);cand(circ(fq,Math.max(14,3.2*fq.k))*0.55,function(){return'feather';});}          // the golden feather by the 祠
 if(api.rareCat)cand(circ(api.rareCat,10)*0.7,function(){api.rareCatTap();return'cat';});
 if(I.catP&&api.catShown)cand(circ(I.catP,Math.max(6,1.3*I.catP.k+2))*0.7,function(){I.cat={t0:t,kind:rng()<0.5?'stretch':'hop'};return'cat';});
 g.walkers.forEach(function(w){
@@ -14010,7 +14011,7 @@ return{plume:plumePts,tips:tips};
 function mount(el,opts){
 opts=opts||{};
 var o={stage:0,season:seasonFor(),light:lightFor(),quality:'card',animate:true,event:null,date:null};
-function merge(n){if(!n)return;['stage','season','light','quality','animate','onReady','event','onCue','date','weather','fireworks','wide','hoou','onKeep'].forEach(function(k){if(n[k]!==undefined)o[k]=n[k];});if(n.date!==undefined)dateSetAt=Date.now();norm();}
+function merge(n){if(!n)return;['stage','season','light','quality','animate','onReady','event','onCue','date','weather','fireworks','wide','hoou','onKeep','feather','onFeather'].forEach(function(k){if(n[k]!==undefined)o[k]=n[k];});if(n.date!==undefined)dateSetAt=Date.now();norm();}
 function norm(){
 o.stage=Math.max(0,Math.min(STAGES.length-1,Math.round(+o.stage||0)));
 if(SEASON_KEYS.indexOf(o.season)<0)o.season=seasonFor();
@@ -14158,7 +14159,8 @@ g.fw={launch:fwLaunchPts(g),boatPa:boatPath()};fwGeo(g);FW=g.FW=makeFireworks(g,
 FW.boats=[0.18,0.47,0.71].map(function(f,i){return{f:f,ph:frng()*TAU,sp:0.02+frng()*0.015,dir:i%2?-1:1};});
 if(!g.specAdded){g.specAdded=true;var rng=mulberry32(4711);g.paths.forEach(function(q,pi){if(!q.still)return;var n=pi===g.paths.length-3?12:8;for(var i=0;i<n;i++)g.walkers.push(makeWalker(g,pi,rng,i));});}
 }
-function curWeather(){if(o.weather)return{wx:o.weather,after:(o.weather==='clear'||o.weather==='cloudy')&&afterRainAt(nowDate())};var d=nowDate();return{wx:weatherAt(d),after:afterRainAt(d)};}
+function curWeather(){if(hoouForce||hoouClearNow()){var b0=o.weather||weatherAt(nowDate());return{wx:'clear',after:b0==='rain'||b0==='storm'||b0==='typhoon'||afterRainAt(nowDate())};}          // the golden feather's 鳳凰 has landed: the bad weather is gone
+if(o.weather)return{wx:o.weather,after:(o.weather==='clear'||o.weather==='cloudy')&&afterRainAt(nowDate())};var d=nowDate();return{wx:weatherAt(d),after:afterRainAt(d)};}
 function nowDate(){return new Date(o.date?o.date.getTime()+(Date.now()-dateSetAt):Date.now());}
 var windRaw=null,windT=-99;
 function gustK(){
@@ -14256,25 +14258,65 @@ return true;
 // morning or by day, in fair weather, it comes 14–24 s after the view opens. The visit runs on the wall clock from t0,
 // so every view open at the time (the home card, the larger view, 全画面) shows the same moment of it, and a view
 // opened mid-visit joins in. In: 9 s flying in; 1.6 s landing; 95 s at rest (the rainbow); 9 s flying off.
-var HOOU_IN=10,HOOU_LAND=1.6,HOOU_STAY=95,HOOU_OUT=20,HOOU_ALL=HOOU_IN+HOOU_LAND+HOOU_STAY+HOOU_OUT;
-var hoou=null,hoouWait=0,hoouSp=[],hoouLT=-1,hoouSnd=null;
+
+var hoou=null,hoouWait=0,hoouSp=[],hoouLT=-1,hoouSnd=null,hoouForce=false,hoouClr=false;
+// ===== 金の羽: the golden feather, a phoenix's plume set on a small 三方 by the 祠 (o.feather {on, charged, k: its power
+// gathering, 0..1}). Charged, it glows and gives off rising sparks; spent, it is a dull gold that brightens as its power returns.
+var FEATHER={x:TORII.x-2.75,z:TORII.z-0.35};          // beside the 祠's 鳥居, in front of everything near it
+function featherOn(g){return!!(o.feather&&o.feather.on&&g&&g.F&&g.F.shrine);}
+function drawFeather(c,g,t){
+var fx=FEATHER.x,fz=FEATHER.z,ch=!!o.feather.charged,pw=ch?1:clamp(+o.feather.k||0),b0=P(fx,0,fz),k=b0.k;
+c.save();c.lineJoin='round';
+var FS=1.4,Q=function(x,y,z){var p=P(fx+x*FS,y*FS,fz+z*FS);return[p.x,p.y];},poly=function(pts,fill,st){c.beginPath();pts.forEach(function(q,i){if(i)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);});c.closePath();c.fillStyle=fill;c.fill();if(st){c.strokeStyle=st;c.lineWidth=Math.max(0.2,0.04*k);c.stroke();}};
+// the 三方: a small stand of plain wood
+poly([Q(-0.38,0,-0.38),Q(0.38,0,-0.38),Q(0.42,0.34,-0.42),Q(-0.42,0.34,-0.42)],'#a87c4a','rgba(70,46,20,.45)');
+poly([Q(0.38,0,-0.38),Q(0.38,0,0.38),Q(0.42,0.34,0.42),Q(0.42,0.34,-0.42)],'#8e6638','rgba(70,46,20,.45)');
+poly([Q(-0.5,0.34,-0.5),Q(0.5,0.34,-0.5),Q(0.5,0.42,-0.5),Q(-0.5,0.42,-0.5)],'#c49a62','rgba(70,46,20,.45)');
+poly([Q(-0.5,0.42,-0.5),Q(0.5,0.42,-0.5),Q(0.5,0.42,0.5),Q(-0.5,0.42,0.5)],'#dcb47c','rgba(70,46,20,.35)');
+// its glow, stronger as its power gathers
+var gp=P(fx+0.28,2.1,fz),gR=(2.2+0.7*pw)*k,ga=(ch?0.34+0.1*Math.sin(t*2.1):0.16*pw);
+if(ga>0.01){c.globalCompositeOperation='screen';var gg=c.createRadialGradient(gp.x,gp.y,0,gp.x,gp.y,gR);gg.addColorStop(0,'rgba(255,226,150,'+ga+')');gg.addColorStop(0.5,'rgba(255,206,120,'+(ga*0.4)+')');gg.addColorStop(1,'rgba(255,190,90,0)');c.fillStyle=gg;c.beginPath();c.arc(gp.x,gp.y,gR,0,TAU);c.fill();c.globalCompositeOperation='source-over';}
+// the plume: a curved shaft leaning a little and swaying in the air, the vane widening to a rounded tip with an eye
+var sw=0.09*Math.sin(t*1.25)+0.04*Math.sin(t*2.9),pts=[];
+for(var i=0;i<=16;i++){var s=i/16;pts.push(Q(0.62*s*s+sw*s*s,0.44+2.25*s,-0.06*s));}
+var Ls=Math.hypot(pts[16][0]-pts[0][0],pts[16][1]-pts[0][1])||1,L2=[],R2=[];
+var wf=function(s){return s<0.12?0.012+0.1*s:s<0.86?0.024+0.05*Math.pow(Math.sin(Math.PI*(s-0.12)/1.48),0.8):0.074*Math.sqrt(Math.max(0,1-Math.pow((s-0.86)/0.14,2)));};
+pts.forEach(function(q,i){var a=pts[Math.max(0,i-1)],b=pts[Math.min(16,i+1)],tx=b[0]-a[0],ty=b[1]-a[1],tl=Math.hypot(tx,ty)||1,w=wf(i/16)*Ls;L2.push([q[0]-ty/tl*w,q[1]+tx/tl*w]);R2.push([q[0]+ty/tl*w,q[1]-tx/tl*w]);});
+var mute=function(h,a){if(ch)return h;var n=parseInt(h.slice(1),16),r=n>>16&255,g2=n>>8&255,bb=n&255,m=(r+g2+bb)/3,u=0.55*(1-a);return rgb([lerp(r,m*0.92,u),lerp(g2,m*0.9,u),lerp(bb,m*0.85,u)]);};          // spent: the gold dulled, coming back as its power returns
+var vg=c.createLinearGradient(pts[0][0],pts[0][1],pts[16][0],pts[16][1]);vg.addColorStop(0,mute('#b0802e',pw));vg.addColorStop(0.45,mute('#e2b456',pw));vg.addColorStop(0.8,mute('#f6d896',pw));vg.addColorStop(1,mute('#f4b892',pw));
+c.beginPath();L2.concat(R2.slice().reverse()).forEach(function(q,i){if(i)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);});c.closePath();c.fillStyle=vg;c.fill();c.strokeStyle='rgba(120,80,24,.3)';c.lineWidth=Math.max(0.15,0.006*Ls);c.stroke();
+c.strokeStyle='rgba(255,236,190,.35)';c.lineWidth=Math.max(0.1,0.004*Ls);c.beginPath();for(var bq=3;bq<15;bq+=2){var p0=pts[bq],l0=L2[bq+1],r0=R2[bq+1];c.moveTo(p0[0],p0[1]);c.lineTo(l0[0],l0[1]);c.moveTo(p0[0],p0[1]);c.lineTo(r0[0],r0[1]);}c.stroke();          // a few barbs
+c.strokeStyle=ch?'rgba(255,240,196,.75)':'rgba(230,214,170,.6)';c.lineWidth=Math.max(0.15,0.012*Ls);c.beginPath();pts.slice(0,15).forEach(function(q,i){if(i)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);});c.stroke();          // the shaft
+var ep=pts[14],en=pts[15],ang=Math.atan2(en[1]-ep[1],en[0]-ep[0]);
+[[0.07,0.05,'#f2d896'],[0.056,0.04,'#c86848'],[0.042,0.03,'#e0b050'],[0.028,0.02,'#3e7a6a'],[0.014,0.01,'#1c2a24']].forEach(function(r){c.fillStyle=mute(r[2],pw);c.beginPath();c.ellipse(ep[0],ep[1],r[0]*Ls,r[1]*Ls,ang,0,TAU);c.fill();});          // the eye
+// charged, sparks rise from it and twinkle
+if(ch){var sp=hoouSpark();c.globalCompositeOperation='lighter';for(var j=0;j<8;j++){var ph=(t*0.32+j/8)%1,sx=Math.sin(j*2.37+t*0.4)*0.55,q2=P(fx+0.4+sx*1.4,1+3.6*ph,fz),a2=Math.sin(Math.PI*ph)*(0.6+0.4*Math.sin(t*7+j*1.7)),z2=(0.28+0.16*((j*5)%3))*q2.k;if(a2<=0.02)continue;c.globalAlpha=a2;c.drawImage(sp,q2.x-z2/2,q2.y-z2/2,z2,z2);}c.globalAlpha=1;c.globalCompositeOperation='source-over';}
+c.restore();
+}
 function hoouRec(){return o.hoou&&typeof o.hoou==='object'?o.hoou:null;}
 function hoouOK(g){return!!(g&&g.F&&g.F.pagoda&&(g.light==='morning'||g.light==='day')&&(g.wx==='clear'||g.wx==='cloudy'));}
 function hoouFin(){return P(PAGODA.x,21.72,PAGODA.z);}
 function hoouDir(g){return hoouFin().x<g.W*0.5?-1:1;}          // the way it flies in: from the side with more sky (at rest it turns to face the town)
 function hoouKeep(rec){o.hoou=rec;if(typeof o.onKeep==='function'){try{o.onKeep('hoou',rec);}catch(e){if(window.console)console.error(e);}}}
-function hoouStart(kept){
+function hoouStart(kept,feather){
 var g=cur.geo;if(!g.F.pagoda)return false;
-hoou={t0:Date.now(),dir:hoouDir(g)};hoouSp=[];hoouLT=-1;
-if(kept)hoouKeep({y:nowDate().getFullYear(),t0:hoou.t0,dir:hoou.dir});
+hoou={t0:Date.now(),dir:hoouDir(g),feather:!!feather};hoouSp=[];hoouLT=-1;
+if(kept)hoouKeep(feather?{y:(o.hoou&&o.hoou.y)||0,t0:hoou.t0,dir:hoou.dir,feather:1}:{y:nowDate().getFullYear(),t0:hoou.t0,dir:hoou.dir});          // (called by the golden feather it is not this year's visit: the year is left as it was)
+if(feather)hoouPrebake();
 cue('rare',{id:'houou',name:'鳳凰'},true);loopCheck();
 return true;
 }
+// the golden feather's visit: from the moment it lands until half an hour after it has gone, all bad weather is gone
+function hoouClearNow(){var r=hoou&&hoou.feather?hoou:(o.hoou&&o.hoou.feather?o.hoou:null);if(!r||!r.t0)return false;var e=(Date.now()-r.t0)/1000;return e>=HOOU_IN+HOOU_LAND-0.2&&e<HOOU_ALL+1800;}
+function hoouWxFade(){var r=hoou&&hoou.feather?hoou:(o.hoou&&o.hoou.feather?o.hoou:null);if(!r||!r.t0)return 1;var e=(Date.now()-r.t0)/1000-HOOU_IN-HOOU_LAND+0.2;return e<0||e>HOOU_ALL+1800?1:1-sstep(0,3.5,e);}
+function hoouPrebake(){if(!cur||!size)return;try{hoouForce=true;var sp=specFor(o.quality);hoouForce=false;if(sp.key!==cur.spec.key)obtain(sp).catch(function(){});}catch(e){hoouForce=false;}}          // the clear sky painted ahead, so it is ready when the bird lands
 function hoouTick(){
-var g=cur.geo,now=Date.now();
+var g=cur.geo,now=Date.now(),clr=hoouClearNow();
+if(clr!==hoouClr){hoouClr=clr;if(size&&cur.spec.key!==wantKey())lastReq=refresh(true);}
 if(hoou){if(now-hoou.t0>HOOU_ALL*1000||!g.F.pagoda){hoou=null;hoouSp=[];}return;}
 var r=hoouRec();if(!r)return;
-if(r.t0&&now>=r.t0-1000&&now-r.t0<HOOU_ALL*1000){if(g.F.pagoda){hoou={t0:r.t0,dir:r.dir||hoouDir(g),joined:true};hoouSp=[];hoouLT=-1;}return;}
+if(r.t0&&now>=r.t0-1000&&now-r.t0<HOOU_ALL*1000){if(g.F.pagoda){hoou={t0:r.t0,dir:r.dir||hoouDir(g),joined:true,feather:!!r.feather};hoouSp=[];hoouLT=-1;if(hoou.feather)hoouPrebake();}return;}
+if(r.t0&&now-r.t0<HOOU_ALL*1000+36e5){hoouWait=0;return;}          // (not again within the hour after a visit)
 if(!hoouOK(g)||reveal||r.y===nowDate().getFullYear()){hoouWait=0;return;}
 if(!hoouWait){hoouWait=clock+14+frng()*10;return;}
 if(clock<hoouWait)return;
@@ -14494,6 +14536,7 @@ ctx=av.getContext('2d');ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.glob
 }else looseOff();
 }else looseOff();
 if(motion){
+if(featherOn(g))drawFeather(ctx,g,t);
 if(hoou)hoouBow(ctx,g,(Date.now()-hoou.t0)/1000);
 drawWillowSway(ctx,g,t);
 drawSmoke(ctx,g,t);
@@ -14510,7 +14553,9 @@ if(hoou)hoouDraw(ctx,g,t);
 if(rare&&!g.rareNow){RARE_LAST=null;rare.def.draw(ctx,g,rare.st,clamp((t-rare.t0)/rare.def.dur),t);if(RARE_LAST)rare.scr=RARE_LAST;}
 if(g.I)drawInteract(ctx,g,g.I,t);
 if(FW){drawSkyMasked(ctx,g,function(c){drawFireworks(c,FW,g);},null,fwSkyMask());if(FW.flash>0.02){ctx.globalCompositeOperation='lighter';ctx.fillStyle=rgb(mixc(FW.flashCol,[255,220,170],0.4),0.055*Math.min(1,FW.flash));ctx.fillRect(0,0,g.W,g.H);ctx.globalCompositeOperation='source-over';}}
-if(wfx){var wdt=Math.min(0.1,Math.max(0,t-(wfx.lt||t)));drawWeatherFx(ctx,g,wfx,t,wdt);wfx.lt=t;if(wfx.bz)drawBlizzard(ctx,g,wfx.bz,t,wdt);}
+var wxF=hoouWxFade();          // the rain or snow dies away as the feather's 鳳凰 lands, while the clear sky is painted
+if(wfx&&wxF>0.01){var wdt=Math.min(0.1,Math.max(0,t-(wfx.lt||t)));ctx.save();ctx.globalAlpha*=wxF;drawWeatherFx(ctx,g,wfx,t,wdt);wfx.lt=t;if(wfx.bz)drawBlizzard(ctx,g,wfx.bz,t,wdt);ctx.restore();}
+if(lightning&&wxF<0.6)lightning=null;
 if(lightning){if(!drawLightningFlash(ctx,g,lightning,t))lightning=null;else drawSkyMasked(ctx,g,function(c){drawLightning(c,g,lightning,t);});}
 }
 if(reveal)drawReveal(ctx,g);
@@ -14935,6 +14980,8 @@ return hl.show(rare.def.id,rare.def.name,ms);
 },
 update:update,
 playStageUp:playStageUp,
+summonHoou:function(feather){if(!cur||dead)return false;var sv0=saveState(),okH=false;try{var gg=cur.geo;W=gg.W;H=gg.H;CAM=gg.cam;KS=gg.KS;MODE='n';F=gg.F;okH=hoouStart(!!feather,!!feather);}finally{restoreState(sv0);}loopCheck();return okH;},          // the golden feather calls the 鳳凰 (kept, so every view joins it)
+hoouBusy:function(){return!!hoou;},
 _summon:function(id){if(id==='houou'){if(!cur||dead)return false;var sv0=saveState(),okH=false;try{var gg=cur.geo;W=gg.W;H=gg.H;CAM=gg.cam;KS=gg.KS;MODE='n';F=gg.F;okH=hoouStart(false);}finally{restoreState(sv0);}return okH;}var d=rareById(id);if(!d||!cur||dead||!(cur.geo&&cur.geo.F&&cur.geo.F.had(d.minStage)))return false;if(rare&&rare.hand&&rare.def.id===id)return true;var ok=false;try{ok=startRare(d);}catch(e){rare=null;cur.geo.rareNow=null;if(window.console)console.error(e);}loopCheck();return ok;},
 tap:function(nx,ny){
 if(!cur||dead||!isFinite(nx)||!isFinite(ny))return null;
@@ -14943,11 +14990,12 @@ try{
 W=g.W;H=g.H;CAM=g.cam;KS=g.KS;MODE='n';F=g.F;SEA=g.SEA;LIT=g.LIT;setLight(LIT);WIND_LEAN=cur.spec.wsign===-1?-1:1;
 var rc=null;
 if(rare&&(rare.def.id==='shironeko'||rare.def.id==='mikeneko')){var cp=rare.def.id==='shironeko'?mixc(rare.st.a,rare.st.b,0.6):rare.st.bench;rc=Pa(cp);}
-hit=tapScene(g,g.I,clamp(nx)*g.W,clamp(ny)*g.H,clock,frng,{rareCat:rc,catShown:!(wxWet(g.wx)||wxSnowy(g.wx))&&g.light!=='night',rareCatTap:function(){var st0=rare.st,T0=clamp((clock-rare.t0)/rare.def.dur)*st0.T,e0=null;(st0.tl||[]).forEach(function(q){if(T0>=q.t0&&T0<q.t1)e0=q;});if(e0&&e0.kind==='wait'&&e0.fill){var to=e0.t0+(e0.t1-e0.t0)*0.93;if(to>T0)rare.t0-=(to-T0)/st0.T*rare.def.dur;}}});
+hit=tapScene(g,g.I,clamp(nx)*g.W,clamp(ny)*g.H,clock,frng,{feather:featherOn(g)?FEATHER:null,rareCat:rc,catShown:!(wxWet(g.wx)||wxSnowy(g.wx))&&g.light!=='night',rareCatTap:function(){var st0=rare.st,T0=clamp((clock-rare.t0)/rare.def.dur)*st0.T,e0=null;(st0.tl||[]).forEach(function(q){if(T0>=q.t0&&T0<q.t1)e0=q;});if(e0&&e0.kind==='wait'&&e0.fill){var to=e0.t0+(e0.t1-e0.t0)*0.93;if(to>T0)rare.t0-=(to-T0)/st0.T*rare.def.dur;}}});
 }catch(e){if(window.console)console.error(e);hit=null;}
 finally{restoreState(st);}
 if(!hit)return null;
-if(hit==='cat')cue('rare',{id:'neko',name:'猫'},true);
+if(hit==='feather'){if(typeof o.onFeather==='function')try{o.onFeather(api);}catch(e){if(window.console)console.error(e);}cue('feather',null,true);}
+else if(hit==='cat')cue('rare',{id:'neko',name:'猫'},true);
 else if(hit==='paddy')cue('paddy',{what:g.I.paddy&&g.I.paddy.what},true);
 else cue(hit,null,true);
 loopCheck();if(!running())drawFrame(true);
@@ -15074,8 +15122,10 @@ raf=requestAnimationFrame(frame);return true;
 stop:off
 };
 }
+var HOOU_IN=10,HOOU_LAND=1.6,HOOU_STAY=95,HOOU_OUT=20,HOOU_ALL=HOOU_IN+HOOU_LAND+HOOU_STAY+HOOU_OUT;          // the 鳳凰's visit (s): flying in, landing, resting, flying off
 var API={
 VERSION:VERSION,
+HOOU:{IN:HOOU_IN,LAND:HOOU_LAND,STAY:HOOU_STAY,OUT:HOOU_OUT,ALL:HOOU_ALL},
 STAGES:STAGES,
 EVENTS:EVENTS,
 RARE:RARE,

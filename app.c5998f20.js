@@ -9254,7 +9254,7 @@
         });
         var stage = E ? E.stageFor(min) : 0, stages = E ? E.STAGES : [];
         return { w: w, min: min, week: Math.floor(week / 60), today: Math.floor((tot.days[getTodayDateString()] || 0) / 60),
-                 stage: stage, stages: stages, next: stages[stage + 1] || null, event: gdEventFor(now), weather: gdWeatherAt(w, now), fireworks: gdFireworksAt(w, now),
+                 stage: stage, stages: stages, next: stages[stage + 1] || null, event: gdEventFor(now), weather: hoouClearApp(now) ? 'clear' : gdWeatherAt(w, now), fireworks: gdFireworksAt(w, now),
                  season: E ? E.seasonFor(now) : 'autumn', light: E ? E.lightFor(now) : 'day' };
     }
     // what is still to come stays hidden: the next stage shows only how long is left, not what it is
@@ -9785,7 +9785,7 @@
         return gdPlayOpts({ stage: d.stage != null ? d.stage : GD.preview != null ? GD.preview : s.stage,
                  season: d.season || s.season, light: d.light || s.light,
                  event: d.event !== undefined ? (d.event || null) : s.event,
-                 weather: d.weather || s.weather,
+                 weather: hoouClearApp() ? 'clear' : d.weather || s.weather,
                  fireworks: d.fireworks !== undefined ? d.fireworks === 'on' : s.fireworks,
                  date: fl ? new Date(new Date().getFullYear(), fl[2], fl[3], fl[4] || 11) : d.season && d.season !== s.season ? ({ spring: new Date(new Date().getFullYear(), 3, 20), summer: new Date(new Date().getFullYear(), 6, 20), autumn: new Date(new Date().getFullYear(), 9, 25), winter: new Date(new Date().getFullYear(), 0, 20) })[d.season] : new Date(),
                  quality: 'full', animate: true,
@@ -9920,7 +9920,7 @@
             sel('event', [['', '行事なし']].concat(Object.keys(GD_EVENTS).map(function(k) { return [k, GD_EVENTS[k]]; })), o.event || '') +
             (gdViewWorld() === 'garden' ? sel('flower', [['', '花：日付どおり']].concat(Object.keys(GD_FLOWERS).map(function(k) { return [k, GD_FLOWERS[k][0]]; })), (GD.dev && GD.dev.flower) || '') : '') +
             '<button data-k="up">段階アップを見る</button><button data-k="reset">いまに戻す</button>' +
-            (gdViewWorld() === 'town' ? '<button data-k="hoou">鳳凰を呼ぶ</button>' : '');          // the town's 鳳凰: its whole visit, now (the 五重塔 must be built)
+            (gdViewWorld() === 'town' ? '<button data-k="hoou">鳳凰を呼ぶ</button><button data-k="feather">' + (GD.devFeather ? '金の羽をしまう' : '金の羽を置く') + '</button>' : '');          // the town's 鳳凰: its whole visit, now (the 五重塔 must be built)
         devBox.querySelectorAll('select').forEach(function(x) {
             x.addEventListener('change', function() {
                 if (x.dataset.k === 'world') { GD.devWorld = x.value; GD.dev = null; gdRenderView(); gdMountView(true); return; }
@@ -9937,6 +9937,8 @@
             if (GD.vctrl) GD.vctrl.playStageUp(to - 1, to);
             if (window.MogiSound && getSetting('gdSound', true)) MogiSound.cue('reveal');
         });
+        var fBtn = devBox.querySelector('[data-k="feather"]');
+        if (fBtn) fBtn.addEventListener('click', function() { GD.devFeather = !GD.devFeather; featherLast = ''; featherTick(); fBtn.textContent = GD.devFeather ? '金の羽をしまう' : '金の羽を置く'; if (GD.devFeather) showToast('祠のそばに金の羽を置きました（触れると鳳凰が来ます）', 3000); });
         var hoouBtn = devBox.querySelector('[data-k="hoou"]');
         if (hoouBtn) hoouBtn.addEventListener('click', function() {
             var ok = false;
@@ -9997,9 +9999,74 @@
         o.streak = st;
         Object.keys(GD_KEEP).forEach(function(k) { var v = loadJSON(GD_KEEP[k], null); if (v != null) o[k] = v; });
         o.onKeep = gdKeep;
+        o.feather = featherOpts(); o.onFeather = gdFeatherTap;          // 金の羽
         if (GD.devMode || GD.preview != null) o.hoou = false; else if (o.hoou == null) o.hoou = {};   // not in a preview or the developer menu
         if (inView) o.view = GD.engawa && gdViewWorld() === 'garden' ? 'engawa' : null;
         return o;
+    }
+    // ---------- 金の羽: the golden feather. It is given after 13:00 on JLPT test day (the exam date you set, or JLPT's own
+    // first Sundays of July and December) and waits on a small stand by the town's 祠. Touch it to call the 鳳凰 (once the
+    // 五重塔 is built): when it lands, all bad weather clears and a rainbow forms. Then its power is spent until you have studied
+    // 10 more hours or answered 500 more questions (a new test day gives it back too).
+    var FEATHER_KEY = 'jlptGoldFeather', FEATHER_SEC = 36000, FEATHER_Q = 500;
+    function featherRec() { var r = loadJSON(FEATHER_KEY, null); return r && r.day ? r : null; }
+    function featherSave(r) { try { localStorage.setItem(FEATHER_KEY, JSON.stringify(r)); } catch (e) {} }
+    function answeredTotal() { var n = 0; try { Object.keys(dailyStats).forEach(function(d) { n += +(dailyStats[d] && dailyStats[d].answered) || 0; }); } catch (e) {} return n; }
+    function featherPower(r) {          // k: its power, 0..1 (full when either the study time or the answers are reached)
+        if (!r) return { k: 0, full: false, sec: 0, q: 0 };
+        if (!r.used || !r.base) return { k: 1, full: true, sec: FEATHER_SEC, q: FEATHER_Q };
+        var ds = Math.max(0, studyTotals().total - (r.base.sec || 0)), dq = Math.max(0, answeredTotal() - (r.base.q || 0));
+        var k = Math.min(1, Math.max(ds / FEATHER_SEC, dq / FEATHER_Q));
+        return { k: k, full: k >= 1, sec: ds, q: dq };
+    }
+    function jlptTestDay(d) {
+        var ex = getSetting('examDate', '');
+        if (ex && ex === ymd(d)) return true;
+        var m = d.getMonth(); if (m !== 6 && m !== 11) return false;
+        var s = new Date(d.getFullYear(), m, 1); while (s.getDay() !== 0) s.setDate(s.getDate() + 1);
+        return s.getDate() === d.getDate();
+    }
+    function featherOpts() {
+        if (GD.devMode) return GD.devFeather ? { on: true, charged: true, k: 1 } : { on: false };          // (開発者メニュー: a feather of its own, never spent)
+        var r = featherRec(), p = featherPower(r);
+        return r ? { on: true, charged: p.full, k: p.k } : { on: false };
+    }
+    function featherPush() { var f = featherOpts(); [GD.ctrl, GD.vctrl, GD.full && GD.full.ctrl, GD.focus && GD.focus.ctrl].forEach(function(c) { if (c && c.update) try { c.update({ feather: f }); } catch (e) {} }); }
+    var featherLast = '';
+    function featherTick() {          // given on test day after 13:00; its glow follows its power
+        var now = new Date();
+        if (jlptTestDay(now) && now.getHours() >= 13) {
+            var r = featherRec(), today = getTodayDateString();
+            if (!r || r.day !== today) { featherSave({ day: today, used: 0, base: null }); showToast('🪶 金の羽を授かりました。町の祠のそばに置いてあります', 5000); }
+        }
+        var f = JSON.stringify(featherOpts());
+        if (f !== featherLast) { featherLast = f; featherPush(); }
+    }
+    setInterval(featherTick, 60000);
+    document.addEventListener('visibilitychange', function() { if (!document.hidden) featherTick(); });
+    setTimeout(featherTick, 1500);
+    function gdFeatherTap(ctrl) {
+        var f = featherOpts();
+        if (!f.on) return;
+        if (ctrl && ctrl.hoouBusy && ctrl.hoouBusy()) { showToast('鳳凰はいま町に来ています'); return; }
+        if (!f.charged) {
+            var p = featherPower(featherRec()), h = Math.max(0, (FEATHER_SEC - p.sec) / 3600), q = Math.max(0, FEATHER_Q - p.q);
+            showToast('金の羽は力をためています。あと ' + (Math.ceil(h * 10) / 10) + '時間の学習か ' + q + '問で満ちます', 4500); return;
+        }
+        var ok = false; try { ok = !!(ctrl && ctrl.summonHoou && ctrl.summonHoou(true)); } catch (e) { ok = false; }
+        if (!ok) { showToast('鳳凰は五重塔が建ってから来ます', 3000); return; }
+        if (!GD.devMode) featherSave({ day: featherRec().day, used: Date.now(), base: { sec: studyTotals().total, q: answeredTotal() } });
+        GD.hoouFeather = Date.now();
+        featherLast = ''; featherTick();
+        var H = (gdEngineFor('town') || {}).HOOU;
+        if (H) setTimeout(function() { if (gardenOpen()) gdRenderView(); gdSoundUpdate(); }, (H.IN + H.LAND) * 1000 + 300);          // the bad weather is gone: its sound and its name too
+    }
+    function hoouClearApp(now) {          // the feather's 鳳凰 has landed: from then until half an hour after it has gone, the weather is clear
+        var H = (gdEngineFor('town') || {}).HOOU; if (!H) return false;
+        var r = loadJSON(GD_KEEP.hoou, null), t0 = Math.max(r && r.feather ? r.t0 : 0, GD.hoouFeather || 0);
+        if (!t0) return false;
+        var e = ((now || new Date()).getTime() - t0) / 1000;
+        return e >= H.IN + H.LAND - 0.2 && e < H.ALL + 1800;
     }
     function gdKeep(k, v) {
         if (!GD_KEEP[k] || GD.devMode) return;
