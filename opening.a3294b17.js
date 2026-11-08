@@ -2034,9 +2034,9 @@ c.restore();
 };
 // --- the neck and head: the neck curving up (higher and prouder when it stands) with long hackles draping down it;
 // the head with its crest plumes, red bare skin round the eye, a wattle and a hooked beak; it turns with o.look
-var N0=[0.2,-0.04],NA=[lerp(0.36,0.43,hu),lerp(-0.05,-0.1,hu)],NB=[lerp(0.52,0.31,hu),lerp(-0.12,-0.33,hu)],N2=[lerp(0.66,0.43,hu),lerp(-0.2,-0.47,hu)],N1=NA,hs=0.9+0.15*hu,lk=o.look||0,cl0=Math.cos(lk),sl0=Math.sin(lk);          // a swan's S at rest, stretched forward in flight
+var N0=[0.2,-0.04],NA=[lerp(0.36,0.43,hu),lerp(-0.05,-0.1,hu)],NB=[lerp(0.52,0.31,hu)-0.015*(o.crane||0),lerp(-0.12,-0.33,hu)-0.045*(o.crane||0)],N2=[lerp(0.66,0.43,hu)-0.035*(o.crane||0),lerp(-0.2,-0.47,hu)-0.07*(o.crane||0)],N1=NA,hs=0.9+0.15*hu,lk=o.look||0,cl0=Math.cos(lk),sl0=Math.sin(lk);          // a swan's S at rest, stretched forward in flight
 var hoouNeck=function(u){u=Math.max(0,Math.min(1,u));var v=1-u;return[v*v*v*N0[0]+3*v*v*u*NA[0]+3*v*u*u*NB[0]+u*u*u*N2[0],v*v*v*N0[1]+3*v*v*u*NA[1]+3*v*u*u*NB[1]+u*u*u*N2[1]];};
-var hl0=(o.pitch||0)*0.9,ch0=Math.cos(hl0),sh0=Math.sin(hl0);          // the head stays level when the body tilts
+var hl0=(o.pitch||0)*0.9-(o.tilt||0),ch0=Math.cos(hl0),sh0=Math.sin(hl0);          // the head stays level when the body tilts
 var Hm=function(x,y,z){var ax=(x-0.53)*hs,ay=(y+0.3)*hs,dz=(z||0)*hs,dx=ax*ch0-ay*sh0,dy=ax*sh0+ay*ch0;return M(N2[0]+dx*cl0-dz*sl0,N2[1]+dy,dx*sl0+dz*cl0);};          // the head's own space, turned and scaled about the top of the neck
 var NKd=null,neckDraw=function(){          // the neck, drawn just behind the body so it rises out of the breast
 var neck=[];for(var i3=0;i3<=12;i3++)neck.push(hoouNeck(i3/12));
@@ -2073,7 +2073,9 @@ c.restore();
 
 var bm=function(q){return Hm(q[0],q[1],0);},bt=Hm(0.64,-0.34,0),bk=c.createLinearGradient(Hm(0.61,-0.37,0)[0],Hm(0.61,-0.37,0)[1],Hm(0.69,-0.32,0)[0],Hm(0.69,-0.32,0)[1]);bk.addColorStop(0,'#e8c070');bk.addColorStop(1,'#7a5014');
 var lm0=Hm(0.6,-0.33,0),lm1=Hm(0.7,-0.33,0),lmg=c.createLinearGradient(lm0[0],lm0[1],lm1[0],lm1[1]);lmg.addColorStop(0,'#d0a050');lmg.addColorStop(0.6,'#a87430');lmg.addColorStop(1,'#7a4e1a');
-hoouPath(c,[[0.597,-0.3335],[0.65,-0.3362],[0.688,-0.3322],[0.7,-0.329],[0.68,-0.3238],[0.64,-0.3226],[0.601,-0.3218]],bm);c.fillStyle=lmg;c.fill();          // the lower mandible, closed under the upper
+var gpv=o.gape||0,gpa=0.36*gpv,gcs=Math.cos(gpa),gsn=Math.sin(gpa),LJ=function(q){var dx=q[0]-0.598,dy=q[1]+0.333;return[0.598+dx*gcs-dy*gsn,-0.333+dx*gsn+dy*gcs];};          // o.gape: the bill opens as it cries, the lower mandible swinging down from the gape
+if(gpv>0.02){hoouPath(c,[[0.596,-0.3338],[0.65,-0.3368],[0.694,-0.3318]].concat([[0.688,-0.3322],[0.65,-0.3362],[0.598,-0.3335]].map(LJ)),bm);c.fillStyle='#4e1810';c.fill();}          // the mouth, dark within
+hoouPath(c,[[0.597,-0.3335],[0.65,-0.3362],[0.688,-0.3322],[0.7,-0.329],[0.68,-0.3238],[0.64,-0.3226],[0.601,-0.3218]].map(LJ),bm);c.fillStyle=lmg;c.fill();          // the lower mandible, closed under the upper
 var UB=[[0.588,-0.3668],[0.622,-0.3648],[0.662,-0.3578],[0.697,-0.3455],[0.72,-0.3285],[0.7245,-0.3165],[0.7155,-0.32],[0.694,-0.3318],[0.65,-0.3368],[0.598,-0.3338]];hoouPath(c,UB,bm);c.fillStyle=bk;c.fill();          // a slender upper bill with a fine hooked tip
 var gp=[[0.588,-0.3326],[0.6,-0.3338],[0.65,-0.3366],[0.694,-0.3318]].map(bm);c.strokeStyle='rgba(70,36,10,.55)';c.lineWidth=Math.max(0.1,0.0022*hs*px);c.beginPath();c.moveTo(gp[0][0],gp[0][1]);c.bezierCurveTo(gp[1][0],gp[1][1],gp[2][0],gp[2][1],gp[3][0],gp[3][1]);c.stroke();          // the gape, a fine line where the bill closes
 var ns0=Hm(0.613,-0.3555,0),ns1=Hm(0.627,-0.3552,0);c.strokeStyle='rgba(70,36,10,.5)';c.lineWidth=Math.max(0.1,0.0024*hs*px);c.beginPath();c.moveTo(ns0[0],ns0[1]);c.lineTo(ns1[0],ns1[1]);c.stroke();          // a nostril
@@ -2103,16 +2105,21 @@ c.restore();}
 };
 // a soft glow about it, and at rest a faint halo of golden rays behind it, turning slowly
 c.save();c.globalCompositeOperation='screen';
-// at rest on the spire (o.aurora 0..1): an aurora of rainbow light welling out from it, wavering rings of colour that drift
-// outward and fade, their hues flowing round them like the folds of an aurora's curtain
+// at rest on the spire (o.aurora 0..1): its field. Faint lines of force loop out of it from crown to foot and back, as round
+// a lodestone, in shells that turn slowly about it in depth and breathe; a bead of light drifts along each, and their hues
+// shift along them like an aurora's. Its cry (o.cry 0..1) swells them. (The town bends the light behind it as well.)
 var au=o.aurora||0;
-if(au>0.01){var ac=M(0.1,-0.14,0);c.globalCompositeOperation='source-over';
-for(var ai=0;ai<4;ai++){var aph=(t*0.065+ai/4)%1,arr=(0.38+1.15*aph)*px,aa=au*Math.pow(Math.sin(Math.PI*aph),1.5)*0.12;if(aa<0.004)continue;
-var apt=[];for(var aq=0;aq<=60;aq++){var ath=aq/60*TAU,wob=1+0.12*Math.sin(3*ath+t*0.7+ai*1.9)+0.07*Math.sin(5*ath-t*1.1+ai)+0.04*Math.sin(9*ath+t*1.6+ai*0.7);apt.push([ac[0]+Math.cos(ath)*arr*wob,ac[1]+Math.sin(ath)*arr*wob*0.9]);}
-var afl;if(c.createConicGradient){afl=c.createConicGradient(t*0.12+ai*1.3,ac[0],ac[1]);for(var hk=0;hk<=24;hk++){var hue=(hk*15+t*22+ai*60)%360,str=0.3+0.7*Math.pow(0.5+0.5*Math.sin(hk/24*TAU*5+t*1.2+ai*2.1),2);afl.addColorStop(hk/24,'hsla('+hue.toFixed(0)+',78%,68%,'+(aa*str).toFixed(3)+')');}}
-else afl='hsla('+((t*22+ai*72)%360).toFixed(0)+',78%,68%,'+aa.toFixed(3)+')';
-c.strokeStyle=afl;c.lineJoin='round';
-[[0.8,0.15],[0.64,0.22],[0.5,0.3],[0.37,0.42],[0.26,0.58],[0.16,0.78],[0.07,1]].forEach(function(lw){c.globalAlpha=A*lw[1];c.lineWidth=lw[0]*arr*(1-0.4*aph);c.beginPath();apt.forEach(function(p,i){if(i)c.lineTo(p[0],p[1]);else c.moveTo(p[0],p[1]);});c.closePath();c.stroke();});}          // layered widths: soft edges, a brighter heart
+if(au>0.01){var ac=M(0.1,-0.16,0),cy=o.cry||0,tl=0.2*Math.sin(t*0.11)+0.1,ctl=Math.cos(tl),stl=Math.sin(tl),br=1+0.045*Math.sin(t*0.47+0.6*Math.sin(t*0.19));
+c.globalCompositeOperation='screen';c.lineCap='round';c.lineJoin='round';
+[0.6,0.9,1.25].forEach(function(sh,si){for(var ai=0;ai<6;ai++){
+var phi=ai/6*TAU+t*(0.045+0.012*si)+si*0.52,cp=Math.cos(phi),sp=Math.sin(phi),Lk=sh*br*(1+0.1*cy*(si+1)/3)*px,pts=[];
+for(var q=0;q<=30;q++){var th=0.2+(Math.PI-0.4)*q/30,s2=Math.sin(th),rr=Lk*s2*s2,xx=rr*s2*cp,yy=-rr*Math.cos(th)*1.08;pts.push([ac[0]+xx*ctl-yy*stl,ac[1]+xx*stl+yy*ctl]);}
+var fr=0.62+0.38*Math.max(0,-sp),aa=au*(0.085-0.018*si)*fr*(1+0.9*cy),h0=(196+si*34+ai*17+t*9)%360;          // the near side of each shell brighter than the far
+var lg=c.createLinearGradient(pts[0][0],pts[0][1],pts[30][0],pts[30][1]);lg.addColorStop(0,'hsla('+h0.toFixed(0)+',80%,64%,1)');lg.addColorStop(0.5,'hsla('+((h0+70)%360).toFixed(0)+',74%,68%,1)');lg.addColorStop(1,'hsla('+((h0+140)%360).toFixed(0)+',80%,64%,1)');
+c.strokeStyle=lg;[[0.034,0.3],[0.009,1]].forEach(function(lw){c.globalAlpha=A*aa*lw[1];c.lineWidth=Math.max(0.2,lw[0]*px);c.beginPath();pts.forEach(function(p,i){if(i)c.lineTo(p[0],p[1]);else c.moveTo(p[0],p[1]);});c.stroke();});          // a soft line with a finer, brighter heart
+var bs=(t*0.06+ai/6+si*0.37)%1,bi=bs*30,b0i=Math.floor(bi),bp2=pts[b0i],bq2=pts[Math.min(30,b0i+1)],bx=lerp(bp2[0],bq2[0],bi-b0i),by=lerp(bp2[1],bq2[1],bi-b0i),ba=au*0.26*fr*Math.sin(Math.PI*bs)*(1+cy),bR=Math.max(0.5,0.03*px);
+if(ba>0.004){c.globalAlpha=A*ba;var bgr=c.createRadialGradient(bx,by,0,bx,by,bR);bgr.addColorStop(0,'rgba(255,250,236,1)');bgr.addColorStop(1,'rgba(220,236,255,0)');c.fillStyle=bgr;c.beginPath();c.arc(bx,by,bR,0,TAU);c.fill();}          // a bead of light running along it
+}});
 c.globalAlpha=A;c.globalCompositeOperation='screen';}
 var gr=1.7*px,gg=c.createRadialGradient(b0.x,b0.y,0,b0.x,b0.y,gr);gg.addColorStop(0,'rgba(255,226,160,'+((0.16+0.12*(o.glow||0))*(0.9+0.1*Math.sin(t*0.7)))+')');gg.addColorStop(0.45,'rgba(255,214,140,'+(0.05+0.04*(o.glow||0))+')');gg.addColorStop(1,'rgba(255,190,90,0)');c.fillStyle=gg;c.fillRect(b0.x-gr,b0.y-gr,gr*2,gr*2);
 if((o.glow||0)>0.35){var hk2=(o.glow-0.35)/0.65*(0.8+0.2*Math.sin(t*1.3)),hc2=M(0.12,-0.22,0);
