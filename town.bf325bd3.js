@@ -13671,10 +13671,192 @@ x.globalAlpha=0.05;for(i=0;i<6;i++){x.beginPath();x.ellipse(w*(0.1+r()*0.8),h*(0
 x.globalAlpha=0.1;var tex=x.createPattern(getGrain(),'repeat');x.globalCompositeOperation='overlay';x.fillStyle=tex;x.fillRect(0,0,w,h);
 x.globalCompositeOperation='source-over';x.globalAlpha=1;
 }
+// ===== 鳳凰: the golden phoenix of the opening (opening.js), come to rest on the 五重塔 once a year =====
+// The same bird, feather for feather: painted in its own unit space (body ≈ 0.6 long, head at +x) and placed by
+// paintHoou(ctx, x, y, Ls, pose). pose: t (seconds), dir (+1 faces right, -1 left), rot (body tilt, head up < 0),
+// a1/a2/fold/e (the wing: arm and hand angles, how far the hand is folded, the spread between near and far wing),
+// droop (0 in flight → 1 perched: the tail plumes hang), glow (0–1).
+var HOOU_PRIM=[[0.08,0.95,-0.02,1.6],[0.05,0.9,-0.1,1.55],[0.02,0.85,-0.17,1.48],[-0.01,0.8,-0.24,1.38],[-0.04,0.74,-0.3,1.26],[-0.06,0.68,-0.35,1.12],[-0.08,0.62,-0.4,0.98],[-0.09,0.56,-0.44,0.84]].reverse();
+var HOOU_COV=(function(){var a=[[0.13,0],[0.18,0.25],[0.19,0.5],[0.14,0.75],[0.08,0.98],[0,1.02]];for(var ck=0;ck<=12;ck++){var cr0=0.98-ck*0.08;a.push([-0.06-0.12*Math.sin(Math.PI*Math.min(1,cr0/1.0))*0.9-(ck%2?0:0.025),cr0]);}a.push([-0.12,0]);return a;})();
+var HOOU_PLUMES=[[1.9,0.04],[1.65,-0.1],[2.1,0.2],[1.5,0.3],[1.8,-0.02]];
+var HOOU_PROF={round:[0.55,0.85,1,0.95,0.75,0],point:[0.5,0.85,1,0.8,0.42,0]},HOOU_SS=[0,0.25,0.5,0.75,0.9,1];
+var HOOU_SPARK=null;
+function hoouSpark(){
+if(HOOU_SPARK)return HOOU_SPARK;
+var c=document.createElement('canvas');c.width=c.height=16;var x=c.getContext('2d'),g2=x.createRadialGradient(8,8,0,8,8,8);
+g2.addColorStop(0,'rgba(255,248,215,1)');g2.addColorStop(0.3,'rgba(255,214,120,.7)');g2.addColorStop(1,'rgba(255,180,60,0)');x.fillStyle=g2;x.fillRect(0,0,16,16);
+return(HOOU_SPARK=c);
+}
+function hoouQuad(a,b,c,t){var u=1-t;return[u*u*a[0]+2*u*t*b[0]+t*t*c[0],u*u*a[1]+2*u*t*b[1]+t*t*c[1]];}
+function hoouSame(q){return q;}
+function hoouPath(c,pts,map){c.beginPath();pts.forEach(function(q,i){var m=map(q);if(i)c.lineTo(m[0],m[1]);else c.moveTo(m[0],m[1]);});c.closePath();}
+// one feather from its root (c0, r0) to its tip (c1, r1) in wing coordinates, projected through map
+function hoouFeather(c,map,c0,r0,c1,r1,w,kind,bend,cols,detail){
+var dx=c1-c0,dy=r1-r0,l=Math.hypot(dx,dy)||1,nx=-dy/l,ny=dx/l,L=[],R=[];
+HOOU_SS.forEach(function(s,i){var hw=w*0.5*HOOU_PROF[kind][i],b=bend*Math.sin(Math.PI*s),px=c0+dx*s+nx*b,py=r0+dy*s+ny*b;L.push([px+nx*hw,py+ny*hw]);R.push([px-nx*hw,py-ny*hw]);});
+var a=map([c0,r0]),z=map([c1,r1]),gr=c.createLinearGradient(a[0],a[1],z[0],z[1]);
+gr.addColorStop(0,cols[0]);gr.addColorStop(0.55,cols[1]);gr.addColorStop(1,cols[2]);
+hoouPath(c,L.concat(R.reverse()),map);c.fillStyle=gr;c.fill();
+if(!detail)return;
+c.strokeStyle='rgba(90,56,12,.28)';c.lineWidth=0.005;c.stroke();
+var m1=map([c0+dx*0.05,r0+dy*0.05]),m2=map([c0+dx*0.5+nx*bend,r0+dy*0.5+ny*bend]),m3=map([c0+dx*0.92,r0+dy*0.92]);
+c.strokeStyle='rgba(255,240,190,.55)';c.lineWidth=0.005;c.beginPath();c.moveTo(m1[0],m1[1]);c.quadraticCurveTo(m2[0],m2[1],m3[0],m3[1]);c.stroke();
+}
+// a long tail feather: shaft, a vane of fine barbs, and an eye near the tip
+function hoouPlume(c,pts,wf,eye,k){
+var L2=[],R2=[],barbs=[],i;
+for(i=0;i<pts.length;i++){
+var p0=pts[Math.max(0,i-1)],p1=pts[Math.min(pts.length-1,i+1)],tx=p1[0]-p0[0],ty=p1[1]-p0[1],l=Math.hypot(tx,ty)||1,w=wf(i/(pts.length-1));
+tx/=l;ty/=l;
+L2.push([pts[i][0]-ty*w,pts[i][1]+tx*w]);R2.push([pts[i][0]+ty*w,pts[i][1]-tx*w]);
+barbs.push([pts[i],[pts[i][0]-ty*w*1.18+tx*w*0.9,pts[i][1]+tx*w*1.18+ty*w*0.9],[pts[i][0]+ty*w*1.18+tx*w*0.9,pts[i][1]-tx*w*1.18+ty*w*0.9]]);
+}
+var f=pts[0],g=pts[pts.length-1],vg=c.createLinearGradient(f[0],f[1],g[0],g[1]);
+vg.addColorStop(0,'#9a6a1e');vg.addColorStop(0.4,k%2?'#d49c3c':'#e2ac48');vg.addColorStop(1,'#f4cf78');
+hoouPath(c,L2.concat(R2.reverse()),hoouSame);var ga=c.globalAlpha;c.globalAlpha=ga*0.93;c.fillStyle=vg;c.fill();c.globalAlpha=ga;
+c.strokeStyle='rgba(255,226,150,.38)';c.lineWidth=0.005;c.beginPath();
+barbs.forEach(function(b){c.moveTo(b[0][0],b[0][1]);c.lineTo(b[1][0],b[1][1]);c.moveTo(b[0][0],b[0][1]);c.lineTo(b[2][0],b[2][1]);});c.stroke();
+c.strokeStyle='#fbe3a0';c.lineWidth=0.009;c.beginPath();
+pts.slice(0,pts.length-2).forEach(function(q,j){if(j)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);});c.stroke();
+if(!eye)return;
+var n=pts.length,ep=pts[Math.round(n*0.85)],en=pts[Math.round(n*0.85)+1],ang=Math.atan2(en[1]-ep[1],en[0]-ep[0]);
+[[0.07,0.046,'#f8dc8a'],[0.052,0.034,'#7a4e12'],[0.038,0.025,'#e2a440'],[0.02,0.014,'#2e1c06']].forEach(function(r){c.fillStyle=r[2];c.beginPath();c.ellipse(ep[0],ep[1],r[0],r[1],ang,0,7);c.fill();});
+c.fillStyle='rgba(255,250,230,.8)';c.beginPath();c.arc(ep[0]+0.006,ep[1]-0.006,0.006,0,7);c.fill();
+}
+// paints the bird; returns the screen points it sheds sparks from ({plume: [...], tips: [...]}) and its feet
+function paintHoou(c,x,y,Ls,o){
+var t=o.t,D=Math.PI/180,e=(o.e===undefined?20:o.e)*D,rot=o.rot,dir=o.dir===undefined?1:o.dir,a1=o.a1,a2=o.a2,fold=o.fold,droop=o.droop||0;
+var gx=Math.sin(rot),gy=Math.cos(rot);          // which way is down, in the bird's own frame
+var wmap=function(sign){
+var s1=Math.sin(a1+sign*e),s2=Math.sin(a2+sign*e),k=sign>0?1:0.9,ox=sign>0?0.04:0.08,oy=sign>0?-0.06:-0.08;
+return function(q){
+var r=q[1],cc=q[0]-0.22*Math.pow(Math.max(0,r-0.3),2);
+if(r>0.5){cc-=0.25*fold*(r-0.5);r=0.5+(r-0.5)*(1-0.4*fold);}
+return[ox+cc*k,oy-(r<=0.5?r*s1:0.5*s1+(r-0.5)*s2)*k];
+};
+};
+var far=wmap(-1),near=wmap(1),tips=[],plumePts=[];
+var wing=function(map,isFar){
+var Pc=isFar?['#7e5418','#b0802c','#d4a24a']:['#b8822a','#e6b552','#fff2c8'];
+for(var j=6;j>=0;j--)hoouFeather(c,map,-0.08,0.05+j*0.075,-0.5+j*0.015,0.1+j*0.082,0.11,'round',0.015,Pc,!isFar);
+HOOU_PRIM.forEach(function(f,k){hoouFeather(c,map,f[0],f[1],f[2],f[3],0.1,'point',-0.02,Pc,!isFar);if(!isFar&&k>3)tips.push(map([f[2],f[3]]));});
+var g=map([0.18,0.4]),h2=map([-0.2,0.4]),cg=c.createLinearGradient(g[0],g[1],h2[0],h2[1]);
+cg.addColorStop(0,isFar?'#d9a84e':'#fff3cc');cg.addColorStop(0.45,isFar?'#b0802c':'#ecbd5e');cg.addColorStop(1,isFar?'#8a5c1c':'#c48c30');
+hoouPath(c,HOOU_COV,map);c.fillStyle=cg;c.fill();
+if(isFar)return;
+c.strokeStyle='rgba(110,70,16,.35)';c.lineWidth=0.005;c.stroke();
+c.strokeStyle='rgba(130,86,22,.28)';c.beginPath();
+for(var rr=0.06;rr<0.9;rr+=0.07){var k0=map([-0.02,rr]),k1=map([-0.06,rr+0.035]),k2=map([-0.02,rr+0.07]);c.moveTo(k0[0],k0[1]);c.quadraticCurveTo(k1[0],k1[1],k2[0],k2[1]);}
+c.stroke();
+c.lineCap='round';c.strokeStyle='rgba(255,246,214,.75)';c.lineWidth=0.012;c.beginPath();
+HOOU_COV.slice(0,5).forEach(function(q,i){var m=map(q);if(i)c.lineTo(m[0],m[1]);else c.moveTo(m[0],m[1]);});c.stroke();
+};
+c.save();c.translate(x,y);c.scale(Ls*dir,Ls);c.rotate(rot);
+var A0=c.globalAlpha;
+c.globalCompositeOperation='screen';          // a soft glow around it
+var au=c.createRadialGradient(0,-0.05,0,0,-0.05,1.5);
+au.addColorStop(0,'rgba(255,214,130,'+(0.26+0.2*(o.glow||0))+')');au.addColorStop(1,'rgba(255,190,90,0)');
+c.fillStyle=au;c.fillRect(-1.6,-1.6,3.2,3.2);
+c.globalCompositeOperation='source-over';
+wing(far,true);
+HOOU_PLUMES.forEach(function(pl,k){
+var pts=[];
+for(var i=0;i<=30;i++){
+var s=i/30,fl=Math.pow(s,1.4)*0.16*Math.sin(s*4.4-t*2.4+k*0.9)*(1-0.7*droop),hang=droop*s*s*pl[0]*0.95,sw=droop*Math.pow(s,1.6)*0.06*Math.sin(t*0.9+k*1.3);
+var px=-0.28-s*pl[0]*(1-0.35*droop),py=0.03+s*pl[1]*(1-0.5*droop)+fl;
+pts.push([px+gx*hang+gy*sw,py+gy*hang-gx*sw]);if(s>=0.45)plumePts.push(pts[i]);
+}
+hoouPlume(c,pts,function(s){return s<0.7?0.04*(1-0.5*s):0.026*(1-(s-0.7)/0.3)+0.07*Math.sin(Math.PI*(s-0.7)/0.3);},true,k);
+});
+[[0.62,0.0],[0.5,0.1],[0.56,-0.06],[0.45,0.04]].forEach(function(cv2,k){
+var pts=[];for(var i=0;i<=12;i++){var s=i/12,hang=droop*s*s*cv2[0]*0.6;pts.push([-0.2-s*cv2[0]*(1-0.3*droop)+gx*hang,0.02+s*cv2[1]+s*s*0.05*Math.sin(t*2.4+k)*(1-0.6*droop)+gy*hang]);}
+hoouPlume(c,pts,function(s){return 0.045*Math.sin(Math.PI*Math.min(1,s*1.05+0.1));},false,k+1);
+});
+// the legs, gripping the perch (only once it is coming in to land)
+if(o.legs>0){
+var lp=o.legs;c.strokeStyle='rgba(110,58,22,'+lp+')';c.lineWidth=0.034;c.lineCap='round';
+[[-0.03,0.07],[0.07,0.07]].forEach(function(q,i){var fx=q[0]*0.4+gx*0.15,fy=0.07+gy*0.15;c.beginPath();c.moveTo(q[0],q[1]);c.lineTo(lerp(q[0],fx+(i?0.03:-0.03),lp),lerp(q[1]+0.05,fy,lp));c.stroke();});
+}
+var bg=c.createRadialGradient(0.1,0.07,0,0.02,0,0.36);
+bg.addColorStop(0,'#fff0c0');bg.addColorStop(0.35,'#e9b85a');bg.addColorStop(0.75,'#b07a26');bg.addColorStop(1,'#6e4612');
+c.fillStyle=bg;c.beginPath();c.ellipse(0,0,0.3,0.105,-0.1,0,7);c.fill();
+c.strokeStyle='rgba(122,78,18,.45)';c.lineWidth=0.006;
+for(var row=0;row<3;row++)for(var col=0;col<7;col++){
+var sx=-0.2+col*0.06+(row%2)*0.03,sy=-0.035+row*0.035;
+if((sx/0.3)*(sx/0.3)+(sy/0.1)*(sy/0.1)>0.8)continue;
+c.beginPath();c.arc(sx,sy,0.024,0.15*Math.PI,0.85*Math.PI);c.stroke();
+}
+// the neck curving up (a little higher and prouder when it stands), with long hackles draping down it
+var hu=o.head||0,N0=[0.16,-0.03],N1=[0.42-0.08*hu,-0.05-0.04*hu],N2=[0.53-0.06*hu,-0.3-0.06*hu];
+var neck=[];for(var i3=0;i3<=12;i3++)neck.push(hoouQuad(N0,N1,N2,i3/12));
+var ng=c.createLinearGradient(0.36,-0.24,0.52,-0.1);
+ng.addColorStop(0,'#9a6a1e');ng.addColorStop(0.5,'#e2b04a');ng.addColorStop(1,'#fbe0a0');
+var NL=[],NR=[];
+neck.forEach(function(q,i){var w=0.05-0.022*i/12,a0=neck[Math.max(0,i-1)],b0=neck[Math.min(12,i+1)],tx=b0[0]-a0[0],ty=b0[1]-a0[1],l=Math.hypot(tx,ty)||1;NL.push([q[0]-ty/l*w,q[1]+tx/l*w]);NR.push([q[0]+ty/l*w,q[1]-tx/l*w]);});
+hoouPath(c,NL.concat(NR.reverse()),hoouSame);c.fillStyle=ng;c.fill();
+for(var hk=0;hk<9;hk++){
+var u0=0.55+hk*0.045,p0=hoouQuad(N0,N1,N2,Math.min(1,u0+0.12)),p1=hoouQuad(N0,N1,N2,Math.max(0,u0-0.42));
+hoouFeather(c,hoouSame,p0[0]-0.012,p0[1],p1[0]-0.035+Math.sin(t*2+hk)*0.004,p1[1]+0.02,0.03,'point',0.01,['#a8721e','#e8b850','#fff0c0'],true);
+}
+// the head: crest plumes, red bare skin around the eye, a hooked beak (turned a little with o.look)
+c.save();var hx0=N2[0],hy0=N2[1];c.translate(hx0-0.53,hy0+0.3);c.translate(0.53,-0.3);c.rotate(o.look||0);c.translate(-0.53,0.3);
+for(var k2=0;k2<4;k2++){
+var cp=[];for(var i2=0;i2<=10;i2++)cp.push(hoouQuad([0.545,-0.37],[0.52-k2*0.025,-0.5+k2*0.025],[0.42-k2*0.045,-0.5+k2*0.06+Math.sin(t*2+k2)*0.01],i2/10));
+hoouPlume(c,cp,function(s){return s<0.62?0.006:0.006+0.022*Math.sin(Math.PI*(s-0.62)/0.38);},false,k2);
+}
+var hg=c.createRadialGradient(0.58,-0.32,0,0.56,-0.34,0.08);
+hg.addColorStop(0,'#fff0c0');hg.addColorStop(0.5,'#e6b552');hg.addColorStop(1,'#9a6a1e');
+c.fillStyle=hg;c.beginPath();c.ellipse(0.56,-0.335,0.068,0.05,-0.3,0,7);c.fill();
+c.fillStyle='#c4482c';c.beginPath();c.ellipse(0.585,-0.338,0.03,0.022,-0.2,0,7);c.fill();
+c.fillStyle='#b03a26';c.beginPath();c.ellipse(0.598,-0.29,0.016,0.032,0.25,0,7);c.fill();
+var bk=c.createLinearGradient(0.61,-0.37,0.69,-0.32);bk.addColorStop(0,'#e8c070');bk.addColorStop(1,'#7a5014');
+c.fillStyle=bk;hoouPath(c,[[0.612,-0.362],[0.66,-0.358],[0.705,-0.338],[0.692,-0.318],[0.668,-0.33],[0.615,-0.318]],hoouSame);c.fill();
+c.fillStyle='#f2c64a';c.beginPath();c.arc(0.586,-0.343,0.016,0,7);c.fill();
+c.fillStyle='#1c1004';c.beginPath();c.arc(0.588,-0.343,0.01,0,7);c.fill();
+c.fillStyle='#fffbe8';c.beginPath();c.arc(0.591,-0.347,0.0035,0,7);c.fill();
+c.restore();
+wing(near,false);
+c.globalAlpha=A0;
+// where the sparks come from, in screen space
+var cr=Math.cos(rot),sn=Math.sin(rot),out=function(q){var lx=q[0]*cr-q[1]*sn,ly=q[0]*sn+q[1]*cr;return[x+Ls*dir*lx,y+Ls*ly];};
+c.restore();
+return{plume:plumePts.map(out),tips:tips.map(out)};
+}
+// the sparks it sheds: they drift, sink a little, twinkle and fade (screen space, so they stay behind as it flies on)
+function hoouSparksStep(c,S,dt,t,k){
+if(!S.length)return;
+var sp=hoouSpark();c.save();c.globalCompositeOperation='lighter';
+for(var i=S.length-1;i>=0;i--){
+var m=S[i];m.life-=dt;if(m.life<=0){S.splice(i,1);continue;}
+m.x+=m.vx*dt;m.y+=m.vy*dt;m.vy+=1.2*k*dt;m.vx*=1-0.6*dt;
+var a=(m.life/m.max)*(0.55+0.45*Math.sin(t*9+m.tw)),z=m.r*6;if(a<=0.01)continue;
+c.globalAlpha=Math.min(1,a);c.drawImage(sp,m.x-z/2,m.y-z/2,z,z);
+}
+c.restore();
+}
+function hoouSparksEmit(S,E,want,k){
+var pts=E.plume,tp=E.tips;
+while(want>0&&pts.length&&S.length<400){
+if(want<1&&Math.random()>want)break;want-=1;
+var src=Math.random()<0.82||!tp.length?pts[(Math.random()*pts.length)|0]:tp[(Math.random()*tp.length)|0],life=1.1+Math.random()*1.3;
+S.push({x:src[0],y:src[1],vx:(Math.random()-0.6)*3.4*k,vy:(Math.random()*2.4-0.5)*k,life:life,max:life,r:(0.15+Math.random()*0.35)*k,tw:Math.random()*6.3});
+}
+}
+// the rainbow that comes out while it rests: a primary bow, and a faint secondary one with its colours reversed
+function paintHoouBow(c,cx,cy,R,a,lw){
+var cols=[[255,70,60],[255,160,50],[255,236,90],[90,210,100],[80,140,255],[130,90,220]];
+c.save();c.lineCap='butt';
+for(var i=0;i<cols.length;i++){var r0=R-i*lw,g=c.createLinearGradient(0,cy-r0,0,cy);g.addColorStop(0,rgb(cols[i],a));g.addColorStop(0.75,rgb(cols[i],a*0.7));g.addColorStop(1,rgb(cols[i],0));c.strokeStyle=g;c.lineWidth=lw*1.15;c.beginPath();c.arc(cx,cy,r0,Math.PI*1.02,Math.PI*1.98);c.stroke();}
+var R2=R*1.16+lw*6;
+for(var j=0;j<cols.length;j++){var r1=R2-(cols.length-1-j)*lw*1.1,g2=c.createLinearGradient(0,cy-r1,0,cy);g2.addColorStop(0,rgb(cols[j],a*0.2));g2.addColorStop(1,rgb(cols[j],0));c.strokeStyle=g2;c.lineWidth=lw*1.2;c.beginPath();c.arc(cx,cy,r1,Math.PI*1.04,Math.PI*1.96);c.stroke();}
+var gi=c.createRadialGradient(cx,cy,R*0.6,cx,cy,R-lw*6);gi.addColorStop(0,'rgba(255,255,255,0)');gi.addColorStop(1,'rgba(255,255,255,'+(a*0.18)+')');
+c.fillStyle=gi;c.beginPath();c.arc(cx,cy,R-lw*6,Math.PI,TAU);c.fill();          // the sky is a little brighter inside the bow
+c.restore();
+}
 function mount(el,opts){
 opts=opts||{};
 var o={stage:0,season:seasonFor(),light:lightFor(),quality:'card',animate:true,event:null,date:null};
-function merge(n){if(!n)return;['stage','season','light','quality','animate','onReady','event','onCue','date','weather','fireworks','wide'].forEach(function(k){if(n[k]!==undefined)o[k]=n[k];});if(n.date!==undefined)dateSetAt=Date.now();norm();}
+function merge(n){if(!n)return;['stage','season','light','quality','animate','onReady','event','onCue','date','weather','fireworks','wide','hoou','onKeep'].forEach(function(k){if(n[k]!==undefined)o[k]=n[k];});if(n.date!==undefined)dateSetAt=Date.now();norm();}
 function norm(){
 o.stage=Math.max(0,Math.min(STAGES.length-1,Math.round(+o.stage||0)));
 if(SEASON_KEYS.indexOf(o.season)<0)o.season=seasonFor();
@@ -13866,7 +14048,7 @@ if(g.wx!=='clear'&&g.wx!=='cloudy'){dflies=bflies=null;}
 else dflies=withScene({W:cur.spec.W,H:cur.spec.H,KS:cur.spec.KS,stage:cur.spec.stage,season:cur.spec.season,light:cur.spec.light,event:cur.spec.event},function(){return initDragonflies(g,frng);});
 if(g.wx==='clear'||g.wx==='cloudy')bflies=withScene({W:cur.spec.W,H:cur.spec.H,KS:cur.spec.KS,stage:cur.spec.stage,season:cur.spec.season,light:cur.spec.light,event:cur.spec.event},function(){return initButterflies(g,frng);});
 g.FA=withScene({W:cur.spec.W,H:cur.spec.H,KS:cur.spec.KS,stage:cur.spec.stage,season:cur.spec.season,light:cur.spec.light,event:cur.spec.event},function(){return initFauna(g,frng);});g.FA.next=clock+4+frng()*6;
-rare=null;rareRoll=clock+20+frng()*20;
+rare=null;rareRoll=clock+20+frng()*20;hoouWait=0;
 cues.next={bell:clock+6+frng()*6,wheel:clock+9+frng()*10,splash:clock+12+frng()*14,gust:clock+35+frng()*35,thunder:clock+3+frng()*7};
 if(g.wx==='typhoon'||g.wx==='blizzard')cues.next.gust=clock+2+frng()*4;
 }
@@ -13913,6 +14095,89 @@ rare=withScene({W:sp.W,H:sp.H,KS:sp.KS,stage:sp.stage,season:sp.season,light:sp.
 cur.geo.rareNow=rare;
 cues.last=clock;cue('rare',{id:def.id,name:def.name},true);
 return true;
+}
+// ----- 鳳凰: once a year the phoenix of the opening flies into town, rests on top of the 五重塔, and a rainbow comes out -----
+// The host keeps the record of its last visit (o.hoou = {y: year, t0: ms, dir}; false: never, as in a preview or the
+// developer menu) and hands it to every view. Once the 五重塔 stands, the first time each year the town is open in the
+// morning or by day, in fair weather, it comes 14–24 s after the view opens. The visit runs on the wall clock from t0,
+// so every view open at the time (the home card, the larger view, 全画面) shows the same moment of it, and a view
+// opened mid-visit joins in. In: 9 s flying in; 1.6 s landing; 95 s at rest (the rainbow); 9 s flying off.
+var HOOU_IN=9,HOOU_LAND=1.6,HOOU_STAY=95,HOOU_OUT=9,HOOU_ALL=HOOU_IN+HOOU_LAND+HOOU_STAY+HOOU_OUT;
+var hoou=null,hoouWait=0,hoouSp=[],hoouLT=-1;
+function hoouRec(){return o.hoou&&typeof o.hoou==='object'?o.hoou:null;}
+function hoouOK(g){return!!(g&&g.F&&g.F.pagoda&&(g.light==='morning'||g.light==='day')&&(g.wx==='clear'||g.wx==='cloudy'));}
+function hoouFin(){return P(PAGODA.x,21.72,PAGODA.z);}
+function hoouDir(g){return hoouFin().x<g.W*0.5?-1:1;}          // the way it flies in: from the side with more sky (at rest it turns to face the town)
+function hoouKeep(rec){o.hoou=rec;if(typeof o.onKeep==='function'){try{o.onKeep('hoou',rec);}catch(e){if(window.console)console.error(e);}}}
+function hoouStart(kept){
+var g=cur.geo;if(!g.F.pagoda)return false;
+hoou={t0:Date.now(),dir:hoouDir(g)};hoouSp=[];hoouLT=-1;
+if(kept)hoouKeep({y:nowDate().getFullYear(),t0:hoou.t0,dir:hoou.dir});
+cue('rare',{id:'houou',name:'鳳凰'},true);loopCheck();
+return true;
+}
+function hoouTick(){
+var g=cur.geo,now=Date.now();
+if(hoou){if(now-hoou.t0>HOOU_ALL*1000||!g.F.pagoda){hoou=null;hoouSp=[];}return;}
+var r=hoouRec();if(!r)return;
+if(r.t0&&now>=r.t0-1000&&now-r.t0<HOOU_ALL*1000){if(g.F.pagoda){hoou={t0:r.t0,dir:r.dir||hoouDir(g),joined:true};hoouSp=[];hoouLT=-1;}return;}
+if(!hoouOK(g)||reveal||r.y===nowDate().getFullYear()){hoouWait=0;return;}
+if(!hoouWait){hoouWait=clock+14+frng()*10;return;}
+if(clock<hoouWait)return;
+hoouWait=0;hoouStart(true);
+}
+// where it is and how it holds itself el seconds into the visit
+function hoouPose(g,el,t){
+var fin=hoouFin(),Ls=3.0*fin.k,dir=hoou.dir,face=-dir,D=Math.PI/180;
+var pr=-0.55,feet=[0.008+0.15*Math.sin(pr),0.07+0.15*Math.cos(pr)];
+var A=[fin.x-Ls*face*(feet[0]*Math.cos(pr)-feet[1]*Math.sin(pr)),fin.y-Ls*(feet[0]*Math.sin(pr)+feet[1]*Math.cos(pr))];
+var A1=[A[0]-dir*0.7*Ls,A[1]-0.55*Ls];
+var flap=function(rate){var u=(t*rate)%1,down=u<0.6,psi=down?Math.PI*u/0.6:Math.PI+Math.PI*(u-0.6)/0.4;return{psi:psi,fold:down?0:0.85*Math.sin(Math.PI*(u-0.6)/0.4),a1:(10+48*Math.cos(psi))*D,a2:(10+48*Math.cos(psi))*D+20*Math.sin(psi)*D};};
+var bez=function(a,b,c,u){var v=1-u;return[v*v*a[0]+2*v*u*b[0]+u*u*c[0],v*v*a[1]+2*v*u*b[1]+u*u*c[1]];};
+var rest={a1:44*D+4*D*Math.sin(t*0.7),fold:0.3},cyc=(t%16)/16,st=cyc>0.78?Math.sin(Math.PI*(cyc-0.78)/0.22):0;          // every 16 s it stretches its wings up
+rest.a1+=26*D*st;rest.fold-=0.28*st;rest.a2=rest.a1+24*D;
+var p,o2={t:t,dir:dir,e:20};
+if(el<HOOU_IN){
+var u=el/HOOU_IN,ue=1-(1-u)*(1-u),S=[dir<0?g.W+3.5*Ls:-3.5*Ls,Math.max(-Ls,A[1]-g.H*0.24)],C=[lerp(S[0],A1[0],0.55),Math.min(S[1],A1[1])-g.H*0.06];
+p=bez(S,C,A1,ue);var f=flap(0.8);
+o2.rot=-0.05+0.08*(1-u);o2.a1=f.a1;o2.a2=f.a2;o2.fold=f.fold;o2.droop=0;o2.legs=0;o2.head=0;o2.glow=0.2;
+p[1]-=Math.sin(f.psi)*0.05*Ls;
+}else if(el<HOOU_IN+HOOU_LAND){
+var s=(el-HOOU_IN)/HOOU_LAND,se=sstep(0,1,s),f2=flap(0.8);
+p=[lerp(A1[0],A[0],se),lerp(A1[1],A[1],se)-Math.sin(Math.PI*s)*0.15*Ls];
+var flare=sstep(0,0.45,s);
+o2.dir=dir*Math.cos(Math.PI*sstep(0.35,0.85,s));          // it turns about as it lands, to face out over the town
+o2.rot=lerp(-0.05,pr,se);o2.a1=lerp(f2.a1,70*D,flare);o2.a1=lerp(o2.a1,rest.a1,sstep(0.55,1,s));o2.a2=o2.a1+24*D*flare+(1-flare)*(f2.a2-f2.a1);o2.fold=lerp(f2.fold,rest.fold,flare);
+o2.droop=sstep(0.3,1,s);o2.legs=sstep(0.2,0.8,s);o2.head=se;o2.glow=0.2+0.4*se;
+}else if(el<HOOU_IN+HOOU_LAND+HOOU_STAY){
+var tr=el-HOOU_IN-HOOU_LAND;p=[A[0],A[1]+Math.sin(t*0.7)*0.012*Ls];
+o2.dir=face;o2.rot=pr+0.02*Math.sin(t*0.7);o2.a1=rest.a1;o2.a2=rest.a2;o2.fold=rest.fold;o2.droop=1;o2.legs=1;o2.head=1;o2.glow=0.6;
+o2.look=0.12*Math.sin(tr*0.31)+0.1*sstep(0.6,0.9,Math.sin(tr*0.13));
+}else{
+var s3=clamp((el-HOOU_IN-HOOU_LAND-HOOU_STAY)/HOOU_OUT),f3=flap(0.85),go=sstep(0,0.16,s3);
+var E=[face>0?g.W+3.5*Ls:-3.5*Ls,A[1]-g.H*0.3],C2=[A[0]+face*g.W*0.12,A[1]-g.H*0.16],ua=Math.pow(s3,1.6);
+p=bez(A,C2,E,ua);
+o2.rot=lerp(pr,-0.18,go);o2.a1=lerp(rest.a1,f3.a1,go);o2.a2=lerp(rest.a2,f3.a2,go);o2.fold=lerp(rest.fold,f3.fold,go);
+o2.droop=1-sstep(0,0.3,s3);o2.legs=1-sstep(0,0.12,s3);o2.head=1-sstep(0,0.3,s3);o2.glow=0.6-0.4*s3;
+o2.dir=face;          // and flies off over the town, back the way it came
+}
+return{x:p[0],y:p[1],Ls:Ls,o:o2,fin:fin};
+}
+// the rainbow, in the sky only (behind the hills, the 五重塔 and everything else), from the 五重塔 out over the town
+function hoouBow(ctx,g,el){
+var r0=HOOU_IN+HOOU_LAND,k=sstep(r0+0.4,r0+6,el)*(1-sstep(r0+HOOU_STAY-8,r0+HOOU_STAY+2,el));
+if(k<=0.002)return;
+var fin=hoouFin(),side=fin.x<g.W*0.5?1:-1,xa=fin.x+side*g.W*0.02,xb=side>0?g.W*0.78:g.W*0.22,yh=fin.y+12,yt=Math.max(4,fin.y-34),h=yh-yt,c0=Math.abs(xb-xa),R=(c0*c0/4+h*h)/(2*h),cx=(xa+xb)/2,cy=yt+R;
+if(!hoou.bow&&k>0.15){hoou.bow=true;if(!hoou.joined||el<r0+8)cue('rainbow',null,true);}
+drawSkyMasked(ctx,g,function(c){paintHoouBow(c,cx,cy,R,0.4*k,g.W*0.0085);});
+}
+function hoouDraw(ctx,g,t){
+var el=(Date.now()-hoou.t0)/1000;if(el<0||el>HOOU_ALL)return;
+var dt=hoouLT<0?0:Math.min(0.1,Math.max(0,t-hoouLT));hoouLT=t;
+var q=hoouPose(g,el,el),E=null,L=q.Ls,bb=[q.x-3.6*L,q.y-2.4*L,q.x+3.6*L,q.y+2.6*L];
+hoouSparksStep(ctx,hoouSp,dt,el,L*0.12);
+drawCut(ctx,g,bb,q.fin.d-3,function(c){E=paintHoou(c,q.x,q.y,L,q.o);});
+if(E)hoouSparksEmit(hoouSp,E,(el<HOOU_IN+HOOU_LAND?70:el<HOOU_IN+HOOU_LAND+HOOU_STAY?12:60)*dt,L*0.12);
 }
 var reveal=null,dbgSwayOnly=false,dbgSway=null,cvBg=false,townKeep=null;
 function swayBase(on){
@@ -14004,6 +14269,7 @@ ctx=av.getContext('2d');ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.glob
 }else looseOff();
 }else looseOff();
 if(motion){
+if(hoou)hoouBow(ctx,g,(Date.now()-hoou.t0)/1000);
 drawWillowSway(ctx,g,t);
 drawSmoke(ctx,g,t);
 drawMist(ctx,g,t);
@@ -14015,6 +14281,7 @@ if(petals)drawPetals(ctx,petals,g,sc);
 if(dflies)drawDragonflies(ctx,g,dflies,t);
 if(bflies)drawButterflies(ctx,g,bflies,t);
 if(g.FA)drawSkyBirds(ctx,g,g.FA,t);
+if(hoou)hoouDraw(ctx,g,t);
 if(rare&&!g.rareNow){RARE_LAST=null;rare.def.draw(ctx,g,rare.st,clamp((t-rare.t0)/rare.def.dur),t);if(RARE_LAST)rare.scr=RARE_LAST;}
 if(g.I)drawInteract(ctx,g,g.I,t);
 if(FW){drawSkyMasked(ctx,g,function(c){drawFireworks(c,FW,g);},null,fwSkyMask());if(FW.flash>0.02){ctx.globalCompositeOperation='lighter';ctx.fillStyle=rgb(mixc(FW.flashCol,[255,220,170],0.4),0.055*Math.min(1,FW.flash));ctx.fillRect(0,0,g.W,g.H);ctx.globalCompositeOperation='source-over';}}
@@ -14147,7 +14414,8 @@ g.FA.next=clock+(g.light==='dusk'?16+frng()*14:22+frng()*26)*(wxWet(g.wx)||wxSno
 }
 }
 if(rare&&clock>rare.t0+rare.def.dur){rare=null;g.rareNow=null;}
-if(!rare&&clock>rareRoll&&g.wx!=='storm'&&g.wx!=='typhoon'&&g.wx!=='blizzard'){
+hoouTick();
+if(!rare&&!hoou&&clock>rareRoll&&g.wx!=='storm'&&g.wx!=='typhoon'&&g.wx!=='blizzard'){
 rareRoll=clock+20+frng()*20;
 if(frng()<RARE_P){var el=rareEligible(g),tw=0;el.forEach(function(d){tw+=d.w;});var r=frng()*tw;for(var j=0;j<el.length;j++){r-=el[j].w;if(r<=0){startRare(el[j]);break;}}}
 }
@@ -14442,7 +14710,7 @@ return hl.show(rare.def.id,rare.def.name,ms);
 },
 update:update,
 playStageUp:playStageUp,
-_summon:function(id){var d=rareById(id);if(!d||!cur||dead||!(cur.geo&&cur.geo.F&&cur.geo.F.had(d.minStage)))return false;if(rare&&rare.hand&&rare.def.id===id)return true;var ok=false;try{ok=startRare(d);}catch(e){rare=null;cur.geo.rareNow=null;if(window.console)console.error(e);}loopCheck();return ok;},
+_summon:function(id){if(id==='houou'){if(!cur||dead)return false;var sv0=saveState(),okH=false;try{var gg=cur.geo;W=gg.W;H=gg.H;CAM=gg.cam;KS=gg.KS;MODE='n';F=gg.F;okH=hoouStart(false);}finally{restoreState(sv0);}return okH;}var d=rareById(id);if(!d||!cur||dead||!(cur.geo&&cur.geo.F&&cur.geo.F.had(d.minStage)))return false;if(rare&&rare.hand&&rare.def.id===id)return true;var ok=false;try{ok=startRare(d);}catch(e){rare=null;cur.geo.rareNow=null;if(window.console)console.error(e);}loopCheck();return ok;},
 tap:function(nx,ny){
 if(!cur||dead||!isFinite(nx)||!isFinite(ny))return null;
 var g=cur.geo,st=saveState(),hit=null;

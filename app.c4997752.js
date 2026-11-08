@@ -9982,13 +9982,15 @@
     function gdCueName(n) { return GD_CUE_ALIAS[n] || n; }
     // (b5) what the garden keeps through the app: the lanterns lit this evening, the study streak's moments;
     // handed back on every mount with the streak (days in a row studied: a short streak just brings the usual garden, never a reminder)
-    var GD_KEEP = { lamps: 'jlptGardenLamps', reward: 'jlptGardenReward' };
+    // hoou: the town's 鳳凰, who comes once a year to rest on the 五重塔 (the year and moment of its last visit)
+    var GD_KEEP = { lamps: 'jlptGardenLamps', reward: 'jlptGardenReward', hoou: 'jlptTownHoou' };
     try { localStorage.removeItem('jlptGardenRake'); } catch (e) {}   // (raking by hand was taken out: the strokes kept before are let go)
     function gdPlayOpts(o, inView) {
         var st = 0; try { st = typeof computeStreaks === 'function' ? computeStreaks().current : 0; } catch (e) { st = 0; }
         o.streak = st;
         Object.keys(GD_KEEP).forEach(function(k) { var v = loadJSON(GD_KEEP[k], null); if (v != null) o[k] = v; });
         o.onKeep = gdKeep;
+        if (GD.devMode || GD.preview != null) o.hoou = false; else if (o.hoou == null) o.hoou = {};   // not in a preview or the developer menu
         if (inView) o.view = GD.engawa && gdViewWorld() === 'garden' ? 'engawa' : null;
         return o;
     }
