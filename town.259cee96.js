@@ -14557,7 +14557,7 @@ if(hoou&&hoou.cry!==undefined){var cd=el-hoou.cry;if(cd>=0&&cd<HOOU_CRY){var ce=
 o.cry=ce;o.cryT=cd;o.gape=ce*hoouGape(cd);o.tilt=(still?0.5:0.2)*ce;if(still){o.crane=ce;o.head=Math.max(o.head||0,1);o.look=lerp(o.look||0,0,ce);o.wings={a1:o.wings.a1+0.12*ce,a2:o.wings.a2+0.1*ce,sw:o.wings.sw,fold:o.wings.fold*(1-ce)};o.glow=Math.max(o.glow||0,0.6+0.3*ce);}}}
 return o;
 }
-var HOOU_CRY=7.6,HOOU_GAPE=[[0,0],[0.3,0.45],[0.6,0.6],[1.15,0.68],[1.45,1],[3,0.95],[3.6,0.78],[4.4,0.62],[5,0.55],[6.2,0.5],[6.6,0.3],[7.2,0]];
+var HOOU_CRY=10.6,HOOU_GAPE=[[0,0],[0.3,0.45],[0.6,0.6],[1.15,0.68],[1.45,1],[3,0.95],[3.6,0.78],[4.4,0.62],[5,0.55],[5.36,0.48],[5.72,0.42],[6.05,0.6],[6.55,0.86],[7.4,0.8],[8.2,0.5],[9,0.47],[9.4,0.3],[10.1,0]];          // (its two parts: the first high and long, the second rising again and falling away)
 function hoouGape(cd){var G=HOOU_GAPE,i=1;while(i<G.length-1&&G[i][0]<cd)i++;var a=G[i-1],b=G[i],v=lerp(a[1],b[1],clamp((cd-a[0])/((b[0]-a[0])||1)));return clamp(v*(1+0.06*Math.sin(cd*31)));}          // how wide the bill opens through the cry, following its song, with a little tremble
 // tapped, it cries: a long, rising, falling cry (once at a time, and not once it is going)
 function hoouCry(){if(!hoou)return false;var el=(Date.now()-hoou.t0)/1000;if(el<0||el>HOOU_TW-1)return false;if(hoou.cry!==undefined&&el-hoou.cry<HOOU_CRY)return false;hoou.cry=el;cue('houou-cry',{id:+clamp(hoou.near||1,0.15,1.2).toFixed(2)},true);loopCheck();return true;}
@@ -14593,7 +14593,7 @@ var N=10,r0=0.32*Rd,ph=clock/3.4,ct=o.cryT||0,dk=fv.width/Math.max(1,size.cssW);
 ctx.save();
 for(var i=0;i<N;i++){var ra=r0+(Rd-r0)*i/N,rb=r0+(Rd-r0)*(i+1)/N,rm=(ra+rb)/2,u=(rm-r0)/(Rd-r0),env=Math.pow(Math.sin(Math.PI*u),1.3);
 var d=0.6*au*Math.sin(TAU*(rm/(0.42*Rd)-ph))+0.23*au*Math.sin(TAU*(rm/(0.23*Rd)-ph*1.7)+1.3);          // two slow ripples running outward (in css pixels: well under one)
-if(cr>0.02)[0.35,1.5,2.9,4.3,5.6].forEach(function(te){var a2=ct-te;if(a2<0)return;var rw=r0+a2*0.5*(Rd-r0);d+=1.33*cr*Math.exp(-Math.pow((rm-rw)/(0.11*Rd),2))*(1-clamp(a2/2.2));});          // and as it cries, a stronger wave with each breath of its song
+if(cr>0.02)[0.35,1.5,2.9,4.3,6.0,6.6,7.5,9.0].forEach(function(te){var a2=ct-te;if(a2<0)return;var rw=r0+a2*0.5*(Rd-r0);d+=1.33*cr*Math.exp(-Math.pow((rm-rw)/(0.11*Rd),2))*(1-clamp(a2/2.2));});          // and as it cries, a stronger wave with each breath of its song
 d*=env*dk;if(Math.abs(d)<0.05)continue;var s=1+d/(rm*sc);
 ctx.save();ctx.beginPath();ctx.arc(cx,cy,rb,0,TAU);ctx.arc(cx,cy,ra,0,TAU,true);ctx.clip();ctx.drawImage(c,cx-Rd*s,cy-Rd*s,2*Rd*s,2*Rd*s);ctx.restore();}
 ctx.restore();
