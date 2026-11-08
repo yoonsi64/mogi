@@ -25619,18 +25619,36 @@
             judge = need > 60 ? '言語知識・読解とも基準点（19点）以上ですが、総合得点が合格点（100点）に届くには聴解が満点でも足りません。'
                 : '言語知識・読解とも基準点（19点）以上です。合格（総合100点以上）には、聴解で <b>' + need + '点</b> 以上が必要です。';
         }
-        return '<div class="mk-rep">' + repStampHtml(ts) +
-            '<div class="mk-rep-head">日本語能力試験 N1　成績（目安）' + (title ? '<small>' + escapeHtml(title) + '</small>' : '') + '</div>' +
-            '<table class="mk-rep-tbl">' +
-                '<tr><th rowspan="3" class="mk-rep-k">' + rb('得点区分別得点', 'とくてんくぶんべつとくてん') + '</th><td>' + rb('言語知識', 'げんごちしき') + '（' + rb('文字', 'もじ') + '・' + rb('語彙', 'ごい') + '・' + rb('文法', 'ぶんぽう') + '）</td><td class="mk-rep-n">' + lang + ' ／ 60</td></tr>' +
-                '<tr><td>' + rb('読解', 'どっかい') + '</td><td class="mk-rep-n">' + read + ' ／ 60</td></tr>' +
-                '<tr><td>' + rb('聴解', 'ちょうかい') + '</td><td class="mk-rep-n mk-rep-na">未受験</td></tr>' +
-                '<tr><th rowspan="2" class="mk-rep-k">' + rb('参考情報', 'さんこうじょうほう') + '</th><td>' + rb('文字', 'もじ') + '・' + rb('語彙', 'ごい') + '</td><td class="mk-rep-n mk-rep-g">' + grade(c.v) + '</td></tr>' +
-                '<tr><td>' + rb('文法', 'ぶんぽう') + '</td><td class="mk-rep-n mk-rep-g">' + grade(c.g) + '</td></tr>' +
-                '<tr><th colspan="2" class="mk-rep-k">' + rb('総合得点', 'そうごうとくてん') + '<small>（聴解を除く）</small></th><td class="mk-rep-n"><b>' + sum + '</b> ／ 120</td></tr>' +
+        // laid out like the JLPT 合否結果通知書 (score table, 参考情報 with its key, the verdict box and the date), marked as モギ's estimate
+        var d = new Date(ts || Date.now()), wd = '日月火水木金土'.charAt(d.getDay());
+        var jd = d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
+        var verdict = low.length ? '不合格<small>（' + low.join('・') + 'が基準点未満）</small>' : need > 60 ? '不合格<small>（総合得点が届きません）</small>' : '合格圏<small>（聴解 ' + need + '点以上で合格）</small>';
+        return '<div class="mk-rep mr">' +
+            '<div class="mr-title">日本語能力試験 N1　<span class="mr-nw">成績（目安）</span>' + '</div>' +
+            '<div class="mr-info">' +
+                (title ? '<div><span>教材</span><b>' + escapeHtml(title) + '</b></div>' : '') +
+                '<div><span>受験日</span><b>' + jd + '（' + wd + '曜日）</b></div>' +
+                '<div><span>受験レベル</span><b>N1</b></div>' +
+            '</div>' +
+            '<table class="mr-tbl"><colgroup><col style="width:42%"><col style="width:17%"><col style="width:17%"><col style="width:24%"></colgroup>' +
+                '<tr><th colspan="3" class="mr-sp">得点区分別得点' + '</th><th rowspan="2" class="mr-sp mr-tot">総合得点' + '</th></tr>' +
+                '<tr><th>言語知識<span class="mr-sub">（文字・語彙・文法）</span>' + '</th><th class="mr-sp">読解' + '</th><th class="mr-sp">聴解' + '</th></tr>' +
+                '<tr class="mr-num"><td>' + lang + '/60</td><td>' + read + '/60</td><td class="mr-na">未受験</td><td class="mr-tot">' + sum + '/120<small>（聴解を除く）</small></td></tr>' +
             '</table>' +
+            '<div class="mr-low">' +
+                '<div class="mr-refw"><div class="mr-arrow" aria-hidden="true"></div>' +
+                    '<table class="mr-ref"><tr><th colspan="2" class="mr-sp">参考情報' + '</th></tr>' +
+                    '<tr><th>文字・語彙' + '</th><th class="mr-sp">文法' + '</th></tr>' +
+                    '<tr class="mr-num"><td>' + grade(c.v) + '</td><td>' + grade(c.g) + '</td></tr></table></div>' +
+                '<div class="mr-key">' +
+                    '<div><b>A</b>正答率67%以上' + '</div>' +
+                    '<div><b>B</b>正答率34%以上67%未満' + '</div>' +
+                    '<div><b>C</b>正答率34%未満' + '</div>' +
+                '</div>' +
+            '</div>' +
+            '<div class="mr-foot"><div class="mr-verdict">' + verdict + '</div>' + repStampHtml(ts) + '</div>' +
             '<div class="mk-rep-judge">' + judge + '</div>' +
-            '<div class="mk-rep-note">参考情報　A：正答率67%以上　B：34%以上67%未満　C：34%未満<br>得点は正答数から換算した目安です（本試験は等化による尺度得点で、配点も公表されていません）。N1の合格は、総合得点100点以上（180点満点）かつ各区分19点以上です。</div>' +
+            '<div class="mk-rep-note">得点は正答数から換算した目安です（本試験は等化による尺度得点で、配点も公表されていません）。N1の合格は、総合得点100点以上（180点満点）かつ各区分19点以上です。</div>' +
         '</div>';
     }
     function renderMockResult() {

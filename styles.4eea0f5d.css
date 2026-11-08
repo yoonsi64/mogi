@@ -3454,6 +3454,42 @@ body.gd-on .gd-meet { top: calc(62px + env(safe-area-inset-top)); }
 .results-screen .mk-rep, .results-screen .mk-rep-wait { margin: 0 0 14px; }
 /* モギの日付印 on the score report */
 .mk-rep { position: relative; }
+/* the score report printed on the JLPT certificate's lattice (cream and pale gold; a darker one in dark mode) */
+.mk-rep { background-color: #faf8f2; background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 fill=%22%23faf8f2%22/%3E%3Cpath d=%22M47.00 47.00 Q33.00 33.00 44.50 15.50 Q29.50 29.50 0.50 0.50 Q29.50 29.50 15.50 44.50 Q33.00 33.00 47.00 47.00Z M47.00 53.00 Q33.00 67.00 44.50 84.50 Q29.50 70.50 0.50 99.50 Q29.50 70.50 15.50 55.50 Q33.00 67.00 47.00 53.00Z M53.00 47.00 Q67.00 33.00 55.50 15.50 Q70.50 29.50 99.50 0.50 Q70.50 29.50 84.50 44.50 Q67.00 33.00 53.00 47.00Z M53.00 53.00 Q67.00 67.00 55.50 84.50 Q70.50 70.50 99.50 99.50 Q70.50 70.50 84.50 55.50 Q67.00 67.00 53.00 53.00Z%22 fill=%22%23e8dec2%22 stroke=%22%23e8dec2%22 stroke-width=%220%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M0 0 L50 -10.5 L100 0 L50 10.5 Z M0 100 L50 89.5 L100 100 L50 110.5 Z M0 0 L-10.5 50 L0 100 L10.5 50 Z M100 0 L89.5 50 L100 100 L110.5 50 Z%22 fill=%22none%22 stroke=%22%23eae2cb%22 stroke-width=%222%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E"); background-size: 14px 14px; background-position: center top; }
+html.dark .mk-rep { background-color: #24211b; background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 fill=%22%2324211b%22/%3E%3Cpath d=%22M47.00 47.00 Q33.00 33.00 44.50 15.50 Q29.50 29.50 0.50 0.50 Q29.50 29.50 15.50 44.50 Q33.00 33.00 47.00 47.00Z M47.00 53.00 Q33.00 67.00 44.50 84.50 Q29.50 70.50 0.50 99.50 Q29.50 70.50 15.50 55.50 Q33.00 67.00 47.00 53.00Z M53.00 47.00 Q67.00 33.00 55.50 15.50 Q70.50 29.50 99.50 0.50 Q70.50 29.50 84.50 44.50 Q67.00 33.00 53.00 47.00Z M53.00 53.00 Q67.00 67.00 55.50 84.50 Q70.50 70.50 99.50 99.50 Q70.50 70.50 84.50 55.50 Q67.00 67.00 53.00 53.00Z%22 fill=%22%233d3627%22 stroke=%22%233d3627%22 stroke-width=%220%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M0 0 L50 -10.5 L100 0 L50 10.5 Z M0 100 L50 89.5 L100 100 L50 110.5 Z M0 0 L-10.5 50 L0 100 L10.5 50 Z M100 0 L89.5 50 L100 100 L110.5 50 Z%22 fill=%22none%22 stroke=%22%23342f24%22 stroke-width=%222%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E"); }
+/* the report laid out like the JLPT 合否結果通知書 */
+.mk-rep.mr { padding: 14px 12px 12px; color: var(--text-main); }
+.mr-title { font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif; font-weight: 800; font-size: 1rem; line-height: 1.35; margin-bottom: 8px; }
+.mr-info { font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif; font-size: 0.8rem; line-height: 1.6; margin-bottom: 10px; }
+.mr-info div { display: flex; gap: 10px; }
+.mr-info span { flex: 0 0 5.6em; letter-spacing: 0.08em; color: var(--text-sub); }
+.mr-info b { font-family: inherit; font-weight: 600; min-width: 0; }
+.mr-tbl, .mr-ref { width: 100%; border-collapse: collapse; table-layout: fixed; background: transparent; }
+.mr-tbl { border: 2px solid var(--text-main); }
+.mr-tbl th, .mr-tbl td, .mr-ref th, .mr-ref td { border: 1px solid var(--text-main); text-align: center; vertical-align: middle; padding: 5px 3px 4px; font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif; font-weight: 600; font-size: 0.74rem; line-height: 1.3; }
+.mr-tbl .mr-tot { border-left: 3px double var(--text-main); }
+.mr-sub { display: block; font-size: 0.6rem; letter-spacing: 0; }
+.mr-nw { white-space: nowrap; }
+.mr-ref th { white-space: nowrap; font-size: 0.7rem; }
+.mr-sp { letter-spacing: 0.3em; }
+.mr .mr-num td { font-family: 'Helvetica Neue', Arial, sans-serif; font-weight: 500; font-size: 1.12rem; padding: 9px 2px 8px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mr .mr-num td small { display: block; font-size: 0.6rem; color: var(--text-sub); font-weight: normal; }
+.mr .mr-num td.mr-na { font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', serif; font-size: 0.78rem; color: var(--text-sub); }
+.mr-low { display: flex; gap: 10px; align-items: stretch; margin-top: 6px; }
+.mr-refw { flex: 0 0 40%; }
+.mr-arrow { width: 4px; height: 20px; margin: 0 auto 12px; background: var(--text-main); position: relative; }
+.mr-arrow::after { content: ''; position: absolute; left: 50%; bottom: -10px; transform: translateX(-50%); border-left: 9px solid transparent; border-right: 9px solid transparent; border-top: 12px solid var(--text-main); }
+.mr-ref { border: 1.5px solid var(--text-main); }
+.mr-ref tr:nth-child(2) th:first-child, .mr-ref tr:nth-child(3) td:first-child { border-right-style: dotted; }
+.mr-key { flex: 1; min-width: 0; border: 1.5px dotted var(--text-main); padding: 10px 10px; display: flex; flex-direction: column; justify-content: space-around; gap: 8px; font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif; font-weight: normal; font-size: 0.86rem; line-height: 1.35; }
+.mr-key div { display: flex; align-items: flex-start; line-height: 1.2rem; }
+.mr-key b { font-family: 'Helvetica Neue', Arial, sans-serif; font-weight: normal; font-size: 1.1rem; line-height: 1.2rem; margin-right: 8px; flex: 0 0 auto; }
+.mr-foot { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.mr-verdict { flex: 1 1 auto; border: 2px solid var(--text-main); padding: 8px 6px; text-align: center; font-family: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif; font-weight: 800; font-size: 1.05rem; letter-spacing: 0.3em; }
+.mr-verdict small { display: block; letter-spacing: 0; font-size: 0.66rem; font-weight: 600; color: var(--text-sub); margin-top: 2px; }
+.mr-foot .mk-rep-stamp { position: relative; top: auto; right: auto; flex: 0 0 72px; margin: 0 10px 0 4px; }
+.mk-rep.mr .mk-rep-judge { margin: 10px 2px 4px; font-size: 0.8rem; }
+@media (max-width: 400px) { .mr .mr-num td { font-size: 0.98rem; padding: 9px 1px 8px; } .mr .mr-num td.mr-na { font-size: 0.68rem; } }
 .mk-rep-stamp { position: absolute; top: -18px; right: -12px; z-index: 2; width: 72px; height: 72px; box-sizing: border-box; border: 3px solid #c8372d; border-radius: 50%; overflow: hidden; color: #c8372d; font-family: var(--mincho); display: flex; flex-direction: column; justify-content: center; text-align: center; transform: rotate(-12deg); mix-blend-mode: multiply; filter: url(#mk-hanko); opacity: 0; pointer-events: none; }
 .mk-rep-stamp .st-top { font-weight: 900; font-size: 1.02rem; line-height: 1.05; letter-spacing: 0.06em; padding-bottom: 2px; }
 .mk-rep-stamp .st-mid { border-top: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; font-family: var(--reading-font, inherit); font-weight: 800; font-size: 0.66rem; line-height: 1.55; letter-spacing: 0.04em; }
