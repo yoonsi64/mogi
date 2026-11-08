@@ -13678,7 +13678,7 @@ x.globalCompositeOperation='source-over';x.globalAlpha=1;
 // droop (0 in flight → 1 perched: the tail plumes hang), glow (0–1).
 var HOOU_PRIM=[[0.08,0.95,-0.02,1.6],[0.05,0.9,-0.1,1.55],[0.02,0.85,-0.17,1.48],[-0.01,0.8,-0.24,1.38],[-0.04,0.74,-0.3,1.26],[-0.06,0.68,-0.35,1.12],[-0.08,0.62,-0.4,0.98],[-0.09,0.56,-0.44,0.84]].reverse();
 var HOOU_COV=(function(){var a=[[0.13,0],[0.18,0.25],[0.19,0.5],[0.14,0.75],[0.08,0.98],[0,1.02]];for(var ck=0;ck<=12;ck++){var cr0=0.98-ck*0.08;a.push([-0.06-0.12*Math.sin(Math.PI*Math.min(1,cr0/1.0))*0.9-(ck%2?0:0.025),cr0]);}a.push([-0.12,0]);return a;})();
-var HOOU_PLUMES=[[1.9,0.04],[1.65,-0.1],[2.1,0.2],[1.5,0.3],[1.8,-0.02]];
+var HOOU_PLUMES=[[1.9,0.04],[1.65,-0.1],[2.3,0.12],[2.1,0.2],[1.5,0.3],[1.8,-0.02],[1.35,0.16]];
 var HOOU_PROF={round:[0.55,0.85,1,0.95,0.75,0],point:[0.5,0.85,1,0.8,0.42,0]},HOOU_SS=[0,0.25,0.5,0.75,0.9,1];
 var HOOU_SPARK=null;
 function hoouSpark(){
@@ -13720,15 +13720,15 @@ c.strokeStyle='#fbe3a0';c.lineWidth=0.009;c.beginPath();
 pts.slice(0,pts.length-2).forEach(function(q,j){if(j)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);});c.stroke();
 if(!eye)return;
 var n=pts.length,ep=pts[Math.round(n*0.85)],en=pts[Math.round(n*0.85)+1],ang=Math.atan2(en[1]-ep[1],en[0]-ep[0]);
-[[0.07,0.046,'#f8dc8a'],[0.052,0.034,'#7a4e12'],[0.038,0.025,'#e2a440'],[0.02,0.014,'#2e1c06']].forEach(function(r){c.fillStyle=r[2];c.beginPath();c.ellipse(ep[0],ep[1],r[0],r[1],ang,0,7);c.fill();});
+[[0.078,0.05,'#f8dc8a'],[0.06,0.039,'#a8322a'],[0.045,0.029,'#e8b048'],[0.03,0.02,'#2c7466'],[0.014,0.01,'#10201c']].forEach(function(r){c.fillStyle=r[2];c.beginPath();c.ellipse(ep[0],ep[1],r[0],r[1],ang,0,7);c.fill();});
 c.fillStyle='rgba(255,250,230,.8)';c.beginPath();c.arc(ep[0]+0.006,ep[1]-0.006,0.006,0,7);c.fill();
 }
 // paints the bird; returns the screen points it sheds sparks from ({plume: [...], tips: [...]}) and its feet
 function paintHoou(c,x,y,Ls,o){
 var t=o.t,D=Math.PI/180,e=(o.e===undefined?20:o.e)*D,rot=o.rot,dir=o.dir===undefined?1:o.dir,a1=o.a1,a2=o.a2,fold=o.fold,droop=o.droop||0;
 var gx=Math.sin(rot),gy=Math.cos(rot);          // which way is down, in the bird's own frame
-var wmap=function(sign){
-var s1=Math.sin(a1+sign*e),s2=Math.sin(a2+sign*e),k=sign>0?1:0.9,ox=sign>0?0.04:0.08,oy=sign>0?-0.06:-0.08;
+var fu=(o.farUp||0)*D,wmap=function(sign){
+var s1=Math.sin(a1+sign*e+(sign<0?fu:0)),s2=Math.sin(a2+sign*e+(sign<0?fu*1.3:0)),k=sign>0?1:0.9,ox=sign>0?0.04:0.08,oy=sign>0?-0.06:-0.08;
 return function(q){
 var r=q[1],cc=q[0]-0.22*Math.pow(Math.max(0,r-0.3),2);
 if(r>0.5){cc-=0.25*fold*(r-0.5);r=0.5+(r-0.5)*(1-0.4*fold);}
@@ -13738,7 +13738,7 @@ return[ox+cc*k,oy-(r<=0.5?r*s1:0.5*s1+(r-0.5)*s2)*k];
 var far=wmap(-1),near=wmap(1),tips=[],plumePts=[];
 var wing=function(map,isFar){
 var Pc=isFar?['#7e5418','#b0802c','#d4a24a']:['#b8822a','#e6b552','#fff2c8'];
-for(var j=6;j>=0;j--)hoouFeather(c,map,-0.08,0.05+j*0.075,-0.5+j*0.015,0.1+j*0.082,0.11,'round',0.015,Pc,!isFar);
+for(var j=8;j>=0;j--)hoouFeather(c,map,-0.08,0.05+j*0.075,-0.5+j*0.015,0.1+j*0.082,0.11,'round',0.015,Pc,!isFar);          // the secondaries, filling the wing out to the first primary
 HOOU_PRIM.forEach(function(f,k){hoouFeather(c,map,f[0],f[1],f[2],f[3],0.1,'point',-0.02,Pc,!isFar);if(!isFar&&k>3)tips.push(map([f[2],f[3]]));});
 var g=map([0.18,0.4]),h2=map([-0.2,0.4]),cg=c.createLinearGradient(g[0],g[1],h2[0],h2[1]);
 cg.addColorStop(0,isFar?'#d9a84e':'#fff3cc');cg.addColorStop(0.45,isFar?'#b0802c':'#ecbd5e');cg.addColorStop(1,isFar?'#8a5c1c':'#c48c30');
@@ -13757,13 +13757,19 @@ c.globalCompositeOperation='screen';          // a soft glow around it
 var au=c.createRadialGradient(0,-0.05,0,0,-0.05,1.5);
 au.addColorStop(0,'rgba(255,214,130,'+(0.26+0.2*(o.glow||0))+')');au.addColorStop(1,'rgba(255,190,90,0)');
 c.fillStyle=au;c.fillRect(-1.6,-1.6,3.2,3.2);
+if((o.glow||0)>0.35){          // at rest: a faint halo of golden rays behind it, turning slowly
+var hk=(o.glow-0.35)/0.65*(0.8+0.2*Math.sin(t*1.3)),hc=[0.12,-0.22];c.translate(hc[0],hc[1]);c.rotate(t*0.04);
+for(var ri=0;ri<18;ri++){var ra=ri/18*TAU,rl=ri%2?0.95:1.25,gr2=c.createLinearGradient(0,0,Math.cos(ra)*rl,Math.sin(ra)*rl);gr2.addColorStop(0,'rgba(255,226,150,'+(0.16*hk)+')');gr2.addColorStop(1,'rgba(255,210,120,0)');c.fillStyle=gr2;c.beginPath();c.moveTo(0,0);c.lineTo(Math.cos(ra-0.07)*rl,Math.sin(ra-0.07)*rl);c.lineTo(Math.cos(ra+0.07)*rl,Math.sin(ra+0.07)*rl);c.closePath();c.fill();}
+c.rotate(-t*0.04);c.translate(-hc[0],-hc[1]);
+}
 c.globalCompositeOperation='source-over';
-wing(far,true);
+var ft2=o.farTilt||0;if(ft2){c.save();c.translate(0.06,-0.07);c.rotate(ft2);c.translate(-0.06,0.07);}          // at rest the far wing stands a little forward of the near one, the two raised like a fan
+wing(far,true);if(ft2)c.restore();
 HOOU_PLUMES.forEach(function(pl,k){
 var pts=[];
 for(var i=0;i<=30;i++){
-var s=i/30,fl=Math.pow(s,1.4)*0.16*Math.sin(s*4.4-t*2.4+k*0.9)*(1-0.7*droop),hang=droop*s*s*pl[0]*0.95,sw=droop*Math.pow(s,1.6)*0.06*Math.sin(t*0.9+k*1.3);
-var px=-0.28-s*pl[0]*(1-0.35*droop),py=0.03+s*pl[1]*(1-0.5*droop)+fl;
+var s=i/30,fl=Math.pow(s,1.4)*0.16*Math.sin(s*4.4-t*2.4+k*0.9)*(1-0.7*droop),hang=droop*s*s*pl[0]*0.62,sw=droop*(Math.pow(s,1.3)*0.17*Math.sin(s*5.2+k*0.8+0.4)*(k%2?1:-1)+Math.pow(s,1.6)*0.05*Math.sin(t*0.9+k*1.3));
+var px=-0.28-s*pl[0]*(1-0.12*droop),py=0.03+s*pl[1]*(1+0.8*droop)+fl;
 pts.push([px+gx*hang+gy*sw,py+gy*hang-gx*sw]);if(s>=0.45)plumePts.push(pts[i]);
 }
 hoouPlume(c,pts,function(s){return s<0.7?0.04*(1-0.5*s):0.026*(1-(s-0.7)/0.3)+0.07*Math.sin(Math.PI*(s-0.7)/0.3);},true,k);
@@ -13775,23 +13781,23 @@ hoouPlume(c,pts,function(s){return 0.045*Math.sin(Math.PI*Math.min(1,s*1.05+0.1)
 // the legs and talons, gripping the 宝珠 at the top of the spire (they come down as it lands and tuck up as it leaves):
 // feathered thighs, scaled golden shanks, three toes curled forward over the ball and one behind, dark hooked claws
 if(o.legs>0){
-var lp=o.legs,hx=gy,hy=-gx,R0=0.072;          // (hx, hy): level and forward, in the bird's frame
+var lp=o.legs,hx=gy,hy=-gx,R0=0.07;          // (hx, hy): level and forward, in the bird's frame
 var Fm=[lerp(0.025,0.008+0.15*gx,lp),lerp(0.08,0.07+0.15*gy,lp)],Cb=[Fm[0]+gx*(R0+0.012),Fm[1]+gy*(R0+0.012)];
 var on=function(th,rr,lat){var d0=-Math.cos(th),d1=Math.sin(th);return[Cb[0]+rr*(gx*d0+hx*d1)+hx*lat*0.4,Cb[1]+rr*(gy*d0+hy*d1)+hy*lat*0.4];};
 c.lineCap='round';c.lineJoin='round';
 [[0,-0.014,['#4a2c0c','#8a5c1c','#24160a']],[0.05,0.016,['#5a3410','#cf9636','#1c1008']]].forEach(function(L){
 var hip=[L[0],0.055],lat=L[1],col=L[2],ft=[Fm[0]+hx*lat,Fm[1]+hy*lat];
 var kn=[hip[0]+gx*0.05*lp+hx*0.022,hip[1]+gy*0.05*lp+hy*0.022];
-c.fillStyle=col[1];c.beginPath();c.ellipse((hip[0]+kn[0])/2,(hip[1]+kn[1])/2,0.04,0.026,Math.atan2(kn[1]-hip[1],kn[0]-hip[0]),0,7);c.fill();          // feathered thigh
+c.fillStyle=col[1];c.beginPath();c.ellipse((hip[0]+kn[0])/2,(hip[1]+kn[1])/2,0.05,0.03,Math.atan2(kn[1]-hip[1],kn[0]-hip[0]),0,7);c.fill();          // feathered thigh
 var dx=ft[0]-kn[0],dy=ft[1]-kn[1],l=Math.hypot(dx,dy)||1,nx=-dy/l,ny=dx/l;          // the shank, tapering, with scales across it
-c.fillStyle=col[1];c.strokeStyle=col[0];c.lineWidth=0.005;c.beginPath();c.moveTo(kn[0]+nx*0.017,kn[1]+ny*0.017);c.lineTo(ft[0]+nx*0.012,ft[1]+ny*0.012);c.lineTo(ft[0]-nx*0.012,ft[1]-ny*0.012);c.lineTo(kn[0]-nx*0.017,kn[1]-ny*0.017);c.closePath();c.fill();c.stroke();
-c.strokeStyle=col[0];c.lineWidth=0.004;c.beginPath();for(var sc=0.2;sc<0.95;sc+=0.16){var w=0.013-0.005*sc,qx=kn[0]+dx*sc,qy=kn[1]+dy*sc;c.moveTo(qx+nx*w,qy+ny*w);c.quadraticCurveTo(qx+dx/l*0.008,qy+dy/l*0.008,qx-nx*w,qy-ny*w);}c.stroke();
+c.fillStyle=col[1];c.beginPath();c.moveTo(kn[0]+nx*0.008,kn[1]+ny*0.008);c.lineTo(ft[0]+nx*0.005,ft[1]+ny*0.005);c.lineTo(ft[0]-nx*0.005,ft[1]-ny*0.005);c.lineTo(kn[0]-nx*0.008,kn[1]-ny*0.008);c.closePath();c.fill();
+c.strokeStyle=col[0];c.lineWidth=0.0025;c.beginPath();for(var sc=0.25;sc<0.95;sc+=0.2){var w=0.007-0.002*sc,qx=kn[0]+dx*sc,qy=kn[1]+dy*sc;c.moveTo(qx+nx*w,qy+ny*w);c.quadraticCurveTo(qx+dx/l*0.008,qy+dy/l*0.008,qx-nx*w,qy-ny*w);}c.stroke();
 // toes: two forward ones seen side by side, the long middle one, and the hind toe; each ends in a claw
-[[0.05,1.25*lp,0.026],[0.18,1.5*lp,0.03],[-0.12,-1.05*lp,0.026]].forEach(function(T){
+[[0.08,1.05*lp,0.009],[0.2,1.3*lp,0.011],[-0.12,-0.85*lp,0.009]].forEach(function(T){
 var a0=T[0],a1=T[1],n=7,pts=[];for(var k=0;k<=n;k++)pts.push(on(a0+(a1-a0)*k/n,R0+0.011,lat));
-c.beginPath();pts.forEach(function(q,k){if(k)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);});c.strokeStyle=col[0];c.lineWidth=T[2]+0.01;c.stroke();c.strokeStyle=col[1];c.lineWidth=T[2];c.stroke();          // outlined, so it reads against the gilt ball
-c.strokeStyle=col[0];c.lineWidth=0.004;c.beginPath();for(var k2=1;k2<n;k2+=2){var q=pts[k2],r=pts[k2+1],tx=r[0]-q[0],ty=r[1]-q[1],tl=Math.hypot(tx,ty)||1;c.moveTo(q[0]-ty/tl*T[2]*0.5,q[1]+tx/tl*T[2]*0.5);c.lineTo(q[0]+ty/tl*T[2]*0.5,q[1]-tx/tl*T[2]*0.5);}c.stroke();
-var e0=pts[n],sg=a1>=a0?1:-1,e1=on(a1+sg*0.6,R0-0.004,lat),ex=e1[0]-e0[0],ey=e1[1]-e0[1],el2=Math.hypot(ex,ey)||1,w2=T[2]*0.5;
+c.beginPath();pts.forEach(function(q,k){if(k)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);});c.strokeStyle=col[0];c.lineWidth=T[2]+0.004;c.stroke();c.strokeStyle=col[1];c.lineWidth=T[2];c.stroke();          // outlined, so it reads against the gilt ball
+c.strokeStyle=col[0];c.lineWidth=0.002;c.beginPath();for(var k2=1;k2<n;k2+=3){var q=pts[k2],r=pts[k2+1],tx=r[0]-q[0],ty=r[1]-q[1],tl=Math.hypot(tx,ty)||1;c.moveTo(q[0]-ty/tl*T[2]*0.5,q[1]+tx/tl*T[2]*0.5);c.lineTo(q[0]+ty/tl*T[2]*0.5,q[1]-tx/tl*T[2]*0.5);}c.stroke();
+var e0=pts[n],sg=a1>=a0?1:-1,e1=on(a1+sg*0.38,R0+0.002,lat),ex=e1[0]-e0[0],ey=e1[1]-e0[1],el2=Math.hypot(ex,ey)||1,w2=T[2]*0.45;
 c.fillStyle=col[2];c.beginPath();c.moveTo(e0[0]-ey/el2*w2,e0[1]+ex/el2*w2);c.quadraticCurveTo(e0[0]+ex*0.6+ey/el2*w2*0.2,e0[1]+ey*0.6-ex/el2*w2*0.2,e1[0],e1[1]);c.lineTo(e0[0]+ey/el2*w2,e0[1]-ex/el2*w2);c.closePath();c.fill();
 });
 });
@@ -13799,6 +13805,7 @@ c.fillStyle=col[2];c.beginPath();c.moveTo(e0[0]-ey/el2*w2,e0[1]+ex/el2*w2);c.qua
 var bg=c.createRadialGradient(0.1,0.07,0,0.02,0,0.36);
 bg.addColorStop(0,'#fff0c0');bg.addColorStop(0.35,'#e9b85a');bg.addColorStop(0.75,'#b07a26');bg.addColorStop(1,'#6e4612');
 c.fillStyle=bg;c.beginPath();c.ellipse(0,0,0.3,0.105,-0.1,0,7);c.fill();
+var bb2=c.createRadialGradient(0.2,-0.04,0,0.16,-0.01,0.16);bb2.addColorStop(0,'#fff4cc');bb2.addColorStop(0.5,'#ecbf62');bb2.addColorStop(1,'rgba(196,140,48,0)');c.fillStyle=bb2;c.beginPath();c.ellipse(0.15,-0.01,0.16,0.11,-0.6,0,7);c.fill();          // a full, proud breast
 c.strokeStyle='rgba(122,78,18,.45)';c.lineWidth=0.006;
 for(var row=0;row<3;row++)for(var col=0;col<7;col++){
 var sx=-0.2+col*0.06+(row%2)*0.03,sy=-0.035+row*0.035;
@@ -13806,21 +13813,21 @@ if((sx/0.3)*(sx/0.3)+(sy/0.1)*(sy/0.1)>0.8)continue;
 c.beginPath();c.arc(sx,sy,0.024,0.15*Math.PI,0.85*Math.PI);c.stroke();
 }
 // the neck curving up (a little higher and prouder when it stands), with long hackles draping down it
-var hu=o.head||0,N0=[0.16,-0.03],N1=[0.42-0.08*hu,-0.05-0.04*hu],N2=[0.53-0.06*hu,-0.3-0.06*hu];
+var hu=o.head||0,N0=[0.16,-0.03],N1=[0.42-0.04*hu,-0.05-0.06*hu],N2=[0.53-0.1*hu,-0.3-0.06*hu];
 var neck=[];for(var i3=0;i3<=12;i3++)neck.push(hoouQuad(N0,N1,N2,i3/12));
 var ng=c.createLinearGradient(0.36,-0.24,0.52,-0.1);
 ng.addColorStop(0,'#9a6a1e');ng.addColorStop(0.5,'#e2b04a');ng.addColorStop(1,'#fbe0a0');
 var NL=[],NR=[];
-neck.forEach(function(q,i){var w=0.05-0.022*i/12,a0=neck[Math.max(0,i-1)],b0=neck[Math.min(12,i+1)],tx=b0[0]-a0[0],ty=b0[1]-a0[1],l=Math.hypot(tx,ty)||1;NL.push([q[0]-ty/l*w,q[1]+tx/l*w]);NR.push([q[0]+ty/l*w,q[1]-tx/l*w]);});
+neck.forEach(function(q,i){var w=0.05+0.024*hu-(0.022+0.012*hu)*i/12,a0=neck[Math.max(0,i-1)],b0=neck[Math.min(12,i+1)],tx=b0[0]-a0[0],ty=b0[1]-a0[1],l=Math.hypot(tx,ty)||1;NL.push([q[0]-ty/l*w,q[1]+tx/l*w]);NR.push([q[0]+ty/l*w,q[1]-tx/l*w]);});
 hoouPath(c,NL.concat(NR.reverse()),hoouSame);c.fillStyle=ng;c.fill();
 for(var hk=0;hk<9;hk++){
 var u0=0.55+hk*0.045,p0=hoouQuad(N0,N1,N2,Math.min(1,u0+0.12)),p1=hoouQuad(N0,N1,N2,Math.max(0,u0-0.42));
 hoouFeather(c,hoouSame,p0[0]-0.012,p0[1],p1[0]-0.035+Math.sin(t*2+hk)*0.004,p1[1]+0.02,0.03,'point',0.01,['#a8721e','#e8b850','#fff0c0'],true);
 }
 // the head: crest plumes, red bare skin around the eye, a hooked beak (turned a little with o.look)
-c.save();var hx0=N2[0],hy0=N2[1];c.translate(hx0-0.53,hy0+0.3);c.translate(0.53,-0.3);c.rotate(o.look||0);c.translate(-0.53,0.3);
-for(var k2=0;k2<4;k2++){
-var cp=[];for(var i2=0;i2<=10;i2++)cp.push(hoouQuad([0.545,-0.37],[0.52-k2*0.025,-0.5+k2*0.025],[0.42-k2*0.045,-0.5+k2*0.06+Math.sin(t*2+k2)*0.01],i2/10));
+c.save();var hx0=N2[0],hy0=N2[1],hs=1+0.4*hu;c.translate(hx0-0.53,hy0+0.3);c.translate(0.53,-0.3);c.rotate(o.look||0);c.scale(hs,hs);c.translate(-0.53,0.3);
+for(var k2=0;k2<(hu>0.5?6:4);k2++){
+var cl=1+0.6*hu,cp=[];for(var i2=0;i2<=10;i2++)cp.push(hoouQuad([0.545,-0.37],[0.545-(0.025+k2*0.025)*cl,-0.37-(0.13-k2*0.02)*cl],[0.545-(0.125+k2*0.045)*cl,-0.37-(0.13-k2*0.06)*cl+Math.sin(t*2+k2)*0.01],i2/10));
 hoouPlume(c,cp,function(s){return s<0.62?0.006:0.006+0.022*Math.sin(Math.PI*(s-0.62)/0.38);},false,k2);
 }
 var hg=c.createRadialGradient(0.58,-0.32,0,0.56,-0.34,0.08);
@@ -14147,14 +14154,14 @@ hoouWait=0;hoouStart(true);
 }
 // where it is and how it holds itself el seconds into the visit
 function hoouPose(g,el,t){
-var fin=hoouFin(),Ls=2.0*fin.k,dir=hoou.dir,face=-dir,D=Math.PI/180;
+var fin=hoouFin(),Ls=3.4*fin.k,dir=hoou.dir,face=-dir,D=Math.PI/180;
 var pr=-0.55,feet=[0.008+0.15*Math.sin(pr),0.07+0.15*Math.cos(pr)];
 var A=[fin.x-Ls*face*(feet[0]*Math.cos(pr)-feet[1]*Math.sin(pr)),fin.y-Ls*(feet[0]*Math.sin(pr)+feet[1]*Math.cos(pr))];
 var A1=[A[0]-dir*0.7*Ls,A[1]-0.55*Ls];
 var flap=function(rate){var u=(t*rate)%1,down=u<0.6,psi=down?Math.PI*u/0.6:Math.PI+Math.PI*(u-0.6)/0.4;return{psi:psi,fold:down?0:0.85*Math.sin(Math.PI*(u-0.6)/0.4),a1:(10+48*Math.cos(psi))*D,a2:(10+48*Math.cos(psi))*D+20*Math.sin(psi)*D};};
 var bez=function(a,b,c,u){var v=1-u;return[v*v*a[0]+2*v*u*b[0]+u*u*c[0],v*v*a[1]+2*v*u*b[1]+u*u*c[1]];};
-var rest={a1:44*D+4*D*Math.sin(t*0.7),fold:0.3},cyc=(t%16)/16,st=cyc>0.78?Math.sin(Math.PI*(cyc-0.78)/0.22):0;          // every 16 s it stretches its wings up
-rest.a1+=26*D*st;rest.fold-=0.28*st;rest.a2=rest.a1+24*D;
+var rest={a1:60*D+3*D*Math.sin(t*0.7),fold:0.14},cyc=(t%16)/16,st=cyc>0.78?Math.sin(Math.PI*(cyc-0.78)/0.22):0;          // every 16 s it stretches its wings up
+rest.a1+=16*D*st;rest.fold-=0.14*st;rest.a2=rest.a1+16*D;
 var p,o2={t:t,dir:dir,e:20};
 if(el<HOOU_IN){
 var u=el/HOOU_IN,ue=1-(1-u)*(1-u),S=[dir<0?g.W+3.5*Ls:-3.5*Ls,Math.max(-Ls,A[1]-g.H*0.24)],C=[lerp(S[0],A1[0],0.55),Math.min(S[1],A1[1])-g.H*0.06];
@@ -14170,7 +14177,7 @@ o2.rot=lerp(-0.05,pr,se);o2.a1=lerp(f2.a1,70*D,flare);o2.a1=lerp(o2.a1,rest.a1,s
 o2.droop=sstep(0.3,1,s);o2.legs=sstep(0.2,0.8,s);o2.head=se;o2.glow=0.2+0.4*se;
 }else if(el<HOOU_IN+HOOU_LAND+HOOU_STAY){
 var tr=el-HOOU_IN-HOOU_LAND;p=[A[0],A[1]+Math.sin(t*0.7)*0.012*Ls];
-o2.dir=face;o2.rot=pr+0.02*Math.sin(t*0.7);o2.a1=rest.a1;o2.a2=rest.a2;o2.fold=rest.fold;o2.droop=1;o2.legs=1;o2.head=1;o2.glow=0.6;
+o2.dir=face;o2.e=20;o2.farUp=20;o2.farTilt=0.34;o2.rot=pr+0.02*Math.sin(t*0.7);o2.a1=rest.a1;o2.a2=rest.a2;o2.fold=rest.fold;o2.droop=1;o2.legs=1;o2.head=1;o2.glow=0.6;
 o2.look=0.12*Math.sin(tr*0.31)+0.1*sstep(0.6,0.9,Math.sin(tr*0.13));
 }else{
 var s3=clamp((el-HOOU_IN-HOOU_LAND-HOOU_STAY)/HOOU_OUT),f3=flap(0.85),go=sstep(0,0.16,s3);
