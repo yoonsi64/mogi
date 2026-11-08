@@ -321,7 +321,7 @@ var HAZA=[[-28.5,17.4],[-23.5,12.6]];
 var KAKI={x:-36.0,z:36.6};
 var MILL={x:-16.5,z:39.2,u:norm2([0.925,-0.38]),wr:2.0,wb:-3.4,ry:-0.15};
 var MILL_RACE=[[-6.2,5.0],[-5.7,1.9],[-4.9,-0.8],[-3.8,-2.75],[-2.5,-3.55],[2.5,-3.55],[3.8,-2.75],[4.9,-0.8],[5.7,1.9],[6.2,5.0]],MILL_RACE_HW=1.0;
-var SHRINE={x:3.8,z:29.6},TORII={x:3.38,z:25.42};
+var SHRINE={x:3.8,z:29.6},TORII={x:3.38,z:25.42},ALTAR={x:0.55,z:25.75};          // ALTAR: the 金の羽's, beside the 祠 off its path
 var SHRINE_CEDARS=[[5.8,-1.6,8.6,702],[7.1,-3.2,9.2,701],[4.2,-0.6,8.4,704]];
 var TEMPLE={x:-28.22,z:93.66},BELL={x:-14.29,z:86.78},PAGODA={x:-47.44,z:94.37};
 var MARKET=(function(){var p=stPt(0.6,-10.2);return{x:p[0],z:p[1],rx:6.2,rz:4.0};})();
@@ -2410,6 +2410,103 @@ if(fw.vis){wquad(ctx,fw,0,1.1,cy-0.55,cy+0.55,S?[0,0,0]:shade([62,48,38],fw.n),0
 var a0=Pa(B.L(0,-d/2-0.05,cy)),a1=Pa(B.L(0,MILL.wb+G.w/2+0.1,cy)),ka=a0.k;
 ctx.lineCap='round';ctx.strokeStyle=S?'#000':rgb(shade([54,42,32],norm([LS[0],0.6,LS[1]])));ctx.lineWidth=Math.max(0.7,0.24*ka);ctx.beginPath();ctx.moveTo(a0.x,a0.y);ctx.lineTo(a1.x,a1.y);ctx.stroke();ctx.lineCap='butt';
 if(!S){ctx.strokeStyle='rgba(150,122,92,0.35)';ctx.lineWidth=Math.max(0.25,0.04*ka);ctx.beginPath();ctx.moveTo(a0.x,a0.y-0.07*ka);ctx.lineTo(a1.x,a1.y-0.07*ka);ctx.stroke();}
+}
+// the 金の羽's altar, beside the 祠's 鳥居 just off its path, nestled against the end of its fence: a low natural stone, mossy
+// at its foot and spotted with lichen, a thin dressed slab of granite on it, and on the slab a small, weathered 三方 of hinoki
+// with a folded sheet of 半紙; a straw rope with two paper 紙垂 is tied round the stone, and three stepping stones lead to it
+// from the path. Quiet in colour, as old as the shrine it serves: part of the painted town (lit, weathered, rained and snowed on
+// with the rest; no one walks through it), and the feather rests on it while you hold one.
+function altarRock(ctx,cx,cz,rings,rot,alb,o){          // a stone of uneven radius, in courses: rings of [y, radii, dx, dz], bottom up
+o=o||{};var n=rings[0][1].length,R=rings.map(function(g){return g[1].map(function(r,i){var a=rot+i*TAU/n;return[cx+(g[2]||0)+Math.cos(a)*r,g[0],cz+(g[3]||0)+Math.sin(a)*r];});}),S=sil(),faces=[],i,k;
+for(k=0;k<R.length-1;k++)for(i=0;i<n;i++){var j=(i+1)%n,A=R[k],C=R[k+1],nr=norm(cross(sub(C[i],A[i]),sub(A[j],A[i])));faces.push({pts:[A[i],A[j],C[j],C[i]],n:nr,c:mul(add(add(A[i],A[j]),add(C[i],C[j])),0.25),i:i,k:k});}
+var Tp=R[R.length-1],tc=Tp.reduce(function(s,p){return add(s,mul(p,1/n));},[0,0,0]);faces.push({pts:Tp,n:[0,1,0],c:tc,top:true});
+var vis=faces.filter(function(f){return faceVisible(f.c,f.n);}).map(function(f){return{f:f,d:Pa(f.c).d};}).sort(function(a,b){return b.d-a.d;});
+var all=new Path2D(),out=[];
+vis.forEach(function(v){var f=v.f,pp=f.pts.map(Pa),path=new Path2D();pp.forEach(function(p,q){if(q)path.lineTo(p.x,p.y);else path.moveTo(p.x,p.y);});path.closePath();
+var al=f.top&&o.topAlb?o.topAlb:alb;if(!f.top&&o.faceK)al=scl(al,o.faceK(f));
+ctx.fillStyle=S?'#000':rgb(shade(snowAlb(al,f.n[1]),f.n,o.sun!==undefined?{sun:o.sun}:undefined));ctx.fill(path);if(!S){ctx.strokeStyle=ctx.fillStyle;ctx.lineWidth=0.4;ctx.stroke(path);}all.addPath(path);out.push({f:f,pp:pp});});
+if(o.tex&&!S)grainClip(ctx,all,o.tex);
+return{all:all,out:out};
+}
+function rockRadii(seed,n,r,v){var g=mulberry32(seed),o=[];for(var i=0;i<n;i++)o.push(r*(1-v+2*v*g()));return o;}
+var ALTAR_STEPS=[[1.02,23.78,0.2,0.4],[0.8,24.32,0.17,1.3],[0.64,24.84,0.15,2.2]];          // the stepping stones: x, z, size, turn
+function drawAltarSteps(ctx){
+if(sil()||MODE!=='n'||SEA.snow>0.5)return;
+ALTAR_STEPS.forEach(function(s,si){var r=mulberry32(77+si),rim=[],top=[];
+for(var i=0;i<11;i++){var a=s[3]+i*TAU/11,rr=s[2]*(0.84+0.3*r()),ex=1.25;rim.push(P(s[0]+Math.cos(a)*rr*ex,0,s[1]+Math.sin(a)*rr));top.push(P(s[0]+Math.cos(a)*rr*ex*0.94,0.03,s[1]+Math.sin(a)*rr*0.94));}
+var sh=function(pp,col){ctx.beginPath();pp.forEach(function(p,k){if(k)ctx.lineTo(p.x,p.y);else ctx.moveTo(p.x,p.y);});ctx.closePath();ctx.fillStyle=col;ctx.fill();};
+sh(rim,rgb(shade([70,66,58],[0,1,0]),0.55));          // sunk a little into the earth, its edge in shadow
+var c=shade(F.wet?[104,102,96]:[132,128,118],[0,1,0]);sh(top,rgb(c));
+ctx.save();ctx.beginPath();top.forEach(function(p,k){if(k)ctx.lineTo(p.x,p.y);else ctx.moveTo(p.x,p.y);});ctx.closePath();ctx.clip();
+var q=P(s[0]-s[2]*0.3,0.03,s[1]+s[2]*0.35);ctx.fillStyle=rgb(scl(c,1.12),0.6);ctx.beginPath();ctx.ellipse(q.x,q.y,s[2]*0.7*q.k,s[2]*0.3*q.k*CAM.s,0,0,TAU);ctx.fill();          // worn smooth by feet, paler where they fall
+if(!SEA.snow&&seasonName()!=='winter'){ctx.fillStyle=rgb(shade([78,100,54],[0,1,0]),0.55);var m2=P(s[0]+s[2]*0.75,0.03,s[1]-s[2]*0.3);ctx.beginPath();ctx.ellipse(m2.x,m2.y,s[2]*0.45*m2.k,s[2]*0.25*m2.k*CAM.s,0,0,TAU);ctx.fill();}          // a little moss in its lee
+ctx.restore();
+if(F.frost){ctx.globalAlpha=0.4*Math.min(1,+F.frost||1);sh(top,'rgb(226,232,238)');ctx.globalAlpha=1;}          // rimed on a cold clear morning
+});
+}
+function drawFeatherAltar(ctx){
+var x=ALTAR.x,z=ALTAR.z,S=sil(),B=BF(x,z,[1,-0.1],0),rng=mulberry32(4211),sn=seasonName(),wet=!!(F&&F.wet)&&!SEA.snow,dk=wet?0.84:1;
+var stone=scl([114,111,102],dk),stoneUp=scl([124,121,111],dk);
+var lt=function(c,n){return shade(c,n);};
+// the stone: a broad lower course half sunk in the ground, a smaller upper one set off its centre, and a lump at its side
+var rb=rockRadii(11,8,1,0.12);altarRock(ctx,x-0.42,z+0.2,[[0,rockRadii(5,6,0.21,0.12)],[0.09,rockRadii(6,6,0.19,0.12)],[0.15,rockRadii(7,6,0.11,0.15),0.01,-0.01]],0.5,scl([108,106,96],dk),{tex:0.5,sun:0.72});
+altarRock(ctx,x,z,[[0,rb.map(function(r){return(SEA.snow?0.585:0.63)*r;})],          // (its foot flares into the earth; under snow, the drift hides it)
+[0.13,rb.map(function(r,i){return(0.575+0.01*(i%3))*r;}),0.005,0],[0.31,rb.map(function(r,i){return(0.52-0.012*(i%2))*r;}),0.012,-0.006],[0.37,rb.map(function(r){return 0.46*r;}),0.018,-0.01]],0.31,stone,{tex:0.55,sun:0.72,topAlb:stoneUp,faceK:function(f){return(f.k===0?1.02:f.k===1?1:1.08)*(0.95+0.1*((f.i*5)%4)/3);}});
+if(!S&&!SEA.snow)altarRock(ctx,x+0.52,z-0.44,[[0,rockRadii(9,5,0.07,0.15)],[0.05,rockRadii(10,5,0.045,0.15)]],0.2,scl([126,122,112],dk));          // a pebble at its foot
+// the slab: thin dressed granite, a little wider than the stone's top
+boxIn(ctx,B,-0.34,0.34,-0.28,0.28,0.37,0.415,scl([142,138,128],dk));
+if(!S){var sv=B.L(-0.3,0.21,0.415);prism(ctx,sv[0],sv[2],0.415,0.49,0.028,0.034,7,0,[204,200,190]);          // a sprig of 榊 in a little white vase at the back of the slab, always green
+var sg0=P(sv[0],0.49,sv[2]),sgk=sg0.k,lc=shade(sn==='winter'?[44,70,48]:[46,82,50],[0,0.6,-0.8]);ctx.strokeStyle=rgb(scl(lc,0.8));ctx.lineWidth=Math.max(0.12,0.012*sgk);ctx.beginPath();ctx.moveTo(sg0.x,sg0.y);ctx.quadraticCurveTo(sg0.x-0.02*sgk,sg0.y-0.1*sgk,sg0.x+0.01*sgk,sg0.y-0.19*sgk);ctx.stroke();
+[[-0.035,0.05,-0.7],[0.03,0.08,0.6],[-0.03,0.12,-0.5],[0.025,0.15,0.5],[0.005,0.19,0]].forEach(function(l,li){ctx.fillStyle=rgb(scl(lc,li%2?1.12:0.95));ctx.beginPath();ctx.ellipse(sg0.x+l[0]*sgk,sg0.y-l[1]*sgk,0.028*sgk,0.012*sgk,l[2],0,TAU);ctx.fill();});}
+// the 三方: a box stand of hinoki gone soft grey-brown out of doors, and its tray
+boxIn(ctx,B,-0.17,0.17,-0.13,0.13,0.415,0.585,[150,132,104]);
+boxIn(ctx,B,-0.26,0.26,-0.22,0.22,0.585,0.635,[164,145,112]);
+if(S)return;
+var Ws=boxWalls(B,0.68,0.56,0.37,0.415);
+if(Ws.f.vis){ctx.strokeStyle=rgb(lt(scl([196,190,178],dk),[0,0.6,-0.8]),0.7);ctx.lineWidth=0.22;ctx.beginPath();wline(ctx,Ws.f,0.02,0.412,0.66,0.412,0.003);ctx.stroke();
+ctx.strokeStyle=rgb(lt([70,66,60],Ws.f.n),0.35);ctx.lineWidth=0.2;ctx.beginPath();wline(ctx,Ws.f,0.38,0.372,0.44,0.41,0.003);ctx.stroke();}          // the slab's worn front edge, catching the light, and an old chip
+if(wet){ctx.strokeStyle=rgb(lt([206,212,218],[0,1,0]),0.45);ctx.lineWidth=0.3;ctx.beginPath();var w0=Pa(B.L(-0.3,0.25,0.417)),w1=Pa(B.L(0.3,0.25,0.417));ctx.moveTo(w0.x,w0.y);ctx.lineTo(w1.x,w1.y);ctx.stroke();}          // wet: a sheen along its top
+var Wl0=boxWalls(B,0.6,0.5,0.3,0.37);if(Wl0.f.vis){ctx.fillStyle='rgba(30,26,22,.22)';var u0=Pa(Wl0.f.at(0,0.37,0.03)),u1=Pa(Wl0.f.at(0.6,0.37,0.03)),u2=Pa(Wl0.f.at(0.6,0.335,0.03)),u3=Pa(Wl0.f.at(0,0.335,0.03));ctx.beginPath();ctx.moveTo(u0.x,u0.y);ctx.lineTo(u1.x,u1.y);ctx.lineTo(u2.x,u2.y);ctx.lineTo(u3.x,u3.y);ctx.closePath();ctx.fill();}          // the slab's shadow on the stone below it
+var Wb=boxWalls(B,0.34,0.26,0.415,0.585);
+if(Wb.f.vis){ctx.globalAlpha=0.24;fillPts(ctx,[Wb.f.at(0,0.585,0.003),Wb.f.at(0.34,0.585,0.003),Wb.f.at(0.34,0.567,0.003),Wb.f.at(0,0.567,0.003)],[54,42,32],0);ctx.globalAlpha=1;}          // and the tray's on its stand
+[[Wb.f,0.34],[Wb.r,0.26]].forEach(function(q){var W2=q[0],w=q[1];if(!W2.vis)return;var cc=lt([92,74,54],W2.n);
+fillPts(ctx,[W2.at(w*0.3,0.445,0.004),W2.at(w*0.7,0.445,0.004),W2.at(w*0.7,0.525,0.004),W2.at(w*0.62,0.545,0.004),W2.at(w*0.5,0.552,0.004),W2.at(w*0.38,0.545,0.004),W2.at(w*0.3,0.525,0.004)],cc,0.1);});          // the cut-outs (眼象) in its faces, round-topped
+if(Wb.f.vis){ctx.strokeStyle=rgb(lt([122,104,80],Wb.f.n),0.4);ctx.lineWidth=0.14;ctx.beginPath();wline(ctx,Wb.f,0.04,0.57,0.3,0.566,0.003);wline(ctx,Wb.f,0.04,0.43,0.3,0.434,0.003);ctx.stroke();}          // a little grain
+if(Wb.f.vis){ctx.strokeStyle=rgb(lt([90,82,70],Wb.f.n),0.3);ctx.lineWidth=0.25;ctx.beginPath();wline(ctx,Wb.f,0.02,0.418,0.32,0.418,0.004);ctx.stroke();}          // its foot darkened where rain splashes
+var Wt=boxWalls(B,0.52,0.44,0.585,0.635);if(Wt.f.vis){ctx.strokeStyle=rgb(lt([198,180,146],[0,0.7,-0.7]),0.55);ctx.lineWidth=0.18;ctx.beginPath();wline(ctx,Wt.f,0.01,0.633,0.51,0.633,0.003);ctx.stroke();ctx.strokeStyle=rgb(lt([118,100,74],Wt.f.n),0.45);ctx.beginPath();wline(ctx,Wt.f,0,0.598,0.52,0.598,0.003);ctx.stroke();}          // the tray's rim: its lip in the light, its joint below
+// the 半紙 on the tray, warm and soft, folded; snow covers it
+var sn2=SEA.snow,pc=lt(sn2?mixc([216,210,194],SNOW,0.5*sn2):wet?[196,192,180]:[214,206,186],[0,1,0]);          // (soaked grey in the rain)
+fillPts(ctx,[B.L(-0.17,-0.13,0.637),B.L(0.17,-0.13,0.637),B.L(0.17,0.13,0.637),B.L(-0.17,0.13,0.637)],pc,0.12);
+ctx.strokeStyle=rgb(lt([184,176,156],[0,1,0]),0.5);ctx.lineWidth=0.12;ctx.beginPath();var f0=Pa(B.L(-0.17,0.13,0.638)),f1=Pa(B.L(0.17,-0.13,0.638));ctx.moveTo(f0.x,f0.y);ctx.lineTo(f1.x,f1.y);ctx.stroke();          // and its fold
+// moss, lichen and weather on the stone
+mossDabs(ctx,[[x-0.58,0.01,z-0.16],[x-0.1,0.01,z-0.58],[x-0.05,0.06,z-0.5],[x-0.5,0.08,z-0.26]],4,mulberry32(41),0.2);          // moss at its foot, on its shaded side
+if(!SEA.snow){for(var li=0;li<5;li++){var la=Math.PI*(1.1+0.8*rng()),lp=P(x+Math.cos(la)*0.46,0.24+0.1*rng(),z+Math.sin(la)*0.46);ctx.fillStyle=rgb(lt([164,170,148],[0,0.3,-1]),0.42);ctx.beginPath();ctx.ellipse(lp.x,lp.y,(0.02+0.02*rng())*lp.k,(0.014+0.01*rng())*lp.k,0,0,TAU);ctx.fill();}}          // lichen on the upper course
+ctx.strokeStyle=rgb(lt([60,56,50],[0,0.2,-1]),0.32);ctx.lineWidth=0.22;ctx.beginPath();var ck=[[0.62,0.3],[0.66,0.24],[0.63,0.17],[0.68,0.1]].map(function(q){var a=Math.PI*(1.5+0.3*(q[0]-0.65)*8);return P(x+Math.cos(a)*0.57,q[1],z+Math.sin(a)*0.57);});ck.forEach(function(p,m){if(m)ctx.lineTo(p.x,p.y);else ctx.moveTo(p.x,p.y);});ctx.stroke();          // a hairline crack down its face
+ctx.strokeStyle=rgb(lt([70,66,58],[0,0.2,-1]),0.18);ctx.lineWidth=0.3;ctx.beginPath();for(var si=0;si<4;si++){var sa=Math.PI*(1.25+0.5*si/3+0.05*rng()),sp=P(x+Math.cos(sa)*0.47,0.36,z+Math.sin(sa)*0.47),sq=P(x+Math.cos(sa)*0.5,0.24-0.05*rng(),z+Math.sin(sa)*0.5);ctx.moveTo(sp.x,sp.y);ctx.lineTo(sq.x,sq.y);}ctx.stroke();          // rain-streaks down its face
+// grass and a fern at its foot, so it sits in the ground; dry in winter, none in snow
+if(!SEA.snow){
+var gc=sn==='autumn'?[128,122,64]:sn==='winter'?[136,124,88]:sn==='summer'?[72,104,50]:[92,122,58];
+ctx.lineCap='round';
+for(var gi=0;gi<7;gi++){var ga=Math.PI*(1.04+0.92*gi/6)+0.08*(rng()-0.5),gr=0.6+0.05*rng(),gp=P(x+Math.cos(ga)*gr,0,z+Math.sin(ga)*gr),nb=3+((rng()*3)|0);ctx.strokeStyle=rgb(lt(mixc(gc,[60,80,40],0.3*rng()),[0,1,0]),0.8);ctx.lineWidth=0.24;ctx.beginPath();for(var bb=0;bb<nb;bb++){var lean=(bb-(nb-1)/2)*0.022+(rng()-0.5)*0.01,gh=(0.05+0.06*rng())*gp.k;ctx.moveTo(gp.x+(bb-(nb-1)/2)*0.008*gp.k,gp.y);ctx.quadraticCurveTo(gp.x+lean*gp.k*0.6,gp.y-gh*0.6,gp.x+lean*gp.k*1.4,gp.y-gh);}ctx.stroke();}
+if(sn!=='winter'){var fp=P(x-0.66,0,z+0.02),fk=fp.k,fc=lt(sn==='autumn'?[150,118,58]:[70,104,52],[0,1,0]);ctx.strokeStyle=rgb(fc,0.85);ctx.lineWidth=0.22;ctx.beginPath();[-0.9,-0.45,0.05,0.5].forEach(function(an){var ex=Math.sin(an)*0.2*fk,ey=-Math.cos(an)*0.17*fk;ctx.moveTo(fp.x,fp.y);ctx.quadraticCurveTo(fp.x+ex*0.4,fp.y+ey*0.9,fp.x+ex,fp.y+ey*0.55);for(var lf=1;lf<4;lf++){var u=lf/4,lx=fp.x+ex*u*0.95,ly=fp.y+ey*(0.9*u-0.35*u*u)*1.1;ctx.moveTo(lx,ly);ctx.lineTo(lx+0.03*fk*(an<0?-1:1),ly-0.02*fk);}});ctx.stroke();}          // a small fern against the fence's end
+ctx.lineCap='butt';
+}
+// the straw rope round the stone (its front half), weathered, with its twist, two tassels and two 紙垂
+var rope=[],i;for(i=0;i<=16;i++){var a=Math.PI+Math.PI*i/16;rope.push(P(x+Math.cos(a)*0.575,0.15+0.012*Math.sin(a*3),z+Math.sin(a)*0.575));}
+var rk=rope[8].k,rc=SEA.snow?[176,160,120]:[168,148,104];ctx.lineCap='round';ctx.strokeStyle=rgb(lt(rc,[0,0.3,-1]));ctx.lineWidth=Math.max(0.26,0.048*rk);ctx.beginPath();rope.forEach(function(p,j){if(j)ctx.lineTo(p.x,p.y);else ctx.moveTo(p.x,p.y);});ctx.stroke();
+ctx.strokeStyle=rgb(lt([126,106,70],[0,0.3,-1]),0.5);ctx.lineWidth=Math.max(0.1,0.017*rk);ctx.beginPath();for(i=1;i<16;i+=2){var p=rope[i];ctx.moveTo(p.x-0.022*rk,p.y-0.02*rk);ctx.lineTo(p.x+0.022*rk,p.y+0.02*rk);}ctx.stroke();
+var kn=rope[8];ctx.fillStyle=rgb(lt(scl(rc,0.92),[0,0.3,-1]));ctx.beginPath();ctx.ellipse(kn.x,kn.y,0.04*rk,0.03*rk,0,0,TAU);ctx.fill();          // its knot at the front
+[7,9].forEach(function(j){var p=rope[j],kk=p.k;ctx.strokeStyle=rgb(lt([160,140,96],[0,0.3,-1]),0.8);ctx.lineWidth=Math.max(0.13,0.02*kk);ctx.beginPath();for(var s2=-1;s2<=1;s2++){ctx.moveTo(p.x+s2*0.01*kk,p.y);ctx.lineTo(p.x+s2*0.017*kk,p.y+0.06*kk);}ctx.stroke();});
+[5,11].forEach(function(j){var p=rope[j],kk=p.k,w=0.036*kk,h=0.04*kk,zz=[[-0.4*w,0],[0.4*w,0],[0.4*w,h],[w,h],[w,2*h],[0.1*w,2*h],[0.1*w,3*h],[0.7*w,3*h],[0.7*w,4*h],[-0.3*w,4*h],[-0.3*w,2.6*h],[-0.4*w,2.6*h]];ctx.beginPath();zz.forEach(function(q,m){if(m)ctx.lineTo(p.x+q[0],p.y+q[1]);else ctx.moveTo(p.x+q[0],p.y+q[1]);});ctx.closePath();ctx.fillStyle=rgb(lt(wet?[214,212,204]:[232,228,216],[0,0.2,-1]));ctx.fill();ctx.strokeStyle='rgba(110,100,84,.28)';ctx.lineWidth=0.1;ctx.stroke();});
+ctx.lineCap='butt';
+// the season on the slab: a petal or two in spring, a fallen maple leaf in autumn; snow on its shoulders in winter
+if(!SEA.snow&&sn==='spring'){ctx.fillStyle=rgb(lt([246,214,222],[0,1,0]),0.9);[[-0.29,-0.21],[0.26,0.2]].forEach(function(q,qi){var pp=Pa(B.L(q[0],q[1],0.417));ctx.beginPath();ctx.ellipse(pp.x,pp.y,0.022*pp.k,0.012*pp.k,qi*1.1,0,TAU);ctx.fill();});}
+if(!SEA.snow&&sn==='autumn'){[[-0.29,-0.19,[176,64,34]],[0.3,0.2,[196,120,40]]].forEach(function(q,qi){var pp=Pa(B.L(q[0],q[1],0.417)),kk=pp.k*0.032;ctx.fillStyle=rgb(lt(q[2],[0,1,0]));ctx.beginPath();for(var m=0;m<10;m++){var an=qi+m*TAU/10,rr=m%2?0.45:1;ctx.lineTo(pp.x+Math.cos(an)*kk*rr,pp.y+Math.sin(an)*kk*rr*0.6);}ctx.closePath();ctx.fill();});}
+if(F.frost&&!SEA.snow){ctx.globalAlpha=0.42*Math.min(1,+F.frost||1);fillPts(ctx,[B.L(-0.34,-0.28,0.416),B.L(0.34,-0.28,0.416),B.L(0.34,0.28,0.416),B.L(-0.34,0.28,0.416)],[228,234,240],0);ctx.globalAlpha=1;}          // frost on the slab on a cold clear morning
+if(SEA.snow){snowCap(ctx,x-0.41,0.15,z+0.19,0.12*Math.min(1,SEA.snow+0.3),0.03);          // snow on the lump's top, and drifted against the stone's foot
+var sc=scl(snowLt(lightTint(1)),0.86),dr=[];for(var di=0;di<=12;di++){var da=Math.PI*(0.97+1.06*di/12),rr=0.61+0.025*Math.sin(di*2.3);dr.push(P(x+Math.cos(da)*rr,0.03+0.025*Math.sin(di*1.7)*Math.sin(di*0.9),z+Math.sin(da)*rr));}
+for(di=12;di>=0;di--){var da2=Math.PI*(0.97+1.06*di/12);dr.push(P(x+Math.cos(da2)*0.7,0,z+Math.sin(da2)*0.7));}
+ctx.fillStyle=rgb(sc);ctx.beginPath();dr.forEach(function(p,m){if(m)ctx.lineTo(p.x,p.y);else ctx.moveTo(p.x,p.y);});ctx.closePath();ctx.fill();}
 }
 function drawHokora(ctx){
 var B=BF(SHRINE.x,SHRINE.z,[1,-0.1],0),S=sil();
@@ -4571,7 +4668,7 @@ var pdc=paddyAt(PADDY_L,jx,jz)||paddyAt(PADDY_R,jx,jz);
 if(pdc){if(hig&&F.paddy&&pdc.e<0.22&&r()<0.55*sstep(0.42,0.66,NZ.n2(jx*0.1+60,jz*0.1-4)))higan(jx,jz,2);continue;}
 if((F.sign&&polyD(SIDE_S,jx,jz)<0.9)||(F.shrine&&polyD(SHR_S,jx,jz)<1.2)||Math.hypot(jx-SIGN.x,jz-SIGN.z)<0.9||Math.hypot(jx-WELL.x,jz-WELL.z)<2||Math.hypot(jx-TREE0.x,jz-TREE0.z)<1.4||(F.farm&&jx>FIELDN.x0-0.2&&jx<FIELDN.x1+0.2&&jz>FIELDN.z0-0.2&&jz<FIELDN.z1+0.2)||(F.paddy&&jz<0&&polyD(FOOT_S,jx,jz)<0.45)||(F.paddy&&jx>7.6&&Math.abs(jz-ditchZ(jx))<0.62)||(jx>FIELD.x0-0.5&&jx<FIELD.x1+0.5&&jz>FIELD.z0-0.5)||(F.tea&&jx>CHA.x0-0.6&&jx<CHA.x1+0.6&&jz>CHA.z0-0.9&&jz<CHA.z1+0.3))continue;
 if(jz>riverZAt(jx)-RIVER_HW)continue;
-if(jz>19&&(jx<-4||Math.hypot(jx-SHRINE.x,jz-SHRINE.z)<3.2||Math.hypot(jx-TORII.x,jz-TORII.z)<1.8))continue;
+if(jz>19&&(jx<-4||Math.hypot(jx-SHRINE.x,jz-SHRINE.z)<3.2||Math.hypot(jx-TORII.x,jz-TORII.z)<1.8||Math.hypot(jx-ALTAR.x,jz-ALTAR.z)<0.95))continue;
 var fade=(1-0.4*sstep(-6,14,jz))*(jx<-4?1-sstep(14,19,jz):1),dens=NZ.n2(jx*0.22+7,jz*0.22)*0.7+0.3*NZ.n2(jx*0.9,jz*0.9+3);
 if(q>(snow?0.5*sstep(0.6,0.85,dens):0.25+dens*0.75)*fade)continue;
 var c0=P(jx,0,jz);if(c0.x<-30||c0.x>W+30||c0.y>H+60)continue;
@@ -4679,6 +4776,8 @@ var mg=millGate();simple(mg.x,mg.z,drawMillGate,{});
 if(F.shrine){
 YARDS.push({x:SHRINE.x,z:SHRINE.z,u:[1,0],v:[0,1],w:5,d:5,pad:1.2,k:0.7});
 simple(SHRINE.x,SHRINE.z,drawHokora,{ao:circAO(SHRINE.x,SHRINE.z,2),drift:1.1});
+simple(ALTAR.x,ALTAR.z,drawFeatherAltar,{ao:function(c){[[ALTAR.x,ALTAR.z,0.74],[ALTAR.x-0.4,ALTAR.z+0.18,0.27]].forEach(function(q){var p=P(q[0],0,q[1]);c.beginPath();c.ellipse(p.x,p.y,q[2]*p.k,q[2]*p.k*CAM.s,0,0,TAU);c.fill();});},drift:0.5});          // the 金の羽's altar
+flat.push({draw:drawAltarSteps,key:0});          // and the stepping stones to it
 if(F.torii)simple(TORII.x,TORII.z,drawTorii,{ao:function(c){var tb2=toriiFrame();[-1.45,1.45].forEach(function(a){var p=Pa(tb2.L(a,0,0));c.beginPath();c.ellipse(p.x,p.y,0.4*p.k,0.2*p.k,0,0,TAU);c.fill();});}});
 SHRINE_CEDARS.map(function(a){return[SHRINE.x+a[0],SHRINE.z+a[1],a[2],a[3]];}).forEach(function(a){put(a[0],a[1],{draw:function(c){drawCedar(c,a[0],a[1],a[2],a[3]);},ao:circAO(a[0],a[1],1.4),sway:swayCedar(a[0],a[1],a[2],a[3]),tap:'cedar'});});
 }
@@ -5565,6 +5664,7 @@ var tx=0,tz=0,ahead=landState(st,Math.min(st.T,time+0.7)),pts=[[S.x,S.z],[ahead.
 function push(ox,oz,R){pts.forEach(function(p){var dx=p[0]-ox,dz=p[1]-oz,d=Math.hypot(dx,dz);if(d<R){if(d<1e-3){dx=-S.dz;dz=S.dx;d=1;}var f=(R-d)/d;tx+=dx*f;tz+=dz*f;}});}
 if(!(S.y>0.3)){
 (g.walkers||[]).forEach(function(w){if(w.fx===undefined||w.cl===undefined)return;push(w.fx,w.fz,w.horse||w.cart?1.6:0.85);});
+if(F&&F.shrine)push(ALTAR.x,ALTAR.z,1.4);          // (nor any visiting creature)
 (g.life||[]).forEach(function(a){if(a.x===undefined||a.z===undefined)return;push(a.x,a.z,a.kind==='bon'?3.6:a.kind==='hanami'?2.0:1.3);});
 }
 var tl=Math.hypot(tx,tz);if(tl>1.0){tx/=tl;tz/=tl;}
@@ -6228,7 +6328,7 @@ var sf=BF(SHRINE.x,SHRINE.z,[1,-0.1],0);box(sf,-1.3,1.3,-1.3,1.3);
 seg([SHRINE.x-3,SHRINE.z-2.6],[SHRINE.x-0.85,SHRINE.z-2.815],0.06);seg([SHRINE.x+0.85,SHRINE.z-2.985],[SHRINE.x+3,SHRINE.z-3.2],0.06);
 [-1.1,1.1].forEach(function(a){var q=sf.L(a,-3.35,0);circ(q[0],q[2],0.22);});
 if(F.torii)[-1.45,1.45].forEach(function(a){var p=toriiFrame().L(a,0,0);circ(p[0],p[2],0.18);});
-SHRINE_CEDARS.forEach(function(a){circ(SHRINE.x+a[0],SHRINE.z+a[1],0.45);});
+SHRINE_CEDARS.forEach(function(a){circ(SHRINE.x+a[0],SHRINE.z+a[1],0.45);});circ(ALTAR.x,ALTAR.z,0.95);          // (no one walks through the altar)
 }
 if(F.tower)rect(TOWER.x,TOWER.z,[1,0.1],3,3);
 if(F.temple){
@@ -7656,7 +7756,7 @@ if(F.well)rect(WELL.x,WELL.z,[1,0],1.4,1.4,0.2);
 if(F.sign)rect(SIGN.x,SIGN.z,[1,0],0.5,0.5,0.2);
 if(F.farm){rect(FARM.x,FARM.z,[1,0.08],11.5,7.6);seg([FARM.x-8.5,FARM.z-8],[FARM.x-2.5,FARM.z-8.3],0.3);seg([FARM.x+1.5,FARM.z-8.4],[FARM.x+6.5,FARM.z-8.2],0.3);rect(FARM.x+7.5,FARM.z-2,[1,0],2.2,1,0.2);}
 if(F.mill)rect(MILL.x,MILL.z,MILL.u,5,4.4);
-if(F.shrine){rect(SHRINE.x,SHRINE.z,[1,-0.1],3,3,0.3);seg([SHRINE.x-3,SHRINE.z-2.6],[SHRINE.x-0.85,SHRINE.z-2.815],0.3);seg([SHRINE.x+0.85,SHRINE.z-2.985],[SHRINE.x+3,SHRINE.z-3.2],0.3);[-1.1,1.1].forEach(function(a){var q=BF(SHRINE.x,SHRINE.z,[1,-0.1],0).L(a,-3.35,0);rect(q[0],q[2],[1,0],0.4,0.4,0.1);});if(F.torii)[-1.45,1.45].forEach(function(a){var p=toriiFrame().L(a,0,0);rect(p[0],p[2],[1,0],0.5,0.5,0.15);});SHRINE_CEDARS.forEach(function(a){rect(SHRINE.x+a[0],SHRINE.z+a[1],[1,0],0.8,0.8,0.1);});}
+if(F.shrine){rect(SHRINE.x,SHRINE.z,[1,-0.1],3,3,0.3);seg([SHRINE.x-3,SHRINE.z-2.6],[SHRINE.x-0.85,SHRINE.z-2.815],0.3);seg([SHRINE.x+0.85,SHRINE.z-2.985],[SHRINE.x+3,SHRINE.z-3.2],0.3);[-1.1,1.1].forEach(function(a){var q=BF(SHRINE.x,SHRINE.z,[1,-0.1],0).L(a,-3.35,0);rect(q[0],q[2],[1,0],0.4,0.4,0.1);});if(F.torii)[-1.45,1.45].forEach(function(a){var p=toriiFrame().L(a,0,0);rect(p[0],p[2],[1,0],0.5,0.5,0.15);});SHRINE_CEDARS.forEach(function(a){rect(SHRINE.x+a[0],SHRINE.z+a[1],[1,0],0.8,0.8,0.1);});rect(ALTAR.x,ALTAR.z,[1,0],1.3,1.3,0.2);}
 if(F.tower)rect(TOWER.x,TOWER.z,[1,0.1],3,3,0.2);
 if(F.farm)NEAR_BUSHES.forEach(function(q){var e=q[2]*(q[4]==='low'?2.6:1.8);rect(q[0],q[1],[1,0],e,e*0.8,0.15);});
 if(F.temple){box(templeFrame(),-8.9,8.9,-10.3,7.0);if(F.belfry)rect(BELL.x,BELL.z,KR_DIR,4.4,4.4,0.2);precinctPieces().forEach(function(pc){seg(pc.a,pc.b,0.4);});var gq=gateFrame();[-2.0,2.0].forEach(function(a){var p=gq.L(a,0,0);rect(p[0],p[2],KR_DIR,0.5,2.2,0.1);});sandoLanterns().forEach(function(q){rect(q[0],q[2],[1,0],0.7,0.7,0.1);});}
@@ -11630,7 +11730,7 @@ function tapScene(g,I,x,y,t,rng,api){
 var best=null;
 function cand(sc,fn){if(sc<1&&(!best||sc<best.s))best={s:sc,fn:fn};}
 function circ(p,r){return Math.hypot(p.x-x,(p.y-y)*1.15)/r;}
-if(api.feather){var fq=P(api.feather.x+0.3,1.8,api.feather.z);cand(circ(fq,Math.max(14,3.2*fq.k))*0.55,function(){return'feather';});}          // the golden feather by the 祠
+if(api.feather){var fq=P(api.feather.x,0.75,api.feather.z);cand(circ(fq,Math.max(12,2.6*fq.k))*0.55,function(){return'feather';});}          // the golden feather by the 祠
 if(api.rareCat)cand(circ(api.rareCat,10)*0.7,function(){api.rareCatTap();return'cat';});
 if(I.catP&&api.catShown)cand(circ(I.catP,Math.max(6,1.3*I.catP.k+2))*0.7,function(){I.cat={t0:t,kind:rng()<0.5?'stretch':'hop'};return'cat';});
 g.walkers.forEach(function(w){
@@ -13263,7 +13363,7 @@ function sparrowHome(){
 var paths=walkPaths(),feet=townPlan(F).map(planFoot),best=null;
 for(var i=1;i<RIVER_S.length-1;i++)for(var side=-1;side<=1;side+=2){
 var a=RIVER_S[i],b=RIVER_S[i+1],dx=b[0]-a[0],dz=b[1]-a[1],l=Math.hypot(dx,dz)||1,x=a[0]-dz/l*side*(RIVER_HW+3.2),z=a[1]+dx/l*side*(RIVER_HW+3.2);
-if(!faunaVisible(x,z)||faunaHidden(x,z)||Math.hypot(x-BR.x,z-BR.z)<12)continue;
+if(!faunaVisible(x,z)||faunaHidden(x,z)||Math.hypot(x-BR.x,z-BR.z)<12||(F.shrine&&Math.hypot(x-ALTAR.x,z-ALTAR.z)<3))continue;
 var dp=1e9;paths.forEach(function(q){dp=Math.min(dp,polyD(q.pts,x,z));});if(dp<3)continue;
 if(feet.some(function(f){return Math.hypot(f.x-x,f.z-z)<Math.max(f.w,f.d)*0.75+2.5;}))continue;
 if(F.mill&&Math.hypot(x-MILL.x,z-MILL.z)<9.5)continue;if(F.teahouse&&Math.hypot(x-TEA.x,z-TEA.z)<6)continue;if(F.landing&&Math.hypot(x-landingGeom().B.x,z-landingGeom().B.z)<9)continue;if(F.kura&&z>20&&x>5)continue;
@@ -13344,7 +13444,7 @@ else{b.y=0;b.cr=0;b.air=false;b.bob=0;b.flick=b.act==='look'?Math.max(0,Math.sin
 }
 if(FA.pg)FA.pg.birds.forEach(function(b){
 b.at-=dt;if(b.at<=0){var r3=rng();b.act=r3<0.5?'walk':r3<0.85?'peck':'stand';b.at=b.act==='walk'?1.2+rng()*1.8:0.6+rng()*1.2;if(rng()<0.35&&FA.t-(b.ft||-9)>1.6){b.face=-b.face;b.ft=FA.t;}}
-if(b.act==='walk'){b.st+=dt*3.4;var nx2=b.x+b.face*dt*0.32*(0.6+0.4*Math.abs(Math.sin(b.st*Math.PI)));if(Math.abs(nx2-FA.pg.x)<1.8)b.x=nx2;else{b.face=-b.face;b.ft=FA.t;b.act='stand';b.at=0.5+rng()*0.6;}}
+if(b.act==='walk'){b.st+=dt*3.4;var nx2=b.x+b.face*dt*0.32*(0.6+0.4*Math.abs(Math.sin(b.st*Math.PI)));if(Math.abs(nx2-FA.pg.x)<1.8&&!(g.F.shrine&&Math.hypot(nx2-ALTAR.x,b.z-ALTAR.z)<1.0))b.x=nx2;else{b.face=-b.face;b.ft=FA.t;b.act='stand';b.at=0.5+rng()*0.6;}}
 });
 var Hn=FA.heron;
 if(Hn){
@@ -13487,7 +13587,7 @@ drawWader(ctx,hq.x,hq.y,hq.k,'heron',{face:Hn.face,ext:Hn.ext,strike:Hn.strike,s
 if(Hn.act==='strike'&&Hn.strike>0.9){ctx.strokeStyle='rgba(232,240,246,0.5)';ctx.lineWidth=0.4;var rp=P(Hn.x+Hn.face*0.55,WL,Hn.z);ctx.beginPath();ctx.ellipse(rp.x,rp.y,0.25*rp.k,0.06*rp.k,0,0,TAU);ctx.stroke();}
 }
 }
-var VERSION='1.3.19';
+var VERSION='1.3.21';
 var SEASON_KEYS=['spring','summer','autumn','winter'],LIGHT_KEYS=['morning','day','dusk','night'];
 var WEATHERS=['clear','cloudy','rain','storm','snow','typhoon','blizzard'];
 var EVENTS=['shogatsu','setsubun','hinamatsuri','kodomo','tanabata','obon','tsukimi'];
@@ -14260,37 +14360,54 @@ return true;
 // opened mid-visit joins in. In: 9 s flying in; 1.6 s landing; 95 s at rest (the rainbow); 9 s flying off.
 
 var hoou=null,hoouWait=0,hoouSp=[],hoouLT=-1,hoouSnd=null,hoouForce=false,wxAskAt=-99;
-// ===== 金の羽: the golden feather, a phoenix's plume set on a small 三方 by the 祠 (o.feather {on, charged, k: its power
-// gathering, 0..1}). Charged, it glows and gives off rising sparks; spent, it is a dull gold that brightens as its power returns.
-var FEATHER={x:TORII.x-2.75,z:TORII.z-0.35};          // beside the 祠's 鳥居, in front of everything near it
+// ===== 金の羽: the golden feather, resting on its altar by the 祠 (o.feather {on, charged, k: its power gathering, 0..1}). Quiet
+// by day and found by its light: it lies across the 三方's paper with its tip lifted past the tray's edge, a soft glow breathing
+// about it while it is charged (warmer and wider as the light goes), and now and then a glint that runs along it and flashes at
+// its eye. Spent, it is a dull gold that brightens as its power returns, with now and then a faint spark once it is nearly back.
+var FEATHER=ALTAR,featherTapT=-99;
 function featherOn(g){return!!(o.feather&&o.feather.on&&g&&g.F&&g.F.shrine);}
 function drawFeather(c,g,t){
-var fx=FEATHER.x,fz=FEATHER.z,ch=!!o.feather.charged,pw=ch?1:clamp(+o.feather.k||0),b0=P(fx,0,fz),k=b0.k;
-c.save();c.lineJoin='round';
-var FS=1.4,Q=function(x,y,z){var p=P(fx+x*FS,y*FS,fz+z*FS);return[p.x,p.y];},poly=function(pts,fill,st){c.beginPath();pts.forEach(function(q,i){if(i)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);});c.closePath();c.fillStyle=fill;c.fill();if(st){c.strokeStyle=st;c.lineWidth=Math.max(0.2,0.04*k);c.stroke();}};
-// the 三方: a small stand of plain wood
-poly([Q(-0.38,0,-0.38),Q(0.38,0,-0.38),Q(0.42,0.34,-0.42),Q(-0.42,0.34,-0.42)],'#a87c4a','rgba(70,46,20,.45)');
-poly([Q(0.38,0,-0.38),Q(0.38,0,0.38),Q(0.42,0.34,0.42),Q(0.42,0.34,-0.42)],'#8e6638','rgba(70,46,20,.45)');
-poly([Q(-0.5,0.34,-0.5),Q(0.5,0.34,-0.5),Q(0.5,0.42,-0.5),Q(-0.5,0.42,-0.5)],'#c49a62','rgba(70,46,20,.45)');
-poly([Q(-0.5,0.42,-0.5),Q(0.5,0.42,-0.5),Q(0.5,0.42,0.5),Q(-0.5,0.42,0.5)],'#dcb47c','rgba(70,46,20,.35)');
-// its glow, stronger as its power gathers
-var gp=P(fx+0.28,2.1,fz),gR=(2.2+0.7*pw)*k,ga=(ch?0.34+0.1*Math.sin(t*2.1):0.16*pw);
-if(ga>0.01){c.globalCompositeOperation='screen';var gg=c.createRadialGradient(gp.x,gp.y,0,gp.x,gp.y,gR);gg.addColorStop(0,'rgba(255,226,150,'+ga+')');gg.addColorStop(0.5,'rgba(255,206,120,'+(ga*0.4)+')');gg.addColorStop(1,'rgba(255,190,90,0)');c.fillStyle=gg;c.beginPath();c.arc(gp.x,gp.y,gR,0,TAU);c.fill();c.globalCompositeOperation='source-over';}
-// the plume: a curved shaft leaning a little and swaying in the air, the vane widening to a rounded tip with an eye
-var sw=0.09*Math.sin(t*1.25)+0.04*Math.sin(t*2.9),pts=[];
-for(var i=0;i<=16;i++){var s=i/16;pts.push(Q(0.62*s*s+sw*s*s,0.44+2.25*s,-0.06*s));}
-var Ls=Math.hypot(pts[16][0]-pts[0][0],pts[16][1]-pts[0][1])||1,L2=[],R2=[];
-var wf=function(s){return s<0.12?0.012+0.1*s:s<0.86?0.024+0.05*Math.pow(Math.sin(Math.PI*(s-0.12)/1.48),0.8):0.074*Math.sqrt(Math.max(0,1-Math.pow((s-0.86)/0.14,2)));};
-pts.forEach(function(q,i){var a=pts[Math.max(0,i-1)],b=pts[Math.min(16,i+1)],tx=b[0]-a[0],ty=b[1]-a[1],tl=Math.hypot(tx,ty)||1,w=wf(i/16)*Ls;L2.push([q[0]-ty/tl*w,q[1]+tx/tl*w]);R2.push([q[0]+ty/tl*w,q[1]-tx/tl*w]);});
-var mute=function(h,a){if(ch)return h;var n=parseInt(h.slice(1),16),r=n>>16&255,g2=n>>8&255,bb=n&255,m=(r+g2+bb)/3,u=0.55*(1-a);return rgb([lerp(r,m*0.92,u),lerp(g2,m*0.9,u),lerp(bb,m*0.85,u)]);};          // spent: the gold dulled, coming back as its power returns
-var vg=c.createLinearGradient(pts[0][0],pts[0][1],pts[16][0],pts[16][1]);vg.addColorStop(0,mute('#b0802e',pw));vg.addColorStop(0.45,mute('#e2b456',pw));vg.addColorStop(0.8,mute('#f6d896',pw));vg.addColorStop(1,mute('#f4b892',pw));
-c.beginPath();L2.concat(R2.slice().reverse()).forEach(function(q,i){if(i)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);});c.closePath();c.fillStyle=vg;c.fill();c.strokeStyle='rgba(120,80,24,.3)';c.lineWidth=Math.max(0.15,0.006*Ls);c.stroke();
-c.strokeStyle='rgba(255,236,190,.35)';c.lineWidth=Math.max(0.1,0.004*Ls);c.beginPath();for(var bq=3;bq<15;bq+=2){var p0=pts[bq],l0=L2[bq+1],r0=R2[bq+1];c.moveTo(p0[0],p0[1]);c.lineTo(l0[0],l0[1]);c.moveTo(p0[0],p0[1]);c.lineTo(r0[0],r0[1]);}c.stroke();          // a few barbs
-c.strokeStyle=ch?'rgba(255,240,196,.75)':'rgba(230,214,170,.6)';c.lineWidth=Math.max(0.15,0.012*Ls);c.beginPath();pts.slice(0,15).forEach(function(q,i){if(i)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);});c.stroke();          // the shaft
-var ep=pts[14],en=pts[15],ang=Math.atan2(en[1]-ep[1],en[0]-ep[0]);
-[[0.07,0.05,'#f2d896'],[0.056,0.04,'#c86848'],[0.042,0.03,'#e0b050'],[0.028,0.02,'#3e7a6a'],[0.014,0.01,'#1c2a24']].forEach(function(r){c.fillStyle=mute(r[2],pw);c.beginPath();c.ellipse(ep[0],ep[1],r[0]*Ls,r[1]*Ls,ang,0,TAU);c.fill();});          // the eye
-// charged, sparks rise from it and twinkle
-if(ch){var sp=hoouSpark();c.globalCompositeOperation='lighter';for(var j=0;j<8;j++){var ph=(t*0.32+j/8)%1,sx=Math.sin(j*2.37+t*0.4)*0.55,q2=P(fx+0.4+sx*1.4,1+3.6*ph,fz),a2=Math.sin(Math.PI*ph)*(0.6+0.4*Math.sin(t*7+j*1.7)),z2=(0.28+0.16*((j*5)%3))*q2.k;if(a2<=0.02)continue;c.globalAlpha=a2;c.drawImage(sp,q2.x-z2/2,q2.y-z2/2,z2,z2);}c.globalAlpha=1;c.globalCompositeOperation='source-over';}
+var x=ALTAR.x,z=ALTAR.z,ch=!!o.feather.charged,pw=ch?1:clamp(+o.feather.k||0),top=0.637,b0=P(x,top,z),k=b0.k;
+if(b0.d<=0.5)return;
+var B=BF(x,z,[1,-0.1],0),lg=g.light,dark=lg==='night'?1.75:lg==='dusk'||lg==='dawn'?1.3:lg==='morning'?1.1:1,wet=wxWet(g.wx),snowy=wxSnowy(g.wx),tint0=g.tint||[1,1,1],tint=ch&&dark>1.2?mixc(tint0,[1,0.96,0.88],dark>1.5?0.6:0.3):tint0;          // (charged, it shines by its own light after dark)
+c.save();c.lineJoin='round';c.lineCap='round';
+var Q=function(a,y,b){var p=Pa(B.L(a,b,y));return[p.x,p.y];},hq=[-0.05,0.05];
+// charged: a soft glow about it, breathing slowly; at night a little warm light falls on the tray and the slab
+if(ch){var br=0.5+0.5*Math.sin(t*1.3),gp=Pa(B.L(0.03,0.02,top+0.36)),gR=(0.6+0.06*br)*k*(dark>1.5?1.3:1),ga=(0.09+0.04*br)*dark*(wet?0.8:1);
+c.globalCompositeOperation='screen';var gg=c.createRadialGradient(gp.x,gp.y,0,gp.x,gp.y,gR);gg.addColorStop(0,'rgba(255,228,160,'+ga+')');gg.addColorStop(0.45,'rgba(255,212,138,'+(ga*0.45)+')');gg.addColorStop(1,'rgba(255,198,118,0)');c.fillStyle=gg;c.beginPath();c.arc(gp.x,gp.y,gR,0,TAU);c.fill();
+if(dark>1.2){var pq=Pa(B.L(0,0,0.42)),pr=0.5*k,pa=(0.05+0.02*br)*(dark-1);c.save();c.translate(pq.x,pq.y);c.scale(1,0.42);var pg=c.createRadialGradient(0,0,0,0,0,pr);pg.addColorStop(0,'rgba(255,214,150,'+pa+')');pg.addColorStop(1,'rgba(255,200,130,0)');c.fillStyle=pg;c.beginPath();c.arc(0,0,pr,0,TAU);c.fill();c.restore();}
+c.globalCompositeOperation='source-over';}
+// the plume: its quill at the back of the tray, lying across the paper toward the front corner and lifting toward its tip, which
+// reaches a little past the tray's edge and stirs in the air
+var wind=g.wind0?Math.min(1,Math.abs(g.wind0.x||0)):0.3,air=(0.012*Math.sin(t*1.6)+0.007*Math.sin(t*2.7+1))*(0.6+0.8*wind),pts=[],N=16;
+var dr=ch?0:0.75*(1-pw)+0.1,bth=ch?0.012*Math.sin(t*1.3):0;          // spent, it droops, rising as its power returns; charged, it breathes with its glow
+for(var i=0;i<=N;i++){var s=i/N;pts.push(Q(hq[0]+0.1*s+0.05*Math.sin(Math.PI*s*0.9)+0.07*s*s*s+(0.14*dr+bth)*s*s+air*s*s*3,top+0.045+0.54*s-0.06*s*s*s-0.16*dr*s*s*s,hq[1]-0.03*s));}
+var Ls=0;for(i=1;i<=N;i++)Ls+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);Ls=Ls||1;
+// its soft shadow on the paper, under the part that lies on it
+var sh0=Q(hq[0]+0.06,top+0.002,hq[1]-0.02);c.fillStyle='rgba(66,46,22,'+(snowy?0.1:0.16)+')';c.beginPath();c.ellipse(sh0[0],sh0[1],0.1*k,0.035*k,0,0,TAU);c.fill();
+var hb=BF(x,z,[1,-0.1],0),hw=0.028;[[[-1,-1],[1,-1],[1,1],[-1,1]]].forEach(function(){var pp=function(a,b,y){return Pa(hb.L(hq[0]+a*hw,hq[1]+b*hw,y));},f=[pp(-1,-1,top),pp(1,-1,top),pp(1,-1,top+0.05),pp(-1,-1,top+0.05)],r=[pp(1,-1,top),pp(1,1,top),pp(1,1,top+0.05),pp(1,-1,top+0.05)],tp=[pp(-1,-1,top+0.05),pp(1,-1,top+0.05),pp(1,1,top+0.05),pp(-1,1,top+0.05)];[[f,[96,72,50]],[r,[78,58,42]],[tp,[118,92,64]]].forEach(function(q){c.beginPath();q[0].forEach(function(p,m){if(m)c.lineTo(p.x,p.y);else c.moveTo(p.x,p.y);});c.closePath();c.fillStyle=rgb(mulc(q[1],tint));c.fill();});});          // the little wooden holder its quill is set in
+var wf=function(s){return s<0.1?0.01+0.1*s:s<0.78?0.02+0.085*Math.pow(Math.sin(Math.PI*(s-0.1)/1.36),0.9):0.104*Math.sqrt(Math.max(0,1-Math.pow((s-0.78)/0.22,2)));},L2=[],R2=[];
+pts.forEach(function(q,j){var a=pts[Math.max(0,j-1)],b=pts[Math.min(N,j+1)],tx=b[0]-a[0],ty=b[1]-a[1],tl=Math.hypot(tx,ty)||1,w=wf(j/N)*Ls,wl=w*(j/N>0.2?1.08:1);L2.push([q[0]-ty/tl*wl,q[1]+tx/tl*wl]);R2.push([q[0]+ty/tl*w*0.92,q[1]-tx/tl*w*0.92]);});          // (its vanes a little uneven, as a real feather's are)
+var mute=function(h,a){var n=parseInt(h.slice(1),16),r=n>>16&255,g2=n>>8&255,bb=n&255,m=(r+g2+bb)/3,u=ch?0:0.5*(1-a);return rgb([lerp(r,m*0.92,u)*Math.min(1.05,tint[0]),lerp(g2,m*0.9,u)*Math.min(1.05,tint[1]),lerp(bb,m*0.85,u)*Math.min(1.05,tint[2])]);};          // in the light of the hour; spent, its gold dulled, coming back as its power returns
+var vg=c.createLinearGradient(pts[0][0],pts[0][1],pts[N][0],pts[N][1]);vg.addColorStop(0,mute('#a87a2c',pw));vg.addColorStop(0.4,mute('#dcac52',pw));vg.addColorStop(0.78,mute('#f2d290',pw));vg.addColorStop(1,mute('#eeb48e',pw));
+c.beginPath();L2.concat(R2.slice().reverse()).forEach(function(q,j){if(j)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);});c.closePath();c.fillStyle=vg;c.fill();c.strokeStyle='rgba(104,70,22,.3)';c.lineWidth=Math.max(0.12,0.008*Ls);c.stroke();
+c.save();c.clip();c.fillStyle=ch?'rgba(255,244,214,.22)':'rgba(240,230,200,.12)';c.beginPath();L2.slice(3,N-1).concat(pts.slice(3,N-1).reverse()).forEach(function(q,j){if(j)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);});c.closePath();c.fill();c.restore();          // its upper vane catching the light
+c.strokeStyle='rgba(255,236,196,.26)';c.lineWidth=Math.max(0.07,0.004*Ls);c.beginPath();for(var bq=3;bq<N-2;bq+=2){var p0=pts[bq],l0=L2[bq+2],r0=R2[bq+2];c.moveTo(p0[0],p0[1]);c.lineTo(l0[0],l0[1]);c.moveTo(p0[0],p0[1]);c.lineTo(r0[0],r0[1]);}c.stroke();          // a few barbs, swept toward the tip
+c.strokeStyle=ch?'rgba(255,240,200,.7)':'rgba(226,210,170,.5)';c.lineWidth=Math.max(0.12,0.013*Ls);c.beginPath();pts.slice(0,N-2).forEach(function(q,j){if(j)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);});c.stroke();          // the shaft
+c.strokeStyle=ch?'rgba(255,248,226,.8)':'rgba(236,224,196,.6)';c.lineWidth=Math.max(0.1,0.01*Ls);c.beginPath();c.moveTo(pts[0][0],pts[0][1]);c.lineTo(pts[2][0],pts[2][1]);c.stroke();          // its bare quill, paler
+var ei=Math.round(N*0.8),ep=pts[ei],en=pts[ei+1],ang=Math.atan2(en[1]-ep[1],en[0]-ep[0]);
+[[0.075,0.056,'#f2d896'],[0.059,0.044,'#c86848'],[0.045,0.034,'#e0b050'],[0.03,0.022,'#3e7a6a'],[0.015,0.011,'#1c2a24']].forEach(function(r){c.fillStyle=mute(r[2],pw);c.beginPath();c.ellipse(ep[0],ep[1],r[0]*Ls,r[1]*Ls,ang,0,TAU);c.fill();});          // the eye
+// charged: now and then a glint runs along it and flashes at its eye, small, to catch the eye; and a mote or two rises.
+// Spent but nearly back: now and then a faint spark, so you can see it coming back to life
+var gc=((t+1.7)%4.8)/4.8,gl=gc<0.13?Math.sin(Math.PI*gc/0.13):0;
+if(!ch&&pw>0.6){var gc2=((t+0.9)%11)/11;gl=gc2<0.05?Math.sin(Math.PI*gc2/0.05)*0.45*sstep(0.6,1,pw):0;}
+c.globalCompositeOperation='lighter';
+if(gl>0.01){var gq=pts[Math.min(N,Math.round(2+(N-2)*Math.min(1,gc/0.11)))];if(ch){c.fillStyle='rgba(255,246,220,'+(0.55*gl)+')';c.beginPath();c.arc(gq[0],gq[1],Math.max(0.35,0.05*k),0,TAU);c.fill();}
+var R=Math.max(1.6,(0.3+0.38*gl)*k)*(dark>1.5?1.15:1),ex=ep[0],ey=ep[1];for(var r4=0;r4<4;r4++){var an=r4*Math.PI/2+0.4,ux=Math.cos(an),uy=Math.sin(an),Rr=R*(r4%2?0.62:1),lg2=c.createLinearGradient(ex,ey,ex+ux*Rr,ey+uy*Rr);lg2.addColorStop(0,'rgba(255,250,230,'+(0.85*gl)+')');lg2.addColorStop(1,'rgba(255,220,160,0)');c.fillStyle=lg2;c.beginPath();c.moveTo(ex-uy*Rr*0.06,ey+ux*Rr*0.06);c.lineTo(ex+ux*Rr,ey+uy*Rr);c.lineTo(ex+uy*Rr*0.06,ey-ux*Rr*0.06);c.closePath();c.fill();}
+c.fillStyle='rgba(255,250,232,'+(0.7*gl)+')';c.beginPath();c.arc(ex,ey,Math.max(0.4,0.06*k)*gl,0,TAU);c.fill();}          // the glint, its long rays across and short ones between
+if(ch){var nm=dark>1.5?4:wet||snowy?1:2,sp=hoouSpark();for(var j2=0;j2<nm;j2++){var ph=(t*0.2+j2/nm)%1,q2=Pa(B.L(0.1+0.14*Math.sin(j2*2.1+t*0.5),top+0.4+0.8*ph,0.02)),a2=Math.sin(Math.PI*ph)*(dark>1.2?0.5:0.3)*(0.6+0.4*Math.sin(t*5+j2*1.9)),z2=(dark>1.2?0.15:0.11)*q2.k;if(a2<=0.02)continue;c.globalAlpha=a2;c.drawImage(sp,q2.x-z2/2,q2.y-z2/2,z2,z2);}c.globalAlpha=1;}          // a mote or two
+if(featherTapT>-50&&t-featherTapT<1.8){var bu=(t-featherTapT)/1.8,bp=pts[ei],bR=(0.15+1.3*Math.sqrt(bu))*k,ba=(1-bu)*(1-bu);c.strokeStyle='rgba(255,236,180,'+(0.55*ba)+')';c.lineWidth=Math.max(0.3,0.05*k*(1-bu));c.beginPath();c.ellipse(bp[0],bp[1],bR,bR*0.62,0,0,TAU);c.stroke();var bg=c.createRadialGradient(bp[0],bp[1],0,bp[0],bp[1],0.7*k);bg.addColorStop(0,'rgba(255,246,214,'+(0.6*ba)+')');bg.addColorStop(1,'rgba(255,220,150,0)');c.fillStyle=bg;c.beginPath();c.arc(bp[0],bp[1],0.7*k,0,TAU);c.fill();}          // pressed: a ring of light goes out from it
+c.globalCompositeOperation='source-over';
 c.restore();
 }
 function hoouRec(){return o.hoou&&typeof o.hoou==='object'?o.hoou:null;}
@@ -14996,7 +15113,7 @@ hit=tapScene(g,g.I,clamp(nx)*g.W,clamp(ny)*g.H,clock,frng,{feather:featherOn(g)?
 }catch(e){if(window.console)console.error(e);hit=null;}
 finally{restoreState(st);}
 if(!hit)return null;
-if(hit==='feather'){if(typeof o.onFeather==='function')try{o.onFeather(api);}catch(e){if(window.console)console.error(e);}cue('feather',null,true);}
+if(hit==='feather'){featherTapT=clock;if(typeof o.onFeather==='function')try{o.onFeather(api);}catch(e){if(window.console)console.error(e);}cue('feather',null,true);}
 else if(hit==='cat')cue('rare',{id:'neko',name:'猫'},true);
 else if(hit==='paddy')cue('paddy',{what:g.I.paddy&&g.I.paddy.what},true);
 else cue(hit,null,true);
