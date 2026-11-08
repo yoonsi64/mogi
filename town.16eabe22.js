@@ -13882,14 +13882,14 @@ c.fillStyle=hg;c.beginPath();c.arc(hc[0],hc[1],hr,0,TAU);c.fill();
 var bm=function(q){return Hm(q[0],q[1],0);},bt=Hm(0.64,-0.34,0),bk=c.createLinearGradient(Hm(0.61,-0.37,0)[0],Hm(0.61,-0.37,0)[1],Hm(0.69,-0.32,0)[0],Hm(0.69,-0.32,0)[1]);bk.addColorStop(0,'#e8c070');bk.addColorStop(1,'#7a5014');
 hoouPath(c,[[0.592,-0.358],[0.65,-0.356],[0.7,-0.342],[0.728,-0.322],[0.716,-0.318],[0.69,-0.33],[0.64,-0.328],[0.596,-0.322]],bm);c.fillStyle=bk;c.fill();          // a long, fine hooked beak
 var vis=Math.min(1,Math.max(0,side3*1.4));
-if(vis>0.05){var ez=zs*0.045,e1=Hm(0.608,-0.334,ez),e2=Hm(0.554,-0.348,ez),eu=Hm(0.583,-0.351,ez),ed=Hm(0.583,-0.327,ez),mx=(e1[0]+e2[0])/2,my=(e1[1]+e2[1])/2,cu=[2*eu[0]-mx,2*eu[1]-my],cd=[2*ed[0]-mx,2*ed[1]-my];
+if(vis>0.05){var ez=zs*0.045,ec=Hm(0.584,-0.339,ez),k=hs*px,ea0=Hm(0.6,-0.339,ez),ea=Math.atan2(ea0[1]-ec[1],ea0[0]-ec[0]),sq2=0.5+0.5*vis,sp0=Hm(0.574,-0.341,ez);
 c.save();c.globalAlpha=A*Math.min(1,vis*2);
-var almond=function(){c.beginPath();c.moveTo(e1[0],e1[1]);c.quadraticCurveTo(cu[0],cu[1],e2[0],e2[1]);c.quadraticCurveTo(cd[0],cd[1],e1[0],e1[1]);c.closePath();};          // an almond eye, its outer corner swept up toward the back of the head
-almond();c.fillStyle='#e6b444';c.fill();
-c.save();almond();c.clip();var pc=Hm(0.586,-0.339,ez);c.fillStyle='#1c1004';c.beginPath();c.ellipse(pc[0],pc[1],0.0085*hs*px,0.011*hs*px,0,0,TAU);c.fill();c.restore();
-var fl=Hm(0.532,-0.356,ez);c.strokeStyle='#a8322a';c.lineWidth=Math.max(0.15,0.0055*hs*px);c.lineJoin='round';almond();c.stroke();          // a fine vermilion line round it
-c.beginPath();c.moveTo(e2[0],e2[1]);c.lineTo(fl[0],fl[1]);c.stroke();          // flicked out behind, as in the old paintings
-c.fillStyle='#fffbe8';c.beginPath();c.arc(pc[0]+0.003*hs*px,pc[1]-0.004*hs*px,0.0028*hs*px,0,TAU);c.fill();
+var sk2=c.createRadialGradient(sp0[0],sp0[1],0,sp0[0],sp0[1],0.034*k);sk2.addColorStop(0,'rgba(176,58,40,.85)');sk2.addColorStop(0.7,'rgba(176,58,40,.45)');sk2.addColorStop(1,'rgba(176,58,40,0)');          // soft red bare skin round the eye, as on a pheasant
+c.fillStyle=sk2;c.beginPath();c.ellipse(sp0[0],sp0[1],0.034*k*sq2,0.016*k,ea,0,TAU);c.fill();
+c.fillStyle='#e2ae40';c.beginPath();c.ellipse(ec[0],ec[1],0.016*k*sq2,0.0092*k,ea,0,TAU);c.fill();          // an oval eye, longer than tall
+c.fillStyle='#1c1004';c.beginPath();c.ellipse(ec[0],ec[1],0.0072*k*sq2,0.0072*k,ea,0,TAU);c.fill();
+c.strokeStyle='rgba(110,40,24,.6)';c.lineWidth=Math.max(0.1,0.0025*k);c.beginPath();c.ellipse(ec[0],ec[1],0.016*k*sq2,0.0092*k,ea,Math.PI*1.05,Math.PI*1.95);c.stroke();          // a hint of the upper lid
+c.fillStyle='#fffbe8';c.beginPath();c.arc(ec[0]+0.003*k,ec[1]-0.003*k,0.0026*k,0,TAU);c.fill();
 c.restore();}
 
 };
