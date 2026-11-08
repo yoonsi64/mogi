@@ -9914,8 +9914,31 @@ var BIRD = {
     return snPhrase(E, t, out, n, { harm: [[1, 1], [2, 0.12], [3, 0.04]], att: 0.06, rel: 0.12 });
   }
 };
+/* the town's 鳳凰: a calm, clear call like a phrase on the 龍笛, breath under the tone: a long note that rises a fourth and
+   holds with a slow vibrato, then after a breath a softer, falling answer; its echo comes back off the hills */
+function snHoouCall(E, t, out) {
+  var c = E.ctx, p = snR(E, 0.97, 1.03), f0 = 698 * p;
+  var one = function (t1, o1, a) {
+    snPhrase(E, t1, o1, [{ t: 0, d: 2.3, f: [f0 * 0.89, f0, f0 * 1.335, f0 * 1.335, f0 * 1.31], a: 0.62 * a, s: 0.7 },
+      { t: 2.55, d: 1.25, f: [f0 * 1.19, f0 * 1.12, f0 * 0.89], a: 0.4 * a, s: 0.35 }],
+      { harm: [[1, 1], [2, 0.2], [3, 0.07], [4, 0.025]], att: 0.22, rel: 0.45, vib: [4.8, 12] });
+    snNoise(E, t1, o1, { kind: 'pink', type: 'bandpass', f: f0 * 2.4, q: 1.6, att: 0.3, hold: 1.7, dec: 0.5, peak: 0.1 * a });
+    snNoise(E, t1 + 2.55, o1, { kind: 'pink', type: 'bandpass', f: f0 * 2.2, q: 1.6, att: 0.2, hold: 0.7, dec: 0.4, peak: 0.06 * a });
+  };
+  one(t, out, 1);
+  one(t + 0.38, snFilt(c, 'lowpass', 2000, 0.5, snGain(c, 0.28, out)), 1);   // the echo off the hills
+  return t + 4.3;
+}
+/* a soft beat of the 鳳凰's wings: air pushed down, a hush of feathers */
+function snHoouWing(E, t, out) {
+  snNoise(E, t, out, { kind: 'pink', type: 'bandpass', f: 1150, f1: 460, q: 0.9, att: 0.15, hold: 0.04, dec: 0.3, peak: 1, dur: 0.45 });   // the air
+  snNoise(E, t + 0.04, out, { kind: 'brown', type: 'lowpass', f: 300, q: 0.5, att: 0.14, dec: 0.28, peak: 0.45 });   // its weight
+  snNoise(E, t + 0.05, out, { kind: 'white', type: 'bandpass', f: 2700, q: 0.7, att: 0.1, dec: 0.2, peak: 0.22 });   // the feathers' hush
+  return t + 0.8;
+}
 /* rare visitors (cue 'rare', id) */
 var RARE = {
+  houou: function (E, t, out) { return snHoouCall(E, t, snFilt(E.ctx, 'lowpass', 3500, 0.5, snGain(E.ctx, 0.6, out))); },   // still far off as it comes: softer, the air taking its brightness
   ooruri: function (E, t, out) { // a clear, falling warble ending in a harsh "jiji"
     var n = [], p = snR(E, 0.95, 1.05), fs = [3600, 3000, 3300, 2600, 2900, 2300], i;
     for (i = 0; i < fs.length; i++) n.push({ t: i * 0.16, d: 0.13, f: [fs[i] * p * 1.08, fs[i] * p], a: 0.8 });
@@ -10920,6 +10943,8 @@ function sndCue(E, name, arg, focus, at, so) {
       var o1 = out(0.16, R(-0.4, 0.4), 4000), j; for (j = 0; j < 14; j++) snNoise(E, t + j * 0.035 + R(0, 0.01), o1, { f: R(700, 950), q: 8, dec: 0.02, peak: 0.6 + Math.sin(j / 3) * 0.3 }); snNoise(E, t + 0.5, out(0.18, 0.2, 5000), { kind: 'pink', f: 1300, q: 0.6, att: 0.1, hold: 0.6, dec: 0.6 }); return;
     case 'crow': BIRD.hashibuto(E, t, out(0.22 * (SND.birdK || 1), R(-0.6, 0.6), 7000)); return;
     case 'reveal': snChime(E, t, out(0.1, 0), 1); return;
+    case 'houou-call': snHoouCall(E, t, out(0.2 * clamp(+arg || 0.8, 0.2, 1.2), R(-0.15, 0.15), 9000)); return;   // the 鳳凰 calls (arg: how near)
+    case 'houou-wing': snHoouWing(E, t, out(0.42 * clamp(+arg || 0.6, 0.1, 1.2), R(-0.2, 0.2), 6000)); return;   // one beat of its wings (arg: the stroke's strength, how near)
     case 'rare': var f = RARE[arg]; if (f) { f(E, t, out(0.24, R(-0.5, 0.5), 11000)); return; } snChime(E, t, out(0.14, 0), 1, [2093, 2637, 3136, 4186]); return;
     case 'thunder': E.lastThunder = t; snThunder(E, t + Math.max(0, +arg || 0), out(0.3, R(-0.5, 0.5)), Math.max(0, +arg || 3)); return;
     case 'firework': var a = typeof arg === 'object' && arg ? arg : { delay: +arg || 1.2 }; snBoom(E, t, out(0.17, R(-0.3, 0.3)), Math.max(0, a.delay || 0), a.kind === 'crackle' || (!a.kind && E.rnd() < 0.4) ? 'crackle' : a.kind, a.whistle === undefined ? E.rnd() < 0.25 : a.whistle); return;

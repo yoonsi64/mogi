@@ -14244,7 +14244,7 @@ return true;
 // so every view open at the time (the home card, the larger view, 全画面) shows the same moment of it, and a view
 // opened mid-visit joins in. In: 9 s flying in; 1.6 s landing; 95 s at rest (the rainbow); 9 s flying off.
 var HOOU_IN=9,HOOU_LAND=1.6,HOOU_STAY=95,HOOU_OUT=9,HOOU_ALL=HOOU_IN+HOOU_LAND+HOOU_STAY+HOOU_OUT;
-var hoou=null,hoouWait=0,hoouSp=[],hoouLT=-1;
+var hoou=null,hoouWait=0,hoouSp=[],hoouLT=-1,hoouSnd=null;
 function hoouRec(){return o.hoou&&typeof o.hoou==='object'?o.hoou:null;}
 function hoouOK(g){return!!(g&&g.F&&g.F.pagoda&&(g.light==='morning'||g.light==='day')&&(g.wx==='clear'||g.wx==='cloudy'));}
 function hoouFin(){return P(PAGODA.x,21.72,PAGODA.z);}
@@ -14316,11 +14316,25 @@ o.droop=1-sstep(0,0.35,s3);o.legs=1-sstep(0,0.15,s3);o.head=(1-sstep(0,0.3,s3))*
 }
 return o;
 }
+// its voice: a soft beat of the wings on each downstroke (louder the stronger the stroke and the nearer it is), and a calm call
+// as it settles on the spire and again as it rises to leave (it calls first as it comes, with the visit's own 'rare' cue)
+function hoouVoice(el,dt,o,bp){
+var s=hoouSnd,a=o.wings.a1;
+if(!s||s.t0!==hoou.t0){hoouSnd={t0:hoou.t0,pe:el,a:a,up:false,top:0};return;}
+var fk=hoouFin().k,near=clamp(fk?bp.k/fk:1,0.3,1.2);
+if(dt>0){var v=(a-s.a)/dt;
+if(v>0.5&&!s.up){s.up=true;s.top=a;}
+if(s.up)s.top=Math.max(s.top,a);
+if(v<-0.5&&s.up){s.up=false;cue('houou-wing',{id:+(clamp((s.top-0.2)/1.1,0.3,1)*near).toFixed(2)},true);}}
+s.a=a;
+var r0=HOOU_IN+HOOU_LAND;[r0+3.2,r0+HOOU_STAY+0.15].forEach(function(x){if(s.pe<x&&el>=x)cue('houou-call',{id:+near.toFixed(2)},true);});
+s.pe=el;
+}
 function hoouDraw(ctx,g,t){
 var el=(Date.now()-hoou.t0)/1000;if(el<0||el>HOOU_ALL)return;
 var dt=hoouLT<0?0:Math.min(0.1,Math.max(0,t-hoouLT));hoouLT=t;
 var o=hoouState(g,el,el),bp=P(o.B[0],o.B[1],o.B[2]),k=o.L*bp.k*0.05;
-hoouSparksStep(ctx,hoouSp,dt,el,k);
+hoouVoice(el,dt,o,bp);hoouSparksStep(ctx,hoouSp,dt,el,k);
 if(bp.d<=0.5)return;
 var E=hoouPaint3D(ctx,o);          // drawn whole, never cut by the depth of the scene: it is in front of everything it passes
 if(E&&o.alpha>0.3)hoouSparksEmit(hoouSp,E,(el<HOOU_IN+HOOU_LAND?55:el<HOOU_IN+HOOU_LAND+HOOU_STAY?6:45)*dt,k);
