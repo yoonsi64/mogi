@@ -11034,7 +11034,7 @@ function sndCue(E, name, arg, focus, at, so) {
     case 'houou-cry2': snHoouCry2(E, t, out(0.22 * clamp(+arg || 0.8, 0.2, 1.2), R(-0.12, 0.12), 9500)); return;   // touched again: the second part
     case 'houou-outro': snHoouOutro(E, t, out(0.2 * clamp(+arg || 0.8, 0.2, 1.2), R(-0.15, 0.15), 9000)); return;   // its farewell as it lifts off
     case 'houou-cry': snHoouCry(E, t, out(0.22 * clamp(+arg || 0.8, 0.2, 1.2), R(-0.12, 0.12), 9500)); return;   // touched, it cries long (arg: how near)
-    case 'houou-wing': snHoouWing(E, t, out(0.42 * clamp(+arg || 0.6, 0.1, 1.2), R(-0.2, 0.2), 6000)); return;   // one beat of its wings (arg: the stroke's strength, how near)
+    case 'houou-wing': var wq = clamp(arg === undefined || arg === null ? 0.6 : +arg || 0, 0, 1.2); if (wq < 0.015) return; snHoouWing(E, t, out(0.42 * wq, R(-0.2, 0.2), 1400 + 4600 * Math.min(1, Math.sqrt(wq)))); return;   // one beat of its wings (arg: the stroke's strength and how near: far off, softer and duller)
     case 'rare': var f = RARE[arg]; if (f) { f(E, t, out(0.24, R(-0.5, 0.5), 11000)); return; } snChime(E, t, out(0.14, 0), 1, [2093, 2637, 3136, 4186]); return;
     case 'thunder': E.lastThunder = t; snThunder(E, t + Math.max(0, +arg || 0), out(0.3, R(-0.5, 0.5)), Math.max(0, +arg || 3)); return;
     case 'firework': var a = typeof arg === 'object' && arg ? arg : { delay: +arg || 1.2 }; snBoom(E, t, out(0.17, R(-0.3, 0.3)), Math.max(0, a.delay || 0), a.kind === 'crackle' || (!a.kind && E.rnd() < 0.4) ? 'crackle' : a.kind, a.whistle === undefined ? E.rnd() < 0.25 : a.whistle); return;

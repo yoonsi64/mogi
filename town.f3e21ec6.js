@@ -14602,7 +14602,7 @@ if(v>0.5&&!s.up){s.up=true;s.top=a;}
 if(s.up)s.top=Math.max(s.top,a);
 var shk=hoou.mv&&/^(shake|rouse)$/.test(HOOU_MOVES[hoou.mv.i].k)&&el-hoou.mv.t0<HOOU_MOVES[hoou.mv.i].len;          // (a shake of its feathers is not a wingbeat)
 if(v<-0.5&&s.up&&shk)s.up=false;
-if(v<-0.5&&s.up){s.up=false;cue('houou-wing',{id:+(clamp((s.top-0.2)/1.1,0.3,1)*near).toFixed(2)},true);}}
+if(v<-0.5&&s.up){s.up=false;var wn=Math.pow(clamp(fk?bp.k/fk:1,0,1.2),1.4)*(el>HOOU_IN+HOOU_LAND+HOOU_STAY?1-sstep(0.35,0.8,hoouOutU(el).ua):1),wa=clamp((s.top-0.2)/1.1,0.3,1)*wn;if(wa>=0.015)cue('houou-wing',{id:+wa.toFixed(3)},true);}}          // fainter and fainter the farther off it is, and gone well before it reaches the horizon
 s.a=a;
 hoou.near=near;if(hoou.cryQ&&el>=hoou.cryQ.at)hoouCrySing(hoou.cryQ.part,el,true);if(hoou.moveQ&&el>=hoou.moveQ.at)hoouMove(hoou.moveQ.i,el);          // the next part of its cry, when the last ends
 var CPn=hoou.cry!==undefined?HOOU_CRIES[hoou.cryPart||0]:null,cEnd=CPn?hoou.cry+CPn.len:-1e9,r0=HOOU_IN+HOOU_LAND;
