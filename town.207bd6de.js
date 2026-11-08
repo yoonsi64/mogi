@@ -13738,7 +13738,8 @@ return[ox+cc*k,oy-(r<=0.5?r*s1:0.5*s1+(r-0.5)*s2)*k];
 var far=wmap(-1),near=wmap(1),tips=[],plumePts=[];
 var wing=function(map,isFar){
 var Pc=isFar?['#7e5418','#b0802c','#d4a24a']:['#b8822a','#e6b552','#fff2c8'];
-for(var j=8;j>=0;j--)hoouFeather(c,map,-0.08,0.05+j*0.075,-0.5+j*0.015,0.1+j*0.082,0.11,'round',0.015,Pc,!isFar);          // the secondaries, filling the wing out to the first primary
+for(var j=6;j>=0;j--)hoouFeather(c,map,-0.08,0.05+j*0.075,-0.5+j*0.015,0.1+j*0.082,0.11,'round',0.015,Pc,!isFar);
+hoouFeather(c,map,-0.085,0.56,-0.47,0.71,0.11,'round',0.012,Pc,!isFar);          // one more, closing the gap between the secondaries and the first primary
 HOOU_PRIM.forEach(function(f,k){hoouFeather(c,map,f[0],f[1],f[2],f[3],0.1,'point',-0.02,Pc,!isFar);if(!isFar&&k>3)tips.push(map([f[2],f[3]]));});
 var g=map([0.18,0.4]),h2=map([-0.2,0.4]),cg=c.createLinearGradient(g[0],g[1],h2[0],h2[1]);
 cg.addColorStop(0,isFar?'#d9a84e':'#fff3cc');cg.addColorStop(0.45,isFar?'#b0802c':'#ecbd5e');cg.addColorStop(1,isFar?'#8a5c1c':'#c48c30');
