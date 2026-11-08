@@ -1956,8 +1956,8 @@ var tail=function(){
 var plume=function(pl,k,len,wf,eye){
 var pts=[];
 for(var i=0;i<=34;i++){
-var s=i/34,fl=Math.pow(s,1.4)*0.14*Math.sin(s*3.6-t*1.4+k*0.9)*(1-0.7*droop)+Math.pow(s,1.3)*0.16*(o.tailWave||0)*Math.sin(s*5.2-t*3.3+k*1.7),hang=droop*s*s*len*0.5,sw=droop*(Math.pow(s,1.2)*0.2*Math.sin(s*4.6+k*0.8+0.4)*(k%2?1:-1)+Math.pow(s,1.6)*0.05*Math.sin(t*0.55+k*1.3));
-var x=-0.28-s*len*(1-0.05*droop),y=0.03+s*pl[1]*(0.55+0.7*droop)+fl,z=s*pl[2]*len*(0.55+0.5*droop)+sw*0.7;
+var s=i/34,ff=o.tailFloat||0,fl=Math.pow(s,1.4)*0.14*Math.sin(s*3.6-t*1.4+k*0.9)*(1-0.7*droop)+ff*(Math.pow(s,1.2)*0.11*Math.sin(s*2.4-t*0.85+k*1.3)+s*0.045*Math.sin(s*4.3-t*1.5+k*2.2)-0.2*s*s*len*0.45),hang=droop*s*s*len*0.5*(1-0.85*ff),sw=droop*(Math.pow(s,1.2)*0.2*Math.sin(s*4.6+k*0.8+0.4)*(k%2?1:-1)+Math.pow(s,1.6)*0.05*Math.sin(t*0.55+k*1.3));
+var x=-0.28-s*len*(1-0.05*droop)+ff*0.05*s*len*Math.sin(t*0.5+k),y=0.03+s*pl[1]*(0.55+0.7*droop)+fl,z=s*pl[2]*len*(0.55+0.5*droop)+sw*0.7+ff*0.16*Math.pow(s,1.3)*len*Math.sin(t*0.6+k*1.15);
 pts.push(M(x+gx*hang,y+gy*hang,z));if(s>=0.45)plumePts.push(pts[i]);
 }
 hoouPlume(c,pts,wf,eye,k,px);
