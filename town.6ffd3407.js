@@ -13789,22 +13789,21 @@ var on=function(th,rr,lat){var d0=-Math.cos(th),d1=Math.sin(th);return[Cb[0]+rr*
 c.lineCap='round';c.lineJoin='round';
 [[0,-0.012,'#2e1c0a',['#4e3410','#8a6022','#b88c44']],[0.05,0.014,'#3a2410',['#6a4816','#b07e2c','#dcb45e']]].forEach(function(Lg){
 var hip=[Lg[0],0.05],lat=Lg[1],ink=Lg[2],fc=Lg[3],ft=[Fm[0]+hx*lat,Fm[1]+hy*lat];
-var kn=[hip[0]+gx*0.085*lp+hx*0.006*lp,hip[1]+gy*0.085*lp+hy*0.006*lp];
+var kn=[hip[0]+gx*0.1*lp+hx*0.006*lp,hip[1]+gy*0.1*lp+hy*0.006*lp];
 var hk=[(kn[0]+ft[0])/2-hx*0.022*lp,(kn[1]+ft[1])/2-hy*0.022*lp];          // a slight crook at the hock
 // an eagle's leg: a thick bare shank in yellow-gold, banded with scales, under feathered 'trousers'
 var ribbon=function(P,Wd){var Lf=[],Rt=[];P.forEach(function(q,k){var a=P[Math.max(0,k-1)],b=P[Math.min(P.length-1,k+1)],tx=b[0]-a[0],ty=b[1]-a[1],tl=Math.hypot(tx,ty)||1;Lf.push([q[0]-ty/tl*Wd[k],q[1]+tx/tl*Wd[k]]);Rt.push([q[0]+ty/tl*Wd[k],q[1]-tx/tl*Wd[k]]);});c.beginPath();Lf.concat(Rt.reverse()).forEach(function(q,k){if(k)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);});c.closePath();};
 var sk=c.createLinearGradient(kn[0]+hx*0.02,kn[1]+hy*0.02,kn[0]-hx*0.02,kn[1]-hy*0.02);sk.addColorStop(0,fc===Lg[3]&&lat>0?'#f0cc66':'#c8a048');sk.addColorStop(0.5,lat>0?'#d8a836':'#a8822c');sk.addColorStop(1,lat>0?'#946a1c':'#6e4e16');
-ribbon([kn,hk,ft],[0.016,0.0135,0.012]);c.fillStyle=sk;c.fill();c.strokeStyle=ink;c.lineWidth=0.003;c.stroke();
-c.strokeStyle='rgba(70,44,12,.6)';c.lineWidth=0.0022;c.beginPath();
-[[kn,hk],[hk,ft]].forEach(function(sg2){var a=sg2[0],b=sg2[1],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1,nx=-dy/l,ny=dx/l;for(var f=0.12;f<0.95;f+=0.17){var qx=a[0]+dx*f,qy=a[1]+dy*f,w=0.013;c.moveTo(qx+nx*w,qy+ny*w);c.quadraticCurveTo(qx+dx/l*0.006,qy+dy/l*0.006,qx-nx*w,qy-ny*w);}});c.stroke();          // the scales across the shank
-[[0.08,0.85*lp,-0.012,0.78],[0.22,1.15*lp,0.01,0.85],[-0.14,-0.7*lp,0,1.05]].forEach(function(Tq){          // thick scaled toes clenched round the ball, each ending in a long black talon
-var a0=Tq[0],a1=Tq[1],tl0=lat+Tq[2],n=8,pts=[],wd=[];for(var k=0;k<=n;k++){pts.push(on(a0+(a1-a0)*k/n,R0+0.01,tl0));wd.push(0.0105-0.003*k/n);}
-ribbon(pts,wd);c.fillStyle=lat>0?'#d0a034':'#a07a28';c.fill();c.strokeStyle=ink;c.lineWidth=0.003;c.stroke();
-c.strokeStyle='rgba(70,44,12,.55)';c.lineWidth=0.002;c.beginPath();for(var kk=1;kk<n;kk++){var q=pts[kk],r=pts[kk+1],tx=r[0]-q[0],ty=r[1]-q[1],tl=Math.hypot(tx,ty)||1,w=wd[kk];c.moveTo(q[0]-ty/tl*w,q[1]+tx/tl*w);c.lineTo(q[0]+ty/tl*w,q[1]-tx/tl*w);}c.stroke();
-var sg=a1>=a0?1:-1,cl=[];for(var m=0;m<=6;m++){var fr=m/6;cl.push(on(a1+sg*Tq[3]*fr,R0+0.01+0.018*Math.sin(Math.PI*fr)-0.042*fr*fr,tl0));}          // the talon arches out, then hooks in
-var cw=[];for(var m1=0;m1<=6;m1++)cw.push(0.0085*(1-m1/6)+0.0004);
-ribbon(cl,cw);c.fillStyle='#140c06';c.fill();
-c.strokeStyle='rgba(255,236,200,.35)';c.lineWidth=0.0018;c.beginPath();c.moveTo(cl[1][0],cl[1][1]);c.lineTo(cl[4][0],cl[4][1]);c.stroke();          // a glint along the talon
+ribbon([kn,hk,ft],[0.0105,0.009,0.0078]);c.fillStyle=sk;c.fill();c.strokeStyle='rgba(70,44,14,.45)';c.lineWidth=0.002;c.stroke();
+c.strokeStyle='rgba(90,60,18,.28)';c.lineWidth=0.0015;c.beginPath();
+[[kn,hk],[hk,ft]].forEach(function(sg2){var a=sg2[0],b=sg2[1],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1,nx=-dy/l,ny=dx/l;for(var f=0.2;f<0.95;f+=0.25){var qx=a[0]+dx*f,qy=a[1]+dy*f,w=0.008;c.moveTo(qx+nx*w,qy+ny*w);c.quadraticCurveTo(qx+dx/l*0.006,qy+dy/l*0.006,qx-nx*w,qy-ny*w);}});c.stroke();          // the scales across the shank
+[[0.08,0.8*lp,-0.012,0.42],[0.22,1.05*lp,0.01,0.45],[-0.14,-0.65*lp,0,0.5]].forEach(function(Tq){          // slender toes resting round the ball, each ending in a small neat claw
+var a0=Tq[0],a1=Tq[1],tl0=lat+Tq[2],n=8,pts=[],wd=[];for(var k=0;k<=n;k++){pts.push(on(a0+(a1-a0)*k/n,R0+0.01,tl0));wd.push(0.0062-0.0018*k/n);}
+ribbon(pts,wd);c.fillStyle=lat>0?'#d6aa44':'#a8822e';c.fill();c.strokeStyle='rgba(70,44,14,.4)';c.lineWidth=0.0016;c.stroke();
+c.strokeStyle='rgba(90,60,18,.25)';c.lineWidth=0.0012;c.beginPath();for(var kk=2;kk<n;kk+=2){var q=pts[kk],r=pts[kk+1],tx=r[0]-q[0],ty=r[1]-q[1],tl=Math.hypot(tx,ty)||1,w=wd[kk];c.moveTo(q[0]-ty/tl*w,q[1]+tx/tl*w);c.lineTo(q[0]+ty/tl*w,q[1]-tx/tl*w);}c.stroke();
+var sg=a1>=a0?1:-1,cl=[];for(var m=0;m<=6;m++){var fr=m/6;cl.push(on(a1+sg*Tq[3]*fr,R0+0.01+0.006*Math.sin(Math.PI*fr)-0.016*fr*fr,tl0));}          // a small claw, curving in
+var cw=[];for(var m1=0;m1<=6;m1++)cw.push(0.0045*(1-m1/6)+0.0003);
+ribbon(cl,cw);c.fillStyle='#4a3014';c.fill();
 });
 // the feathered 'trousers': layered pointed feathers from the hip down over the top of the shank
 for(var row=0;row<3;row++)for(var tf=0;tf<5;tf++){
