@@ -13803,7 +13803,7 @@ ribbon(pts,wd);c.fillStyle=lat>0?'#d6aa44':'#a8822e';c.fill();c.strokeStyle='rgb
 c.strokeStyle='rgba(90,60,18,.25)';c.lineWidth=0.0012;c.beginPath();for(var kk=2;kk<n;kk+=2){var q=pts[kk],r=pts[kk+1],tx=r[0]-q[0],ty=r[1]-q[1],tl=Math.hypot(tx,ty)||1,w=wd[kk];c.moveTo(q[0]-ty/tl*w,q[1]+tx/tl*w);c.lineTo(q[0]+ty/tl*w,q[1]-tx/tl*w);}c.stroke();
 var sg=a1>=a0?1:-1,cl=[];for(var m=0;m<=6;m++){var fr=m/6;cl.push(on(a1+sg*Tq[3]*fr,R0+0.01+0.006*Math.sin(Math.PI*fr)-0.016*fr*fr,tl0));}          // a small claw, curving in
 var cw=[];for(var m1=0;m1<=6;m1++)cw.push(0.0045*(1-m1/6)+0.0003);
-ribbon(cl,cw);c.fillStyle='#4a3014';c.fill();
+ribbon(cl,cw);var cg2=c.createLinearGradient(cl[0][0],cl[0][1],cl[6][0],cl[6][1]);cg2.addColorStop(0,'#b07c24');cg2.addColorStop(0.6,'#e6c066');cg2.addColorStop(1,'#fff0c0');c.fillStyle=cg2;c.fill();c.strokeStyle='rgba(110,72,20,.5)';c.lineWidth=0.0012;c.stroke();          // golden claws, brightest at the tip
 });
 // the feathered 'trousers': layered pointed feathers from the hip down over the top of the shank
 for(var row=0;row<3;row++)for(var tf=0;tf<5;tf++){
