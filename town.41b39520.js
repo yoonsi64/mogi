@@ -14147,7 +14147,7 @@ hoouWait=0;hoouStart(true);
 }
 // where it is and how it holds itself el seconds into the visit
 function hoouPose(g,el,t){
-var fin=hoouFin(),Ls=3.0*fin.k,dir=hoou.dir,face=-dir,D=Math.PI/180;
+var fin=hoouFin(),Ls=2.0*fin.k,dir=hoou.dir,face=-dir,D=Math.PI/180;
 var pr=-0.55,feet=[0.008+0.15*Math.sin(pr),0.07+0.15*Math.cos(pr)];
 var A=[fin.x-Ls*face*(feet[0]*Math.cos(pr)-feet[1]*Math.sin(pr)),fin.y-Ls*(feet[0]*Math.sin(pr)+feet[1]*Math.cos(pr))];
 var A1=[A[0]-dir*0.7*Ls,A[1]-0.55*Ls];
