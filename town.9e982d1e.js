@@ -13876,9 +13876,9 @@ var Hm=function(x,y,z){var ax=(x-0.53)*hs,ay=(y+0.3)*hs,dz=(z||0)*hs,dx=ax*ch0-a
 var head=function(){
 var neck=[];for(var i3=0;i3<=12;i3++)neck.push(hoouQuad(N0,N1,N2,i3/12));
 var ns=neck.map(function(q){return M(q[0],q[1],0);});
-var nd0=[ns[9][0]-ns[3][0],ns[9][1]-ns[3][1]],ndl=Math.hypot(nd0[0],nd0[1])||1,nnx=-nd0[1]/ndl,nny=nd0[0]/ndl;if(nnx*lsx+nny*lsy<0){nnx=-nnx;nny=-nny;}var nmid=ns[6],ng=c.createLinearGradient(nmid[0]-nnx*0.05*px,nmid[1]-nny*0.05*px,nmid[0]+nnx*0.05*px,nmid[1]+nny*0.05*px);          // shaded round the neck, lit on the sun's side; bright gold all round: it glows
+var nd0=[ns[9][0]-ns[3][0],ns[9][1]-ns[3][1]],ndl=Math.hypot(nd0[0],nd0[1])||1,nnx=-nd0[1]/ndl,nny=nd0[0]/ndl;if(nnx*lsx+nny*lsy<0){nnx=-nnx;nny=-nny;}var nmid=ns[6],ng=c.createLinearGradient(nmid[0]-nnx*0.038*px,nmid[1]-nny*0.038*px,nmid[0]+nnx*0.038*px,nmid[1]+nny*0.038*px);          // shaded round the neck, lit on the sun's side; bright gold all round: it glows
 ng.addColorStop(0,'#c49438');ng.addColorStop(0.45,'#deae52');ng.addColorStop(0.8,'#eccb7c');ng.addColorStop(1,'#f8e2a6');c.fillStyle=ng;
-neck.forEach(function(q,i){var w=(0.056-0.02*i/12)*px;c.beginPath();c.arc(ns[i][0],ns[i][1],w,0,TAU);c.fill();if(i){var a=ns[i-1],b=ns[i],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1,nx=-dy/l,ny=dx/l,w0=(0.056-0.02*(i-1)/12)*px;c.beginPath();c.moveTo(a[0]+nx*w0,a[1]+ny*w0);c.lineTo(b[0]+nx*w,b[1]+ny*w);c.lineTo(b[0]-nx*w,b[1]-ny*w);c.lineTo(a[0]-nx*w0,a[1]-ny*w0);c.closePath();c.fill();}});
+neck.forEach(function(q,i){var w=(0.042-0.016*i/12)*px;c.beginPath();c.arc(ns[i][0],ns[i][1],w,0,TAU);c.fill();if(i){var a=ns[i-1],b=ns[i],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1,nx=-dy/l,ny=dx/l,w0=(0.042-0.016*(i-1)/12)*px;c.beginPath();c.moveTo(a[0]+nx*w0,a[1]+ny*w0);c.lineTo(b[0]+nx*w,b[1]+ny*w);c.lineTo(b[0]-nx*w,b[1]-ny*w);c.lineTo(a[0]-nx*w0,a[1]-ny*w0);c.closePath();c.fill();}});
 var HK=function(q){return M(q[0],q[1],zs*0.03);},TF=function(q){return M(q[0],q[1],zs*0.022);};
 
 for(var hk=0;hk<6;hk++){var u0=0.5+hk*0.08,p0=hoouQuad(N0,N1,N2,Math.min(1,u0+0.1)),p1=hoouQuad(N0,N1,N2,Math.max(0,u0-0.5));hoouFeather(c,HK,p0[0]-0.012,p0[1],p1[0]-0.05+Math.sin(t*2+hk)*0.005,p1[1]+0.03,0.03,'point',0.012,['#8a6020','#c4922e','#dcb868'],false,px);}
