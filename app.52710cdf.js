@@ -8626,6 +8626,8 @@
         if (Math.abs(day - t) <= 2 * 86400000) return 'tsukimi';
         return null;
     }
+    // when the garden is done: its last stage's time (one curve for both worlds, the engines' STAGE_END_H), in hours
+    function gdEndHours() { var E = window.MogiGarden; return E && E.STAGES && E.STAGES.length ? Math.round(E.STAGES[E.STAGES.length - 1].min / 60) : 300; }
     function gdState(w) {
         w = w || worldActive();
         var E = gdEngineFor(w), tot = studyTotals(), min = Math.floor(worldSeconds(w) / 60), now = new Date();
@@ -9007,8 +9009,8 @@
     // reached a new stage since the garden was last seen: play the reveal on the card
     function gdCheckStageUp() {
         var s = gdState(), sk = gdWorld().seen, seen = parseInt(localStorage.getItem(sk), 10);
-        // the stage list grew (24 → 30 steps): an index saved under the old numbering means something else now,
-        // so it is reset once to the present stage rather than replaying a reveal of things already there
+        // the stage list grew (24 → 30 steps, then 30 → 32 in a new order on a new curve): an index saved under the old numbering means
+        // something else now, so it is reset once to the present stage rather than replaying a reveal of things already there
         var E = gdEngine(), nk = sk + 'N', n = E && E.STAGES ? E.STAGES.length : 0;
         if (n && localStorage.getItem(nk) !== String(n)) { localStorage.setItem(nk, String(n)); if (!isNaN(seen)) { localStorage.setItem(sk, String(s.stage)); return; } }
         if (isNaN(seen) || seen > s.stage) { localStorage.setItem(sk, String(s.stage)); return; }
@@ -9199,14 +9201,18 @@
         MogiSound.play({ world: w, season: o.season, light: o.light, stage: skyStage(w, o.stage), event: o.event, weather: o.weather, fireworks: o.fireworks, sky: gdSkyOpen(), date: o.date });
     }
     document.addEventListener('visibilitychange', function() { if (gardenOpen()) gdSoundUpdate(); });
-    // The garden and town grew from 24 to 30 stages. An ambience.js built for the old numbering (no MogiSky.STAGES30)
-    // is given the old index of the same scenery, so the sky view and the sounds keep showing what the painting shows.
+    // The garden and town grew from 24 to 30 stages, then to 32 in a new order (garden 1.4.20, town 1.3.19). ambience.js on the 32
+    // (MogiSky.STAGES32) takes the painting's stage as it is. An older one is given the stage at the same place along the way (the new
+    // order has no exact older equivalent), and one built for the 24 (no STAGES30) the old index of that, as before.
     var SKY_OLD_TO_NEW = {
         garden: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 14, 15, 18, 20, 21, 22, 23, 25, 26, 27, 28, 29],
         town: [0, 1, 2, 3, 4, 5, 7, 9, 10, 12, 13, 14, 15, 16, 17, 19, 20, 21, 22, 24, 25, 27, 28, 29]
     };
     function skyStage(w, st) {
-        if (window.MogiSky && MogiSky.STAGES30) return st;
+        var S = window.MogiSky, E = gdEngineFor(w), n = E && E.STAGES ? E.STAGES.length : 30;
+        if (S && S.STAGES32) return st;
+        if (n === 32) st = Math.round(st * 29 / 31);
+        if (S && S.STAGES30) return st;
         var m = SKY_OLD_TO_NEW[w === 'town' ? 'town' : 'garden'], old = 0;
         for (var i = 0; i < m.length; i++) if (m[i] <= st) old = i;
         return old;
@@ -26540,7 +26546,7 @@
             { id: 'readdaily', cat: 'habit', icon: '📖', name: '一日一文', value: nb.readBest, unit: '日', tiers: tiers([7, 14, 30, 60, 100], '日'), hint: '毎日1つ以上の文章（内容理解・文章の文法）を解き続けた日数（最長）' },
             { id: 'rush', cat: 'habit', icon: '🏁', name: '追い込み', value: nb.rush.length, unit: '日', tiers: tiers([10, 20, 25, 28, 30], '日'), hint: getSetting('examDate', '') ? '試験日までの30日間に学習した日の数（30日すべてで最高位）' : '試験日を設定すると、試験前の30日間に学習した日を数えます' },
             // 学びの庭 (only once the garden is in the app)
-            { id: 'gdhours', cat: gardenLive() ? 'garden' : 'off', icon: '🌱', name: '庭づくり', value: Math.floor(gdT.total / 3600), unit: '時間', tiers: tiers([1, 10, 50, 150, 500], '時間'), hint: '問題・読解・模試・単語帳のゲームで、手を動かして学習した時間の合計（500時間で庭が完成）' },
+            { id: 'gdhours', cat: gardenLive() ? 'garden' : 'off', icon: '🌱', name: '庭づくり', value: Math.floor(gdT.total / 3600), unit: '時間', tiers: tiers([1, 10, 50, 150, gdEndHours()], '時間'), hint: '問題・読解・模試・単語帳のゲームで、手を動かして学習した時間の合計（' + gdEndHours() + '時間で庭が完成）' },
             { id: 'gdfocus', cat: gardenLive() ? 'garden' : 'off', icon: '🍵', name: '集中', value: gdBestDay, unit: '分', tiers: [{ n: 30, label: '30分' }, { n: 60, label: '1時間' }, { n: 120, label: '2時間' }, { n: 180, label: '3時間' }, { n: 300, label: '5時間' }], hint: '1日に手を動かして学習した時間（いちばん長かった日）' },
             { id: 'gdwater', cat: gardenLive() ? 'garden' : 'off', icon: '💧', name: '水やり', value: gdBestRun, unit: '日', tiers: tiers([3, 7, 14, 30, 100], '日'), hint: '毎日15分以上、手を動かして学習した連続日数（最長）' },
             { id: 'gdseasons', cat: gardenLive() ? 'garden' : 'off', icon: '🍁', name: '四季の庭', value: Object.keys(gdSeasons).length, unit: '季', tiers: [{ n: 1, label: '1季' }, { n: 2, label: '2季' }, { n: 3, label: '3季' }, { n: 4, label: '四季（1年）' }, { n: 8, label: '四季を2巡（2年）' }], hint: '1日1時間以上学習した日がある季節の数。年ごとに数えるので、同じ季節も次の年にまた数えます（8季で四季を2巡）' },

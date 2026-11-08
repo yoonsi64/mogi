@@ -65,7 +65,7 @@ var th=24*Math.PI/180,dist=200,tz=64;
 return{s:Math.sin(th),c:Math.cos(th),x:-5.8+2.5*clamp((1.62-w/h)/0.3),y:dist*Math.sin(th),z:tz-dist*Math.cos(th),F:878*CAM_ZOOM*(1-Math.max(0,266-h)*0.0016),cx:w/2,cy:158+(h-REF_H)/2+Math.max(0,266-h)*0.5+SKY_LIFT*h*0.11};
 }
 var FRAME_ON=true,FRAME_C={},FRAME_N=0;
-var FR={th0:24*Math.PI/180,thMin:12*Math.PI/180,mMax:2.6,crest:[7.5,105],mx:0.035,mb:0.03,mt:0.07,full:[14,22],pad:2};
+var FR={th0:24*Math.PI/180,thMin:12*Math.PI/180,mMax:2.6,crest:[7.5,105],mx:0.035,mb:0.03,mt:0.07,full:[15,23],pad:2};
 function frCam(b,th,D,tx,tz){return{s:Math.sin(th),c:Math.cos(th),x:tx,y:D*Math.sin(th),z:tz-D*Math.cos(th),F:b.F,cx:b.cx,cy:b.cy};}
 function frP(c,x,y,z){var ry=y-c.y,rz=z-c.z,d=-ry*c.s+rz*c.c;return[c.cx+c.F*(x-c.x)/d,c.cy-c.F*(ry*c.c+rz*c.s)/d,d];}
 function frFoot(key){
@@ -87,6 +87,7 @@ case'temple':return[[TEMPLE.x-9,TEMPLE.z-8,BELL.x+3,TEMPLE.z+4,10]];
 case'pagoda':return[bx(PAGODA,4,4,24)];
 case'keep':return[[CASTLE.x-7,CASTLE.z-7,CASTLE.x+7,CASTLE.z+7,26]];
 case'festival':return[];
+case'torii':case'belfry':return[];
 }
 var i=SI[key],f=i===undefined?null:stageFocus(STAGE_DEFS[i][3]);
 return f?[[f[0]-6,f[2]-6,f[0]+6,f[2]+6,f[1]*2+2]]:[];
@@ -237,37 +238,46 @@ function grainClip(ctx,path,alpha){
 if(sil()||!GRAINPAT)return;
 ctx.save();ctx.clip(path);ctx.globalCompositeOperation='overlay';ctx.globalAlpha=alpha;ctx.fillStyle=GRAINPAT;ctx.fillRect(0,0,W,H);ctx.restore();
 }
+var STAGE_END_H=300;
+var STAGE_MIN=(function(){
+var shape=[0,5,10,20,30,45,60,80,105,135,175,220,280,360,450,560,700,880,1080,1350,1680,2100,2610,3200,4000,5000,6200,7700,9500,11800,14600,18000];
+var k=STAGE_END_H*60/18000,out=[];
+shape.forEach(function(m,i){var v=m*k,r=v<300?5:v<1000?10:v<3000?30:v<10000?100:200;out.push(i===shape.length-1?STAGE_END_H*60:i?Math.max(Math.round(v/r)*r,out[i-1]+5):0);});
+return out;
+})();
 var STAGE_DEFS=[
-[0,'一本道','草原を一本の道が川へと続いています',[-9,1,15],'road'],
-[10,'道標','分かれ道に石の道標が立ちました',[-14.2,0.8,12.2],'sign'],
-[20,'茶屋','街道沿いに茶屋が店を開きました',[-12.6,2,23],'teahouse'],
-[40,'井戸','茶屋の脇に井戸が掘られました',[-17.6,1,19.5],'well'],
-[60,'農家','茅葺きの農家が建ちました',[-31,3.5,29],'farm'],
-[90,'田んぼ','道の両側に田んぼが開かれました',[22,0,14],'paddy'],
-[120,'茶畑','街道沿いに茶畑が開かれました','tea','tea'],
-[180,'水車小屋','川辺に水車小屋ができ、水車が回りはじめました',[-17.4,1.8,37.4],'mill'],
-[240,'鍛冶屋','農家のとなりに鍛冶屋ができ、槌の音が響きます','smithy','smithy'],
-[300,'祠と鳥居','杉木立の祠に鳥居が奉納されました',[3.8,2.2,28.6],'shrine'],
-[420,'太鼓橋','川に木の太鼓橋が架かりました',[2,2.5,41],'stoneBridge'],
-[540,'高札場','橋の手前に高札場が設けられました','kosatsu','kosatsu'],
-[720,'商家','橋のたもとに大きな商家が建ちました','shoka','shoka'],
-[900,'長屋','裏通りに長屋が軒を連ねました','nagaya','nagaya'],
-[1200,'旅籠','旅人を迎える旅籠ができました','inn','inn'],
-[1500,'火の見櫓','町を見守る火の見櫓が立ちました','tower','tower'],
-[1800,'土蔵','川沿いになまこ壁の土蔵が並びました','kura','kura'],
-[2400,'寺と鐘楼','山すそに寺が建ち、鐘の音が響きます',[-26.3,5,88],'temple'],
-[3000,'寺子屋','寺の境内に寺子屋が開かれ、子どもたちが通います','terakoya','terakoya'],
-[3600,'町家の通り','格子の町家が通りを埋めました','street','machiya'],
-[4500,'市場','橋のたもとに市が立ち、にぎわっています','market','market'],
-[6000,'船着き場','船着き場に舟が出入りします',[21.4,0.5,36.5],'landing'],
-[7500,'芝居小屋','幟がはためく芝居小屋ができました','theatre','theatre'],
-[9000,'酒蔵','町の東に酒蔵ができ、軒先に杉玉が下がりました','sakagura','sakagura'],
-[12000,'五重塔','寺に五重塔がそびえ立ちました',[-47,12,94],'pagoda'],
-[15000,'武家屋敷','白壁の武家屋敷が並びました','buke','buke'],
-[18000,'木戸と番屋','大通りに木戸が設けられ、番屋ができました','kido','kido'],
-[21000,'石垣','城山に高い石垣が築かれました',[32.5,3,90.5],'ishigaki'],
-[24000,'天守','石垣の上に天守がそびえました',[34.5,13,103.5],'keep'],
-[30000,'城下町の完成','提灯が灯り、城下町の祭りが始まりました','centre','festival']
+[STAGE_MIN[0],'一本道','草原を一本の道が川へと続いています',[-9,1,15],'road'],
+[STAGE_MIN[1],'道標','分かれ道に石の道標が立ちました',[-14.2,0.8,12.2],'sign'],
+[STAGE_MIN[2],'茶屋','街道沿いに茶屋が店を開きました',[-12.6,2,23],'teahouse'],
+[STAGE_MIN[3],'井戸','茶屋の脇に井戸が掘られました',[-17.6,1,19.5],'well'],
+[STAGE_MIN[4],'農家','茅葺きの農家が建ちました',[-31,3.5,29],'farm'],
+[STAGE_MIN[5],'田んぼ','道の両側に田んぼが開かれました',[22,0,14],'paddy'],
+[STAGE_MIN[6],'茶畑','街道沿いに茶畑が開かれました','tea','tea'],
+[STAGE_MIN[7],'鍛冶屋','農家のとなりに鍛冶屋ができ、槌の音が響きます','smithy','smithy'],
+[STAGE_MIN[8],'祠','杉木立に小さな祠がまつられました',[3.8,1.8,29.6],'shrine'],
+[STAGE_MIN[9],'鳥居','祠の前に鳥居が奉納されました',[3.38,2.2,25.42],'torii'],
+[STAGE_MIN[10],'水車小屋','川辺に水車小屋ができ、水車が回りはじめました',[-17.4,1.8,37.4],'mill'],
+[STAGE_MIN[11],'高札場','橋の手前に高札場が設けられました','kosatsu','kosatsu'],
+[STAGE_MIN[12],'商家','橋のたもとに大きな商家が建ちました','shoka','shoka'],
+[STAGE_MIN[13],'長屋','裏通りに長屋が軒を連ねました','nagaya','nagaya'],
+[STAGE_MIN[14],'旅籠','旅人を迎える旅籠ができました','inn','inn'],
+[STAGE_MIN[15],'土蔵','川沿いになまこ壁の土蔵が並びました','kura','kura'],
+[STAGE_MIN[16],'火の見櫓','町を見守る火の見櫓が立ちました','tower','tower'],
+[STAGE_MIN[17],'市場','橋のたもとに市が立ち、にぎわっています','market','market'],
+[STAGE_MIN[18],'町家の通り','格子の町家が通りを埋めました','street','machiya'],
+[STAGE_MIN[19],'酒蔵','町の東に酒蔵ができ、軒先に杉玉が下がりました','sakagura','sakagura'],
+[STAGE_MIN[20],'木戸と番屋','大通りに木戸が設けられ、番屋ができました','kido','kido'],
+[STAGE_MIN[21],'寺','山すそに寺が建ちました',[-26.3,5,88],'temple'],
+[STAGE_MIN[22],'鐘楼','寺に鐘楼ができ、鐘の音が響きます',[-14.3,3,86.8],'belfry'],
+[STAGE_MIN[23],'寺子屋','寺の境内に寺子屋が開かれ、子どもたちが通います','terakoya','terakoya'],
+[STAGE_MIN[24],'武家屋敷','白壁の武家屋敷が並びました','buke','buke'],
+[STAGE_MIN[25],'船着き場','船着き場に舟が出入りします',[21.4,0.5,36.5],'landing'],
+[STAGE_MIN[26],'太鼓橋','板橋が木の太鼓橋に架け替えられました',[2,2.5,41],'stoneBridge'],
+[STAGE_MIN[27],'芝居小屋','幟がはためく芝居小屋ができました','theatre','theatre'],
+[STAGE_MIN[28],'五重塔','寺に五重塔がそびえ立ちました',[-47,12,94],'pagoda'],
+[STAGE_MIN[29],'石垣','城山に高い石垣が築かれました',[32.5,3,90.5],'ishigaki'],
+[STAGE_MIN[30],'天守','石垣の上に天守がそびえました',[34.5,13,103.5],'keep'],
+[STAGE_MIN[31],'城下町の完成','提灯が灯り、城下町の祭りが始まりました','centre','festival']
 ];
 var NST=STAGE_DEFS.length;
 var SI={};
@@ -384,13 +394,18 @@ paddy:'stubble',cherry:'bare',snow:1,fx:'snow',river:[64,80,88],sky:[214,220,228
 Object.keys(SEASONS).forEach(function(k){SEASONS[k].name=k;});
 function lightSnow(se){var o={};for(var k in se)o[k]=se[k];o.snow=Math.max(se.snow,0.3);o.fx=se.snow?se.fx:'snow';return o;}
 function features(st){
+st=Math.max(0,Math.min(NST-1,Math.round(+st)||0));
 var f={s:st,stage:st};
-f.tree0=0.72+0.28*Math.min(1,st/SI.temple);
 STAGE_DEFS.forEach(function(d,i){if(i)f[d[4]]=st>=i;});
-f.street=st>=SI.shoka;
-f.rivst=st>=SI.nagaya;
-f.town=clamp((st-SI.stoneBridge)/(SI.theatre-SI.stoneBridge));
-f.riverCherry=st>=SI.stoneBridge?Math.min(1,0.5+0.5*(st-SI.stoneBridge)/(SI.theatre-SI.stoneBridge)):0;
+f.had=function(i){return i<=st;};
+f.frame=st;
+var q=st*29/(NST-1);
+f.q=q;
+f.tree0=0.72+0.28*Math.min(1,q/17);
+f.street=f.shoka;
+f.rivst=f.nagaya;
+f.town=clamp((q-10)/12);
+f.riverCherry=f.stoneBridge?Math.min(1,0.5+0.5*(st-SI.stoneBridge)/Math.max(1,NST-1-SI.stoneBridge)):0;
 return f;
 }
 function stageFocus(f){
@@ -4611,7 +4626,7 @@ for(var nfz=44.5;nfz>=-27;nfz-=1.5)(function(z0){flat.push({draw:function(c){nea
 var rmK=riverMistK();
 if(rmK>0){var rmP=polyLen(RIVER_S);for(var rms=0;rms<rmP.len;rms+=6)(function(s0){var ra=polyAt(rmP,s0+3);put(ra.x,ra.z,{draw:function(c){riverMistSeg(c,rmP,s0,Math.min(rmP.len,s0+6),rmK);},key:P(ra.x,WL,ra.z).d+0.4,noShadow:true,noRefl:true});})(rms);}
 GROVES.forEach(function(gv,gi){
-if(F.s>=gv[2])return;
+if(F.had(gv[2]))return;
 var gr=mulberry32(900+gi);
 for(var n=0;n<gv[3];n++){
 var tx=gv[0]+(gr()-0.5)*7,tz=gv[1]+(gr()-0.5)*5,tt=genBroad(950+gi*7+n,tx,tz,1.0+gr()*0.3,1.15),pal=n%3===2&&SEA.maple?SEA.maple:null;
@@ -4664,15 +4679,15 @@ var mg=millGate();simple(mg.x,mg.z,drawMillGate,{});
 if(F.shrine){
 YARDS.push({x:SHRINE.x,z:SHRINE.z,u:[1,0],v:[0,1],w:5,d:5,pad:1.2,k:0.7});
 simple(SHRINE.x,SHRINE.z,drawHokora,{ao:circAO(SHRINE.x,SHRINE.z,2),drift:1.1});
-simple(TORII.x,TORII.z,drawTorii,{ao:function(c){var tb2=toriiFrame();[-1.45,1.45].forEach(function(a){var p=Pa(tb2.L(a,0,0));c.beginPath();c.ellipse(p.x,p.y,0.4*p.k,0.2*p.k,0,0,TAU);c.fill();});}});
+if(F.torii)simple(TORII.x,TORII.z,drawTorii,{ao:function(c){var tb2=toriiFrame();[-1.45,1.45].forEach(function(a){var p=Pa(tb2.L(a,0,0));c.beginPath();c.ellipse(p.x,p.y,0.4*p.k,0.2*p.k,0,0,TAU);c.fill();});}});
 SHRINE_CEDARS.map(function(a){return[SHRINE.x+a[0],SHRINE.z+a[1],a[2],a[3]];}).forEach(function(a){put(a[0],a[1],{draw:function(c){drawCedar(c,a[0],a[1],a[2],a[3]);},ao:circAO(a[0],a[1],1.4),sway:swayCedar(a[0],a[1],a[2],a[3]),tap:'cedar'});});
 }
 if(F.landing)simple(landingGeom().B.x,landingGeom().B.z,drawLanding,{refl:true,key:P(landingGeom().B.x,0,landingGeom().B.z-3).d});
 if(F.tower)simple(TOWER.x,TOWER.z,drawTower,{ao:circAO(TOWER.x,TOWER.z,2)});
 if(F.temple){
-var tf=templeFrame(),tfc=tf.L(0,-1.1,0),bf=bellFrame();YARDS.push({x:tfc[0],z:tfc[2],u:tf.u,v:tf.v,w:20,d:18,pad:2,k:0.9});YARDS.push({x:BELL.x,z:BELL.z,u:bf.u,v:bf.v,w:6,d:6,pad:1.5,k:0.8});
+var tf=templeFrame(),tfc=tf.L(0,-1.1,0),bf=bellFrame();YARDS.push({x:tfc[0],z:tfc[2],u:tf.u,v:tf.v,w:20,d:18,pad:2,k:0.9});if(F.belfry)YARDS.push({x:BELL.x,z:BELL.z,u:bf.u,v:bf.v,w:6,d:6,pad:1.5,k:0.8});
 simple(TEMPLE.x,TEMPLE.z,drawTemple,{ao:function(c){footAO(c,{x:tfc[0],z:tfc[2],u:tf.u,w:17.2,d:16.4},0.5);},foot:{x:TEMPLE.x,z:TEMPLE.z,u:tf.u,w:15.8,d:13.5}});
-simple(BELL.x,BELL.z,drawBelfry,{ao:function(c){footAO(c,{x:BELL.x,z:BELL.z,u:bf.u,w:4.4,d:4.4},0.5);},tap:'bell'});
+if(F.belfry)simple(BELL.x,BELL.z,drawBelfry,{ao:function(c){footAO(c,{x:BELL.x,z:BELL.z,u:bf.u,w:4.4,d:4.4},0.5);},tap:'bell'});
 precinctPieces().forEach(function(pc){put((pc.a[0]+pc.b[0])/2,(pc.a[1]+pc.b[1])/2,{draw:function(c){drawPrecinctWall(c,pc);},ao:function(c){precinctWallAO(c,pc);}});});
 var gfr=gateFrame();simple(gfr.x,gfr.z,drawTempleGate,{ao:function(c){footAO(c,{x:gfr.x,z:gfr.z,u:gfr.u,w:4.2,d:2.4},0.4);}});
 sandoLanterns().forEach(function(q){simple(q[0],q[2],function(c){stoneLantern(c,q[0],q[2],1.15,LIT.lit);},{ao:circAO(q[0],q[2],0.5)});});
@@ -5066,7 +5081,7 @@ return yieldNow().then(function(){restoreState(st);last=now();if(job.cancelled)t
 function saveState(){return{WIND_LEAN:WIND_LEAN,W:W,H:H,KS:KS,DQ:DQ,CAM:CAM,SUN:SUN,SUNC:SUNC,AMB:AMB,LS:LS,SX:SX,SZ:SZ,MODE:MODE,F:F,SEA:SEA,LIT:LIT,GRAINPAT:GRAINPAT,GLOWS:GLOWS,TMPS:TMPS};}
 function restoreState(s){WIND_LEAN=s.WIND_LEAN;W=s.W;H=s.H;KS=s.KS;DQ=s.DQ;CAM=s.CAM;SUN=s.SUN;SUNC=s.SUNC;AMB=s.AMB;LS=s.LS;SX=s.SX;SZ=s.SZ;MODE=s.MODE;F=s.F;SEA=s.SEA;LIT=s.LIT;GRAINPAT=s.GRAINPAT;GLOWS=s.GLOWS;TMPS=s.TMPS;}
 function setupScene(o){
-W=o.W;H=o.H;KS=o.KS;DQ=o.DQ||1;SKY_LIFT=skyLiftFor(o);CAM=makeCam(W,H,o.camStage===undefined||o.camStage===null?o.stage:o.camStage);F=features(o.stage);F.event=o.event||null;F.prog=o.sp===undefined||o.sp===null?0.5:o.sp;SEA=o.season==='spring'?springSea(F.prog):SEASONS[o.season];if(F.event==='shogatsu'&&!SEA.snow)SEA=lightSnow(SEA);LIT=weatherLight(LIGHTS[o.light],o.wx);F.wx=o.wx||'clear';F.after=!!o.after;F.wet=wxWet(F.wx);F.frost=o.light==='morning'&&(F.wx==='clear'||F.wx==='cloudy')&&!F.after&&!SEA.snow&&((o.season==='autumn'&&F.prog>=0.75)||(o.season==='spring'&&F.prog<0.1))?(o.season==='autumn'&&F.prog>=1?1:0.7):0;setLight(LIT);MODE='n';WIND_LEAN=(o.wsign===-1?-1:1)*(o.wx==='typhoon'?3:o.wx==='blizzard'||o.wx==='storm'?1.8:1);
+W=o.W;H=o.H;KS=o.KS;DQ=o.DQ||1;SKY_LIFT=skyLiftFor(o);F=features(o.stage);CAM=makeCam(W,H,o.camStage===undefined||o.camStage===null?o.stage:o.camStage);F.event=o.event||null;F.prog=o.sp===undefined||o.sp===null?0.5:o.sp;SEA=o.season==='spring'?springSea(F.prog):SEASONS[o.season];if(F.event==='shogatsu'&&!SEA.snow)SEA=lightSnow(SEA);LIT=weatherLight(LIGHTS[o.light],o.wx);F.wx=o.wx||'clear';F.after=!!o.after;F.wet=wxWet(F.wx);F.frost=o.light==='morning'&&(F.wx==='clear'||F.wx==='cloudy')&&!F.after&&!SEA.snow&&((o.season==='autumn'&&F.prog>=0.75)||(o.season==='spring'&&F.prog<0.1))?(o.season==='autumn'&&F.prog>=1?1:0.7):0;setLight(LIT);MODE='n';WIND_LEAN=(o.wsign===-1?-1:1)*(o.wx==='typhoon'?3:o.wx==='blizzard'||o.wx==='storm'?1.8:1);
 }
 function makeGrainPat(ctx){
 var p=ctx.createPattern(getGrain(),'repeat');
@@ -5623,7 +5638,7 @@ return out;
 }
 function noboriList(){
 var out=[];
-if(F.shrine&&!F.festival){var tf=toriiFrame();[[-2.6,NOBORI_SHRINE[1]],[2.6,NOBORI_SHRINE[0]]].forEach(function(q,qi){var p=tf.L(q[0],-0.8,0);out.push({x:p[0],z:p[2],h:3.4,side:tf.u,col:[198,52,38],edge:[244,240,230],ph:1.1+qi,band:0,mark:true,text:q[1]});});}
+if(F.torii&&!F.festival){var tf=toriiFrame();[[-2.6,NOBORI_SHRINE[1]],[2.6,NOBORI_SHRINE[0]]].forEach(function(q,qi){var p=tf.L(q[0],-0.8,0);out.push({x:p[0],z:p[2],h:3.4,side:tf.u,col:[198,52,38],edge:[244,240,230],ph:1.1+qi,band:0,mark:true,text:q[1]});});}
 if(F.teahouse&&!F.festival){var tb=teaFrame(),p=tb.L(5.6/2+0.9,-4.2/2-1.2,0);out.push({x:p[0],z:p[2],h:3.6,side:tb.u,col:[238,232,216],edge:[184,46,36],ph:0.4,band:0,mark:true,text:'名物団子'});}
 if(F.theatre){var th=theatreFrame(),cols=[[198,54,40],[42,70,140],[226,180,50],[60,120,80],[150,60,130],[198,54,40]];for(var i=0;i<6;i++){var q=th.L(-4.4+i*1.75,-6.4,0);out.push({x:q[0],z:q[2],h:4.6,side:th.u,col:cols[i],edge:[240,236,226],ph:i*1.3,band:2,mark:true,text:NOBORI_THEATRE[i%4]});}}
 if(F.festival){
@@ -5677,7 +5692,7 @@ noboriList().forEach(function(q,i){add({id:'b'+i,band:q.band,key:P(q.x,0,q.z).d,
 stringList().forEach(function(q,i){add({id:'s'+i,band:q.band,key:Pa(mixc(q.a,q.b,0.5)).d-0.3,bb:screenBox([q.a,q.b,add3(q.a,[0,-1.6,0]),add3(q.b,[0,-1.6,0])],4)});});
 if(F.mill){var G=millWheelGeom(),c=G.c;add({id:'wheel',band:0,key:P(c[0],0,c[2]).d,bb:screenBox([[c[0]-4.2,c[1]-2.8,c[2]-4.2],[c[0]+4.2,c[1]+2.8,c[2]+4.2]])});}
 if(F.landing){var bp=boatPath(true),pts=bp.p.map(function(q){return[q[0],2.6,q[1]];}).concat(bp.p.map(function(q){return[q[0],WL,q[1]];}));add({id:'boat',band:1,key:P(BR.x,0,BR.z+0.6).d,bb:screenBox(pts,6)});}
-RARE_DEFS.forEach(function(d){if(F.s<d.minStage||d.loose)return;var a=rareAnchor(d);add({id:'rare_'+d.id,band:a.band,key:a.key,bb:a.bb});});
+RARE_DEFS.forEach(function(d){if(!F.had(d.minStage)||d.loose)return;var a=rareAnchor(d);add({id:'rare_'+d.id,band:a.band,key:a.key,bb:a.bb});});
 lifeSites().forEach(function(q,i){add({id:'life'+i,band:P(q.x,0,q.z).d<P(0,0,36).d?0:2,key:P(q.x,0,q.z).d-0.3,bb:screenBox([[q.x-q.r,0,q.z-q.r],[q.x+q.r,q.h,q.z+q.r]],4)});});
 if(F.festival){var tk=TAIKO();add({id:'taiko',band:2,key:P(tk.x,0,tk.z).d-0.3,bb:screenBox([[tk.x-1.2,0,tk.z-1.2],[tk.x+2.2,2.4,tk.z+1.2]],4)});}
 var cs=townCatSpot();if(cs)add({id:'tcat',band:P(cs.x,0,cs.z).d<P(0,0,36).d?0:2,key:P(cs.x,0,cs.z).d-0.2,bb:screenBox([[cs.x-1.2,0,cs.z-1],[cs.x+2.2,1.6,cs.z+1]],4)});
@@ -5727,7 +5742,7 @@ wl.strands.forEach(function(st){var m=Pa(strandPt(st,0.6));if(m.d<cd+0.4&&r()<0.
 if(ss.length)g.willows.push({ss:ss.slice(0,40),d:cd,pal:SEA.willow});
 });
 g.paths=walkPaths();
-var wxK={clear:1,cloudy:0.95,rain:0.5,storm:0.3,snow:0.7,typhoon:0,blizzard:0}[g.wx],nw=Math.round((1+o.stage*1.05*23/(NST-1)+(F.festival?8:0))*(wxK===undefined?1:wxK)*(o.light==='night'?0.45:o.light==='dusk'?0.85:1)),tw=0;
+var wxK={clear:1,cloudy:0.95,rain:0.5,storm:0.3,snow:0.7,typhoon:0,blizzard:0}[g.wx],nw=Math.round((1+F.frame*1.05*23/(NST-1)+(F.festival?8:0))*(wxK===undefined?1:wxK)*(o.light==='night'?0.45:o.light==='dusk'?0.85:1)),tw=0;
 if(g.wx==='blizzard')nw=1;g.paths.forEach(function(q){tw+=q.w;});
 g.walkers=[];
 for(i=0;i<nw;i++){
@@ -5738,10 +5753,10 @@ g.walkers.push(makeWalker(g,pi,rng,i));
 var kagoSeen=false;g.walkers.forEach(function(w){if(w.kago){if(kagoSeen){w.kago=false;w.sp=0.75+rng()*0.6;}kagoSeen=true;}});
 var fair=!wxWet(g.wx)&&g.wx!=='blizzard'&&o.light!=='night',cand=g.walkers.filter(function(w){return!w.kago&&!w.still&&!w.child&&g.paths[w.pi].pa.len>20;});
 function take(fn){for(var i2=0;i2<cand.length;i2++){var w2=cand[i2];if(!w2.trade&&fn(w2)){w2.trade=true;return w2;}}return null;}
-if(fair&&o.stage>=SI.mill){var hk=take(function(){return true;});if(hk){hk.hikyaku=true;hk.load=null;hk.woman=false;hk.umb=null;hk.lantern=false;hk.sp=2.7;hk.pauseK=0;hk.hat=null;}}
-if(fair&&o.stage>=SI.temple){var km=take(function(w2){return!w2.load;});if(km){km.komuso=true;km.woman=false;km.sp=0.42;km.hat=null;km.lantern=false;km.umb=null;}}
-if(fair&&o.stage>=SI.farm){var hs=take(function(w2){return g.paths[w2.pi].band===0||g.paths[w2.pi].spread>=2;});if(hs){hs.horse={col:rng()<0.5?[120,84,56]:[72,58,50]};hs.load=null;hs.woman=false;hs.sp=0.62;hs.lantern=false;var hq=g.paths[hs.pi],hf;for(var hk2=0;hk2<40&&hs.s>3;hk2++){hf=pathFrame(hq.pa,hs.s);if(!nearDeck(hf.x,hf.z,4))break;hs.s-=1;}}}
-if(o.stage>=SI.stoneBridge&&!wxSnowy(g.wx)){var ct=take(function(w2){return g.paths[w2.pi].band===2&&g.paths[w2.pi].spread>=2;});if(ct){ct.cart=true;ct.load=null;ct.woman=false;ct.umb=null;ct.sp=0.7;ct.lantern=false;var cl0=g.paths[ct.pi].pa.len;if(cl0>14)ct.s=clamp(ct.s,6,cl0-6);ct.lat*=0.4;}}
+if(fair&&F.mill){var hk=take(function(){return true;});if(hk){hk.hikyaku=true;hk.load=null;hk.woman=false;hk.umb=null;hk.lantern=false;hk.sp=2.7;hk.pauseK=0;hk.hat=null;}}
+if(fair&&F.temple){var km=take(function(w2){return!w2.load;});if(km){km.komuso=true;km.woman=false;km.sp=0.42;km.hat=null;km.lantern=false;km.umb=null;}}
+if(fair&&F.farm){var hs=take(function(w2){return g.paths[w2.pi].band===0||g.paths[w2.pi].spread>=2;});if(hs){hs.horse={col:rng()<0.5?[120,84,56]:[72,58,50]};hs.load=null;hs.woman=false;hs.sp=0.62;hs.lantern=false;var hq=g.paths[hs.pi],hf;for(var hk2=0;hk2<40&&hs.s>3;hk2++){hf=pathFrame(hq.pa,hs.s);if(!nearDeck(hf.x,hf.z,4))break;hs.s-=1;}}}
+if(F.stoneBridge&&!wxSnowy(g.wx)){var ct=take(function(w2){return g.paths[w2.pi].band===2&&g.paths[w2.pi].spread>=2;});if(ct){ct.cart=true;ct.load=null;ct.woman=false;ct.umb=null;ct.sp=0.7;ct.lantern=false;var cl0=g.paths[ct.pi].pa.len;if(cl0>14)ct.s=clamp(ct.s,6,cl0-6);ct.lat*=0.4;}}
 g.walkers.forEach(function(w){if(w.load==='pole')w.goods=rng()<0.5?'fish':'veg';});
 if(g.walkers.length>1&&!wxWet(g.wx)&&g.wx!=='blizzard'){var pw=g.walkers[1];pw.load='pole';pw.woman=false;pw.child=false;pw.umb=null;}
 g.smoke=smokeSources(o);
@@ -5819,7 +5834,7 @@ function pickc(r,a){return a[(r()*a.length)|0];}
 function mutedCol(r){var x=r();return pickc(r,x<0.34?EDO_COL.cha:x<0.62?EDO_COL.nezu:x<0.88?EDO_COL.ai:EDO_COL.iro);}
 function folkEnv(g,country){
 var wet=wxWet(g.wx),sn=wxSnowy(g.wx);
-return{season:g.season,wet:wet,snow:sn||!!(g.SEA&&g.SEA.snow),cold:g.season==='winter'||sn,fest:g.season==='summer'&&(g.light==='dusk'||g.light==='night')&&!wet,dark:g.light==='night'||g.light==='dusk',stage:g.stage,country:!!country};
+return{season:g.season,wet:wet,snow:sn||!!(g.SEA&&g.SEA.snow),cold:g.season==='winter'||sn,fest:g.season==='summer'&&(g.light==='dusk'||g.light==='night')&&!wet,dark:g.light==='night'||g.light==='dusk',stage:g.stage,buke:!!(g.F&&g.F.buke),temple:!!(g.F&&g.F.temple),country:!!country};
 }
 function yukataOf(D,r){
 D.yukata=true;D.len='long';D.jacket=D.haori=D.apron=D.legs=D.tasuki=D.collar=D.hakama=D.kyahan=null;D.mino=false;D.hat=null;D.pad=1;D.swords=false;
@@ -5853,7 +5868,7 @@ if(w.yukata||(E.fest&&sub!=='work'&&r()<0.75))yukataOf(D,r);
 var role;
 if(w.load==='pole')role='peddler';else if(w.load==='pack')role='traveler';else if(w.load==='basket')role='farmer';
 else if(E.country&&x<0.55)role='farmer';
-else{y=r();role=y<0.32?'merchant':y<0.56?'craft':y<0.68?'farmer':y<0.8?'elder':(E.stage>=SI.buke&&y<0.91)?'samurai':(E.stage>=SI.temple&&y<0.97)?'monk':'merchant';}
+else{y=r();role=y<0.32?'merchant':y<0.56?'craft':y<0.68?'farmer':y<0.8?'elder':(E.buke&&y<0.91)?'samurai':(E.temple&&y<0.97)?'monk':'merchant';}
 D.role=role;
 if(role==='merchant'){D.col=r()<0.5?pickc(r,EDO_COL.nezu):pickc(r,EDO_COL.cha);D.pat=r()<0.5?'stripe':null;if(r()<0.35)D.haori=pickc(r,[[36,34,38],[66,50,40],[44,46,60]]);else if(r()<0.6)D.apron=pickc(r,[[40,52,84],[32,38,62]]);}
 else if(role==='craft'){D.len='short';D.jacket={col:pickc(r,[[40,56,92],[32,38,64],[96,66,44]]),len:0.44,crest:[232,228,216],eri:[26,24,26]};D.col=D.jacket.col;D.legs=pickc(r,[[36,44,70],[30,32,44]]);D.sleeve=0.04;if(r()<0.6){D.head='band';D.cloth=r()<0.6?[230,228,220]:[60,80,120];}}
@@ -6196,7 +6211,7 @@ function circ(x,z,r){S.push({t:0,x:x,z:z,r:r});}
 function seg(a,b,r){S.push({t:2,a:a,b:b,r:r});}
 townPlan(F).forEach(function(b){var f=planFoot(b);rect(f.x,f.z,f.u,f.w,f.d);});
 circ(TREE0.x,TREE0.z,0.4);
-GROVES.forEach(function(gv,gi){if(F.s>=gv[2])return;var gr=mulberry32(900+gi);for(var n=0;n<gv[3];n++){var tx=gv[0]+(gr()-0.5)*7,tz=gv[1]+(gr()-0.5)*5;gr();circ(tx,tz,0.35);}});
+GROVES.forEach(function(gv,gi){if(F.had(gv[2]))return;var gr=mulberry32(900+gi);for(var n=0;n<gv[3];n++){var tx=gv[0]+(gr()-0.5)*7,tz=gv[1]+(gr()-0.5)*5;gr();circ(tx,tz,0.35);}});
 var bb=BAMBOO;box(BF(bb.x,bb.z,bb.u,0),-bb.ru*0.85,bb.ru*0.85,-bb.rv*0.85,bb.rv*0.85);
 if(F.sign){circ(SIGN.x,SIGN.z,0.22);circ(SIGN.x+0.75,SIGN.z+0.25,0.3);}
 if(F.teahouse){var tb=teaFrame(),hp=tb.L(-4.6,-1.5,0);rect(TEA.x,TEA.z,TEA.u,5.6,4.2);box(BF(hp[0],hp[2],[Math.cos(0.9),Math.sin(0.9)],0),-1.4,1.0,-0.65,0.65);if(!SEA.snow){var tpq=teaParasol().base;circ(tpq[0],tpq[2],0.08);}var tbp=tb.L(0.2,-4.1,0);box(BF(tbp[0],tbp[2],TEA.u,0),-1.05,1.05,-0.4,0.4);}
@@ -6212,12 +6227,12 @@ if(F.shrine){
 var sf=BF(SHRINE.x,SHRINE.z,[1,-0.1],0);box(sf,-1.3,1.3,-1.3,1.3);
 seg([SHRINE.x-3,SHRINE.z-2.6],[SHRINE.x-0.85,SHRINE.z-2.815],0.06);seg([SHRINE.x+0.85,SHRINE.z-2.985],[SHRINE.x+3,SHRINE.z-3.2],0.06);
 [-1.1,1.1].forEach(function(a){var q=sf.L(a,-3.35,0);circ(q[0],q[2],0.22);});
-[-1.45,1.45].forEach(function(a){var p=toriiFrame().L(a,0,0);circ(p[0],p[2],0.18);});
+if(F.torii)[-1.45,1.45].forEach(function(a){var p=toriiFrame().L(a,0,0);circ(p[0],p[2],0.18);});
 SHRINE_CEDARS.forEach(function(a){circ(SHRINE.x+a[0],SHRINE.z+a[1],0.45);});
 }
 if(F.tower)rect(TOWER.x,TOWER.z,[1,0.1],3,3);
 if(F.temple){
-var tf=templeFrame();rect(TEMPLE.x,TEMPLE.z,tf.u,15.8,13.5);rect(BELL.x,BELL.z,KR_DIR,4.4,4.4);
+var tf=templeFrame();rect(TEMPLE.x,TEMPLE.z,tf.u,15.8,13.5);if(F.belfry)rect(BELL.x,BELL.z,KR_DIR,4.4,4.4);
 precinctPieces().forEach(function(pc){seg(pc.a,pc.b,0.25);});
 var gq=gateFrame();[-2.0,2.0].forEach(function(a){var p=gq.L(a,0,0);rect(p[0],p[2],KR_DIR,0.5,2.2);});
 sandoLanterns().forEach(function(q){circ(q[0],q[2],0.3);});box(chozuyaFrame(),-1.35,1.35,-1.0,1.0);
@@ -6654,7 +6669,7 @@ bearer(ends[1],f1,1);
 }
 function folkDress(g,w){
 if(w.D)return w.D;
-var q=g.paths[w.pi],r=mulberry32(((w.ph*1e5)|0)+17),country=g.stage<SI.shoka||(q&&q.band===0&&!q.still);
+var q=g.paths[w.pi],r=mulberry32(((w.ph*1e5)|0)+17),country=!g.F.shoka||(q&&q.band===0&&!q.still);
 if(w.still&&g.season==='summer'&&(g.light==='night'||g.light==='dusk'))w.yukata=r()<0.75;
 w.D=dressFor(folkEnv(g,country),w,r);if(w.D.mino)w.mino=true;
 if(w.D.yukata||w.D.role==='monk'||w.D.role==='samurai'){if(w.load)w.load=null;}
@@ -7251,7 +7266,7 @@ function perchPoints(){
 var pts=[];
 if(F.sign)pts.push([SIGN.x,1.62,SIGN.z]);
 if(F.well)pts.push([WELL.x-0.85,2.25,WELL.z]);
-if(F.shrine){var tb=toriiFrame();pts.push(tb.L(-2.4,-0.1,3.85));}
+if(F.torii){var tb=toriiFrame();pts.push(tb.L(-2.4,-0.1,3.85));}
 if(F.market)pts.push([MARKET.x-4.5+1.1,2.15,MARKET.z-1.9]);
 if(F.paddy&&SEA.name==='autumn'&&F.farm)for(var i=0;i<4;i++)pts.push([HAZA[0][0]-4+i*2.7,2.25,HAZA[0][1]]);
 if(F.landing){var lb=landingGeom().B;pts.push(lb.L(-2.8,-1.8,1.15));}
@@ -7641,10 +7656,10 @@ if(F.well)rect(WELL.x,WELL.z,[1,0],1.4,1.4,0.2);
 if(F.sign)rect(SIGN.x,SIGN.z,[1,0],0.5,0.5,0.2);
 if(F.farm){rect(FARM.x,FARM.z,[1,0.08],11.5,7.6);seg([FARM.x-8.5,FARM.z-8],[FARM.x-2.5,FARM.z-8.3],0.3);seg([FARM.x+1.5,FARM.z-8.4],[FARM.x+6.5,FARM.z-8.2],0.3);rect(FARM.x+7.5,FARM.z-2,[1,0],2.2,1,0.2);}
 if(F.mill)rect(MILL.x,MILL.z,MILL.u,5,4.4);
-if(F.shrine){rect(SHRINE.x,SHRINE.z,[1,-0.1],3,3,0.3);seg([SHRINE.x-3,SHRINE.z-2.6],[SHRINE.x-0.85,SHRINE.z-2.815],0.3);seg([SHRINE.x+0.85,SHRINE.z-2.985],[SHRINE.x+3,SHRINE.z-3.2],0.3);[-1.1,1.1].forEach(function(a){var q=BF(SHRINE.x,SHRINE.z,[1,-0.1],0).L(a,-3.35,0);rect(q[0],q[2],[1,0],0.4,0.4,0.1);});[-1.45,1.45].forEach(function(a){var p=toriiFrame().L(a,0,0);rect(p[0],p[2],[1,0],0.5,0.5,0.15);});SHRINE_CEDARS.forEach(function(a){rect(SHRINE.x+a[0],SHRINE.z+a[1],[1,0],0.8,0.8,0.1);});}
+if(F.shrine){rect(SHRINE.x,SHRINE.z,[1,-0.1],3,3,0.3);seg([SHRINE.x-3,SHRINE.z-2.6],[SHRINE.x-0.85,SHRINE.z-2.815],0.3);seg([SHRINE.x+0.85,SHRINE.z-2.985],[SHRINE.x+3,SHRINE.z-3.2],0.3);[-1.1,1.1].forEach(function(a){var q=BF(SHRINE.x,SHRINE.z,[1,-0.1],0).L(a,-3.35,0);rect(q[0],q[2],[1,0],0.4,0.4,0.1);});if(F.torii)[-1.45,1.45].forEach(function(a){var p=toriiFrame().L(a,0,0);rect(p[0],p[2],[1,0],0.5,0.5,0.15);});SHRINE_CEDARS.forEach(function(a){rect(SHRINE.x+a[0],SHRINE.z+a[1],[1,0],0.8,0.8,0.1);});}
 if(F.tower)rect(TOWER.x,TOWER.z,[1,0.1],3,3,0.2);
 if(F.farm)NEAR_BUSHES.forEach(function(q){var e=q[2]*(q[4]==='low'?2.6:1.8);rect(q[0],q[1],[1,0],e,e*0.8,0.15);});
-if(F.temple){box(templeFrame(),-8.9,8.9,-10.3,7.0);rect(BELL.x,BELL.z,KR_DIR,4.4,4.4,0.2);precinctPieces().forEach(function(pc){seg(pc.a,pc.b,0.4);});var gq=gateFrame();[-2.0,2.0].forEach(function(a){var p=gq.L(a,0,0);rect(p[0],p[2],KR_DIR,0.5,2.2,0.1);});sandoLanterns().forEach(function(q){rect(q[0],q[2],[1,0],0.7,0.7,0.1);});}
+if(F.temple){box(templeFrame(),-8.9,8.9,-10.3,7.0);if(F.belfry)rect(BELL.x,BELL.z,KR_DIR,4.4,4.4,0.2);precinctPieces().forEach(function(pc){seg(pc.a,pc.b,0.4);});var gq=gateFrame();[-2.0,2.0].forEach(function(a){var p=gq.L(a,0,0);rect(p[0],p[2],KR_DIR,0.5,2.2,0.1);});sandoLanterns().forEach(function(q){rect(q[0],q[2],[1,0],0.7,0.7,0.1);});}
 if(F.pagoda)rect(PAGODA.x,PAGODA.z,KR_DIR,8,8,0.3);
 if(F.temple)box(chozuyaFrame(),-1.55,1.55,-1.2,1.2);
 if(F.theatre){var th=theatreFrame();rect(th.x,th.z,th.u,9.5,11);}
@@ -11330,7 +11345,7 @@ var dmin=1e9;ground.forEach(function(q){dmin=Math.min(dmin,P(q[0],0,q[2]).d);});
 var box=[];ground.forEach(function(q){box.push([q[0]-1.6,q[1],q[2]-1.6],[q[0]+1.6,q[1]+2.4,q[2]+1.6]);});
 return{band:dmin<P(0,0,36).d?0:2,key:dmin-0.4,bb:screenBox(box,6)};
 }
-function rareEligible(g){return RARE_DEFS.filter(function(d){return d.season.indexOf(g.season)>=0&&d.light.indexOf(g.light)>=0&&g.stage>=d.minStage;});}
+function rareEligible(g){return RARE_DEFS.filter(function(d){return d.season.indexOf(g.season)>=0&&d.light.indexOf(g.light)>=0&&g.F.had(d.minStage);});}
 function rareById(id){for(var i=0;i<RARE_DEFS.length;i++)if(RARE_DEFS[i].id===id)return RARE_DEFS[i];return null;}
 function springSea(prog){
 var B=SEASONS.spring,Wn=SEASONS.winter,st=sakuraState(prog),k=st.leafOut,o={};
@@ -11353,8 +11368,8 @@ var FAR_CHERRY=[
 [52.5,18.8,0.9,0,NST],[56.5,17.6,0.7,SI.kura,NST],[60,13.4,0.9,SI.kura,NST],
 [20.37,44.8,0.75,SI.stoneBridge,SI.machiya],[31.3,39.7,0.85,SI.kosatsu,SI.kura]
 ].map(function(a,i){return{x:a[0],z:a[1],s:a[2],from:a[3],to:a[4],seed:840+i};});
-function farCherries(){return FAR_CHERRY.filter(function(c){return F.s>=c.from&&F.s<c.to;});}
-function farCherryG(c){return c.s*1.3*(c.from?Math.min(1,0.7+0.3*(F.s-c.from)/4):1);}
+function farCherries(){return FAR_CHERRY.filter(function(c){return F.had(c.from)&&!F.had(c.to);});}
+function farCherryG(c){return c.s*1.3*(c.from?0.7+0.3*clamp((F.frame-c.from)/4):1);}
 function shedTrees(){
 var out=[];
 if(F.riverCherry>0)RIVER_CHERRY.forEach(function(a){out.push([a[0],a[1],4.4*a[2]*F.riverCherry,1]);});
@@ -11364,7 +11379,7 @@ if(SEA.name==='autumn'){
 out.push([TREE0.x,TREE0.z,4.2*F.tree0,1]);
 if(F.farm)out.push([KAKI.x,KAKI.z,3.0,0.6]);
 if(F.temple){out.push([-28,95.5,3.4,0.8]);out.push([-47,80,3.2,0.7]);}
-GROVES.forEach(function(gv){if(F.s<gv[2])out.push([gv[0],gv[1],3.6,0.5]);});
+GROVES.forEach(function(gv){if(!F.had(gv[2]))out.push([gv[0],gv[1],3.6,0.5]);});
 }
 return out;
 }
@@ -11602,11 +11617,11 @@ return out;
 }
 function initInteract(g){
 var I={bell:null,birds:[],wheel:0,lamps:[],trees:[],koi:null,paddy:null,taiko:null,cat:null,outs:[]};
-if(g.stage>=SI.temple){I.bellP=P(BELL.x,3.2,BELL.z);var bb=screenBox([[BELL.x-2.6,0,BELL.z-2.6],[BELL.x+2.6,6.2,BELL.z+2.6]],1);I.bellBox={x:(bb[0]+bb[2])/2,y:(bb[1]+bb[3])/2,rx:(bb[2]-bb[0])/2+2,ry:(bb[3]-bb[1])/2+2,d:P(BELL.x,0,BELL.z).d};}
+if(g.F.belfry){I.bellP=P(BELL.x,3.2,BELL.z);var bb=screenBox([[BELL.x-2.6,0,BELL.z-2.6],[BELL.x+2.6,6.2,BELL.z+2.6]],1);I.bellBox={x:(bb[0]+bb[2])/2,y:(bb[1]+bb[3])/2,rx:(bb[2]-bb[0])/2+2,ry:(bb[3]-bb[1])/2+2,d:P(BELL.x,0,BELL.z).d};}
 if(g.F.mill)I.wheelP=Pa(g.wheel?g.wheel.c:millWheelGeom().c);
 if(g.F.festival){var tk=TAIKO();I.taikoW=tk;I.taikoP=P(tk.x,1.2,tk.z);}
 var cs=townCatSpot();if(cs){I.catW=cs;I.catP=P(cs.x,0.3,cs.z);}
-if(g.F.shrine){var sb=screenBox([[SHRINE.x-1.7,0,SHRINE.z-1.7],[SHRINE.x+1.7,3.6,SHRINE.z+1.7],[TORII.x-1.9,0,TORII.z-0.4],[TORII.x+1.9,3.9,TORII.z+0.4]],1);I.shrineBox={x:(sb[0]+sb[2])/2,y:(sb[1]+sb[3])/2,rx:(sb[2]-sb[0])/2+2,ry:(sb[3]-sb[1])/2+2};I.shrineP=P(SHRINE.x-0.2,1.4,SHRINE.z-1.7);}
+if(g.F.shrine){var sb=screenBox([[SHRINE.x-1.7,0,SHRINE.z-1.7],[SHRINE.x+1.7,3.6,SHRINE.z+1.7]].concat(g.F.torii?[[TORII.x-1.9,0,TORII.z-0.4],[TORII.x+1.9,3.9,TORII.z+0.4]]:[]),1);I.shrineBox={x:(sb[0]+sb[2])/2,y:(sb[1]+sb[3])/2,rx:(sb[2]-sb[0])/2+2,ry:(sb[3]-sb[1])/2+2};I.shrineP=P(SHRINE.x-0.2,1.4,SHRINE.z-1.7);}
 I.treeList=tapTreeList();
 if(I.wheelP)I.wheelR=MILL.wr*I.wheelP.k+2;
 return I;
@@ -11985,7 +12000,7 @@ var fr=lifeFronts(6);fr.forEach(function(q){add(q[0],q[2],2.6,2.6);});
 if(F.ishigaki){var oq2=oteFrame().L(0.6,-0.4,0);add(oq2[0],oq2[2],7.5,8.5);}
 if(!F.street&&F.teahouse)add(-4.0,17.0,2.4,2.2);else if(F.street){var kpp=stPt(10,0.5);add(kpp[0],kpp[1],2.4,2.2);}
 if(F.shrine)add(SHRINE.x-0.35,SHRINE.z-3.35,3);
-if(F.temple){var tf=templeFrame().L(0,-11.6,0);add(tf[0],tf[2],4.6);var bqs=bellFrame().L(-3.7,0.3,0);add(bqs[0],bqs[2],3.6);}
+if(F.temple){var tf=templeFrame().L(0,-11.6,0);add(tf[0],tf[2],4.6);if(F.belfry){var bqs=bellFrame().L(-3.7,0.3,0);add(bqs[0],bqs[2],3.6);}}
 if(F.farm){var ff=farmFrame().L(2.5,-9.6,0);add(ff[0],ff[2],2.2);}
 if(F.market)marketBenches().forEach(function(q){add(MARKET.x+q[0],MARKET.z+q[1],1.6);});
 if(F.teahouse){var tb=teaFrame().L(0.2,-4.1,0);add(tb[0],tb[2],1.6);}
@@ -12038,7 +12053,7 @@ if(g.season==='autumn'&&daytime&&F0.riverCherry>0){var apm=seasonProgress(d,'aut
 if(g.SEA.snow&&daytime&&g.wx!=='blizzard')L.push({kind:'snowman',x:LIFE_SITES.kids[0][0],z:LIFE_SITES.kids[0][1],folk:people(2).map(function(k2){k2.child=true;return k2;})});
 if(g.SEA.snow&&daytime&&F0.machiya&&g.wx!=='blizzard')lifeFronts().forEach(function(q){L.push({kind:'sweep',x:q[0],z:q[2],W:q.W,w:q.w,folk:people(1,[[44,50,76],[60,44,36],[36,40,52],[80,50,40]]),shovel:true});});
 if(m===11&&daytime){if(day>=25&&F0.farm){var ff=farmFrame().L(2.5,-9.6,0);L.push({kind:'mochi',x:ff[0],z:ff[2],folk:people(2)});}}
-if(m===11&&day===31&&light==='night'&&F0.temple){var bq2=bellFrame().L(-3.3,-1.4,0),tf3=templeFrame().L(0,-11.6,0);L.push({kind:'joya',x:bq2[0],z:bq2[2],folk:people(8)});L.push({kind:'joya',x:tf3[0],z:tf3[2],crowd:true,folk:people(10)});}
+if(m===11&&day===31&&light==='night'&&F0.temple){var bq2=bellFrame().L(-3.3,-1.4,0),tf3=templeFrame().L(0,-11.6,0);if(F0.belfry)L.push({kind:'joya',x:bq2[0],z:bq2[2],folk:people(8)});L.push({kind:'joya',x:tf3[0],z:tf3[2],crowd:true,folk:people(10)});}
 if(m===0&&day<=7&&light!=='night'){if(F0.shrine)L.push({kind:'pray',small:true,x:SHRINE.x-0.35,z:SHRINE.z-3.35,folk:people(5)});if(F0.temple){var tf=templeFrame().L(0,-11.6,0);L.push({kind:'pray',x:tf[0],z:tf[2],folk:people(8)});}}
 if((light==='morning'||light==='dusk')&&F0.machiya&&g.wx!=='typhoon')lifeFronts().forEach(function(q,i){if(light==='morning'&&i===0)return;L.push({kind:'shutter',x:q[0],z:q[2],W:q.W,w:q.w,i:i,open:light==='morning',folk:people(1)});});
 if(light==='night'&&F0.street&&!wet&&g.wx!=='snow'){var sb=rvPt(18,-2.2);L.push({kind:'soba',x:sb[0],z:sb[1],folk:people(2)});}
@@ -13234,9 +13249,9 @@ for(var i=0;i<5+((rng()*3)|0);i++)FA.sp.birds.push({x:hx+(rng()-0.5)*2.4,z:hz+(r
 }
 if((g.light!=='night')&&g.season!=='winter'||(g.season==='winter'&&day&&!g.SEA.snow)){
 var spot=heronSpot();
-if(spot&&g.stage>=SI.sign&&g.wx!=='snow')FA.heron={x:spot[0],z:spot[1],hx:spot[0],hz:spot[1],y:0,face:spot[2],ext:0.1,act:'stand',timer:6+rng()*8,strike:0,step:null,fly:null,gone:0,band:P(spot[0],0,spot[1]).d<P(0,0,36).d?0:1};
+if(spot&&g.F.sign&&g.wx!=='snow')FA.heron={x:spot[0],z:spot[1],hx:spot[0],hz:spot[1],y:0,face:spot[2],ext:0.1,act:'stand',timer:6+rng()*8,strike:0,step:null,fly:null,gone:0,band:P(spot[0],0,spot[1]).d<P(0,0,36).d?0:1};
 }
-if(F.shrine&&dry&&g.light!=='night'&&g.stage>=SI.shrine){FA.pg={x:SHRINE.x-0.6,z:SHRINE.z-4.6,birds:[],band:P(SHRINE.x,0,SHRINE.z-4.6).d<P(0,0,36).d?0:2};for(var pj=0;pj<3+((rng()*2)|0);pj++)FA.pg.birds.push({x:FA.pg.x+(rng()-0.5)*2.4,z:FA.pg.z+(rng()-0.5)*1.2,face:rng()<0.5?1:-1,act:'walk',at:rng()*2,ph:rng()*TAU,st:0});}
+if(F.shrine&&dry&&g.light!=='night'){FA.pg={x:SHRINE.x-0.6,z:SHRINE.z-4.6,birds:[],band:P(SHRINE.x,0,SHRINE.z-4.6).d<P(0,0,36).d?0:2};for(var pj=0;pj<3+((rng()*2)|0);pj++)FA.pg.birds.push({x:FA.pg.x+(rng()-0.5)*2.4,z:FA.pg.z+(rng()-0.5)*1.2,face:rng()<0.5?1:-1,act:'walk',at:rng()*2,ph:rng()*TAU,st:0});}
 if((g.season==='summer'||g.season==='spring')&&g.light!=='night'&&dry){FA.sw=[];for(var j=0;j<4;j++)FA.sw.push({s:0.2+rng()*0.6,off:(rng()-0.5)*6,h:1+rng()*2,v:(rng()<0.5?1:-1)*(0.045+rng()*0.025),ph:rng()*TAU,burst:rng(),paddy:F.paddy&&j%2===1});}
 return FA;
 }
@@ -13471,7 +13486,7 @@ drawWader(ctx,hq.x,hq.y,hq.k,'heron',{face:Hn.face,ext:Hn.ext,strike:Hn.strike,s
 if(Hn.act==='strike'&&Hn.strike>0.9){ctx.strokeStyle='rgba(232,240,246,0.5)';ctx.lineWidth=0.4;var rp=P(Hn.x+Hn.face*0.55,WL,Hn.z);ctx.beginPath();ctx.ellipse(rp.x,rp.y,0.25*rp.k,0.06*rp.k,0,0,TAU);ctx.stroke();}
 }
 }
-var VERSION='1.3.18';
+var VERSION='1.3.19';
 var SEASON_KEYS=['spring','summer','autumn','winter'],LIGHT_KEYS=['morning','day','dusk','night'];
 var WEATHERS=['clear','cloudy','rain','storm','snow','typhoon','blizzard'];
 var EVENTS=['shogatsu','setsubun','hinamatsuri','kodomo','tanabata','obon','tsukimi'];
@@ -13864,8 +13879,8 @@ return true;
 }
 function tickCues(){
 var g=cur.geo,n=cues.next;
-var nd=nowDate();if(g.stage>=SI.temple&&g.light==='night'&&nd.getMonth()===11&&nd.getDate()===31&&clock>n.bell){cue('bell',null,true);n.bell=clock+9+frng()*2;if(g.I)g.I.bell={t0:clock,monk:true};}
-else if(g.stage>=SI.temple&&g.light==='dusk'&&clock>n.bell){if(cue('bell')){n.bell=clock+55+frng()*10;if(g.I)g.I.bell={t0:clock,monk:true};}else n.bell=clock+2;}
+var nd=nowDate();if(g.F.belfry&&g.light==='night'&&nd.getMonth()===11&&nd.getDate()===31&&clock>n.bell){cue('bell',null,true);n.bell=clock+9+frng()*2;if(g.I)g.I.bell={t0:clock,monk:true};}
+else if(g.F.belfry&&g.light==='dusk'&&clock>n.bell){if(cue('bell')){n.bell=clock+55+frng()*10;if(g.I)g.I.bell={t0:clock,monk:true};}else n.bell=clock+2;}
 if(g.F.mill&&clock>n.wheel){if(cue('wheel'))n.wheel=clock+24+frng()*22;else n.wheel=clock+3;}
 if(clock>n.splash&&(g.wx==='clear'||g.wx==='cloudy'||g.wx==='rain')){
 if(cue('splash')){
@@ -14427,7 +14442,7 @@ return hl.show(rare.def.id,rare.def.name,ms);
 },
 update:update,
 playStageUp:playStageUp,
-_summon:function(id){var d=rareById(id);if(!d||!cur||dead||cur.spec.stage<d.minStage)return false;if(rare&&rare.hand&&rare.def.id===id)return true;var ok=false;try{ok=startRare(d);}catch(e){rare=null;cur.geo.rareNow=null;if(window.console)console.error(e);}loopCheck();return ok;},
+_summon:function(id){var d=rareById(id);if(!d||!cur||dead||!(cur.geo&&cur.geo.F&&cur.geo.F.had(d.minStage)))return false;if(rare&&rare.hand&&rare.def.id===id)return true;var ok=false;try{ok=startRare(d);}catch(e){rare=null;cur.geo.rareNow=null;if(window.console)console.error(e);}loopCheck();return ok;},
 tap:function(nx,ny){
 if(!cur||dead||!isFinite(nx)||!isFinite(ny))return null;
 var g=cur.geo,st=saveState(),hit=null;

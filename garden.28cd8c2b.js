@@ -135,37 +135,46 @@ function grainClip(ctx,path,alpha){
 if(sil()||!GRAINPAT)return;
 ctx.save();ctx.clip(path);ctx.globalCompositeOperation='overlay';ctx.globalAlpha=alpha;ctx.fillStyle=GRAINPAT;ctx.fillRect(0,0,W,H);ctx.restore();
 }
+var STAGE_END_H=300;
+var STAGE_MIN=(function(){
+var shape=[0,5,10,20,30,45,60,80,105,135,175,220,280,360,450,560,700,880,1080,1350,1680,2100,2610,3200,4000,5000,6200,7700,9500,11800,14600,18000];
+var k=STAGE_END_H*60/18000,out=[];
+shape.forEach(function(m,i){var v=m*k,r=v<300?5:v<1000?10:v<3000?30:v<10000?100:200;out.push(i===shape.length-1?STAGE_END_H*60:i?Math.max(Math.round(v/r)*r,out[i-1]+5):0);});
+return out;
+})();
 var STAGE_DEFS=[
-[0,'空き地','雑草の茂る空き地。ここから庭づくりが始まります',[0.9,0.05,3.2]],
-[15,'整地','土をならし、砂利敷きの縁取りを描きました',[-2.7,0,1.45]],
-[35,'砂紋と石','白砂に砂紋を引き、石をひとつ据えました',[-2.3,0.35,1.6]],
-[60,'もみじの苗','もみじの苗を植えました',[-4.4,0.55,4.2]],
-[90,'飛び石','飛び石の小道ができました',[0.45,0,1.6]],
-[125,'苔','庭に苔が広がりはじめました',[-1.2,0,3.0]],
-[170,'つつじと松の苗','つつじと若い松を植えました',[5.9,0.5,3.7]],
-[225,'池','池を掘り、水を引きました',[2.4,0,4.6]],
-[290,'錦鯉と石灯籠','錦鯉を放ち、石灯籠を据えました',[-0.85,0.9,3.95]],
-[370,'睡蓮と菖蒲','睡蓮が浮かび、菖蒲が水辺を彩ります',[3.2,0,4.5]],
-[470,'流れ','池から流れを引き、せせらぎが生まれました',[4.95,0,2.0]],
-[595,'竹垣','庭を竹垣で囲いました',[0.6,1.0,11.0]],
-[750,'太鼓橋','池に朱の太鼓橋を架けました',null],
-[940,'石橋','流れに一枚石の石橋を渡しました',[4.79,0.2,0.97]],
-[1175,'蹲踞','筧の水が落ちる蹲踞を据えました',[-2.2,0.3,6.35]],
-[1465,'茶室','苔むした茶室が建ちました',[-1.95,1.7,8.8]],
-[1825,'延段','茶室へ向かう延段を敷きました',[-0.7,0,5.5]],
-[2270,'袖垣','茶室の脇に竹の袖垣を添えました',[-0.25,1.0,7.88]],
-[2820,'鹿おどし','鹿おどしの音が庭に響きます',[0.75,0.45,3.25]],
-[3500,'雪見灯籠','水辺に雪見灯籠を据えました',[5.35,0.7,2.04]],
-[4350,'築山と滝','築山を盛り、滝を落としました',[5.3,0.9,7.9]],
-[5400,'藤棚','池のほとりに藤棚を組みました',[1.15,1.75,6.6]],
-[6700,'枯山水','白砂に石組みを据え、枯山水を整えました',[-3.5,0.5,1.2]],
-[8300,'苔庭と大もみじ','苔が庭を覆い、もみじが大きく育ちました',[-4.05,3.2,4.2]],
-[10300,'竹林','庭の奥に竹林が育ちました',[-3.8,5.0,10.5]],
-[12800,'五重塔','遠くの山に五重塔が見えます','pagoda'],
-[15900,'山門','竹垣に山門を構えました',[2.65,1.6,11.0]],
-[19700,'桜並木','垣根沿いに桜並木が育ちました',[7.7,2.9,11.55]],
-[24400,'八つ橋','菖蒲の沢に八つ橋を渡しました',[2.7,0,2.3]],
-[30000,'枝垂れ桜','枝垂れ桜が咲き、庭が完成しました',[6.1,3.9,9.7]]
+[STAGE_MIN[0],'空き地','雑草の茂る空き地。ここから庭づくりが始まります',[0.9,0.05,3.2],'base'],
+[STAGE_MIN[1],'整地','土をならし、砂利敷きの縁取りを描きました',[-2.7,0,1.45],'leveled'],
+[STAGE_MIN[2],'砂紋と石','白砂に砂紋を引き、石をひとつ据えました',[-2.3,0.35,1.6],'gravel'],
+[STAGE_MIN[3],'もみじの苗','もみじの苗を植えました',[-4.4,0.55,4.2],'maple'],
+[STAGE_MIN[4],'飛び石','飛び石の小道ができました',[0.45,0,1.6],'path'],
+[STAGE_MIN[5],'苔','庭に苔が広がりはじめました',[-1.2,0,3.0],'moss'],
+[STAGE_MIN[6],'つつじ','つつじの株を植えました',[-3.25,0.4,5.4],'azaleas'],
+[STAGE_MIN[7],'松の苗','若い松を植えました',[5.9,0.5,3.7],'pine'],
+[STAGE_MIN[8],'石灯籠','飛び石のそばに石灯籠を据えました',[-0.85,0.9,3.95],'lantern'],
+[STAGE_MIN[9],'池','池を掘り、水を引きました',[2.4,0,4.6],'pond'],
+[STAGE_MIN[10],'錦鯉','池に錦鯉を放ちました',[2.0,0,4.0],'koi'],
+[STAGE_MIN[11],'蹲踞','筧の水が落ちる蹲踞を据えました',[-2.2,0.3,6.35],'tsukubai'],
+[STAGE_MIN[12],'鹿おどし','鹿おどしの音が庭に響きます',[0.75,0.45,3.25],'shishi'],
+[STAGE_MIN[13],'睡蓮と菖蒲','睡蓮が浮かび、菖蒲が水辺を彩ります',[3.2,0,4.5],'lilies'],
+[STAGE_MIN[14],'流れ','池から流れを引き、せせらぎが生まれました',[4.95,0,2.0],'nagare'],
+[STAGE_MIN[15],'石橋','流れに一枚石の石橋を渡しました',[4.79,0.2,0.97],'ishibashi'],
+[STAGE_MIN[16],'雪見灯籠','水辺に雪見灯籠を据えました',[5.35,0.7,2.04],'yukimi'],
+[STAGE_MIN[17],'竹垣','庭を竹垣で囲いました',[0.6,1.0,11.0],'fence'],
+[STAGE_MIN[18],'枯山水','白砂に石組みを据え、枯山水を整えました',[-3.5,0.5,1.2],'kare'],
+[STAGE_MIN[19],'竹林','庭の奥に竹林が育ちました',[-3.8,5.0,10.5],'chikurin'],
+[STAGE_MIN[20],'藤棚','池のほとりに藤棚を組みました',[1.15,1.75,6.6],'wisteria'],
+[STAGE_MIN[21],'八つ橋','菖蒲の沢に八つ橋を渡しました',[2.7,0,2.3],'yatsu'],
+[STAGE_MIN[22],'茶室','苔むした茶室が建ちました',[-1.95,1.7,8.8],'teahouse'],
+[STAGE_MIN[23],'延段','茶室へ向かう延段を敷きました',[-0.7,0,5.5],'nobedan'],
+[STAGE_MIN[24],'袖垣','茶室の脇に竹の袖垣を添えました',[-0.25,1.0,7.88],'sodegaki'],
+[STAGE_MIN[25],'桜並木','垣根沿いに桜並木が育ちました',[7.7,2.9,11.55],'namiki'],
+[STAGE_MIN[26],'山門','竹垣に山門を構えました',[2.65,1.6,11.0],'gate'],
+[STAGE_MIN[27],'太鼓橋','池に朱の太鼓橋を架けました',null,'bridge'],
+[STAGE_MIN[28],'五重塔','遠くの山に五重塔が見えます','pagoda','pagoda'],
+[STAGE_MIN[29],'苔庭と大もみじ','苔が庭を覆い、もみじが大きく育ちました',[-4.05,3.2,4.2],'mature'],
+[STAGE_MIN[30],'築山と滝','築山を盛り、滝を落としました',[5.3,0.9,7.9],'hill'],
+[STAGE_MIN[31],'枝垂れ桜','枝垂れ桜が咲き、庭が完成しました',[6.1,3.9,9.7],'cherry']
 ];
 STAGE_DEFS.forEach(function(d){var f=d[3];if(f&&typeof f!=='string')d[3]=[LX(f[0]),f[1],LZ(f[2])];});
 var NST=STAGE_DEFS.length;
@@ -231,28 +240,33 @@ var AZ_TEA=2;
 var AZALEAS=AZALEAS0.map(function(a){return[LX(a[0]),LZ(a[1]),a[2],a[3]];});
 var OLD_EQ=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,15.5,16,17,18,19,19.5,20,21];
 var PREV_EQ=[0,1,2,3,4,5,6,7,8,9,9.5,10,11,11.5,12,13,13.3,13.6,14,14.5,15,16,17,18,18.5,19,20,21,22,23];
+var MOSS_LV=[0.64,0.6,0.56,0.53,0.5,0.47,0.45,0.43,0.41,0.39,0.37,0.35,0.29,0.28,0.27,0.26,0.25];
+var SI={};STAGE_DEFS.forEach(function(d,i){SI[d[4]]=i;});
 function features(st){
-st=Math.max(0,Math.min(PREV_EQ.length-1,st));
-var sp=PREV_EQ[st],s0=Math.floor(sp),s=lerp(OLD_EQ[s0],OLD_EQ[Math.min(OLD_EQ.length-1,s0+1)],sp-s0),si=Math.floor(s);
-var f={s:si,stage:st,sp:sp};
-f.weeds=s===0;f.leveled=s>=1;f.gravelOutline=s===1;f.gravel=s>=2;f.rock1=s>=2;
-f.maple=s<3?0:s>=17?1+(s-17)*0.03:lerp(0.17,0.8,Math.pow((s-3)/13,0.9));
-f.path=s>=4;f.mossOn=s>=5;
-f.moss=s<5?2:[0.64,0.6,0.56,0.53,0.5,0.47,0.45,0.43,0.41,0.39,0.37,0.35,0.29,0.28,0.27,0.26,0.25][si-5]-(s-si)*0.02;
-f.rockMoss=clamp((s-2)/16)*0.85;
-f.azaleas=s>=6?Math.min(1,lerp(0.68,1,(s-6)/8)):0;
-f.pine=s<6?0:s>=17?0.9+(s-17)*0.015:lerp(0.2,0.84,(s-6)/11);
-f.pond=s>=7;f.koi=s>=8;f.lantern=s>=8;f.lilies=s>=9;f.irises=s>=9;
-f.fence=s>=10;f.bridge=s>=11;f.tsukubai=s>=12;f.teahouse=s>=13;f.teaPath=s>=13;f.smallLanterns=s>=13;
-f.shishi=s>=14;f.hill=s>=15;f.kare=s>=16;f.mature=s>=17;f.maple2=0;
-f.pagoda=s>=18;f.gate=s>=19;f.marsh=s>=20;f.yatsu=s>=20;f.cherry=s>=21?1:0;
-f.lilyN=s<9?0:Math.min(1,0.5+(s-9)*0.06);
-f.weeds=si===0&&st===0;f.gravelOutline=sp===1;
-f.wisteria=sp>=16?Math.min(1,0.62+(sp-16)*0.06):0;
-f.ycherry=sp>=1?Math.min(1.05,lerp(0.14,1,Math.pow((sp-1)/18,0.85))):0;
-f.namiki=sp>=21;
-f.nagare=st>=10;f.ishibashi=st>=13;f.nobedan=st>=16;f.sodegaki=st>=17;f.yukimi=st>=19;
-f.chikurin=st>=24?Math.min(1,0.8+(st-24)*0.04):0;
+st=Math.max(0,Math.min(NST-1,Math.round(st)));
+var has=function(k){return st>=SI[k];},from=function(k){return st-SI[k];},mt=SI.mature;
+var g=st<=5?st:5+(st-5)*24/(NST-6),g0=Math.floor(g),sp=lerp(PREV_EQ[g0],PREV_EQ[Math.min(PREV_EQ.length-1,g0+1)],g-g0),s0=Math.floor(sp),s=lerp(OLD_EQ[s0],OLD_EQ[Math.min(OLD_EQ.length-1,s0+1)],sp-s0);
+var f={s:Math.floor(s),sp:sp};
+f.weeds=st===0;f.leveled=has('leveled');f.gravelOutline=f.leveled&&!has('gravel');f.gravel=f.rock1=has('gravel');
+f.mature=has('mature');f.maple2=0;
+f.maple=!has('maple')?0:f.mature?1+from('mature')*0.03:lerp(0.17,0.8,Math.pow(from('maple')/(mt-1-SI.maple),0.9));
+f.path=has('path');f.mossOn=has('moss');
+var mu=clamp(from('moss')/(mt-1-SI.moss))*11,mi=Math.min(10,Math.floor(mu));
+f.moss=!f.mossOn?2:f.mature?Math.max(0.25,0.29-from('mature')*0.01):lerp(MOSS_LV[mi],MOSS_LV[mi+1],mu-mi);
+f.rockMoss=clamp((st-2)/(mt-1))*0.85;
+f.azaleas=has('azaleas')?Math.min(1,lerp(0.68,1,from('azaleas')/8)):0;
+f.pine=!has('pine')?0:f.mature?0.9+from('mature')*0.015:lerp(0.2,0.84,from('pine')/(mt-SI.pine));
+f.pond=has('pond');f.koi=has('koi');f.lantern=has('lantern');f.lilies=f.irises=has('lilies');
+f.fence=has('fence');f.bridge=has('bridge');f.tsukubai=has('tsukubai');f.teahouse=f.teaPath=f.smallLanterns=has('teahouse');
+f.shishi=has('shishi');f.hill=has('hill');f.kare=has('kare');
+f.pagoda=has('pagoda');f.gate=has('gate');f.marsh=f.yatsu=has('yatsu');f.cherry=has('cherry')?1:0;
+f.lilyN=f.lilies?Math.min(1,0.5+from('lilies')*0.06):0;
+f.wisteria=has('wisteria')?Math.min(1,0.62+from('wisteria')*0.06):0;
+f.ycherry=st>=1?Math.min(1.05,lerp(0.14,1,Math.pow((st-1)/(NST-5),0.85))):0;
+f.namiki=has('namiki');f.nagare=has('nagare');f.ishibashi=has('ishibashi');f.nobedan=has('nobedan');f.sodegaki=has('sodegaki');f.yukimi=has('yukimi');
+f.chikurin=has('chikurin')?Math.min(1,0.8+from('chikurin')*0.04):0;
+f.koiN=f.koi?Math.min(7,3+Math.floor(from('koi')/3)):0;f.kakiG=f.teahouse?clamp(from('teahouse')/8):-1;f.umeG=f.teahouse?clamp(from('teahouse')/7):0;
+f.stage=st;
 return f;
 }
 function gravelInfo(Fx){return Fx.kare?{cx:LX(-3.15),cz:LZ(1.45),rx:3.75*SPX,rz:2.0*SPZ}:{cx:LX(-2.9),cz:LZ(1.45),rx:3.3*SPX,rz:1.82*SPZ};}
@@ -6413,11 +6427,11 @@ else if(sname==='summer')acc={p:0.05,pal:[[150,40,70],[200,80,110],[230,130,150]
 var sh=makeShrub(400+ii,a[0],a[1],a[2]*sc,a[3]*sc,bloom?[[8,20,12],[14,32,18],[24,50,24],[38,70,30],[58,92,40],[88,118,54]]:SEA.shrub,{accent:acc,dab:0.045,moonK:0.4,transK:bloom?0.25:undefined});
 put(a[0],a[1],{draw:function(c){drawShrub(c,sh);},ao:function(c){shrubAO(c,sh);},bend:0.5,sway:{flex:0.6,shrub:true}});
 });
-if(F.teahouse){var um=genUme(31,AZALEAS[AZ_TEA][0],AZALEAS[AZ_TEA][1],lerp(1.12,1.32,clamp((F.s-13)/7)));put(um.base[0],um.base[2],{draw:function(c){drawUme(c,um);},ao:function(c){umeAO(c,um);},bend:0.5,sway:{flex:0.5}});}
+if(F.teahouse){var um=genUme(31,AZALEAS[AZ_TEA][0],AZALEAS[AZ_TEA][1],lerp(1.12,1.32,F.umeG));put(um.base[0],um.base[2],{draw:function(c){drawUme(c,um);},ao:function(c){umeAO(c,um);},bend:0.5,sway:{flex:0.5}});}
 if(F.nagare)AJI.forEach(function(q){
 put(q.x,q.z,{draw:function(c){drawAjisai(c,q);},ao:function(c){ajiAO(c,q);},bend:0.4,noRefl:true});});
 if(F.teahouse)put(TSU.x,TSU.z,{draw:drawTsubaki,ao:tsuAO,bend:0.4});
-if(F.stage>=15){var kk=genKaki(clamp((F.stage-15)/8));put(KAKI_TREE.x,KAKI_TREE.z,{draw:function(c){drawKakiTree(c,kk);},ao:function(c){mapleAO(c,kk);},noRefl:true,bend:0.5,sway:{flex:0.5,tag:'kaki'}});}
+if(F.kakiG>=0){var kk=genKaki(F.kakiG);put(KAKI_TREE.x,KAKI_TREE.z,{draw:function(c){drawKakiTree(c,kk);},ao:function(c){mapleAO(c,kk);},noRefl:true,bend:0.5,sway:{flex:0.5,tag:'kaki'}});}
 if(F.lantern){put(NANTEN_CLUMP.x,NANTEN_CLUMP.z,{draw:drawNantenClump,ao:function(c){fl4AO(c,NANTEN_CLUMP.x,NANTEN_CLUMP.z,0.28,0.24);},bend:0.3});if(fl4At('fuku')>=0)put(FUKUJU_PATCH.x,FUKUJU_PATCH.z,{draw:drawFukujuPatch,noShadow:true});}
 if(F.tsukubai)put(SENRYO_CLUMP.x,SENRYO_CLUMP.z,{draw:drawSenryoClump,ao:function(c){fl4AO(c,SENRYO_CLUMP.x,SENRYO_CLUMP.z,0.2,0.18);},noRefl:true});
 if(F.tsukubai&&fl4At('sui')>=0)suisenClumps().forEach(function(q){put(q.x,q.z,{draw:function(c){drawSuisenClump(c,q);},noShadow:true,noRefl:true});});
@@ -6965,7 +6979,7 @@ g.caus=[];
 if(!SEA.cold&&(o.light==='day'||o.light==='morning'))for(i=0;i<6000&&g.caus.length<260;i++){var cx3=LX(-0.8+rng()*8.2),cz3=LZ(1.6+rng()*6.6),d3=pondSDF(cx3,cz3);if(d3>-0.04||d3<-0.5)continue;var p3=P(cx3,WL,cz3);g.caus.push({x:p3.x,y:p3.y,k:p3.k,a:rng()*TAU,ph:rng()*TAU,w:0.7+rng()*1.1,dep:-d3});}
 }
 if(F.koi){
-var nk=Math.min(7,3+Math.floor((F.sp-8)/3)),deep=SEA.cold?-0.75:-0.4;
+var nk=F.koiN,deep=SEA.cold?-0.75:-0.4;
 g.koi=[];
 for(var k=0;k<nk;k++){
 var best=null;
@@ -7002,7 +7016,7 @@ g.flies.push({x:fx,y:0.25+rng()*0.9,z:fz,a1:0.13+rng()*0.2,a2:0.1+rng()*0.2,p1:r
 }
 g.fallers=o.season==='autumn'?'leaf':o.season==='winter'?'snow':null;
 g.petalSrc=petalSources(g);
-if(F.teahouse&&FLW&&FLW.ume>=1){var uS=lerp(1.12,1.32,clamp((F.s-13)/7)),uc=P(AZALEAS[AZ_TEA][0],1.7*uS,AZALEAS[AZ_TEA][1]),uf=P(AZALEAS[AZ_TEA][0],0,AZALEAS[AZ_TEA][1]-0.6);g.umeSrc={x:uc.x,y:uc.y,r:0.85*uS*uc.k,floor:uf.y,n:[0,3,6,10][FLW.ume]};}
+if(F.teahouse&&FLW&&FLW.ume>=1){var uS=lerp(1.12,1.32,F.umeG),uc=P(AZALEAS[AZ_TEA][0],1.7*uS,AZALEAS[AZ_TEA][1]),uf=P(AZALEAS[AZ_TEA][0],0,AZALEAS[AZ_TEA][1]-0.6);g.umeSrc={x:uc.x,y:uc.y,r:0.85*uS*uc.k,floor:uf.y,n:[0,3,6,10][FLW.ume]};}
 g.petSrc=[];
 if(F.hill&&fl4At('san')>=1){var szx=LAY.fall.x-1.0,szz=LAY.fall.ztop-8.0+8.9,szy=hillH(szx,szz)-0.1,szc=P(szx,szy+0.7,szz),szf=P(szx+0.1,szy,szz-0.45);g.petSrc.push({x:szc.x,y:szc.y,r:0.55*szc.k,floor:szf.y,n:[0,1,3,5][fl4At('san')],col:[236,120,156],sz:1.1});}
 if(F.gate&&fl4At('hagi')>=2){var hgc=P(HAGI_BUSH.x-0.2,0.95,HAGI_BUSH.z-0.3),hgf=P(HAGI_BUSH.x-0.2,0,HAGI_BUSH.z-0.5);g.petSrc.push({x:hgc.x,y:hgc.y,r:0.75*hgc.k,floor:hgf.y,n:fl4At('hagi')===3?4:2,col:[206,64,132],sz:0.6});}
@@ -8039,21 +8053,23 @@ for(var i=0;i<S.floats.length;i++){var f=S.floats[i];ctx.globalAlpha=Math.min(1,
 ctx.restore();ctx.globalAlpha=1;
 }
 var RARE=[
-{id:'ooruri',name:'オオルリ',season:['spring','summer'],light:['morning','day'],minStage:6,desc:'青い背中の夏鳥。松の上で美しい声でさえずる',w:1},
-{id:'kawasemi',name:'カワセミ',season:['spring','summer','autumn'],light:['morning','day'],minStage:7,desc:'水辺の宝石。岩から池に飛び込み小魚をとる',w:1},
-{id:'rurubitaki',name:'ルリビタキ',season:['winter'],light:['morning','day'],minStage:8,desc:'雪の灯籠にとまる、冬の小さな青い鳥',w:1},
-{id:'usagi',name:'白いノウサギ',season:['winter'],light:['morning','day','dusk','night'],minStage:0,desc:'雪の上を跳ねる、冬毛の白いノウサギ',w:1},
-{id:'kitsune',name:'キツネ',season:['autumn','winter'],light:['dusk','night'],minStage:11,desc:'垣根沿いを音もなく歩くキツネ',w:0.9},
-{id:'tanuki',name:'タヌキ',season:['spring','summer','autumn'],light:['night'],minStage:15,desc:'茶室のそばをのんびり歩くタヌキ',w:0.9},
-{id:'shika',name:'鹿',season:['autumn'],light:['morning','dusk'],minStage:14,desc:'もみじのそばにたたずむ角のある牡鹿',w:0.7},
-{id:'sagi',name:'白鷺',season:['summer'],light:['morning','day'],minStage:7,desc:'池の浅瀬をそっと歩く白い鷺',w:0.8},
-{id:'mejiro',name:'メジロ',season:['spring'],light:['morning','day'],minStage:4,desc:'桜の花に来た、目のまわりの白い小鳥のつがい',w:1},
-{id:'uguisu',name:'ウグイス',season:['spring'],light:['morning','day','dusk'],minStage:6,desc:'茂みにちらりと姿を見せた春告げ鳥',w:0.9},
-{id:'hotaru',name:'ゲンジボタルの群れ',season:['summer'],light:['night'],minStage:7,desc:'池のほとりを舞う、めったに見られないほたるの群れ',w:0.14},
-{id:'tsuru',name:'丹頂鶴',season:['winter'],light:['morning'],minStage:0,desc:'雪の庭に舞い降りた丹頂鶴。めったに見られない',w:0.08}
+{id:'ooruri',name:'オオルリ',season:['spring','summer'],light:['morning','day'],need:function(F){return F.pine>0;},desc:'青い背中の夏鳥。松の上で美しい声でさえずる',w:1},
+{id:'kawasemi',name:'カワセミ',season:['spring','summer','autumn'],light:['morning','day'],need:function(F){return F.pond;},desc:'水辺の宝石。岩から池に飛び込み小魚をとる',w:1},
+{id:'rurubitaki',name:'ルリビタキ',season:['winter'],light:['morning','day'],need:function(F){return F.lantern;},desc:'雪の灯籠にとまる、冬の小さな青い鳥',w:1},
+{id:'usagi',name:'白いノウサギ',season:['winter'],light:['morning','day','dusk','night'],need:null,desc:'雪の上を跳ねる、冬毛の白いノウサギ',w:1},
+{id:'kitsune',name:'キツネ',season:['autumn','winter'],light:['dusk','night'],need:function(F){return F.fence;},desc:'垣根沿いを音もなく歩くキツネ',w:0.9},
+{id:'tanuki',name:'タヌキ',season:['spring','summer','autumn'],light:['night'],need:function(F){return F.teahouse;},desc:'茶室のそばをのんびり歩くタヌキ',w:0.9},
+{id:'shika',name:'鹿',season:['autumn'],light:['morning','dusk'],need:function(F){return F.maple>=0.55;},desc:'もみじのそばにたたずむ角のある牡鹿',w:0.7},
+{id:'sagi',name:'白鷺',season:['summer'],light:['morning','day'],need:function(F){return F.pond;},desc:'池の浅瀬をそっと歩く白い鷺',w:0.8},
+{id:'mejiro',name:'メジロ',season:['spring'],light:['morning','day'],need:function(F){return F.ycherry>=0.3;},desc:'桜の花に来た、目のまわりの白い小鳥のつがい',w:1},
+{id:'uguisu',name:'ウグイス',season:['spring'],light:['morning','day','dusk'],need:function(F){return F.azaleas>0;},desc:'茂みにちらりと姿を見せた春告げ鳥',w:0.9},
+{id:'hotaru',name:'ゲンジボタルの群れ',season:['summer'],light:['night'],need:function(F){return F.pond;},desc:'池のほとりを舞う、めったに見られないほたるの群れ',w:0.14},
+{id:'tsuru',name:'丹頂鶴',season:['winter'],light:['morning'],need:null,desc:'雪の庭に舞い降りた丹頂鶴。めったに見られない',w:0.08}
 ];
+function rareHas(r,Fx){return!r.need||!!(Fx&&r.need(Fx));}
+RARE.forEach(function(r){r.minStage=0;while(r.minStage<NST-1&&!rareHas(r,features(r.minStage)))r.minStage++;});
 function rareFits(r,g,date){
-if(r.season.indexOf(g.season)<0||r.light.indexOf(g.light)<0||g.stage<r.minStage)return false;
+if(r.season.indexOf(g.season)<0||r.light.indexOf(g.light)<0||!rareHas(r,g.F))return false;
 if(r.id==='hotaru'&&date!==undefined&&date!==null){var m=toDate(date).getMonth();if(!isNaN(m)&&(m<5||m>6))return false;}
 return true;
 }
@@ -8223,7 +8239,7 @@ if(F.tsukubai)c(SENRYO_CLUMP.x,SENRYO_CLUMP.z,0.18);
 if(F.nagare){BOTAN_BED.concat(SHAKU_BED).forEach(function(q){c(q.x,q.z,q.R*0.85);});c(YAMABUKI_BUSH.x,YAMABUKI_BUSH.z,0.32);}
 if(F.gate)c(HAGI_BUSH.x,HAGI_BUSH.z,0.38);
 if(F.hill)c(KINMOKU_TREE.x,KINMOKU_TREE.z,0.5);
-if(F.stage>=15)c(KAKI_TREE.x,KAKI_TREE.z,0.2);
+if(F.kakiG>=0)c(KAKI_TREE.x,KAKI_TREE.z,0.2);
 if(F.teahouse){c(TSU.x,TSU.z,0.42);B.push([KIKU.x0,KIKU.x1,KIKU.z-0.2,KIKU.z+0.2]);}
 if(F.nagare)AJI.forEach(function(q){c(q.x,q.z,q.R*0.8);});
 if(F.sodegaki)B.push([SODE.x0-0.06,SODE.x1+0.06,SODE.z-0.12,SODE.z+0.12]);
@@ -11582,8 +11598,8 @@ var fx=LAY.fall.x,fz=LAY.fall.ztop-8.0,hs=g.flbSaz||(g.flbSaz=genSazanka(fx-1.0,
 var m2=magAt('mejiro',hs.x,hs.by+hs.H*0.5,hs.z),e2=m2/FLB_MAG.mejiro,sp=perches(hs.fl.filter(function(f,j){return j<nf2&&faceVisible(f.p,f.n);}),0.085*e2,-0.035*e2);
 if(sp.length>=3)out.push({id:'san',kind:'mejiro',mag:m2,leaf:[32,64,38],w:ph===2?1:0.6,pts:sp,host:host(hs.x,hs.by+hs.H*0.5,hs.z,0.75)});
 }
-if(F.stage>=15&&(ph=fl4At('kaki'))>=5&&ph<=8){
-var kt=g.flbKaki||(g.flbKaki=genKaki(clamp((F.stage-15)/8))),want=[0,0,0,40,46,52,52,40,5,0][ph],cd=Pa(kt.center).d,m3=magAt('hiyodori',kt.center[0],kt.center[1],kt.center[2]),e3=m3/FLB_MAG.hiyodori;
+if(F.kakiG>=0&&(ph=fl4At('kaki'))>=5&&ph<=8){
+var kt=g.flbKaki||(g.flbKaki=genKaki(F.kakiG)),want=[0,0,0,40,46,52,52,40,5,0][ph],cd=Pa(kt.center).d,m3=magAt('hiyodori',kt.center[0],kt.center[1],kt.center[2]),e3=m3/FLB_MAG.hiyodori;
 var fr=kt.fruit.slice(0,Math.min(kt.fruit.length,Math.round(want*(0.5+0.5*kt.gk)))).filter(function(f){return ph===8||Pa(f.p).d<=cd+0.1;}).map(function(f){return{p:f.p,side:f.p[0]-KAKI_TREE.x};});
 var kp=perches(fr,0.13*e3,0.03*e3);
 if(kp.length>=(ph===8?1:2))out.push({id:'kaki',kind:'hiyodori',mag:m3,leaf:ph===8?null:ph===5?[96,110,44]:[204,92,32],w:ph===8?1.2:0.35,pts:kp,host:host(kt.center[0],kt.center[1],kt.center[2],2.2)});
@@ -12160,7 +12176,7 @@ st.forEach(function(q){var p=P(q[0],0.08,q[1]);if(YW&&!(p.d>CAM.near))return;add
 function tree(cx,cy,cz,R,kind,tag){var p=P(cx,cy,cz);if(YW&&!(p.d>CAM.near))return;add('tree',p.x,p.y,R*p.k+3,{pri:1,kind:kind,c:[cx,cy,cz],R:R,tag:tag},true);}
 if(F0.maple>0.15){var mh=lerp(0.75,4.7,Math.min(1,F0.maple));tree(LAY.maple.x+0.3+0.6*clamp(F0.maple*2-1),mh*0.62,LAY.maple.z,mh*0.55,'maple','maple');}
 if(F0.ycherry>0.3){var ch=4.7*F0.ycherry*0.82;tree(LAY.ycherry.x+0.3,ch*0.88,LAY.ycherry.z,ch*0.42,'sakura','ycherry');}
-if(F0.stage>=15){var kh=lerp(4.6,6.4,clamp((F0.stage-15)/8));tree(KAKI_TREE.x,kh*0.72,KAKI_TREE.z,kh*0.3,'kaki','kaki');}
+if(F0.kakiG>=0){var kh=lerp(4.6,6.4,F0.kakiG);tree(KAKI_TREE.x,kh*0.72,KAKI_TREE.z,kh*0.3,'kaki','kaki');}
 if(F0.cherry)tree(LAY.cherry.x,hillH(LAY.cherry.x,LAY.cherry.z)+2.2,LAY.cherry.z,1.9,'sakura','cherry');
 if(F0.pine>0.1){var S=lerp(0.24,0.92,Math.min(1,F0.pine));tree(LAY.pine.x-0.75*S,1.3*S,LAY.pine.z+0.3*S,1.2*S+0.3,'pine','pine');}
 return T;
@@ -13934,7 +13950,7 @@ if(o.label!==false){ctx.fillStyle='rgba(255,255,255,0.85)';ctx.font=Math.round(c
 return L;
 }finally{restoreState(st);}
 }
-var VERSION='1.4.19';
+var VERSION='1.4.20';
 var SEASON_KEYS=['spring','summer','autumn','winter'],LIGHT_KEYS=['morning','day','dusk','night'];
 function withScene(o,fn){
 var st=saveState();
@@ -15015,7 +15031,7 @@ var n=+o.streak||0;if(n<7||!cur||cur.spec.view)return null;
 var d=nowDate(),today=dayKey(d),R=o.reward&&typeof o.reward==='object'?o.reward:{},last=R.last||{},F0=g.F,w=g.LIT.weather||'clear',lt=g.light,sea=g.season,mo=d.getMonth();
 if(R.day===today||w==='rain'||w==='storm'||w==='typhoon'||w==='blizzard')return null;
 function ago(id){var t=last[id];if(!t)return 1e9;var a=new Date(t+'T12:00:00');return isNaN(a.getTime())?1e9:(d-a)/86400000;}
-function st(id){var r=null;RARE.forEach(function(q){if(q.id===id)r=q;});return r&&g.stage>=r.minStage;}
+function st(id){var r=null;RARE.forEach(function(q){if(q.id===id)r=q;});return r&&rareHas(r,g.F);}
 var C=[];
 if(n>=30){
 if(sea==='winter'&&lt==='morning'&&w!=='snow')C.push({id:'tsuru',tier:30,visit:'tsuru',gap:10});
@@ -15628,6 +15644,13 @@ return;
 }
 var g=cur.geo,f=focusFor(to,g.W,g.H,{season:cur.spec.season,light:cur.spec.light,event:cur.spec.event});
 startReveal(oldImg,f,!!keepOld);
+if(from<SI.koi&&SI.koi<=to&&g.koi&&g.koi.length){
+var kf=STAGE_DEFS[SI.koi][3];if(!taps)taps=[];
+g.feed={x:kf[0],z:kf[2],t0:clock+0.8,dur:7};
+g.koi.forEach(function(k,n){k.fr=0.35+0.1*(n%3);});
+taps.push({kind:'koi',t0:clock+0.8,dur:7,x:0,y:0,pellets:[],nibbles:[3.2]});if(taps.length>8)taps.shift();
+loopCheck();
+}
 });
 }).catch(function(e){if(e!==CANCEL&&window.console)console.error(e);});
 function refreshNoFade(){
