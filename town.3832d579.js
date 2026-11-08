@@ -14011,7 +14011,7 @@ return{plume:plumePts,tips:tips};
 function mount(el,opts){
 opts=opts||{};
 var o={stage:0,season:seasonFor(),light:lightFor(),quality:'card',animate:true,event:null,date:null};
-function merge(n){if(!n)return;['stage','season','light','quality','animate','onReady','event','onCue','date','weather','fireworks','wide','hoou','onKeep','feather','onFeather'].forEach(function(k){if(n[k]!==undefined)o[k]=n[k];});if(n.date!==undefined)dateSetAt=Date.now();norm();}
+function merge(n){if(!n)return;if(n.weather!==undefined&&n.weather!==o.weather)wxAskAt=clock;['stage','season','light','quality','animate','onReady','event','onCue','date','weather','fireworks','wide','hoou','onKeep','feather','onFeather'].forEach(function(k){if(n[k]!==undefined)o[k]=n[k];});if(n.date!==undefined)dateSetAt=Date.now();norm();}
 function norm(){
 o.stage=Math.max(0,Math.min(STAGES.length-1,Math.round(+o.stage||0)));
 if(SEASON_KEYS.indexOf(o.season)<0)o.season=seasonFor();
@@ -14159,7 +14159,7 @@ g.fw={launch:fwLaunchPts(g),boatPa:boatPath()};fwGeo(g);FW=g.FW=makeFireworks(g,
 FW.boats=[0.18,0.47,0.71].map(function(f,i){return{f:f,ph:frng()*TAU,sp:0.02+frng()*0.015,dir:i%2?-1:1};});
 if(!g.specAdded){g.specAdded=true;var rng=mulberry32(4711);g.paths.forEach(function(q,pi){if(!q.still)return;var n=pi===g.paths.length-3?12:8;for(var i=0;i<n;i++)g.walkers.push(makeWalker(g,pi,rng,i));});}
 }
-function curWeather(){if(hoouForce||hoouClearNow()){var b0=o.weather||weatherAt(nowDate());return{wx:'clear',after:b0==='rain'||b0==='storm'||b0==='typhoon'||afterRainAt(nowDate())};}          // the golden feather's 鳳凰 has landed: the bad weather is gone
+function curWeather(){if(hoouForce){var b0=o.weather||weatherAt(nowDate());return{wx:'clear',after:b0==='rain'||b0==='storm'||b0==='typhoon'||afterRainAt(nowDate())};}          // the golden feather's 鳳凰 has landed: the bad weather is gone
 if(o.weather)return{wx:o.weather,after:(o.weather==='clear'||o.weather==='cloudy')&&afterRainAt(nowDate())};var d=nowDate();return{wx:weatherAt(d),after:afterRainAt(d)};}
 function nowDate(){return new Date(o.date?o.date.getTime()+(Date.now()-dateSetAt):Date.now());}
 var windRaw=null,windT=-99;
@@ -14259,7 +14259,7 @@ return true;
 // so every view open at the time (the home card, the larger view, 全画面) shows the same moment of it, and a view
 // opened mid-visit joins in. In: 9 s flying in; 1.6 s landing; 95 s at rest (the rainbow); 9 s flying off.
 
-var hoou=null,hoouWait=0,hoouSp=[],hoouLT=-1,hoouSnd=null,hoouForce=false,hoouClr=false;
+var hoou=null,hoouWait=0,hoouSp=[],hoouLT=-1,hoouSnd=null,hoouForce=false,wxAskAt=-99;
 // ===== 金の羽: the golden feather, a phoenix's plume set on a small 三方 by the 祠 (o.feather {on, charged, k: its power
 // gathering, 0..1}). Charged, it glows and gives off rising sparks; spent, it is a dull gold that brightens as its power returns.
 var FEATHER={x:TORII.x-2.75,z:TORII.z-0.35};          // beside the 祠's 鳥居, in front of everything near it
@@ -14306,13 +14306,10 @@ if(feather)hoouPrebake();
 cue('rare',{id:'houou',name:'鳳凰'},true);loopCheck();
 return true;
 }
-// the golden feather's visit: from the moment it lands until half an hour after it has gone, all bad weather is gone
-function hoouClearNow(){var r=hoou&&hoou.feather?hoou:(o.hoou&&o.hoou.feather?o.hoou:null);if(!r||!r.t0)return false;var e=(Date.now()-r.t0)/1000;return e>=HOOU_IN+HOOU_LAND-0.2&&e<HOOU_ALL+1800;}
-function hoouWxFade(){var r=hoou&&hoou.feather?hoou:(o.hoou&&o.hoou.feather?o.hoou:null);if(!r||!r.t0)return 1;var e=(Date.now()-r.t0)/1000-HOOU_IN-HOOU_LAND+0.2;return e<0||e>HOOU_ALL+1800?1:1-sstep(0,3.5,e);}
+function hoouWxFade(){if(!cur)return 1;var w=curWeather().wx,g=cur.geo;if((w==='clear'||w==='cloudy')&&(wxWet(g.wx)||wxSnowy(g.wx)))return 1-sstep(0,3,clock-wxAskAt);return 1;}          // clear weather asked for, the old sky still showing: its rain or snow dies away
 function hoouPrebake(){if(!cur||!size)return;try{hoouForce=true;var sp=specFor(o.quality);hoouForce=false;if(sp.key!==cur.spec.key)obtain(sp).catch(function(){});}catch(e){hoouForce=false;}}          // the clear sky painted ahead, so it is ready when the bird lands
 function hoouTick(){
-var g=cur.geo,now=Date.now(),clr=hoouClearNow();
-if(clr!==hoouClr){hoouClr=clr;if(size&&cur.spec.key!==wantKey())lastReq=refresh(true);}
+var g=cur.geo,now=Date.now();
 if(hoou){if(now-hoou.t0>HOOU_ALL*1000||!g.F.pagoda){hoou=null;hoouSp=[];}return;}
 var r=hoouRec();if(!r)return;
 if(r.t0&&now>=r.t0-1000&&now-r.t0<HOOU_ALL*1000){if(g.F.pagoda){hoou={t0:r.t0,dir:r.dir||hoouDir(g),joined:true,feather:!!r.feather};hoouSp=[];hoouLT=-1;if(hoou.feather)hoouPrebake();}return;}
@@ -14558,7 +14555,7 @@ if(hoou)hoouDraw(ctx,g,t);
 if(rare&&!g.rareNow){RARE_LAST=null;rare.def.draw(ctx,g,rare.st,clamp((t-rare.t0)/rare.def.dur),t);if(RARE_LAST)rare.scr=RARE_LAST;}
 if(g.I)drawInteract(ctx,g,g.I,t);
 if(FW){drawSkyMasked(ctx,g,function(c){drawFireworks(c,FW,g);},null,fwSkyMask());if(FW.flash>0.02){ctx.globalCompositeOperation='lighter';ctx.fillStyle=rgb(mixc(FW.flashCol,[255,220,170],0.4),0.055*Math.min(1,FW.flash));ctx.fillRect(0,0,g.W,g.H);ctx.globalCompositeOperation='source-over';}}
-var wxF=hoouWxFade();          // the rain or snow dies away as the feather's 鳳凰 lands, while the clear sky is painted
+var wxF=hoouWxFade();          // the rain or snow dies away once clear weather is asked for, while the clear sky is painted
 if(wfx&&wxF>0.01){var wdt=Math.min(0.1,Math.max(0,t-(wfx.lt||t)));ctx.save();ctx.globalAlpha*=wxF;drawWeatherFx(ctx,g,wfx,t,wdt);wfx.lt=t;if(wfx.bz)drawBlizzard(ctx,g,wfx.bz,t,wdt);ctx.restore();}
 if(lightning&&wxF<0.6)lightning=null;
 if(lightning){if(!drawLightningFlash(ctx,g,lightning,t))lightning=null;else drawSkyMasked(ctx,g,function(c){drawLightning(c,g,lightning,t);});}

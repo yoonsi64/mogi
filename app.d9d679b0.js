@@ -9926,6 +9926,7 @@
                 if (x.dataset.k === 'world') { GD.devWorld = x.value; GD.dev = null; gdRenderView(); gdMountView(true); return; }
                 GD.dev = GD.dev || {};
                 GD.dev[x.dataset.k] = x.dataset.k === 'stage' ? +x.value : x.value;
+                if (x.dataset.k === 'weather') GD.devWxAt = Date.now();          // (chosen by hand: it holds, even over the feather's clear sky)
                 if (x.dataset.k === 'flower' && GD_FLOWERS[x.value]) GD.dev.season = GD_FLOWERS[x.value][1];   // (the flower's own season with it)
                 if (x.dataset.k === 'season' && GD.dev.flower && GD_FLOWERS[GD.dev.flower] && GD_FLOWERS[GD.dev.flower][1] !== x.value) GD.dev.flower = '';   // (another season: that flower is over)
                 if (GD.vctrl) GD.vctrl.update(gdViewOpts(gdState(gdViewWorld())));
@@ -10058,12 +10059,30 @@
         if (!GD.devMode) featherSave({ day: featherRec().day, used: Date.now(), base: { sec: studyTotals().total, q: answeredTotal() } });
         GD.hoouFeather = Date.now();
         featherLast = ''; featherTick();
-        var H = (gdEngineFor('town') || {}).HOOU;
-        if (H) setTimeout(function() { if (gardenOpen()) gdRenderView(); gdSoundUpdate(); }, (H.IN + H.LAND) * 1000 + 300);          // the bad weather is gone: its sound and its name too
+        hoouWxSchedule();
+    }
+    // when the feather's 鳳凰 lands, and when its clear sky is over, every view is told the weather (and the sound follows)
+    var hoouWxTimers = [];
+    function hoouWxPush() {
+        var now = new Date(), wx = hoouClearApp(now) ? 'clear' : gdWeatherAt('town', now);
+        [GD.ctrl, GD.full && GD.full.ctrl, GD.focus && GD.focus.ctrl].forEach(function(c) { if (c && c.update && wx) try { c.update({ weather: wx }); } catch (e) {} });
+        if (GD.vctrl && GD.vctrl.update) try { GD.vctrl.update({ weather: gdViewOpts(gdState(gdViewWorld())).weather }); } catch (e) {}
+        if (gardenOpen()) gdRenderView();
+        gdSoundUpdate();
+    }
+    function hoouWxSchedule() {
+        hoouWxTimers.forEach(clearTimeout); hoouWxTimers = [];
+        var H = (gdEngineFor('town') || {}).HOOU, t0 = hoouFeatherT0(); if (!H || !t0) return;
+        [(H.IN + H.LAND) * 1000 + 300, (H.ALL + 1800) * 1000 + 300].forEach(function(at) { var d = t0 + at - Date.now(); if (d > 0 && d < 36e5) hoouWxTimers.push(setTimeout(hoouWxPush, d)); });
+    }
+    setTimeout(hoouWxSchedule, 2000);
+    function hoouFeatherT0() {          // the feather's latest visit (none if a weather has been chosen by hand since: that holds)
+        var r = loadJSON(GD_KEEP.hoou, null), t0 = Math.max(r && r.feather ? r.t0 : 0, GD.hoouFeather || 0);
+        return t0 && !(GD.devMode && GD.devWxAt > t0) ? t0 : 0;
     }
     function hoouClearApp(now) {          // the feather's 鳳凰 has landed: from then until half an hour after it has gone, the weather is clear
         var H = (gdEngineFor('town') || {}).HOOU; if (!H) return false;
-        var r = loadJSON(GD_KEEP.hoou, null), t0 = Math.max(r && r.feather ? r.t0 : 0, GD.hoouFeather || 0);
+        var t0 = hoouFeatherT0();
         if (!t0) return false;
         var e = ((now || new Date()).getTime() - t0) / 1000;
         return e >= H.IN + H.LAND - 0.2 && e < H.ALL + 1800;
