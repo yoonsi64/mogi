@@ -13885,18 +13885,18 @@ hoouPath(c,[[0.592,-0.358],[0.65,-0.356],[0.7,-0.342],[0.728,-0.322],[0.716,-0.3
 var vis=Math.min(1,Math.max(0,side3*1.4));
 if(vis>0.05){var ez=zs*0.046,k=hs*px,H2=function(x,y){return Hm(x,y,ez);};
 c.save();c.globalAlpha=A*Math.min(1,vis*2);
-// a fierce, narrow eye: the front corner low by the beak, the back corner swept up; a nearly straight upper lid under a heavy brow
-var e1=H2(0.612,-0.329),e2=H2(0.55,-0.358),eu=H2(0.581,-0.3455),ed=H2(0.583,-0.3275),mx=(e1[0]+e2[0])/2,my=(e1[1]+e2[1])/2,cu=[2*eu[0]-mx,2*eu[1]-my],cd=[2*ed[0]-mx,2*ed[1]-my];
+// a calm eye: a gentle almond, level, the lids softly curved and the upper one a little lowered, serene
+var e1=H2(0.607,-0.336),e2=H2(0.558,-0.342),eu=H2(0.583,-0.3475),ed=H2(0.583,-0.3295),mx=(e1[0]+e2[0])/2,my=(e1[1]+e2[1])/2,cu=[2*eu[0]-mx,2*eu[1]-my],cd=[2*ed[0]-mx,2*ed[1]-my];
 var eye=function(){c.beginPath();c.moveTo(e1[0],e1[1]);c.quadraticCurveTo(cu[0],cu[1],e2[0],e2[1]);c.quadraticCurveTo(cd[0],cd[1],e1[0],e1[1]);c.closePath();};
-var ic=H2(0.584,-0.3395);
-c.save();c.globalCompositeOperation='screen';var gw=c.createRadialGradient(ic[0],ic[1],0,ic[0],ic[1],0.035*k);gw.addColorStop(0,'rgba(120,255,220,.6)');gw.addColorStop(1,'rgba(60,200,180,0)');c.fillStyle=gw;c.beginPath();c.arc(ic[0],ic[1],0.035*k,0,TAU);c.fill();c.restore();          // a faint glow
-eye();var ig=c.createRadialGradient(ic[0],ic[1],0,ic[0],ic[1],0.024*k);ig.addColorStop(0,'#e8fff6');ig.addColorStop(0.35,'#5ee8c8');ig.addColorStop(0.8,'#169a84');ig.addColorStop(1,'#0a4a40');c.fillStyle=ig;c.fill();          // a glowing jade iris
-c.save();eye();c.clip();c.fillStyle='#06120e';c.beginPath();c.arc(ic[0],ic[1],0.0042*k,0,TAU);c.fill();c.restore();
-c.strokeStyle='#2a1806';c.lineWidth=Math.max(0.15,0.0035*k);c.lineJoin='miter';eye();c.stroke();
-var b1=H2(0.622,-0.333),b2=H2(0.584,-0.352),b3=H2(0.536,-0.376),b4=H2(0.544,-0.363),b5=H2(0.584,-0.3445),b6=H2(0.616,-0.3295);          // the brow ridge, angled down toward the beak
-c.beginPath();c.moveTo(b1[0],b1[1]);c.lineTo(b2[0],b2[1]);c.lineTo(b3[0],b3[1]);c.lineTo(b4[0],b4[1]);c.lineTo(b5[0],b5[1]);c.lineTo(b6[0],b6[1]);c.closePath();
-var bg3=c.createLinearGradient(b2[0],b2[1]-0.006*k,b5[0],b5[1]+0.004*k);bg3.addColorStop(0,'#f0d080');bg3.addColorStop(0.5,'#a87a2a');bg3.addColorStop(1,'#5a3c12');c.fillStyle=bg3;c.fill();
-c.fillStyle='#ffffff';c.beginPath();c.arc(ic[0]+0.004*k,ic[1]-0.002*k,0.0022*k,0,TAU);c.fill();          // a glint
+var ic=H2(0.583,-0.3385),ea1=H2(0.6,-0.3395),ea=Math.atan2(ea1[1]-ic[1],ea1[0]-ic[0]),sp0=H2(0.576,-0.341);
+var sk2=c.createRadialGradient(sp0[0],sp0[1],0,sp0[0],sp0[1],0.04*k);sk2.addColorStop(0,'rgba(180,52,40,.9)');sk2.addColorStop(0.65,'rgba(176,52,40,.5)');sk2.addColorStop(1,'rgba(176,52,40,0)');
+c.fillStyle=sk2;c.beginPath();c.ellipse(sp0[0],sp0[1],0.042*k,0.021*k,ea,0,TAU);c.fill();          // the red bare skin round the eye
+c.save();c.globalCompositeOperation='screen';var gw=c.createRadialGradient(ic[0],ic[1],0,ic[0],ic[1],0.035*k);gw.addColorStop(0,'rgba(230,90,100,.25)');gw.addColorStop(1,'rgba(200,40,60,0)');c.fillStyle=gw;c.beginPath();c.arc(ic[0],ic[1],0.035*k,0,TAU);c.fill();c.restore();          // a faint glow
+eye();var ig=c.createRadialGradient(ic[0],ic[1],0,ic[0],ic[1],0.024*k);ig.addColorStop(0,'#e88a96');ig.addColorStop(0.35,'#a8243e');ig.addColorStop(0.8,'#640e22');ig.addColorStop(1,'#320610');c.fillStyle=ig;c.fill();          // a deep burgundy iris
+c.save();eye();c.clip();c.fillStyle='#120206';c.beginPath();c.arc(ic[0],ic[1],0.0042*k,0,TAU);c.fill();c.restore();
+c.strokeStyle='rgba(60,24,10,.85)';c.lineWidth=Math.max(0.15,0.003*k);c.lineJoin='round';eye();c.stroke();
+var l1=H2(0.609,-0.3395),l2=H2(0.556,-0.3455),lu=H2(0.583,-0.3535),lm=[(l1[0]+l2[0])/2,(l1[1]+l2[1])/2],lc=[2*lu[0]-lm[0],2*lu[1]-lm[1]];c.strokeStyle='rgba(110,70,20,.55)';c.lineWidth=Math.max(0.12,0.0028*k);c.beginPath();c.moveTo(l1[0],l1[1]);c.quadraticCurveTo(lc[0],lc[1],l2[0],l2[1]);c.stroke();          // a soft crease above the lid
+c.fillStyle='#fff6f0';c.beginPath();c.arc(ic[0]+0.0035*k,ic[1]-0.003*k,0.0024*k,0,TAU);c.fill();          // a glint
 c.restore();}
 
 };
