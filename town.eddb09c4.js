@@ -13878,15 +13878,27 @@ var neck=[];for(var i3=0;i3<=12;i3++)neck.push(hoouQuad(N0,N1,N2,i3/12));
 var ns=neck.map(function(q){return M(q[0],q[1],0);});
 var nd0=[ns[9][0]-ns[3][0],ns[9][1]-ns[3][1]],ndl=Math.hypot(nd0[0],nd0[1])||1,nnx=-nd0[1]/ndl,nny=nd0[0]/ndl;if(nnx*lsx+nny*lsy<0){nnx=-nnx;nny=-nny;}var nmid=ns[6],ng=c.createLinearGradient(nmid[0]-nnx*0.038*px,nmid[1]-nny*0.038*px,nmid[0]+nnx*0.038*px,nmid[1]+nny*0.038*px);          // shaded round the neck, lit on the sun's side; bright gold all round: it glows
 ng.addColorStop(0,'#c49438');ng.addColorStop(0.45,'#deae52');ng.addColorStop(0.8,'#eccb7c');ng.addColorStop(1,'#f8e2a6');c.fillStyle=ng;
-neck.forEach(function(q,i){var w=(0.042-0.016*i/12)*px;c.beginPath();c.arc(ns[i][0],ns[i][1],w,0,TAU);c.fill();if(i){var a=ns[i-1],b=ns[i],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1,nx=-dy/l,ny=dx/l,w0=(0.042-0.016*(i-1)/12)*px;c.beginPath();c.moveTo(a[0]+nx*w0,a[1]+ny*w0);c.lineTo(b[0]+nx*w,b[1]+ny*w);c.lineTo(b[0]-nx*w,b[1]-ny*w);c.lineTo(a[0]-nx*w0,a[1]-ny*w0);c.closePath();c.fill();}});
+var hoouPoly=function(P2,pts){var ar=0;for(var i=0;i<pts.length;i++){var p=pts[i],q=pts[(i+1)%pts.length];ar+=p[0]*q[1]-q[0]*p[1];}if(ar<0)pts=pts.slice().reverse();P2.moveTo(pts[0][0],pts[0][1]);for(var j=1;j<pts.length;j++)P2.lineTo(pts[j][0],pts[j][1]);P2.closePath();};          // all wound the same way, so overlapping pieces add up instead of cancelling
+var NW=function(u){return(0.042-0.016*u)*px;},NP=new Path2D();          // the neck as one smooth shape
+neck.forEach(function(q,i){var w=NW(i/12);NP.moveTo(ns[i][0]+w,ns[i][1]);NP.arc(ns[i][0],ns[i][1],w,0,TAU);if(i){var a=ns[i-1],b=ns[i],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1,nx=-dy/l,ny=dx/l,w0=NW((i-1)/12);hoouPoly(NP,[[a[0]+nx*w0,a[1]+ny*w0],[b[0]+nx*w,b[1]+ny*w],[b[0]-nx*w,b[1]-ny*w],[a[0]-nx*w0,a[1]-ny*w0]]);}});
+c.fill(NP);
 var HK=function(q){return M(q[0],q[1],zs*0.03);},TF=function(q){return M(q[0],q[1],zs*0.022);};
 
 for(var k2=0;k2<5;k2++){var cl=1.5+0.5*hu,cp=[];for(var i2=0;i2<=10;i2++){var q=hoouQuad([0.545,-0.37],[0.545-(0.025+k2*0.025)*cl,-0.37-(0.13-k2*0.02)*cl],[0.545-(0.125+k2*0.045)*cl,-0.37-(0.13-k2*0.06)*cl+Math.sin(t*2+k2)*0.01],i2/10);cp.push(Hm(q[0],q[1],(k2-2.5)*0.018*i2/10));}
 hoouPlume(c,cp,function(s){return s<0.62?0.006:0.006+0.022*Math.sin(Math.PI*(s-0.62)/0.38);},false,k2,px*hs);}
 var HP=[[0.602,-0.357],[0.586,-0.374],[0.558,-0.386],[0.53,-0.383],[0.508,-0.366],[0.499,-0.338],[0.505,-0.302],[0.51,-0.272],[0.55,-0.272],[0.554,-0.298],[0.57,-0.312],[0.6,-0.322]];          // the nape and throat narrow into the neck
-var hc=Hm(0.548,-0.34,0),hr=0.075*hs*px,hg=c.createRadialGradient(hc[0]+lsx*hr*0.35,hc[1]+lsy*hr*0.35,0,hc[0],hc[1],hr*1.15);hg.addColorStop(0,'#eccd82');hg.addColorStop(0.5,'#c4922e');hg.addColorStop(1,'#74501a');c.fillStyle=hg;
-[-0.034,0,0.034].forEach(function(zz){var q=HP.map(function(p){return Hm(p[0],p[1],zz*(1-0.5*Math.max(0,(p[0]-0.57)/0.03)));}),n=q.length;c.beginPath();for(var i=0;i<n;i++){var a=q[i],b=q[(i+1)%n],m=[(a[0]+b[0])/2,(a[1]+b[1])/2];if(i)c.quadraticCurveTo(a[0],a[1],m[0],m[1]);else c.moveTo(m[0],m[1]);}var a0=q[0],b0=q[1];c.quadraticCurveTo(a0[0],a0[1],(a0[0]+b0[0])/2,(a0[1]+b0[1])/2);c.closePath();c.fill();});
-c.strokeStyle='rgba(120,80,24,.3)';c.lineWidth=Math.max(0.1,0.003*hs*px);c.beginPath();for(var hf2=0;hf2<5;hf2++){var fa=Hm(0.53-hf2*0.008,-0.372+hf2*0.012,zs*0.03),fb=Hm(0.515-hf2*0.008,-0.36+hf2*0.012,zs*0.03);c.moveTo(fa[0],fa[1]);c.lineTo(fb[0],fb[1]);}c.stroke();          // a few fine feather lines at the back of the head
+var hc=Hm(0.548,-0.34,0),hr=0.075*hs*px,HDP=new Path2D();
+[-0.034,0,0.034].forEach(function(zz){var q=HP.map(function(p){return Hm(p[0],p[1],zz*(1-0.5*Math.max(0,(p[0]-0.57)/0.03)));}),n=q.length,ar=0;for(var ii=0;ii<n;ii++){var pp=q[ii],qq=q[(ii+1)%n];ar+=pp[0]*qq[1]-qq[0]*pp[1];}if(ar<0)q.reverse();for(var i=0;i<n;i++){var a=q[i],b=q[(i+1)%n],m=[(a[0]+b[0])/2,(a[1]+b[1])/2];if(i)HDP.quadraticCurveTo(a[0],a[1],m[0],m[1]);else HDP.moveTo(m[0],m[1]);}var a0=q[0],b0=q[1];HDP.quadraticCurveTo(a0[0],a0[1],(a0[0]+b0[0])/2,(a0[1]+b0[1])/2);HDP.closePath();});
+c.fillStyle=ng;c.fill(HDP);          // the head in the neck's own colours, so the two are one
+c.save();c.clip(HDP);var hg=c.createRadialGradient(hc[0]+lsx*hr*0.4,hc[1]+lsy*hr*0.4-hr*0.2,0,hc[0],hc[1],hr*1.1);hg.addColorStop(0,'rgba(255,236,186,.22)');hg.addColorStop(0.6,'rgba(255,230,170,.04)');hg.addColorStop(1,'rgba(120,80,24,.22)');c.fillStyle=hg;c.fillRect(hc[0]-hr*2,hc[1]-hr*2,hr*4,hr*4);c.restore();          // the crown catching the light
+// fine feathers lying flat along the neck and up into the nape: drawn inside the outline, so they add no thickness
+var NB=new Path2D();NB.addPath(NP);NB.addPath(HDP);c.save();c.clip(NB);
+var nAt=function(u){var q=hoouQuad(N0,N1,N2,u),q2=hoouQuad(N0,N1,N2,u+0.01),a=M(q[0],q[1],0),b=M(q2[0],q2[1],0),dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1;return{x:a[0],y:a[1],tx:dx/l,ty:dy/l,w:NW(Math.min(1,u))};};
+for(var fi=0;fi<18;fi++){var uf=0.06+fi*0.056,lats=fi%2?[-0.5,0.1,0.65]:[-0.2,0.38];lats.forEach(function(la){var R=nAt(uf+0.05),T=nAt(Math.max(0,uf-0.03)),rx=R.x-R.ty*la*R.w,ry=R.y+R.tx*la*R.w,tx2=T.x-T.ty*la*T.w*0.9,ty2=T.y+T.tx*la*T.w*0.9,dx=tx2-rx,dy=ty2-ry,l=Math.hypot(dx,dy)||1,nx=-dy/l,ny=dx/l,wf=R.w*0.32;
+c.beginPath();c.moveTo(rx,ry);c.quadraticCurveTo(rx+dx*0.5+nx*wf,ry+dy*0.5+ny*wf,tx2,ty2);c.quadraticCurveTo(rx+dx*0.5-nx*wf,ry+dy*0.5-ny*wf,rx,ry);c.closePath();
+c.fillStyle='rgba(255,240,200,.13)';c.fill();c.strokeStyle='rgba(120,80,24,.2)';c.lineWidth=Math.max(0.1,0.0028*px);c.beginPath();c.moveTo(tx2,ty2);c.quadraticCurveTo(rx+dx*0.5-nx*wf,ry+dy*0.5-ny*wf,rx,ry);c.stroke();});}
+c.restore();
+
 var bm=function(q){return Hm(q[0],q[1],0);},bt=Hm(0.64,-0.34,0),bk=c.createLinearGradient(Hm(0.61,-0.37,0)[0],Hm(0.61,-0.37,0)[1],Hm(0.69,-0.32,0)[0],Hm(0.69,-0.32,0)[1]);bk.addColorStop(0,'#e8c070');bk.addColorStop(1,'#7a5014');
 hoouPath(c,[[0.592,-0.358],[0.65,-0.356],[0.7,-0.342],[0.728,-0.322],[0.716,-0.318],[0.69,-0.33],[0.64,-0.328],[0.596,-0.322]],bm);c.fillStyle=bk;c.fill();          // a long, fine hooked beak
 var vis=Math.min(1,Math.max(0,side3*1.4));
