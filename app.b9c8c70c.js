@@ -10700,6 +10700,7 @@
         markSeg('set-autonext', getSetting('autoNext', false) ? 'on' : 'off');
         markSeg('set-vibrate', getSetting('vibrate', true) ? 'on' : 'off');
         markSeg('set-timer', getSetting('showTimer', true) ? 'on' : 'off');
+        markSeg('set-rep-score', getSetting('repScore', 'scaled'));
         markSeg('set-explain', explainOn() ? 'on' : 'off');
         markSeg('set-srs-new', String(getSetting('srsNewPerDay', 20)));
         markSeg('set-srs-rev', String(getSetting('srsMaxReviews', 200)));
@@ -10756,7 +10757,7 @@
     });
     [['set-size', 'textSize', function(v) { return v; }], ['set-font', 'font', function(v) { return v; }], ['set-option-font', 'optionFont', function(v) { return v; }], ['set-furigana', 'furigana', function(v) { return v === 'on'; }],
      ['set-autonext', 'autoNext', function(v) { return v === 'on'; }], ['set-vibrate', 'vibrate', function(v) { return v === 'on'; }], ['set-timer', 'showTimer', function(v) { return v === 'on'; }],
-     ['set-explain', 'showExplain', function(v) { return v === 'on'; }]].forEach(function(cfg) {
+     ['set-explain', 'showExplain', function(v) { return v === 'on'; }], ['set-rep-score', 'repScore', function(v) { return v; }]].forEach(function(cfg) {
         document.querySelectorAll('#' + cfg[0] + ' button').forEach(function(b) {
             b.addEventListener('click', function() {
                 setSetting(cfg[1], cfg[2](b.dataset.v));
@@ -25542,9 +25543,9 @@
         var c = { v: { ok: 0, n: 0 }, g: { ok: 0, n: 0 }, r: { ok: 0, n: 0 } }, answered = 0;
         mk.items.forEach(function(it) {
             var k = MOCK_CAT[it.q.type]; if (!k) return;
-            c[k].n++;
+            c[k].n++; c[k].wn = (c[k].wn || 0) + repWeight(it.q);
             if (mk.s.a[it.key] !== undefined) answered++;
-            if (mk.s.a[it.key] === it.correct) c[k].ok++;
+            if (mk.s.a[it.key] === it.correct) { c[k].ok++; c[k].wok = (c[k].wok || 0) + repWeight(it.q); }
         });
         if (!c.v.n || !c.g.n || !c.r.n) return '';
         var total = c.v.n + c.g.n + c.r.n;
@@ -25566,6 +25567,7 @@
             ids[q.id] = 1;
             var r = earnedFrom(q, reportAnswers);
             c[k].ok += r.earned; c[k].n += r.max; left += r.max - r.answered;
+            var w = repWeight(q); c[k].wok = (c[k].wok || 0) + r.earned * w; c[k].wn = (c[k].wn || 0) + r.max * w;
         });
         if (!c.v.n || !c.g.n || !c.r.n) return '';
         if (left > 0) return '<div class="mk-rep-wait">' + escapeHtml(title) + 'の文字・語彙・文法・読解をすべて解くと、JLPTの成績表の形で得点（目安）が表示されます（未解答 ' + left + '問）。</div>';
@@ -25606,49 +25608,60 @@
         }, { threshold: 0.55 });
         io.observe(rep);
     }
+    // a question's weight in the 尺度得点 report: やさしい 1.4, ややかんたん 1.2, N1標準 1, むずかしい 0.8, とてもむずかしい 0.6 (unrated 1)
+    function repWeight(q) { var d = q && Q_DIFF[q.id]; return d ? ([1.4, 1.2, 1, 0.8, 0.6][d[0] - 1] || 1) : 1; }
+    // 成績表の得点 (設定 › 問題を解くとき): 尺度得点 weighs each question by its 難易度, 素点 is the plain share of points
     function jlptReportHtml(c, title, ts) {
-        var lang = Math.round((c.v.ok + c.g.ok) / (c.v.n + c.g.n) * 60), read = Math.round(c.r.ok / c.r.n * 60), sum = lang + read;
         var grade = function(x) { var r = x.ok / x.n; return r >= 0.67 ? 'A' : r >= 0.34 ? 'B' : 'C'; };
-        var rb = function(t, r) { return '<ruby>' + t + '<rt>' + r + '</rt></ruby>'; };
-        var judge, low = [];
-        if (lang < 19) low.push('言語知識');
-        if (read < 19) low.push('読解');
-        if (low.length) judge = '<b class="ng">' + low.join('・') + 'が基準点（19点）に届いていません。</b>この得点では不合格になります。';
-        else {
-            var need = Math.max(19, 100 - sum);
-            judge = need > 60 ? '言語知識・読解とも基準点（19点）以上ですが、総合得点が合格点（100点）に届くには聴解が満点でも足りません。'
-                : '言語知識・読解とも基準点（19点）以上です。合格（総合100点以上）には、聴解で <b>' + need + '点</b> 以上が必要です。';
-        }
-        // laid out like the JLPT 合否結果通知書 (score table, 参考情報 with its key, the verdict box and the date), marked as モギ's estimate
+        var raw = getSetting('repScore', 'scaled') === 'raw';
+        // one way of scoring: the section scores, the verdict and what it means
+        var part = function(lang, read) {
+            var sum = lang + read, low = [], need = 0, judge, verdict;
+            if (lang < 19) low.push('言語知識');
+            if (read < 19) low.push('読解');
+            if (low.length) judge = '<b class="ng">' + low.join('・') + 'が基準点（19点）に届いていません。</b>この得点では不合格になります。';
+            else {
+                need = Math.max(19, 100 - sum);
+                judge = need > 60 ? '言語知識・読解とも基準点（19点）以上ですが、総合得点が合格点（100点）に届くには聴解が満点でも足りません。'
+                    : '言語知識・読解とも基準点（19点）以上です。合格（総合100点以上）には、聴解で <b>' + need + '点</b> 以上が必要です。';
+            }
+            verdict = low.length ? '不合格<small>（' + low.join('・') + 'が基準点未満）</small>' : need > 60 ? '不合格<small>（総合得点が届きません）</small>' : '合格圏<small>（聴解 ' + need + '点以上で合格）</small>';
+            return { lang: lang, read: read, sum: sum, judge: judge, verdict: verdict };
+        };
+        var wv = function(x) { return x.wn ? [x.wok || 0, x.wn] : [x.ok, x.n]; }, vw = wv(c.v), gw = wv(c.g), rw = wv(c.r);
+        var R = part(Math.round((c.v.ok + c.g.ok) / (c.v.n + c.g.n) * 60), Math.round(c.r.ok / c.r.n * 60));
+        var S = part(Math.round((vw[0] + gw[0]) / (vw[1] + gw[1]) * 60), Math.round(rw[0] / rw[1] * 60));
+        var P = raw ? R : S;
+        // laid out like the JLPT 合否結果通知書 (score table, 参考情報 with its key, the verdict box and the seal), marked as モギ's estimate
         var d = new Date(ts || Date.now()), wd = '日月火水木金土'.charAt(d.getDay());
         var jd = d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
-        var verdict = low.length ? '不合格<small>（' + low.join('・') + 'が基準点未満）</small>' : need > 60 ? '不合格<small>（総合得点が届きません）</small>' : '合格圏<small>（聴解 ' + need + '点以上で合格）</small>';
         return '<div class="mk-rep mr">' +
-            '<div class="mr-title">日本語能力試験 N1　<span class="mr-nw">成績（目安）</span>' + '</div>' +
+            '<div class="mr-title">日本語能力試験 N1　<span class="mr-nw">成績（目安）</span></div>' +
             '<div class="mr-info">' +
                 (title ? '<div><span>教材</span><b>' + escapeHtml(title) + '</b></div>' : '') +
                 '<div><span>受験日</span><b>' + jd + '（' + wd + '曜日）</b></div>' +
                 '<div><span>受験レベル</span><b>N1</b></div>' +
+                '<div><span>得点</span><b>' + (raw ? '素点' : '尺度得点') + '</b></div>' +
             '</div>' +
             '<table class="mr-tbl"><colgroup><col style="width:42%"><col style="width:17%"><col style="width:17%"><col style="width:24%"></colgroup>' +
-                '<tr><th colspan="3" class="mr-sp">得点区分別得点' + '</th><th rowspan="2" class="mr-sp mr-tot">総合得点' + '</th></tr>' +
-                '<tr><th>言語知識<span class="mr-sub">（文字・語彙・文法）</span>' + '</th><th class="mr-sp">読解' + '</th><th class="mr-sp">聴解' + '</th></tr>' +
-                '<tr class="mr-num"><td>' + lang + '/60</td><td>' + read + '/60</td><td class="mr-na">未受験</td><td class="mr-tot">' + sum + '/120<small>（聴解を除く）</small></td></tr>' +
+                '<tr><th colspan="3" class="mr-sp">得点区分別得点</th><th rowspan="2" class="mr-sp mr-tot">総合得点</th></tr>' +
+                '<tr><th>言語知識<span class="mr-sub">（文字・語彙・文法）</span></th><th class="mr-sp">読解</th><th class="mr-sp">聴解</th></tr>' +
+                '<tr class="mr-num"><td>' + P.lang + '/60</td><td>' + P.read + '/60</td><td class="mr-na">未受験</td><td class="mr-tot">' + P.sum + '/120<small>（聴解を除く）</small></td></tr>' +
             '</table>' +
             '<div class="mr-low">' +
                 '<div class="mr-refw"><div class="mr-arrow" aria-hidden="true"></div>' +
-                    '<table class="mr-ref"><tr><th colspan="2" class="mr-sp">参考情報' + '</th></tr>' +
-                    '<tr><th>文字・語彙' + '</th><th class="mr-sp">文法' + '</th></tr>' +
+                    '<table class="mr-ref"><tr><th colspan="2" class="mr-sp">参考情報</th></tr>' +
+                    '<tr><th>文字・語彙</th><th class="mr-sp">文法</th></tr>' +
                     '<tr class="mr-num"><td>' + grade(c.v) + '</td><td>' + grade(c.g) + '</td></tr></table></div>' +
                 '<div class="mr-key">' +
-                    '<div><b>A</b>正答率67%以上' + '</div>' +
-                    '<div><b>B</b>正答率34%以上67%未満' + '</div>' +
-                    '<div><b>C</b>正答率34%未満' + '</div>' +
+                    '<div><b>A</b>正答率67%以上</div>' +
+                    '<div><b>B</b>正答率34%以上67%未満</div>' +
+                    '<div><b>C</b>正答率34%未満</div>' +
                 '</div>' +
             '</div>' +
-            '<div class="mr-foot"><div class="mr-verdict">' + verdict + '</div>' + repStampHtml(ts) + '</div>' +
-            '<div class="mk-rep-judge">' + judge + '</div>' +
-            '<div class="mk-rep-note">得点は正答数から換算した目安です（本試験は等化による尺度得点で、配点も公表されていません）。N1の合格は、総合得点100点以上（180点満点）かつ各区分19点以上です。</div>' +
+            '<div class="mr-foot"><div class="mr-verdict">' + P.verdict + '</div>' + repStampHtml(ts) + '</div>' +
+            '<div class="mk-rep-judge">' + P.judge + '</div>' +
+            '<div class="mk-rep-note">' + (raw ? '素点は、正答数をそのまま60点満点に換算した目安です。' : '尺度得点は、やさしい問題ほど配点を高く、むずかしい問題ほど低くして換算した目安です。') + '本試験は等化による尺度得点で、配点も公表されていません。参考情報は正答率です。N1の合格は、総合得点100点以上（180点満点）かつ各区分19点以上です。</div>' +
         '</div>';
     }
     function renderMockResult() {
