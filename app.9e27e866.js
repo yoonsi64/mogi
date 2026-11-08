@@ -9919,7 +9919,8 @@
             sel('weather', Object.keys(GD_WEATHER).map(function(k) { return [k, GD_WEATHER[k]]; }), o.weather || 'clear') +
             sel('event', [['', '行事なし']].concat(Object.keys(GD_EVENTS).map(function(k) { return [k, GD_EVENTS[k]]; })), o.event || '') +
             (gdViewWorld() === 'garden' ? sel('flower', [['', '花：日付どおり']].concat(Object.keys(GD_FLOWERS).map(function(k) { return [k, GD_FLOWERS[k][0]]; })), (GD.dev && GD.dev.flower) || '') : '') +
-            '<button data-k="up">段階アップを見る</button><button data-k="reset">いまに戻す</button>';
+            '<button data-k="up">段階アップを見る</button><button data-k="reset">いまに戻す</button>' +
+            (gdViewWorld() === 'town' ? '<button data-k="hoou">鳳凰を呼ぶ</button>' : '');          // the town's 鳳凰: its whole visit, now (the 五重塔 must be built)
         devBox.querySelectorAll('select').forEach(function(x) {
             x.addEventListener('change', function() {
                 if (x.dataset.k === 'world') { GD.devWorld = x.value; GD.dev = null; gdRenderView(); gdMountView(true); return; }
@@ -9935,6 +9936,12 @@
             var to = gdViewOpts(gdState(gdViewWorld())).stage || 1;
             if (GD.vctrl) GD.vctrl.playStageUp(to - 1, to);
             if (window.MogiSound && getSetting('gdSound', true)) MogiSound.cue('reveal');
+        });
+        var hoouBtn = devBox.querySelector('[data-k="hoou"]');
+        if (hoouBtn) hoouBtn.addEventListener('click', function() {
+            var ok = false;
+            try { ok = !!(GD.vctrl && GD.vctrl._summon && GD.vctrl._summon('houou')); } catch (e) { ok = false; }
+            if (!ok) showToast('鳳凰は五重塔のある町に来ます（段階を上げてください）');
         });
         devBox.querySelector('[data-k="reset"]').addEventListener('click', function() {
             GD.dev = null;
