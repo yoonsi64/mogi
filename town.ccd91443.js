@@ -13777,7 +13777,7 @@ var B=o.B;
 if(o.feet&&lp>0){var ad=[o.feet[0]-(f[0]*Fm[0]-u[0]*Fm[1])*L,o.feet[1]-(f[1]*Fm[0]-u[1]*Fm[1])*L,o.feet[2]-(f[2]*Fm[0]-u[2]*Fm[1])*L],kf=sstep(0.55,1,lp);B=[lerp(B[0],ad[0],kf),lerp(B[1],ad[1],kf),lerp(B[2],ad[2],kf)];}          // the feet on the ball
 var Wl=function(x,y,z){return[B[0]+(f[0]*x-u[0]*y+r[0]*z)*L,B[1]+(f[1]*x-u[1]*y+r[1]*z)*L,B[2]+(f[2]*x-u[2]*y+r[2]*z)*L];};
 var M=function(x,y,z){var w=Wl(x,y,z||0),p=P(w[0],w[1],w[2]);return[p.x,p.y];};
-var b0=P(B[0],B[1],B[2]),px=L*b0.k,A=c.globalAlpha;
+var b0=P(B[0],B[1],B[2]),px=L*b0.k,A0=c.globalAlpha,A=A0*(o.alpha===undefined?1:clamp(o.alpha,0,1));if(A<=0.002)return{plume:[],tips:[]};c.globalAlpha=A;          // o.alpha: it fades in and out
 var cam=hoouNorm([CAM.x-B[0],CAM.y-B[1],CAM.z-B[2]]),zs=dot(r,cam)>=0?1:-1,side3=Math.abs(dot(r,cam));          // zs: the side of it we see
 var lsx=SUN[0],lsy=-SUN[1],lsl=Math.hypot(lsx,lsy)||1;lsx/=lsl;lsy/=lsl;
 var tips=[],plumePts=[];
@@ -13985,10 +13985,10 @@ c.save();c.globalCompositeOperation='screen';
 // outward and fade, their hues flowing round them like the folds of an aurora's curtain
 var au=o.aurora||0;
 if(au>0.01){var ac=M(0.1,-0.14,0);c.globalCompositeOperation='source-over';
-for(var ai=0;ai<4;ai++){var aph=(t*0.085+ai/4)%1,arr=(0.4+1.5*aph)*px,aa=au*Math.pow(Math.sin(Math.PI*aph),1.3)*0.2;if(aa<0.004)continue;
+for(var ai=0;ai<4;ai++){var aph=(t*0.065+ai/4)%1,arr=(0.38+1.15*aph)*px,aa=au*Math.pow(Math.sin(Math.PI*aph),1.5)*0.12;if(aa<0.004)continue;
 var apt=[];for(var aq=0;aq<=60;aq++){var ath=aq/60*TAU,wob=1+0.12*Math.sin(3*ath+t*0.7+ai*1.9)+0.07*Math.sin(5*ath-t*1.1+ai)+0.04*Math.sin(9*ath+t*1.6+ai*0.7);apt.push([ac[0]+Math.cos(ath)*arr*wob,ac[1]+Math.sin(ath)*arr*wob*0.9]);}
-var afl;if(c.createConicGradient){afl=c.createConicGradient(t*0.12+ai*1.3,ac[0],ac[1]);for(var hk=0;hk<=24;hk++){var hue=(hk*15+t*22+ai*60)%360,str=0.3+0.7*Math.pow(0.5+0.5*Math.sin(hk/24*TAU*5+t*1.2+ai*2.1),2);afl.addColorStop(hk/24,'hsla('+hue.toFixed(0)+',92%,62%,'+(aa*str).toFixed(3)+')');}}
-else afl='hsla('+((t*22+ai*72)%360).toFixed(0)+',92%,62%,'+aa.toFixed(3)+')';
+var afl;if(c.createConicGradient){afl=c.createConicGradient(t*0.12+ai*1.3,ac[0],ac[1]);for(var hk=0;hk<=24;hk++){var hue=(hk*15+t*22+ai*60)%360,str=0.3+0.7*Math.pow(0.5+0.5*Math.sin(hk/24*TAU*5+t*1.2+ai*2.1),2);afl.addColorStop(hk/24,'hsla('+hue.toFixed(0)+',78%,68%,'+(aa*str).toFixed(3)+')');}}
+else afl='hsla('+((t*22+ai*72)%360).toFixed(0)+',78%,68%,'+aa.toFixed(3)+')';
 c.strokeStyle=afl;c.lineJoin='round';
 [[0.8,0.15],[0.64,0.22],[0.5,0.3],[0.37,0.42],[0.26,0.58],[0.16,0.78],[0.07,1]].forEach(function(lw){c.globalAlpha=A*lw[1];c.lineWidth=lw[0]*arr*(1-0.4*aph);c.beginPath();apt.forEach(function(p,i){if(i)c.lineTo(p[0],p[1]);else c.moveTo(p[0],p[1]);});c.closePath();c.stroke();});}          // layered widths: soft edges, a brighter heart
 c.globalAlpha=A;c.globalCompositeOperation='screen';}
@@ -14004,6 +14004,7 @@ wing(wmap(-zs),true);
 [[dep(-0.9,0.1,0),tail],[dep(0,0,0)+0.006,legs],[dep(0,0,0)+0.003,neckDraw],[dep(0,0,0),body],[dep(0.45,-0.25,0)+(dot(f,cam)>0?-0.01:0.01),head]].sort(function(a,b){return b[0]-a[0];}).forEach(function(z){z[1]();});
 wing(wmap(zs),false);
 c.restore();
+c.globalAlpha=A0;
 return{plume:plumePts,tips:tips};
 }
 function mount(el,opts){
@@ -14294,7 +14295,7 @@ return ry;
 }
 function hoouUnP(sx,sy,d){var rx=(sx-CAM.cx)*d/CAM.F,u=-(sy-CAM.cy)*d/CAM.F;return[CAM.x+rx,CAM.y+u*CAM.c-d*CAM.s,CAM.z+u*CAM.s+d*CAM.c];}
 function hoouBow(ctx,g,el){
-var r0=HOOU_IN+HOOU_LAND,k=sstep(r0+0.4,r0+6,el)*(1-sstep(r0+HOOU_STAY+0.5,HOOU_ALL-0.3,el));          // it stays while the bird flies off through it, growing fainter the farther the bird goes
+var r0=HOOU_IN+HOOU_LAND,k=sstep(r0+0.4,r0+6,el)*(1-(el>r0+HOOU_STAY?sstep(0.04,0.95,hoouOutU(el).ua):0));          // it stays while the bird flies off through it, growing fainter the farther the bird goes
 if(k<=0.002)return;
 var bg=hoouBowGeo(g),xa=bg.xa,xb=bg.xb,yh=bg.yh,yt=bg.yt,R=bg.R,cx=bg.cx,cy=bg.cy,lw=g.W*0.0085;
 if(!hoou.bow&&k>0.15){hoou.bow=true;if(!hoou.joined||el<r0+8)cue('rainbow',null,true);}
@@ -14307,15 +14308,35 @@ function hoouAng(a,b,u){var d=((b-a)%TAU+TAU*1.5)%TAU-TAU*0.5;return a+d*u;}
 // speed that eases from brisk to gentle as it nears the spire. Returns where it is and how it holds itself (and the last
 // waypoint, where the landing takes over).
 function hoouArr(g,side,fin,Br,el){
+var AC=hoou&&hoou.arr;
+if(!AC||AC.g!==g||AC.gw!==g.W||AC.gh!==g.H){
 var fp=hoouFin(),d0=fp.d,sx=function(f){return side>0?-f*g.W:(1+f)*g.W;};          // sx: a screen x off the edge on the 五重塔's side
 var kp=P(CASTLE.x,19.5,CASTLE.z),H0=g.H,ex=side>0?fp.x*0.45:g.W-(g.W-fp.x)*0.45;          // the top of the keep; ex: between the edge and the 五重塔
-var W=[[CASTLE.x,21.5,CASTLE.z],hoouUnP(lerp(kp.x,fp.x,0.5),Math.max(kp.y,fp.y)+0.06*H0,lerp(kp.d,d0,0.5)*0.9),hoouUnP(sx(0.07),fp.y+0.05*H0,d0*0.93),hoouUnP(sx(0.2),fp.y+0.09*H0,d0*0.84),hoouUnP(sx(0.04),fp.y+0.1*H0,d0*0.87),hoouUnP(ex,fp.y+0.06*H0,d0*0.95),[Br[0]-side*3,Br[1]+3,Br[2]-1.5]];          // over the town below the skyline, out past the 五重塔, round just out of sight, and back in to the spire
-var n=W.length-1,len=[],cum=[0],i;for(i=0;i<n;i++){len.push(Math.hypot(W[i+1][0]-W[i][0],W[i+1][1]-W[i][1],W[i+1][2]-W[i][2])||1);cum.push(cum[i]+len[i]);}
-var at=function(e){var p=clamp(e/HOOU_IN),s=cum[n]*(1.25*p-0.35*p*p)/0.9,k=0;while(k<n-1&&s>cum[k+1])k++;var u=clamp((s-cum[k])/len[k]),p0=W[Math.max(0,k-1)],p1=W[k],p2=W[k+1],p3=W[Math.min(n,k+2)],u2=u*u,u3=u2*u;
-return[0,1,2].map(function(j){return 0.5*(2*p1[j]+(-p0[j]+p2[j])*u+(2*p0[j]-5*p1[j]+4*p2[j]-p3[j])*u2+(-p0[j]+3*p1[j]-3*p2[j]+p3[j])*u3);});};
-var dir=function(e){var a=at(Math.min(e,HOOU_IN-0.12)),b=at(Math.min(e,HOOU_IN-0.12)+0.12),dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2];return{yaw:Math.atan2(dz,dx),pitch:Math.atan2(dy,Math.hypot(dx,dz))};};
-var h=dir(el),h2=dir(el+0.3),p=clamp(el/HOOU_IN);
-return{B:at(el),yaw:h.yaw,pitch:h.pitch,roll:clamp(hoouAng(h.yaw,h2.yaw,1)-h.yaw,-0.5,0.5)*-5,p:p,end:W[n]};
+var W=[[CASTLE.x,21.5,CASTLE.z],hoouUnP(lerp(kp.x,fp.x,0.5),Math.max(kp.y,fp.y)+0.06*H0,lerp(kp.d,d0,0.5)*0.9),hoouUnP(sx(0.07),fp.y+0.04*H0,d0*0.93),hoouUnP(sx(0.2),fp.y+0.03*H0,d0*0.85),hoouUnP(sx(0.04),fp.y-0.01*H0,d0*0.89),hoouUnP(ex,fp.y-0.015*H0,d0*0.95),[Br[0]-side*3,Br[1]+3,Br[2]-1.5]];          // over the town below the skyline, out past the 五重塔, round just out of sight, and back in to the spire
+// a centripetal Catmull-Rom through them (no loops or cusps), sampled densely and measured, so it can be walked smoothly
+var n=W.length-1,pts=[],ds=function(a,b){return Math.sqrt(Math.hypot(b[0]-a[0],b[1]-a[1],b[2]-a[2]))||1e-3;},mix=function(a,b,x){return[a[0]+(b[0]-a[0])*x,a[1]+(b[1]-a[1])*x,a[2]+(b[2]-a[2])*x];};
+for(var k=0;k<n;k++){var q1=W[k],q2=W[k+1],q0=k>0?W[k-1]:mix(q2,q1,2),q3=k<n-1?W[k+2]:mix(q1,q2,2),t1=ds(q0,q1),t2=t1+ds(q1,q2),t3=t2+ds(q2,q3);
+for(var j2=0;j2<24;j2++){var tt=t1+(t2-t1)*j2/24,A1=mix(q0,q1,tt/t1),A2=mix(q1,q2,(tt-t1)/(t2-t1)),A3=mix(q2,q3,(tt-t2)/(t3-t2)),B1=mix(A1,A2,tt/t2),B2=mix(A2,A3,(tt-t1)/(t3-t1));pts.push(mix(B1,B2,(tt-t1)/(t2-t1)));}}
+pts.push(W[n]);var cum=[0];for(var m=1;m<pts.length;m++)cum.push(cum[m-1]+Math.hypot(pts[m][0]-pts[m-1][0],pts[m][1]-pts[m-1][1],pts[m][2]-pts[m-1][2]));
+AC={g:g,gw:g.W,gh:g.H,pts:pts,cum:cum,end:W[n]};if(hoou)hoou.arr=AC;
+}
+var Lt=AC.cum[AC.cum.length-1],posAt=function(s){s=clamp(s,0,Lt);var lo=0,hi=AC.cum.length-1;while(hi-lo>1){var md=(lo+hi)>>1;if(AC.cum[md]<=s)lo=md;else hi=md;}var u=(s-AC.cum[lo])/Math.max(1e-6,AC.cum[hi]-AC.cum[lo]),a=AC.pts[lo],b=AC.pts[hi];return[a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u,a[2]+(b[2]-a[2])*u];};
+var sAt=function(e){var p=clamp(e/HOOU_IN);return Lt*(1.8*p-0.8*p*p);};          // brisk as it sets out, gentle as it nears the spire
+var hd=function(s0){s0=clamp(s0,2.5,Lt-2.5);var a=posAt(s0-2.5),b=posAt(s0+2.5),dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2],dl=Math.hypot(dx,dy,dz)||1;return{yaw:Math.atan2(dz,dx),pitch:Math.atan2(dy,Math.hypot(dx,dz)),d:[dx/dl,dy/dl,dz/dl]};};          // its heading, taken over a few units of path: smooth
+var s=sAt(el),h=hd(s),h2=hd(sAt(el+0.35)),p=clamp(el/HOOU_IN);
+return{B:posAt(s),yaw:h.yaw,pitch:h.pitch,roll:clamp(hoouAng(h.yaw,h2.yaw,1)-h.yaw,-0.5,0.5)*-4,p:p,end:AC.end,v:Lt*(1.8-1.6*p)/HOOU_IN,dir:h.d};
+}
+// how far it has gone on its way out: s3, the time (0..1), and ua, along its path (slow off the spire, then on and on, more and
+// more slowly, into the distance, where it lingers before it is gone)
+function hoouOutU(el){var s3=clamp((el-HOOU_IN-HOOU_LAND-HOOU_STAY)/HOOU_OUT),k=4.5;return{s3:s3,ua:(1-Math.exp(-k*Math.pow(s3,1.6)))/(1-Math.exp(-k))};}
+// it is gone in a twinkle: a star of light where it was, flaring and fading
+function hoouTwinkle(c,bp,q,g){
+var a=Math.pow(Math.sin(Math.PI*clamp(q*1.1)),0.8);if(a<0.01)return;
+var R=g.W*(0.012+0.03*Math.sin(Math.PI*Math.min(1,q*1.2))),rot=q*0.8;
+c.save();c.globalCompositeOperation='lighter';
+var gg=c.createRadialGradient(bp.x,bp.y,0,bp.x,bp.y,R*0.55);gg.addColorStop(0,'rgba(255,252,236,'+(0.95*a)+')');gg.addColorStop(0.25,'rgba(255,226,160,'+(0.55*a)+')');gg.addColorStop(1,'rgba(255,200,120,0)');c.fillStyle=gg;c.beginPath();c.arc(bp.x,bp.y,R*0.55,0,TAU);c.fill();
+for(var i=0;i<8;i++){var an=rot+i*Math.PI/4,ln=R*(i%2?0.42:1),w=R*(i%2?0.035:0.05),ux=Math.cos(an),uy=Math.sin(an),lg=c.createLinearGradient(bp.x,bp.y,bp.x+ux*ln,bp.y+uy*ln);lg.addColorStop(0,'rgba(255,250,228,'+a+')');lg.addColorStop(1,'rgba(255,214,150,0)');c.fillStyle=lg;c.beginPath();c.moveTo(bp.x-uy*w,bp.y+ux*w);c.lineTo(bp.x+ux*ln,bp.y+uy*ln);c.lineTo(bp.x+uy*w,bp.y-ux*w);c.closePath();c.fill();}
+c.restore();
 }
 function hoouState(g,el,t){
 var fin=[PAGODA.x,21.67,PAGODA.z],S=3.4,side=hoouFin().x<g.W*0.5?1:-1;
@@ -14334,7 +14355,8 @@ var gl=sstep(0.78,0.96,u);o.wings=flap(0.62,0.86*(1-0.6*gl),0.22+0.12*gl);o.B[1]
 o.droop=0;o.legs=0;o.head=0;o.glow=0.2;
 }else if(el<HOOU_IN+HOOU_LAND){
 var s=(el-HOOU_IN)/HOOU_LAND,se=sstep(0,1,s),hl=hoouArr(g,side,fin,Br,HOOU_IN),fl=Math.sin(Math.PI*Math.min(1,s*1.3)),R=rest();
-o.B=[lerp(P3[0],Br[0],se),lerp(P3[1],Br[1],se)+fl*0.1*S,lerp(P3[2],Br[2],se)];
+var s2=s*s,s3h=s2*s,h00=2*s3h-3*s2+1,h10=s3h-2*s2+s,h01=-2*s3h+3*s2,mv=hl.v*HOOU_LAND*0.6;          // a Hermite curve: leaving P3 at the speed and heading it came in with, settling on the spire
+o.B=[h00*P3[0]+h10*hl.dir[0]*mv+h01*Br[0],h00*P3[1]+h10*hl.dir[1]*mv+h01*Br[1]+fl*0.1*S,h00*P3[2]+h10*hl.dir[2]*mv+h01*Br[2]];
 o.yaw=hoouAng(hl.yaw,yawR,sstep(0.15,0.9,s));o.pitch=lerp(hl.pitch*0.6,pitR,se)+0.45*fl;o.roll=0;
 o.wings={a1:lerp(lerp(0.4,1.25,sstep(0,0.4,s)),R.a1,sstep(0.6,1,s)),a2:lerp(lerp(0.5,1.5,sstep(0,0.4,s)),R.a2,sstep(0.6,1,s)),sw:lerp(-0.25,R.sw,sstep(0.5,1,s)),fold:lerp(0,R.fold,sstep(0.6,1,s))};
 o.droop=sstep(0.3,1,s);o.legs=sstep(0.15,0.75,s);o.head=se;o.glow=0.2+0.4*se+0.3*Math.pow(Math.sin(Math.PI*0.5*sstep(0.55,1,s)),2);          // a bloom of light as it roosts
@@ -14349,11 +14371,11 @@ if(fe>0.001){var fph=fcy*0.75*TAU,fcs=Math.cos(fph),fsn=Math.sin(fph),W0=o.wings
 o.wings={a1:lerp(W0.a1,0.5+0.9*fcs,fe),a2:lerp(W0.a2,0.62+0.9*fcs+0.3*fsn,fe),sw:lerp(W0.sw,0.18,fe),fold:lerp(W0.fold,Math.max(0,fsn)*0.45,fe)};
 o.droop=1-0.3*fe;o.look=lerp(o.look,0,fe);o.glow=0.6+0.25*fe;o.pitch+=0.05*fe*Math.max(0,-fcs);}
 }else{
-var s3=clamp((el-HOOU_IN-HOOU_LAND-HOOU_STAY)/HOOU_OUT),bw=hoouBowGeo(g),rdg=hoouRidge(g,bw.cx),Q0=Br,Q1=[Br[0]+side*6,Br[1]+10,Br[2]+6],Q2=hoouUnP(lerp(bw.xa,bw.cx,0.6),lerp(bw.yt,rdg,0.5),420),Q3=hoouUnP(bw.cx,rdg-0.14*(rdg-bw.yt),1400);          // it leaves through its rainbow: up off the spire, out through the bow and away under it, to the horizon
-var ua=Math.pow(s3,1.35),h3=head(Q0,Q1,Q2,Q3,Math.max(0.02,ua)),go=sstep(0,0.18,s3),R3=rest(),tk=s3*HOOU_OUT,F3=function(){var ph=tk*0.7*TAU,c=Math.cos(ph),sn=Math.sin(ph),amp=0.86*(1+0.25*Math.exp(-tk*0.8));return{a1:0.25+amp*c,a2:0.25+amp*c+0.32*amp*sn,sw:0.22,fold:Math.max(0,-sn)*0.55*amp};}(),cr=Math.sin(Math.PI*clamp(s3/0.06));          // it crouches, then its raised wings come down in one deep stroke
+var OU=hoouOutU(el),s3=OU.s3,bw=hoouBowGeo(g),rdg=hoouRidge(g,bw.cx),Q0=Br,Q1=[Br[0]+side*6,Br[1]+10,Br[2]+6],Q2=hoouUnP(lerp(bw.xa,bw.cx,0.6),lerp(bw.yt,rdg,0.5),420),Q3=hoouUnP(bw.cx,rdg-0.14*(rdg-bw.yt),900);          // it leaves through its rainbow: up off the spire, out through the bow and away under it, to the horizon
+var ua=OU.ua,h3=head(Q0,Q1,Q2,Q3,Math.max(0.02,ua)),go=sstep(0,0.18,s3),R3=rest(),tk=s3*HOOU_OUT,F3=function(){var ph=tk*0.7*TAU,c=Math.cos(ph),sn=Math.sin(ph),amp=0.86*(1+0.25*Math.exp(-tk*0.8));return{a1:0.25+amp*c,a2:0.25+amp*c+0.32*amp*sn,sw:0.22,fold:Math.max(0,-sn)*0.55*amp};}(),cr=Math.sin(Math.PI*clamp(s3/0.06));          // it crouches, then its raised wings come down in one deep stroke
 o.B=bez(Q0,Q1,Q2,Q3,ua);o.B[1]-=0.035*S*cr;o.yaw=hoouAng(yawR,h3.yaw,sstep(0.05,0.3,s3));o.pitch=lerp(pitR,h3.pitch*0.7,go);o.roll=0;
 o.wings={a1:lerp(R3.a1,F3.a1,go),a2:lerp(R3.a2,F3.a2,go),sw:lerp(R3.sw,F3.sw,go),fold:lerp(R3.fold,F3.fold,go)};
-o.droop=1-sstep(0,0.35,s3);o.legs=1-sstep(0,0.15,s3);o.head=(1-sstep(0,0.3,s3))*(1-0.2*cr);o.glow=0.6-0.4*s3;o.alpha=1-sstep(0.8,1,s3);
+o.droop=1-sstep(0,0.35,s3);o.legs=1-sstep(0,0.15,s3);o.head=(1-sstep(0,0.3,s3))*(1-0.2*cr);o.glow=0.35+0.25*(1-ua);o.alpha=1-sstep(HOOU_ALL-1.15,HOOU_ALL-0.85,el);o.twk=el>HOOU_ALL-1.2?clamp((el-HOOU_ALL+1.2)/1.2):0;          // a golden glimmer far off; then gone in a twinkle
 }
 return o;
 }
@@ -14379,6 +14401,7 @@ var o=hoouState(g,el,el),bp=P(o.B[0],o.B[1],o.B[2]),k=o.L*bp.k*0.05;
 hoouVoice(el,dt,o,bp);hoouSparksStep(ctx,hoouSp,dt,el,k);
 if(bp.d<=0.5)return;
 var E=hoouPaint3D(ctx,o);          // drawn whole, never cut by the depth of the scene: it is in front of everything it passes
+if(o.twk>0)hoouTwinkle(ctx,bp,o.twk,g);
 if(E&&o.alpha>0.15)hoouSparksEmit(hoouSp,E,(el<HOOU_IN+HOOU_LAND?150:el<HOOU_IN+HOOU_LAND+HOOU_STAY?8:150)*dt,k);          // a thick trail of sparks while it flies
 }
 var reveal=null,dbgSwayOnly=false,dbgSway=null,cvBg=false,townKeep=null;

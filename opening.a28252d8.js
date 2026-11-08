@@ -1899,7 +1899,7 @@ var B=o.B;
 if(o.feet&&lp>0){var ad=[o.feet[0]-(f[0]*Fm[0]-u[0]*Fm[1])*L,o.feet[1]-(f[1]*Fm[0]-u[1]*Fm[1])*L,o.feet[2]-(f[2]*Fm[0]-u[2]*Fm[1])*L],kf=sstep(0.55,1,lp);B=[lerp(B[0],ad[0],kf),lerp(B[1],ad[1],kf),lerp(B[2],ad[2],kf)];}          // the feet on the ball
 var Wl=function(x,y,z){return[B[0]+(f[0]*x-u[0]*y+r[0]*z)*L,B[1]+(f[1]*x-u[1]*y+r[1]*z)*L,B[2]+(f[2]*x-u[2]*y+r[2]*z)*L];};
 var M=function(x,y,z){var w=Wl(x,y,z||0),p=P(w[0],w[1],w[2]);return[p.x,p.y];};
-var b0=P(B[0],B[1],B[2]),px=L*b0.k,A=c.globalAlpha;
+var b0=P(B[0],B[1],B[2]),px=L*b0.k,A0=c.globalAlpha,A=A0*(o.alpha===undefined?1:clamp(o.alpha,0,1));if(A<=0.002)return{plume:[],tips:[]};c.globalAlpha=A;          // o.alpha: it fades in and out
 var cam=hoouNorm([CAM.x-B[0],CAM.y-B[1],CAM.z-B[2]]),zs=dot(r,cam)>=0?1:-1,side3=Math.abs(dot(r,cam));          // zs: the side of it we see
 var lsx=SUN[0],lsy=-SUN[1],lsl=Math.hypot(lsx,lsy)||1;lsx/=lsl;lsy/=lsl;
 var tips=[],plumePts=[];
@@ -2107,10 +2107,10 @@ c.save();c.globalCompositeOperation='screen';
 // outward and fade, their hues flowing round them like the folds of an aurora's curtain
 var au=o.aurora||0;
 if(au>0.01){var ac=M(0.1,-0.14,0);c.globalCompositeOperation='source-over';
-for(var ai=0;ai<4;ai++){var aph=(t*0.085+ai/4)%1,arr=(0.4+1.5*aph)*px,aa=au*Math.pow(Math.sin(Math.PI*aph),1.3)*0.2;if(aa<0.004)continue;
+for(var ai=0;ai<4;ai++){var aph=(t*0.065+ai/4)%1,arr=(0.38+1.15*aph)*px,aa=au*Math.pow(Math.sin(Math.PI*aph),1.5)*0.12;if(aa<0.004)continue;
 var apt=[];for(var aq=0;aq<=60;aq++){var ath=aq/60*TAU,wob=1+0.12*Math.sin(3*ath+t*0.7+ai*1.9)+0.07*Math.sin(5*ath-t*1.1+ai)+0.04*Math.sin(9*ath+t*1.6+ai*0.7);apt.push([ac[0]+Math.cos(ath)*arr*wob,ac[1]+Math.sin(ath)*arr*wob*0.9]);}
-var afl;if(c.createConicGradient){afl=c.createConicGradient(t*0.12+ai*1.3,ac[0],ac[1]);for(var hk=0;hk<=24;hk++){var hue=(hk*15+t*22+ai*60)%360,str=0.3+0.7*Math.pow(0.5+0.5*Math.sin(hk/24*TAU*5+t*1.2+ai*2.1),2);afl.addColorStop(hk/24,'hsla('+hue.toFixed(0)+',92%,62%,'+(aa*str).toFixed(3)+')');}}
-else afl='hsla('+((t*22+ai*72)%360).toFixed(0)+',92%,62%,'+aa.toFixed(3)+')';
+var afl;if(c.createConicGradient){afl=c.createConicGradient(t*0.12+ai*1.3,ac[0],ac[1]);for(var hk=0;hk<=24;hk++){var hue=(hk*15+t*22+ai*60)%360,str=0.3+0.7*Math.pow(0.5+0.5*Math.sin(hk/24*TAU*5+t*1.2+ai*2.1),2);afl.addColorStop(hk/24,'hsla('+hue.toFixed(0)+',78%,68%,'+(aa*str).toFixed(3)+')');}}
+else afl='hsla('+((t*22+ai*72)%360).toFixed(0)+',78%,68%,'+aa.toFixed(3)+')';
 c.strokeStyle=afl;c.lineJoin='round';
 [[0.8,0.15],[0.64,0.22],[0.5,0.3],[0.37,0.42],[0.26,0.58],[0.16,0.78],[0.07,1]].forEach(function(lw){c.globalAlpha=A*lw[1];c.lineWidth=lw[0]*arr*(1-0.4*aph);c.beginPath();apt.forEach(function(p,i){if(i)c.lineTo(p[0],p[1]);else c.moveTo(p[0],p[1]);});c.closePath();c.stroke();});}          // layered widths: soft edges, a brighter heart
 c.globalAlpha=A;c.globalCompositeOperation='screen';}
@@ -2126,9 +2126,9 @@ wing(wmap(-zs),true);
 [[dep(-0.9,0.1,0),tail],[dep(0,0,0)+0.006,legs],[dep(0,0,0)+0.003,neckDraw],[dep(0,0,0),body],[dep(0.45,-0.25,0)+(dot(f,cam)>0?-0.01:0.01),head]].sort(function(a,b){return b[0]-a[0];}).forEach(function(z){z[1]();});
 wing(wmap(zs),false);
 c.restore();
+c.globalAlpha=A0;
 return{plume:plumePts,tips:tips};
 }
-
         return function(c, o, view) { VIEW = view; CAM.z = -(view.D || 14); return hoouPaint3D(c, o); };
     })();
     function wvSpring(cv, dawn) {
