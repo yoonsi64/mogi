@@ -14553,14 +14553,25 @@ o.yaw=hoouAng(yawR,h3.yaw,sstep(1,4,tk));o.pitch=lerp(pitR,h3.pitch*0.7,sstep(0.
 o.wings={a1:lerp(R3.a1,F3.a1,go),a2:lerp(R3.a2,F3.a2,go),sw:lerp(R3.sw,F3.sw,go),fold:lerp(R3.fold,F3.fold,go)};
 o.droop=1-sstep(0.5,3,tk);o.legs=1-sstep(0.8,2.6,tk);o.head=(1-sstep(0.2,1.6,tk))*(1-0.2*cr);o.glow=0.35+0.25*(1-ua);o.alpha=1-sstep(HOOU_TW-1.15,HOOU_TW-0.85,el);o.twk=el>HOOU_TW-1.2?clamp((el-HOOU_TW+1.2)/1.2):0;          // a golden glimmer far off; then gone in a twinkle
 }
-if(hoou&&hoou.cry!==undefined){var cd=el-hoou.cry;if(cd>=0&&cd<HOOU_CRY){var ce=sstep(0,0.45,cd)*(1-sstep(HOOU_CRY-1.1,HOOU_CRY,cd)),still=(o.legs||0)>0.9;          // its long cry (tapped): the head lifts on a craned neck, the bill opens with the song, the wings lift a little and it glows
-o.cry=ce;o.cryT=cd;o.gape=ce*hoouGape(cd);o.tilt=(still?0.5:0.2)*ce;if(still){o.crane=ce;o.head=Math.max(o.head||0,1);o.look=lerp(o.look||0,0,ce);o.wings={a1:o.wings.a1+0.12*ce,a2:o.wings.a2+0.1*ce,sw:o.wings.sw,fold:o.wings.fold*(1-ce)};o.glow=Math.max(o.glow||0,0.6+0.3*ce);}}}
+if(hoou&&hoou.cry!==undefined){var CP=HOOU_CRIES[hoou.cryPart||0],cd=el-hoou.cry;if(cd>=0&&cd<CP.len){var ce=(hoou.cryCont?Math.max(sstep(0,0.45,cd),Math.min(1,(hoou.cryPrev||0)/CP.pose)):sstep(0,0.45,cd))*(hoou.cryQ?1:1-sstep(CP.len-1.1,CP.len,cd))*CP.pose,still=(o.legs||0)>0.9;          // its long cry (tapped): the head lifts on a craned neck, the bill opens with the song, the wings lift a little and it glows (held up between parts when one follows another)
+o.cry=ce;o.cryT=cd;o.cryW=CP.waves;o.gape=(ce/CP.pose)*hoouGape(CP.gape,cd);o.tilt=(still?0.5:0.2)*ce;if(still){o.crane=ce;o.head=Math.max(o.head||0,1);o.look=lerp(o.look||0,0,ce);o.wings={a1:o.wings.a1+0.12*ce,a2:o.wings.a2+0.1*ce,sw:o.wings.sw,fold:o.wings.fold*(1-ce)};o.glow=Math.max(o.glow||0,0.6+0.3*ce);}}}
 return o;
 }
-var HOOU_CRY=10.6,HOOU_GAPE=[[0,0],[0.3,0.45],[0.6,0.6],[1.15,0.68],[1.45,1],[3,0.95],[3.6,0.78],[4.4,0.62],[5,0.55],[5.36,0.48],[5.72,0.42],[6.05,0.6],[6.55,0.86],[7.4,0.8],[8.2,0.5],[9,0.47],[9.4,0.3],[10.1,0]];          // (its two parts: the first high and long, the second rising again and falling away)
-function hoouGape(cd){var G=HOOU_GAPE,i=1;while(i<G.length-1&&G[i][0]<cd)i++;var a=G[i-1],b=G[i],v=lerp(a[1],b[1],clamp((cd-a[0])/((b[0]-a[0])||1)));return clamp(v*(1+0.06*Math.sin(cd*31)));}          // how wide the bill opens through the cry, following its song, with a little tremble
+// its song comes in four parts: the intro as it settles on the spire; the first part when it is tapped; the second when it is
+// tapped again (and so on, turn and turn about; tapped while it sings, the next part follows on); and its farewell as it lifts
+// off. Each: how long it lasts, how wide the bill opens through it, when it sends a ripple out, its sound, and how far it lifts
+// its head to sing it
+var HOOU_CRIES=[{len:4.8,gape:[[0,0],[0.15,0.4],[0.55,0.45],[0.9,0.7],[1.9,0.65],[2.15,0.8],[2.4,0.65],[2.85,0.5],[3.6,0.45],[4,0.3],[4.6,0]],waves:[0.9,2.15],cue:'houou-call',pose:0.6},
+{len:7.6,gape:[[0,0],[0.3,0.45],[0.6,0.6],[1.15,0.68],[1.45,1],[3,0.95],[3.6,0.78],[4.4,0.62],[5,0.55],[6.2,0.5],[6.6,0.3],[7.2,0]],waves:[0.35,1.5,2.9,4.3,5.6],cue:'houou-cry',pose:1},
+{len:6.4,gape:[[0,0.3],[0.15,0.42],[0.55,0.56],[1.18,0.5],[1.5,0.45],[1.85,0.62],[2.35,0.86],[3.2,0.8],[4,0.5],[4.8,0.47],[5.2,0.3],[5.9,0]],waves:[0.3,1.85,2.4,3.4],cue:'houou-cry2',pose:1},
+{len:6.5,gape:[[0,0],[0.15,0.4],[0.5,0.45],[0.8,0.8],[1.6,0.7],[1.95,0.6],[2.75,0.5],[3.3,0.45],[3.8,0.42],[4.3,0.4],[4.6,0.3],[5,0.3],[5.4,0.45],[6.2,0]],waves:[0.8,5.4],cue:'houou-outro',pose:0.35}];
+function hoouGape(G,cd){var i=1;while(i<G.length-1&&G[i][0]<cd)i++;var a=G[i-1],b=G[i],v=lerp(a[1],b[1],clamp((cd-a[0])/((b[0]-a[0])||1)));return clamp(v*(1+0.06*Math.sin(cd*31)));}          // how wide the bill opens through the cry, following its song, with a little tremble
 // tapped, it cries: a long, rising, falling cry (once at a time, and not once it is going)
-function hoouCry(){if(!hoou)return false;var el=(Date.now()-hoou.t0)/1000;if(el<0||el>HOOU_TW-1)return false;if(hoou.cry!==undefined&&el-hoou.cry<HOOU_CRY)return false;hoou.cry=el;cue('houou-cry',{id:+clamp(hoou.near||1,0.15,1.2).toFixed(2)},true);loopCheck();return true;}
+function hoouCry(){if(!hoou)return false;var el=(Date.now()-hoou.t0)/1000;if(el<0||el>HOOU_TW-1)return false;
+var part=hoou.lastTap===1?2:1,CP=hoou.cry!==undefined?HOOU_CRIES[hoou.cryPart||0]:null,end=CP?hoou.cry+CP.len:-1e9;
+if(CP&&el<end){if(hoou.cryQ)return false;hoou.cryQ={at:end-0.15,part:part};hoou.lastTap=part;return true;}          // tapped while it sings: that part follows on
+hoou.lastTap=part;hoouCrySing(part,el,false);return true;}
+function hoouCrySing(part,el,cont){hoou.cryPrev=cont&&hoou.cryPart!==undefined?HOOU_CRIES[hoou.cryPart].pose:0;hoou.cry=el;hoou.cryPart=part;hoou.cryCont=!!cont;hoou.cryQ=null;cue(HOOU_CRIES[part].cue,{id:+clamp(hoou.near||1,0.15,1.2).toFixed(2)},true);loopCheck();}
 // its voice (and the hush it brings): a soft beat of the wings on each downstroke (louder the stronger the stroke and the nearer it is), and a calm call
 // as it settles on the spire and again as it rises to leave (it calls first as it comes, with the visit's own 'rare' cue)
 function hoouVoice(el,dt,o,bp){
@@ -14573,8 +14584,10 @@ if(v>0.5&&!s.up){s.up=true;s.top=a;}
 if(s.up)s.top=Math.max(s.top,a);
 if(v<-0.5&&s.up){s.up=false;cue('houou-wing',{id:+(clamp((s.top-0.2)/1.1,0.3,1)*near).toFixed(2)},true);}}
 s.a=a;
-hoou.near=near;var crying=hoou.cry!==undefined&&el-hoou.cry<HOOU_CRY+1;
-var r0=HOOU_IN+HOOU_LAND;[r0+3.2,r0+HOOU_STAY+0.15].forEach(function(x){if(s.pe<x&&el>=x&&!crying)cue('houou-call',{id:+near.toFixed(2)},true);});
+hoou.near=near;if(hoou.cryQ&&el>=hoou.cryQ.at)hoouCrySing(hoou.cryQ.part,el,true);          // the next part of its cry, when the last ends
+var CPn=hoou.cry!==undefined?HOOU_CRIES[hoou.cryPart||0]:null,cEnd=CPn?hoou.cry+CPn.len:-1e9,r0=HOOU_IN+HOOU_LAND;
+if(s.pe<r0+3.2&&el>=r0+3.2){if(el>=cEnd&&!hoou.cryQ)hoouCrySing(0,el,false);}          // the intro, as it settles (unless it is already singing)
+if(s.pe<r0+HOOU_STAY+0.15&&el>=r0+HOOU_STAY+0.15){if(el<cEnd)hoou.cryQ={at:cEnd-0.15,part:3};else hoouCrySing(3,el,false);}          // and its farewell as it lifts off, after whatever it is singing
 s.pe=el;
 }
 // space bent about it as it rests: rings of whatever is behind it (sky and clouds, the castle, the rainbow) drawn again a hair
@@ -14593,7 +14606,7 @@ var N=10,r0=0.32*Rd,ph=clock/3.4,ct=o.cryT||0,dk=fv.width/Math.max(1,size.cssW);
 ctx.save();
 for(var i=0;i<N;i++){var ra=r0+(Rd-r0)*i/N,rb=r0+(Rd-r0)*(i+1)/N,rm=(ra+rb)/2,u=(rm-r0)/(Rd-r0),env=Math.pow(Math.sin(Math.PI*u),1.3);
 var d=0.6*au*Math.sin(TAU*(rm/(0.42*Rd)-ph))+0.23*au*Math.sin(TAU*(rm/(0.23*Rd)-ph*1.7)+1.3);          // two slow ripples running outward (in css pixels: well under one)
-if(cr>0.02)[0.35,1.5,2.9,4.3,6.0,6.6,7.5,9.0].forEach(function(te){var a2=ct-te;if(a2<0)return;var rw=r0+a2*0.5*(Rd-r0);d+=1.33*cr*Math.exp(-Math.pow((rm-rw)/(0.11*Rd),2))*(1-clamp(a2/2.2));});          // and as it cries, a stronger wave with each breath of its song
+if(cr>0.02)(o.cryW||[]).forEach(function(te){var a2=ct-te;if(a2<0)return;var rw=r0+a2*0.5*(Rd-r0);d+=1.33*cr*Math.exp(-Math.pow((rm-rw)/(0.11*Rd),2))*(1-clamp(a2/2.2));});          // and as it cries, a stronger wave with each breath of its song
 d*=env*dk;if(Math.abs(d)<0.05)continue;var s=1+d/(rm*sc);
 ctx.save();ctx.beginPath();ctx.arc(cx,cy,rb,0,TAU);ctx.arc(cx,cy,ra,0,TAU,true);ctx.clip();ctx.drawImage(c,cx-Rd*s,cy-Rd*s,2*Rd*s,2*Rd*s);ctx.restore();}
 ctx.restore();

@@ -9951,20 +9951,41 @@ function snHoouCall(E, t, out) {
   snHoouEchoes(E, t, out, function (t1, o1) { snHoouSing(E, t1, o1, P, A, V, G); }, [[0.42, 0.3, 2200], [0.95, 0.13, 1400]]);
   return t + 5.8;
 }
-/* its long cry, when it is touched: it rises from low in its breast, climbs, leaps the octave and holds it high and long, leans
-   on the half-step above, and comes down through the scale; then a second part: it turns on the note, gathers itself and
-   rises again, softer, to the high note, holds it hollow and far-off, and lets it fall in one long glide to the same sigh and
-   rest — and the hills give it back */
+/* its song, in four parts: the call as it settles on the spire (the intro, snHoouCall above); the first part when it is
+   touched; the second when it is touched again; and a farewell as it lifts off (the outro). All in the same 都節 scale on E,
+   each coming home to the same sigh, F to E, but the last, which rises a fourth as the first did and is carried away. */
+/* the first part: it rises from low in its breast, climbs, leaps the octave and holds it high and long, leans on the
+   half-step above, then comes down through the scale, slow, to the sigh and rest — and the hills give it back */
 function snHoouCry(E, t, out) {
   var p = snR(E, 0.985, 1.015), F = function (h) { return h * p; };
-  var P = [[0, F(494)], [0.28, F(640)], [0.42, F(659)], [0.78, F(659)], [1.08, F(880)], [1.25, F(880)], [1.55, F(1319)], [2.95, F(1319)], [3.2, F(1397)], [3.42, F(1397)], [3.95, F(1047)], [4.35, F(1047)], [4.6, F(988)], [5.0, F(988)],
-    [5.12, F(1047)], [5.24, F(988)], [5.36, F(880)], [5.72, F(880)], [6.0, F(1047)], [6.25, F(1047)], [6.55, F(1319)], [7.4, F(1319)], [8.2, F(698)], [9.0, F(698)], [9.4, F(659)], [10.4, F(646)]];
-  var A = [[0, 0], [0.15, 0.42], [0.75, 0.58], [1.1, 0.72], [1.5, 0.95], [2.9, 0.88], [3.3, 0.96], [3.9, 0.78], [4.4, 0.68], [5.0, 0.6],
-    [5.36, 0.56], [5.72, 0.5], [6.1, 0.6], [6.6, 0.72], [7.35, 0.64], [8.2, 0.5], [9.0, 0.45], [9.4, 0.34], [10.4, 0]];
-  var V = [[0, 0], [0.7, 8], [1.2, 5], [1.6, 5], [2.9, 32], [3.25, 10], [3.42, 20], [4.3, 22], [4.6, 8], [5.0, 14], [5.1, 4], [5.72, 12], [6.0, 4], [6.6, 6], [7.4, 28], [7.6, 10], [8.2, 8], [9.0, 30], [9.4, 14], [10.4, 12]];
-  var G = [[0, 0], [1.6, 0], [2.3, 0.05], [2.9, 0.025], [3.4, 0.045], [4.5, 0.015], [5.0, 0], [6.4, 0], [6.9, 0.07], [7.4, 0.05], [8.0, 0.02], [9.2, 0.03], [10.4, 0]];   // (the second high note hollow: more of its ghost)
+  var P = [[0, F(494)], [0.28, F(640)], [0.42, F(659)], [0.78, F(659)], [1.08, F(880)], [1.25, F(880)], [1.55, F(1319)], [2.95, F(1319)], [3.2, F(1397)], [3.42, F(1397)], [3.95, F(1047)], [4.35, F(1047)], [4.6, F(988)], [5.0, F(988)], [5.45, F(698)], [6.25, F(698)], [6.65, F(659)], [7.6, F(646)]];
+  var A = [[0, 0], [0.15, 0.42], [0.75, 0.58], [1.1, 0.72], [1.5, 0.95], [2.9, 0.88], [3.3, 0.96], [3.9, 0.78], [4.4, 0.68], [5.0, 0.6], [5.5, 0.54], [6.2, 0.48], [6.7, 0.34], [7.6, 0]];
+  var V = [[0, 0], [0.7, 8], [1.2, 5], [1.6, 5], [2.9, 32], [3.25, 10], [3.42, 20], [4.3, 22], [4.6, 8], [5.0, 18], [5.45, 8], [6.2, 30], [6.7, 14], [7.6, 12]];
+  var G = [[0, 0], [1.6, 0], [2.3, 0.05], [2.9, 0.025], [3.4, 0.045], [4.5, 0.015], [6.0, 0.03], [7.6, 0]];
   snHoouEchoes(E, t, out, function (t1, o1) { snHoouSing(E, t1, o1, P, A, V, G, { breath: 0.18 }); }, [[0.48, 0.32, 2400], [1.1, 0.17, 1600], [1.9, 0.08, 1100]]);
-  return t + 12.4;
+  return t + 9.6;
+}
+/* the second part: from home it lifts to A, turns on the note (B, C, B, A), gathers itself and rises again, softer, to the
+   high E, holds it hollow and far-off (more of its ghost above), and lets it fall in one long glide to the sigh and rest */
+function snHoouCry2(E, t, out) {
+  var p = snR(E, 0.985, 1.015), F = function (h) { return h * p; };
+  var P = [[0, F(622)], [0.14, F(659)], [0.35, F(659)], [0.55, F(880)], [0.7, F(880)], [0.82, F(988)], [0.94, F(1047)], [1.06, F(988)], [1.18, F(880)], [1.5, F(880)], [1.8, F(1047)], [2.05, F(1047)], [2.35, F(1319)], [3.2, F(1319)], [4.0, F(698)], [4.8, F(698)], [5.2, F(659)], [6.2, F(646)]];
+  var A = [[0, 0], [0.12, 0.4], [0.5, 0.55], [1.18, 0.5], [1.5, 0.48], [1.85, 0.6], [2.4, 0.72], [3.15, 0.64], [4.0, 0.5], [4.8, 0.45], [5.2, 0.34], [6.2, 0]];
+  var V = [[0, 0], [0.4, 6], [0.55, 4], [1.2, 4], [1.5, 12], [1.8, 4], [2.05, 10], [2.4, 6], [3.2, 28], [3.4, 10], [4.0, 8], [4.8, 30], [5.2, 14], [6.2, 12]];
+  var G = [[0, 0], [2.2, 0], [2.7, 0.07], [3.2, 0.05], [3.8, 0.02], [5.0, 0.03], [6.2, 0]];
+  snHoouEchoes(E, t, out, function (t1, o1) { snHoouSing(E, t1, o1, P, A, V, G, { breath: 0.18 }); }, [[0.48, 0.32, 2400], [1.1, 0.17, 1600], [1.9, 0.08, 1100]]);
+  return t + 8.2;
+}
+/* the farewell, as it lifts off: from B up to the high E and held, then down the scale, C, B, A, the sigh to E — and at the
+   last it rises a fourth to A, as it did when it came, and holds it as it goes, the hills giving it back fainter and fainter */
+function snHoouOutro(E, t, out) {
+  var p = snR(E, 0.985, 1.015), F = function (h) { return h * p; };
+  var P = [[0, F(932)], [0.15, F(988)], [0.45, F(988)], [0.75, F(1319)], [1.6, F(1319)], [1.9, F(1047)], [2.2, F(1047)], [2.45, F(988)], [2.75, F(880)], [3.3, F(880)], [3.75, F(698)], [4.3, F(698)], [4.6, F(659)], [5.0, F(659)], [5.35, F(880)], [6.4, F(872)]];
+  var A = [[0, 0], [0.12, 0.4], [0.5, 0.5], [0.8, 0.75], [1.55, 0.68], [1.95, 0.62], [2.5, 0.56], [3.3, 0.5], [3.8, 0.45], [4.3, 0.42], [4.65, 0.36], [5.0, 0.34], [5.4, 0.38], [6.4, 0]];
+  var V = [[0, 0], [0.45, 6], [0.8, 4], [1.6, 28], [1.9, 8], [2.2, 14], [2.5, 6], [3.3, 24], [3.8, 8], [4.3, 26], [4.6, 10], [5.0, 14], [5.4, 6], [6.4, 26]];
+  var G = [[0, 0], [0.9, 0.03], [1.6, 0.05], [2.4, 0.015], [5.4, 0.02], [6.0, 0.05], [6.4, 0]];
+  snHoouEchoes(E, t, out, function (t1, o1) { snHoouSing(E, t1, o1, P, A, V, G); }, [[0.5, 0.32, 2200], [1.15, 0.18, 1500], [1.95, 0.1, 1100], [2.9, 0.05, 800]]);
+  return t + 9.4;
 }
 /* a soft beat of the 鳳凰's wings: air pushed down, a hush of feathers */
 function snHoouWing(E, t, out) {
@@ -9975,7 +9996,7 @@ function snHoouWing(E, t, out) {
 }
 /* rare visitors (cue 'rare', id) */
 var RARE = {
-  houou: function (E, t, out) { return snHoouCall(E, t, snFilt(E.ctx, 'lowpass', 3500, 0.5, snGain(E.ctx, 0.6, out))); },   // still far off as it comes: softer, the air taking its brightness
+  houou: function (E, t) { return t; },   // (it comes in silence but for its wings: its song begins as it settles on the spire)
   ooruri: function (E, t, out) { // a clear, falling warble ending in a harsh "jiji"
     var n = [], p = snR(E, 0.95, 1.05), fs = [3600, 3000, 3300, 2600, 2900, 2300], i;
     for (i = 0; i < fs.length; i++) n.push({ t: i * 0.16, d: 0.13, f: [fs[i] * p * 1.08, fs[i] * p], a: 0.8 });
@@ -10992,6 +11013,8 @@ function sndCue(E, name, arg, focus, at, so) {
     case 'reveal': snChime(E, t, out(0.1, 0), 1); return;
     case 'houou-hush': var hs = Math.max(0, +arg || 0), h0 = E.hush; E.hush = { from: h0 && h0.until > t ? h0.from : t, until: t + hs }; (E.scenes || []).forEach(function (s) { if (!s.dead) s.hushTo(E.hush, t); }); return;   // the 鳳凰 has come: the town's birds and people fall quiet (arg: seconds it will stay)
     case 'houou-call': snHoouCall(E, t, out(0.2 * clamp(+arg || 0.8, 0.2, 1.2), R(-0.15, 0.15), 9000)); return;   // the 鳳凰 calls (arg: how near)
+    case 'houou-cry2': snHoouCry2(E, t, out(0.22 * clamp(+arg || 0.8, 0.2, 1.2), R(-0.12, 0.12), 9500)); return;   // touched again: the second part
+    case 'houou-outro': snHoouOutro(E, t, out(0.2 * clamp(+arg || 0.8, 0.2, 1.2), R(-0.15, 0.15), 9000)); return;   // its farewell as it lifts off
     case 'houou-cry': snHoouCry(E, t, out(0.22 * clamp(+arg || 0.8, 0.2, 1.2), R(-0.12, 0.12), 9500)); return;   // touched, it cries long (arg: how near)
     case 'houou-wing': snHoouWing(E, t, out(0.42 * clamp(+arg || 0.6, 0.1, 1.2), R(-0.2, 0.2), 6000)); return;   // one beat of its wings (arg: the stroke's strength, how near)
     case 'rare': var f = RARE[arg]; if (f) { f(E, t, out(0.24, R(-0.5, 0.5), 11000)); return; } snChime(E, t, out(0.14, 0), 1, [2093, 2637, 3136, 4186]); return;
