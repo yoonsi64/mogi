@@ -13867,7 +13867,8 @@ for(var row=0;row<3;row++)for(var col=0;col<7;col++){var sx=-0.2+col*0.06+(row%2
 // --- the neck and head: the neck curving up (higher and prouder when it stands) with long hackles draping down it;
 // the head with its crest plumes, red bare skin round the eye, a wattle and a hooked beak; it turns with o.look
 var N0=[0.2,-0.04],N1=[0.46-0.02*hu,-0.06-0.08*hu],N2=[0.66-0.26*hu,-0.2-0.27*hu],hs=0.9+0.15*hu,lk=o.look||0,cl0=Math.cos(lk),sl0=Math.sin(lk);
-var Hm=function(x,y,z){var dx=(x-0.53)*hs,dy=(y+0.3)*hs,dz=(z||0)*hs;return M(N2[0]+dx*cl0-dz*sl0,N2[1]+dy,dx*sl0+dz*cl0);};          // the head's own space, turned and scaled about the top of the neck
+var hl0=(o.pitch||0)*0.9,ch0=Math.cos(hl0),sh0=Math.sin(hl0);          // the head stays level when the body tilts
+var Hm=function(x,y,z){var ax=(x-0.53)*hs,ay=(y+0.3)*hs,dz=(z||0)*hs,dx=ax*ch0-ay*sh0,dy=ax*sh0+ay*ch0;return M(N2[0]+dx*cl0-dz*sl0,N2[1]+dy,dx*sl0+dz*cl0);};          // the head's own space, turned and scaled about the top of the neck
 var head=function(){
 var neck=[];for(var i3=0;i3<=12;i3++)neck.push(hoouQuad(N0,N1,N2,i3/12));
 var ns=neck.map(function(q){return M(q[0],q[1],0);});
@@ -13882,14 +13883,20 @@ c.fillStyle=hg;c.beginPath();c.arc(hc[0],hc[1],hr,0,TAU);c.fill();
 var bm=function(q){return Hm(q[0],q[1],0);},bt=Hm(0.64,-0.34,0),bk=c.createLinearGradient(Hm(0.61,-0.37,0)[0],Hm(0.61,-0.37,0)[1],Hm(0.69,-0.32,0)[0],Hm(0.69,-0.32,0)[1]);bk.addColorStop(0,'#e8c070');bk.addColorStop(1,'#7a5014');
 hoouPath(c,[[0.592,-0.358],[0.65,-0.356],[0.7,-0.342],[0.728,-0.322],[0.716,-0.318],[0.69,-0.33],[0.64,-0.328],[0.596,-0.322]],bm);c.fillStyle=bk;c.fill();          // a long, fine hooked beak
 var vis=Math.min(1,Math.max(0,side3*1.4));
-if(vis>0.05){var ez=zs*0.045,ec=Hm(0.584,-0.339,ez),k=hs*px,ea0=Hm(0.6,-0.339,ez),ea=Math.atan2(ea0[1]-ec[1],ea0[0]-ec[0]),sq2=0.5+0.5*vis,sp0=Hm(0.574,-0.341,ez);
+if(vis>0.05){var ez=zs*0.046,k=hs*px,H2=function(x,y){return Hm(x,y,ez);};
 c.save();c.globalAlpha=A*Math.min(1,vis*2);
-var sk2=c.createRadialGradient(sp0[0],sp0[1],0,sp0[0],sp0[1],0.034*k);sk2.addColorStop(0,'rgba(176,58,40,.85)');sk2.addColorStop(0.7,'rgba(176,58,40,.45)');sk2.addColorStop(1,'rgba(176,58,40,0)');          // soft red bare skin round the eye, as on a pheasant
-c.fillStyle=sk2;c.beginPath();c.ellipse(sp0[0],sp0[1],0.034*k*sq2,0.016*k,ea,0,TAU);c.fill();
-c.fillStyle='#e2ae40';c.beginPath();c.ellipse(ec[0],ec[1],0.016*k*sq2,0.0092*k,ea,0,TAU);c.fill();          // an oval eye, longer than tall
-c.fillStyle='#1c1004';c.beginPath();c.ellipse(ec[0],ec[1],0.0072*k*sq2,0.0072*k,ea,0,TAU);c.fill();
-c.strokeStyle='rgba(110,40,24,.6)';c.lineWidth=Math.max(0.1,0.0025*k);c.beginPath();c.ellipse(ec[0],ec[1],0.016*k*sq2,0.0092*k,ea,Math.PI*1.05,Math.PI*1.95);c.stroke();          // a hint of the upper lid
-c.fillStyle='#fffbe8';c.beginPath();c.arc(ec[0]+0.003*k,ec[1]-0.003*k,0.0026*k,0,TAU);c.fill();
+// a fierce, narrow eye: the front corner low by the beak, the back corner swept up; a nearly straight upper lid under a heavy brow
+var e1=H2(0.612,-0.329),e2=H2(0.55,-0.358),eu=H2(0.581,-0.3455),ed=H2(0.583,-0.3275),mx=(e1[0]+e2[0])/2,my=(e1[1]+e2[1])/2,cu=[2*eu[0]-mx,2*eu[1]-my],cd=[2*ed[0]-mx,2*ed[1]-my];
+var eye=function(){c.beginPath();c.moveTo(e1[0],e1[1]);c.quadraticCurveTo(cu[0],cu[1],e2[0],e2[1]);c.quadraticCurveTo(cd[0],cd[1],e1[0],e1[1]);c.closePath();};
+var ic=H2(0.584,-0.3395);
+c.save();c.globalCompositeOperation='screen';var gw=c.createRadialGradient(ic[0],ic[1],0,ic[0],ic[1],0.035*k);gw.addColorStop(0,'rgba(120,255,220,.6)');gw.addColorStop(1,'rgba(60,200,180,0)');c.fillStyle=gw;c.beginPath();c.arc(ic[0],ic[1],0.035*k,0,TAU);c.fill();c.restore();          // a faint glow
+eye();var ig=c.createRadialGradient(ic[0],ic[1],0,ic[0],ic[1],0.024*k);ig.addColorStop(0,'#e8fff6');ig.addColorStop(0.35,'#5ee8c8');ig.addColorStop(0.8,'#169a84');ig.addColorStop(1,'#0a4a40');c.fillStyle=ig;c.fill();          // a glowing jade iris
+c.save();eye();c.clip();c.fillStyle='#06120e';c.beginPath();c.arc(ic[0],ic[1],0.0042*k,0,TAU);c.fill();c.restore();
+c.strokeStyle='#2a1806';c.lineWidth=Math.max(0.15,0.0035*k);c.lineJoin='miter';eye();c.stroke();
+var b1=H2(0.622,-0.333),b2=H2(0.584,-0.352),b3=H2(0.536,-0.376),b4=H2(0.544,-0.363),b5=H2(0.584,-0.3445),b6=H2(0.616,-0.3295);          // the brow ridge, angled down toward the beak
+c.beginPath();c.moveTo(b1[0],b1[1]);c.lineTo(b2[0],b2[1]);c.lineTo(b3[0],b3[1]);c.lineTo(b4[0],b4[1]);c.lineTo(b5[0],b5[1]);c.lineTo(b6[0],b6[1]);c.closePath();
+var bg3=c.createLinearGradient(b2[0],b2[1]-0.006*k,b5[0],b5[1]+0.004*k);bg3.addColorStop(0,'#f0d080');bg3.addColorStop(0.5,'#a87a2a');bg3.addColorStop(1,'#5a3c12');c.fillStyle=bg3;c.fill();
+c.fillStyle='#ffffff';c.beginPath();c.arc(ic[0]+0.004*k,ic[1]-0.002*k,0.0022*k,0,TAU);c.fill();          // a glint
 c.restore();}
 
 };
