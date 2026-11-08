@@ -9822,7 +9822,7 @@ function snAD(p, t, a, peak, d, from) {
 }
 /* the end of a voice's chain: level -> optional distance lowpass -> pan -> group bus */
 function snVoiceOut(S, group, level, pan, lp) {
-  var c = S.E.ctx, dest = group === 'gnd' ? S.gnd : S.nat;
+  var c = S.E.ctx, dest = group === 'gnd' ? S.gnd : group === 'folk' ? S.folk : group === 'birds' ? S.birds : S.nat;
   var p = snPan(c, pan, dest);
   var head = lp ? snFilt(c, 'lowpass', lp, 0.5, p) : p;
   return snGain(c, level, head);
@@ -10478,11 +10478,20 @@ function SnScene(E, o, t0) {
   this.mufLP = snFilt(c, 'lowpass', 20000, 0.5, this.bus);
   this.nat = snGain(c, 1, this.mufLP);
   this.gndLP = snFilt(c, 'lowpass', 20000, 0.5, this.mufLP); this.gnd = snGain(c, 1, this.gndLP);
+  this.birds = snGain(c, 1, this.nat); this.folk = snGain(c, 1, this.gnd);   // the town's birds and its people, each on its own bus: they fall quiet while the 鳳凰 is there
   this.wet = snGain(c, 0, E.verbIn);   // (1.5) the voices' own reverb sends, by distance (SnScene.far)
   this.date0 = o.date ? +new Date(o.date) : Date.now();
   this.build();
   this.setSky(!!o.sky, t0, true);
+  (E.scenes || (E.scenes = [])).push(this); if (E.hush) this.hushTo(E.hush, t0);
 }
+/* while the 鳳凰 is in the town (h: {from, until}, the context's time) its birds and its people fall quiet: a fade of 3 s as it comes,
+   silence while it stays, and 6 s to come back after it has gone */
+SnScene.prototype.hushTo = function (h, t) {
+  if (this.o.world !== 'town' || !h) return;
+  var pts = [[h.from, 1], [h.from + 3, 0], [h.until, 0], [h.until + 6, 1]], at = function (x) { if (x <= pts[0][0]) return 1; for (var i = 1; i < pts.length; i++) if (x <= pts[i][0]) { var a = pts[i - 1], b = pts[i]; return a[1] + (b[1] - a[1]) * (x - a[0]) / Math.max(1e-3, b[0] - a[0]); } return 1; };
+  [this.birds.gain, this.folk.gain].forEach(function (p) { p.cancelScheduledValues(t); p.setValueAtTime(at(t), t); pts.forEach(function (q) { if (q[0] > t) p.linearRampToValueAtTime(q[1], q[0]); }); });
+};
 SnScene.prototype.r = function (a, b) { return a + (b - a) * this.E.rnd(); };
 SnScene.prototype.setSky = function (sky, t, now) { // looking up: the ground recedes
   var k = now ? 0.01 : 1.2;
@@ -10492,7 +10501,7 @@ SnScene.prototype.setSky = function (sky, t, now) { // looking up: the ground re
 SnScene.prototype.fade = function (to, t, secs) {
   var self = this; [[this.bus.gain, to], [this.wet.gain, to * 2.6]].forEach(function (q) { q[0].cancelScheduledValues(t); q[0].setValueAtTime(q[0].value, t); q[0].linearRampToValueAtTime(q[1], t + secs); });
 };
-SnScene.prototype.stop = function (t) { var self = this; this.dead = true; this.srcs.forEach(function (s) { try { s.stop(t); } catch (e) { } }); setTimeout(function () { try { self.trim.disconnect(); self.send.disconnect(); self.wet.disconnect(); } catch (e) { } }, Math.max(0, (t - this.E.ctx.currentTime) * 1000 + 200)); };
+SnScene.prototype.stop = function (t) { var self = this; this.dead = true; if (this.E.scenes) this.E.scenes = this.E.scenes.filter(function (s) { return s !== self; }); this.srcs.forEach(function (s) { try { s.stop(t); } catch (e) { } }); setTimeout(function () { try { self.trim.disconnect(); self.send.disconnect(); self.wet.disconnect(); } catch (e) { } }, Math.max(0, (t - this.E.ctx.currentTime) * 1000 + 200)); };
 /* an event generator: mean interval (s) may be a function of time; voice(t) schedules one event */
 SnScene.prototype.gen = function (mean, voice, first) {
   var self = this; this.gens.push({ next: this.t0 + (first === undefined ? this.r(0.3, 1) * (typeof mean === 'function' ? mean(this.t0) : mean) : first), fn: function (t) {
@@ -10557,7 +10566,7 @@ SnScene.prototype.build = function () {
   }
   // ---------- life: birds, insects, frogs by season and hour ----------
   var birdLv = wet ? 0.45 : snowy ? 0.6 : 1;      // and the few that do call, call softly
-  var bird = function (k, lv, pan) { return function (t) { BIRD[k](E, t, S.out('nat', lv * birdLv, pan === undefined ? r(-0.85, 0.85) : pan, r(5000, 12000))); }; };
+  var bird = function (k, lv, pan) { return function (t) { BIRD[k](E, t, S.out('birds', lv * birdLv, pan === undefined ? r(-0.85, 0.85) : pan, r(5000, 12000))); }; };
   var bug = function (k, lv, grp) { return function (t) { BUG[k](E, t, S.out(grp || 'gnd', lv, r(-0.9, 0.9), r(6000, 12000))); }; };
   if (se === 'spring') {
     if (day) { S.gen(R(14), bird('uguisu', 0.09)); S.gen(R(5), bird('suzume', 0.035)); if (!focus) S.gen(R(30), bird('hiyodori', 0.04)); S.gen(R(22), bird('shijukara', 0.035)); }
@@ -10577,18 +10586,18 @@ SnScene.prototype.build = function () {
     if (dusk || night) { S.gen(R(1.6 / many), bug('suzumushi', 0.03)); S.gen(R(2.4 / many), bug('matsumushi', 0.028)); S.gen(R(0.5 / many), bug('korogi', 0.014)); }
     if (day) { S.gen(R(16), bird('hiyodori', 0.04)); S.gen(R(8), bird('suzume', 0.03)); S.gen(R(20), bird('shijukara', 0.03)); }
   } else {
-    if (day && !focus) S.gen(R(18), function (t) { BIRD.hashibuto(E, t, S.out('nat', 0.05, r(-0.8, 0.8), 6000)); });
+    if (day && !focus) S.gen(R(18), function (t) { BIRD.hashibuto(E, t, S.out('birds', 0.05, r(-0.8, 0.8), 6000)); });
     if (day) S.gen(R(14), bird('suzume', 0.025));
-    if (night) S.gen(R(40), function (t) { BIRD.fukurou(E, t, S.out('nat', 0.07, r(-0.7, 0.7), 3000)); });
+    if (night) S.gen(R(40), function (t) { BIRD.fukurou(E, t, S.out('birds', 0.07, r(-0.7, 0.7), 3000)); });
   }
   // ---------- the town ----------
   if (town) {
     var people = (TF.machiya ? 1 : 0) * (night ? 0.35 : 1) * (wet ? 0.3 : snowy ? 0.4 : 1);
     if (people > 0) {
-      S.gen(1.2 / people / (TF.market && day ? 1.8 : 1), function (t) { snVoice(E, t, S.out('gnd', 0.02 * people, r(-0.9, 0.9), 1500), 1, r(0.8, 2.6)); });
-      S.gen(4 / people, function (t) { var o1 = S.out('gnd', 0.03, r(-0.8, 0.8), 3500); snKnock(E, t, o1, r(900, 1200), 1, 0.05); snKnock(E, t + r(0.22, 0.32), o1, r(780, 950), 0.8, 0.05); });
+      S.gen(1.2 / people / (TF.market && day ? 1.8 : 1), function (t) { snVoice(E, t, S.out('folk', 0.02 * people, r(-0.9, 0.9), 1500), 1, r(0.8, 2.6)); });
+      S.gen(4 / people, function (t) { var o1 = S.out('folk', 0.03, r(-0.8, 0.8), 3500); snKnock(E, t, o1, r(900, 1200), 1, 0.05); snKnock(E, t + r(0.22, 0.32), o1, r(780, 950), 0.8, 0.05); });
     }
-    if (TF.market && day && !wet && !focus) S.gen(14, function (t) { snVoice(E, t, S.out('gnd', 0.05, r(-0.8, 0.8), 2600), 1, r(1.2, 2), r(220, 300)); });
+    if (TF.market && day && !wet && !focus) S.gen(14, function (t) { snVoice(E, t, S.out('folk', 0.05, r(-0.8, 0.8), 2600), 1, r(1.2, 2), r(220, 300)); });
     if (TF.festival && night && !wet && !snowy) { // the festival: taiko and fue, a crowd
       var bar = 2.4;
       S.gen(bar, function (t) {
@@ -10596,7 +10605,7 @@ SnScene.prototype.build = function () {
         p.forEach(function (x, i) { snTaiko(E, t + x, o1, i === 0 ? 1 : 0.7); }); [0.3, 0.9, 1.5, 2.1].forEach(function (x) { snShime(E, t + x, o1, 0.35); });
       }, 0.5);
       S.gen(9, function (t) { snFue(E, t, S.out('gnd', 0.02, r(-0.4, 0.4), 3000), 1); });
-      S.gen(0.35, function (t) { snVoice(E, t, S.out('gnd', 0.006, r(-1, 1), 1200), 1, r(0.6, 2)); });
+      S.gen(0.35, function (t) { snVoice(E, t, S.out('folk', 0.006, r(-1, 1), 1200), 1, r(0.6, 2)); });
     }
     if (se === 'summer' && !wet) S.gen(function () { return 9 / Math.max(0.3, S.windNow ? S.windNow.strength : 0.5); }, function (t) { snFurin(E, t, S.out('gnd', focus ? 0.02 : 0.03, r(-0.6, 0.6)), 1); });
   }
@@ -10929,6 +10938,7 @@ function sndCue(E, name, arg, focus, at, so) {
         break;
     }
   }
+  if ((name === 'bird' || name === 'crow' || name === 'birdtap') && E.hush && t >= E.hush.from && t < E.hush.until + 3) return;   // no other bird calls while the 鳳凰 is there
   switch (name) {
     case 'shishi': // 鹿威し: the bamboo tips, knocks on the stone, the water pours
       snKnock(E, t, out(0.13, R(-0.3, 0.3)), R(520, 600), 1, 0.25); snNoise(E, t + 0.04, out(0.12, 0.1, 3000), { kind: 'pink', f: 1400, q: 0.7, att: 0.05, hold: 0.25, dec: 0.4 }); return;
@@ -10943,6 +10953,7 @@ function sndCue(E, name, arg, focus, at, so) {
       var o1 = out(0.16, R(-0.4, 0.4), 4000), j; for (j = 0; j < 14; j++) snNoise(E, t + j * 0.035 + R(0, 0.01), o1, { f: R(700, 950), q: 8, dec: 0.02, peak: 0.6 + Math.sin(j / 3) * 0.3 }); snNoise(E, t + 0.5, out(0.18, 0.2, 5000), { kind: 'pink', f: 1300, q: 0.6, att: 0.1, hold: 0.6, dec: 0.6 }); return;
     case 'crow': BIRD.hashibuto(E, t, out(0.22 * (SND.birdK || 1), R(-0.6, 0.6), 7000)); return;
     case 'reveal': snChime(E, t, out(0.1, 0), 1); return;
+    case 'houou-hush': var hs = Math.max(0, +arg || 0), h0 = E.hush; E.hush = { from: h0 && h0.until > t ? h0.from : t, until: t + hs }; (E.scenes || []).forEach(function (s) { if (!s.dead) s.hushTo(E.hush, t); }); return;   // the 鳳凰 has come: the town's birds and people fall quiet (arg: seconds it will stay)
     case 'houou-call': snHoouCall(E, t, out(0.2 * clamp(+arg || 0.8, 0.2, 1.2), R(-0.15, 0.15), 9000)); return;   // the 鳳凰 calls (arg: how near)
     case 'houou-wing': snHoouWing(E, t, out(0.42 * clamp(+arg || 0.6, 0.1, 1.2), R(-0.2, 0.2), 6000)); return;   // one beat of its wings (arg: the stroke's strength, how near)
     case 'rare': var f = RARE[arg]; if (f) { f(E, t, out(0.24, R(-0.5, 0.5), 11000)); return; } snChime(E, t, out(0.14, 0), 1, [2093, 2637, 3136, 4186]); return;

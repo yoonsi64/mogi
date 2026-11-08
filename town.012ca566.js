@@ -14316,11 +14316,12 @@ o.droop=1-sstep(0,0.35,s3);o.legs=1-sstep(0,0.15,s3);o.head=(1-sstep(0,0.3,s3))*
 }
 return o;
 }
-// its voice: a soft beat of the wings on each downstroke (louder the stronger the stroke and the nearer it is), and a calm call
+// its voice (and the hush it brings): a soft beat of the wings on each downstroke (louder the stronger the stroke and the nearer it is), and a calm call
 // as it settles on the spire and again as it rises to leave (it calls first as it comes, with the visit's own 'rare' cue)
 function hoouVoice(el,dt,o,bp){
 var s=hoouSnd,a=o.wings.a1;
-if(!s||s.t0!==hoou.t0){hoouSnd={t0:hoou.t0,pe:el,a:a,up:false,top:0};return;}
+if(!s||s.t0!==hoou.t0){hoouSnd={t0:hoou.t0,pe:el,a:a,up:false,top:0,hs:el+10};cue('houou-hush',{id:+(HOOU_ALL-el+0.5).toFixed(1)},true);return;}          // the town's birds and people fall quiet while it is here (said again every 10 s, so a sound turned on late hears it)
+if(el>=s.hs){s.hs=el+10;cue('houou-hush',{id:+(HOOU_ALL-el+0.5).toFixed(1)},true);}
 var fk=hoouFin().k,near=clamp(fk?bp.k/fk:1,0.3,1.2);
 if(dt>0){var v=(a-s.a)/dt;
 if(v>0.5&&!s.up){s.up=true;s.top=a;}
