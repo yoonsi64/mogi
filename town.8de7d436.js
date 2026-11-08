@@ -13795,6 +13795,14 @@ return mp;
 var hxk=function(h,k){var n=parseInt(h.slice(1),16);return rgb([(n>>16&255)*k,(n>>8&255)*k,(n&255)*k]);};
 var wing=function(map,isFar){
 var kw=(map.k||1)*(isFar?0.88:1),Pc=['#a87a2a','#d8a84c','#f2d28e'].map(function(h){return hxk(h,kw);});          // the same golds as the body, lit by how the wing faces the sun
+// the wing's own surface under its feathers, from the leading edge out to the hand and back along the feathers to most of
+// their length, so the feathers stay joined to the wing however it bends, and only their tips part like fingers
+var webP=[[0.13,0],[0.18,0.25],[0.19,0.5],[0.14,0.75],[0.08,0.98],[0,1.02]];
+HOOU_PRIM.slice().reverse().forEach(function(fp,kr){var k=HOOU_PRIM.length-1-kr,tx=fp[2]-0.04*k/7,ty=fp[3]+0.08,u=0.62;webP.push([fp[0]+(tx-fp[0])*u,fp[1]+(ty-fp[1])*u]);});
+webP.push([-0.085+(-0.47+0.085)*0.7,0.56+(0.71-0.56)*0.7]);
+for(var jw=6;jw>=0;jw--){var u2=0.72;webP.push([-0.08+(-0.5+jw*0.015+0.08)*u2,0.05+jw*0.075+(0.1+jw*0.082-0.05-jw*0.075)*u2]);}
+webP.push([-0.1,0.0]);
+hoouPath(c,webP,map);c.fillStyle=hxk('#c49446',kw*0.95);c.fill();
 for(var j=6;j>=0;j--)hoouFeather(c,map,-0.08,0.05+j*0.075,-0.5+j*0.015,0.1+j*0.082,0.11,'round',0.015,Pc,!isFar,px);
 hoouFeather(c,map,-0.085,0.56,-0.47,0.71,0.11,'round',0.012,Pc,!isFar,px);
 var Pt=['#b08030','#dfad58','#f4b892'].map(function(h){return hxk(h,kw);});          // the flight feathers' tips warm to a rose-gold, as if the light shone through them
