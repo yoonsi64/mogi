@@ -13789,31 +13789,27 @@ var on=function(th,rr,lat){var d0=-Math.cos(th),d1=Math.sin(th);return[Cb[0]+rr*
 c.lineCap='round';c.lineJoin='round';
 [[0,-0.012,'#2e1c0a',['#4e3410','#8a6022','#b88c44']],[0.05,0.014,'#3a2410',['#6a4816','#b07e2c','#dcb45e']]].forEach(function(Lg){
 var hip=[Lg[0],0.05],lat=Lg[1],ink=Lg[2],fc=Lg[3],ft=[Fm[0]+hx*lat,Fm[1]+hy*lat];
-var kn=[hip[0]+gx*0.06*lp+hx*0.012*lp,hip[1]+gy*0.06*lp+hy*0.012*lp];
-var hk=[(kn[0]+ft[0])/2-hx*0.042*lp,(kn[1]+ft[1])/2-hy*0.042*lp];          // the crook: the bare leg runs back to the hock, then bends forward down to the foot
-// the shank and toes: fine dark lines
-c.strokeStyle=ink;c.lineWidth=0.013;c.beginPath();c.moveTo(kn[0],kn[1]);c.lineTo(hk[0],hk[1]);c.lineTo(ft[0],ft[1]);c.stroke();
-c.fillStyle=ink;c.beginPath();c.arc(hk[0],hk[1],0.0105,0,7);c.fill();
-c.strokeStyle='rgba(150,104,40,.55)';c.lineWidth=0.0045;c.beginPath();c.moveTo(kn[0],kn[1]);c.lineTo(hk[0],hk[1]);c.lineTo(ft[0],ft[1]);c.stroke();          // a little warm light down the front of the leg          // the joint
-[[0.08,0.85*lp,-0.01,0.75],[0.22,1.15*lp,0.008,0.8],[-0.14,-0.7*lp,0,1.0]].forEach(function(Tq){          // knuckled toes clenched round the ball, each ending in a long black hooked claw
-var a0=Tq[0],a1=Tq[1],tl0=lat+Tq[2],n=8,pts=[];for(var k=0;k<=n;k++)pts.push(on(a0+(a1-a0)*k/n,R0+0.008,tl0));
-c.beginPath();pts.forEach(function(q,k){if(k)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);});
-c.strokeStyle=ink;c.lineWidth=0.013;c.stroke();c.strokeStyle='#7a5418';c.lineWidth=0.0075;c.stroke();
-c.fillStyle=ink;for(var kk=2;kk<n;kk+=2){var kq=pts[kk];c.beginPath();c.arc(kq[0],kq[1],0.0068,0,7);c.fill();}          // the knuckles
-var sg=a1>=a0?1:-1,e0=pts[n],cl=[];for(var m=0;m<=5;m++){var fr=m/5;cl.push(on(a1+sg*Tq[3]*fr,R0+0.008+0.016*Math.sin(Math.PI*fr)-0.038*fr*fr,tl0));}          // it arches out from the toe, then hooks in
-var cx=cl[5][0]-e0[0],cy=cl[5][1]-e0[1];
-c.fillStyle='#120a04';c.beginPath();
-for(var m2=0;m2<=5;m2++){var w=0.0075*(1-m2/5),pq=cl[m2],nq=cl[Math.min(5,m2+1)],pq0=cl[Math.max(0,m2-1)],tx=nq[0]-pq0[0],ty=nq[1]-pq0[1],tl=Math.hypot(tx,ty)||1;var X=pq[0]-ty/tl*w*sg,Y=pq[1]+tx/tl*w*sg;if(m2)c.lineTo(X,Y);else c.moveTo(X,Y);}
-for(var m3=5;m3>=0;m3--){var w3=0.0075*(1-m3/5),pr3=cl[m3],nr=cl[Math.min(5,m3+1)],pr0=cl[Math.max(0,m3-1)],ux=nr[0]-pr0[0],uy=nr[1]-pr0[1],ul=Math.hypot(ux,uy)||1;c.lineTo(pr3[0]+uy/ul*w3*sg,pr3[1]-ux/ul*w3*sg);}
-c.closePath();c.fill();
-c.strokeStyle='rgba(255,236,200,.35)';c.lineWidth=0.0018;c.beginPath();c.moveTo(cl[1][0],cl[1][1]);c.lineTo(cl[3][0],cl[3][1]);c.stroke();          // a glint along the claw
+var kn=[hip[0]+gx*0.085*lp+hx*0.006*lp,hip[1]+gy*0.085*lp+hy*0.006*lp];
+var hk=[(kn[0]+ft[0])/2-hx*0.022*lp,(kn[1]+ft[1])/2-hy*0.022*lp];          // a slight crook at the hock
+// an eagle's leg: a thick bare shank in yellow-gold, banded with scales, under feathered 'trousers'
+var ribbon=function(P,Wd){var Lf=[],Rt=[];P.forEach(function(q,k){var a=P[Math.max(0,k-1)],b=P[Math.min(P.length-1,k+1)],tx=b[0]-a[0],ty=b[1]-a[1],tl=Math.hypot(tx,ty)||1;Lf.push([q[0]-ty/tl*Wd[k],q[1]+tx/tl*Wd[k]]);Rt.push([q[0]+ty/tl*Wd[k],q[1]-tx/tl*Wd[k]]);});c.beginPath();Lf.concat(Rt.reverse()).forEach(function(q,k){if(k)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);});c.closePath();};
+var sk=c.createLinearGradient(kn[0]+hx*0.02,kn[1]+hy*0.02,kn[0]-hx*0.02,kn[1]-hy*0.02);sk.addColorStop(0,fc===Lg[3]&&lat>0?'#f0cc66':'#c8a048');sk.addColorStop(0.5,lat>0?'#d8a836':'#a8822c');sk.addColorStop(1,lat>0?'#946a1c':'#6e4e16');
+ribbon([kn,hk,ft],[0.016,0.0135,0.012]);c.fillStyle=sk;c.fill();c.strokeStyle=ink;c.lineWidth=0.003;c.stroke();
+c.strokeStyle='rgba(70,44,12,.6)';c.lineWidth=0.0022;c.beginPath();
+[[kn,hk],[hk,ft]].forEach(function(sg2){var a=sg2[0],b=sg2[1],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1,nx=-dy/l,ny=dx/l;for(var f=0.12;f<0.95;f+=0.17){var qx=a[0]+dx*f,qy=a[1]+dy*f,w=0.013;c.moveTo(qx+nx*w,qy+ny*w);c.quadraticCurveTo(qx+dx/l*0.006,qy+dy/l*0.006,qx-nx*w,qy-ny*w);}});c.stroke();          // the scales across the shank
+[[0.08,0.85*lp,-0.012,0.78],[0.22,1.15*lp,0.01,0.85],[-0.14,-0.7*lp,0,1.05]].forEach(function(Tq){          // thick scaled toes clenched round the ball, each ending in a long black talon
+var a0=Tq[0],a1=Tq[1],tl0=lat+Tq[2],n=8,pts=[],wd=[];for(var k=0;k<=n;k++){pts.push(on(a0+(a1-a0)*k/n,R0+0.01,tl0));wd.push(0.0105-0.003*k/n);}
+ribbon(pts,wd);c.fillStyle=lat>0?'#d0a034':'#a07a28';c.fill();c.strokeStyle=ink;c.lineWidth=0.003;c.stroke();
+c.strokeStyle='rgba(70,44,12,.55)';c.lineWidth=0.002;c.beginPath();for(var kk=1;kk<n;kk++){var q=pts[kk],r=pts[kk+1],tx=r[0]-q[0],ty=r[1]-q[1],tl=Math.hypot(tx,ty)||1,w=wd[kk];c.moveTo(q[0]-ty/tl*w,q[1]+tx/tl*w);c.lineTo(q[0]+ty/tl*w,q[1]-tx/tl*w);}c.stroke();
+var sg=a1>=a0?1:-1,cl=[];for(var m=0;m<=6;m++){var fr=m/6;cl.push(on(a1+sg*Tq[3]*fr,R0+0.01+0.018*Math.sin(Math.PI*fr)-0.042*fr*fr,tl0));}          // the talon arches out, then hooks in
+var cw=[];for(var m1=0;m1<=6;m1++)cw.push(0.0085*(1-m1/6)+0.0004);
+ribbon(cl,cw);c.fillStyle='#140c06';c.fill();
+c.strokeStyle='rgba(255,236,200,.35)';c.lineWidth=0.0018;c.beginPath();c.moveTo(cl[1][0],cl[1][1]);c.lineTo(cl[4][0],cl[4][1]);c.stroke();          // a glint along the talon
 });
-// the feathered thigh, ending in a flared tuft of long pointed feathers at the hock
-var mid=[(hip[0]+kn[0])/2,(hip[1]+kn[1])/2];
-c.fillStyle=fc[1];c.beginPath();c.ellipse(mid[0],mid[1],0.05,0.026,Math.atan2(kn[1]-hip[1],kn[0]-hip[0]),0,7);c.fill();
-for(var tf=0;tf<7;tf++){
-var u=tf/6-0.5,ang=Math.atan2(gy,gx)+u*1.9+(tf%2?0.06:-0.04),len=(0.085+0.04*Math.cos(u*2.6))*(0.4+0.6*lp),r0=[kn[0]-gx*0.02+hx*u*0.03,kn[1]-gy*0.02+hy*u*0.03];
-hoouFeather(c,hoouSame,r0[0],r0[1],r0[0]+Math.cos(ang)*len,r0[1]+Math.sin(ang)*len,0.022,'point',(tf%2?0.006:-0.006),fc,false);
+// the feathered 'trousers': layered pointed feathers from the hip down over the top of the shank
+for(var row=0;row<3;row++)for(var tf=0;tf<5;tf++){
+var fr2=row/2,u=tf/4-0.5,base=[lerp(hip[0],kn[0],fr2*0.75)+hx*u*0.045,lerp(hip[1],kn[1],fr2*0.75)+hy*u*0.045],ang=Math.atan2(gy,gx)+u*0.9-0.25*(tf%2?1:-1)*0.3,len=(0.05+0.03*fr2)*(0.5+0.5*lp);
+hoouFeather(c,hoouSame,base[0],base[1],base[0]+Math.cos(ang)*len,base[1]+Math.sin(ang)*len,0.026,'point',(tf%2?0.005:-0.005),fc,false);
 }
 });
 }
