@@ -1869,6 +1869,7 @@ var m1=map([c0+dx*0.05,r0+dy*0.05]),m2=map([c0+dx*0.5+nx*bend,r0+dy*0.5+ny*bend]
 var sg3=c.createLinearGradient(m1[0],m1[1],m3[0],m3[1]);sg3.addColorStop(0,'rgba(255,240,200,.4)');sg3.addColorStop(1,'rgba(255,230,190,.08)');c.strokeStyle=sg3;c.lineWidth=Math.max(0.1,0.0045*px);c.beginPath();c.moveTo(m1[0],m1[1]);c.quadraticCurveTo(m2[0],m2[1],m3[0],m3[1]);c.stroke();
 }
 // a long tail feather (points already on the screen): shaft, a vane of fine barbs, and an eye near the tip
+var HOOU_EYES=[],HOOU_EYEGLOW=0,HOOU_HEAD=null;          // (the tail plumes' eyes as last painted, and how they shine: o.eyeGlow)
 function hoouPlume(c,pts,wf,eye,k,px){
 var L2=[],R2=[],barbs=[],i;
 for(i=0;i<pts.length;i++){
@@ -1886,7 +1887,7 @@ var nsh=pts.length-2,SL=[],SR=[];for(var sj=0;sj<nsh;sj++){var sa=pts[Math.max(0
 hoouPath(c,SL.concat(SR.reverse()),hoouSame);c.fillStyle='rgba(246,226,168,.62)';c.fill();          // the shaft: one smooth stroke, tapering
 if(!eye)return;
 var n=pts.length,ep=pts[Math.round(n*0.85)],en=pts[Math.round(n*0.85)+1],ang=Math.atan2(en[1]-ep[1],en[0]-ep[0]);
-c.save();c.globalCompositeOperation='screen';var eg=c.createRadialGradient(ep[0],ep[1],0,ep[0],ep[1],0.1*px);eg.addColorStop(0,'rgba(255,220,170,.28)');eg.addColorStop(1,'rgba(255,200,150,0)');c.fillStyle=eg;c.beginPath();c.arc(ep[0],ep[1],0.1*px,0,TAU);c.fill();c.restore();          // a soft glow
+HOOU_EYES.push(ep);var EG=HOOU_EYEGLOW,eR=(0.1+0.1*EG)*px;c.save();c.globalCompositeOperation='screen';var eg=c.createRadialGradient(ep[0],ep[1],0,ep[0],ep[1],eR);eg.addColorStop(0,'rgba(255,224,176,'+(0.28+0.5*EG)+')');eg.addColorStop(0.4,'rgba(255,214,160,'+(0.12+0.25*EG)+')');eg.addColorStop(1,'rgba(255,200,150,0)');c.fillStyle=eg;c.beginPath();c.arc(ep[0],ep[1],eR,0,TAU);c.fill();c.restore();          // a soft glow
 [[0.064,0.04,'#f2d896',0],[0.05,0.031,'#9a4a28',0.004],[0.037,0.023,'#d0a048',0.007],[0.025,0.016,'#4e7a66',0.009],[0.012,0.008,'#1e2a22',0.01]].forEach(function(r){var ox=-Math.cos(ang)*r[3]*px,oy=-Math.sin(ang)*r[3]*px;c.fillStyle=r[2];c.beginPath();c.ellipse(ep[0]+ox,ep[1]+oy,r[0]*px,r[1]*px,ang,0,TAU);c.fill();});
 c.fillStyle='rgba(255,250,230,.8)';c.beginPath();c.arc(ep[0]+0.006*px,ep[1]-0.006*px,0.006*px,0,TAU);c.fill();
 }
@@ -1899,7 +1900,7 @@ var B=o.B;
 if(o.feet&&lp>0){var ad=[o.feet[0]-(f[0]*Fm[0]-u[0]*Fm[1])*L,o.feet[1]-(f[1]*Fm[0]-u[1]*Fm[1])*L,o.feet[2]-(f[2]*Fm[0]-u[2]*Fm[1])*L],kf=sstep(0.55,1,lp);B=[lerp(B[0],ad[0],kf),lerp(B[1],ad[1],kf),lerp(B[2],ad[2],kf)];}          // the feet on the ball
 var Wl=function(x,y,z){return[B[0]+(f[0]*x-u[0]*y+r[0]*z)*L,B[1]+(f[1]*x-u[1]*y+r[1]*z)*L,B[2]+(f[2]*x-u[2]*y+r[2]*z)*L];};
 var M=function(x,y,z){var w=Wl(x,y,z||0),p=P(w[0],w[1],w[2]);return[p.x,p.y];};
-var b0=P(B[0],B[1],B[2]),px=L*b0.k,A0=c.globalAlpha,A=A0*(o.alpha===undefined?1:clamp(o.alpha,0,1));if(A<=0.002)return{plume:[],tips:[]};c.globalAlpha=A;          // o.alpha: it fades in and out
+HOOU_EYES=[];HOOU_EYEGLOW=o.eyeGlow||0;HOOU_HEAD=null;var b0=P(B[0],B[1],B[2]),px=L*b0.k,A0=c.globalAlpha,A=A0*(o.alpha===undefined?1:clamp(o.alpha,0,1));if(A<=0.002)return{plume:[],tips:[]};c.globalAlpha=A;          // o.alpha: it fades in and out
 var cam=hoouNorm([CAM.x-B[0],CAM.y-B[1],CAM.z-B[2]]),zs=dot(r,cam)>=0?1:-1,side3=Math.abs(dot(r,cam));          // zs: the side of it we see
 var lsx=SUN[0],lsy=-SUN[1],lsl=Math.hypot(lsx,lsy)||1;lsx/=lsl;lsy/=lsl;
 var tips=[],plumePts=[];
@@ -1957,7 +1958,7 @@ var plume=function(pl,k,len,wf,eye){
 var pts=[];
 for(var i=0;i<=34;i++){
 var s=i/34,ff=o.tailFloat||0,fl=Math.pow(s,1.4)*0.14*Math.sin(s*3.6-t*1.4+k*0.9)*(1-0.7*droop)+ff*(Math.pow(s,1.2)*0.11*Math.sin(s*2.4-t*0.85+k*1.3)+s*0.045*Math.sin(s*4.3-t*1.5+k*2.2)-0.2*s*s*len*0.45),hang=droop*s*s*len*0.5*(1-0.85*ff),sw=droop*(Math.pow(s,1.2)*0.2*Math.sin(s*4.6+k*0.8+0.4)*(k%2?1:-1)+Math.pow(s,1.6)*0.05*Math.sin(t*0.55+k*1.3));
-var x=-0.28-s*len*(1-0.05*droop)+ff*0.05*s*len*Math.sin(t*0.5+k),y=0.03+s*pl[1]*(0.55+0.7*droop)+fl,z=s*pl[2]*len*(0.55+0.5*droop)+sw*0.7+ff*0.16*Math.pow(s,1.3)*len*Math.sin(t*0.6+k*1.15);
+var fan=o.tailFan||0,x=-0.28-s*len*(1-0.05*droop)*(1-0.25*fan)+ff*0.05*s*len*Math.sin(t*0.5+k),y=0.03+s*pl[1]*(0.55+0.7*droop)+fl-fan*s*len*0.42*(0.6+0.4*Math.cos(k*1.3)),z=s*pl[2]*len*(0.55+0.5*droop)*(1+1.1*fan)+sw*0.7+ff*0.16*Math.pow(s,1.3)*len*Math.sin(t*0.6+k*1.15);          // (o.tailFan: the plumes raised and spread in a great fan behind it)
 pts.push(M(x+gx*hang,y+gy*hang,z));if(s>=0.45)plumePts.push(pts[i]);
 }
 hoouPlume(c,pts,wf,eye,k,px);
@@ -2057,10 +2058,10 @@ if(!NKd)neckDraw();var neck=NKd.neck,ns=NKd.ns,NW=NKd.NW,NP=NKd.NP,tube=NKd.tube
 var hdu=[ns[12][0]-ns[10][0],ns[12][1]-ns[10][1]],hdl=Math.hypot(hdu[0],hdu[1])||1,hux=-hdu[1]/hdl,huy=hdu[0]/hdl;if(hux*lsx+huy*lsy<0){hux=-hux;huy=-huy;}
 var HK=function(q){return M(q[0],q[1],zs*0.03);},TF=function(q){return M(q[0],q[1],zs*0.022);};
 
-for(var k2=0;k2<5;k2++){var cl=(1.55+0.5*hu)*[1,0.92,0.98,0.82,0.74][k2],cp=[];for(var i2=0;i2<=16;i2++){var q=hoouQuad([0.543,-0.364],[0.545-(0.025+k2*0.025)*cl,-0.37-(0.13-k2*0.02)*cl],[0.545-(0.125+k2*0.036)*cl,-0.37-(0.13-k2*0.06)*cl+Math.sin(t*0.9+k2*1.7)*0.012],i2/16);cp.push(Hm(q[0],q[1],(k2-2)*0.016*i2/16));}
+for(var k2=0;k2<5;k2++){var cl=(1.55+0.5*hu+0.35*(o.crestUp||0))*[1,0.92,0.98,0.82,0.74][k2],cp=[];for(var i2=0;i2<=16;i2++){var q=hoouQuad([0.543,-0.364],[0.545-(0.025+k2*0.025)*cl,-0.37-(0.13-k2*0.02)*cl],[0.545-(0.125+k2*0.036)*cl,-0.37-(0.13-k2*0.06)*cl+Math.sin(t*0.9+k2*1.7)*0.012],i2/16);cp.push(Hm(q[0],q[1],(k2-2)*0.016*i2/16));}
 hoouPlume(c,cp,function(s){var x=(s-0.58)/0.42;return 0.0034*(1-0.5*s)+(x>0?0.0145*Math.pow(Math.sin(Math.PI*Math.pow(x,1.55)),0.85):0);},false,k2,px*hs);}          // the crest: fine filaments, each ending in a small teardrop
 var HP=[[0.607,-0.353],[0.597,-0.3655],[0.578,-0.3742],[0.558,-0.3792],[0.538,-0.3808],[0.521,-0.3772],[0.509,-0.3668],[0.504,-0.354],[0.503,-0.344],[0.505,-0.322],[0.51,-0.3],[0.514,-0.278],[0.548,-0.276],[0.553,-0.296],[0.563,-0.311],[0.58,-0.321],[0.597,-0.326],[0.607,-0.329]];          // a sleek head: a rounded crown, the forehead flowing into the beak, the nape and throat narrowing into the neck          // the nape and throat narrow into the neck
-var hc=Hm(0.548,-0.34,0),hr=0.075*hs*px,HDP=new Path2D();
+HOOU_HEAD=Hm(0.548,-0.34,0);var hc=HOOU_HEAD,hr=0.075*hs*px,HDP=new Path2D();
 [[-0.021,0.8],[-0.012,0.94],[0,1],[0.012,0.94],[0.021,0.8]].forEach(function(SL){var zz=SL[0],kk=SL[1],q=HP.map(function(p){return Hm(0.55+(p[0]-0.55)*kk,-0.33+(p[1]+0.33)*kk,zz*(1-0.5*Math.max(0,(p[0]-0.57)/0.03)));}),n=q.length,ar=0;for(var ii=0;ii<n;ii++){var pp=q[ii],qq=q[(ii+1)%n];ar+=pp[0]*qq[1]-qq[0]*pp[1];}if(ar<0)q.reverse();for(var i=0;i<n;i++){var a=q[i],b=q[(i+1)%n],m=[(a[0]+b[0])/2,(a[1]+b[1])/2];if(i)HDP.quadraticCurveTo(a[0],a[1],m[0],m[1]);else HDP.moveTo(m[0],m[1]);}var a0=q[0],b0=q[1];HDP.quadraticCurveTo(a0[0],a0[1],(a0[0]+b0[0])/2,(a0[1]+b0[1])/2);HDP.closePath();});
 c.fillStyle=tube(hc[0],hc[1],hux,huy,hr*0.75);c.fill(HDP);          // the head in the neck's own colours and light, so the two are one
 c.save();c.clip(HDP);var hg=c.createRadialGradient(hc[0]+lsx*hr*0.4,hc[1]+lsy*hr*0.4-hr*0.2,0,hc[0],hc[1],hr*1.1);hg.addColorStop(0,'rgba(255,236,186,.22)');hg.addColorStop(0.6,'rgba(255,230,170,.04)');hg.addColorStop(1,'rgba(120,80,24,.22)');c.fillStyle=hg;c.fillRect(hc[0]-hr*2,hc[1]-hr*2,hr*4,hr*4);c.restore();          // the crown catching the light
@@ -2139,7 +2140,7 @@ wing(wmap(-zs),true);
 wing(wmap(zs),false);
 c.restore();
 c.globalAlpha=A0;
-return{plume:plumePts,tips:tips};
+return{plume:plumePts,tips:tips,eyes:HOOU_EYES.slice(),head:HOOU_HEAD};
 }
         return function(c, o, view) { VIEW = view; CAM.z = -(view.D || 14); return hoouPaint3D(c, o); };
     })();

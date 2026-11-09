@@ -13849,6 +13849,7 @@ var m1=map([c0+dx*0.05,r0+dy*0.05]),m2=map([c0+dx*0.5+nx*bend,r0+dy*0.5+ny*bend]
 var sg3=c.createLinearGradient(m1[0],m1[1],m3[0],m3[1]);sg3.addColorStop(0,'rgba(255,240,200,.4)');sg3.addColorStop(1,'rgba(255,230,190,.08)');c.strokeStyle=sg3;c.lineWidth=Math.max(0.1,0.0045*px);c.beginPath();c.moveTo(m1[0],m1[1]);c.quadraticCurveTo(m2[0],m2[1],m3[0],m3[1]);c.stroke();
 }
 // a long tail feather (points already on the screen): shaft, a vane of fine barbs, and an eye near the tip
+var HOOU_EYES=[],HOOU_EYEGLOW=0,HOOU_HEAD=null;          // (the tail plumes' eyes as last painted, and how they shine: o.eyeGlow)
 function hoouPlume(c,pts,wf,eye,k,px){
 var L2=[],R2=[],barbs=[],i;
 for(i=0;i<pts.length;i++){
@@ -13866,7 +13867,7 @@ var nsh=pts.length-2,SL=[],SR=[];for(var sj=0;sj<nsh;sj++){var sa=pts[Math.max(0
 hoouPath(c,SL.concat(SR.reverse()),hoouSame);c.fillStyle='rgba(246,226,168,.62)';c.fill();          // the shaft: one smooth stroke, tapering
 if(!eye)return;
 var n=pts.length,ep=pts[Math.round(n*0.85)],en=pts[Math.round(n*0.85)+1],ang=Math.atan2(en[1]-ep[1],en[0]-ep[0]);
-c.save();c.globalCompositeOperation='screen';var eg=c.createRadialGradient(ep[0],ep[1],0,ep[0],ep[1],0.1*px);eg.addColorStop(0,'rgba(255,220,170,.28)');eg.addColorStop(1,'rgba(255,200,150,0)');c.fillStyle=eg;c.beginPath();c.arc(ep[0],ep[1],0.1*px,0,TAU);c.fill();c.restore();          // a soft glow
+HOOU_EYES.push(ep);var EG=HOOU_EYEGLOW,eR=(0.1+0.1*EG)*px;c.save();c.globalCompositeOperation='screen';var eg=c.createRadialGradient(ep[0],ep[1],0,ep[0],ep[1],eR);eg.addColorStop(0,'rgba(255,224,176,'+(0.28+0.5*EG)+')');eg.addColorStop(0.4,'rgba(255,214,160,'+(0.12+0.25*EG)+')');eg.addColorStop(1,'rgba(255,200,150,0)');c.fillStyle=eg;c.beginPath();c.arc(ep[0],ep[1],eR,0,TAU);c.fill();c.restore();          // a soft glow
 [[0.064,0.04,'#f2d896',0],[0.05,0.031,'#9a4a28',0.004],[0.037,0.023,'#d0a048',0.007],[0.025,0.016,'#4e7a66',0.009],[0.012,0.008,'#1e2a22',0.01]].forEach(function(r){var ox=-Math.cos(ang)*r[3]*px,oy=-Math.sin(ang)*r[3]*px;c.fillStyle=r[2];c.beginPath();c.ellipse(ep[0]+ox,ep[1]+oy,r[0]*px,r[1]*px,ang,0,TAU);c.fill();});
 c.fillStyle='rgba(255,250,230,.8)';c.beginPath();c.arc(ep[0]+0.006*px,ep[1]-0.006*px,0.006*px,0,TAU);c.fill();
 }
@@ -13879,7 +13880,7 @@ var B=o.B;
 if(o.feet&&lp>0){var ad=[o.feet[0]-(f[0]*Fm[0]-u[0]*Fm[1])*L,o.feet[1]-(f[1]*Fm[0]-u[1]*Fm[1])*L,o.feet[2]-(f[2]*Fm[0]-u[2]*Fm[1])*L],kf=sstep(0.55,1,lp);B=[lerp(B[0],ad[0],kf),lerp(B[1],ad[1],kf),lerp(B[2],ad[2],kf)];}          // the feet on the ball
 var Wl=function(x,y,z){return[B[0]+(f[0]*x-u[0]*y+r[0]*z)*L,B[1]+(f[1]*x-u[1]*y+r[1]*z)*L,B[2]+(f[2]*x-u[2]*y+r[2]*z)*L];};
 var M=function(x,y,z){var w=Wl(x,y,z||0),p=P(w[0],w[1],w[2]);return[p.x,p.y];};
-var b0=P(B[0],B[1],B[2]),px=L*b0.k,A0=c.globalAlpha,A=A0*(o.alpha===undefined?1:clamp(o.alpha,0,1));if(A<=0.002)return{plume:[],tips:[]};c.globalAlpha=A;          // o.alpha: it fades in and out
+HOOU_EYES=[];HOOU_EYEGLOW=o.eyeGlow||0;HOOU_HEAD=null;var b0=P(B[0],B[1],B[2]),px=L*b0.k,A0=c.globalAlpha,A=A0*(o.alpha===undefined?1:clamp(o.alpha,0,1));if(A<=0.002)return{plume:[],tips:[]};c.globalAlpha=A;          // o.alpha: it fades in and out
 var cam=hoouNorm([CAM.x-B[0],CAM.y-B[1],CAM.z-B[2]]),zs=dot(r,cam)>=0?1:-1,side3=Math.abs(dot(r,cam));          // zs: the side of it we see
 var lsx=SUN[0],lsy=-SUN[1],lsl=Math.hypot(lsx,lsy)||1;lsx/=lsl;lsy/=lsl;
 var tips=[],plumePts=[];
@@ -13937,7 +13938,7 @@ var plume=function(pl,k,len,wf,eye){
 var pts=[];
 for(var i=0;i<=34;i++){
 var s=i/34,ff=o.tailFloat||0,fl=Math.pow(s,1.4)*0.14*Math.sin(s*3.6-t*1.4+k*0.9)*(1-0.7*droop)+ff*(Math.pow(s,1.2)*0.11*Math.sin(s*2.4-t*0.85+k*1.3)+s*0.045*Math.sin(s*4.3-t*1.5+k*2.2)-0.2*s*s*len*0.45),hang=droop*s*s*len*0.5*(1-0.85*ff),sw=droop*(Math.pow(s,1.2)*0.2*Math.sin(s*4.6+k*0.8+0.4)*(k%2?1:-1)+Math.pow(s,1.6)*0.05*Math.sin(t*0.55+k*1.3));
-var x=-0.28-s*len*(1-0.05*droop)+ff*0.05*s*len*Math.sin(t*0.5+k),y=0.03+s*pl[1]*(0.55+0.7*droop)+fl,z=s*pl[2]*len*(0.55+0.5*droop)+sw*0.7+ff*0.16*Math.pow(s,1.3)*len*Math.sin(t*0.6+k*1.15);
+var fan=o.tailFan||0,x=-0.28-s*len*(1-0.05*droop)*(1-0.25*fan)+ff*0.05*s*len*Math.sin(t*0.5+k),y=0.03+s*pl[1]*(0.55+0.7*droop)+fl-fan*s*len*0.42*(0.6+0.4*Math.cos(k*1.3)),z=s*pl[2]*len*(0.55+0.5*droop)*(1+1.1*fan)+sw*0.7+ff*0.16*Math.pow(s,1.3)*len*Math.sin(t*0.6+k*1.15);          // (o.tailFan: the plumes raised and spread in a great fan behind it)
 pts.push(M(x+gx*hang,y+gy*hang,z));if(s>=0.45)plumePts.push(pts[i]);
 }
 hoouPlume(c,pts,wf,eye,k,px);
@@ -14037,10 +14038,10 @@ if(!NKd)neckDraw();var neck=NKd.neck,ns=NKd.ns,NW=NKd.NW,NP=NKd.NP,tube=NKd.tube
 var hdu=[ns[12][0]-ns[10][0],ns[12][1]-ns[10][1]],hdl=Math.hypot(hdu[0],hdu[1])||1,hux=-hdu[1]/hdl,huy=hdu[0]/hdl;if(hux*lsx+huy*lsy<0){hux=-hux;huy=-huy;}
 var HK=function(q){return M(q[0],q[1],zs*0.03);},TF=function(q){return M(q[0],q[1],zs*0.022);};
 
-for(var k2=0;k2<5;k2++){var cl=(1.55+0.5*hu)*[1,0.92,0.98,0.82,0.74][k2],cp=[];for(var i2=0;i2<=16;i2++){var q=hoouQuad([0.543,-0.364],[0.545-(0.025+k2*0.025)*cl,-0.37-(0.13-k2*0.02)*cl],[0.545-(0.125+k2*0.036)*cl,-0.37-(0.13-k2*0.06)*cl+Math.sin(t*0.9+k2*1.7)*0.012],i2/16);cp.push(Hm(q[0],q[1],(k2-2)*0.016*i2/16));}
+for(var k2=0;k2<5;k2++){var cl=(1.55+0.5*hu+0.35*(o.crestUp||0))*[1,0.92,0.98,0.82,0.74][k2],cp=[];for(var i2=0;i2<=16;i2++){var q=hoouQuad([0.543,-0.364],[0.545-(0.025+k2*0.025)*cl,-0.37-(0.13-k2*0.02)*cl],[0.545-(0.125+k2*0.036)*cl,-0.37-(0.13-k2*0.06)*cl+Math.sin(t*0.9+k2*1.7)*0.012],i2/16);cp.push(Hm(q[0],q[1],(k2-2)*0.016*i2/16));}
 hoouPlume(c,cp,function(s){var x=(s-0.58)/0.42;return 0.0034*(1-0.5*s)+(x>0?0.0145*Math.pow(Math.sin(Math.PI*Math.pow(x,1.55)),0.85):0);},false,k2,px*hs);}          // the crest: fine filaments, each ending in a small teardrop
 var HP=[[0.607,-0.353],[0.597,-0.3655],[0.578,-0.3742],[0.558,-0.3792],[0.538,-0.3808],[0.521,-0.3772],[0.509,-0.3668],[0.504,-0.354],[0.503,-0.344],[0.505,-0.322],[0.51,-0.3],[0.514,-0.278],[0.548,-0.276],[0.553,-0.296],[0.563,-0.311],[0.58,-0.321],[0.597,-0.326],[0.607,-0.329]];          // a sleek head: a rounded crown, the forehead flowing into the beak, the nape and throat narrowing into the neck          // the nape and throat narrow into the neck
-var hc=Hm(0.548,-0.34,0),hr=0.075*hs*px,HDP=new Path2D();
+HOOU_HEAD=Hm(0.548,-0.34,0);var hc=HOOU_HEAD,hr=0.075*hs*px,HDP=new Path2D();
 [[-0.021,0.8],[-0.012,0.94],[0,1],[0.012,0.94],[0.021,0.8]].forEach(function(SL){var zz=SL[0],kk=SL[1],q=HP.map(function(p){return Hm(0.55+(p[0]-0.55)*kk,-0.33+(p[1]+0.33)*kk,zz*(1-0.5*Math.max(0,(p[0]-0.57)/0.03)));}),n=q.length,ar=0;for(var ii=0;ii<n;ii++){var pp=q[ii],qq=q[(ii+1)%n];ar+=pp[0]*qq[1]-qq[0]*pp[1];}if(ar<0)q.reverse();for(var i=0;i<n;i++){var a=q[i],b=q[(i+1)%n],m=[(a[0]+b[0])/2,(a[1]+b[1])/2];if(i)HDP.quadraticCurveTo(a[0],a[1],m[0],m[1]);else HDP.moveTo(m[0],m[1]);}var a0=q[0],b0=q[1];HDP.quadraticCurveTo(a0[0],a0[1],(a0[0]+b0[0])/2,(a0[1]+b0[1])/2);HDP.closePath();});
 c.fillStyle=tube(hc[0],hc[1],hux,huy,hr*0.75);c.fill(HDP);          // the head in the neck's own colours and light, so the two are one
 c.save();c.clip(HDP);var hg=c.createRadialGradient(hc[0]+lsx*hr*0.4,hc[1]+lsy*hr*0.4-hr*0.2,0,hc[0],hc[1],hr*1.1);hg.addColorStop(0,'rgba(255,236,186,.22)');hg.addColorStop(0.6,'rgba(255,230,170,.04)');hg.addColorStop(1,'rgba(120,80,24,.22)');c.fillStyle=hg;c.fillRect(hc[0]-hr*2,hc[1]-hr*2,hr*4,hr*4);c.restore();          // the crown catching the light
@@ -14119,7 +14120,7 @@ wing(wmap(-zs),true);
 wing(wmap(zs),false);
 c.restore();
 c.globalAlpha=A0;
-return{plume:plumePts,tips:tips};
+return{plume:plumePts,tips:tips,eyes:HOOU_EYES.slice(),head:HOOU_HEAD};
 }
 function mount(el,opts){
 opts=opts||{};
@@ -14538,7 +14539,7 @@ o.aurora=sstep(0.8,4,tr)*(1-sstep(HOOU_STAY-2.5,HOOU_STAY,tr));          // the 
 o.wings=rest();var dmp=Math.exp(-tr*1.1)*Math.sin(tr*2.6);o.wings.a1+=0.07*dmp;o.wings.a2+=0.09*dmp;o.droop=1;o.legs=1;o.head=1-0.16*Math.pow(Math.sin(Math.PI*clamp((tr-0.6)/2.4)),2);o.glow=0.6+0.3*Math.pow(Math.sin(Math.PI*0.5*(1+clamp(tr/1.6))),2);o.look=(0.18*Math.sin(tr*0.19)+0.14*sstep(0.6,0.9,Math.sin(tr*0.09)))*sstep(2,5,tr);          // the wings settle slowly; a quiet bow, then it looks about
 // every 24 s it beats its wings four or five times where it stands: up high, down past level, the hand folding a little on
 // each upstroke; the tail lifts and fans, it looks ahead, and it glows a little brighter
-var fcy=(tr+6)%24,fe=sstep(0,0.6,fcy)*(1-sstep(4.4,6,fcy));
+var fcy=(tr+6)%24,bz=hoou&&hoouBusyEnd()>el?1:0;if(hoou){hoou.qk=lerp(hoou.qk||0,bz,0.12);}var fe=sstep(0,0.6,fcy)*(1-sstep(4.4,6,fcy))*(1-(hoou?hoou.qk:0));          // (its wings keep still for its songs and its movements)
 if(fe>0.001){var fph=fcy*0.75*TAU,fcs=Math.cos(fph),fsn=Math.sin(fph),W0=o.wings;
 o.wings={a1:lerp(W0.a1,0.5+0.9*fcs,fe),a2:lerp(W0.a2,0.62+0.9*fcs+0.3*fsn,fe),sw:lerp(W0.sw,0.18,fe),fold:lerp(W0.fold,Math.max(0,fsn)*0.45,fe)};
 o.droop=1-0.3*fe;o.look=lerp(o.look,0,fe);o.glow=0.6+0.25*fe;o.pitch+=0.05*fe*Math.max(0,-fcs);}
@@ -14556,11 +14557,20 @@ o.droop=1-sstep(0.5,3,tk);o.legs=1-sstep(0.8,2.6,tk);o.head=(1-sstep(0.2,1.6,tk)
 }
 if(hoou&&hoou.cry!==undefined){var CP=HOOU_CRIES[hoou.cryPart||0],cd=el-hoou.cry;if(cd>=0&&cd<CP.len){var ce=(hoou.cryCont?Math.max(sstep(0,0.45,cd),Math.min(1,(hoou.cryPrev||0)/CP.pose)):sstep(0,0.45,cd))*(hoou.cryQ?1:1-sstep(CP.len-1.1,CP.len,cd))*CP.pose,still=(o.legs||0)>0.9;          // its long cry (tapped): the head lifts on a craned neck, the bill opens with the song, the wings lift a little and it glows (held up between parts when one follows another)
 o.cry=ce;o.cryT=cd;o.cryW=CP.waves;o.gape=(ce/CP.pose)*hoouGape(CP.gape,cd);o.tilt=(still?0.5:0.2)*ce;if(still){o.crane=ce;o.head=Math.max(o.head||0,1);o.look=lerp(o.look||0,0,ce);o.wings={a1:o.wings.a1+0.12*ce,a2:o.wings.a2+0.1*ce,sw:o.wings.sw,fold:o.wings.fold*(1-ce)};o.glow=Math.max(o.glow||0,0.6+0.3*ce);}}}
-if(hoou&&(o.legs||0)>0.9)[hoou.heldOld,hoou.held,hoou.mv].forEach(function(mv){if(!mv)return;var MV=HOOU_MOVES[mv.i],md=el-mv.t0;if(md<0||(!MV.hold&&md>=MV.len))return;          // a movement (tapped): a shake of the head, or a display held until it is tapped again
-var fo=MV.hold?(mv.end!==undefined?1-sstep(0,0.9,el-mv.end):1):1-sstep(MV.len-(MV.fade||0.3),MV.len,md),me=sstep(0,MV.k==='shake'?0.15:0.6,md)*fo,W0=o.wings;if(me<=0)return;
-if(MV.k==='shake'){var sp3=Math.sin(md*TAU*6.5);o.look=(o.look||0)*(1-me)+me*0.34*sp3;o.tilt=(o.tilt||0)+0.05*me*Math.sin(md*TAU*6.5+1.2);}          // a quick shake of the head
-else if(MV.k==='display'){var wk=me*(1-sstep(2.6,4.2,md));o.wings={a1:lerp(W0.a1,0.38+0.03*Math.sin(md*2.4),wk),a2:lerp(W0.a2,0.56+0.03*Math.sin(md*2.4+0.4),wk),sw:lerp(W0.sw,-0.08,wk),fold:lerp(W0.fold,0,wk)};o.droop=(o.droop||1)-0.45*wk;o.crane=Math.max(o.crane||0,0.5*wk);o.tilt=(o.tilt||0)+0.18*wk;o.glow=(o.glow||0)+0.15*me+0.15*wk;o.flare=Math.max(o.flare||0,me);}          // it spreads its wings out wide and shines, and its aurora blazes up wide for six seconds (the wings come to rest again before it fades)
-else if(MV.k==='tail'){var mf=sstep(0,1.4,md)*fo;o.tailFloat=Math.max(o.tailFloat||0,mf);o.droop=(o.droop||1)-0.5*mf;o.glow=(o.glow||0)+0.1*mf;}});          // its tail feathers float up as if by magic, drifting and glittering, for six seconds
+if(hoou&&(o.legs||0)>0.9)[hoou.heldOld,hoou.held,hoou.mv].forEach(function(mv){if(!mv)return;var MV=HOOU_MOVES[mv.i],md=el-mv.t0;if(md<0||(!MV.hold&&md>=MV.len))return;          // a movement (tapped)
+var fo=MV.hold?(mv.end!==undefined?1-sstep(0,0.9,el-mv.end):1):1-sstep(MV.len-(MV.fade||0.3),MV.len,md),me=sstep(0,0.3,md)*fo,W0=o.wings;if(me<=0)return;
+if(MV.k==='toss'){          // it lifts its head proudly, crest raised, looks slowly out over the town one way and the other, then tosses its head and its crest sheds sparks
+var up=sstep(0,0.5,md)*fo,sw2=sstep(0.45,0.7,md)*(1-sstep(1.3,1.5,md))*Math.sin(Math.PI*clamp((md-0.45)/0.95)*2)*0.5,sh2=sstep(1.4,1.5,md)*(1-sstep(1.95,2.15,md))*0.24*Math.sin((md-1.4)*TAU*6.5);
+o.crane=Math.max(o.crane||0,0.6*up);o.tilt=(o.tilt||0)+0.32*up;o.crestUp=up;o.look=(o.look||0)*(1-up)+sw2+sh2;o.glow=(o.glow||0)+0.25*up+0.35*Math.exp(-Math.pow((md-1.55)/0.25,2));}
+else if(MV.k==='display'){          // it gathers its wings high above it, sweeps them out wide in one great stroke (a ring of light goes out, the aurora blossoms), and holds them so, shining, light streaming from their edges
+var g1=sstep(0,0.75,md),g2=sstep(0.8,1.12,md),br3=0.035*Math.sin(md*1.9)*g2;
+var a1t=lerp(lerp(W0.a1,1.45,g1),0.36+br3,g2),a2t=lerp(lerp(W0.a2,2.0,g1),0.54+br3*1.2,g2);
+o.wings={a1:lerp(W0.a1,a1t,fo),a2:lerp(W0.a2,a2t,fo),sw:lerp(W0.sw,lerp(0.05,-0.1,g2),fo),fold:lerp(W0.fold,0,fo*g1)};
+o.B=[o.B[0],o.B[1]-0.02*o.L*fo*(g1-g2)+0.015*o.L*fo*Math.max(0,Math.sin(Math.PI*clamp((md-0.8)/0.6))),o.B[2]];
+o.droop=(o.droop||1)-0.4*fo*g1;o.crane=Math.max(o.crane||0,0.5*fo*g1);o.tilt=(o.tilt||0)+0.22*fo*g1;o.crestUp=Math.max(o.crestUp||0,fo*g1);o.glow=(o.glow||0)+(0.2*g1+0.2*g2)*fo;o.flare=Math.max(o.flare||0,fo*sstep(0.85,1.5,md));}
+else if(MV.k==='tail'){          // its tail rises and spreads in a great fan, floating as if by magic, the eyes of its plumes lit and showering sparkles
+var mf=sstep(0,1.4,md)*fo;o.tailFloat=Math.max(o.tailFloat||0,mf);o.tailFan=Math.max(o.tailFan||0,sstep(0.2,1.8,md)*fo);o.eyeGlow=Math.max(o.eyeGlow||0,sstep(0.5,2,md)*fo);o.droop=(o.droop||1)-0.5*mf;o.glow=(o.glow||0)+0.15*mf;o.wings={a1:W0.a1+0.08*mf,a2:W0.a2+0.1*mf,sw:W0.sw,fold:W0.fold};}});
+if(hoou&&hoou.fxw){hoou.fxw=hoou.fxw.filter(function(w){return el-w.t0<2.6;});o.fxW=hoou.fxw.map(function(w){return[el-w.t0,w.a];});}          // the ripples its movements send out through the bent light about it
 return o;
 }
 // its song comes in four parts: the intro as it settles on the spire; the first part when it is tapped; the second when it is
@@ -14574,10 +14584,13 @@ var HOOU_CRIES=[{len:3.95,gape:[[0,0],[0.1,0.5],[0.5,0.62],[1.2,0.5],[1.32,0.15]
 function hoouGape(G,cd){var i=1;while(i<G.length-1&&G[i][0]<cd)i++;var a=G[i-1],b=G[i],v=lerp(a[1],b[1],clamp((cd-a[0])/((b[0]-a[0])||1)));return clamp(v*(1+0.06*Math.sin(cd*31)));}          // how wide the bill opens through the cry, following its song, with a little tremble
 // tapped, it cries: a long, rising, falling cry (once at a time, and not once it is going)
 // tapped: at rest, the first tap gets the first part of its song and the second the second; after that it answers with a
-// movement: first it shakes its head; then it spreads its wings out wide and its aurora blazes up; then its tail feathers
-// lift and shower sparkles; and from then on it shakes its head.
+// movement: first it lifts its head and looks out over the town, then tosses it, its crest shedding sparks; then it gathers its
+// wings high and sweeps them out wide in one great stroke, a ring of light going out and its aurora blossoming; then its tail
+// rises in a great floating fan, the eyes of its plumes lit and showering sparkles; and from then on, the head again.
 // Tapped as it flies, it gives off a shower of sparkles. Tapped while it sings or moves, what comes next follows on.
-var HOOU_MOVES=[{k:'shake',len:1.1,fade:0.3,cue:'houou-ruffle'},{k:'display',len:6,fade:1,cue:'houou-aurora'},{k:'tail',len:6,fade:1,cue:'houou-sparkle'}];          // (len: how long it lasts; fade: how long it takes to die away at its end; hold: until tapped again)
+var HOOU_MOVES=[{k:'toss',len:2.6,fade:0.5,cues:[[0,'houou-toss',1],[1.42,'houou-ruffle',0.8],[1.5,'houou-sparkle',0.6]],fx:[[0.5,'wave',0.7],[1.5,'crest'],[1.5,'hring'],[1.75,'crest']]},
+{k:'display',len:6,fade:1,cues:[[0.1,'houou-whoom',0.45],[0.85,'houou-whoom',1],[0.9,'houou-aurora',1]],fx:[[0.92,'ring'],[0.92,'wave',1.4],[0.95,'tips']]},
+{k:'tail',len:6,fade:1,cues:[[0,'houou-chime',1],[0.4,'houou-sparkle',0.8],[3.2,'houou-sparkle',0.5]],fx:[[0.5,'wave',0.6],[1.6,'eyes']]}];          // (len: how long it lasts; fade: how long it takes to die away at its end; cues: its sounds and when; fx: its bursts of light and when)
 function hoouCry(){if(!hoou)return false;var el=(Date.now()-hoou.t0)/1000;if(el<0||el>HOOU_TW-0.6)return false;
 var r0=HOOU_IN+HOOU_LAND,inAt=r0+3.2,inEnd=inAt+HOOU_CRIES[0].len,outAt=r0+HOOU_STAY+0.15,resting=el>=r0+0.4&&el<outAt,near=+clamp(hoou.near||1,0.15,1.2).toFixed(2),io=hoou.cry!==undefined&&(hoou.cryPart===0||hoou.cryPart===3)&&el<hoou.cry+HOOU_CRIES[hoou.cryPart].len;
 if(!resting){if(hoou.burst!==undefined&&el-hoou.burst<0.35)return false;hoou.burst=el;hoou.burstDone=false;cue('houou-sparkle',{id:near},true);loopCheck();return true;}          // (its glitter may sound over its farewell; it does not cut into it)
@@ -14589,9 +14602,13 @@ if(n>=0)hoou.taps=n+1;
 if(st>el){if(n>=0&&n<2)hoou.cryQ={at:st,part:n+1};else hoou.moveQ={at:st,i:mi};return true;}
 if(n>=0&&n<2)hoouCrySing(n+1,el,false);else hoouMove(mi,el);return true;}
 function hoouBusyEnd(){var e=-1e9;if(hoou.cry!==undefined)e=Math.max(e,hoou.cry+HOOU_CRIES[hoou.cryPart||0].len);if(hoou.mv)e=Math.max(e,hoou.mv.t0+HOOU_MOVES[hoou.mv.i].len);if(hoou.held)e=Math.max(e,hoou.held.t0+HOOU_MOVES[hoou.held.i].len);return e;}
-function hoouMove(i,el){var mv={i:i,t0:el};if(HOOU_MOVES[i].hold){if(hoou.held&&hoou.held.end===undefined)hoou.held.end=el;hoou.heldOld=hoou.held;hoou.held=mv;}else hoou.mv=mv;hoou.moveQ=null;var M=HOOU_MOVES[i];if(M.cue)cue(M.cue,{id:+clamp(hoou.near||1,0.1,1.2).toFixed(2)},true);loopCheck();}
+function hoouMove(i,el){var mv={i:i,t0:el,cd:{},fd:{}};if(HOOU_MOVES[i].hold){if(hoou.held&&hoou.held.end===undefined)hoou.held.end=el;hoou.heldOld=hoou.held;hoou.held=mv;}else hoou.mv=mv;hoou.moveQ=null;loopCheck();}          // (its sounds and its light follow on in hoouVoice and hoouDraw)
+// a ring of light going out from it, gold edged with rainbow, fading as it widens
+function hoouRing(c,x,y,px,u){var a=Math.pow(1-u,1.6)*0.6;if(a<0.01)return;var R=Math.max(6,px*(0.3+2.5*Math.sqrt(u))),w=Math.max(0.6,px*0.07*(1-u));c.save();c.globalCompositeOperation='lighter';c.translate(x,y);c.scale(1,0.72);
+[[w*3,0.18],[w,0.7]].forEach(function(q){c.lineWidth=q[0];if(c.createConicGradient){var cg=c.createConicGradient(u*2,0,0);for(var i=0;i<=6;i++)cg.addColorStop(i/6,'hsla('+((i*60+40)%360)+',90%,72%,'+(a*q[1])+')');c.strokeStyle=cg;}else c.strokeStyle='rgba(255,230,170,'+(a*q[1])+')';c.beginPath();c.arc(0,0,R,0,TAU);c.stroke();});
+if(u<0.3){var fg=c.createRadialGradient(0,0,0,0,0,R);fg.addColorStop(0,'rgba(255,246,220,'+(0.4*(1-u/0.3))+')');fg.addColorStop(1,'rgba(255,220,160,0)');c.fillStyle=fg;c.beginPath();c.arc(0,0,R,0,TAU);c.fill();}c.restore();}
 // a shower of sparkles from it, and a flash of light where it is
-function hoouBurst(S,x,y,k){for(var i=0;i<150&&S.length<900;i++){var a=Math.random()*TAU,sp=(1.5+Math.random()*5)*k,life=1.2+Math.random()*1.8,bg=Math.random()<0.18;S.push({x:x+Math.cos(a)*k*0.6,y:y+Math.sin(a)*k*0.6,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-0.8*k,life:life,max:life,r:(bg?0.45+Math.random()*0.4:0.15+Math.random()*0.35)*k,tw:Math.random()*6.3,big:bg});}}
+function hoouBurst(S,x,y,k,n){for(var i=0;i<(n||150)&&S.length<900;i++){var a=Math.random()*TAU,sp=(1.5+Math.random()*5)*k,life=1.2+Math.random()*1.8,bg=Math.random()<0.18;S.push({x:x+Math.cos(a)*k*0.6,y:y+Math.sin(a)*k*0.6,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-0.8*k,life:life,max:life,r:(bg?0.45+Math.random()*0.4:0.15+Math.random()*0.35)*k,tw:Math.random()*6.3,big:bg});}}
 function hoouFlash(c,x,y,px,bd){var a=Math.pow(1-clamp(bd/1.1),2);if(a<0.01)return;var R=Math.max(5,px*(0.45+0.9*bd));c.save();c.globalCompositeOperation='lighter';var gg=c.createRadialGradient(x,y,0,x,y,R);gg.addColorStop(0,'rgba(255,248,226,'+(0.55*a)+')');gg.addColorStop(0.3,'rgba(255,222,160,'+(0.25*a)+')');gg.addColorStop(1,'rgba(255,200,120,0)');c.fillStyle=gg;c.beginPath();c.arc(x,y,R,0,TAU);c.fill();
 var Rr=Math.max(7,px*0.9)*(0.6+0.6*Math.sin(Math.PI*clamp(bd/0.5))),ra=a*clamp(1-bd/0.6);if(ra>0.01)for(var i=0;i<4;i++){var an=i*Math.PI/2+0.3,ux=Math.cos(an),uy=Math.sin(an),lg=c.createLinearGradient(x,y,x+ux*Rr,y+uy*Rr);lg.addColorStop(0,'rgba(255,252,236,'+ra+')');lg.addColorStop(1,'rgba(255,220,160,0)');c.fillStyle=lg;c.beginPath();c.moveTo(x-uy*Rr*0.05,y+ux*Rr*0.05);c.lineTo(x+ux*Rr,y+uy*Rr);c.lineTo(x+uy*Rr*0.05,y-ux*Rr*0.05);c.closePath();c.fill();}
 c.restore();}
@@ -14606,11 +14623,12 @@ var fk=hoouFin().k,near=clamp(fk?bp.k/fk:1,0.08,1.2);          // (far off over 
 if(dt>0){var v=(a-s.a)/dt;
 if(v>0.5&&!s.up){s.up=true;s.top=a;}
 if(s.up)s.top=Math.max(s.top,a);
-var shk=hoou.mv&&HOOU_MOVES[hoou.mv.i].k==='shake'&&el-hoou.mv.t0<HOOU_MOVES[hoou.mv.i].len;          // (a shake of its feathers is not a wingbeat)
+var shk=hoou.mv&&el-hoou.mv.t0<HOOU_MOVES[hoou.mv.i].len;          // (its movements' wing strokes have their own sounds)
 if(v<-0.5&&s.up&&shk)s.up=false;
 if(v<-0.5&&s.up){s.up=false;var wn=Math.pow(clamp(fk?bp.k/fk:1,0,1.2),1.4)*(el>HOOU_IN+HOOU_LAND+HOOU_STAY?1-sstep(0.35,0.8,hoouOutU(el).ua):1),wa=clamp((s.top-0.2)/1.1,0.3,1)*wn;if(wa>=0.015)cue('houou-wing',{id:+wa.toFixed(3)},true);}}          // fainter and fainter the farther off it is, and gone well before it reaches the horizon
 s.a=a;
-hoou.near=near;if(hoou.cryQ&&el>=hoou.cryQ.at)hoouCrySing(hoou.cryQ.part,el,true);if(hoou.moveQ&&el>=hoou.moveQ.at)hoouMove(hoou.moveQ.i,el);          // the next part of its cry, when the last ends
+hoou.near=near;if(hoou.cryQ&&el>=hoou.cryQ.at)hoouCrySing(hoou.cryQ.part,el,true);if(hoou.moveQ&&el>=hoou.moveQ.at)hoouMove(hoou.moveQ.i,el);
+[hoou.mv,hoou.held].forEach(function(mv){if(!mv||!mv.cd)return;(HOOU_MOVES[mv.i].cues||[]).forEach(function(q,qi){if(!mv.cd[qi]&&el-mv.t0>=q[0]&&el-mv.t0<q[0]+1){mv.cd[qi]=1;cue(q[1],{id:+clamp(near*q[2],0.1,1.2).toFixed(2)},true);}});});          // a movement's sounds, each in its moment          // the next part of its cry, when the last ends
 var CPn=hoou.cry!==undefined?HOOU_CRIES[hoou.cryPart||0]:null,cEnd=CPn?hoou.cry+CPn.len:-1e9,r0=HOOU_IN+HOOU_LAND;
 if(s.pe<r0+3.2&&el>=r0+3.2)hoouCrySing(0,el,false);          // the intro, as it settles: always, on time (taps before it wait for it)
 if(s.pe<r0+HOOU_STAY+0.15&&el>=r0+HOOU_STAY+0.15){hoou.cryQ=hoou.moveQ=null;if(hoou.held&&hoou.held.end===undefined)hoou.held.end=el;hoouCrySing(3,el,false);}          // and its farewell as it lifts off: always, on time
@@ -14620,7 +14638,7 @@ s.pe=el;
 // larger or smaller, the bend running slowly outward like ripples on a pond, faint; its cry sends stronger ripples out
 var hoouLC=null;
 function hoouLens(ctx,g,o,bp,px){
-var au=o.aurora||0,cr=o.cry||0;if(au<0.02&&cr<0.02)return;
+var au=o.aurora||0,cr=o.cry||0;if(au<0.02&&cr<0.02&&!(o.fxW&&o.fxW.length))return;
 var sc=fv.width/g.W,cx=bp.x,cy=bp.y-0.16*px,D=Math.min(520,Math.ceil(2*1.35*px*sc)+2);if(D<24)return;
 var Rd=D/2/sc,c=hoouLC||(hoouLC=mkCanvas(2,2));if(c.width!==D||c.height!==D){c.width=D;c.height=D;}
 var x=c.getContext('2d');x.setTransform(1,0,0,1,0,0);x.globalAlpha=1;x.globalCompositeOperation='source-over';x.clearRect(0,0,D,D);
@@ -14632,6 +14650,7 @@ var N=10,r0=0.32*Rd,ph=clock/3.4,ct=o.cryT||0,dk=fv.width/Math.max(1,size.cssW);
 ctx.save();
 for(var i=0;i<N;i++){var ra=r0+(Rd-r0)*i/N,rb=r0+(Rd-r0)*(i+1)/N,rm=(ra+rb)/2,u=(rm-r0)/(Rd-r0),env=Math.pow(Math.sin(Math.PI*u),1.3);
 var d=0.6*au*Math.sin(TAU*(rm/(0.42*Rd)-ph))+0.23*au*Math.sin(TAU*(rm/(0.23*Rd)-ph*1.7)+1.3);          // two slow ripples running outward (in css pixels: well under one)
+(o.fxW||[]).forEach(function(w){var a2=w[0],rw=r0+a2*0.55*(Rd-r0);d+=1.33*w[1]*Math.exp(-Math.pow((rm-rw)/(0.12*Rd),2))*(1-clamp(a2/2.4));});          // a movement's ripple
 if(cr>0.02)(o.cryW||[]).forEach(function(te){var a2=ct-te;if(a2<0)return;var rw=r0+a2*0.5*(Rd-r0);d+=1.33*cr*Math.exp(-Math.pow((rm-rw)/(0.11*Rd),2))*(1-clamp(a2/2.2));});          // and as it cries, a stronger wave with each breath of its song
 d*=env*dk;if(Math.abs(d)<0.05)continue;var s=1+d/(rm*sc);
 ctx.save();ctx.beginPath();ctx.arc(cx,cy,rb,0,TAU);ctx.arc(cx,cy,ra,0,TAU,true);ctx.clip();ctx.drawImage(c,cx-Rd*s,cy-Rd*s,2*Rd*s,2*Rd*s);ctx.restore();}
@@ -14648,7 +14667,19 @@ hoou.tapP=o.alpha>0.3&&bp.x>-0.3*px&&bp.x<g.W+0.3*px&&bp.y>-0.3*px?{x:bp.x,y:bp.
 var E=hoouPaint3D(ctx,o);          // drawn whole, never cut by the depth of the scene: it is in front of everything it passes
 if(o.twk>0)hoouTwinkle(ctx,bp,o.twk,g);
 if(hoou.burst!==undefined&&el-hoou.burst<1.2){var bx=bp.x,by=bp.y-0.1*px;if(!hoou.burstDone){hoou.burstDone=true;hoouBurst(hoouSp,bx,by,Math.max(k,0.35));}hoouFlash(ctx,bx,by,px,el-hoou.burst);}          // tapped in flight: a shower of sparkles
-[hoou.heldOld,hoou.held,hoou.mv].forEach(function(hv){if(!E||!hv||HOOU_MOVES[hv.i].k!=='tail'||el>=HOOU_IN+HOOU_LAND+HOOU_STAY)return;var HV=HOOU_MOVES[hv.i],tmd=el-hv.t0,tf2=HV.hold?(hv.end!==undefined?1-sstep(0,0.9,el-hv.end):1):1-sstep(HV.len-HV.fade,HV.len,tmd);if(tmd<0||tf2<=0)return;hoouSparksEmit(hoouSp,{plume:E.plume,tips:[]},(110+190*(1-sstep(0.8,2,tmd)))*dt*sstep(0,0.3,tmd)*tf2,k);if(hv.end===undefined&&tmd>=(hv.sn||0)+3.2&&tmd<HV.len-1.5){hv.sn=(hv.sn||0)+3.2;cue('houou-sparkle',{id:+clamp((hoou.near||1)*0.5,0.1,1.2).toFixed(2)},true);}});          // the tail's sparkles, for as long as it floats (and now and then their glitter, softly)
+if(E)[hoou.heldOld,hoou.held,hoou.mv].forEach(function(hv){if(!hv||!hv.fd||el>=HOOU_IN+HOOU_LAND+HOOU_STAY)return;var HV=HOOU_MOVES[hv.i],md=el-hv.t0,ff=HV.hold?(hv.end!==undefined?1-sstep(0,0.9,el-hv.end):1):1-sstep(HV.len-HV.fade,HV.len,md);if(md<0||ff<=0)return;          // a movement's light: its bursts in their moments, and what streams from it meanwhile
+var hd=E.head,cx2=bp.x,cy2=bp.y-0.16*px,eyes=E.eyes||[];
+(HV.fx||[]).forEach(function(q,qi){if(hv.fd[qi]||md<q[0])return;hv.fd[qi]=1;
+if(q[1]==='wave')(hoou.fxw||(hoou.fxw=[])).push({t0:el,a:q[2]});
+else if(q[1]==='ring')(hoou.rings||(hoou.rings=[])).push({t0:el});
+else if(q[1]==='crest'&&hd)hoouBurst(hoouSp,hd[0],hd[1]-0.05*px,Math.max(k*0.85,0.3),70);
+else if(q[1]==='hring')(hoou.rings||(hoou.rings=[])).push({t0:el,head:true});
+else if(q[1]==='tips')(E.tips||[]).forEach(function(tp){hoouBurst(hoouSp,tp[0],tp[1],Math.max(k*0.6,0.25),14);});
+else if(q[1]==='eyes')eyes.forEach(function(ep){hoouBurst(hoouSp,ep[0],ep[1],Math.max(k*0.45,0.2),9);});});
+if(HV.k==='display'&&md>1&&md<HV.len-0.8)hoouSparksEmit(hoouSp,{plume:[],tips:E.tips||[]},90*dt*ff,k);          // light streaming from the edges of its wings
+if(HV.k==='tail'){hoouSparksEmit(hoouSp,{plume:E.plume,tips:[]},(80+160*(1-sstep(0.8,2,md)))*dt*sstep(0,0.3,md)*ff,k);if(eyes.length&&md>0.6)hoouSparksEmit(hoouSp,{plume:eyes,tips:[]},70*dt*ff,k);}          // its plumes, and their lit eyes, showering sparkles
+if(HV.k==='toss'&&hd&&md>1.4&&md<2.1)hoouSparksEmit(hoouSp,{plume:[hd],tips:[]},60*dt,k);});
+if(hoou.rings){hoou.rings=hoou.rings.filter(function(r){return el-r.t0<1.7;});hoou.rings.forEach(function(r){if(r.head){if(E&&E.head)hoouRing(ctx,E.head[0],E.head[1],px*0.45,(el-r.t0)/1.7);}else hoouRing(ctx,bp.x,bp.y-0.16*px,px,(el-r.t0)/1.7);});}          // its rings of light, widening
 if(E&&o.alpha>0.15)hoouSparksEmit(hoouSp,E,(el<HOOU_IN+HOOU_LAND?150:el<HOOU_IN+HOOU_LAND+HOOU_STAY?8:150)*dt,k);          // a thick trail of sparks while it flies
 }
 var reveal=null,dbgSwayOnly=false,dbgSway=null,cvBg=false,townKeep=null;
