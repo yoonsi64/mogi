@@ -13885,7 +13885,7 @@ var cam=hoouNorm([CAM.x-B[0],CAM.y-B[1],CAM.z-B[2]]),zs=dot(r,cam)>=0?1:-1,side3
 var lsx=SUN[0],lsy=-SUN[1],lsl=Math.hypot(lsx,lsy)||1;lsx/=lsl;lsy/=lsl;
 var tips=[],plumePts=[];
 // --- the wings: the old wing, feather for feather, its span raised in 3D (arm by a1, hand by a2) and swept back
-var wg=o.wings;
+var wg=o.wings,tk=clamp(wg.tuck||0,0,1);
 var wmap=function(sd){
 var sw1=Math.sin(wg.sw),d1=hoouNorm([-sw1,-Math.sin(wg.a1),sd*Math.cos(wg.a1)]),sw2=Math.sin(wg.sw+0.5*wg.fold),d2=hoouNorm([-sw2,-Math.sin(wg.a2),sd*Math.cos(wg.a2)]);
 var mp=function(q){
@@ -13893,9 +13893,10 @@ var rr=q[1],cc=q[0]-0.22*Math.pow(Math.max(0,rr-0.3),2);
 if(rr>0.5){cc-=0.25*wg.fold*(rr-0.5);rr=0.5+(rr-0.5)*(1-0.4*wg.fold);}
 var x=0.04+cc,y=-0.06,z=sd*0.05;
 if(rr<=0.5){x+=d1[0]*rr;y+=d1[1]*rr;z+=d1[2]*rr;}else{x+=d1[0]*0.5+d2[0]*(rr-0.5);y+=d1[1]*0.5+d2[1]*(rr-0.5);z+=d1[2]*0.5+d2[2]*(rr-0.5);}
+if(tk>0.001){var r0=q[1],c0=q[0],tx=0.1-0.8*r0+0.16*c0,ty=-0.12+0.2*r0-0.5*c0-0.06*r0*r0,tz=sd*(0.085+0.03*r0+0.05*Math.max(0,c0+0.1)-0.02*r0*r0);x=lerp(x,tx,tk);y=lerp(y,ty,tk);z=lerp(z,tz,tk);}          // folded (o.wings.tuck): laid back along its flank, the long feathers crossing over the root of the tail
 return M(x,y,z);
 };
-var nw=hoouNorm([-u[0]*d1[2]-r[0]*d1[1],-u[1]*d1[2]-r[1]*d1[1],-u[2]*d1[2]-r[2]*d1[1]]);mp.k=Math.min(1.1,0.76+0.38*Math.abs(dot(nw,SUN)));          // how brightly the sun falls on this wing
+var nw=hoouNorm([-u[0]*d1[2]-r[0]*d1[1],-u[1]*d1[2]-r[1]*d1[1],-u[2]*d1[2]-r[2]*d1[1]]);if(tk>0.001){var ns2=[r[0]*sd,r[1]*sd,r[2]*sd];nw=hoouNorm([lerp(nw[0],ns2[0],tk),lerp(nw[1],ns2[1],tk),lerp(nw[2],ns2[2],tk)]);}mp.k=Math.min(1.1,0.76+0.38*Math.abs(dot(nw,SUN)));          // how brightly the sun falls on this wing
 return mp;
 };
 var hxk=function(h,k){var n=parseInt(h.slice(1),16),R=n>>16&255,G=n>>8&255,Bc=n&255;if(k<1)return rgb([R*Math.pow(k,0.58),G*Math.pow(k,0.92),Bc*Math.pow(k,1.28)]);var e=Math.min(1,(k-1)*2.5)*0.3;return rgb([R+(255-R)*e,G+(246-G)*e,Bc+(214-Bc)*e]);};          // warm shadows, never olive; light lifts toward pale gold
@@ -14536,12 +14537,13 @@ o.droop=sstep(0.3,1,s);o.legs=sstep(0.15,0.75,s);o.head=se;o.glow=0.2+0.4*se+0.3
 }else if(el<HOOU_IN+HOOU_LAND+HOOU_STAY){
 var tr=el-HOOU_IN-HOOU_LAND;o.B=[Br[0],Br[1]+Math.sin(t*0.7)*0.01*S,Br[2]];o.yaw=yawR+0.05*Math.sin(tr*0.21);o.pitch=pitR+0.02*Math.sin(t*0.7);o.roll=0;
 o.aurora=sstep(0.8,4,tr)*(1-sstep(HOOU_STAY-2.5,HOOU_STAY,tr));          // the aurora about it while it rests
-o.wings=rest();var dmp=Math.exp(-tr*1.1)*Math.sin(tr*2.6);o.wings.a1+=0.07*dmp;o.wings.a2+=0.09*dmp;o.droop=1;o.legs=1;o.head=1-0.16*Math.pow(Math.sin(Math.PI*clamp((tr-0.6)/2.4)),2);o.glow=0.6+0.3*Math.pow(Math.sin(Math.PI*0.5*(1+clamp(tr/1.6))),2);o.look=(0.18*Math.sin(tr*0.19)+0.14*sstep(0.6,0.9,Math.sin(tr*0.09)))*sstep(2,5,tr);          // the wings settle slowly; a quiet bow, then it looks about
+o.wings=rest();var dmp=Math.exp(-tr*1.1)*Math.sin(tr*2.6);o.wings.a1+=0.07*dmp;o.wings.a2+=0.09*dmp;o.wings.tuck=sstep(1.4,3.6,tr)*(1-sstep(HOOU_STAY-1.6,HOOU_STAY-0.2,tr));          // settled, it folds its wings along its sides; just before it leaves it opens them again
+o.droop=1;o.legs=1;o.head=1-0.16*Math.pow(Math.sin(Math.PI*clamp((tr-0.6)/2.4)),2);o.glow=0.6+0.3*Math.pow(Math.sin(Math.PI*0.5*(1+clamp(tr/1.6))),2);o.look=(0.18*Math.sin(tr*0.19)+0.14*sstep(0.6,0.9,Math.sin(tr*0.09)))*sstep(2,5,tr);          // the wings settle slowly; a quiet bow, then it looks about
 // every 24 s it beats its wings four or five times where it stands: up high, down past level, the hand folding a little on
 // each upstroke; the tail lifts and fans, it looks ahead, and it glows a little brighter
 var fcy=(tr+6)%24,bz=hoou&&hoouBusyEnd()>el?1:0;if(hoou){hoou.qk=lerp(hoou.qk||0,bz,0.12);}var fe=sstep(0,0.6,fcy)*(1-sstep(4.4,6,fcy))*(1-(hoou?hoou.qk:0));          // (its wings keep still for its songs and its movements)
 if(fe>0.001){var fph=fcy*0.75*TAU,fcs=Math.cos(fph),fsn=Math.sin(fph),W0=o.wings;
-o.wings={a1:lerp(W0.a1,0.5+0.9*fcs,fe),a2:lerp(W0.a2,0.62+0.9*fcs+0.3*fsn,fe),sw:lerp(W0.sw,0.18,fe),fold:lerp(W0.fold,Math.max(0,fsn)*0.45,fe)};
+o.wings={a1:lerp(W0.a1,0.5+0.9*fcs,fe),a2:lerp(W0.a2,0.62+0.9*fcs+0.3*fsn,fe),sw:lerp(W0.sw,0.18,fe),fold:lerp(W0.fold,Math.max(0,fsn)*0.45,fe),tuck:(W0.tuck||0)*(1-sstep(0,0.35,fe))};          // (it opens its folded wings to beat them, and folds them again after)
 o.droop=1-0.3*fe;o.look=lerp(o.look,0,fe);o.glow=0.6+0.25*fe;o.pitch+=0.05*fe*Math.max(0,-fcs);}
 }else{
 // it leaves through its rainbow: a crouch, then it beats its wings hard and lifts straight up off the spire, legs hanging; as it
@@ -14556,7 +14558,7 @@ o.wings={a1:lerp(R3.a1,F3.a1,go),a2:lerp(R3.a2,F3.a2,go),sw:lerp(R3.sw,F3.sw,go)
 o.droop=1-sstep(0.5,3,tk);o.legs=1-sstep(0.8,2.6,tk);o.head=(1-sstep(0.2,1.6,tk))*(1-0.2*cr);o.glow=0.35+0.25*(1-ua);o.alpha=1-sstep(HOOU_TW-1.15,HOOU_TW-0.85,el);o.twk=el>HOOU_TW-1.2?clamp((el-HOOU_TW+1.2)/1.2):0;          // a golden glimmer far off; then gone in a twinkle
 }
 if(hoou&&hoou.cry!==undefined){var CP=HOOU_CRIES[hoou.cryPart||0],cd=el-hoou.cry;if(cd>=0&&cd<CP.len){var ce=(hoou.cryCont?Math.max(sstep(0,0.45,cd),Math.min(1,(hoou.cryPrev||0)/CP.pose)):sstep(0,0.45,cd))*(hoou.cryQ?1:1-sstep(CP.len-1.1,CP.len,cd))*CP.pose,still=(o.legs||0)>0.9;          // its long cry (tapped): the head lifts on a craned neck, the bill opens with the song, the wings lift a little and it glows (held up between parts when one follows another)
-o.cry=ce;o.cryT=cd;o.cryW=CP.waves;o.gape=(ce/CP.pose)*hoouGape(CP.gape,cd);o.tilt=(still?0.5:0.2)*ce;if(still){o.crane=ce;o.head=Math.max(o.head||0,1);o.look=lerp(o.look||0,0,ce);o.wings={a1:o.wings.a1+0.12*ce,a2:o.wings.a2+0.1*ce,sw:o.wings.sw,fold:o.wings.fold*(1-ce)};o.glow=Math.max(o.glow||0,0.6+0.3*ce);}}}
+o.cry=ce;o.cryT=cd;o.cryW=CP.waves;o.gape=(ce/CP.pose)*hoouGape(CP.gape,cd);o.tilt=(still?0.5:0.2)*ce;if(still){o.crane=ce;o.head=Math.max(o.head||0,1);o.look=lerp(o.look||0,0,ce);o.wings={a1:o.wings.a1+0.12*ce,a2:o.wings.a2+0.1*ce,sw:o.wings.sw,fold:o.wings.fold*(1-ce),tuck:(o.wings.tuck||0)*(1-0.12*ce)};o.glow=Math.max(o.glow||0,0.6+0.3*ce);}}}
 if(hoou&&(o.legs||0)>0.9)[hoou.heldOld,hoou.held,hoou.mv].forEach(function(mv){if(!mv)return;var MV=HOOU_MOVES[mv.i],md=el-mv.t0;if(md<0||(!MV.hold&&md>=MV.len))return;          // a movement (tapped)
 var fo=MV.hold?(mv.end!==undefined?1-sstep(0,0.9,el-mv.end):1):1-sstep(MV.len-(MV.fade||0.3),MV.len,md),me=sstep(0,0.3,md)*fo,W0=o.wings;if(me<=0)return;
 if(MV.k==='toss'){          // it lifts its head proudly, crest raised, looks slowly out over the town one way and the other, then tosses its head and its crest sheds sparks
@@ -14565,11 +14567,11 @@ o.crane=Math.max(o.crane||0,0.6*up);o.tilt=(o.tilt||0)+0.32*up;o.crestUp=up;o.lo
 else if(MV.k==='display'){          // it gathers its wings high above it, sweeps them out wide in one great stroke (a ring of light goes out, the aurora blossoms), and holds them so, shining, light streaming from their edges
 var g1=sstep(0,0.75,md),g2=sstep(0.8,1.12,md),br3=0.035*Math.sin(md*1.9)*g2;
 var a1t=lerp(lerp(W0.a1,1.45,g1),0.36+br3,g2),a2t=lerp(lerp(W0.a2,2.0,g1),0.54+br3*1.2,g2);
-o.wings={a1:lerp(W0.a1,a1t,fo),a2:lerp(W0.a2,a2t,fo),sw:lerp(W0.sw,lerp(0.05,-0.1,g2),fo),fold:lerp(W0.fold,0,fo*g1)};
+o.wings={a1:lerp(W0.a1,a1t,fo),a2:lerp(W0.a2,a2t,fo),sw:lerp(W0.sw,lerp(0.05,-0.1,g2),fo),fold:lerp(W0.fold,0,fo*g1),tuck:lerp(W0.tuck||0,0,fo*sstep(0,0.45,md))};          // (it unfolds them as it gathers them up, and folds them again as it ends)
 o.B=[o.B[0],o.B[1]-0.02*o.L*fo*(g1-g2)+0.015*o.L*fo*Math.max(0,Math.sin(Math.PI*clamp((md-0.8)/0.6))),o.B[2]];
 o.droop=(o.droop||1)-0.4*fo*g1;o.crane=Math.max(o.crane||0,0.5*fo*g1);o.tilt=(o.tilt||0)+0.22*fo*g1;o.crestUp=Math.max(o.crestUp||0,fo*g1);o.glow=(o.glow||0)+(0.2*g1+0.2*g2)*fo;o.flare=Math.max(o.flare||0,fo*sstep(0.85,1.5,md));}
 else if(MV.k==='tail'){          // its tail rises and spreads in a great fan, floating as if by magic, the eyes of its plumes lit and showering sparkles
-var mf=sstep(0,1.4,md)*fo;o.tailFloat=Math.max(o.tailFloat||0,mf);o.tailFan=Math.max(o.tailFan||0,sstep(0.2,1.8,md)*fo);o.eyeGlow=Math.max(o.eyeGlow||0,sstep(0.5,2,md)*fo);o.droop=(o.droop||1)-0.5*mf;o.glow=(o.glow||0)+0.15*mf;o.wings={a1:W0.a1+0.08*mf,a2:W0.a2+0.1*mf,sw:W0.sw,fold:W0.fold};}});
+var mf=sstep(0,1.4,md)*fo;o.tailFloat=Math.max(o.tailFloat||0,mf);o.tailFan=Math.max(o.tailFan||0,sstep(0.2,1.8,md)*fo);o.eyeGlow=Math.max(o.eyeGlow||0,sstep(0.5,2,md)*fo);o.droop=(o.droop||1)-0.5*mf;o.glow=(o.glow||0)+0.15*mf;o.wings={a1:W0.a1+0.08*mf,a2:W0.a2+0.1*mf,sw:W0.sw,fold:W0.fold,tuck:(W0.tuck||0)*(1-0.2*mf)};}});
 if(hoou&&hoou.fxw){hoou.fxw=hoou.fxw.filter(function(w){return el-w.t0<2.6;});o.fxW=hoou.fxw.map(function(w){return[el-w.t0,w.a];});}          // the ripples its movements send out through the bent light about it
 return o;
 }

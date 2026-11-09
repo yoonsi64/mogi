@@ -1905,7 +1905,7 @@ var cam=hoouNorm([CAM.x-B[0],CAM.y-B[1],CAM.z-B[2]]),zs=dot(r,cam)>=0?1:-1,side3
 var lsx=SUN[0],lsy=-SUN[1],lsl=Math.hypot(lsx,lsy)||1;lsx/=lsl;lsy/=lsl;
 var tips=[],plumePts=[];
 // --- the wings: the old wing, feather for feather, its span raised in 3D (arm by a1, hand by a2) and swept back
-var wg=o.wings;
+var wg=o.wings,tk=clamp(wg.tuck||0,0,1);
 var wmap=function(sd){
 var sw1=Math.sin(wg.sw),d1=hoouNorm([-sw1,-Math.sin(wg.a1),sd*Math.cos(wg.a1)]),sw2=Math.sin(wg.sw+0.5*wg.fold),d2=hoouNorm([-sw2,-Math.sin(wg.a2),sd*Math.cos(wg.a2)]);
 var mp=function(q){
@@ -1913,9 +1913,10 @@ var rr=q[1],cc=q[0]-0.22*Math.pow(Math.max(0,rr-0.3),2);
 if(rr>0.5){cc-=0.25*wg.fold*(rr-0.5);rr=0.5+(rr-0.5)*(1-0.4*wg.fold);}
 var x=0.04+cc,y=-0.06,z=sd*0.05;
 if(rr<=0.5){x+=d1[0]*rr;y+=d1[1]*rr;z+=d1[2]*rr;}else{x+=d1[0]*0.5+d2[0]*(rr-0.5);y+=d1[1]*0.5+d2[1]*(rr-0.5);z+=d1[2]*0.5+d2[2]*(rr-0.5);}
+if(tk>0.001){var r0=q[1],c0=q[0],tx=0.1-0.8*r0+0.16*c0,ty=-0.12+0.2*r0-0.5*c0-0.06*r0*r0,tz=sd*(0.085+0.03*r0+0.05*Math.max(0,c0+0.1)-0.02*r0*r0);x=lerp(x,tx,tk);y=lerp(y,ty,tk);z=lerp(z,tz,tk);}          // folded (o.wings.tuck): laid back along its flank, the long feathers crossing over the root of the tail
 return M(x,y,z);
 };
-var nw=hoouNorm([-u[0]*d1[2]-r[0]*d1[1],-u[1]*d1[2]-r[1]*d1[1],-u[2]*d1[2]-r[2]*d1[1]]);mp.k=Math.min(1.1,0.76+0.38*Math.abs(dot(nw,SUN)));          // how brightly the sun falls on this wing
+var nw=hoouNorm([-u[0]*d1[2]-r[0]*d1[1],-u[1]*d1[2]-r[1]*d1[1],-u[2]*d1[2]-r[2]*d1[1]]);if(tk>0.001){var ns2=[r[0]*sd,r[1]*sd,r[2]*sd];nw=hoouNorm([lerp(nw[0],ns2[0],tk),lerp(nw[1],ns2[1],tk),lerp(nw[2],ns2[2],tk)]);}mp.k=Math.min(1.1,0.76+0.38*Math.abs(dot(nw,SUN)));          // how brightly the sun falls on this wing
 return mp;
 };
 var hxk=function(h,k){var n=parseInt(h.slice(1),16),R=n>>16&255,G=n>>8&255,Bc=n&255;if(k<1)return rgb([R*Math.pow(k,0.58),G*Math.pow(k,0.92),Bc*Math.pow(k,1.28)]);var e=Math.min(1,(k-1)*2.5)*0.3;return rgb([R+(255-R)*e,G+(246-G)*e,Bc+(214-Bc)*e]);};          // warm shadows, never olive; light lifts toward pale gold
