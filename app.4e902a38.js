@@ -11585,9 +11585,10 @@
         };
         go(); requestAnimationFrame(go);          // again once the page has laid out
     }
-    // The bar: ホーム / 学ぶ (教材・誤答ノート・ブックマーク) / 単語 / 記録. 設定 opens from the gear on home and has no button
-    // of its own: the bar shows ホーム while it is open, and leaving it goes home.
+    // The bar: ホーム / 学ぶ (教材・誤答ノート・ブックマーク) / 単語 / 記録. 設定 opens from the gear at the top right of each of
+    // the four and has no button of its own: the bar shows the tab it was opened from, and leaving it (Back) goes back there.
     var navTab = 'home';
+    var settingsFrom = { tab: 'home' };
     var homeGear = document.getElementById('home-settings');
     function setNav(tab, sub) {
         if (tab === 'review') { if (sub === 'words') { tab = 'words'; sub = undefined; } else tab = 'learn'; }     // the old 復習 tab
@@ -11596,8 +11597,8 @@
         navTab = tab;
         document.body.classList.remove('in-quiz');
         bottomNav.style.display = 'flex';
-        bottomNav.querySelectorAll('button').forEach(function(b) { b.classList.toggle('active', b.dataset.tab === (tab === 'settings' ? 'home' : tab)); });
-        if (homeGear) homeGear.hidden = tab !== 'home';
+        bottomNav.querySelectorAll('button').forEach(function(b) { b.classList.toggle('active', b.dataset.tab === (tab === 'settings' ? settingsFrom.tab : tab)); });
+        if (homeGear) homeGear.hidden = tab === 'settings';
         renderSubnav(tab, sub);
         if (!homeReturn) window.scrollTo(0, 0);       // coming back home or to 教材: the old spot is restored instead
     }
@@ -11680,8 +11681,17 @@
             else if (tab === 'records') openSub('records', currentRecordsSub);
         });
     });
-    // 設定: the gear at the top right of home; the bar's ホーム (and Back) go home again
+    // 設定: the gear at the top right of ホーム, 学ぶ, 単語 and 記録; Back returns to the tab (and the spot) it was opened from
     if (homeGear) homeGear.addEventListener('click', showSettings);
+    function leaveSettings() {
+        var f = settingsFrom;
+        settingsFrom = { tab: 'home' };
+        if (f.tab === 'learn') openSub('learn', f.sub);
+        else if (f.tab === 'words') showWordList();
+        else if (f.tab === 'records') openSub('records', f.sub);
+        else returnHome();
+        if (f.y) { window.scrollTo(0, f.y); requestAnimationFrame(function() { window.scrollTo(0, f.y); }); }
+    }
 
     // Answer history: collapsed by default, remembers the choice
     var historyContainer = document.getElementById('history-container');
@@ -12149,6 +12159,8 @@
     })();
 
     function showSettings() {
+        var from = navActiveTab();
+        if (from !== 'settings') settingsFrom = { tab: document.body.classList.contains('in-quiz') ? 'home' : from, sub: from === 'learn' ? currentReviewSub : from === 'records' ? currentRecordsSub : undefined, y: window.scrollY };
         setAnswerMode(false);
         quizView.style.display = 'none'; dashboardView.style.display = 'none'; statsView.style.display = 'none'; bookmarksView.style.display = 'none'; mistakesView.style.display = 'none'; wordlistView.style.display = 'none';
         settingsView.style.display = 'flex';
@@ -15832,7 +15844,7 @@
     function showWordList() {
         setAnswerMode(false);
         setNav('words');
-        quizView.style.display = 'none'; dashboardView.style.display = 'none'; statsView.style.display = 'none'; bookmarksView.style.display = 'none'; mistakesView.style.display = 'none';
+        quizView.style.display = 'none'; dashboardView.style.display = 'none'; statsView.style.display = 'none'; bookmarksView.style.display = 'none'; mistakesView.style.display = 'none'; settingsView.style.display = 'none';
         wordlistView.style.display = 'block';
         closePopup();
         renderDeckPicker();
@@ -26627,6 +26639,7 @@
     function navDepth() {
         var d = 0;
         if (navActiveTab() !== 'home') d++;
+        if (navActiveTab() === 'settings' && settingsFrom.tab !== 'home') d++;          // 設定 opened from 学ぶ・単語・記録 sits one step above that tab
         if (document.body.classList.contains('in-quiz')) d++;
         if (navOverlayOpen()) d++;
         if (typeof dictPanelOpen === 'function' && dictPanelOpen()) d++;
@@ -26685,6 +26698,7 @@
         if (blankPopup.classList.contains('active')) { blankPopup.classList.remove('active'); return; }
         if (definitionPopup.classList.contains('active')) { closePopup(); return; }
         if (document.body.classList.contains('in-quiz')) { leaveQuiz(); return; }
+        if (navActiveTab() === 'settings') { leaveSettings(); return; }
         if (navActiveTab() !== 'home') { returnHome(); return; }
     }
     window.addEventListener('popstate', function(e) {
