@@ -9914,78 +9914,89 @@ var BIRD = {
     return snPhrase(E, t, out, n, { harm: [[1, 1], [2, 0.12], [3, 0.04]], att: 0.06, rel: 0.12 });
   }
 };
-/* the 鳳凰's voice: one breath of song as a 龍笛 might play it, slowly — a pure, rounded tone with breath under it, gliding
-   between its notes (塩梅), two voices a few cents apart, a vibrato that deepens the longer a note is held, and now and then a
-   ghost of the tone a twelfth above, there and gone. P: [s, Hz] the line it sings (glides between points), A: [s, level],
-   V: [s, vibrato in cents], G: [s, the ghost's level]; o.breath: how much breath */
-function snHoouSing(E, t, out, P, A, V, G, o) {
-  o = o || {};
-  var c = E.ctx, end = t + A[A.length - 1][0], srcs = [], i;
-  var wave = E._hoouWave || (E._hoouWave = c.createPeriodicWave(new Float32Array([0, 0, 0, 0, 0, 0]), new Float32Array([0, 1, 0.15, 0.055, 0.02, 0.008])));
-  var amp = snGain(c, 0, out), lineTo = function (prm, pts, k, exp) { prm.setValueAtTime(Math.max(1e-4, pts[0][1] * k), t + pts[0][0]); for (var q = 1; q < pts.length; q++) { var v = pts[q][1] * k; if (exp) prm.exponentialRampToValueAtTime(Math.max(20, v), t + pts[q][0]); else prm.linearRampToValueAtTime(v, t + pts[q][0]); } };
-  lineTo(amp.gain, A, 1, false);
-  var vib = snOsc(c, 'sine', 5.1), vib2 = snOsc(c, 'sine', 0.37), vd = snGain(c, 0), vw = snGain(c, 0.6, vib.frequency);   // the vibrato, its own speed wavering a little
-  vib2.connect(vw); vib.connect(vd); lineTo(vd.gain, V, 1, false); srcs.push(vib, vib2);
-  [-5, 4].forEach(function (dt, k) { var os = c.createOscillator(); os.setPeriodicWave(wave); lineTo(os.frequency, P, 1, true); os.detune.value = dt; vd.connect(os.detune); os.connect(snGain(c, k ? 0.42 : 0.58, amp)); srcs.push(os); });   // two voices, a breath apart in pitch
-  if (G) { var gh = c.createOscillator(), gg = snGain(c, 0, out); gh.type = 'sine'; lineTo(gh.frequency, P, 3, true); vd.connect(gh.detune); gh.connect(gg); lineTo(gg.gain, G, 1, false); srcs.push(gh); }   // the ghost a twelfth above
-  var br = c.createBufferSource(); br.buffer = E.pink; br.loop = true; var bf = snFilt(c, 'bandpass', 1500, 2.2), bg = snGain(c, 0, out); br.connect(bf); bf.connect(bg);
-  lineTo(bf.frequency, P, 2, true); lineTo(bg.gain, A, o.breath === undefined ? 0.16 : o.breath, false); br.start(t, E.rnd() * 3); srcs.push(br);   // breath under the tone, following it
-  snNoise(E, t, out, { kind: 'white', type: 'bandpass', f: P[0][1] * 3, q: 1.2, att: 0.02, dec: 0.12, peak: 0.12 });   // the soft chiff as the breath begins
-  srcs.forEach(function (s) { if (s !== br) s.start(t); }); snStop(srcs, end + 0.05);
-  return end;
+/* the 鳳凰's voice: a great bird's, not an instrument's. Each syllable is its own breath: it slides up into its note and falls
+   off it; its throat is reedy (a little buzz in the loud parts); its waver is never quite even; it is brighter as it is
+   louder; now and then a second voice of its own sounds beside the first (as a bird can sing two notes at once); and at its
+   height there is a depth beneath it no small bird has. Then the sky's long hall gives it back, and the hills, left and right.
+   S: { t: start (s), d: length, P: [[u (0..1 of the syllable), Hz]...], a: level, att, rel, sus: what it settles to, vib: its
+   waver (cents), rasp: its reed (0..1), two: the second voice (a ratio to the first), sub: the depth beneath, bright: 0..1 } */
+function snHoouSyl(E, t, out, S) {
+  var c = E.ctx, t0 = t + S.t, d = S.d, t1 = t0 + d, srcs = [], r = function (a, b) { return snR(E, a, b); };
+  var wave = E._hoouWave2 || (E._hoouWave2 = c.createPeriodicWave(new Float32Array(8), new Float32Array([0, 1, 0.3, 0.15, 0.075, 0.04, 0.02, 0.01])));
+  var env = snGain(c, 0, out), lp = snFilt(c, 'lowpass', 3000, 0.6, env), a = S.a, att = S.att || 0.06, rel = S.rel || 0.2;
+  env.gain.setValueAtTime(0, t0); env.gain.linearRampToValueAtTime(a, t0 + att); env.gain.setTargetAtTime(a * (S.sus === undefined ? 0.8 : S.sus), t0 + att, Math.max(0.05, d * 0.45)); env.gain.setTargetAtTime(0, t1 - rel, rel / 3);
+  var path = function (prm, k, lo) { prm.setValueAtTime(Math.max(lo || 20, S.P[0][1] * k), t0); for (var q = 1; q < S.P.length; q++) prm.exponentialRampToValueAtTime(Math.max(lo || 20, S.P[q][1] * k), t0 + S.P[q][0] * d); };
+  // its waver: a vibrato that comes in late and is never quite even, and a slow drift under it
+  var vb = snOsc(c, 'sine', r(4.6, 6)), vw = snOsc(c, 'sine', r(0.3, 0.6)), vwg = snGain(c, r(0.4, 0.8), vb.frequency), vd = snGain(c, 0), j1 = snOsc(c, 'sine', r(0.7, 1.1)), j2 = snOsc(c, 'sine', r(1.9, 2.7)), jg = snGain(c, 1);
+  vw.connect(vwg); vb.connect(vd); j1.connect(snGain(c, r(4, 7), jg)); j2.connect(snGain(c, r(2, 4), jg)); srcs.push(vb, vw, j1, j2);
+  var V = S.vib || 0; vd.gain.setValueAtTime(0, t0); vd.gain.linearRampToValueAtTime(V * 0.3, t0 + d * 0.3); vd.gain.linearRampToValueAtTime(V, t0 + d * 0.65); vd.gain.linearRampToValueAtTime(V * 1.25, t1);
+  var tune = function (os) { vd.connect(os.detune); jg.connect(os.detune); };
+  // its throat: the main voice, through a reed that buzzes a little when it is loud, and brighter as it climbs
+  var A = c.createOscillator(); A.setPeriodicWave(wave); path(A.frequency, 1); tune(A); srcs.push(A);
+  var rz = snGain(c, 1 - 0.16 * (S.rasp || 0), lp), am = snOsc(c, 'sine', r(34, 44)); am.connect(snGain(c, 0.16 * (S.rasp || 0), rz.gain)); A.connect(rz); srcs.push(am);
+  path(lp.frequency, 2.2 + 3.2 * (S.bright === undefined ? 0.6 : S.bright), 400);
+  if (S.two) { var B = c.createOscillator(), bg = snGain(c, 0, lp); B.setPeriodicWave(wave); path(B.frequency, S.two); tune(B); B.connect(bg); bg.gain.setValueAtTime(0, t0); bg.gain.linearRampToValueAtTime(0, t0 + d * 0.22); bg.gain.linearRampToValueAtTime(0.32, t0 + d * 0.5); bg.gain.linearRampToValueAtTime(0.22, t1); srcs.push(B); }   // its second voice, opening beside the first
+  if (S.sub) { var U = snOsc(c, 'sine', 300), ug = snGain(c, 0, env); path(U.frequency, 0.5); tune(U); U.connect(ug); ug.gain.setValueAtTime(0, t0); ug.gain.linearRampToValueAtTime(S.sub, t0 + d * 0.35); srcs.push(U); }   // the depth beneath it
+  var br = c.createBufferSource(); br.buffer = E.pink; br.loop = true; var bf = snFilt(c, 'bandpass', 1500, 1.8); br.connect(bf); bf.connect(snGain(c, 0.08, env)); path(bf.frequency, 2.2); srcs.push(br);   // breath under it
+  srcs.forEach(function (s) { if (s === br) s.start(t0, E.rnd() * 3); else s.start(t0); }); snStop(srcs, t1 + 0.1);
+  return t1;
 }
-/* and its echo off the far hills: the same song again, later, softer and duller each time */
-function snHoouEchoes(E, t, out, sing, list) {
+/* the sky's long hall: a dark, wide tail of some five seconds, made once and lent to each song (each its own, let go after) */
+function snHoouHall(E, t, out, secs) {
   var c = E.ctx;
-  sing(t, out, 1);
-  list.forEach(function (e) { sing(t + e[0], snFilt(c, 'lowpass', e[2], 0.5, snGain(c, e[1], out)), e[1]); });
+  if (!E._hallBuf) { var sr = c.sampleRate, n = Math.floor(sr * 4.6), buf = c.createBuffer(2, n, sr), ch, i; for (ch = 0; ch < 2; ch++) { var dd = buf.getChannelData(ch), l = 0; for (i = 0; i < n; i++) { var tt = i / sr, k = 0.6 + 0.37 * Math.min(1, tt / 2); l = l * k + (E.rnd() * 2 - 1) * (1 - k); dd[i] = l * Math.exp(-tt * 1.25) * Math.min(1, tt / 0.08) * 1.5; } } E._hallBuf = buf; }
+  var cv = c.createConvolver(); cv.buffer = E._hallBuf; var g = snGain(c, 0.5, E.out); cv.connect(g); out.connect(cv);
+  var k = c.createOscillator(), kg = snGain(c, 0, g); k.connect(kg); k.onended = function () { try { out.disconnect(cv); cv.disconnect(); g.disconnect(); } catch (e) {} }; k.start(t); k.stop(t + secs + 5);
 }
-/* the town's 鳳凰 calls: it scoops up to its note and climbs a fourth, holds it as the vibrato deepens, lifts a step, then
-   falls in one long sigh to the half-step above home and comes to rest on it (the 都節 scale: a little sad, very clear) */
+/* a whole call: its syllables, the hall, and the hills giving it back, left and right, fainter and duller each time */
+function snHoouSong(E, t, out, syls, echoes) {
+  var c = E.ctx, end = t;
+  syls.forEach(function (S) { end = Math.max(end, snHoouSyl(E, t, out, S)); });
+  snHoouHall(E, t, out, end - t);
+  echoes.forEach(function (e) { var o1 = snFilt(c, 'lowpass', e[2], 0.5, snGain(c, e[1], snPan(c, e[3] || 0, out))); syls.forEach(function (S) { snHoouSyl(E, t + e[0], o1, S); }); });
+  return end + 3;
+}
+/* its song, in four parts, in the 都節 scale on E (E F A B C E), but sung as a bird sings, not played: the intro as it settles on
+   the spire; the first part when it is touched; the second when it is touched again; and a farewell as it lifts off */
+var HOOU_ECHO = [[0.45, 0.32, 2400, -0.55], [1.05, 0.19, 1700, 0.6], [1.8, 0.09, 1200, -0.3]];
+/* the intro: "kuu — aah — ru": up into the A, a sigh down from the B with its second voice a fifth under it, and a soft rise */
 function snHoouCall(E, t, out) {
-  var p = snR(E, 0.97, 1.03), F = function (h) { return h * p; };
-  var P = [[0, F(622)], [0.18, F(659)], [0.55, F(659)], [0.88, F(880)], [1.9, F(880)], [2.12, F(988)], [2.36, F(988)], [2.85, F(698)], [3.6, F(698)], [3.98, F(659)], [4.7, F(650)]];
-  var A = [[0, 0], [0.12, 0.48], [0.5, 0.52], [0.9, 0.82], [1.85, 0.76], [2.15, 0.88], [2.4, 0.7], [2.85, 0.55], [3.55, 0.48], [3.98, 0.36], [4.7, 0]];
-  var V = [[0, 0], [0.5, 5], [0.9, 3], [1.85, 24], [2.15, 6], [2.85, 6], [3.55, 28], [3.98, 12], [4.7, 10]];
-  var G = [[0, 0], [1.1, 0], [1.7, 0.045], [2.2, 0.015], [3.1, 0.035], [4.7, 0]];
-  snHoouEchoes(E, t, out, function (t1, o1) { snHoouSing(E, t1, o1, P, A, V, G); }, [[0.42, 0.3, 2200], [0.95, 0.13, 1400]]);
-  return t + 5.8;
+  var p = snR(E, 0.98, 1.02), F = function (h) { return h * p; };
+  return snHoouSong(E, t, out, [
+    { t: 0, d: 1.25, P: [[0, F(600)], [0.12, F(640)], [0.3, F(880)], [0.8, F(872)], [1, F(830)]], a: 0.7, att: 0.05, rel: 0.25, vib: 16, rasp: 0.3, sub: 0.05, bright: 0.5 },
+    { t: 1.38, d: 1.55, P: [[0, F(940)], [0.08, F(988)], [0.35, F(980)], [1, F(700)]], a: 0.85, vib: 22, rasp: 0.5, two: 0.667, sub: 0.08, bright: 0.85 },
+    { t: 3.05, d: 0.78, P: [[0, F(640)], [0.4, F(690)], [1, F(880)]], a: 0.42, att: 0.05, rel: 0.3, vib: 6, rasp: 0.15, bright: 0.4 }], HOOU_ECHO);
 }
-/* its song, in four parts: the call as it settles on the spire (the intro, snHoouCall above); the first part when it is
-   touched; the second when it is touched again; and a farewell as it lifts off (the outro). All in the same 都節 scale on E,
-   each coming home to the same sigh, F to E, but the last, which rises a fourth as the first did and is carried away. */
-/* the first part: it rises from low in its breast, climbs, leaps the octave and holds it high and long, leans on the
-   half-step above, then comes down through the scale, slow, to the sigh and rest — and the hills give it back */
+/* the first part: a swell low in its breast, then the great cry, "kreee", on the high E with its second voice a fourth under
+   it and the depth beneath; a cascade down, "kyu kyu kyu kyu", C B A F; and the long sigh home */
 function snHoouCry(E, t, out) {
-  var p = snR(E, 0.985, 1.015), F = function (h) { return h * p; };
-  var P = [[0, F(494)], [0.28, F(640)], [0.42, F(659)], [0.78, F(659)], [1.08, F(880)], [1.25, F(880)], [1.55, F(1319)], [2.95, F(1319)], [3.2, F(1397)], [3.42, F(1397)], [3.95, F(1047)], [4.35, F(1047)], [4.6, F(988)], [5.0, F(988)], [5.45, F(698)], [6.25, F(698)], [6.65, F(659)], [7.6, F(646)]];
-  var A = [[0, 0], [0.15, 0.42], [0.75, 0.58], [1.1, 0.72], [1.5, 0.95], [2.9, 0.88], [3.3, 0.96], [3.9, 0.78], [4.4, 0.68], [5.0, 0.6], [5.5, 0.54], [6.2, 0.48], [6.7, 0.34], [7.6, 0]];
-  var V = [[0, 0], [0.7, 8], [1.2, 5], [1.6, 5], [2.9, 32], [3.25, 10], [3.42, 20], [4.3, 22], [4.6, 8], [5.0, 18], [5.45, 8], [6.2, 30], [6.7, 14], [7.6, 12]];
-  var G = [[0, 0], [1.6, 0], [2.3, 0.05], [2.9, 0.025], [3.4, 0.045], [4.5, 0.015], [6.0, 0.03], [7.6, 0]];
-  snHoouEchoes(E, t, out, function (t1, o1) { snHoouSing(E, t1, o1, P, A, V, G, { breath: 0.18 }); }, [[0.48, 0.32, 2400], [1.1, 0.17, 1600], [1.9, 0.08, 1100]]);
-  return t + 9.6;
+  var p = snR(E, 0.985, 1.015), F = function (h) { return h * p; }, S = [
+    { t: 0, d: 0.55, P: [[0, F(490)], [0.5, F(560)], [1, F(660)]], a: 0.45, att: 0.08, rel: 0.08, sus: 1, vib: 4, rasp: 0.2, bright: 0.3 },
+    { t: 0.62, d: 2.1, P: [[0, F(1050)], [0.06, F(1290)], [0.12, F(1319)], [0.75, F(1310)], [1, F(1240)]], a: 1, att: 0.04, rel: 0.25, vib: 26, rasp: 0.6, two: 0.75, sub: 0.1, bright: 1 }];
+  [[1047, 0.7], [988, 0.62], [880, 0.56], [698, 0.5]].forEach(function (q, i) { S.push({ t: 2.85 + i * 0.38, d: 0.32, P: [[0, F(q[0] * 1.04)], [0.25, F(q[0])], [1, F(q[0] * 0.94)]], a: q[1], att: 0.025, rel: 0.1, sus: 0.85, vib: 8, rasp: 0.35, bright: 0.7 }); });
+  S.push({ t: 4.42, d: 1.48, P: [[0, F(700)], [0.5, F(690)], [1, F(640)]], a: 0.5, att: 0.06, rel: 0.45, vib: 26, rasp: 0.2, sub: 0.05, bright: 0.45 });
+  return snHoouSong(E, t, out, S, HOOU_ECHO);
 }
-/* the second part: from home it lifts to A, turns on the note (B, C, B, A), gathers itself and rises again, softer, to the
-   high E, holds it hollow and far-off (more of its ghost above), and lets it fall in one long glide to the sigh and rest */
+/* the second part: a trill, A and B, quick as a wren's; then a long wail rising slowly from E to the high E, as a loon's does
+   over still water, wavering there; a fall; and a soft "coo" home */
 function snHoouCry2(E, t, out) {
-  var p = snR(E, 0.985, 1.015), F = function (h) { return h * p; };
-  var P = [[0, F(622)], [0.14, F(659)], [0.35, F(659)], [0.55, F(880)], [0.7, F(880)], [0.82, F(988)], [0.94, F(1047)], [1.06, F(988)], [1.18, F(880)], [1.5, F(880)], [1.8, F(1047)], [2.05, F(1047)], [2.35, F(1319)], [3.2, F(1319)], [4.0, F(698)], [4.8, F(698)], [5.2, F(659)], [6.2, F(646)]];
-  var A = [[0, 0], [0.12, 0.4], [0.5, 0.55], [1.18, 0.5], [1.5, 0.48], [1.85, 0.6], [2.4, 0.72], [3.15, 0.64], [4.0, 0.5], [4.8, 0.45], [5.2, 0.34], [6.2, 0]];
-  var V = [[0, 0], [0.4, 6], [0.55, 4], [1.2, 4], [1.5, 12], [1.8, 4], [2.05, 10], [2.4, 6], [3.2, 28], [3.4, 10], [4.0, 8], [4.8, 30], [5.2, 14], [6.2, 12]];
-  var G = [[0, 0], [2.2, 0], [2.7, 0.07], [3.2, 0.05], [3.8, 0.02], [5.0, 0.03], [6.2, 0]];
-  snHoouEchoes(E, t, out, function (t1, o1) { snHoouSing(E, t1, o1, P, A, V, G, { breath: 0.18 }); }, [[0.48, 0.32, 2400], [1.1, 0.17, 1600], [1.9, 0.08, 1100]]);
-  return t + 8.2;
+  var p = snR(E, 0.985, 1.015), F = function (h) { return h * p; }, tr = [];
+  for (var i = 0; i <= 12; i++) tr.push([i / 12, F(i % 2 ? 988 : 880)]);
+  return snHoouSong(E, t, out, [
+    { t: 0, d: 0.7, P: tr, a: 0.55, att: 0.03, rel: 0.08, sus: 0.9, vib: 0, rasp: 0.25, bright: 0.6 },
+    { t: 0.85, d: 2.7, P: [[0, F(640)], [0.15, F(660)], [0.55, F(1250)], [0.7, F(1319)], [0.9, F(1300)], [1, F(1200)]], a: 0.9, att: 0.12, rel: 0.3, vib: 24, rasp: 0.35, two: 0.667, sub: 0.09, bright: 0.9 },
+    { t: 3.62, d: 0.75, P: [[0, F(1050)], [1, F(870)]], a: 0.55, att: 0.03, rel: 0.15, vib: 10, rasp: 0.3, bright: 0.6 },
+    { t: 4.45, d: 0.78, P: [[0, F(690)], [0.3, F(665)], [1, F(640)]], a: 0.4, att: 0.05, rel: 0.35, vib: 14, rasp: 0.1, bright: 0.35 }], HOOU_ECHO);
 }
-/* the farewell, as it lifts off: from B up to the high E and held, then down the scale, C, B, A, the sigh to E — and at the
-   last it rises a fourth to A, as it did when it came, and holds it as it goes, the hills giving it back fainter and fainter */
+/* the farewell: "koo — ree", up to the B with its second voice; then "kreee" on the high E, falling away to the A; and at the
+   last a faint rise back up to the high E as it goes, which the hills carry off far */
 function snHoouOutro(E, t, out) {
   var p = snR(E, 0.985, 1.015), F = function (h) { return h * p; };
-  var P = [[0, F(932)], [0.15, F(988)], [0.45, F(988)], [0.75, F(1319)], [1.6, F(1319)], [1.9, F(1047)], [2.2, F(1047)], [2.45, F(988)], [2.75, F(880)], [3.3, F(880)], [3.75, F(698)], [4.3, F(698)], [4.6, F(659)], [5.0, F(659)], [5.35, F(880)], [6.4, F(872)]];
-  var A = [[0, 0], [0.12, 0.4], [0.5, 0.5], [0.8, 0.75], [1.55, 0.68], [1.95, 0.62], [2.5, 0.56], [3.3, 0.5], [3.8, 0.45], [4.3, 0.42], [4.65, 0.36], [5.0, 0.34], [5.4, 0.38], [6.4, 0]];
-  var V = [[0, 0], [0.45, 6], [0.8, 4], [1.6, 28], [1.9, 8], [2.2, 14], [2.5, 6], [3.3, 24], [3.8, 8], [4.3, 26], [4.6, 10], [5.0, 14], [5.4, 6], [6.4, 26]];
-  var G = [[0, 0], [0.9, 0.03], [1.6, 0.05], [2.4, 0.015], [5.4, 0.02], [6.0, 0.05], [6.4, 0]];
-  snHoouEchoes(E, t, out, function (t1, o1) { snHoouSing(E, t1, o1, P, A, V, G); }, [[0.5, 0.32, 2200], [1.15, 0.18, 1500], [1.95, 0.1, 1100], [2.9, 0.05, 800]]);
-  return t + 9.4;
+  return snHoouSong(E, t, out, [
+    { t: 0, d: 0.8, P: [[0, F(600)], [0.15, F(659)], [1, F(700)]], a: 0.55, att: 0.05, rel: 0.12, vib: 10, rasp: 0.25, bright: 0.5 },
+    { t: 0.9, d: 1.3, P: [[0, F(960)], [0.1, F(988)], [0.6, F(990)], [1, F(960)]], a: 0.75, att: 0.04, rel: 0.15, vib: 20, rasp: 0.45, two: 0.667, bright: 0.8 },
+    { t: 2.3, d: 1.6, P: [[0, F(1200)], [0.1, F(1319)], [0.6, F(1315)], [1, F(890)]], a: 0.85, att: 0.04, rel: 0.3, vib: 26, rasp: 0.5, two: 0.75, sub: 0.08, bright: 1 },
+    { t: 4.1, d: 1.1, P: [[0, F(860)], [0.5, F(1000)], [1, F(1319)]], a: 0.35, att: 0.08, rel: 0.5, vib: 8, rasp: 0.1, bright: 0.6 }], HOOU_ECHO.concat([[2.8, 0.05, 900, 0.4]]));
 }
 /* touched as it flies: a shower of sparkles — a breath of air, and a glitter of high, glassy notes on the 都節 scale, scattering */
 function snHoouSparkle(E, t, out) {
@@ -11040,14 +11051,14 @@ function sndCue(E, name, arg, focus, at, so) {
     case 'crow': BIRD.hashibuto(E, t, out(0.22 * (SND.birdK || 1), R(-0.6, 0.6), 7000)); return;
     case 'reveal': snChime(E, t, out(0.1, 0), 1); return;
     case 'houou-hush': var hs = Math.max(0, +arg || 0), h0 = E.hush; E.hush = { from: h0 && h0.until > t ? h0.from : t, until: t + hs }; (E.scenes || []).forEach(function (s) { if (!s.dead) s.hushTo(E.hush, t); }); return;   // the 鳳凰 has come: the town's birds and people fall quiet (arg: seconds it will stay)
-    case 'houou-call': snHoouCall(E, t, out(0.2 * clamp(+arg || 0.8, 0.2, 1.2), R(-0.15, 0.15), 9000)); return;   // the 鳳凰 calls (arg: how near)
+    case 'houou-call': snHoouCall(E, t, out(0.17 * clamp(+arg || 0.8, 0.2, 1.2), R(-0.15, 0.15), 9000)); return;   // the 鳳凰 calls (arg: how near)
     case 'houou-aurora': snHoouAurora(E, t, out(0.16 * clamp(+arg || 0.8, 0.2, 1.2), R(-0.1, 0.1), 9000)); return;   // its wings spread wide and its aurora blazes
     case 'houou-sparkle': snHoouSparkle(E, t, out(0.13 * clamp(+arg || 0.8, 0.3, 1.2), R(-0.2, 0.2), 12000)); return;   // touched in flight: a shower of sparkles
     case 'houou-ruffle': snHoouRuffle(E, t, out(0.2 * clamp(+arg || 0.8, 0.1, 1.2), R(-0.15, 0.15), 8000), 0.55); return;   // it tosses its head
     case 'houou-rouse': snHoouRuffle(E, t, out(0.24 * clamp(+arg || 0.8, 0.1, 1.2), R(-0.15, 0.15), 8000), 1.2); return;   // it shakes out all its feathers
-    case 'houou-cry2': snHoouCry2(E, t, out(0.22 * clamp(+arg || 0.8, 0.2, 1.2), R(-0.12, 0.12), 9500)); return;   // touched again: the second part
-    case 'houou-outro': snHoouOutro(E, t, out(0.2 * clamp(+arg || 0.8, 0.2, 1.2), R(-0.15, 0.15), 9000)); return;   // its farewell as it lifts off
-    case 'houou-cry': snHoouCry(E, t, out(0.22 * clamp(+arg || 0.8, 0.2, 1.2), R(-0.12, 0.12), 9500)); return;   // touched, it cries long (arg: how near)
+    case 'houou-cry2': snHoouCry2(E, t, out(0.18 * clamp(+arg || 0.8, 0.2, 1.2), R(-0.12, 0.12), 9500)); return;   // touched again: the second part
+    case 'houou-outro': snHoouOutro(E, t, out(0.17 * clamp(+arg || 0.8, 0.2, 1.2), R(-0.15, 0.15), 9000)); return;   // its farewell as it lifts off
+    case 'houou-cry': snHoouCry(E, t, out(0.18 * clamp(+arg || 0.8, 0.2, 1.2), R(-0.12, 0.12), 9500)); return;   // touched, it cries long (arg: how near)
     case 'houou-wing': var wq = clamp(arg === undefined || arg === null ? 0.6 : +arg || 0, 0, 1.2); if (wq < 0.015) return; snHoouWing(E, t, out(0.42 * wq, R(-0.2, 0.2), 1400 + 4600 * Math.min(1, Math.sqrt(wq)))); return;   // one beat of its wings (arg: the stroke's strength and how near: far off, softer and duller)
     case 'rare': var f = RARE[arg]; if (f) { f(E, t, out(0.24, R(-0.5, 0.5), 11000)); return; } snChime(E, t, out(0.14, 0), 1, [2093, 2637, 3136, 4186]); return;
     case 'thunder': E.lastThunder = t; snThunder(E, t + Math.max(0, +arg || 0), out(0.3, R(-0.5, 0.5)), Math.max(0, +arg || 3)); return;

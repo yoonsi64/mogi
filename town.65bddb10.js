@@ -14567,10 +14567,10 @@ return o;
 // tapped again (and so on, turn and turn about; tapped while it sings, the next part follows on); and its farewell as it lifts
 // off. Each: how long it lasts, how wide the bill opens through it, when it sends a ripple out, its sound, and how far it lifts
 // its head to sing it
-var HOOU_CRIES=[{len:4.8,gape:[[0,0],[0.15,0.4],[0.55,0.45],[0.9,0.7],[1.9,0.65],[2.15,0.8],[2.4,0.65],[2.85,0.5],[3.6,0.45],[4,0.3],[4.6,0]],waves:[0.9,2.15],cue:'houou-call',pose:0.6},
-{len:7.6,gape:[[0,0],[0.3,0.45],[0.6,0.6],[1.15,0.68],[1.45,1],[3,0.95],[3.6,0.78],[4.4,0.62],[5,0.55],[6.2,0.5],[6.6,0.3],[7.2,0]],waves:[0.35,1.5,2.9,4.3,5.6],cue:'houou-cry',pose:1},
-{len:6.4,gape:[[0,0.3],[0.15,0.42],[0.55,0.56],[1.18,0.5],[1.5,0.45],[1.85,0.62],[2.35,0.86],[3.2,0.8],[4,0.5],[4.8,0.47],[5.2,0.3],[5.9,0]],waves:[0.3,1.85,2.4,3.4],cue:'houou-cry2',pose:1},
-{len:6.5,gape:[[0,0],[0.15,0.4],[0.5,0.45],[0.8,0.8],[1.6,0.7],[1.95,0.6],[2.75,0.5],[3.3,0.45],[3.8,0.42],[4.3,0.4],[4.6,0.3],[5,0.3],[5.4,0.45],[6.2,0]],waves:[0.8,5.4],cue:'houou-outro',pose:0.35}];
+var HOOU_CRIES=[{len:3.95,gape:[[0,0],[0.1,0.5],[0.5,0.62],[1.2,0.5],[1.32,0.15],[1.45,0.9],[2.2,0.7],[2.9,0.4],[3,0.12],[3.15,0.42],[3.75,0.3],[3.9,0]],waves:[0.15,1.45],cue:'houou-call',pose:0.6},
+{len:5.95,gape:[[0,0],[0.1,0.35],[0.55,0.45],[0.6,0.2],[0.7,1],[2.5,0.92],[2.78,0.2],[2.9,0.7],[3.15,0.25],[3.27,0.65],[3.53,0.25],[3.65,0.6],[3.91,0.22],[4.03,0.55],[4.3,0.2],[4.5,0.5],[5.6,0.35],[5.9,0]],waves:[0.1,0.7,1.6,2.9,3.65,4.5],cue:'houou-cry',pose:1},
+{len:5.3,gape:[[0,0],[0.05,0.5],[0.7,0.5],[0.8,0.15],[0.95,0.55],[2,0.85],[3.4,0.8],[3.55,0.25],[3.7,0.6],[4.35,0.3],[4.5,0.45],[5.1,0.2],[5.25,0]],waves:[0.1,1.3,2.3,3.7],cue:'houou-cry2',pose:1},
+{len:5.3,gape:[[0,0],[0.1,0.45],[0.8,0.5],[0.88,0.15],[1,0.7],[2.1,0.6],[2.25,0.15],[2.4,0.95],[3.7,0.7],[3.95,0.2],[4.15,0.35],[5.1,0.3],[5.25,0]],waves:[1,2.4,4.2],cue:'houou-outro',pose:0.35}];
 function hoouGape(G,cd){var i=1;while(i<G.length-1&&G[i][0]<cd)i++;var a=G[i-1],b=G[i],v=lerp(a[1],b[1],clamp((cd-a[0])/((b[0]-a[0])||1)));return clamp(v*(1+0.06*Math.sin(cd*31)));}          // how wide the bill opens through the cry, following its song, with a little tremble
 // tapped, it cries: a long, rising, falling cry (once at a time, and not once it is going)
 // tapped: at rest, the first tap gets the first part of its song and the second the second; after that it answers with a
