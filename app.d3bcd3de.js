@@ -16647,7 +16647,7 @@
                 var correctSentenceText = q.sentence.replace(/\[\s*\]|\[★\]/g, function() {
                     return q.fragments[q.correctOrder[tempSlotIdx++]];
                 });
-                var cleanCorrectSentence = correctSentenceText.replace(/<[^>]*>?/gm, '');
+                var cleanCorrectSentence = correctSentenceText.replace(/<rt>[\s\S]*?<\/rt>|<rp>[\s\S]*?<\/rp>/gi, '').replace(/<[^>]*>?/gm, '');   // the kanji only, not its furigana too
 
                 if (q.id === 140) {
                     cleanCorrectSentence = cleanCorrectSentence.replace('はおろか', 'はおろか、');
