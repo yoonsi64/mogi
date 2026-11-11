@@ -13588,7 +13588,7 @@ drawWader(ctx,hq.x,hq.y,hq.k,'heron',{face:Hn.face,ext:Hn.ext,strike:Hn.strike,s
 if(Hn.act==='strike'&&Hn.strike>0.9){ctx.strokeStyle='rgba(232,240,246,0.5)';ctx.lineWidth=0.4;var rp=P(Hn.x+Hn.face*0.55,WL,Hn.z);ctx.beginPath();ctx.ellipse(rp.x,rp.y,0.25*rp.k,0.06*rp.k,0,0,TAU);ctx.stroke();}
 }
 }
-var VERSION='1.3.21';
+var VERSION='1.3.22';
 var SEASON_KEYS=['spring','summer','autumn','winter'],LIGHT_KEYS=['morning','day','dusk','night'];
 var WEATHERS=['clear','cloudy','rain','storm','snow','typhoon','blizzard'];
 var EVENTS=['shogatsu','setsubun','hinamatsuri','kodomo','tanabata','obon','tsukimi'];
@@ -13782,37 +13782,84 @@ var c=document.createElement('canvas');c.width=c.height=16;var x=c.getContext('2
 g2.addColorStop(0,'rgba(255,248,215,1)');g2.addColorStop(0.3,'rgba(255,214,120,.7)');g2.addColorStop(1,'rgba(255,180,60,0)');x.fillStyle=g2;x.fillRect(0,0,16,16);
 return(HOOU_SPARK=c);
 }
-// the sparks it sheds: they drift, sink a little, twinkle and fade (screen space, so they stay behind as it flies on)
+// what it sheds (screen space, so it stays behind as it flies on): flakes of gold leaf, thin and crumpled, that tumble as they
+// fall, darkening and flashing as they turn to the light and fluttering slowly down; and here and there an ember that
+// flickers and rises before it dies
+var HOOU_LEAF=(function(){var r=mulberry32(77),out=[];for(var s=0;s<7;s++){var n=5+((r()*3)|0),el=0.65+r()*0.5,pts=[];for(var i=0;i<n;i++){var a=i/n*TAU+(r()-0.5)*0.7,d=0.55+r()*0.45;pts.push([Math.cos(a)*d,Math.sin(a)*d*el]);}out.push(pts);}return out;})();
+var HOOU_EMBER=null;
+function hoouEmberImg(){
+if(HOOU_EMBER)return HOOU_EMBER;
+var c=document.createElement('canvas');c.width=c.height=16;var x=c.getContext('2d'),g2=x.createRadialGradient(8,8,0,8,8,8);
+g2.addColorStop(0,'rgba(255,238,196,1)');g2.addColorStop(0.25,'rgba(255,176,84,.75)');g2.addColorStop(0.6,'rgba(232,96,40,.22)');g2.addColorStop(1,'rgba(200,60,20,0)');x.fillStyle=g2;x.fillRect(0,0,16,16);
+return(HOOU_EMBER=c);
+}
 function hoouSparksStep(c,S,dt,t,k){
 if(!S.length)return;
-var sp=hoouSpark();c.save();c.globalCompositeOperation='lighter';
+var em=hoouEmberImg();c.save();
 for(var i=S.length-1;i>=0;i--){
 var m=S[i];m.life-=dt;if(m.life<=0){S.splice(i,1);continue;}
-m.x+=m.vx*dt;m.y+=m.vy*dt;m.vy+=0.25*k*dt;m.vx*=1-0.6*dt;
-var a=(m.life/m.max)*(0.55+0.45*Math.sin(t*9+m.tw)),z=m.r*6;if(a<=0.01)continue;
-c.globalAlpha=Math.min(1,a);c.drawImage(sp,m.x-z/2,m.y-z/2,z,z);
-if(m.big&&a>0.4){var gz=z*0.75;c.fillStyle='rgba(255,246,220,'+(0.55*Math.min(1,a))+')';c.fillRect(m.x-gz,m.y-0.12*m.r,gz*2,0.24*m.r);c.fillRect(m.x-0.12*m.r,m.y-gz,0.24*m.r,gz*2);}          // the larger ones twinkle with a cross of light
+var a=Math.min(1,(m.max-m.life)/0.18)*Math.min(1,m.life/(0.4*m.max));
+if(m.ember){m.vx*=1-0.9*dt;m.vy+=(-0.45*m.k-m.vy)*1.3*dt;m.x+=(m.vx+Math.sin(t*2.7+m.ph)*0.35*m.k)*dt;m.y+=m.vy*dt;
+var fl=a*(0.55+0.3*Math.sin(t*17+m.ph)+0.15*Math.sin(t*41+m.ph*2)),z=m.r*5;if(fl<=0.02)continue;
+c.globalCompositeOperation='lighter';c.globalAlpha=Math.min(1,fl);c.drawImage(em,m.x-z/2,m.y-z/2,z,z);continue;}
+m.vx*=1-1.3*dt;m.vy+=(0.5*m.k-m.vy)*1.5*dt;m.x+=(m.vx+Math.sin(t*m.ff+m.ph)*m.fa*m.k)*dt;m.y+=m.vy*dt;m.rot+=m.vr*dt;m.sp+=m.vs*dt;          // gold leaf: slowed by the air, it settles into a slow fall and flutters from side to side
+if(a<=0.02)continue;
+var cs=Math.cos(m.sp),fc=Math.abs(cs),z2=m.r*2.2,sh=HOOU_LEAF[m.sh],lit=Math.pow(fc,1.6);
+c.globalCompositeOperation='source-over';c.globalAlpha=Math.min(1,a);
+c.save();c.translate(m.x,m.y);c.rotate(m.rot);c.scale(Math.max(0.1,fc),1);          // turning edge-on and back as it tumbles
+c.fillStyle='rgb('+Math.round(lerp(132,255,lit))+','+Math.round(lerp(92,222,lit))+','+Math.round(lerp(30,128,lit))+')';
+c.beginPath();sh.forEach(function(p,j){if(j)c.lineTo(p[0]*z2,p[1]*z2);else c.moveTo(p[0]*z2,p[1]*z2);});c.closePath();c.fill();
+c.restore();
+if(fc>0.93&&m.r>0.18*m.k){var gl=(fc-0.93)/0.07*a,gz=z2*2.2;c.globalCompositeOperation='lighter';c.globalAlpha=Math.min(1,0.5*gl);c.drawImage(em,m.x-gz/2,m.y-gz/2,gz,gz);}          // and a flash as it faces the light
 }
 c.restore();
+}
+function hoouLeaf(S,x,y,vx,vy,k,emb){
+var life=emb?1+Math.random()*1.4:2.6+Math.random()*2.2;
+S.push(emb?{ember:true,x:x,y:y,vx:vx,vy:vy,life:life,max:life,r:(0.12+Math.random()*0.2)*k,k:k,ph:Math.random()*6.3}:
+{x:x,y:y,vx:vx,vy:vy,life:life,max:life,r:(0.16+Math.random()*0.4)*k,k:k,ph:Math.random()*6.3,sh:(Math.random()*HOOU_LEAF.length)|0,rot:Math.random()*TAU,vr:(Math.random()-0.5)*5,sp:Math.random()*TAU,vs:(2+Math.random()*5)*(Math.random()<0.5?-1:1),ff:1.5+Math.random()*1.5,fa:0.4+Math.random()*0.6});
 }
 function hoouSparksEmit(S,E,want,k){
-var pts=E.plume,tp=E.tips;
-while(want>0&&pts.length&&S.length<900){
+var pts=E.plume,tp=E.tips;want*=0.45;          // (a flake reads larger than a spark did: fewer of them)
+while(want>0&&pts.length&&S.length<600){
 if(want<1&&Math.random()>want)break;want-=1;
-var src=Math.random()<0.7||!tp.length?pts[(Math.random()*pts.length)|0]:tp[(Math.random()*tp.length)|0],life=1.8+Math.random()*2.2,bg=Math.random()<0.12;
-S.push({x:src[0],y:src[1],vx:(Math.random()-0.6)*2.4*k,vy:(Math.random()*1.4-1.0)*k,life:life,max:life,r:(bg?0.45+Math.random()*0.35:0.15+Math.random()*0.35)*k,tw:Math.random()*6.3,big:bg});
+var src=Math.random()<0.7||!tp.length?pts[(Math.random()*pts.length)|0]:tp[(Math.random()*tp.length)|0];
+hoouLeaf(S,src[0],src[1],(Math.random()-0.6)*2.4*k,(Math.random()*1.4-1.0)*k,k,Math.random()<0.28);
 }
 }
-// the rainbow that comes out while it rests: a primary bow, and a faint secondary one with its colours reversed
+// a rainbow as it is seen: one continuous spectrum, not stripes. Red at the outer edge, coming in sharply; strongest through
+// orange and yellow; green, blue and violet weaker and melting into the sky inside the bow, which is a little brighter (all the
+// colours overlap there), with a pale fringe or two of pink and green just inside the violet. Outside it, after a gap of
+// darker sky, a faint secondary bow, twice as wide, with its colours reversed. It is made of light, so it is drawn by
+// screening it on (it shows best against cloud), and its brightness drifts along the arc as the rain behind it thins and
+// thickens. bw: the width of the main band (red to violet); th0, th1: the arc to draw (radians, canvas angles).
+function lifeBow(ctx,cx,cy,R,bw,a,seed,th0,th1,op,k2){
+var cv=ctx.canvas,W0=cv.width,H0=cv.height,m=ctx.getTransform?ctx.getTransform():null;
+var L=document.createElement('canvas');L.width=W0;L.height=H0;var x=L.getContext('2d');
+if(m)x.setTransform(m);
+var S=[[0,[190,40,40],0],[0.06,[226,56,46],0.5],[0.16,[250,100,56],0.82],[0.28,[255,158,70],0.94],[0.4,[252,218,110],1],[0.52,[178,224,120],0.84],[0.64,[96,204,166],0.68],[0.76,[86,150,234],0.56],[0.88,[126,106,224],0.42],[1,[172,148,228],0.28],
+[1.1,[236,206,226],0.16],[1.2,[206,236,214],0.1],[1.3,[238,212,230],0.09],[1.4,[214,236,220],0.06],[1.55,[240,238,244],0.05],[1.75,[244,242,246],0.035]];
+var band=function(Rr,w,rev,k){var ri=Rr-w*1.75,ro=Rr+w*0.02;if(rev){ri=Rr-w*1.02;ro=Rr+w*0.75;}
+var g=x.createRadialGradient(cx,cy,Math.max(0,ri),cx,cy,ro);
+S.forEach(function(s){var r=rev?Rr-w+s[0]*w:Rr-s[0]*w;if(rev&&s[0]>1.2)return;var o=(r-ri)/(ro-ri);if(o<0||o>1)return;g.addColorStop(o,'rgba('+s[1][0]+','+s[1][1]+','+s[1][2]+','+(s[2]*k).toFixed(3)+')');});
+if(!rev){g.addColorStop(0,'rgba(244,242,246,0)');}else{g.addColorStop(1,'rgba(172,148,228,0)');g.addColorStop(0,'rgba(190,40,40,0)');}
+x.fillStyle=g;x.beginPath();x.arc(cx,cy,ro,th0,th1);x.arc(cx,cy,Math.max(0,ri),th1,th0,true);x.closePath();x.fill();};
+band(R,bw,false,1);
+var gi=x.createRadialGradient(cx,cy,Math.max(0,R-bw*7),cx,cy,R-bw*1.6);gi.addColorStop(0,'rgba(246,244,248,0)');gi.addColorStop(1,'rgba(246,244,248,0.08)');
+x.fillStyle=gi;x.beginPath();x.arc(cx,cy,R-bw*1.6,th0,th1);x.arc(cx,cy,Math.max(0,R-bw*7),th1,th0,true);x.closePath();x.fill();          // the sky brighter inside the bow
+band(R*1.19+bw*1.8,bw*1.8,true,k2===undefined?0.3:k2);          // the secondary bow, its colours the other way about
+if(x.createConicGradient){var cg=x.createConicGradient(0,cx,cy),N=180;
+for(var i=0;i<=N;i++){var th=i/N*Math.PI*2,u=(th-th0)/((th1-th0)||1),e=u<0||u>1?0:Math.pow(Math.sin(Math.PI*Math.min(1,Math.max(0,u))),0.35),
+n=0.5+0.3*Math.sin(th*9.3+seed)+0.2*Math.sin(th*23.7+seed*2.1),v=e*(0.55+0.45*n);cg.addColorStop(i/N,'rgba(0,0,0,'+Math.max(0,Math.min(1,v)).toFixed(3)+')');}
+x.setTransform(1,0,0,1,0,0);x.globalCompositeOperation='destination-in';if(m)x.setTransform(m);x.fillStyle=cg;x.fillRect(cx-R*2,cy-R*2,R*4,R*4);}          // brighter and fainter along it, as the rain behind it thickens and thins
+ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=Math.min(1,a);ctx.globalCompositeOperation=op||'screen';ctx.drawImage(L,0,0);ctx.restore();
+}
+// the rainbow that comes out while it rests (made once a visit, then only faded in and out)
+var HOOU_BOWC=null;
 function paintHoouBow(c,cx,cy,R,a,lw){
-var cols=[[255,70,60],[255,160,50],[255,236,90],[90,210,100],[80,140,255],[130,90,220]];
-c.save();c.lineCap='butt';
-for(var i=0;i<cols.length;i++){var r0=R-i*lw,g=c.createLinearGradient(0,cy-r0,0,cy);g.addColorStop(0,rgb(cols[i],a));g.addColorStop(0.75,rgb(cols[i],a*0.7));g.addColorStop(1,rgb(cols[i],0));c.strokeStyle=g;c.lineWidth=lw*1.15;c.beginPath();c.arc(cx,cy,r0,Math.PI*1.02,Math.PI*1.98);c.stroke();}
-var R2=R*1.16+lw*6;
-for(var j=0;j<cols.length;j++){var r1=R2-(cols.length-1-j)*lw*1.1,g2=c.createLinearGradient(0,cy-r1,0,cy);g2.addColorStop(0,rgb(cols[j],a*0.2));g2.addColorStop(1,rgb(cols[j],0));c.strokeStyle=g2;c.lineWidth=lw*1.2;c.beginPath();c.arc(cx,cy,r1,Math.PI*1.04,Math.PI*1.96);c.stroke();}
-var gi=c.createRadialGradient(cx,cy,R*0.6,cx,cy,R-lw*6);gi.addColorStop(0,'rgba(255,255,255,0)');gi.addColorStop(1,'rgba(255,255,255,'+(a*0.18)+')');
-c.fillStyle=gi;c.beginPath();c.arc(cx,cy,R-lw*6,Math.PI,TAU);c.fill();          // the sky is a little brighter inside the bow
-c.restore();
+var cw=c.canvas.width,ch=c.canvas.height,key=[cx,cy,R,lw,cw,ch].map(function(v){return Math.round(v*4);}).join(',');
+if(!HOOU_BOWC||HOOU_BOWC.key!==key){var o=mkCanvas(cw,ch),x=o.getContext('2d');if(c.getTransform)x.setTransform(c.getTransform());lifeBow(x,cx,cy,R,Math.max(lw*1.6,R*0.078),1,7.3,Math.PI*1.02,Math.PI*1.98,'source-over');HOOU_BOWC={key:key,cv:o};}
+c.save();c.setTransform(1,0,0,1,0,0);c.globalAlpha=Math.min(1,a);c.drawImage(HOOU_BOWC.cv,0,0);c.restore();
 }
 // ===== 鳳凰 in 3D: the opening's phoenix, feather for feather as it was painted, but each part placed in three dimensions
 // in the town's own perspective (P), so it banks into its turns, turns about on the spire as a bird does and flies off
@@ -13821,6 +13868,7 @@ c.restore();
 // sw, fold} (arm and hand raised by a1/a2 radians, swept back by sw, the hand folded by fold), droop (0 flying → 1 the
 // tail hangs), legs (0–1), head (0 flying → 1 standing proud), look (head turned, radians), alpha, glow, t, feet (the
 // top of the 宝珠, world).
+var HOOU_NACRE=[[252,248,244],[255,198,222],[192,240,222],[212,200,255],[255,228,186],[192,222,255]];          // mother-of-pearl: pearl white, blush, mint, lavender, champagne, ice blue
 var hoouNorm=norm;
 var HOOU_PRIM=[[0.08,0.95,-0.02,1.6],[0.05,0.9,-0.1,1.55],[0.02,0.85,-0.17,1.48],[-0.01,0.8,-0.24,1.38],[-0.04,0.74,-0.3,1.26],[-0.06,0.68,-0.35,1.12],[-0.08,0.62,-0.4,0.98],[-0.09,0.56,-0.44,0.84]].reverse();
 var HOOU_COV=(function(){var a=[[0.13,0],[0.18,0.25],[0.19,0.5],[0.14,0.75],[0.08,0.98],[0,1.02]];for(var ck=0;ck<=12;ck++){var cr0=0.98-ck*0.08;a.push([0.0-0.075*Math.sin(Math.PI*Math.min(1,cr0/1.0))-(ck%2?0:0.02),cr0]);}a.push([-0.05,0]);return a;})();          // a shallower band of coverts, so more of the long feathers show
@@ -14093,7 +14141,7 @@ c.restore();}
 // a soft glow about it, and at rest a faint halo of golden rays behind it, turning slowly
 c.save();c.globalCompositeOperation='screen';
 // at rest on the spire (o.aurora 0..1): its field. Faint lines of force loop out of it from crown to foot and back, as round
-// a lodestone, in shells that turn slowly about it in depth and breathe; along each hangs a faint band of rainbow light, an
+// a lodestone, in shells that turn slowly about it in depth and breathe; along each hangs a faint veil of mother-of-pearl, an
 // aurora on its field, with a fine bright heart and a bead of light drifting along it. Its cry (o.cry 0..1) swells them; as it
 // spreads its wings in display (o.flare 0..1) the field grows wide and the aurora blazes. (The
 // town bends the light behind it as well.)
@@ -14103,13 +14151,13 @@ c.globalCompositeOperation='screen';c.lineCap='round';c.lineJoin='round';
 [0.6,0.9,1.25].forEach(function(sh,si){for(var ai=0;ai<6;ai++){
 var phi=ai/6*TAU+t*(0.045+0.012*si)+si*0.52,cp=Math.cos(phi),sp=Math.sin(phi),Lk=sh*br*(1+0.1*cy*(si+1)/3)*(1+0.6*fl*(0.7+0.3*si))*px,pts=[];
 for(var q=0;q<=30;q++){var th=0.2+(Math.PI-0.4)*q/30,s2=Math.sin(th),rr=Lk*s2*s2,xx=rr*s2*cp,yy=-rr*Math.cos(th)*1.08;pts.push([ac[0]+xx*ctl-yy*stl,ac[1]+xx*stl+yy*ctl]);}
-var fr=0.62+0.38*Math.max(0,-sp),aa=au*(0.1375-0.0275*si)*fr*(1+0.7*cy)*(1+2.4*fl),h0=(196+si*34+ai*17+t*9)%360;          // the near side of each shell brighter than the far
-var hb=(h0+t*14)%360,ag=function(sat,lt){if(!c.createConicGradient)return'hsla('+hb.toFixed(0)+','+sat+'%,'+lt+'%,0.8)';var g2=c.createConicGradient(tl,ac[0],ac[1]);for(var gi=0;gi<=24;gi++){var u=gi/24,fa=Math.pow(Math.abs(Math.cos(u*TAU)),0.8);g2.addColorStop(u,'hsla('+((hb+Math.abs(Math.sin(u*TAU*0.5))*300)%360).toFixed(0)+','+sat+'%,'+lt+'%,'+fa.toFixed(3)+')');}return g2;};          // a rainbow along each line (round it, from pole to pole), fading out at the poles
+var fr=0.62+0.38*Math.max(0,-sp),aa=au*(0.1375-0.0275*si)*fr*(1+0.7*cy)*(1+1.9*fl),h0=(196+si*34+ai*17+t*9)%360;          // the near side of each shell brighter than the far
+var hb=(h0+t*14)%360,ag=function(wh){var pc=function(v){v=((v%6)+6)%6;var i0=Math.floor(v),f2=v-i0,p0=HOOU_NACRE[i0],p1=HOOU_NACRE[(i0+1)%6];return[0,1,2].map(function(j){return Math.round(lerp(lerp(p0[j],p1[j],f2),255,wh));});};if(!c.createConicGradient){var q0=pc(hb/60);return'rgba('+q0.join(',')+',0.8)';}var g2=c.createConicGradient(tl,ac[0],ac[1]);for(var gi=0;gi<=24;gi++){var u=gi/24,fa=Math.pow(Math.abs(Math.cos(u*TAU)),0.8),q=pc(hb/60+Math.abs(Math.sin(u*TAU*0.5))*2.6);g2.addColorStop(u,'rgba('+q.join(',')+','+fa.toFixed(3)+')');}return g2;};          // a sheen of mother-of-pearl along each line (round it, from pole to pole): pale tints that shift as the line turns, fading out at the poles
 var path=function(){c.beginPath();pts.forEach(function(p,i){if(i)c.lineTo(p[0],p[1]);else c.moveTo(p[0],p[1]);});};
-c.globalCompositeOperation='source-over';c.strokeStyle=ag(88,62);[[0.085,0.42],[0.04,0.75]].forEach(function(lw){c.globalAlpha=A*aa*lw[1];c.lineWidth=Math.max(0.3,lw[0]*px);path();c.stroke();});          // its aurora: a soft band of colour along it, like the curtain of an aurora hung on the field
-c.globalCompositeOperation='screen';c.strokeStyle=ag(70,80);c.globalAlpha=A*aa*1.1;c.lineWidth=Math.max(0.2,0.009*px);path();c.stroke();          // and a fine bright heart
-var bs=(t*0.06+ai/6+si*0.37)%1,bi=bs*30,b0i=Math.floor(bi),bp2=pts[b0i],bq2=pts[Math.min(30,b0i+1)],bx=lerp(bp2[0],bq2[0],bi-b0i),by=lerp(bp2[1],bq2[1],bi-b0i),ba=au*0.26*fr*Math.sin(Math.PI*bs)*(1+cy)*(1+1.5*fl),bR=Math.max(0.5,0.03*px);
-if(ba>0.004){c.globalAlpha=A*ba;var bgr=c.createRadialGradient(bx,by,0,bx,by,bR);bgr.addColorStop(0,'rgba(255,250,236,1)');bgr.addColorStop(1,'rgba(220,236,255,0)');c.fillStyle=bgr;c.beginPath();c.arc(bx,by,bR,0,TAU);c.fill();}          // a bead of light running along it
+c.globalCompositeOperation='source-over';c.strokeStyle=ag(0);[[0.24,0.3],[0.12,0.55],[0.055,0.75]].forEach(function(lw){c.globalAlpha=A*aa*lw[1];c.lineWidth=Math.max(0.3,lw[0]*px);path();c.stroke();});          // its aurora: a soft veil of nacre along it, like the curtain of an aurora hung on the field
+c.globalCompositeOperation='screen';c.strokeStyle=ag(0.25);c.globalAlpha=A*aa*0.7;c.lineWidth=Math.max(0.2,0.009*px);path();c.stroke();          // and a fine bright heart
+var bs=(t*0.06+ai/6+si*0.37)%1,bi=bs*30,b0i=Math.floor(bi),bp2=pts[b0i],bq2=pts[Math.min(30,b0i+1)],bx=lerp(bp2[0],bq2[0],bi-b0i),by=lerp(bp2[1],bq2[1],bi-b0i),ba=au*0.16*fr*Math.sin(Math.PI*bs)*(1+cy)*(1+1.2*fl),bR=Math.max(0.5,0.03*px);
+if(ba>0.004){c.globalAlpha=A*ba;var bgr=c.createRadialGradient(bx,by,0,bx,by,bR);bgr.addColorStop(0,'rgba(255,252,248,1)');bgr.addColorStop(0.5,'rgba(244,232,246,0.5)');bgr.addColorStop(1,'rgba(226,240,246,0)');c.fillStyle=bgr;c.beginPath();c.arc(bx,by,bR,0,TAU);c.fill();}          // a bead of light running along it
 }});
 c.globalAlpha=A;c.globalCompositeOperation='screen';}
 var gr=1.7*px,gg=c.createRadialGradient(b0.x,b0.y,0,b0.x,b0.y,gr);gg.addColorStop(0,'rgba(255,226,160,'+((0.16+0.12*(o.glow||0))*(0.9+0.1*Math.sin(t*0.7)))+')');gg.addColorStop(0.45,'rgba(255,214,140,'+(0.05+0.04*(o.glow||0))+')');gg.addColorStop(1,'rgba(255,190,90,0)');c.fillStyle=gg;c.fillRect(b0.x-gr,b0.y-gr,gr*2,gr*2);
@@ -14478,7 +14526,7 @@ var r0=HOOU_IN+HOOU_LAND,k=sstep(r0+0.4,r0+6,el)*(1-(el>r0+HOOU_STAY?0.62*sstep(
 if(k<=0.002)return;
 var bg=hoouBowGeo(g),xa=bg.xa,xb=bg.xb,yh=bg.yh,yt=bg.yt,R=bg.R,cx=bg.cx,cy=bg.cy,lw=g.W*0.0085;
 if(!hoou.bow&&k>0.15){hoou.bow=true;if(!hoou.joined||el<r0+8)cue('rainbow',null,true);}
-drawSkyMasked(ctx,g,function(c){paintHoouBow(c,cx,cy,R,0.4*k,lw);});
+drawSkyMasked(ctx,g,function(c){paintHoouBow(c,cx,cy,R,0.78*k,lw);},'screen');          // light: screened onto the sky
 }
 // where the bird is and how it holds itself el seconds into the visit (world space: it banks, turns and flies off in depth)
 function hoouAng(a,b,u){var d=((b-a)%TAU+TAU*1.5)%TAU-TAU*0.5;return a+d*u;}
@@ -14611,14 +14659,13 @@ if(st>el){if(n>=0&&n<2)hoou.cryQ={at:st,part:n+1};else hoou.moveQ={at:st,i:mi};r
 if(n>=0&&n<2)hoouCrySing(n+1,el,false);else hoouMove(mi,el);return true;}
 function hoouBusyEnd(){var e=-1e9;if(hoou.cry!==undefined)e=Math.max(e,hoou.cry+HOOU_CRIES[hoou.cryPart||0].len);if(hoou.mv)e=Math.max(e,hoou.mv.t0+HOOU_MOVES[hoou.mv.i].len);if(hoou.held)e=Math.max(e,hoou.held.t0+HOOU_MOVES[hoou.held.i].len);return e;}
 function hoouMove(i,el){var mv={i:i,t0:el,cd:{},fd:{}};if(HOOU_MOVES[i].hold){if(hoou.held&&hoou.held.end===undefined)hoou.held.end=el;hoou.heldOld=hoou.held;hoou.held=mv;}else hoou.mv=mv;hoou.moveQ=null;loopCheck();}          // (its sounds and its light follow on in hoouVoice and hoouDraw)
-// a ring of light going out from it, gold edged with rainbow, fading as it widens
-function hoouRing(c,x,y,px,u){var a=Math.pow(1-u,1.6)*0.6;if(a<0.01)return;var R=Math.max(6,px*(0.3+2.5*Math.sqrt(u))),w=Math.max(0.6,px*0.07*(1-u));c.save();c.globalCompositeOperation='lighter';c.translate(x,y);c.scale(1,0.72);
-[[w*3,0.18],[w,0.7]].forEach(function(q){c.lineWidth=q[0];if(c.createConicGradient){var cg=c.createConicGradient(u*2,0,0);for(var i=0;i<=6;i++)cg.addColorStop(i/6,'hsla('+((i*60+40)%360)+',90%,72%,'+(a*q[1])+')');c.strokeStyle=cg;}else c.strokeStyle='rgba(255,230,170,'+(a*q[1])+')';c.beginPath();c.arc(0,0,R,0,TAU);c.stroke();});
+// a ring of light going out from it, edged with mother-of-pearl, fading as it widens
+function hoouRing(c,x,y,px,u){var a=Math.pow(1-u,1.6)*0.42;if(a<0.01)return;var R=Math.max(6,px*(0.3+2.5*Math.sqrt(u))),w=Math.max(0.6,px*0.07*(1-u));c.save();c.globalCompositeOperation='screen';c.translate(x,y);c.scale(1,0.72);
+[[w*3,0.18],[w,0.7]].forEach(function(q){c.lineWidth=q[0];if(c.createConicGradient){var cg=c.createConicGradient(u*2,0,0);for(var i=0;i<=6;i++){var pq=HOOU_NACRE[i%6];cg.addColorStop(i/6,'rgba('+pq[0]+','+pq[1]+','+pq[2]+','+(a*q[1])+')');}c.strokeStyle=cg;}else c.strokeStyle='rgba(255,230,170,'+(a*q[1])+')';c.beginPath();c.arc(0,0,R,0,TAU);c.stroke();});
 if(u<0.3){var fg=c.createRadialGradient(0,0,0,0,0,R);fg.addColorStop(0,'rgba(255,246,220,'+(0.4*(1-u/0.3))+')');fg.addColorStop(1,'rgba(255,220,160,0)');c.fillStyle=fg;c.beginPath();c.arc(0,0,R,0,TAU);c.fill();}c.restore();}
-// a shower of sparkles from it, and a flash of light where it is
-function hoouBurst(S,x,y,k,n){for(var i=0;i<(n||150)&&S.length<900;i++){var a=Math.random()*TAU,sp=(1.5+Math.random()*5)*k,life=1.2+Math.random()*1.8,bg=Math.random()<0.18;S.push({x:x+Math.cos(a)*k*0.6,y:y+Math.sin(a)*k*0.6,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-0.8*k,life:life,max:life,r:(bg?0.45+Math.random()*0.4:0.15+Math.random()*0.35)*k,tw:Math.random()*6.3,big:bg});}}
+// a puff of gold leaf from it, a few embers, and a soft flash of light where it is
+function hoouBurst(S,x,y,k,n){var N=Math.ceil((n||150)*0.4);for(var i=0;i<N&&S.length<600;i++){var a=Math.random()*TAU,sp=(1.2+Math.random()*3.6)*k;hoouLeaf(S,x+Math.cos(a)*k*0.6,y+Math.sin(a)*k*0.6,Math.cos(a)*sp,Math.sin(a)*sp-0.8*k,k,Math.random()<0.3);}}
 function hoouFlash(c,x,y,px,bd){var a=Math.pow(1-clamp(bd/1.1),2);if(a<0.01)return;var R=Math.max(5,px*(0.45+0.9*bd));c.save();c.globalCompositeOperation='lighter';var gg=c.createRadialGradient(x,y,0,x,y,R);gg.addColorStop(0,'rgba(255,248,226,'+(0.55*a)+')');gg.addColorStop(0.3,'rgba(255,222,160,'+(0.25*a)+')');gg.addColorStop(1,'rgba(255,200,120,0)');c.fillStyle=gg;c.beginPath();c.arc(x,y,R,0,TAU);c.fill();
-var Rr=Math.max(7,px*0.9)*(0.6+0.6*Math.sin(Math.PI*clamp(bd/0.5))),ra=a*clamp(1-bd/0.6);if(ra>0.01)for(var i=0;i<4;i++){var an=i*Math.PI/2+0.3,ux=Math.cos(an),uy=Math.sin(an),lg=c.createLinearGradient(x,y,x+ux*Rr,y+uy*Rr);lg.addColorStop(0,'rgba(255,252,236,'+ra+')');lg.addColorStop(1,'rgba(255,220,160,0)');c.fillStyle=lg;c.beginPath();c.moveTo(x-uy*Rr*0.05,y+ux*Rr*0.05);c.lineTo(x+ux*Rr,y+uy*Rr);c.lineTo(x+uy*Rr*0.05,y-ux*Rr*0.05);c.closePath();c.fill();}
 c.restore();}
 function hoouCrySing(part,el,cont){hoou.cryPrev=cont&&hoou.cryPart!==undefined?HOOU_CRIES[hoou.cryPart].pose:0;hoou.cry=el;hoou.cryPart=part;hoou.cryCont=!!cont;if(cont)hoou.cryQ=null;cue(HOOU_CRIES[part].cue,{id:+clamp(hoou.near||1,0.15,1.2).toFixed(2)},true);loopCheck();}
 // its voice (and the hush it brings): a soft beat of the wings on each downstroke (louder the stronger the stroke and the nearer it is), and a calm call
@@ -14674,7 +14721,7 @@ var px=o.L*bp.k;if((o.aurora||0)>0.02||(o.cry||0)>0.02)hoouLens(ctx,g,o,bp,px);
 hoou.tapP=o.alpha>0.3&&bp.x>-0.3*px&&bp.x<g.W+0.3*px&&bp.y>-0.3*px?{x:bp.x,y:bp.y-0.12*px,r:Math.max(9,0.6*px),at:Date.now()}:null;          // where a tap finds it
 var E=hoouPaint3D(ctx,o);          // drawn whole, never cut by the depth of the scene: it is in front of everything it passes
 if(o.twk>0)hoouTwinkle(ctx,bp,o.twk,g);
-if(hoou.burst!==undefined&&el-hoou.burst<1.2){var bx=bp.x,by=bp.y-0.1*px;if(!hoou.burstDone){hoou.burstDone=true;hoouBurst(hoouSp,bx,by,Math.max(k,0.35));}hoouFlash(ctx,bx,by,px,el-hoou.burst);}          // tapped in flight: a shower of sparkles
+if(hoou.burst!==undefined&&el-hoou.burst<1.2){var bx=bp.x,by=bp.y-0.1*px;if(!hoou.burstDone){hoou.burstDone=true;hoouBurst(hoouSp,bx,by,Math.max(k,0.35));}hoouFlash(ctx,bx,by,px,el-hoou.burst);}          // tapped in flight: a puff of gold leaf
 if(E)[hoou.heldOld,hoou.held,hoou.mv].forEach(function(hv){if(!hv||!hv.fd||el>=HOOU_IN+HOOU_LAND+HOOU_STAY)return;var HV=HOOU_MOVES[hv.i],md=el-hv.t0,ff=HV.hold?(hv.end!==undefined?1-sstep(0,0.9,el-hv.end):1):1-sstep(HV.len-HV.fade,HV.len,md);if(md<0||ff<=0)return;          // a movement's light: its bursts in their moments, and what streams from it meanwhile
 var hd=E.head,cx2=bp.x,cy2=bp.y-0.16*px,eyes=E.eyes||[];
 (HV.fx||[]).forEach(function(q,qi){if(hv.fd[qi]||md<q[0])return;hv.fd[qi]=1;

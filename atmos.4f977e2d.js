@@ -355,11 +355,37 @@ if(fl>0.2){ctx.lineJoin='round';line(L.bolt.pts,2.4,0.25*fl);line(L.bolt.pts,0.8
 ctx.globalCompositeOperation='source-over';
 return true;
 }
+// a rainbow as it is seen: one continuous spectrum, not stripes. Red at the outer edge, coming in sharply; strongest through
+// orange and yellow; green, blue and violet weaker and melting into the sky inside the bow, which is a little brighter (all the
+// colours overlap there), with a pale fringe or two of pink and green just inside the violet. Outside it, after a gap of
+// darker sky, a faint secondary bow, twice as wide, with its colours reversed. It is made of light, so it is drawn by
+// screening it on (it shows best against cloud), and its brightness drifts along the arc as the rain behind it thins and
+// thickens. bw: the width of the main band (red to violet); th0, th1: the arc to draw (radians, canvas angles).
+function lifeBow(ctx,cx,cy,R,bw,a,seed,th0,th1,op,k2){
+var cv=ctx.canvas,W0=cv.width,H0=cv.height,m=ctx.getTransform?ctx.getTransform():null;
+var L=document.createElement('canvas');L.width=W0;L.height=H0;var x=L.getContext('2d');
+if(m)x.setTransform(m);
+var S=[[0,[190,40,40],0],[0.06,[226,56,46],0.5],[0.16,[250,100,56],0.82],[0.28,[255,158,70],0.94],[0.4,[252,218,110],1],[0.52,[178,224,120],0.84],[0.64,[96,204,166],0.68],[0.76,[86,150,234],0.56],[0.88,[126,106,224],0.42],[1,[172,148,228],0.28],
+[1.1,[236,206,226],0.16],[1.2,[206,236,214],0.1],[1.3,[238,212,230],0.09],[1.4,[214,236,220],0.06],[1.55,[240,238,244],0.05],[1.75,[244,242,246],0.035]];
+var band=function(Rr,w,rev,k){var ri=Rr-w*1.75,ro=Rr+w*0.02;if(rev){ri=Rr-w*1.02;ro=Rr+w*0.75;}
+var g=x.createRadialGradient(cx,cy,Math.max(0,ri),cx,cy,ro);
+S.forEach(function(s){var r=rev?Rr-w+s[0]*w:Rr-s[0]*w;if(rev&&s[0]>1.2)return;var o=(r-ri)/(ro-ri);if(o<0||o>1)return;g.addColorStop(o,'rgba('+s[1][0]+','+s[1][1]+','+s[1][2]+','+(s[2]*k).toFixed(3)+')');});
+if(!rev){g.addColorStop(0,'rgba(244,242,246,0)');}else{g.addColorStop(1,'rgba(172,148,228,0)');g.addColorStop(0,'rgba(190,40,40,0)');}
+x.fillStyle=g;x.beginPath();x.arc(cx,cy,ro,th0,th1);x.arc(cx,cy,Math.max(0,ri),th1,th0,true);x.closePath();x.fill();};
+band(R,bw,false,1);
+var gi=x.createRadialGradient(cx,cy,Math.max(0,R-bw*7),cx,cy,R-bw*1.6);gi.addColorStop(0,'rgba(246,244,248,0)');gi.addColorStop(1,'rgba(246,244,248,0.05)');
+x.fillStyle=gi;x.beginPath();x.arc(cx,cy,R-bw*1.6,th0,th1);x.arc(cx,cy,Math.max(0,R-bw*7),th1,th0,true);x.closePath();x.fill();          // the sky brighter inside the bow
+band(R*1.19+bw*1.8,bw*1.8,true,k2===undefined?0.3:k2);          // the secondary bow, its colours the other way about
+if(x.createConicGradient){var cg=x.createConicGradient(0,cx,cy),N=180;
+for(var i=0;i<=N;i++){var th=i/N*Math.PI*2,u=(th-th0)/((th1-th0)||1),e=u<0||u>1?0:Math.pow(Math.sin(Math.PI*Math.min(1,Math.max(0,u))),0.35),
+n=0.5+0.3*Math.sin(th*9.3+seed)+0.2*Math.sin(th*23.7+seed*2.1),v=e*(0.55+0.45*n);cg.addColorStop(i/N,'rgba(0,0,0,'+Math.max(0,Math.min(1,v)).toFixed(3)+')');}
+x.setTransform(1,0,0,1,0,0);x.globalCompositeOperation='destination-in';if(m)x.setTransform(m);x.fillStyle=cg;x.fillRect(cx-R*2,cy-R*2,R*4,R*4);}          // brighter and fainter along it, as the rain behind it thickens and thins
+ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=Math.min(1,a);ctx.globalCompositeOperation=op||'screen';ctx.drawImage(L,0,0);ctx.restore();
+}
+// after the rain on a summer day: the rainbow, on the side of the sky away from the sun
 function paintRainbow(ctx,W,L,cy,R,a){
-var cx=W*(L.sunX>0.5?0.3:0.7),cols=[[255,70,60],[255,160,50],[255,236,90],[90,210,100],[80,140,255],[130,90,220]];
-ctx.save();ctx.lineWidth=2.2;
-for(var i=0;i<cols.length;i++){var g=ctx.createLinearGradient(0,cy-R,0,cy);g.addColorStop(0,rgb(cols[i],a));g.addColorStop(1,rgb(cols[i],a/6));ctx.strokeStyle=g;ctx.beginPath();ctx.arc(cx,cy,R-i*2,Math.PI*1.06,Math.PI*1.94);ctx.stroke();}
-ctx.restore();
+var cx=W*(L.sunX>0.5?0.3:0.7);
+lifeBow(ctx,cx,cy,R,R*0.085,Math.min(1,a*1.9),3.1+cx*0.01,Math.PI*1.04,Math.PI*1.96,'source-over',0.13);          // (laid on, not screened: low over a bright, hazy horizon light alone would barely show)
 }
 function ditherSky(ctx,bw,yr){
 if(yr<2)return;

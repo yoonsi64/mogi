@@ -1841,6 +1841,7 @@
 // sw, fold} (arm and hand raised by a1/a2 radians, swept back by sw, the hand folded by fold), droop (0 flying → 1 the
 // tail hangs), legs (0–1), head (0 flying → 1 standing proud), look (head turned, radians), alpha, glow, t, feet (the
 // top of the 宝珠, world).
+var HOOU_NACRE=[[252,248,244],[255,198,222],[192,240,222],[212,200,255],[255,228,186],[192,222,255]];          // mother-of-pearl: pearl white, blush, mint, lavender, champagne, ice blue
 var hoouNorm=norm;
 var HOOU_PRIM=[[0.08,0.95,-0.02,1.6],[0.05,0.9,-0.1,1.55],[0.02,0.85,-0.17,1.48],[-0.01,0.8,-0.24,1.38],[-0.04,0.74,-0.3,1.26],[-0.06,0.68,-0.35,1.12],[-0.08,0.62,-0.4,0.98],[-0.09,0.56,-0.44,0.84]].reverse();
 var HOOU_COV=(function(){var a=[[0.13,0],[0.18,0.25],[0.19,0.5],[0.14,0.75],[0.08,0.98],[0,1.02]];for(var ck=0;ck<=12;ck++){var cr0=0.98-ck*0.08;a.push([0.0-0.075*Math.sin(Math.PI*Math.min(1,cr0/1.0))-(ck%2?0:0.02),cr0]);}a.push([-0.05,0]);return a;})();          // a shallower band of coverts, so more of the long feathers show
@@ -2113,7 +2114,7 @@ c.restore();}
 // a soft glow about it, and at rest a faint halo of golden rays behind it, turning slowly
 c.save();c.globalCompositeOperation='screen';
 // at rest on the spire (o.aurora 0..1): its field. Faint lines of force loop out of it from crown to foot and back, as round
-// a lodestone, in shells that turn slowly about it in depth and breathe; along each hangs a faint band of rainbow light, an
+// a lodestone, in shells that turn slowly about it in depth and breathe; along each hangs a faint veil of mother-of-pearl, an
 // aurora on its field, with a fine bright heart and a bead of light drifting along it. Its cry (o.cry 0..1) swells them; as it
 // spreads its wings in display (o.flare 0..1) the field grows wide and the aurora blazes. (The
 // town bends the light behind it as well.)
@@ -2123,13 +2124,13 @@ c.globalCompositeOperation='screen';c.lineCap='round';c.lineJoin='round';
 [0.6,0.9,1.25].forEach(function(sh,si){for(var ai=0;ai<6;ai++){
 var phi=ai/6*TAU+t*(0.045+0.012*si)+si*0.52,cp=Math.cos(phi),sp=Math.sin(phi),Lk=sh*br*(1+0.1*cy*(si+1)/3)*(1+0.6*fl*(0.7+0.3*si))*px,pts=[];
 for(var q=0;q<=30;q++){var th=0.2+(Math.PI-0.4)*q/30,s2=Math.sin(th),rr=Lk*s2*s2,xx=rr*s2*cp,yy=-rr*Math.cos(th)*1.08;pts.push([ac[0]+xx*ctl-yy*stl,ac[1]+xx*stl+yy*ctl]);}
-var fr=0.62+0.38*Math.max(0,-sp),aa=au*(0.1375-0.0275*si)*fr*(1+0.7*cy)*(1+2.4*fl),h0=(196+si*34+ai*17+t*9)%360;          // the near side of each shell brighter than the far
-var hb=(h0+t*14)%360,ag=function(sat,lt){if(!c.createConicGradient)return'hsla('+hb.toFixed(0)+','+sat+'%,'+lt+'%,0.8)';var g2=c.createConicGradient(tl,ac[0],ac[1]);for(var gi=0;gi<=24;gi++){var u=gi/24,fa=Math.pow(Math.abs(Math.cos(u*TAU)),0.8);g2.addColorStop(u,'hsla('+((hb+Math.abs(Math.sin(u*TAU*0.5))*300)%360).toFixed(0)+','+sat+'%,'+lt+'%,'+fa.toFixed(3)+')');}return g2;};          // a rainbow along each line (round it, from pole to pole), fading out at the poles
+var fr=0.62+0.38*Math.max(0,-sp),aa=au*(0.1375-0.0275*si)*fr*(1+0.7*cy)*(1+1.9*fl),h0=(196+si*34+ai*17+t*9)%360;          // the near side of each shell brighter than the far
+var hb=(h0+t*14)%360,ag=function(wh){var pc=function(v){v=((v%6)+6)%6;var i0=Math.floor(v),f2=v-i0,p0=HOOU_NACRE[i0],p1=HOOU_NACRE[(i0+1)%6];return[0,1,2].map(function(j){return Math.round(lerp(lerp(p0[j],p1[j],f2),255,wh));});};if(!c.createConicGradient){var q0=pc(hb/60);return'rgba('+q0.join(',')+',0.8)';}var g2=c.createConicGradient(tl,ac[0],ac[1]);for(var gi=0;gi<=24;gi++){var u=gi/24,fa=Math.pow(Math.abs(Math.cos(u*TAU)),0.8),q=pc(hb/60+Math.abs(Math.sin(u*TAU*0.5))*2.6);g2.addColorStop(u,'rgba('+q.join(',')+','+fa.toFixed(3)+')');}return g2;};          // a sheen of mother-of-pearl along each line (round it, from pole to pole): pale tints that shift as the line turns, fading out at the poles
 var path=function(){c.beginPath();pts.forEach(function(p,i){if(i)c.lineTo(p[0],p[1]);else c.moveTo(p[0],p[1]);});};
-c.globalCompositeOperation='source-over';c.strokeStyle=ag(88,62);[[0.085,0.42],[0.04,0.75]].forEach(function(lw){c.globalAlpha=A*aa*lw[1];c.lineWidth=Math.max(0.3,lw[0]*px);path();c.stroke();});          // its aurora: a soft band of colour along it, like the curtain of an aurora hung on the field
-c.globalCompositeOperation='screen';c.strokeStyle=ag(70,80);c.globalAlpha=A*aa*1.1;c.lineWidth=Math.max(0.2,0.009*px);path();c.stroke();          // and a fine bright heart
-var bs=(t*0.06+ai/6+si*0.37)%1,bi=bs*30,b0i=Math.floor(bi),bp2=pts[b0i],bq2=pts[Math.min(30,b0i+1)],bx=lerp(bp2[0],bq2[0],bi-b0i),by=lerp(bp2[1],bq2[1],bi-b0i),ba=au*0.26*fr*Math.sin(Math.PI*bs)*(1+cy)*(1+1.5*fl),bR=Math.max(0.5,0.03*px);
-if(ba>0.004){c.globalAlpha=A*ba;var bgr=c.createRadialGradient(bx,by,0,bx,by,bR);bgr.addColorStop(0,'rgba(255,250,236,1)');bgr.addColorStop(1,'rgba(220,236,255,0)');c.fillStyle=bgr;c.beginPath();c.arc(bx,by,bR,0,TAU);c.fill();}          // a bead of light running along it
+c.globalCompositeOperation='source-over';c.strokeStyle=ag(0);[[0.24,0.3],[0.12,0.55],[0.055,0.75]].forEach(function(lw){c.globalAlpha=A*aa*lw[1];c.lineWidth=Math.max(0.3,lw[0]*px);path();c.stroke();});          // its aurora: a soft veil of nacre along it, like the curtain of an aurora hung on the field
+c.globalCompositeOperation='screen';c.strokeStyle=ag(0.25);c.globalAlpha=A*aa*0.7;c.lineWidth=Math.max(0.2,0.009*px);path();c.stroke();          // and a fine bright heart
+var bs=(t*0.06+ai/6+si*0.37)%1,bi=bs*30,b0i=Math.floor(bi),bp2=pts[b0i],bq2=pts[Math.min(30,b0i+1)],bx=lerp(bp2[0],bq2[0],bi-b0i),by=lerp(bp2[1],bq2[1],bi-b0i),ba=au*0.16*fr*Math.sin(Math.PI*bs)*(1+cy)*(1+1.2*fl),bR=Math.max(0.5,0.03*px);
+if(ba>0.004){c.globalAlpha=A*ba;var bgr=c.createRadialGradient(bx,by,0,bx,by,bR);bgr.addColorStop(0,'rgba(255,252,248,1)');bgr.addColorStop(0.5,'rgba(244,232,246,0.5)');bgr.addColorStop(1,'rgba(226,240,246,0)');c.fillStyle=bgr;c.beginPath();c.arc(bx,by,bR,0,TAU);c.fill();}          // a bead of light running along it
 }});
 c.globalAlpha=A;c.globalCompositeOperation='screen';}
 var gr=1.7*px,gg=c.createRadialGradient(b0.x,b0.y,0,b0.x,b0.y,gr);gg.addColorStop(0,'rgba(255,226,160,'+((0.16+0.12*(o.glow||0))*(0.9+0.1*Math.sin(t*0.7)))+')');gg.addColorStop(0.45,'rgba(255,214,140,'+(0.05+0.04*(o.glow||0))+')');gg.addColorStop(1,'rgba(255,190,90,0)');c.fillStyle=gg;c.fillRect(b0.x-gr,b0.y-gr,gr*2,gr*2);
