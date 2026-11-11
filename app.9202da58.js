@@ -12207,7 +12207,8 @@
             var ss = window.speechSynthesis, vs = [];
             try { vs = ss.getVoices() || []; } catch (e) {}
             var ja = vs.filter(function(v) { return /^ja/i.test(v.lang); }).length;
-            var log = ttsDiag.join(' → ') || '反応なし';
+            var log = ttsDiag.join(' → ') || '反応なし', jv = jaVoice();
+            if (jv) log += '　声：' + jv.name + (jv.localService ? '' : '（ネット）');
             el.textContent = '端末の音声：日本語 ' + ja + ' / 全 ' + vs.length + '　状態：' + log + (ss.speaking ? '（再生中）' : '') + (ss.paused ? '（一時停止）' : '');
         }, 2500);
     }
@@ -17302,8 +17303,20 @@
             return { id: v.voiceURI || v.name, label: name + (v.localService === false ? '（オンライン）' : ''), voice: v };
         });
     }
+    // Use the device's default Japanese voice. If the phone's default engine fails on it (synthesis-failed: seen on Android
+    // Chrome, where the default engine has no Japanese), name the phone's Japanese voice from then on, local ones first.
+    var ttsNameVoice = false;
+    try { ttsNameVoice = localStorage.getItem('jlptTtsNameVoice') === '1'; } catch (e) {}
+    function jaVoice() {
+        var vs = [];
+        try { vs = window.speechSynthesis.getVoices() || []; } catch (e) {}
+        var ja = vs.filter(function(v) { return /^ja/i.test(v.lang); });
+        return ja.filter(function(v) { return v.localService; })[0] || ja[0] || null;
+    }
     function applyVoice(u) {
-        // Use the device's default Japanese voice.
+        if (!ttsNameVoice) return;
+        var v = jaVoice();
+        if (v) { try { u.voice = v; } catch (e) {} u.lang = v.lang; }
     }
     var ttsDiag = [];          // what the speech engine did with the last reading (shown by the 設定 test)
     function speakText(htmlText) {
@@ -17330,7 +17343,27 @@
                 setTimeout(next, chunk.pause);
             };
             utterance.onend = proceed;
-            utterance.onerror = function(ev) { ttsDiag.push('error:' + (ev && ev.error)); if (ev && ev.error === 'interrupted' && retrying) return; proceed(); };
+            utterance.onerror = function(ev) {
+                var code = ev && ev.error;
+                ttsDiag.push('error:' + code);
+                if (code === 'interrupted' && retrying) return;
+                // the default engine can't say it: name the Japanese voice and say the line again
+                if ((code === 'synthesis-failed' || code === 'language-unavailable' || code === 'voice-unavailable') && !ttsNameVoice && jaVoice()) {
+                    ttsNameVoice = true;
+                    try { localStorage.setItem('jlptTtsNameVoice', '1'); } catch (e) {}
+                    var v = jaVoice();
+                    ttsDiag.push('voice:' + v.name);
+                    var u3 = new SpeechSynthesisUtterance(chunk.text);
+                    u3.rate = utterance.rate; applyVoice(u3);
+                    u3.onstart = function() { started = true; ttsDiag.push('start'); };
+                    u3.onend = proceed;
+                    u3.onerror = function(e2) { ttsDiag.push('error:' + (e2 && e2.error)); proceed(); };
+                    retrying = true;
+                    ss.speak(u3);
+                    return;
+                }
+                proceed();
+            };
             // a stuck engine never starts the line: if it hasn't started after a moment, reset it and say the line again (once)
             var started = false, retrying = false;
             utterance.onstart = function() { started = true; ttsDiag.push('start'); };
