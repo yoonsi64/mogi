@@ -17293,7 +17293,9 @@
         // Use the device's default Japanese voice.
     }
     function speakText(htmlText) {
-        window.speechSynthesis.cancel();
+        var ss = window.speechSynthesis;
+        ss.cancel();
+        try { ss.resume(); } catch (e) {}          // Chrome on Android can be left paused, and then says nothing until resumed
         var session = ++speechSession;
         var chunks = buildSpeechChunks(htmlText);
         var i = 0;
@@ -17313,8 +17315,21 @@
                 setTimeout(next, chunk.pause);
             };
             utterance.onend = proceed;
-            utterance.onerror = proceed;
+            utterance.onerror = function(ev) { if (ev && ev.error === 'interrupted' && retrying) return; proceed(); };
+            // a stuck engine never starts the line: if it hasn't started after a moment, reset it and say the line again (once)
+            var started = false, retrying = false;
+            utterance.onstart = function() { started = true; };
             window.speechSynthesis.speak(utterance);
+            if (i === 1) setTimeout(function() {
+                if (started || done || session !== speechSession) return;
+                retrying = true;
+                ss.cancel();
+                try { ss.resume(); } catch (e) {}
+                var u2 = new SpeechSynthesisUtterance(chunk.text);
+                u2.lang = 'ja-JP'; u2.rate = utterance.rate; applyVoice(u2);
+                u2.onend = proceed; u2.onerror = proceed;
+                setTimeout(function() { if (session === speechSession && !done) ss.speak(u2); }, 60);
+            }, 1500);
         }
         next();
     }
