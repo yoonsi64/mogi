@@ -16565,7 +16565,9 @@
                 if (tgEx) feedbackHtml += '<div class="explain-card mx"><div class="explain-title">解説</div>' + tgEx + '</div>';
             }
 
-            var ttsHtmlTG = isAnswered ? '<button class="speak-btn" id="speak-btn" title="音声を再生" style="margin-bottom: 12px;">🔊 音声を再生</button>' : '';
+            // the play button from the first answered blank on: it reads up to the first blank still open (see buildPassageSpeechHtml)
+            var tgAnyAnswered = finalAnswers.some(function(a) { return a; });
+            var ttsHtmlTG = (isAnswered || tgAnyAnswered) ? '<button class="speak-btn" id="speak-btn" title="音声を再生" style="margin-bottom: 12px;">🔊 音声を再生</button>' : '';
 
             quizContainer.innerHTML = '<div class="question-card">' +
                 renderHeader(q, '文章の文法') +
@@ -16599,7 +16601,7 @@
             refreshLineNumbers();
             var tgSpeakBtn = document.getElementById('speak-btn');
             if (tgSpeakBtn) {
-                tgSpeakBtn.addEventListener('click', function() { speakText(buildPassageSpeechHtml(q)); });
+                tgSpeakBtn.addEventListener('click', function() { speakText(buildPassageSpeechHtml(q, isAnswered ? null : finalAnswers)); });
             }
 
             updateNextButton(isAnswered);
@@ -17330,8 +17332,17 @@
     }
 
     // Full passage with every blank filled by its correct answer, without the source line
-    function buildPassageSpeechHtml(q) {
+    // answers: the blanks answered so far, while some are still open. The reading stops just before the first open blank,
+    // so it never says an answer you haven't given yet
+    function buildPassageSpeechHtml(q, answers) {
         var text = q.sentence;
+        if (answers) {
+            var open = answers.findIndex(function(a) { return !a; });
+            if (open >= 0) {
+                var at = text.search(new RegExp('\\[\\[' + (open + 1) + '\\]\\]'));
+                if (at >= 0) text = text.slice(0, at);
+            }
+        }
         q.blanks.forEach(function(blank, i) {
             var ans = blank.options[blank.correct].split('／');
             text = text.replace(new RegExp('\\s*\\[\\[' + (i + 1) + '\\]\\]\\s*'), ans[0]);
