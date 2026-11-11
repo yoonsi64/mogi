@@ -297,8 +297,8 @@
         .sentence { font-size: 1.1rem; line-height: 1.7; margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px; }
         .sentence-text { flex: 1; }
         .sentence u { text-decoration: none; border-bottom: 2px solid var(--text-main); font-weight: bold; padding: 0 2px; }
-        .sentence .context-fill { font-weight: bold; padding: 0 4px; text-decoration: underline 2px var(--text-main); text-underline-offset: 0.2em; text-decoration-skip-ink: none; }   /* an underline, not a border: a border sits below the text's descent and covered the furigana of the next line */
-        .tappable-word { cursor: pointer; text-decoration: underline dotted 2px var(--active-blue); text-underline-offset: 0.2em; text-decoration-skip-ink: none; transition: background-color 0.2s; }   /* an underline, not a border, so it never covers the furigana of the line below */
+        .sentence .context-fill { font-weight: bold; border-bottom: 2px solid var(--text-main); padding: 0 4px; }
+        .tappable-word { cursor: pointer; border-bottom: 2px dotted var(--active-blue); transition: background-color 0.2s; }
         .tappable-word:active { background-color: #e6f0fa; }
         .speak-btn { background: #f0f0f0; border: 1px solid var(--border-dark); color: var(--text-main); border-radius: 0; padding: 8px 12px; font-size: 0.85rem; font-weight: bold; align-self: flex-start; transition: background-color 0.2s, color 0.2s; user-select: none; }
         .speak-btn:active { background: var(--border-dark); color: var(--bg-paper); }
@@ -1747,7 +1747,7 @@
         /* Vertical text (縦書き), read right to left; scrolls sideways when longer than the screen */
         .reading-box.vertical { font-family: var(--reading-font); writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl; text-orientation: mixed; height: min(25em, 64vh); overflow-x: auto; overflow-y: hidden; line-height: 1.9; padding: 14px 12px; -webkit-overflow-scrolling: touch; }
         .reading-box.vertical p { margin: 0 0 0 0.5em; }
-        .reading-box.vertical .tappable-word { border-bottom: none; text-decoration: none; border-left: 2px dotted var(--active-blue); font-family: inherit; }
+        .reading-box.vertical .tappable-word { border-bottom: none; border-left: 2px dotted var(--active-blue); font-family: inherit; }
         .reading-box.vertical * { font-family: inherit; }
         .reading-box.vertical .reading-source { text-align: left; margin: 0 0 0 0; padding-top: 1em; }
         .vertical-hint { font-size: 0.7rem; color: var(--text-sub); margin: -12px 0 14px; text-align: right; }
@@ -2089,7 +2089,7 @@
         .reading-box.lined-vertical { padding-top: 26px; }
         .reading-box [style*="vertical-rl"] .footnote-word { text-underline-position: left; text-underline-offset: 0.2em; }
         .reading-box [style*="vertical-rl"] .bousen, .reading-box [style*="vertical-rl"] .textbook-ref-underline { text-underline-position: right; }
-        .reading-box [style*="vertical-rl"] .tappable-word { border-bottom: none; text-decoration: none; border-left: 2px dotted var(--active-blue); }
+        .reading-box [style*="vertical-rl"] .tappable-word { border-bottom: none; border-left: 2px dotted var(--active-blue); }
         .reading-box [style*="vertical-rl"] .tcy { text-combine-upright: all; -webkit-text-combine: horizontal; }
         .reading-box [style*="vertical-rl"] .upright { text-orientation: upright; -webkit-text-orientation: upright; }
         .reading-box [style*="vertical-rl"] .mk-note-mk { top: 0; left: auto; right: 100%; margin-left: 0; }
