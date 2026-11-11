@@ -12198,8 +12198,21 @@
 
     document.getElementById('set-goal-minus').addEventListener('click', function() { setDailyGoal(dailyGoal - 5, true); document.getElementById('set-goal-value').textContent = dailyGoal + '問'; });
     document.getElementById('set-goal-plus').addEventListener('click', function() { setDailyGoal(dailyGoal + 5, true); document.getElementById('set-goal-value').textContent = dailyGoal + '問'; });
+    // the 設定 test also says what the phone's speech engine did, so a silent phone can be told apart from the app
+    function showTtsDiag() {
+        var row = document.getElementById('set-tts').closest('.setting-row'), el = document.getElementById('tts-diag');
+        if (!el) { el = document.createElement('div'); el.id = 'tts-diag'; el.className = 'stat-sub'; el.style.flexBasis = '100%'; row.classList.add('wrap'); row.appendChild(el); }
+        el.textContent = '確認中…';
+        setTimeout(function() {
+            var ss = window.speechSynthesis, vs = [];
+            try { vs = ss.getVoices() || []; } catch (e) {}
+            var ja = vs.filter(function(v) { return /^ja/i.test(v.lang); }).length;
+            var log = ttsDiag.join(' → ') || '反応なし';
+            el.textContent = '端末の音声：日本語 ' + ja + ' / 全 ' + vs.length + '　状態：' + log + (ss.speaking ? '（再生中）' : '') + (ss.paused ? '（一時停止）' : '');
+        }, 2500);
+    }
     document.querySelectorAll('#set-tts button').forEach(function(b) {
-        b.addEventListener('click', function() { setSetting('ttsRate', parseFloat(b.dataset.v)); markSeg('set-tts', b.dataset.v); speakText('この速さで読み上げます。'); });
+        b.addEventListener('click', function() { setSetting('ttsRate', parseFloat(b.dataset.v)); markSeg('set-tts', b.dataset.v); speakText('この速さで読み上げます。'); showTtsDiag(); });
     });
     document.querySelectorAll('#set-game-scene button').forEach(function(b) {
         b.addEventListener('click', function() { setSetting('gameScene', b.dataset.v === 'on'); markSeg('set-game-scene', b.dataset.v); });
@@ -17292,7 +17305,9 @@
     function applyVoice(u) {
         // Use the device's default Japanese voice.
     }
+    var ttsDiag = [];          // what the speech engine did with the last reading (shown by the 設定 test)
     function speakText(htmlText) {
+        ttsDiag = [];
         var ss = window.speechSynthesis;
         ss.cancel();
         try { ss.resume(); } catch (e) {}          // Chrome on Android can be left paused, and then says nothing until resumed
@@ -17315,10 +17330,10 @@
                 setTimeout(next, chunk.pause);
             };
             utterance.onend = proceed;
-            utterance.onerror = function(ev) { if (ev && ev.error === 'interrupted' && retrying) return; proceed(); };
+            utterance.onerror = function(ev) { ttsDiag.push('error:' + (ev && ev.error)); if (ev && ev.error === 'interrupted' && retrying) return; proceed(); };
             // a stuck engine never starts the line: if it hasn't started after a moment, reset it and say the line again (once)
             var started = false, retrying = false;
-            utterance.onstart = function() { started = true; };
+            utterance.onstart = function() { started = true; ttsDiag.push('start'); };
             window.speechSynthesis.speak(utterance);
             if (i === 1) setTimeout(function() {
                 if (started || done || session !== speechSession) return;
@@ -17327,7 +17342,9 @@
                 try { ss.resume(); } catch (e) {}
                 var u2 = new SpeechSynthesisUtterance(chunk.text);
                 u2.lang = 'ja-JP'; u2.rate = utterance.rate; applyVoice(u2);
-                u2.onend = proceed; u2.onerror = proceed;
+                ttsDiag.push('retry');
+                u2.onstart = function() { ttsDiag.push('start2'); };
+                u2.onend = proceed; u2.onerror = function(ev) { ttsDiag.push('error2:' + (ev && ev.error)); proceed(); };
                 setTimeout(function() { if (session === speechSession && !done) ss.speak(u2); }, 60);
             }, 1500);
         }
