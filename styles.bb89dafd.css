@@ -296,6 +296,7 @@
         .direction-box { font-size: 0.85rem; color: var(--text-main); background-color: #f4f7f6; padding: 8px 12px; border-left: 4px solid var(--active-blue); margin-bottom: 16px; border-radius: 0 4px 4px 0; line-height: 1.5; }
         .sentence { font-size: 1.1rem; line-height: 1.7; margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px; }
         .sentence-text { flex: 1; }
+        .sentence-text:has(rt) { line-height: 2.1; }   /* room for the furigana between lines, so the line above (its underline, a filled-in answer) never covers it */
         .sentence u { text-decoration: none; border-bottom: 2px solid var(--text-main); font-weight: bold; padding: 0 2px; }
         .sentence .context-fill { font-weight: bold; border-bottom: 2px solid var(--text-main); padding: 0 4px; }
         .tappable-word { cursor: pointer; border-bottom: 2px dotted var(--active-blue); transition: background-color 0.2s; }
