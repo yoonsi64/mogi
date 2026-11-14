@@ -11755,6 +11755,19 @@
         return { lib: lib, week: last.week, day: last.day, status: st };
     }
 
+    // After a finished day: the next day in that book not yet finished (null when the book is done or nothing was started)
+    function getNextDay() {
+        var last = loadJSON('jlptLastSession', null);
+        if (!last || !last.week || !last.day || getLastSession()) return null;
+        var lib = getLib(last.lib && LIBRARIES.some(function(l) { return l.id === last.lib; }) ? last.lib : DEFAULT_LIB);
+        for (var w = last.week; w <= (lib.units ? lib.units.length : lib.weeks); w++) {
+            for (var d = (w === last.week ? last.day + 1 : 1); d <= daysIn(lib, w); d++) {
+                var st = dayStatus(w, d, lib.id);
+                if (st.state === 'none' || st.state === 'partial') return { lib: lib.id, week: w, day: d, status: st };
+            }
+        }
+        return null;
+    }
     function startDay(w, d, lib) {
         rememberHomeSpot(d === 'unit' || w === 'all' ? '.lib-card[data-lib="' + (lib || DEFAULT_LIB) + '"]' : '.day-cell[data-lib="' + (lib || DEFAULT_LIB) + '"][data-week="' + w + '"][data-day="' + d + '"]');
         isBookmarkMode = false; isMistakeMode = false;
@@ -11864,7 +11877,7 @@
         var goalPct = Math.min(100, Math.round(todayRec.answered / dailyGoal * 100));
         var streaks = computeStreaks();
         var rvToday = todaysReview(), due = rvToday.remaining.length || rvToday.more;
-        var last = getLastSession();
+        var last = getLastSession(), nextDay = last ? null : getNextDay();
 
         // Home, top to bottom: today (goal, week, streak, exam countdown), start / review, the garden, a row of
         // tools (模擬試験 opens its panel below the row), today's word. The books are in 学ぶ › 教材 (showLibrary).
@@ -11876,7 +11889,8 @@
         // the next things to do, as small pills in the today card: carry on (or start) and, when any are due, 復習
         var startBtn = last
             ? '<button id="home-resume" class="home-pill go">▶ 続きから<small>' + (isMultiLib() ? escapeHtml(getLib(last.lib).short || getLib(last.lib).title) + '・' : '') + escapeHtml(placeLabel(getLib(last.lib), last.week, last.day)) + ' ' + last.status.answered + '/' + last.status.max + '</small></button>'
-            : first ? '<button id="home-start" class="home-pill go">▶ はじめる<small>' + escapeHtml(first.short || first.title) + '・' + escapeHtml(placeLabel(first, 1, 1)) + '</small></button>' : '';
+            : nextDay ? '<button id="home-next" class="home-pill go">▶ 次へ<small>' + (isMultiLib() ? escapeHtml(getLib(nextDay.lib).short || getLib(nextDay.lib).title) + '・' : '') + escapeHtml(placeLabel(getLib(nextDay.lib), nextDay.week, nextDay.day)) + '</small></button>'
+            : first ? '<button id="home-start" class="home-pill go">▶ 教材を選ぶ</button>' : '';
         var pills = startBtn + (due ? '<button id="home-review" class="home-pill">復習<small>' + (rvToday.remaining.length ? reviewLabel(rvToday) : '完了・もう1回分') + '</small></button>' : '');
         var hasMock = mockLibs().length > 0;
         var lastR = readOnlyEntries().slice(-1)[0];
@@ -11919,7 +11933,9 @@
 
         if (last) document.getElementById('home-resume').addEventListener('click', function() { startDay(last.week, last.day, last.lib); });
         var startB = document.getElementById('home-start');
-        if (startB) startB.addEventListener('click', function() { startDay(1, 1, first.id); });
+        if (startB) startB.addEventListener('click', function() { openSub('learn', 'library'); });
+        var nextB = document.getElementById('home-next');
+        if (nextB) nextB.addEventListener('click', function() { startDay(nextDay.week, nextDay.day, nextDay.lib); });
         document.getElementById('rp-home').addEventListener('click', openReadingPractice);
         var mockTile = document.getElementById('home-mock-tile');
         if (mockTile) mockTile.addEventListener('click', function() {
