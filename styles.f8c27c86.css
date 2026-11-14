@@ -1998,6 +1998,10 @@
         .hj-go-row { display: flex; gap: 8px; margin-top: 10px; }
         .hj-go-row .hj-go { flex: 1; margin: 0; width: auto; }
         .hj-go-row .hj-go-miss { flex: 0 0 auto; padding: 14px 16px; }
+        .hj-go-row .hj-go { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+        .hj-go-l { word-break: keep-all; overflow-wrap: anywhere; line-height: 1.3; }
+        .hj-go-n { font-size: 0.78rem; font-weight: normal; color: var(--text-sub); white-space: nowrap; }
+        .hj-go:disabled .hj-go-n { opacity: 0.7; }
         .hj-go-miss:disabled { color: var(--text-sub); border-color: var(--border-light); }
         .hj-loading { padding: 40px 0; text-align: center; color: var(--text-sub); }
         .hj-prompt { text-align: center; }
@@ -2026,6 +2030,8 @@
         .hj-sum-list { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 16px; }
         .hj-chip { display: inline-flex; align-items: baseline; gap: 4px; padding: 4px 10px; border: 1px solid var(--border-light); border-radius: 99px; background: var(--surface); }
         .hj-chip.ng { border-color: var(--mark-ng); }
+        .hj-chip.tri { border-color: var(--mark-tri); }
+        .hj-sum-n .tri, .hj-chip.tri i { color: var(--mark-tri); }
         .hj-chip b { font-weight: normal; font-size: 1.1rem; }
         .hj-chip i { font-style: normal; font-size: 0.8rem; }
         .hj-body .kp-pad-wrap, .hj-body .kp-tools { width: min(100%, 400px); }

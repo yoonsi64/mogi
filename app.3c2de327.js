@@ -18249,7 +18249,7 @@
         t: {
             title: '漢字 쓰기 練習', sub: '韓國語文會 漢字能力檢定試驗', range: '8級~2級',
             chars: '字', words: '單語', items: '問題', kindC: '漢字', kindW: '單語', kindB: '둘 다', own: '이 級만', cum: '아래 級 包含',
-            upTo: '까지', go: '{lv} 練習하기 ({n}問題)', miss: '틀린 것만 練習 ({n})',
+            upTo: '까지', go: '{lv} 練習하기 ({n}問題)', miss: '틀린 것만 練習 ({n}問題)',
             info: '韓國語文會 漢字能力檢定試驗 8級~2級. 訓音(하늘 천)이나 漢字語를 보고, 試驗과 같은 正字로 씁니다. 日本字나 簡體字로 쓰면 誤答입니다.',
             credit: '配定漢字: (社)韓國語文會 · 級數·訓音 資料: vera3422/hanja-study-app-for-CY (MIT) · 單語: <a href="https://github.com/ongocompany/hanjahanja-dict" target="_blank" rel="noopener">한자한자 漢字語 辭典</a> (國立國語院 우리말샘·標準國語大辭典, CC BY-SA 2.0 KR) · 筆順: KanjiVG (CC BY-SA 3.0)',
             close: '닫기', loading: '불러오는 中…', loadFail: '筆記 認識 데이터를 불러오지 못했습니다. 인터넷에 連結한 뒤 다시 열어 주십시오.',
@@ -18357,8 +18357,8 @@
                 '<div class="hj-opts">' + seg('kind', op.kind, [['c', t.kindC], ['w', t.kindW], ['b', t.kindB]]) +
                     seg('cum', op.cum ? '1' : '0', [['0', t.own], ['1', t.cum]]) + (HJ.segs ? HJ.segs(op, seg) : '') + '</div>' +
                 '<div class="hj-levels">' + cells + '</div>' +
-                '<div class="hj-go-row"><button type="button" class="home-all-btn hj-go" data-miss="0">' + hjFmt(t.go, { lv: hjLvName(op.lv, op.cum), n: Math.min(HJ.size, cur.n) }) + '</button>' +
-                    '<button type="button" class="home-all-btn hj-go hj-go-miss" data-miss="1"' + (cur.ng ? '' : ' disabled') + '>' + hjFmt(t.miss, { n: cur.ng }) + '</button></div>' +
+                '<div class="hj-go-row"><button type="button" class="home-all-btn hj-go" data-miss="0">' + hjGoLabel(hjFmt(t.go, { lv: hjLvName(op.lv, op.cum), n: Math.min(HJ.size, cur.n) })) + '</button>' +
+                    '<button type="button" class="home-all-btn hj-go hj-go-miss" data-miss="1"' + (cur.ng ? '' : ' disabled') + '>' + hjGoLabel(hjFmt(t.miss, { n: cur.ng })) + '</button></div>' +
                 '<div class="lib-info">' + t.info + '<br><span class="lib-notice">' + t.credit + '</span></div>' +
             '</div></section>';
     }
@@ -18470,7 +18470,7 @@
         return hjShuffle(pool.slice(0, HJ.size));
     }
     function hjStart() {
-        hj.items = hjPick(); hj.i = 0; hj.res = []; hj.logged = 0;
+        hj.items = hjPick(); hj.i = 0; hj.res = []; hj.tri = []; hj.logged = 0;
         if (!hj.items.length) { hjEnd(); return; }
         hjQuestion();
     }
@@ -18608,6 +18608,7 @@
         if (!skip) hjInkSave(it, hj.mark);
         hjRecord(it, ok, null);
         hj.res[hj.i] = ok ? 1 : 0;
+        (hj.tri = hj.tri || [])[hj.i] = hj.cur.tri ? 1 : 0;
         vibrateFor(ok);
         hjRender();
     }
@@ -18660,6 +18661,7 @@
         hjRecord(it, !!m.v, { fx: m.fx });
         if (m.inkT) hjInkFlip(m);
         hj.res[hj.i] = m.v;
+        (hj.tri = hj.tri || [])[hj.i] = m.tri && !m.v ? 1 : 0;
         vibrateFor(!!m.v);
         hjRender();
     }
@@ -18669,6 +18671,11 @@
         tri: '<svg class="st-ic" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1.6 L10.6 10 L1.4 10 Z"/></svg><span class="st-t">△</span>',
         ng: '<svg class="st-ic" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.4 2.4 L9.6 9.6 M9.6 2.4 L2.4 9.6"/></svg><span class="st-t">×</span>'
     };
+    // a start button: what it does, and its count ((20問題), (3)) on a small line of its own, so neither breaks mid-word
+    function hjGoLabel(s) {
+        var m = s.match(/^(.*?)\s*[(（]([^()（）]*)[)）]\s*$/);
+        return m ? '<span class="hj-go-l">' + m[1] + '</span><span class="hj-go-n">' + m[2] + '</span>' : '<span class="hj-go-l">' + s + '</span>';
+    }
     var HJ_ORDER_LAB = null;
     // the result screen without scrolling: when a long reading list (生: セイ・ショウ・い-きる…) or notes make it too tall,
     // the readings, the stroke-order drawings and the cells get smaller, one step at a time
@@ -18728,7 +18735,10 @@
     }
     function hjEnd() {
         var t = HJ.t, v = document.getElementById('hj-view'), body = v.querySelector('.hj-body'), foot = v.querySelector('.hj-foot');
-        var ok = hj.res.filter(function(x) { return x === 1; }).length, ng = hj.res.length - ok;
+        // ○, △ (the right shape, the stroke order wrong) and × in this round
+        var tr = hj.tri || [], ok = hj.res.filter(function(x) { return x === 1; }).length;
+        var tri = hj.res.filter(function(x, i) { return x !== 1 && tr[i]; }).length, ng = hj.res.length - ok - tri;
+        var markOf = function(i) { return hj.res[i] ? 'ok' : tr[i] ? 'tri' : 'ng'; };
         v.querySelector('.hj-status').textContent = hjLvName(hj.lv, hj.cum);
         // a round of 5 or more, every one ○: 花丸 (once per round)
         if (!hj.logged && hj.items.length >= 5 && hj.res.length === hj.items.length && ok === hj.items.length) { hj.logged = 1; writeLogAdd(true); }
@@ -18738,18 +18748,19 @@
             body.innerHTML = '<div class="hj-loading">' + (hj.miss ? t.noMiss : t.noItems) + '</div>';
             foot.innerHTML = '<button type="button" id="hj-done">' + t.close + '</button>';
         } else {
-            body.innerHTML = '<div class="hj-sum"><div class="hj-sum-n"><span class="ok">○ ' + ok + '</span><span class="ng">× ' + ng + '</span></div>' +
+            body.innerHTML = '<div class="hj-sum"><div class="hj-sum-n"><span class="ok">○ ' + ok + '</span>' + (tri ? '<span class="tri">△ ' + tri + '</span>' : '') + '<span class="ng">× ' + ng + '</span></div>' +
                 '<div class="hj-sum-list">' + hj.items.map(function(it, i) {
-                    return '<span class="hj-chip ' + (hj.res[i] ? 'ok' : 'ng') + '">' + hjHan(it.a) + '<i>' + (hj.res[i] ? '○' : '×') + '</i></span>';
+                    var mk = markOf(i);
+                    return '<span class="hj-chip ' + mk + '">' + hjHan(it.a) + '<i>' + (mk === 'ok' ? '○' : mk === 'tri' ? '△' : '×') + '</i></span>';
                 }).join('') + '</div></div>';
-            foot.innerHTML = '<button type="button" id="hj-done">' + t.close + '</button>' + (ng ? '<button type="button" id="hj-again-miss">' + t.againMiss + '</button>' : '') +
+            foot.innerHTML = '<button type="button" id="hj-done">' + t.close + '</button>' + (ng + tri ? '<button type="button" id="hj-again-miss">' + t.againMiss + '</button>' : '') +
                 '<button type="button" class="primary" id="hj-again">' + hjFmt(t.again, { n: HJ.size }) + '</button>';
         }
         document.getElementById('hj-done').addEventListener('click', closeHanja);
         var am = document.getElementById('hj-again-miss');
         if (am) am.addEventListener('click', function() {
             var miss = hj.items.filter(function(it, i) { return !hj.res[i]; });
-            hj.items = hjShuffle(miss); hj.i = 0; hj.res = []; hj.logged = 0; hjQuestion();
+            hj.items = hjShuffle(miss); hj.i = 0; hj.res = []; hj.tri = []; hj.logged = 0; hjQuestion();
         });
         var ag = document.getElementById('hj-again');
         if (ag) ag.addEventListener('click', function() { hj.miss = false; hjStart(); });
@@ -18774,7 +18785,7 @@
             title: '漢検 書き取り練習', sub: '日本漢字能力検定', range: '10級〜2級',
             chars: '字', words: '語', items: '問', kindC: '漢字', kindW: '単語', kindB: '両方', own: 'この級だけ', cum: '下の級も',
             pCtx: '例文', pYomi: '音・訓',
-            upTo: 'まで', go: '{lv}を練習（{n}問）', miss: '×だけ練習（{n}）',
+            upTo: 'まで', go: '{lv}を練習（{n}問）', miss: '×だけ練習（{n}問）',
             info: '日本漢字能力検定（漢検）10級〜2級の配当漢字（2020年度からの配当）と、その字で書ける単語。例文の――線のカタカナか、音・訓の読みを見て、新字体で書きます。例文がない字・語は読みで出します。',
             credit: '級: hoffmannjp/kanken-json (MIT) · 読み: KANJIDIC2・Kanjium (CC BY-SA 4.0) · 単語: JMdict・JmdictFurigana (CC BY-SA 4.0) · 例文: <a href="https://tatoeba.org/ja/" target="_blank" rel="noopener">Tatoeba</a> (CC BY 2.0 FR) · 筆順: KanjiVG (CC BY-SA 3.0)',
             close: '閉じる', loading: '読み込み中…', loadFail: '手書き判定のデータを読み込めませんでした。インターネットにつないでから開き直してください。',
