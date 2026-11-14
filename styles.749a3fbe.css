@@ -2223,6 +2223,16 @@
         .pen-mark circle, .pen-mark path { fill: none; stroke-width: 4; stroke-linecap: butt; }
         .pen-mark.ok circle { stroke: var(--mark-ok); }
         .pen-mark.ng path { stroke: var(--mark-ng); }
+        /* △: the right shape, the stroke order wrong */
+        :root { --mark-tri: #c06a00; }
+        html.dark { --mark-tri: #ffb547; }
+        .pen-mark.tri path { stroke: var(--mark-tri); stroke-linejoin: round; }
+        .kp-cell.tri { border-color: var(--mark-tri); }
+        .hj-lv-st .tri, .hj-verdict.tri { color: var(--mark-tri); }
+        .hj-verdict.tri span { display: block; margin-top: 2px; }
+        .kp-trinote { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 2px 10px; margin: 0 0 8px; font-size: 0.85rem; }
+        .kp-trinote b { color: var(--mark-tri); }
+        .kp-trinote span { color: var(--text-sub); font-size: 0.78rem; }
         .pen-mark.draw { animation: markIn 0.18s ease-out both; }
         @keyframes markIn { from { opacity: 0; transform: translate(-50%, -50%) scale(0.6); } }
         .pen-mini { position: relative; display: inline-block; width: 1.1em; height: 1em; margin-left: 2px; vertical-align: -0.1em; }

@@ -17059,7 +17059,7 @@
     // (kanjistrokes.*.js: the recogniser and KanjiVG stroke data, CC BY-SA 3.0; loaded only when a writing question
     // opens). A character is right only when the top reading is the answer's. 判定を直す overrules a misread both ways:
     // the user's word stands, and it flips the recorded result (attempt log, day, 成績表 counts, 誤答ノート).
-    var KPAD_SRC = 'kanjistrokes.193f65c3.js';
+    var KPAD_SRC = 'kanjistrokes.d07543e1.js';
     var kpadWait = null, kpadKeyboard = {};
     function kpadLoad(cb) {
         if (window.MogiKanji) { if (cb) cb(true); return; }
@@ -17135,6 +17135,32 @@
         g.stroke();
     }
 
+    // △ (the right shape, a stroke out of order or drawn backwards): those strokes drawn again over the user's writing in the
+    // △ colour, each labelled "written n → correct m" (n→m), or n↩ when drawn backwards. marks: [[user stroke, answer stroke, back], ...]
+    function kpadMarks(cv, box, marks) {
+        if (!marks || !marks.length) return;
+        var w = cv.width, h = cv.height, g = cv.getContext('2d'), cs = getComputedStyle(document.documentElement);
+        var col = cs.getPropertyValue('--mark-tri').trim() || '#c06a00', halo = cs.getPropertyValue('--surface').trim() || '#fff';
+        g.save();
+        g.strokeStyle = g.fillStyle = col; g.lineCap = 'round'; g.lineJoin = 'round'; g.lineWidth = Math.max(2, w * 0.06);
+        marks.forEach(function(m) { if (box[m[0]]) kpadPath(g, box[m[0]], w, h); });
+        var fs = Math.max(10, Math.round(w * 0.15));
+        g.font = 'bold ' + fs + 'px system-ui, -apple-system, sans-serif'; g.textBaseline = 'middle'; g.textAlign = 'center';
+        marks.forEach(function(m) {
+            var s = box[m[0]];
+            if (!s) return;
+            var lab = (m[0] + 1) + (m[2] ? '↩' : '→' + (m[1] + 1)), tw = g.measureText(lab).width;
+            var dx = s.length > 3 ? s[2] - s[0] : 1, dy = s.length > 3 ? s[3] - s[1] : 0, dl = Math.hypot(dx, dy) || 1;
+            var x = Math.max(tw / 2 + 2, Math.min(w - tw / 2 - 2, s[0] * w - dx / dl * fs * 0.9)), y = Math.max(fs / 2 + 2, Math.min(h - fs / 2 - 2, s[1] * h - dy / dl * fs * 0.9));
+            if (x + tw / 2 > w * 0.62 && y < fs * 1.7) y = fs * 1.7;     // clear of the pen mark at the top right
+            g.lineWidth = Math.max(3, fs * 0.28); g.strokeStyle = halo; g.strokeText(lab, x, y);
+            g.fillStyle = col; g.fillText(lab, x, y);
+        });
+        g.restore();
+    }
+    // the verdict line for △: lang 'ja' (漢検 pads) or 'ko' (the hanja practice, 국한문혼용)
+    function kpadTriText(lang) { return lang === 'ko' ? '筆順이 틀렸습니다' : '筆順が違います'; }
+    function kpadTriHow(lang) { return lang === 'ko' ? '表示한 劃: 쓴 順序→바른 順序 · ↩ 거꾸로 쓴 劃' : '色の画：書いた順→正しい順 ・ ↩ 逆向き'; }
     function kpadHtml(q, isAnswered, okT) {
         var ans = q.options[0].split('');
         if (!isAnswered) {
@@ -17153,26 +17179,27 @@
         }
         var rec = kpadRec(q);
         if (!rec) return '<div class="kk-answer ' + (okT ? 'ok' : 'ng') + '"><span class="kk-lab">あなたの答え</span><span class="kk-val">' + escapeHtml(userAnswers[q.id] || '') + '</span></div>';
-        var reads = rec.r.split(''), anim = justAnsweredId === q.id;
+        var reads = rec.r.split(''), anim = justAnsweredId === q.id, tri = rec.tri && !rec.tf;
         return '<div class="kp kp-done' + (rec.fx ? ' fixed' : '') + '">' +
+            (tri ? '<div class="kp-trinote"><b>△ ' + kpadTriText('ja') + '</b><span>' + kpadTriHow('ja') + '</span></div>' : '') +
             '<div class="kp-res">' + ans.map(function(c, i) {
-                var ok = rec.k[i] === 1, cand = (rec.c[i] || '').split('').filter(Boolean);
+                var ok = rec.k[i] === 1, cand = (rec.c[i] || '').split('').filter(Boolean), cl = tri && rec.tv[i] ? 'tri' : ok ? 'ok' : 'ng';
                 return '<div class="kp-col">' +
-                    '<div class="kp-cell ' + (ok ? 'ok' : 'ng') + '"><canvas data-i="' + i + '"></canvas><span class="kp-pen">' + penMark(ok ? 'ok' : 'ng', anim) + '</span></div>' +
+                    '<div class="kp-cell ' + cl + '"><canvas data-i="' + i + '"></canvas><span class="kp-pen">' + penMark(cl, anim) + '</span></div>' +
                     '<div class="kp-read"><span class="kk-lab">読み取り</span><b lang="ja">' + escapeHtml(reads[i] || '？') + '</b></div>' +
                     (cand.length ? '<div class="kp-cands"><span class="kk-lab">候補</span>' + cand.map(function(x) { return '<span lang="ja">' + escapeHtml(x) + '</span>'; }).join('') + '</div>' : '') +
                     '</div>';
             }).join('') + '</div>' +
-            (rec.fx ? '<div class="kp-fixnote">判定を直しました（読み取りは' + (rec.ok ? '○' : '×') + '）</div>' : '') +
+            (rec.fx ? '<div class="kp-fixnote">判定を直しました（読み取りは' + (rec.tri ? '△' : rec.ok ? '○' : '×') + '）</div>' : '') +
             '</div>';
     }
     function kpadAfterHtml(q, isAnswered) {
         if (!isAnswered) return '';
-        var rec = kpadRec(q), right = userAnswers[q.id] === q.options[0];
+        var rec = kpadRec(q), right = userAnswers[q.id] === q.options[0], to = right ? (rec && rec.tri ? (rec.tf ? '△' : '○') : '×') : '○';
         return '<div class="kp-order" id="kp-order"><div class="kp-order-head"><span class="kk-lab">筆順</span><button type="button" class="kp-replay" id="kp-replay">もう一度</button></div>' +
             '<div class="kp-order-row" id="kp-order-row">' + q.options[0].split('').map(function(c) { return '<div class="kp-order-cell" data-c="' + escapeHtml(c) + '"></div>'; }).join('') + '</div></div>' +
-            (rec ? '<div class="kp-fix-row"><button type="button" class="kp-fix" id="kp-fix">判定を直す（' + (right ? '×' : '○') + 'にする）</button>' +
-                '<span class="kp-fix-note">読み取りが違うときに。記録も' + (right ? '×' : '○') + 'に変わります。</span></div>' : '');
+            (rec ? '<div class="kp-fix-row"><button type="button" class="kp-fix" id="kp-fix">判定を直す（' + to + 'にする）</button>' +
+                '<span class="kp-fix-note">読み取りが違うときに。記録も' + to + 'に変わります。</span></div>' : '');
     }
     // the correct kanji, stroke by stroke (numbered), from the KanjiVG data
     // rec: the recogniser whose strokes it shows (the 漢検 pad's by default); lab: { unit, aria(ch, n), cls } for another practice's language
@@ -17206,7 +17233,11 @@
         kpadLoad(isAnswered ? function() { kpadFillOrder(); } : null);
         if (isAnswered) {
             var rec = kpadRec(q);
-            if (rec) document.querySelectorAll('.kp-cell canvas').forEach(function(cv) { kpadDraw(cv, kpadDec(rec.d[+cv.dataset.i]), 0.045); });
+            if (rec) document.querySelectorAll('.kp-cell canvas').forEach(function(cv) {
+                var bi = +cv.dataset.i, bx = kpadDec(rec.d[bi]);
+                kpadDraw(cv, bx, 0.045);
+                if (rec.tri && !rec.tf && rec.o) kpadMarks(cv, bx, rec.o[bi]);
+            });
             var rp = document.getElementById('kp-replay');
             if (rp) rp.addEventListener('click', kpadFillOrder);
             var fx = document.getElementById('kp-fix');
@@ -17305,15 +17336,20 @@
                 document.getElementById('kp-kbd').addEventListener('click', function() { kpadKeyboard[q.id] = true; loadQuestion(); });
                 return;
             }
-            var ans = q.options[0].split(''), reads = [], cands = [];
-            st.boxes.forEach(function(b) {
-                var r = b.length ? MogiKanji.recognize(b, 6) : [];
-                reads.push(r.length ? r[0].c : '？');
-                cands.push(r.slice(1, 5).map(function(x) { return x.c; }).join(''));
+            // judged against the answer (MogiKanji.judge): ○, △ (the right shape, a stroke out of order) or ×
+            var ans = q.options[0].split(''), alts = (q.alt || []).filter(function(a) { return a.length === ans.length; }), reads = [], cands = [], tv = [], o = [];
+            st.boxes.forEach(function(b, i) {
+                var j = b.length ? MogiKanji.judge(b, ans[i] + alts.map(function(a) { return a.charAt(i); }).join('')) : null;
+                reads.push(j && j.read ? j.read : '？');
+                cands.push(j ? j.cands.join('') : '');
+                tv.push(j && j.v === 't' ? 1 : 0); o.push(j && j.v === 't' ? j.marks : []);
             });
             var s = reads.join(''), right = s === q.options[0] || (q.alt || []).indexOf(s) > -1;
             var k = reads.map(function(c, i) { return right || c === ans[i] ? 1 : 0; });
-            kpadAnswer(q, s, right, { r: s, c: cands, k: k, ok: right ? 1 : 0, fx: 0, d: st.boxes.map(kpadEnc) });
+            var rec = { r: s, c: cands, k: k, ok: right ? 1 : 0, fx: 0, d: st.boxes.map(kpadEnc) };
+            // △ counts like 自信なし: right for the 正答率 and 成績表, a miss for the review (at.u on this attempt)
+            if (right && tv.indexOf(1) > -1) { rec.tri = 1; rec.tv = tv; rec.o = o; }
+            kpadAnswer(q, s, right, rec);
         });
     }
     // the same path as a typed answer (handleTypedAnswer), plus the drawing and which 成績表 counts it went into
@@ -17327,6 +17363,10 @@
         recordStats(q, ok);
         var last = attemptLog[attemptLog.length - 1];
         rec.a = val; rec.t = last && last.id === q.id ? last.t : 0;
+        if (rec.tri && last && last.id === q.id) {
+            last.u = 1; masteryMemoKey = '';
+            try { localStorage.setItem('jlptAttempts', JSON.stringify(attemptLog)); } catch (e) {}
+        }
         kpadRecs[q.id] = rec; kpadSaveRecs();
         kp = null;
         justAnsweredId = q.id;
@@ -17338,6 +17378,22 @@
     function kpadFlip(q) {
         var rec = kpadRec(q);
         if (!rec) return;
+        if (rec.tri && userAnswers[q.id] === q.options[0]) {
+            rec.tf = rec.tf ? 0 : 1; rec.fx = rec.tf;
+            for (var ti = attemptLog.length - 1; ti >= 0; ti--) {
+                var ta = attemptLog[ti];
+                if (ta.id !== q.id || ta.b !== -1 || ta.t !== rec.t) continue;
+                if (rec.tf) delete ta.u; else ta.u = 1;
+                masteryMemoKey = '';
+                try { localStorage.setItem('jlptAttempts', JSON.stringify(attemptLog)); } catch (e) {}
+                break;
+            }
+            kpadSaveRecs();
+            justAnsweredId = q.id;
+            vibrateFor(true);
+            loadQuestion();
+            return;
+        }
         var now = userAnswers[q.id] !== q.options[0], d = now ? 1 : -1, i;
         var val = now ? q.options[0] : (rec.r !== q.options[0] ? rec.r : rec.r + '（×に直した）');
         userAnswers[q.id] = val;
@@ -17911,7 +17967,7 @@
     // Progress per character and per word, in HJ.store (in backups like every jlpt* key):
     // { c: { 天: rec }, w: { '천지:天地': rec } }, rec = { l: level 0..11, s: 1/0 the last verdict, ok, ng: counts, t, fx: 1 when 판정 고치기 set it }.
     var HJ = {
-        id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.47169ab0.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
+        id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.bd9922b5.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
         lv: ['8級', '7級Ⅱ', '7級', '6級Ⅱ', '6級', '5級Ⅱ', '5級', '4級Ⅱ', '4級', '3級Ⅱ', '3級', '2級'],
         total: {"c": [50, 50, 50, 75, 75, 99, 100, 250, 250, 500, 316, 526], "w": [150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150]},
         color: '#2b5fa8', badge: '韓', pattern: ['kikkohanabishi', '#2d4f7f'],
@@ -17982,14 +18038,14 @@
     function hjInRange(l, lv, cum) { return cum ? l <= lv : l === lv; }
     // learned (last verdict ○) / missed (last verdict ×) / all, for a level and the chosen kind and range
     function hjCounts(lv, kind, cum) {
-        var o = { n: 0, ok: 0, ng: 0 };
+        var o = { n: 0, ok: 0, ng: 0, tr: 0 };
         ['c', 'w'].forEach(function(k) {
             if (kind !== 'b' && kind !== k) return;
             for (var i = 0; i <= lv; i++) if (hjInRange(i, lv, cum)) o.n += HJ.total[k][i] || 0;
             Object.keys(hjStore[k]).forEach(function(id) {
                 var r = hjStore[k][id];
                 if (!r || !hjInRange(r.l, lv, cum)) return;
-                if (r.s === 1) o.ok++; else if (r.s === 0) o.ng++;
+                if (r.s === 1) o.ok++; else if (r.s === 0) { o.ng++; if (r.tri) o.tr++; }
             });
         });
         return o;
@@ -18011,7 +18067,7 @@
             var c = hjCounts(i, op.kind, op.cum), p = c.n ? Math.round(c.ok / c.n * 100) : 0;
             return '<button type="button" class="hj-lv' + (i === op.lv ? ' on' : '') + '" data-lv="' + i + '" aria-pressed="' + (i === op.lv) + '">' +
                 '<span class="hj-lv-name">' + name + '</span><span class="hj-lv-n">' + c.n + unit + '</span>' +
-                '<span class="hj-lv-st"><span class="ok">○' + c.ok + '</span><span class="ng">×' + c.ng + '</span></span>' +
+                '<span class="hj-lv-st"><span class="ok">○' + c.ok + '</span>' + (c.tr ? '<span class="tri">△' + c.tr + '</span>' : '') + '<span class="ng">×' + (c.ng - c.tr) + '</span></span>' +
                 '<span class="day-bar"><i style="width:' + p + '%"></i></span></button>';
         }).join('');
         var cur = hjCounts(op.lv, op.kind, op.cum);
@@ -18270,6 +18326,7 @@
         var s = reads.join('');
         if (!ok && it.k === 'w' && (all.byKo[it.ko] || []).indexOf(s) > -1) notes.push(hjFmt(t.noteWord, { c: hjHan(s) }));
         hj.mark = { r: reads, c: cands, k: k, ok: ok ? 1 : 0, v: ok ? 1 : 0, fx: 0, skip: skip ? 1 : 0, notes: notes, d: hj.cur.boxes.map(kpadEnc), anim: 1 };
+        if (hj.cur.tri) { hj.mark.tri = 1; hj.mark.tv = J.map(function(j) { return j.v === 't' ? 1 : 0; }); hj.mark.o = J.map(function(j) { return j.o || []; }); }
         if (!skip) hjInkSave(it, hj.mark);
         hjRecord(it, ok, null);
         hj.res[hj.i] = ok ? 1 : 0;
@@ -18285,6 +18342,7 @@
             var ink = JSON.parse(localStorage.getItem(HJ_INK_KEY) || '[]');
             if (!Array.isArray(ink)) ink = [];
             ink.push({ s: HJ.id, a: it.a, r: m.r.join(''), c: m.c, v: m.v, d: m.d, t: Date.now() });
+            if (m.tri) ink[ink.length - 1].tr = 1;
             if (ink.length > HJ_INK_MAX) ink = ink.slice(ink.length - HJ_INK_MAX);
             localStorage.setItem(HJ_INK_KEY, JSON.stringify(ink));
             m.inkT = ink[ink.length - 1].t;
@@ -18325,11 +18383,12 @@
         m.anim = 0;
         var hunOf = function(c) { var i = all.at[c]; return i === undefined ? '' : hjHun(D.hun[i]); };
         body.innerHTML = HJ.prompt(it, true) +
-            '<div class="hj-verdict ' + (m.v ? 'ok' : 'ng') + '">' + (m.v ? t.right : m.skip ? t.skipped : t.wrong) + (m.fx ? '<span>' + hjFmt(t.fixed, { m: m.ok ? '○' : '×' }) + '</span>' : '') + '</div>' +
+            (m.tri && !m.v ? '<div class="hj-verdict tri">△ ' + kpadTriText(HJ.lang) + '<span>' + kpadTriHow(HJ.lang) + '</span></div>' :
+            '<div class="hj-verdict ' + (m.v ? 'ok' : 'ng') + '">' + (m.v ? t.right : m.skip ? t.skipped : t.wrong) + (m.fx ? '<span>' + hjFmt(t.fixed, { m: m.tri ? '△' : m.ok ? '○' : '×' }) + '</span>' : '') + '</div>') +
             (m.skip ? '' : '<div class="kp kp-done' + (m.fx ? ' fixed' : '') + '"><div class="kp-res">' + ans.map(function(c, i) {
-                var ok = m.k[i] === 1, cand = Array.from(m.c[i] || '');
+                var ok = m.k[i] === 1, cand = Array.from(m.c[i] || ''), cl = m.tri && !m.v && m.tv[i] ? 'tri' : ok ? 'ok' : 'ng';
                 return '<div class="kp-col">' +
-                    '<div class="kp-cell ' + (ok ? 'ok' : 'ng') + '"><canvas data-i="' + i + '"></canvas><span class="kp-pen">' + penMark(ok ? 'ok' : 'ng', anim) + '</span></div>' +
+                    '<div class="kp-cell ' + cl + '"><canvas data-i="' + i + '"></canvas><span class="kp-pen">' + penMark(cl, anim) + '</span></div>' +
                     '<div class="kp-read"><span class="kk-lab">' + t.read + '</span>' + hjHan(m.r[i]) + '</div>' +
                     (cand.length ? '<div class="kp-cands"><span class="kk-lab">' + t.cands + '</span>' + cand.map(function(x) { return '<span class="hj-han">' + escapeHtml(x) + '</span>'; }).join('') + '</div>' : '') +
                     '</div>';
@@ -18339,10 +18398,14 @@
                 '<span class="hj-ans-hun">' + ans.map(function(c) { return escapeHtml(hunOf(c)); }).join('　') + '</span></div>' +
             '<div class="kp-order"><div class="kp-order-head"><span class="kk-lab">' + t.order + '</span><button type="button" class="kp-replay" id="hj-replay">' + t.replay + '</button></div>' +
                 '<div class="kp-order-row" id="hj-order-row">' + ans.map(function(c) { return '<div class="kp-order-cell" data-c="' + escapeHtml(c) + '"></div>'; }).join('') + '</div></div>' +
-            (m.skip ? '' : '<div class="kp-fix-row"><button type="button" class="kp-fix" id="hj-fix">' + hjFmt(t.fix, { m: m.v ? '×' : '○' }) + '</button>' +
-                '<span class="kp-fix-note">' + hjFmt(t.fixNote, { m: m.v ? '×' : '○' }) + '</span></div>');
+            (m.skip ? '' : '<div class="kp-fix-row"><button type="button" class="kp-fix" id="hj-fix">' + hjFmt(t.fix, { m: m.v ? (m.tri ? '△' : '×') : '○' }) + '</button>' +
+                '<span class="kp-fix-note">' + hjFmt(t.fixNote, { m: m.v ? (m.tri ? '△' : '×') : '○' }) + '</span></div>');
         foot.innerHTML = '<button type="button" class="primary" id="hj-nextq">' + (hj.i + 1 < hj.items.length ? t.nextQ : t.toEnd) + '</button>';
-        body.querySelectorAll('.kp-cell canvas').forEach(function(cv) { kpadDraw(cv, kpadDec(m.d[+cv.dataset.i]), 0.045); });
+        body.querySelectorAll('.kp-cell canvas').forEach(function(cv) {
+            var bi = +cv.dataset.i, bx = kpadDec(m.d[bi]);
+            kpadDraw(cv, bx, 0.045);
+            if (m.tri && !m.v && m.o) kpadMarks(cv, bx, m.o[bi]);
+        });
         if (!HJ_ORDER_LAB) HJ_ORDER_LAB = { unit: t.strokeUnit, aria: function(c, n) { return hjFmt(t.orderAria, { c: c, n: n }); }, cls: 'hj-han' };
         var fill = function() {
             body.querySelectorAll('#hj-order-row .kp-order-cell').forEach(function(cell) { cell.innerHTML = kpadOrderSvg(cell.dataset.c, hjRec(), HJ_ORDER_LAB); });
@@ -18513,7 +18576,7 @@
             if (skip || !b.length) return { read: '？', cands: '', v: 'x' };
             if (R.judge) {
                 var j = R.judge(b, ans[i], 6), rd = j.read || '？';
-                return { read: rd, cands: (j.cands || []).map(function(x) { return x.c || x; }).filter(function(x) { return x !== rd; }).slice(0, 4).join(''), v: j.v };
+                return { read: rd, cands: (j.cands || []).map(function(x) { return x.c || x; }).filter(function(x) { return x !== rd; }).slice(0, 4).join(''), v: j.v, o: j.v === 't' ? j.marks || [] : [] };
             }
             var r = R.recognize(b, 6);
             return { read: r.length ? r[0].c : '？', cands: r.slice(1, 5).map(function(x) { return x.c; }).join(''), v: r.length && r[0].c === ans[i] ? 'o' : 'x' };
@@ -18525,6 +18588,7 @@
     function penMark(kind, animate) {
         var path = kind === 'ok'
             ? '<circle cx="22" cy="22" r="15"/>'
+            : kind === 'tri' ? '<path d="M22 6 L38 34 L6 34 Z"/>'
             : '<path d="M9 9 L35 35 M35 9 L9 35"/>';
         return '<svg class="pen-mark ' + kind + (animate ? ' draw' : '') + '" viewBox="0 0 44 44" aria-hidden="true">' + path + '</svg>';
     }
