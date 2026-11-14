@@ -11863,7 +11863,7 @@
         var todayRec = dailyStats[getTodayDateString()] || { answered: 0, correct: 0 };
         var goalPct = Math.min(100, Math.round(todayRec.answered / dailyGoal * 100));
         var streaks = computeStreaks();
-        var due = getReviewQuestionIds().length;
+        var rvToday = todaysReview(), due = rvToday.remaining.length || rvToday.more;
         var last = getLastSession();
 
         // Home, top to bottom: today (goal, week, streak, exam countdown), start / review, the garden, a row of
@@ -11877,7 +11877,7 @@
         var startBtn = last
             ? '<button id="home-resume" class="home-pill go">▶ 続きから<small>' + (isMultiLib() ? escapeHtml(getLib(last.lib).short || getLib(last.lib).title) + '・' : '') + escapeHtml(placeLabel(getLib(last.lib), last.week, last.day)) + ' ' + last.status.answered + '/' + last.status.max + '</small></button>'
             : first ? '<button id="home-start" class="home-pill go">▶ はじめる<small>' + escapeHtml(first.short || first.title) + '・' + escapeHtml(placeLabel(first, 1, 1)) + '</small></button>' : '';
-        var pills = startBtn + (due ? '<button id="home-review" class="home-pill">復習<small>' + due + '問</small></button>' : '');
+        var pills = startBtn + (due ? '<button id="home-review" class="home-pill">復習<small>' + (rvToday.remaining.length ? reviewLabel(rvToday) : '完了・もう1回分') + '</small></button>' : '');
         var hasMock = mockLibs().length > 0;
         var lastR = readOnlyEntries().slice(-1)[0];
 
@@ -12032,7 +12032,7 @@
 
         var last = getLastSession();
         var html = '<div class="home">';
-        var dueMap = dueByDay();
+        var dueMap = {};          // the due counts on each day and book are gone: 今日の復習 holds a set of the chosen size instead
         // Shelves: JLPT books, 漢検 books (lib.shelf === 'kanken') and the 読解 books, each on its own tab
         var jlptLibs = LIBRARIES.filter(function(l) { return l.shelf !== 'kanken'; }), kankenLibs = LIBRARIES.filter(function(l) { return l.shelf === 'kanken'; });
         var shelfIds = ['jlpt'].concat(kankenLibs.length ? ['kanken'] : [], READING_BOOKS.length ? ['read'] : []);
@@ -12185,6 +12185,7 @@
         markSeg('set-vibrate', getSetting('vibrate', true) ? 'on' : 'off');
         markSeg('set-timer', getSetting('showTimer', true) ? 'on' : 'off');
         markSeg('set-rep-score', getSetting('repScore', 'scaled'));
+        markSeg('set-review-day', String(reviewPerDay()));
         markSeg('set-explain', explainOn() ? 'on' : 'off');
         markSeg('set-srs-new', String(getSetting('srsNewPerDay', 20)));
         markSeg('set-srs-rev', String(getSetting('srsMaxReviews', 200)));
@@ -12255,7 +12256,7 @@
     });
     [['set-size', 'textSize', function(v) { return v; }], ['set-font', 'font', function(v) { return v; }], ['set-option-font', 'optionFont', function(v) { return v; }], ['set-furigana', 'furigana', function(v) { return v === 'on'; }],
      ['set-autonext', 'autoNext', function(v) { return v === 'on'; }], ['set-vibrate', 'vibrate', function(v) { return v === 'on'; }], ['set-timer', 'showTimer', function(v) { return v === 'on'; }],
-     ['set-explain', 'showExplain', function(v) { return v === 'on'; }], ['set-rep-score', 'repScore', function(v) { return v; }]].forEach(function(cfg) {
+     ['set-explain', 'showExplain', function(v) { return v === 'on'; }], ['set-rep-score', 'repScore', function(v) { return v; }], ['set-review-day', 'reviewPerDay', function(v) { return Number(v); }]].forEach(function(cfg) {
         document.querySelectorAll('#' + cfg[0] + ' button').forEach(function(b) {
             b.addEventListener('click', function() {
                 setSetting(cfg[1], cfg[2](b.dataset.v));
@@ -27833,11 +27834,36 @@
         });
     }
 
+    // 今日の復習: a set of the chosen size (設定 › 1日の復習: 10/20/30/50) picked each day from the questions due, wrong answers
+    // first. It stays fixed for the day so it counts down; the set grows only to its size (questions that fall due later in
+    // the day top it up), and 'もう1回分' adds another set once it is done.
+    function reviewPerDay() { var n = getSetting('reviewPerDay', 20); return [10, 20, 30, 50].indexOf(n) > -1 ? n : 20; }
+    function todaysReview(addSet) {
+        var today = getTodayDateString(), due = getReviewQuestionIds(), isDueNow = {};
+        due.forEach(function(id) { isDueNow[id] = true; });
+        var t = loadJSON('jlptReviewToday', null);
+        if (!t || t.date !== today || !Array.isArray(t.ids)) t = { date: today, ids: [], sets: 1 };
+        if (addSet) t.sets = (t.sets || 1) + 1;
+        var size = reviewPerDay() * (t.sets || 1);
+        t.ids = t.ids.filter(function(id) { return !!findQuestion(id); });
+        for (var i = t.ids.length - 1; i >= 0 && t.ids.length > size; i--) if (isDueNow[t.ids[i]]) t.ids.splice(i, 1);     // the size was lowered
+        var inSet = {};
+        t.ids.forEach(function(id) { inSet[id] = true; });
+        for (var j = 0; j < due.length && t.ids.length < size; j++) if (!inSet[due[j]]) { t.ids.push(due[j]); inSet[due[j]] = true; }
+        localStorage.setItem('jlptReviewToday', JSON.stringify(t));
+        var remaining = due.filter(function(id) { return inSet[id]; });
+        return { ids: t.ids, remaining: remaining, done: t.ids.length - remaining.length, more: due.length - remaining.length };
+    }
     var PRACTICE_SIZE = 20;
     function startReviewPractice() {
-        var ids = getReviewQuestionIds().slice(0, PRACTICE_SIZE);
+        var rv = todaysReview();
+        if (!rv.remaining.length && rv.more) rv = todaysReview(true);
+        var ids = rv.remaining;
         if (!pendingTitle) pendingTitle = '今日の復習';
         if (ids.length) startListQuiz(ids, ids[0], false, 'practice');
+    }
+    function reviewLabel(rv) {
+        return rv.remaining.length ? 'あと' + rv.remaining.length + '問' : rv.ids.length ? '今日の分 完了' : '';
     }
 
     function computeCategoryStats() {
@@ -28477,7 +28503,7 @@
         var state = computeMastery();
         var cats = computeCategoryStats();
         var weak = getWeakCategories(cats);
-        var reviewIds = getReviewQuestionIds();
+        var rvT = todaysReview(), reviewIds = rvT.remaining.length ? rvT.remaining : rvT.more ? [0] : [];
 
         // ---------- 1. Today ----------
         var goalPct = Math.min(100, Math.round(today.answered / dailyGoal * 100));
@@ -28491,7 +28517,7 @@
             '<div class="goal-controls">1日の目標 <button id="goal-minus" aria-label="目標を減らす">−</button><b style="color:var(--text-main); min-width:44px; text-align:center;">' + dailyGoal + '問</b><button id="goal-plus" aria-label="目標を増やす">＋</button></div>' +
             '</div></div>' +
             '<button class="practice-btn" id="review-btn" ' + (reviewIds.length ? '' : 'disabled') + '>' +
-            (reviewIds.length ? '今日の復習を始める（' + reviewIds.length + '問' + (reviewIds.length > PRACTICE_SIZE ? '・1回' + PRACTICE_SIZE + '問' : '') + '）' : '今日の復習はありません') +
+            (rvT.remaining.length ? '今日の復習を始める（あと' + rvT.remaining.length + '問／' + rvT.ids.length + '問）' : rvT.more ? '今日の分は完了・もう1回分復習する（' + Math.min(rvT.more, reviewPerDay()) + '問）' : '今日の復習はありません') +
             '</button></div>';
 
         // ---------- 2. Study days + calendar ----------
@@ -28944,6 +28970,16 @@
         return Object.keys(allModeMistakes).map(Number).filter(function(id) { return !!findQuestion(id); });
     }
 
+    // 誤答ノート by question type: a deck per type (内容理解 split 短文・中文・長文), each with its count, the type's overall
+    // 正答率 and a 解き直す button; tapping a deck shows only its mistakes. Every mistake carries its type's label.
+    var currentMistakeType = 'all';
+    var MX_TYPE_COLORS = { 'Kanji Reading': '#3a6fb0', 'Context': '#2b8a80', 'Paraphrases': '#6a55c2', 'Usage': '#9a6a2a', 'Grammar': '#c0612b',
+        'Composition': '#c23b6e', 'Text Grammar': '#8a3fa8', 'Comprehension:short': '#3d8b3d', 'Comprehension:mid': '#2f7a5c', 'Comprehension:long': '#5b7f1f',
+        'Kanken Reading': '#4f6d8a', 'Kanken Writing': '#7a5a8a', 'Kanken Homophone': '#8a6a4f', 'Kanken Radical': '#5f7f7f' };
+    var MX_TYPE_SUB = { 'Composition': '並べ替え' };
+    function mxTypeChip(c) {
+        return '<span class="mx-type" style="--tc:' + (MX_TYPE_COLORS[c] || '#667') + '">' + statCatName(c) + '</span>';
+    }
     function showMistakes() {
         setAnswerMode(false);
         setNav('learn', 'mistakes'); currentReviewSub = 'mistakes';
@@ -28964,6 +29000,21 @@
             mistakesContent.innerHTML = '<div class="empty-mistakes">誤答はありません。<br>間違えた問題がここに表示されます。</div>';
             return;
         }
+        // the decks: one per question type that has mistakes, the largest first
+        var decks = {}, catStats = computeCategoryStats();
+        entries.forEach(function(en) { var c = statCat(en.q); (decks[c] = decks[c] || []).push(en); });
+        var deckKeys = Object.keys(decks).sort(function(x, y) { return decks[y].length - decks[x].length || STAT_CATS.indexOf(x) - STAT_CATS.indexOf(y); });
+        if (currentMistakeType !== 'all' && !decks[currentMistakeType]) currentMistakeType = 'all';
+        var deckHtml = '<div class="mx-decks" role="group" aria-label="問題の種類">' +
+            '<button class="mx-deck mx-all' + (currentMistakeType === 'all' ? ' on' : '') + '" data-type="all" aria-pressed="' + (currentMistakeType === 'all') + '"><span class="mx-dname">すべて</span><span class="mx-dn">' + entries.length + '<small>問</small></span></button>' +
+            deckKeys.map(function(c) {
+                var st = catStats[c], acc = st && st.att ? Math.round(st.ok / st.att * 100) + '%' : '—';
+                return '<div class="mx-deck' + (currentMistakeType === c ? ' on' : '') + '" style="--tc:' + (MX_TYPE_COLORS[c] || '#667') + '">' +
+                    '<button class="mx-dpick" data-type="' + c + '" aria-pressed="' + (currentMistakeType === c) + '"><span class="mx-dname">' + statCatName(c) + (MX_TYPE_SUB[c] ? '<small>' + MX_TYPE_SUB[c] + '</small>' : '') + '</span>' +
+                    '<span class="mx-dn">' + decks[c].length + '<small>問</small></span><span class="mx-dacc">正答率 ' + acc + '</span></button>' +
+                    '<button class="mx-drill" data-type="' + c + '">解き直す</button></div>';
+            }).join('') + '</div>';
+        if (currentMistakeType !== 'all') entries = decks[currentMistakeType].slice();
         if (currentMistakeSort === 'time') {
             entries.sort(function(a, b) { return b.time - a.time; });
         } else if (currentMistakeSort === 'type') {
@@ -28995,14 +29046,30 @@
                 : '';
 
             html += '<div class="mistake-item" data-id="' + q.id + '" data-source="' + entry.source + '">' +
-                '<div class="mistake-item-header"><span>' + qWhere(q) + ' - ' + qTypeName(q) + sourceTag + '</span></div>' +
+                '<div class="mistake-item-header"><span>' + mxTypeChip(statCat(q)) + qWhere(q) + sourceTag + '</span></div>' +
                 '<div class="mistake-item-sentence">' + previewSentence(q) + '</div>' +
                 '<div class="mistake-explanation"><div>あなたの回答: ' + desc.user + '</div><div><span>正解: ' + desc.correct + '</span></div><div>' + explanation + '</div>' + rationaleHtml + '</div>' +
                 '<div class="mistake-timestamp">' + formatMistakeTime(entry.time) + '</div>' +
                 deleteBtn +
                 '</div>';
         });
-        mistakesContent.innerHTML = html;
+        mistakesContent.innerHTML = deckHtml + html;
+        var shownIds = function(source) { return entries.filter(function(en) { return en.source === source; }).map(function(en) { return en.q.id; }); };
+        mistakesContent.querySelectorAll('.mx-all, .mx-dpick').forEach(function(b) {
+            b.addEventListener('click', function() {
+                currentMistakeType = currentMistakeType === b.dataset.type ? 'all' : b.dataset.type;
+                showMistakes();
+            });
+        });
+        mistakesContent.querySelectorAll('.mx-drill').forEach(function(b) {
+            b.addEventListener('click', function() {
+                var list = decks[b.dataset.type], rep = list.filter(function(en) { return en.source !== 'all'; }).map(function(en) { return en.q.id; });
+                var all = list.filter(function(en) { return en.source === 'all'; }).map(function(en) { return en.q.id; });
+                pendingOrigin = 'learn'; pendingTitle = '誤答ノート・' + statCatName(b.dataset.type);
+                if (rep.length) startListQuiz(rep, rep[0], false, 'report');
+                else if (all.length) startListQuiz(all, all[0], false, 'allMistakes');
+            });
+        });
 
         document.querySelectorAll('.mistake-item').forEach(function(item) {
             item.addEventListener('click', function(e) {
@@ -29010,9 +29077,9 @@
                 var id = parseInt(item.dataset.id);
                 pendingOrigin = 'learn';
                 if (item.dataset.source === 'all') {
-                    startListQuiz(getAllModeMistakeIds(), id, false, 'allMistakes');
+                    startListQuiz(shownIds('all'), id, false, 'allMistakes');
                 } else {
-                    startListQuiz(getMistakeQuestions().map(function(q) { return q.id; }).concat(getRetakeMistakeIds()), id, false, 'report');
+                    startListQuiz(shownIds('report'), id, false, 'report');
                 }
             });
         });
