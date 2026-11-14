@@ -9533,21 +9533,44 @@
         var n = passageChars(orig);
         return n < 450 ? 'short' : n < 800 ? 'mid' : 'long';
     }
+    // 読解 kinds: 統合理解 (two texts A and B compared) and 情報検索 (finding information in a page: ads, notices, tables) as
+    // their own kinds; the rest by length (短文・中文・長文). A book's own section title decides first; then the texts' marks
+    // (A/B labels, 「右のページは」, a table in a non-short text of a mock test).
+    var READ_KIND_NAMES = { compare: '統合理解', search: '情報検索' };
+    var readKindMemo = {};
+    function qReadKind(q) {
+        if (q.id != null && readKindMemo[q.id]) return readKindMemo[q.id];
+        var k = qReadKindOf(q);
+        if (q.id != null) readKindMemo[q.id] = k;
+        return k;
+    }
+    function qReadKindOf(q) {
+        var orig = findQuestion(q.id) || q, lib = getLib(orig.lib || DEFAULT_LIB);
+        var unit = lib && lib.units && lib.units[orig.week - 1] ? lib.units[orig.week - 1].title || '' : '';
+        if (/統合理解/.test(unit)) return 'compare';
+        if (/情報検索/.test(unit)) return 'search';
+        var t = (orig.passage || '') + ' ' + (orig.intro || '') + ' ' + (orig.direction || '');
+        if (/ab-label/.test(t) || /[AＡ]と[BＢ]/.test(t)) return 'compare';
+        if (/右のページ|次のページ/.test(t + ' ' + (orig.sentence || ''))) return 'search';
+        var size = qSize(orig);
+        if (size !== 'short' && /notice-table|kd-tbl|<table/.test(orig.passage || '') && (!unit || /模擬試験|読解/.test(unit))) return 'search';
+        return size;
+    }
     function qTypeName(q) {
         if (!q) return '';
-        if (q.type === 'Comprehension') return '内容理解(' + SIZE_NAMES[qSize(q)] + ')';
+        if (q.type === 'Comprehension') { var k = qReadKind(q); return READ_KIND_NAMES[k] || '内容理解(' + SIZE_NAMES[k] + ')'; }
         return categoryNames[q.type] || q.type;
     }
     // Statistics categories: the question types, with 内容理解 split into 短文・中文・長文
     var STAT_CATS = [];
     Object.keys(categoryNames).forEach(function(t) {
-        if (t === 'Comprehension') STAT_CATS.push('Comprehension:short', 'Comprehension:mid', 'Comprehension:long');
+        if (t === 'Comprehension') STAT_CATS.push('Comprehension:short', 'Comprehension:mid', 'Comprehension:long', 'Comprehension:compare', 'Comprehension:search');
         else STAT_CATS.push(t);
     });
-    function statCat(q) { return q.type === 'Comprehension' ? 'Comprehension:' + qSize(q) : q.type; }
+    function statCat(q) { return q.type === 'Comprehension' ? 'Comprehension:' + qReadKind(q) : q.type; }
     function statCatName(c) {
         var parts = c.split(':');
-        return parts[1] ? '内容理解(' + SIZE_NAMES[parts[1]] + ')' : (categoryNames[c] || c);
+        return parts[1] ? (READ_KIND_NAMES[parts[1]] || '内容理解(' + SIZE_NAMES[parts[1]] + ')') : (categoryNames[c] || c);
     }
     function qWhere(q, gap) {
         gap = gap === undefined ? ' ' : gap;
@@ -27904,7 +27927,7 @@
         t.ids.forEach(function(id) { inSet[id] = true; });
         // a mix of question types: one of each type in turn (each type's own queue keeps wrong answers first, then the
         // longest ago), types taken in the order of their most urgent question; a type already in the set waits its turn.
-        // Passages: for every 20 questions at most one 長文 and three 中文; a passage counts once, and only its missed
+        // Passages: for every 20 questions at most one 長文, three 中文, one 統合理解 and one 情報検索; a passage counts once, and only its missed
         // questions come (they follow one another, so the passage is read once).
         var queues = {}, order = [];
         due.forEach(function(id) {
@@ -27913,7 +27936,7 @@
             if (!queues[c]) { queues[c] = []; order.push(c); }
             queues[c].push(id);
         });
-        var per20 = Math.ceil(size / 20), cap = { 'Comprehension:long': per20, 'Comprehension:mid': 3 * per20 };
+        var per20 = Math.ceil(size / 20), cap = { 'Comprehension:long': per20, 'Comprehension:mid': 3 * per20, 'Comprehension:compare': per20, 'Comprehension:search': per20 };
         var pkey = function(q) { return q.group || 'p' + q.id; };
         var held = {}, passages = {};
         t.ids.forEach(function(id) {
@@ -29079,7 +29102,7 @@
     // 正答率 and a 解き直す button; tapping a deck shows only its mistakes. Every mistake carries its type's label.
     var currentMistakeType = 'all';
     var MX_TYPE_COLORS = { 'Kanji Reading': '#3a6fb0', 'Context': '#2b8a80', 'Paraphrases': '#6a55c2', 'Usage': '#9a6a2a', 'Grammar': '#c0612b',
-        'Composition': '#c23b6e', 'Text Grammar': '#8a3fa8', 'Comprehension:short': '#3d8b3d', 'Comprehension:mid': '#2f7a5c', 'Comprehension:long': '#5b7f1f',
+        'Composition': '#c23b6e', 'Text Grammar': '#8a3fa8', 'Comprehension:short': '#3d8b3d', 'Comprehension:mid': '#2f7a5c', 'Comprehension:long': '#5b7f1f', 'Comprehension:compare': '#2f6f8f', 'Comprehension:search': '#7a6a1f',
         'Kanken Reading': '#4f6d8a', 'Kanken Writing': '#7a5a8a', 'Kanken Homophone': '#8a6a4f', 'Kanken Radical': '#5f7f7f' };
     var MX_TYPE_SUB = { 'Composition': '並べ替え' };
     function mxTypeChip(c) {
@@ -29110,7 +29133,7 @@
         entries.forEach(function(en) { var c = statCat(en.q); (decks[c] = decks[c] || []).push(en); });
         // the decks in groups of related types: 文字・語彙, 文法, 読解, 漢検 (each in the test's own order)
         var MX_GROUPS = [['文字・語彙', ['Kanji Reading', 'Context', 'Paraphrases', 'Usage']], ['文法', ['Grammar', 'Composition', 'Text Grammar']],
-            ['読解', ['Comprehension:short', 'Comprehension:mid', 'Comprehension:long']], ['漢検', ['Kanken Reading', 'Kanken Writing', 'Kanken Homophone', 'Kanken Radical']]];
+            ['読解', ['Comprehension:short', 'Comprehension:mid', 'Comprehension:long', 'Comprehension:compare', 'Comprehension:search']], ['漢検', ['Kanken Reading', 'Kanken Writing', 'Kanken Homophone', 'Kanken Radical']]];
         var grouped = {};
         MX_GROUPS.forEach(function(g) { g[1].forEach(function(c) { grouped[c] = true; }); });
         var others = Object.keys(decks).filter(function(c) { return !grouped[c]; });
