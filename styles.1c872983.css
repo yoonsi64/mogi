@@ -1104,6 +1104,9 @@
         .rp-random small { font-weight: normal; font-size: 0.75rem; opacity: 0.85; }
         .rp-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
         .rp-filters .seg button { font-size: 0.78rem; padding: 6px 10px; }
+        #rp-lib { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+        #rp-lib::-webkit-scrollbar { display: none; }
+        #rp-lib button { flex: none; white-space: nowrap; }
         .rp-group { margin: 16px 0 6px; font-size: 0.78rem; font-weight: bold; color: var(--text-sub); display: flex; justify-content: space-between; }
         .rp-item { width: 100%; display: flex; align-items: center; gap: 10px; padding: 11px 12px; margin-bottom: 6px; border: 1px solid var(--border-light); border-radius: var(--radius-sm, 8px); background: var(--surface); color: var(--text-main); text-align: left; cursor: pointer; font-size: 0.9rem; }
         .rp-item-main { flex: 1; min-width: 0; }

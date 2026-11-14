@@ -9537,6 +9537,7 @@
     // their own kinds; the rest by length (短文・中文・長文). A book's own section title decides first; then the texts' marks
     // (A/B labels, 「右のページは」, a table in a non-short text of a mock test).
     var READ_KIND_NAMES = { compare: '統合理解', search: '情報検索' };
+    function readKindName(k) { return READ_KIND_NAMES[k] || SIZE_NAMES[k] || ''; }
     var readKindMemo = {};
     function qReadKind(q) {
         if (q.id != null && readKindMemo[q.id]) return readKindMemo[q.id];
@@ -9561,7 +9562,8 @@
         if (q.type === 'Comprehension') { var k = qReadKind(q); return READ_KIND_NAMES[k] || '内容理解(' + SIZE_NAMES[k] + ')'; }
         return categoryNames[q.type] || q.type;
     }
-    // Statistics categories: the question types, with 内容理解 split into 短文・中文・長文
+    // Statistics categories: the question types, with 読解 split into 短文・中文・長文・統合理解・情報検索 (used by every
+    // screen that names a question's type: quiz header, 誤答ノート, ブックマーク, 統計, review, results, 読む速さ, 難易度)
     var STAT_CATS = [];
     Object.keys(categoryNames).forEach(function(t) {
         if (t === 'Comprehension') STAT_CATS.push('Comprehension:short', 'Comprehension:mid', 'Comprehension:long', 'Comprehension:compare', 'Comprehension:search');
@@ -14676,22 +14678,23 @@
     function renderDiffView() {
         if (df.mode === 'p') return renderDiffPassages();
         var v = document.getElementById('diff-view'), body = v.querySelector('.rp-body');
-        var base = quizData.filter(function(q) { return (df.lib === 'all' || q.lib === df.lib) && (df.type === 'all' || q.type === df.type); });
+        var base = quizData.filter(function(q) { return (df.lib === 'all' || q.lib === df.lib) && (df.type === 'all' || statCat(q) === df.type); });
         var counts = [0, 0, 0, 0, 0], sum = 0, rated = 0;
         base.forEach(function(q) { var d = diffOf(q); if (d) { counts[d[0] - 1]++; sum += d[0]; rated++; } });
         var max = Math.max.apply(null, counts) || 1;
         var list = base.filter(function(q) { var d = diffOf(q); return d && (!df.lv || d[0] === df.lv); });
-        var types = []; quizData.forEach(function(q) { if (types.indexOf(q.type) < 0) types.push(q.type); });
+        var seenT = {}; quizData.forEach(function(q) { seenT[statCat(q)] = true; });
+        var types = STAT_CATS.filter(function(c) { return seenT[c]; });
         var plain = function(h) { var t = document.createElement('div'); t.innerHTML = String(h || '').replace(/<rt>.*?<\/rt>/g, ''); return t.textContent; };
         body.innerHTML = diffTabsHtml() + '<div class="df-bars">' + counts.map(function(c, i) {
                 return '<button class="df-bar' + (df.lv === i + 1 ? ' on' : '') + '" data-lv="' + (i + 1) + '" style="--lv:' + DIFF_COLORS[i] + '"><span class="df-bar-col"><i style="height:' + Math.round(c / max * 100) + '%"></i></span><b>' + (i + 1) + '</b><small>' + c + '問</small></button>';
             }).join('') + '</div>' +
             '<div class="df-filters"><select class="df-lib" aria-label="教材"><option value="all">すべての教材</option>' + LIBRARIES.map(function(l) { return '<option value="' + l.id + '"' + (df.lib === l.id ? ' selected' : '') + '>' + escapeHtml(l.short || l.title) + '</option>'; }).join('') + '</select>' +
-            '<select class="df-type" aria-label="問題の種類"><option value="all">すべての種類</option>' + types.map(function(t) { return '<option value="' + t + '"' + (df.type === t ? ' selected' : '') + '>' + escapeHtml(categoryNames[t] || t) + '</option>'; }).join('') + '</select></div>' +
+            '<select class="df-type" aria-label="問題の種類"><option value="all">すべての種類</option>' + types.map(function(t) { return '<option value="' + t + '"' + (df.type === t ? ' selected' : '') + '>' + escapeHtml(statCatName(t)) + '</option>'; }).join('') + '</select></div>' +
             '<div class="df-note">1 やさしい（N2程度）〜 5 とてもむずかしい。平均 ' + (rated ? (sum / rated).toFixed(2) : '—') + '　' + (df.lv ? 'レベル' + df.lv + 'だけ表示中（もう一度タップで全部）' : 'バーをタップでレベルを選べます') + '。行をタップすると問題が開きます。</div>' +
             list.map(function(q) {
                 var d = diffOf(q), lib = getLib(q.lib), c = DIFF_COLORS[d[0] - 1];
-                var meta = escapeHtml(lib.short || lib.title) + '・' + escapeHtml(placeLabel(lib, q.week, q.day)) + '・' + escapeHtml(categoryNames[q.type] || q.type) + (q.label ? '・' + escapeHtml(plain(q.label)) : '') + '　#' + q.id;
+                var meta = escapeHtml(lib.short || lib.title) + '・' + escapeHtml(placeLabel(lib, q.week, q.day)) + '・' + escapeHtml(qTypeName(q)) + (q.label ? '・' + escapeHtml(plain(q.label)) : '') + '　#' + q.id;
                 return '<details class="df-row" data-id="' + q.id + '" style="--lv:' + c + '"><summary><span class="df-lv">' + d[0] + '</span><span class="df-main"><span class="df-meta">' + meta + '</span>' +
                     '<div class="df-q">' + escapeHtml(plain(q.sentence)) + '</div><div class="df-why">' + escapeHtml(d[1]) + '</div></span></summary><div class="df-detail"></div></details>';
             }).join('');
@@ -14741,7 +14744,7 @@
             '<div class="df-note">文章そのものの読みにくさ（語彙・文の構造・抽象度・長さ）。平均 ' + (rated ? (sum / rated).toFixed(2) : '—') + '。行をタップすると本文が開きます。</div>' +
             list.map(function(p) {
                 var d = P_DIFF[p.key], text = p.readingId ? '' : plain(p.html);
-                var meta = escapeHtml(p.libName) + '・' + escapeHtml(p.place) + (p.qs.length ? '・' + escapeHtml(categoryNames[p.qs[0].type] || p.qs[0].type) + '・問' + p.qs.length : '・読解') + (text ? '・' + text.length + '字' : '');
+                var meta = escapeHtml(p.libName) + '・' + escapeHtml(p.place) + (p.qs.length ? '・' + escapeHtml(qTypeName(p.qs[0])) + '・問' + p.qs.length : '・読解') + (text ? '・' + text.length + '字' : '');
                 return '<details class="df-row" data-key="' + escapeHtml(p.key) + '" style="--lv:' + DIFF_COLORS[d[0] - 1] + '"><summary><span class="df-lv">' + d[0] + '</span><span class="df-main"><span class="df-meta">' + meta + '</span>' +
                     '<div class="df-q">' + escapeHtml(p.readingId ? READINGS[p.readingId].title : text.slice(0, 80)) + '</div><div class="df-why">' + escapeHtml(d[1]) + '</div></span></summary><div class="df-detail"></div></details>';
             }).join('');
@@ -14861,7 +14864,7 @@
     // the question side: where it is from, the sentence, and the choices with the correct one marked
     function exrQuestionHtml(it) {
         var q = it.q, lib = getLib(q.lib), h = '';
-        var meta = escapeHtml(lib.short || lib.title) + '・' + escapeHtml(placeLabel(lib, q.week, q.day)) + '・' + escapeHtml(categoryNames[q.type] || q.type) +
+        var meta = escapeHtml(lib.short || lib.title) + '・' + escapeHtml(placeLabel(lib, q.week, q.day)) + '・' + escapeHtml(qTypeName(q)) +
             (q.label ? '・' + escapeHtml(exrPlain(q.label)) : '') + (it.blank !== null ? '・空欄' + blankNum(q, it.blank) : '') + '　#' + escapeHtml(it.key);
         h += '<div class="df-meta">' + meta + '</div>';
         var mark = function(opts, correct) {
@@ -26288,7 +26291,7 @@
         rpPassageCache = list.map(function(q) {
             var k = qDayKey(q), lib = getLib(q.lib);
             seen[k] = (seen[k] || 0) + 1;
-            return { q: q, lib: lib, size: qSize(q), chars: rpChars(q),
+            return { q: q, lib: lib, size: qReadKind(q), chars: rpChars(q),
                 label: placeLabel(lib, q.week, q.day) + (perDay[k] > 1 ? '　文章' + seen[k] : '') };
         });
         return rpPassageCache;
@@ -26310,7 +26313,7 @@
         return passageChars(q) - marks;
     }
     function rpFindPassage(id) { var ps = rpPassages(); for (var i = 0; i < ps.length; i++) if (ps[i].q.id === id) return ps[i]; return null; }
-    function rpFilter() { var f = getSetting('rpFilter', {}); return { size: ['all','short','mid','long'].includes(f.size) ? f.size : 'all', lib: f.lib === 'all' || LIBRARIES.some(function(l) { return l.id === f.lib; }) ? (f.lib || 'all') : 'all' }; }
+    function rpFilter() { var f = getSetting('rpFilter', {}); return { size: ['all','short','mid','long','compare','search'].includes(f.size) ? f.size : 'all', lib: f.lib === 'all' || LIBRARIES.some(function(l) { return l.id === f.lib; }) ? (f.lib || 'all') : 'all' }; }
     function rpFiltered() {
         var f = rpFilter();
         return rpPassages().filter(function(p) { return (f.size === 'all' || p.size === f.size) && (f.lib === 'all' || p.lib.id === f.lib); });
@@ -26423,9 +26426,9 @@
             html += '<button class="rp-random" id="rp-random"' + (pool.length ? '' : ' disabled') + '>🎲 おまかせで読む<small>' +
                 (unreadN ? 'まだ読んでいない文章（' + unreadN + '）から選びます' : '下の文章からランダムに選びます') + '</small></button>';
             html += '<div class="rp-filters"><span class="seg" id="rp-size">' +
-                [['all', 'すべて'], ['short', '短文'], ['mid', '中文'], ['long', '長文']].map(function(x) { return '<button data-v="' + x[0] + '"' + (f.size === x[0] ? ' class="active"' : '') + '>' + x[1] + '</button>'; }).join('') + '</span>' +
+                [['all', 'すべて'], ['short', '短文'], ['mid', '中文'], ['long', '長文'], ['compare', '統合理解'], ['search', '情報検索']].map(function(x) { return '<button data-v="' + x[0] + '"' + (f.size === x[0] ? ' class="active"' : '') + '>' + x[1] + '</button>'; }).join('') + '</span>' +
                 (isMultiLib() ? '<span class="seg" id="rp-lib"><button data-v="all"' + (f.lib === 'all' ? ' class="active"' : '') + '>すべての本</button>' +
-                    LIBRARIES.map(function(l) { return '<button data-v="' + l.id + '"' + (f.lib === l.id ? ' class="active"' : '') + '>' + escapeHtml(l.short || l.title) + '</button>'; }).join('') + '</span>' : '') + '</div>';
+                    LIBRARIES.filter(function(l) { return rpPassages().some(function(x) { return x.lib === l; }); }).map(function(l) { return '<button data-v="' + l.id + '"' + (f.lib === l.id ? ' class="active"' : '') + '>' + escapeHtml(l.short || l.title) + '</button>'; }).join('') + '</span>' : '') + '</div>';
             if (!pool.length) html += '<div class="rp-empty">この条件の文章はありません。</div>';
             var curLib = null;
             pool.forEach(function(p) {
@@ -26436,7 +26439,7 @@
                 }
                 var r = lastRead[p.q.id];
                 html += '<button class="rp-item" data-id="' + p.q.id + '"><span class="rp-item-main"><span class="rp-item-label">' + escapeHtml(p.label) + '</span>' +
-                    '<span class="rp-item-meta">' + SIZE_NAMES[p.size] + '・' + p.chars + '字' + (p.q.vertical ? '・縦書き' : '') + '</span></span>' +
+                    '<span class="rp-item-meta">' + readKindName(p.size) + '・' + p.chars + '字' + (p.q.vertical ? '・縦書き' : '') + '</span></span>' +
                     '<span class="rp-item-res' + (r ? ' done' : '') + '">' + (r ? '✓ ' + charsPerMin(r.chars, r.ms) + '字/分' : '未読') + '</span></button>';
             });
             body.innerHTML = html;
@@ -26459,7 +26462,7 @@
         if (rp.state === 'ready') {
             var reads = rpReadsOf(p.q.id);
             body.innerHTML = '<div class="rp-ready"><div class="rp-ready-where">' + escapeHtml(p.label) + '</div>' +
-                '<div class="rp-ready-meta">' + escapeHtml(p.lib.title) + '<br>' + SIZE_NAMES[p.size] + '・' + p.chars + '字' + (reads.length ? '・前回 ' + charsPerMin(reads[reads.length - 1].chars, reads[reads.length - 1].ms) + '字/分' : '') + '</div>' +
+                '<div class="rp-ready-meta">' + escapeHtml(p.lib.title) + '<br>' + readKindName(p.size) + '・' + p.chars + '字' + (reads.length ? '・前回 ' + charsPerMin(reads[reads.length - 1].chars, reads[reads.length - 1].ms) + '字/分' : '') + '</div>' +
                 '<div class="rp-ready-how">「読みはじめる」を押すと文章が表示され、計測が始まります。問いは出ません。<br>ふだんの試験のように、内容を理解しながら読んでください。読み終わったら「読み終わった」を押します。' +
                 (reads.length ? '<br>一度読んだ文章は内容を覚えているので、速い結果が出やすくなります。' : '') + '</div></div>';
             foot.innerHTML = '<button id="rp-back">一覧へ</button><button class="primary" id="rp-go">読みはじめる</button>';
@@ -29098,7 +29101,7 @@
         return keys.every(function(k) { var st = state[k]; return st && st.lastOk && st.streak >= 3 && st.lastT > (missT || 0); });
     }
 
-    // 誤答ノート by question type: a deck per type (内容理解 split 短文・中文・長文), each with its count, the type's overall
+    // 誤答ノート by question type: a deck per type (読解 split 短文・中文・長文・統合理解・情報検索), each with its count, the type's overall
     // 正答率 and a 解き直す button; tapping a deck shows only its mistakes. Every mistake carries its type's label.
     var currentMistakeType = 'all';
     var MX_TYPE_COLORS = { 'Kanji Reading': '#3a6fb0', 'Context': '#2b8a80', 'Paraphrases': '#6a55c2', 'Usage': '#9a6a2a', 'Grammar': '#c0612b',
