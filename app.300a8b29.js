@@ -11570,7 +11570,7 @@
     var bottomNav = document.getElementById('bottom-nav');
     var subnav = document.getElementById('subnav');
     var currentReviewSub = 'library';   // the sub-tab of 学ぶ: 'library' (教材) | 'mistakes' | 'bookmarks' (the name is from when the lists were 復習's)
-    var currentRecordsSub = 'dashboard';
+    var currentRecordsSub = 'stats';          // 記録 opens on 統計
     var pendingOrigin = 'home';      // where × returns to after a quiz started from a list
     var sessionOrigin = 'home';
     var pendingTitle = '';
@@ -11625,7 +11625,7 @@
                 ['bookmarks', 'ブックマーク', bookmarkedQuestions.length]
             ];
         } else if (tab === 'records') {
-            items = [['dashboard', '成績表'], ['stats', '統計']];
+            items = [['stats', '統計'], ['dashboard', '成績表']];
         }
         if (!items) { subnav.classList.remove('show'); subnav.innerHTML = ''; return; }
         subnav.innerHTML = items.map(function(it) {
@@ -26695,7 +26695,7 @@
         { target: '#bottom-nav [data-tab="home"]', title: 'ホーム', text: '今日の目標と「続きから」「今日の復習」、学びの庭はここにあります。' },
         { target: '#bottom-nav [data-tab="learn"]', title: '学ぶ', text: '教材から日を選んで始めます。誤答ノートとブックマークもここにあります。' },
         { target: '#bottom-nav [data-tab="words"]', title: '単語', text: '単語帳です。カードやゲームで覚えられます。' },
-        { target: '#bottom-nav [data-tab="records"]', title: '記録', text: '成績表と、学習日数・苦手分野などの統計です。' },
+        { target: '#bottom-nav [data-tab="records"]', title: '記録', text: '学習日数・苦手分野などの統計と、成績表です。' },
         { target: '#home-settings', title: '設定', text: '右上の歯車から、文字サイズ・ふりがな・テーマの変更やバックアップができます。' },
         { target: null, title: '単語を長押し', text: '問題の中の単語を長押しすると、単語帳に保存できます。' }
     ];
@@ -29108,16 +29108,28 @@
         // the decks: one per question type that has mistakes, the largest first
         var decks = {}, catStats = computeCategoryStats();
         entries.forEach(function(en) { var c = statCat(en.q); (decks[c] = decks[c] || []).push(en); });
-        var deckKeys = Object.keys(decks).sort(function(x, y) { return decks[y].length - decks[x].length || STAT_CATS.indexOf(x) - STAT_CATS.indexOf(y); });
+        // the decks in groups of related types: 文字・語彙, 文法, 読解, 漢検 (each in the test's own order)
+        var MX_GROUPS = [['文字・語彙', ['Kanji Reading', 'Context', 'Paraphrases', 'Usage']], ['文法', ['Grammar', 'Composition', 'Text Grammar']],
+            ['読解', ['Comprehension:short', 'Comprehension:mid', 'Comprehension:long']], ['漢検', ['Kanken Reading', 'Kanken Writing', 'Kanken Homophone', 'Kanken Radical']]];
+        var grouped = {};
+        MX_GROUPS.forEach(function(g) { g[1].forEach(function(c) { grouped[c] = true; }); });
+        var others = Object.keys(decks).filter(function(c) { return !grouped[c]; });
+        if (others.length) MX_GROUPS = MX_GROUPS.concat([['その他', others]]);
         if (currentMistakeType !== 'all' && !decks[currentMistakeType]) currentMistakeType = 'all';
+        var deckCard = function(c) {
+            var st = catStats[c], acc = st && st.att ? Math.round(st.ok / st.att * 100) + '%' : '—';
+            return '<div class="mx-deck' + (currentMistakeType === c ? ' on' : '') + '" style="--tc:' + (MX_TYPE_COLORS[c] || '#667') + '">' +
+                '<button class="mx-dpick" data-type="' + c + '" aria-pressed="' + (currentMistakeType === c) + '"><span class="mx-dname">' + statCatName(c) + (MX_TYPE_SUB[c] ? '<small>' + MX_TYPE_SUB[c] + '</small>' : '') + '</span>' +
+                '<span class="mx-dn">' + decks[c].length + '<small>問</small></span><span class="mx-dacc">正答率 ' + acc + '</span></button>' +
+                '<button class="mx-drill" data-type="' + c + '">解き直す</button></div>';
+        };
         var deckHtml = '<div class="mx-decks" role="group" aria-label="問題の種類">' +
             '<button class="mx-deck mx-all' + (currentMistakeType === 'all' ? ' on' : '') + '" data-type="all" aria-pressed="' + (currentMistakeType === 'all') + '"><span class="mx-dname">すべて</span><span class="mx-dn">' + entries.length + '<small>問</small></span></button>' +
-            deckKeys.map(function(c) {
-                var st = catStats[c], acc = st && st.att ? Math.round(st.ok / st.att * 100) + '%' : '—';
-                return '<div class="mx-deck' + (currentMistakeType === c ? ' on' : '') + '" style="--tc:' + (MX_TYPE_COLORS[c] || '#667') + '">' +
-                    '<button class="mx-dpick" data-type="' + c + '" aria-pressed="' + (currentMistakeType === c) + '"><span class="mx-dname">' + statCatName(c) + (MX_TYPE_SUB[c] ? '<small>' + MX_TYPE_SUB[c] + '</small>' : '') + '</span>' +
-                    '<span class="mx-dn">' + decks[c].length + '<small>問</small></span><span class="mx-dacc">正答率 ' + acc + '</span></button>' +
-                    '<button class="mx-drill" data-type="' + c + '">解き直す</button></div>';
+            MX_GROUPS.map(function(g) {
+                var here = g[1].filter(function(c) { return decks[c]; });
+                if (!here.length) return '';
+                var n = here.reduce(function(s, c) { return s + decks[c].length; }, 0);
+                return '<div class="mx-ghead">' + g[0] + '<small>' + n + '問</small></div>' + here.map(deckCard).join('');
             }).join('') + '</div>';
         if (currentMistakeType !== 'all') entries = decks[currentMistakeType].slice();
         if (currentMistakeSort === 'time') {

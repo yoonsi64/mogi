@@ -3541,3 +3541,7 @@ body.in-quiz #quiz-footer { display: flex; gap: 8px; align-items: stretch; }
 .unsure-btn { flex: none; min-width: 84px; padding: 0 12px; border: 2px dashed var(--border-light); background: var(--bg-paper); color: var(--text-sub); font-family: inherit; font-size: 0.85rem; font-weight: bold; cursor: pointer; }
 .unsure-btn[aria-pressed="true"] { border-style: solid; border-color: #d08a2a; background: color-mix(in srgb, #d08a2a 14%, var(--bg-paper)); color: #a8661a; }
 html.dark .unsure-btn[aria-pressed="true"] { color: #f0b860; }
+
+/* 誤答ノート: a heading over each group of types */
+.mx-ghead { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 6px; margin: 6px 2px -2px; font-size: 0.8rem; font-weight: bold; color: var(--text-sub); letter-spacing: 0.04em; }
+.mx-ghead small { font-weight: normal; font-size: 0.72rem; }
