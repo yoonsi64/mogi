@@ -18241,7 +18241,7 @@
     // Progress per character and per word, in HJ.store (in backups like every jlpt* key):
     // { c: { 天: rec }, w: { '천지:天地': rec } }, rec = { l: level 0..11, s: 1/0 the last verdict, ok, ng: counts, t, fx: 1 when 판정 고치기 set it }.
     var HJ = {
-        id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.65d553e1.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
+        id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.9eacb49a.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
         lv: ['8級', '7級Ⅱ', '7級', '6級Ⅱ', '6級', '5級Ⅱ', '5級', '4級Ⅱ', '4級', '3級Ⅱ', '3級', '2級'],
         total: {"c": [50, 50, 50, 75, 75, 99, 100, 250, 250, 500, 316, 526], "w": [150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150]},
         color: '#2b5fa8', badge: '韓', pattern: ['kikkohanabishi', '#2d4f7f'],
@@ -30008,6 +30008,9 @@
         badgeStamping = true;
         if (typeof welcomeView !== 'undefined' && welcomeView && getComputedStyle(welcomeView).display !== 'none') { setTimeout(nextBadgeStamp, 800); return; }
         if (document.querySelector('.omk-overlay, .omk3d')) { setTimeout(nextBadgeStamp, 800); return; }     // not over the おみくじ: wait until it is closed
+        // not over a writing pad while it takes strokes (the stamp would swallow them): shown once the pad is off screen (the answer, the round's summary)
+        var padUp = function() { return Array.prototype.some.call(document.querySelectorAll('#hj-pad, #kp-pad'), function(p) { return p.getClientRects().length > 0; }); };
+        if (padUp()) { setTimeout(nextBadgeStamp, 800); return; }
         if (!badgeQueue.length) { badgeStamping = false; return; }
         var wrap = document.createElement('div');
         wrap.className = 'badge-stamp-wrap';
@@ -30042,6 +30045,8 @@
         };
         wrap.querySelector('.badge-stamp').addEventListener('click', close);
         setTimeout(close, multi ? 2600 + Math.min(6, wrap.querySelectorAll('.bs-mi').length) * 300 : 2600);
+        // the next question's pad came up under it: out of the way at once (fading, it lets strokes through)
+        var padT = setInterval(function() { if (closed) clearInterval(padT); else if (padUp()) { clearInterval(padT); close(); } }, 150);
     }
 
     var statsResizeT = null, statsLastW = 0;
