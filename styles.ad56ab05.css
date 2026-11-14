@@ -3534,3 +3534,10 @@ html.dark .mx-drill { border-color: color-mix(in srgb, var(--tc) 55%, white); }
 .home-rv-track { display: block; height: 7px; border-radius: 4px; background: var(--track); overflow: hidden; }
 .home-rv-track i { display: block; height: 100%; border-radius: 4px; background: var(--active-blue); transition: width .3s; }
 .home-rv.done .home-rv-track i { background: #2f8f5b; }
+
+/* 自信なし beside 次の問題へ */
+body.in-quiz #quiz-footer { display: flex; gap: 8px; align-items: stretch; }
+#quiz-footer #next-btn { flex: 1; width: auto; }
+.unsure-btn { flex: none; min-width: 84px; padding: 0 12px; border: 2px dashed var(--border-light); background: var(--bg-paper); color: var(--text-sub); font-family: inherit; font-size: 0.85rem; font-weight: bold; cursor: pointer; }
+.unsure-btn[aria-pressed="true"] { border-style: solid; border-color: #d08a2a; background: color-mix(in srgb, #d08a2a 14%, var(--bg-paper)); color: #a8661a; }
+html.dark .unsure-btn[aria-pressed="true"] { color: #f0b860; }

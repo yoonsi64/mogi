@@ -9692,11 +9692,24 @@
     var dailyGoal = parseInt(localStorage.getItem('jlptDailyGoal'), 10) || 20;
     var questionShownAt = Date.now();
 
+    // 自信なし: a toggle beside 次の問題へ, kept per question while the set is open. Tapped before or after answering, it marks this
+    // showing's answers (at.u); the 正答率 and 成績表 stay as answered, the review (computeMastery) counts a 自信なし answer as a miss.
+    var unsureNow = {};
+    function markUnsure(q, on) {
+        if (on) unsureNow[q.id] = true; else delete unsureNow[q.id];
+        var changed = false;
+        attemptLog.forEach(function(at) {
+            if (at.id === q.id && at.t >= questionShownAt) { if (on) at.u = 1; else delete at.u; changed = true; }
+        });
+        if (changed) { try { localStorage.setItem('jlptAttempts', JSON.stringify(attemptLog)); } catch (e) { /* storage full */ } }
+    }
     function recordAttempt(q, blankIdx, isCorrect) {
         var now = Date.now();
         var ms = Math.max(0, Math.min(now - questionShownAt, 300000));
         var modeCode = { report: isBookmarkMode ? 'b' : 'r', all: 'a', allMistakes: 'x', practice: 'p' }[answerMode] || 'r';
-        attemptLog.push({ id: q.id, b: blankIdx, ok: isCorrect ? 1 : 0, t: now, ms: ms, m: modeCode });
+        var at = { id: q.id, b: blankIdx, ok: isCorrect ? 1 : 0, t: now, ms: ms, m: modeCode };
+        if (unsureNow[q.id]) at.u = 1;          // 自信なし: a right answer still counts for the 正答率, but the review treats it as a miss
+        attemptLog.push(at);
         if (attemptLog.length > MAX_ATTEMPTS) attemptLog.splice(0, attemptLog.length - MAX_ATTEMPTS);
         questionShownAt = now;
         var key = getTodayDateString();
@@ -11672,6 +11685,13 @@
     }
 
     document.getElementById('quiz-close').addEventListener('click', leaveQuiz);
+    document.getElementById('unsure-btn').addEventListener('click', function() {
+        var q = currentQuestions[currentIndex];
+        if (!q) return;
+        var on = this.getAttribute('aria-pressed') !== 'true';
+        this.setAttribute('aria-pressed', String(on));
+        markUnsure(q, on);
+    });
     bottomNav.querySelectorAll('button').forEach(function(b) {
         b.addEventListener('click', function() {
             var tab = b.dataset.tab;
@@ -16422,6 +16442,7 @@
 
     function startQuiz() {
         sessionStartedAt = Date.now();
+        unsureNow = {};
         var curLib = getLib(selectedLib);
         var libPrefix = isMultiLib() && !isBookmarkMode ? (curLib.short || curLib.title) + '　' : '';
         enterQuizMode(isBookmarkMode ? 'ブックマーク' : libPrefix + (selectedWeek === 'all' ? '全範囲（ランダム）'
@@ -16524,6 +16545,8 @@
     function loadQuestion() {
         if (currentQuestions.length === 0) return;
         var q = currentQuestions[currentIndex];
+        var unsureBtn = document.getElementById('unsure-btn');
+        if (unsureBtn) unsureBtn.setAttribute('aria-pressed', String(!!unsureNow[q.id]));
         var key = currentModeKey();
         var currentActiveIndex = resumeData[key] || 0;
         isReviewing = currentIndex < currentActiveIndex;
@@ -27802,9 +27825,10 @@
             var st = state[k];
             if (!st || st.seeded) st = state[k] = { attempts: 0, correct: 0, streak: 0, lastT: 0, lastOk: false };
             st.attempts++;
-            if (at.ok) { st.correct++; st.streak++; } else { st.streak = 0; }
+            var good = at.ok && !at.u;            // 自信なし: right, but not sure: the review treats it as a miss
+            if (good) { st.correct++; st.streak++; } else { st.streak = 0; }
             st.lastT = at.t;
-            st.lastOk = !!at.ok;
+            st.lastOk = !!good;
         });
         return state;
     }
@@ -29178,6 +29202,7 @@
     function startListQuiz(ids, startId, bookmarkMode, mode) {
         var index = ids.indexOf(startId);
         if (index === -1) return;
+        unsureNow = {};
         // Opened from a list in 学ぶ or from 単語: remember where the list was scrolled to, for when you come back
         // (a retry from the results screen keeps the spot the list was left at)
         if (pendingOrigin === 'review') pendingOrigin = wordlistView.style.display === 'block' ? 'words' : 'learn';      // the old 復習 tab
