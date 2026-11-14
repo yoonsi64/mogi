@@ -2,7 +2,7 @@
 // The page itself (index.html) is always asked for fresh, so updates show right away; the big script and style
 // files carry a fingerprint in their names and never change once published, so they are kept on the device and
 // served from there, and only re-downloaded when a new version has a new name.
-var ASSETS = ["hanjastrokes.47169ab0.js", "kanjistrokes.193f65c3.js", "glyphs.d5166e4c.js", "ambience.62f7f527.js", "atmos.4f977e2d.js", "app.3686741d.js", "explain.92a5579f.js", "garden.75091cb3.js", "gistsync.419c20f9.js", "omikuji.3243c2a2.js", "opening.941aac6c.js", "styles.1585b502.css", "town.5b7fc45d.js"];
+var ASSETS = ["kankenprac.a5ce6863.js", "hanjastrokes.47169ab0.js", "kanjistrokes.193f65c3.js", "glyphs.d5166e4c.js", "ambience.62f7f527.js", "atmos.4f977e2d.js", "app.1544ccf8.js", "explain.92a5579f.js", "garden.75091cb3.js", "gistsync.419c20f9.js", "omikuji.3243c2a2.js", "opening.941aac6c.js", "styles.876e5ea2.css", "town.5b7fc45d.js"];
 var CACHE = 'mogi-' + ASSETS.join('|').length + '-' + ASSETS.map(function(a) { return a.split('.')[1]; }).join('');
 var FINGERPRINTED = /\.[0-9a-f]{8}\.(js|css)$/;
 var ART = 'mogi-art-1';           // the prints: kept across app updates

@@ -1991,6 +1991,43 @@
         .hj-chip b { font-weight: normal; font-size: 1.1rem; }
         .hj-chip i { font-style: normal; font-size: 0.8rem; }
         .hj-body .kp-pad-wrap, .hj-body .kp-tools { width: min(100%, 400px); }
+        /* 漢検 書き取り練習: the second deck of the practice (Japanese forms in the app's own font; 例文 with the ――線 katakana, or 音・訓) */
+        .hj-view[lang="ja"] .hj-han, .hj-card[lang="ja"] .hj-han { font-family: inherit; }
+        .kk-sent { display: inline-block; max-width: 100%; margin-top: 8px; text-align: left; font-size: 1.3rem; line-height: 1.8; overflow-wrap: anywhere; }
+        .kk-sent u { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.3em; font-weight: bold; padding: 0 1px; }
+        .kk-yomi { font-size: 1.7rem; font-weight: bold; margin-top: 6px; line-height: 1.35; overflow-wrap: anywhere; }
+        .kk-yomi.long { font-size: 1.2rem; }
+        .kk-okuri { font-weight: normal; color: var(--text-sub); }
+        .kk-hint { margin-top: 4px; font-size: 1rem; color: var(--text-sub); }
+        .kk-pr.small .kk-sent { margin-top: 2px; font-size: 1.05rem; line-height: 1.65; }
+        .kk-pr.small .kk-yomi { margin-top: 2px; font-size: 1.15rem; }
+        .kk-pr.small .kk-hint { font-size: 0.85rem; margin-top: 0; }
+        .kk-ex { display: block; margin-top: 1px; font-size: 0.7rem; color: var(--text-sub); text-decoration: none; }
+        /* sideways (both decks): the prompt and the buttons beside the pad, as the 漢検 pad does; the pad's width comes from hjFit */
+        @media (orientation: landscape) and (max-height: 520px) {
+            .hj-body:has(> .hj-kp) { display: grid; grid-template-columns: auto minmax(0, 380px); grid-template-rows: auto auto auto 1fr; justify-content: center; align-content: start; column-gap: 20px; row-gap: 10px; }
+            .hj-body > .hj-kp { display: contents; }
+            .hj-body:has(> .hj-kp) > .hj-prompt { grid-column: 2; grid-row: 1; }
+            .hj-body .hj-kp .kp-pad-wrap { grid-column: 1; grid-row: 1 / span 4; width: 300px; margin-bottom: 4px; }
+            .hj-body .hj-kp .kp-row { grid-column: 2; grid-row: 2; justify-self: center; }
+            .hj-body .hj-kp .kp-tools { grid-column: 2; grid-row: 3; width: 100%; }
+            /* the result: the prompt across the top; what was written on the left, the answer, its stroke order and 判定を直す on the right */
+            .hj-body:has(> .kp-order) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 24px; row-gap: 4px; align-content: start; padding-top: 8px; padding-bottom: 8px; }
+            .hj-body:has(> .kp-order) > * { grid-column: 1; margin: 0; }
+            .hj-body:has(> .kp-order) > .hj-prompt { grid-column: 1 / span 2; grid-row: 1; }
+            .hj-body:has(> .kp-order) .kk-ex { display: inline; margin-left: 10px; }
+            .hj-body:has(> .kp-order) > .hj-verdict { grid-row: 2; align-self: center; }
+            .hj-body:has(> .kp-order) > .kp-done { grid-row: 3; justify-self: center; }
+            .hj-body:has(> .kp-order) > .hj-notes { grid-row: 4 / span 2; max-width: none; }
+            .hj-body:has(> .kp-order) > .hj-ans { grid-column: 2; grid-row: 2; }
+            .hj-body:has(> .kp-order) > .kp-order { grid-column: 2; grid-row: 3; padding: 6px 10px; }
+            .hj-body:has(> .kp-order) > .kp-fix-row { grid-column: 2; grid-row: 4; }
+            .hj-body:has(> .kp-order) .kp-fix-note { display: none; }
+            .hj-body:has(> .kp-order) .kp-order-head { margin-bottom: 2px; }
+            .hj-body:has(> .kp-order) .kp-order-svg { width: 72px; height: 72px; }
+            .hj-body:has(> .kp-order) .kp-cell { width: 72px; height: 72px; }
+            .hj-body:has(> .kp-order) .kp-res { gap: 10px; }
+        }
         /* 콕콕 情報検索 tables: compact enough for a phone-width reading box */
         .notice-grid.kd-tbl { width: 100%; font-size: 0.82em; line-height: 1.5; }
         .notice-grid.kd-tbl th, .notice-grid.kd-tbl td { padding: 4px 5px; white-space: nowrap; vertical-align: middle; }

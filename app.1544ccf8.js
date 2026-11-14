@@ -12106,7 +12106,7 @@
         jlptLibs.forEach(function(lib) { html += libCardHtml(lib, last, dueMap); });
         html += '</div><div class="home-shelf" data-shelf="kanken"' + (shelf === 'kanken' ? '' : ' hidden') + '>';
         kankenLibs.forEach(function(lib) { html += libCardHtml(lib, last, dueMap); });
-        html += hjCardHtml();
+        html += hjCardsHtml();
         html += '</div><div class="home-shelf" data-shelf="read"' + (shelf === 'read' ? '' : ' hidden') + '>';
         readBooks.forEach(function(b) { html += readingBookCardHtml(b); });
         html += '</div></div>';
@@ -12159,7 +12159,7 @@
                 if (nb) nb.focus({ preventScroll: true });
             });
         });
-        hjBindCard();
+        hjBindCards();
         stopQuoteRotation();
     }
 
@@ -17911,11 +17911,10 @@
     // Progress per character and per word, in HJ.store (in backups like every jlpt* key):
     // { c: { 天: rec }, w: { '천지:天地': rec } }, rec = { l: level 0..11, s: 1/0 the last verdict, ok, ng: counts, t, fx: 1 when 판정 고치기 set it }.
     var HJ = {
-        cover: 'data:image/jpeg;base64,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',
         id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.47169ab0.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
         lv: ['8級', '7級Ⅱ', '7級', '6級Ⅱ', '6級', '5級Ⅱ', '5級', '4級Ⅱ', '4級', '3級Ⅱ', '3級', '2級'],
         total: {"c": [50, 50, 50, 75, 75, 99, 100, 250, 250, 500, 316, 526], "w": [150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150]},
-        color: '#2b5fa8', badge: '韓',
+        color: '#2b5fa8', badge: '韓', pattern: ['kikkohanabishi', '#2d4f7f'],
         // 國漢文混用: Sino-Korean words in 漢字 (舊字體 only), native words, particles and endings in 한글; the 訓音 itself in 한글
         t: {
             title: '漢字 쓰기 練習', sub: '韓國語文會 漢字能力檢定試驗', range: '8級~2級',
@@ -17948,28 +17947,27 @@
     function hjFmt(s, o) { return s.replace(/\{(\w+)\}/g, function(m, k) { return o[k] !== undefined ? o[k] : m; }); }
     function hjRec() { return window[HJ.rec]; }
     function hjData() { return window[HJ.data]; }
-    var hjWait = null;
+    // each deck loads its data file once, then the recogniser it needs (d.pre, else the file's own); d.wait holds the callers meanwhile
     function hjLoad(cb) {
-        if (hjRec() && hjData()) { cb(true); return; }
-        if (!hjWait) {
-            hjWait = [];
-            var s = document.createElement('script');
-            s.src = HJ.src;
-            s.onload = function() {
-                setTimeout(function() {
-                    try { hjRec().init(); } catch (e) {}
-                    var w = hjWait; hjWait = null;
-                    w.forEach(function(f) { f(!!(hjRec() && hjData())); });
-                }, 30);
-            };
-            s.onerror = function() {
-                var w = hjWait; hjWait = null;
-                if (s.parentNode) s.parentNode.removeChild(s);
-                w.forEach(function(f) { f(false); });
-            };
-            document.head.appendChild(s);
-        }
-        hjWait.push(cb);
+        var d = HJ, ready = function() { return !!(window[d.rec] && window[d.data]); };
+        if (ready()) { cb(true); return; }
+        if (d.wait) { d.wait.push(cb); return; }
+        d.wait = [cb];
+        var done = function(ok) { var w = d.wait; d.wait = null; w.forEach(function(f) { f(ok && ready()); }); };
+        var after = function() {
+            if (d.pre) { d.pre(done); return; }
+            try { window[d.rec].init(); } catch (e) {}
+            done(true);
+        };
+        if (window[d.data]) { after(); return; }
+        var s = document.createElement('script');
+        s.src = d.src;
+        s.onload = function() { setTimeout(after, 30); };
+        s.onerror = function() {
+            if (s.parentNode) s.parentNode.removeChild(s);
+            done(false);
+        };
+        document.head.appendChild(s);
     }
     var hjStore = loadJSON(HJ.store, {});
     if (!hjStore || typeof hjStore !== 'object') hjStore = {};
@@ -17978,7 +17976,7 @@
     function hjSave() { try { localStorage.setItem(HJ.store, JSON.stringify(hjStore)); } catch (e) {} }
     function hjOpt() {
         var o = getSetting(HJ.opt, null) || {};
-        return { kind: o.kind === 'w' || o.kind === 'b' ? o.kind : 'c', cum: !!o.cum, lv: o.lv >= 0 && o.lv < HJ.lv.length ? o.lv : 0 };
+        return { kind: o.kind === 'w' || o.kind === 'b' ? o.kind : 'c', cum: !!o.cum, lv: o.lv >= 0 && o.lv < HJ.lv.length ? o.lv : 0, p: o.p === 'y' ? 'y' : 'c' };
     }
     function hjSetOpt(k, v) { var o = hjOpt(); o[k] = v; setSetting(HJ.opt, o); }
     function hjInRange(l, lv, cum) { return cum ? l <= lv : l === lv; }
@@ -17996,7 +17994,7 @@
         });
         return o;
     }
-    function hjHun(s) { return s.split('|').join(' · '); }
+    function hjHun(s) { return HJ.hun ? HJ.hun(s) : s.split('|').join(' · '); }
     function hjLvName(lv, cum) { return HJ.lv[lv] + (cum ? HJ.t.upTo : ''); }
 
     // the card (学ぶ › 教材 › 漢検)
@@ -18019,7 +18017,7 @@
         var cur = hjCounts(op.lv, op.kind, op.cum);
         return '<section class="lib-card hj-card' + (open ? ' open' : '') + '" data-lib="' + HJ.id + '" lang="' + HJ.lang + '" style="--lib-color:' + HJ.color + '">' +
             '<button class="lib-head" aria-expanded="' + open + '">' +
-                (HJ.cover ? libCoverHtml(HJ, '') : '<span class="lib-cover" aria-hidden="true"><span>' + HJ.badge + '</span></span>') +
+                (HJ.cover || HJ.pattern ? libCoverHtml(HJ, '') : '<span class="lib-cover" aria-hidden="true"><span>' + HJ.badge + '</span></span>') +
                 '<span class="lib-head-text"><span class="lib-title">' + t.title + '</span>' +
                     '<span class="lib-meta">' + t.sub + ' ' + t.range + ' · ' + nc.toLocaleString() + t.chars + ' · ' + nw.toLocaleString() + t.words + '</span>' +
                     '<span class="lib-progress"><span class="lib-progress-track"><i style="width:' + pct + '%"></i></span><span class="lib-progress-num">' + pct + '%</span></span></span>' +
@@ -18027,7 +18025,7 @@
             '</button>' +
             '<div class="lib-body">' +
                 '<div class="hj-opts">' + seg('kind', op.kind, [['c', t.kindC], ['w', t.kindW], ['b', t.kindB]]) +
-                    seg('cum', op.cum ? '1' : '0', [['0', t.own], ['1', t.cum]]) + '</div>' +
+                    seg('cum', op.cum ? '1' : '0', [['0', t.own], ['1', t.cum]]) + (HJ.segs ? HJ.segs(op, seg) : '') + '</div>' +
                 '<div class="hj-levels">' + cells + '</div>' +
                 '<div class="hj-go-row"><button type="button" class="home-all-btn hj-go" data-miss="0">' + hjFmt(t.go, { lv: hjLvName(op.lv, op.cum), n: Math.min(HJ.size, cur.n) }) + '</button>' +
                     '<button type="button" class="home-all-btn hj-go hj-go-miss" data-miss="1"' + (cur.ng ? '' : ' disabled') + '>' + hjFmt(t.miss, { n: cur.ng }) + '</button></div>' +
@@ -18035,7 +18033,7 @@
             '</div></section>';
     }
     function hjBindCard() {
-        var card = document.querySelector('.hj-card');
+        var card = document.querySelector('.hj-card[data-lib="' + HJ.id + '"]'), deck = HJ;
         if (!card) return;
         var redraw = function() {
             var y = window.scrollY, tmp = document.createElement('div');
@@ -18046,15 +18044,16 @@
         };
         card.querySelectorAll('.hj-seg button').forEach(function(b) {
             b.addEventListener('click', function() {
+                hjUse(deck);
                 var k = b.parentNode.dataset.k;
                 hjSetOpt(k, k === 'cum' ? b.dataset.v === '1' : b.dataset.v); redraw();
             });
         });
         card.querySelectorAll('.hj-lv').forEach(function(b) {
-            b.addEventListener('click', function() { hjSetOpt('lv', +b.dataset.lv); redraw(); });
+            b.addEventListener('click', function() { hjUse(deck); hjSetOpt('lv', +b.dataset.lv); redraw(); });
         });
         card.querySelectorAll('.hj-go').forEach(function(b) {
-            b.addEventListener('click', function() { openHanja(b.dataset.miss === '1'); });
+            b.addEventListener('click', function() { hjUse(deck); openHanja(b.dataset.miss === '1'); });
         });
     }
 
@@ -18079,6 +18078,7 @@
     function openHanja(missOnly) {
         rememberHomeSpot('.lib-card[data-lib="' + HJ.id + '"]');
         buildHjView();
+        hjViewFor();
         var op = hjOpt();
         hj = { lv: op.lv, kind: op.kind, cum: op.cum, miss: !!missOnly, items: null, i: 0, res: [], pid: null };
         document.getElementById('hj-view').classList.add('active');
@@ -18247,20 +18247,20 @@
     function hjHan(c) { return '<b class="hj-han">' + escapeHtml(c) + '</b>'; }
     function hjMark(skip) {
         var t = HJ.t, it = hj.items[hj.i], ans = Array.from(it.a), D = hjData(), all = hjItems(), reads = [], cands = [], notes = [];
-        hj.cur.boxes.forEach(function(b) {
-            var r = !skip && b.length ? hjRec().recognize(b, 6) : [];
-            reads.push(r.length ? r[0].c : '？');
-            cands.push(r.slice(1, 5).map(function(x) { return x.c; }).join(''));
-        });
+        var J = hjJudge(hj.cur.boxes, ans, skip);
+        J.forEach(function(j) { reads.push(j.read); cands.push(j.cands); });
+        // △: every character's shape right, a stroke order wrong (hj.cur.tri; counted apart in the record, practised again with the ×)
+        hj.cur.tri = !skip && J.every(function(j) { return j.v !== 'x'; }) && J.some(function(j) { return j.v === 't'; }) ? 1 : 0;
         var k = reads.map(function(c, i) { return c === ans[i] ? 1 : 0; });
         // the same 훈음: another character that has every 훈음 of the prompt (오를 등: 登 and 騰) answers it too
-        if (it.k === 'c' && !k[0] && all.at.hasOwnProperty(reads[0])) {
+        if (HJ.same) HJ.same(it, reads, k, notes);
+        else if (it.k === 'c' && !k[0] && all.at.hasOwnProperty(reads[0])) {
             var mine = D.hun[all.at[reads[0]]].split('|');
             if (it.hun.split('|').every(function(h) { return mine.indexOf(h) > -1; })) {
                 k[0] = 1; notes.push(hjFmt(t.noteSame, { c: hjHan(reads[0]), h: escapeHtml(hjHun(it.hun)), a: hjHan(ans[0]) }));
             }
         }
-        var ok = !skip && k.every(function(x) { return x; });
+        var ok = !skip && !hj.cur.tri && k.every(function(x) { return x; });
         // why a character is ×: a Japanese (or simplified) form of the answer, a character outside the test, or another word read the same
         reads.forEach(function(c, i) {
             if (k[i] || c === '？') return;
@@ -18301,9 +18301,12 @@
     function hjRecord(it, ok, fix) {
         var r = hjStore[it.k][it.id] || (hjStore[it.k][it.id] = { l: it.l, ok: 0, ng: 0 });
         r.l = it.l;
-        if (fix) { if (ok) { r.ok++; r.ng = Math.max(0, r.ng - 1); } else { r.ng++; r.ok = Math.max(0, r.ok - 1); } }
-        else { if (ok) r.ok++; else r.ng++; r.t = Date.now(); }
+        // a △ counts in r.tr instead of r.ng; its last verdict is a miss (s 0) marked tri
+        var miss = hj && hj.cur && hj.cur.tri ? 'tr' : 'ng';
+        if (fix) { if (ok) { r.ok++; r[miss] = Math.max(0, (r[miss] || 0) - 1); } else { r[miss] = (r[miss] || 0) + 1; r.ok = Math.max(0, r.ok - 1); } }
+        else { if (ok) r.ok++; else r[miss] = (r[miss] || 0) + 1; r.t = Date.now(); }
         r.s = ok ? 1 : 0;
+        if (!ok && miss === 'tr') r.tri = 1; else delete r.tri;
         if (fix && fix.fx) r.fx = 1; else delete r.fx;
         hjSave();
     }
@@ -18375,6 +18378,146 @@
         });
         var ag = document.getElementById('hj-again');
         if (ag) ag.addEventListener('click', function() { hj.miss = false; hjStart(); });
+    }
+
+    // ---------- 漢検 書き取り練習: the same practice for the Japanese 漢検 (日本漢字能力検定 10級–2級, 新字体) ----------
+    // A second deck for the writing practice above (its screen, records, card and pad), on the same shelf. What to write:
+    // 漢字 (one character), 単語 (a word of the level's characters, one box per character) or both; the prompt, as the learner
+    // chooses: 例文 (漢検 書き取り: a Tatoeba sentence with the target in katakana, underlined: a character's 訓 where a sentence
+    // has one, e.g. 「本をヨむ」, else the character alone or in a word) or 音・訓 (the 常用 readings 「テン・あめ／あま」, a word's
+    // kana reading). An item without a sentence is asked by its readings in both. Recognition is the 漢検 pad's: MogiKanji over
+    // all 2,136 常用漢字 (kanjistrokes.*.js, loaded through kpadLoad), so lookalikes are judged among each other.
+    // kankenprac.*.js (MogiKankenData, loaded when the practice opens) holds the levels, readings, words and sentences; its
+    // header and 設定 › 使用しているデータ credit the sources. Progress in HJ_KK.store, like the hanja practice's.
+    var HJ_KK = {
+        id: 'kanken-jp', store: 'jlptKankenPrac', ink: 'jlptKankenInk', opt: 'kankenPracOpt', src: 'kankenprac.a5ce6863.js', rec: 'MogiKanji', data: 'MogiKankenData', lang: 'ja', size: 20,
+        lv: ['10級', '9級', '8級', '7級', '6級', '5級', '4級', '3級', '準2級', '2級'],
+        total: {"c": [80, 160, 200, 202, 193, 191, 313, 284, 328, 185], "w": [150, 150, 150, 150, 150, 150, 150, 150, 150, 113]},
+        color: '#b0413e', badge: '検', pattern: ['asanoha', '#b8312f'],
+        pre: function(cb) { kpadLoad(cb); },
+        t: {
+            title: '漢検 書き取り練習', sub: '日本漢字能力検定', range: '10級〜2級',
+            chars: '字', words: '語', items: '問', kindC: '漢字', kindW: '単語', kindB: '両方', own: 'この級だけ', cum: '下の級も',
+            pCtx: '例文', pYomi: '音・訓',
+            upTo: 'まで', go: '{lv}を練習（{n}問）', miss: '×だけ練習（{n}）',
+            info: '日本漢字能力検定（漢検）10級〜2級の配当漢字（2020年度からの配当）と、その字で書ける単語。例文の――線のカタカナか、音・訓の読みを見て、新字体で書きます。例文がない字・語は読みで出します。',
+            credit: '級: hoffmannjp/kanken-json (MIT) · 読み: KANJIDIC2・Kanjium (CC BY-SA 4.0) · 単語: JMdict・JmdictFurigana (CC BY-SA 4.0) · 例文: <a href="https://tatoeba.org/ja/" target="_blank" rel="noopener">Tatoeba</a> (CC BY 2.0 FR) · 筆順: KanjiVG (CC BY-SA 3.0)',
+            close: '閉じる', loading: '読み込み中…', loadFail: '手書き判定のデータを読み込めませんでした。インターネットにつないでから開き直してください。',
+            askCtx: '――線のカタカナを漢字に直しなさい', askChar: '次の読みの漢字を書きなさい', askWord: '次の読みの語を漢字で書きなさい（{n}字）',
+            boxes: '答えの枠（{n}文字）', nth: '{n}文字目', pad: 'ここに書く',
+            undo: '一つ戻す', clear: '消す', prev: '‹ 前の字', next: '次の字 ›', prevA: '前の字', nextA: '次の字',
+            check: '答え合わせ', skip: 'わからない',
+            right: '正解', wrong: '不正解', skipped: 'わからない', fixed: '（判定を直しました・読み取りは{m}）',
+            read: '読み取り', cands: '候補', answer: '答え', order: '筆順', replay: 'もう一度',
+            fix: '判定を直す（{m}にする）', fixNote: '読み取りが違うときに。記録も{m}に変わります。',
+            nextQ: '次へ', toEnd: '結果を見る', again: '次の{n}問', againMiss: '×をもう一度', noMiss: '×の問題はありません。', noItems: 'この範囲には問題がありません。',
+            noteShin: '', jp: '', jpcn: '', noteOut: '「{c}」はこの練習の漢字ではありません。',
+            noteSame: '{c}も読みが「{h}」なので正解にしました（出題は{a}）。',
+            noteHomo: '{c}も「{h}」と読む語なので正解にしました（出題は{a}）。',
+            noteWord: '{c}：読みが同じ別の語です。',
+            hint: '例：{w}', ex: '例文：Tatoeba {id}',
+            strokeUnit: '画', orderAria: '「{c}」の筆順（{n}画）'
+        },
+        // the third choice on the card: the prompt style
+        segs: function(op, seg) { return seg('p', op.p === 'y' ? 'y' : 'c', [['c', HJ_KK.t.pCtx], ['y', HJ_KK.t.pYomi]]); },
+        // readings as text: 音 in katakana, 訓 with its okurigana after '-', 「テン・あめ／あま」
+        hun: function(s) {
+            var on = [], kun = [];
+            s.split('|').forEach(function(r) { if (/^[゠-ヿ]/.test(r)) on.push(r); else kun.push(r.replace('.', '-')); });
+            return on.concat(kun.length ? [kun.join('／')] : []).join('・');
+        },
+        // the sentence for the item, when the learner asked for 例文 and there is one: [before, katakana, after, tatoeba id]
+        cx: function(it) {
+            var D = hjData();
+            if (hjOpt().p === 'y' || !D) return null;
+            return (it.k === 'c' ? D.cxc[it.a] : D.cxw[it.id]) || null;
+        },
+        prompt: function(it, small) {
+            var t = HJ_KK.t, D = hjData(), x = HJ_KK.cx(it), cls = '"hj-prompt kk-pr' + (small ? ' small' : '') + '"';
+            if (x) {
+                return '<div class=' + cls + '><span class="hj-kind">' + t.askCtx + (it.k === 'w' ? '（' + it.a.length + '字）' : '') + '</span>' +
+                    '<div class="kk-sent">' + escapeHtml(x[0]) + '<u>' + escapeHtml(x[1]) + '</u>' + escapeHtml(x[2]) + '</div>' +
+                    (small ? '<a class="kk-ex" href="https://tatoeba.org/ja/sentences/show/' + x[3] + '" target="_blank" rel="noopener">' + hjFmt(t.ex, { id: x[3] }) + '</a>' : '') + '</div>';
+            }
+            if (it.k === 'w') {
+                return '<div class=' + cls + '><span class="hj-kind">' + hjFmt(t.askWord, { n: it.a.length }) + '</span><div class="kk-yomi">' + escapeHtml(it.ko) + '</div></div>';
+            }
+            var on = [], kun = [];
+            it.hun.split('|').forEach(function(r) {
+                if (/^[゠-ヿ]/.test(r)) on.push(escapeHtml(r));
+                else { var p = r.split('.'); kun.push(escapeHtml(p[0]) + (p[1] ? '<span class="kk-okuri">' + escapeHtml(p[1]) + '</span>' : '')); }
+            });
+            var h = D && D.hint[it.a];
+            return '<div class=' + cls + '><span class="hj-kind">' + t.askChar + '</span>' +
+                '<div class="kk-yomi' + (it.hun.length > 24 ? ' long' : '') + '">' + on.concat(kun.length ? [kun.join('／')] : []).join('・') + '</div>' +
+                (h ? '<div class="kk-hint">' + hjFmt(t.hint, { w: escapeHtml(h.split(it.a).join('○')) }) + '</div>' : '') + '</div>';
+        },
+        // asked by its readings only, another answer that fits them is right too: a character with the same readings (when
+        // no hint word narrows it down), a word read the same; a 例文 asks for the one word that fits the sentence
+        same: function(it, reads, k, notes) {
+            var D = hjData(), all = hjItems(), t = HJ_KK.t;
+            if (HJ_KK.cx(it) || k.every(function(x) { return x; })) return;
+            if (it.k === 'c') {
+                var c = reads[0];
+                if (D.hint[it.a] || !all.at.hasOwnProperty(c) || D.hun[all.at[c]] !== it.hun) return;
+                k[0] = 1; notes.push(hjFmt(t.noteSame, { c: hjHan(c), h: escapeHtml(HJ_KK.hun(it.hun)), a: hjHan(it.a) }));
+                return;
+            }
+            var s = reads.join('');
+            if ((D.homo[it.ko] || []).indexOf(s) < 0) return;
+            for (var i = 0; i < k.length; i++) k[i] = 1;
+            notes.push(hjFmt(t.noteHomo, { c: hjHan(s), h: escapeHtml(it.ko), a: hjHan(it.a) }));
+        }
+    };
+    // the decks on the shelf (漢検 first, then 韓国の漢字検定); HJ is the one in use, with its records, items and labels
+    var HJ_DECKS = [HJ_KK, HJ];
+    function hjStoreOf(d) {
+        var s = loadJSON(d.store, {});
+        if (!s || typeof s !== 'object') s = {};
+        if (!s.c || typeof s.c !== 'object') s.c = {};
+        if (!s.w || typeof s.w !== 'object') s.w = {};
+        return s;
+    }
+    // (with the drawings log, when the app keeps one (HJ_INK_KEY): each deck its own key, d.ink)
+    function hjUse(d) {
+        if (HJ === d) return;
+        var inkOn = typeof HJ_INK_KEY !== 'undefined';
+        HJ._st = { store: hjStore, all: hjAll, lab: HJ_ORDER_LAB, ink: inkOn ? HJ_INK_KEY : null };
+        var s = d._st || { store: hjStoreOf(d), all: null, lab: null, ink: d.ink || null };
+        HJ = d; hjStore = s.store; hjAll = s.all; HJ_ORDER_LAB = s.lab;
+        if (inkOn && s.ink) HJ_INK_KEY = s.ink;
+    }
+    function hjCardsHtml() {
+        var cur = HJ, h = '';
+        HJ_DECKS.forEach(function(d) { hjUse(d); h += hjCardHtml(); });
+        hjUse(cur);
+        return h;
+    }
+    function hjBindCards() {
+        var cur = HJ;
+        HJ_DECKS.forEach(function(d) { hjUse(d); hjBindCard(); });
+        hjUse(cur);
+    }
+    // the practice screen speaks the deck's language
+    function hjViewFor() {
+        var v = document.getElementById('hj-view');
+        v.setAttribute('aria-label', HJ.t.title); v.setAttribute('lang', HJ.lang); v.setAttribute('data-deck', HJ.id);
+        v.querySelector('.rp-title').textContent = HJ.t.title;
+        v.querySelector('.hj-close').setAttribute('aria-label', HJ.t.close);
+    }
+    // Judging, in one place for every deck: per box { read, cands (up to 4 others), v: 'o' or 'x', or 't' (△) when the
+    // recogniser can tell the shape is right but the stroke order is not (rec.judge(box, answer, n), when it has one) }
+    function hjJudge(boxes, ans, skip) {
+        var R = hjRec();
+        return boxes.map(function(b, i) {
+            if (skip || !b.length) return { read: '？', cands: '', v: 'x' };
+            if (R.judge) {
+                var j = R.judge(b, ans[i], 6), rd = j.read || '？';
+                return { read: rd, cands: (j.cands || []).map(function(x) { return x.c || x; }).filter(function(x) { return x !== rd; }).slice(0, 4).join(''), v: j.v };
+            }
+            var r = R.recognize(b, 6);
+            return { read: r.length ? r[0].c : '？', cands: r.slice(1, 5).map(function(x) { return x.c; }).join(''), v: r.length && r[0].c === ans[i] ? 'o' : 'x' };
+        });
     }
 
     // ---------- Red-pen marks ----------
