@@ -17327,17 +17327,30 @@
     // △ (the right shape, a stroke out of order or drawn backwards): those strokes drawn again over the user's writing in the
     // △ colour, each labelled "written n → correct m" (n→m), or n↩ when drawn backwards. marks: [[user stroke, answer stroke, back], ...]
     // A label never covers the writing: it goes in the nearest empty spot around the stroke's start (the ink, the verdict badge
-    // in the top-right corner and the labels already placed are kept clear), joined to the start by a thin line when it moved away.
+    // in the top-right corner and the labels already placed are kept clear). Each mark has its own colour (kpadMarkCols): the
+    // stroke and its label share it, so no line is needed to join them.
     // why (strict ×): the strokes concerned in the × colour, each labelled with the answer's stroke number
+    // the colours of the marks: the verdict's own first (△ amber, × red), then blue, purple, teal, pink
+    function kpadMarkCols(colVar) {
+        var cs = getComputedStyle(document.documentElement), dark = document.documentElement.classList.contains('dark');
+        var first = cs.getPropertyValue(colVar).trim() || (colVar === '--mark-ng' ? '#c92a2a' : '#c06a00');
+        return [first].concat(dark ? ['#74c0fc', '#da77f2', '#38d9a9', '#f783ac'] : ['#1c7ed6', '#9c36b5', '#099268', '#d6336c']);
+    }
+    // the strokes a list of reasons marks (one per user stroke, in order): { user stroke: colour index }
+    function kpadWhyIdx(why) {
+        var idx = {}, n = 0;
+        (why || []).forEach(function(w) { if (w.u >= 0 && idx[w.u] === undefined) idx[w.u] = n++; });
+        return idx;
+    }
     function kpadWhyMarks(cv, box, why) {
-        var seen = {}, mk = [];
-        (why || []).forEach(function(w) { if (w.u >= 0 && !seen[w.u]) { seen[w.u] = 1; mk.push([w.u, w.j, 0, String(w.j + 1)]); } });
+        var idx = kpadWhyIdx(why), mk = [];
+        Object.keys(idx).forEach(function(u) { var w = why.filter(function(x) { return String(x.u) === u; })[0]; mk[idx[u]] = [+u, w.j, 0, String(w.j + 1)]; });
         if (mk.length) kpadMarks(cv, box, mk, '--mark-ng');
     }
     function kpadMarks(cv, box, marks, colVar) {
         if (!marks || !marks.length) return;
         var w = cv.width, h = cv.height, g = cv.getContext('2d'), cs = getComputedStyle(document.documentElement);
-        var col = cs.getPropertyValue(colVar || '--mark-tri').trim() || (colVar ? '#c0392b' : '#c06a00'), halo = cs.getPropertyValue('--surface').trim() || '#fff';
+        var cols = kpadMarkCols(colVar || '--mark-tri'), halo = cs.getPropertyValue('--surface').trim() || '#fff';
         var fs = Math.max(9, Math.round(w * 0.12)), pad = Math.max(1, Math.round(fs * 0.12));
         // where the ink is (every stroke, a little wider than drawn), as a summed-area table for quick box tests
         var oc = document.createElement('canvas'); oc.width = w; oc.height = h;
@@ -17357,12 +17370,13 @@
         var badge = w * 0.2, taken = [[w - badge, 0, w, badge]];          // the verdict badge on the corner
         var hits = function(r) { return taken.some(function(t) { return r[0] < t[2] && r[2] > t[0] && r[1] < t[3] && r[3] > t[1]; }); };
         g.save();
-        g.strokeStyle = g.fillStyle = col; g.lineCap = 'round'; g.lineJoin = 'round'; g.lineWidth = Math.max(2, w * 0.06);
+        g.lineCap = 'round'; g.lineJoin = 'round'; g.lineWidth = Math.max(2, w * 0.06);
         marks = marks.filter(function(m) { return m[3] || m[0] !== m[1] || m[2]; });
-        marks.forEach(function(m) { if (box[m[0]]) kpadPath(g, box[m[0]], w, h); });
+        var colOf = function(i) { return cols[i % cols.length]; };
+        marks.forEach(function(m, i) { if (box[m[0]]) { g.strokeStyle = g.fillStyle = colOf(i); kpadPath(g, box[m[0]], w, h); } });
         g.font = 'bold ' + fs + 'px system-ui, -apple-system, sans-serif'; g.textBaseline = 'middle'; g.textAlign = 'center';
-        marks.forEach(function(m) {
-            var s = box[m[0]];
+        marks.forEach(function(m, mi) {
+            var s = box[m[0]], col = colOf(mi);
             if (!s || (m[0] === m[1] && !m[2] && !m[3])) return;           // written in its own place: nothing to show
             var lab = m[3] || (m[0] + 1) + (m[2] ? '↩' : '→' + (m[1] + 1)), tw = g.measureText(lab).width, hw = tw / 2 + pad, hh = fs / 2 + pad;
             var sx = s[0] * w, sy = s[1] * h;
@@ -17381,21 +17395,15 @@
             }
             if (!best) return;
             taken.push(best.rc);
-            if (best.d > fs * 1.3) {
-                // moved away: a dot where the stroke starts and a thin line to the label
-                var ex = Math.max(best.rc[0], Math.min(best.rc[2], sx)), ey = Math.max(best.rc[1], Math.min(best.rc[3], sy));
-                g.lineWidth = Math.max(1, w * 0.008); g.strokeStyle = col; g.globalAlpha = 0.8;
-                g.beginPath(); g.moveTo(sx, sy); g.lineTo(ex, ey); g.stroke(); g.globalAlpha = 1;
-                g.beginPath(); g.arc(sx, sy, Math.max(2, w * 0.022), 0, Math.PI * 2); g.fill();
-            }
             g.lineWidth = Math.max(3, fs * 0.28); g.strokeStyle = halo; g.strokeText(lab, best.x, best.y);
             g.fillStyle = col; g.fillText(lab, best.x, best.y);
         });
         g.restore();
     }
     // why a drawing of the right shape is still ×: lang 'ja' or 'ko' (국한문혼용); plain text
-    function kpadWhyText(w, lang) {
+    function kpadWhyText(w, lang, col) {
         var j = w.j + 1, b = w.b + 1, ko = lang === 'ko';
+        if (col) j = '<b class="kp-mk" style="color:' + col + '">' + j + '</b>';
         switch (w.k) {
             case 'n': return ko ? '劃數가 다릅니다 (쓴 劃數 ' + w.n + ' · 바른 劃數 ' + w.m + ')' : '画数が違います（書いた画数 ' + w.n + '・正しい画数 ' + w.m + '）';
             case 'long': return ko ? j + '劃이 너무 깁니다' : j + '画目が長すぎます';
@@ -17406,10 +17414,18 @@
         }
         return '';
     }
-    function kpadWhyHtml(why, lang) {
-        if (!why || !why.length) return '';
+    // one reason as HTML, the marked stroke's number in the colour its mark has on the drawing
+    function kpadWhyLine(w, why, lang) {
+        var idx = kpadWhyIdx(why), cols = kpadMarkCols('--mark-ng'), i = idx[w.u];
+        return kpadWhyText(w, lang, i === undefined ? null : cols[i % cols.length]);
+    }
+    // boxes: the reasons per character (a list, or 0 when that character has none)
+    function kpadWhyHtml(boxes, lang) {
+        var lines = [];
+        (boxes || []).forEach(function(why) { (why || []).forEach(function(w) { lines.push(kpadWhyLine(w, why, lang)); }); });
+        if (!lines.length) return '';
         return '<div class="kp-whynote"><b>× ' + (lang === 'ko' ? '쓰는 法이 다릅니다' : '書き方が違います') + '</b>' +
-            why.map(function(w) { return '<span>' + escapeHtml(kpadWhyText(w, lang)) + '</span>'; }).join('') + '</div>';
+            lines.map(function(x) { return '<span>' + x + '</span>'; }).join('') + '</div>';
     }
     // the verdict line for △: lang 'ja' (漢検 pads) or 'ko' (the hanja practice, 국한문혼용)
     function kpadTriText(lang) { return lang === 'ko' ? '筆順이 틀렸습니다' : '筆順が違います'; }
@@ -17435,7 +17451,7 @@
         var reads = rec.r.split(''), anim = justAnsweredId === q.id, tri = rec.tri && !rec.tf;
         return '<div class="kp kp-done' + (rec.fx ? ' fixed' : '') + '">' +
             (tri ? '<div class="kp-trinote"><b>△ ' + kpadTriText('ja') + '</b><span>' + kpadTriHow('ja') + '</span></div>' : '') +
-            (rec.w && !rec.fx ? kpadWhyHtml([].concat.apply([], rec.w.map(function(w) { return w || []; })), 'ja') : '') +
+            (rec.w && !rec.fx ? kpadWhyHtml(rec.w, 'ja') : '') +
             '<div class="kp-res">' + ans.map(function(c, i) {
                 var ok = rec.k[i] === 1, cand = (rec.c[i] || '').split('').filter(Boolean), cl = tri && rec.tv[i] ? 'tri' : ok ? 'ok' : 'ng';
                 return '<div class="kp-col">' +
@@ -18567,7 +18583,7 @@
         hj.cur.tri = !skip && J.every(function(j) { return j.v !== 'x'; }) && J.some(function(j) { return j.v === 't'; }) ? 1 : 0;
         // strict: the right shape written wrongly (stroke count, length, passing through) is ×, with the reasons
         var k = reads.map(function(c, i) { return c === ans[i] && !J[i].w ? 1 : 0; });
-        J.forEach(function(j) { (j.w || []).forEach(function(w) { notes.push(escapeHtml(kpadWhyText(w, HJ.lang))); }); });
+        J.forEach(function(j) { (j.w || []).forEach(function(w) { notes.push(kpadWhyLine(w, j.w, HJ.lang)); }); });
         var readsS = reads.map(function(c, i) { return J[i].w ? '？' : c; });     // a strict × never passes as another reading
         // the same 훈음: another character that has every 훈음 of the prompt (오를 등: 登 and 騰) answers it too
         if (HJ.same) HJ.same(it, readsS, k, notes);
