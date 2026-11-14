@@ -1932,7 +1932,7 @@
         .kp-msg { font-size: 0.8rem; color: var(--incorrect-color); text-align: center; }
         .kp-msg:empty { display: none; }
         .kp-kbd { display: block; margin: 6px auto 0; background: none; border: none; color: var(--active-blue); text-decoration: underline; font-size: 0.8rem; cursor: pointer; }
-        .kp-res { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+        .kp-res { display: flex; gap: 14px 22px; justify-content: center; flex-wrap: wrap; padding-top: 6px; }
         .kp-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
         .kp-cell { position: relative; width: 104px; height: 104px; border: 1.5px solid var(--kp-line); border-radius: var(--radius-sm, 8px); background-color: var(--surface);
             background-image: repeating-linear-gradient(to right, var(--kp-guide) 0 5px, transparent 5px 9px), repeating-linear-gradient(to bottom, var(--kp-guide) 0 5px, transparent 5px 9px);
@@ -1940,7 +1940,10 @@
         .kp-cell.ok { border-color: var(--correct-color); }
         .kp-cell.ng { border-color: var(--incorrect-color); }
         .kp-cell canvas { width: 100%; height: 100%; display: block; }
-        .kp-pen { position: absolute; right: -10px; top: -10px; width: 44px; height: 44px; font-size: 18px; pointer-events: none; }
+        .kp-pen { position: absolute; right: -14px; top: -14px; width: 30px; height: 30px; border-radius: 50%; background: var(--surface); box-shadow: 0 0 0 1.5px var(--kp-line); font-size: 11px; pointer-events: none; z-index: 1; }
+        .kp-cell.ok .kp-pen { box-shadow: 0 0 0 1.5px var(--correct-color); }
+        .kp-cell.ng .kp-pen { box-shadow: 0 0 0 1.5px var(--incorrect-color); }
+        .kp-cell.tri .kp-pen { box-shadow: 0 0 0 1.5px var(--mark-tri); }
         .kp-done.fixed .kp-pen { opacity: 0.45; }
         .kp-read { display: flex; align-items: baseline; gap: 6px; }
         .kp-read b { font-size: 1.5rem; font-weight: normal; font-family: var(--mincho, serif); line-height: 1.2; }
@@ -2262,6 +2265,9 @@
         .hj-verdict.tri span { display: block; margin-top: 2px; }
         .kp-trinote { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 2px 10px; margin: 0 0 8px; font-size: 0.85rem; }
         .kp-trinote b { color: var(--mark-tri); }
+        .kp-whynote { display: flex; flex-direction: column; align-items: center; gap: 2px; margin: 0 0 8px; font-size: 0.85rem; }
+        .kp-whynote b { color: var(--mark-ng); }
+        .kp-whynote span { color: var(--text-sub); font-size: 0.8rem; }
         .kp-trinote span { color: var(--text-sub); font-size: 0.78rem; }
         .pen-mark.draw { animation: markIn 0.18s ease-out both; }
         @keyframes markIn { from { opacity: 0; transform: translate(-50%, -50%) scale(0.6); } }

@@ -9878,7 +9878,7 @@
     }
 
     // ---------- 学びの庭: active study time ----------
-    // Stricter than 学習時間 above: it counts only while a question, reading, mock test or 単語帳 game is open,
+    // Stricter than 学習時間 above: it counts only while a question, reading, mock test, 単語帳 game or 書き取り練習 is open,
     // and you touched something in the last 90 s (150 s while reading), or audio / 読み上げ is playing.
     // Each device keeps its own record (jlptStudyTime_<device>), so studying on two devices adds up instead of
     // one copy replacing the other when they sync; the garden adds all of them together.
@@ -9900,6 +9900,7 @@
         if (ar && ar.classList.contains('active')) return 'read';
         var fv = document.getElementById('flash-view');
         if (fv && fv.classList.contains('active')) return 'quiz';
+        if (typeof hjOpen === 'function' && hjOpen()) return 'quiz';      // 書き取り練習: time only, never answers
         return null;
     }
     function studyMediaPlaying() {
@@ -17247,7 +17248,7 @@
     // (kanjistrokes.*.js: the recogniser and KanjiVG stroke data, CC BY-SA 3.0; loaded only when a writing question
     // opens). A character is right only when the top reading is the answer's. 判定を直す overrules a misread both ways:
     // the user's word stands, and it flips the recorded result (attempt log, day, 成績表 counts, 誤答ノート).
-    var KPAD_SRC = 'kanjistrokes.d07543e1.js';
+    var KPAD_SRC = 'kanjistrokes.305d3032.js';
     var kpadWait = null, kpadKeyboard = {};
     function kpadLoad(cb) {
         if (window.MogiKanji) { if (cb) cb(true); return; }
@@ -17325,26 +17326,90 @@
 
     // △ (the right shape, a stroke out of order or drawn backwards): those strokes drawn again over the user's writing in the
     // △ colour, each labelled "written n → correct m" (n→m), or n↩ when drawn backwards. marks: [[user stroke, answer stroke, back], ...]
-    function kpadMarks(cv, box, marks) {
+    // A label never covers the writing: it goes in the nearest empty spot around the stroke's start (the ink, the verdict badge
+    // in the top-right corner and the labels already placed are kept clear), joined to the start by a thin line when it moved away.
+    // why (strict ×): the strokes concerned in the × colour, each labelled with the answer's stroke number
+    function kpadWhyMarks(cv, box, why) {
+        var seen = {}, mk = [];
+        (why || []).forEach(function(w) { if (w.u >= 0 && !seen[w.u]) { seen[w.u] = 1; mk.push([w.u, w.j, 0, String(w.j + 1)]); } });
+        if (mk.length) kpadMarks(cv, box, mk, '--mark-ng');
+    }
+    function kpadMarks(cv, box, marks, colVar) {
         if (!marks || !marks.length) return;
         var w = cv.width, h = cv.height, g = cv.getContext('2d'), cs = getComputedStyle(document.documentElement);
-        var col = cs.getPropertyValue('--mark-tri').trim() || '#c06a00', halo = cs.getPropertyValue('--surface').trim() || '#fff';
+        var col = cs.getPropertyValue(colVar || '--mark-tri').trim() || (colVar ? '#c0392b' : '#c06a00'), halo = cs.getPropertyValue('--surface').trim() || '#fff';
+        var fs = Math.max(9, Math.round(w * 0.12)), pad = Math.max(1, Math.round(fs * 0.12));
+        // where the ink is (every stroke, a little wider than drawn), as a summed-area table for quick box tests
+        var oc = document.createElement('canvas'); oc.width = w; oc.height = h;
+        var og = oc.getContext('2d');
+        og.strokeStyle = og.fillStyle = '#000'; og.lineCap = 'round'; og.lineJoin = 'round'; og.lineWidth = Math.max(2, w * 0.06) + pad * 2;
+        box.forEach(function(s) { kpadPath(og, s, w, h); });
+        var px = og.getImageData(0, 0, w, h).data, sat = new Int32Array((w + 1) * (h + 1));
+        for (var y = 0; y < h; y++) {
+            var row = 0;
+            for (var x = 0; x < w; x++) { row += px[(y * w + x) * 4 + 3] > 40 ? 1 : 0; sat[(y + 1) * (w + 1) + x + 1] = sat[y * (w + 1) + x + 1] + row; }
+        }
+        var inkIn = function(x0, y0, x1, y1) {
+            x0 = Math.max(0, Math.floor(x0)); y0 = Math.max(0, Math.floor(y0)); x1 = Math.min(w, Math.ceil(x1)); y1 = Math.min(h, Math.ceil(y1));
+            if (x1 <= x0 || y1 <= y0) return 0;
+            return sat[y1 * (w + 1) + x1] - sat[y0 * (w + 1) + x1] - sat[y1 * (w + 1) + x0] + sat[y0 * (w + 1) + x0];
+        };
+        var badge = w * 0.2, taken = [[w - badge, 0, w, badge]];          // the verdict badge on the corner
+        var hits = function(r) { return taken.some(function(t) { return r[0] < t[2] && r[2] > t[0] && r[1] < t[3] && r[3] > t[1]; }); };
         g.save();
         g.strokeStyle = g.fillStyle = col; g.lineCap = 'round'; g.lineJoin = 'round'; g.lineWidth = Math.max(2, w * 0.06);
+        marks = marks.filter(function(m) { return m[3] || m[0] !== m[1] || m[2]; });
         marks.forEach(function(m) { if (box[m[0]]) kpadPath(g, box[m[0]], w, h); });
-        var fs = Math.max(10, Math.round(w * 0.15));
         g.font = 'bold ' + fs + 'px system-ui, -apple-system, sans-serif'; g.textBaseline = 'middle'; g.textAlign = 'center';
         marks.forEach(function(m) {
             var s = box[m[0]];
-            if (!s) return;
-            var lab = (m[0] + 1) + (m[2] ? '↩' : '→' + (m[1] + 1)), tw = g.measureText(lab).width;
-            var dx = s.length > 3 ? s[2] - s[0] : 1, dy = s.length > 3 ? s[3] - s[1] : 0, dl = Math.hypot(dx, dy) || 1;
-            var x = Math.max(tw / 2 + 2, Math.min(w - tw / 2 - 2, s[0] * w - dx / dl * fs * 0.9)), y = Math.max(fs / 2 + 2, Math.min(h - fs / 2 - 2, s[1] * h - dy / dl * fs * 0.9));
-            if (x + tw / 2 > w * 0.62 && y < fs * 1.7) y = fs * 1.7;     // clear of the pen mark at the top right
-            g.lineWidth = Math.max(3, fs * 0.28); g.strokeStyle = halo; g.strokeText(lab, x, y);
-            g.fillStyle = col; g.fillText(lab, x, y);
+            if (!s || (m[0] === m[1] && !m[2] && !m[3])) return;           // written in its own place: nothing to show
+            var lab = m[3] || (m[0] + 1) + (m[2] ? '↩' : '→' + (m[1] + 1)), tw = g.measureText(lab).width, hw = tw / 2 + pad, hh = fs / 2 + pad;
+            var sx = s[0] * w, sy = s[1] * h;
+            var dx = s.length > 3 ? s[2] - s[0] : 1, dy = s.length > 3 ? s[3] - s[1] : 0, dl = Math.hypot(dx, dy) || 1, a0 = Math.atan2(-dy / dl, -dx / dl);
+            var best = null;
+            for (var r = fs * 0.75; r < Math.max(w, h) * 1.2 && !(best && best.ink === 0); r += fs * 0.3) {
+                for (var k = 0; k < 24; k++) {
+                    var an = a0 + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * Math.PI / 12;
+                    var x = Math.max(hw, Math.min(w - hw, sx + Math.cos(an) * r)), y = Math.max(hh, Math.min(h - hh, sy + Math.sin(an) * r));
+                    var rc = [x - hw, y - hh, x + hw, y + hh];
+                    if (hits(rc)) continue;
+                    var ink = inkIn(rc[0], rc[1], rc[2], rc[3]), d = Math.hypot(x - sx, y - sy);
+                    if (!best || ink < best.ink || (ink === best.ink && d < best.d)) best = { x: x, y: y, ink: ink, d: d, rc: rc };
+                    if (ink === 0) break;
+                }
+            }
+            if (!best) return;
+            taken.push(best.rc);
+            if (best.d > fs * 1.3) {
+                // moved away: a dot where the stroke starts and a thin line to the label
+                var ex = Math.max(best.rc[0], Math.min(best.rc[2], sx)), ey = Math.max(best.rc[1], Math.min(best.rc[3], sy));
+                g.lineWidth = Math.max(1, w * 0.008); g.strokeStyle = col; g.globalAlpha = 0.8;
+                g.beginPath(); g.moveTo(sx, sy); g.lineTo(ex, ey); g.stroke(); g.globalAlpha = 1;
+                g.beginPath(); g.arc(sx, sy, Math.max(2, w * 0.022), 0, Math.PI * 2); g.fill();
+            }
+            g.lineWidth = Math.max(3, fs * 0.28); g.strokeStyle = halo; g.strokeText(lab, best.x, best.y);
+            g.fillStyle = col; g.fillText(lab, best.x, best.y);
         });
         g.restore();
+    }
+    // why a drawing of the right shape is still ×: lang 'ja' or 'ko' (국한문혼용); plain text
+    function kpadWhyText(w, lang) {
+        var j = w.j + 1, b = w.b + 1, ko = lang === 'ko';
+        switch (w.k) {
+            case 'n': return ko ? '劃數가 다릅니다 (쓴 劃數 ' + w.n + ' · 바른 劃數 ' + w.m + ')' : '画数が違います（書いた画数 ' + w.n + '・正しい画数 ' + w.m + '）';
+            case 'long': return ko ? j + '劃이 너무 깁니다' : j + '画目が長すぎます';
+            case 'short': return ko ? j + '劃이 너무 짧습니다' : j + '画目が短すぎます';
+            case 'pair': return ko ? j + '劃은 ' + b + '劃보다 짧게 씁니다' : j + '画目は' + b + '画目より短く書きます';
+            case 'thru': return ko ? j + '劃이 ' + b + '劃 밖으로 나왔습니다' : j + '画目が' + b + '画目から突き出ています';
+            case 'reach': return ko ? j + '劃은 ' + b + '劃을 뚫고 나가게 씁니다' : j + '画目は' + b + '画目を突き抜けて書きます';
+        }
+        return '';
+    }
+    function kpadWhyHtml(why, lang) {
+        if (!why || !why.length) return '';
+        return '<div class="kp-whynote"><b>× ' + (lang === 'ko' ? '쓰는 法이 다릅니다' : '書き方が違います') + '</b>' +
+            why.map(function(w) { return '<span>' + escapeHtml(kpadWhyText(w, lang)) + '</span>'; }).join('') + '</div>';
     }
     // the verdict line for △: lang 'ja' (漢検 pads) or 'ko' (the hanja practice, 국한문혼용)
     function kpadTriText(lang) { return lang === 'ko' ? '筆順이 틀렸습니다' : '筆順が違います'; }
@@ -17370,6 +17435,7 @@
         var reads = rec.r.split(''), anim = justAnsweredId === q.id, tri = rec.tri && !rec.tf;
         return '<div class="kp kp-done' + (rec.fx ? ' fixed' : '') + '">' +
             (tri ? '<div class="kp-trinote"><b>△ ' + kpadTriText('ja') + '</b><span>' + kpadTriHow('ja') + '</span></div>' : '') +
+            (rec.w && !rec.fx ? kpadWhyHtml([].concat.apply([], rec.w.map(function(w) { return w || []; })), 'ja') : '') +
             '<div class="kp-res">' + ans.map(function(c, i) {
                 var ok = rec.k[i] === 1, cand = (rec.c[i] || '').split('').filter(Boolean), cl = tri && rec.tv[i] ? 'tri' : ok ? 'ok' : 'ng';
                 return '<div class="kp-col">' +
@@ -17425,6 +17491,7 @@
                 var bi = +cv.dataset.i, bx = kpadDec(rec.d[bi]);
                 kpadDraw(cv, bx, 0.045);
                 if (rec.tri && !rec.tf && rec.o) kpadMarks(cv, bx, rec.o[bi]);
+                if (rec.w && rec.w[bi] && !rec.fx) kpadWhyMarks(cv, bx, rec.w[bi]);
             });
             var rp = document.getElementById('kp-replay');
             if (rp) rp.addEventListener('click', kpadFillOrder);
@@ -17525,19 +17592,22 @@
                 return;
             }
             // judged against the answer (MogiKanji.judge): ○, △ (the right shape, a stroke out of order) or ×
-            var ans = q.options[0].split(''), alts = (q.alt || []).filter(function(a) { return a.length === ans.length; }), reads = [], cands = [], tv = [], o = [];
+            var ans = q.options[0].split(''), alts = (q.alt || []).filter(function(a) { return a.length === ans.length; }), reads = [], cands = [], tv = [], o = [], why = [];
             st.boxes.forEach(function(b, i) {
                 var j = b.length ? MogiKanji.judge(b, ans[i] + alts.map(function(a) { return a.charAt(i); }).join('')) : null;
                 reads.push(j && j.read ? j.read : '？');
                 cands.push(j ? j.cands.join('') : '');
                 tv.push(j && j.v === 't' ? 1 : 0); o.push(j && j.v === 't' ? j.marks : []);
+                why.push(j && j.why && j.why.length ? j.why : 0);
             });
-            var s = reads.join(''), right = s === q.options[0] || (q.alt || []).indexOf(s) > -1;
-            var k = reads.map(function(c, i) { return right || c === ans[i] ? 1 : 0; });
+            // strict: the right shape written wrongly (stroke count, length, passing through) is ×, whatever it reads as
+            var s = reads.join(''), right = (s === q.options[0] || (q.alt || []).indexOf(s) > -1) && !why.some(function(w) { return w; });
+            var k = reads.map(function(c, i) { return !why[i] && (right || c === ans[i]) ? 1 : 0; });
             var rec = { r: s, c: cands, k: k, ok: right ? 1 : 0, fx: 0, d: st.boxes.map(kpadEnc) };
+            if (why.some(function(w) { return w; })) rec.w = why;
             // △ counts like 自信なし: right for the 正答率 and 成績表, a miss for the review (at.u on this attempt)
             if (right && tv.indexOf(1) > -1) { rec.tri = 1; rec.tv = tv; rec.o = o; }
-            kpadAnswer(q, s, right, rec);
+            kpadAnswer(q, right ? s : reads.map(function(c, i) { return why[i] ? '？' : c; }).join(''), right, rec);
         });
     }
     // the same path as a typed answer (handleTypedAnswer), plus the drawing and which 成績表 counts it went into
@@ -18155,7 +18225,7 @@
     // Progress per character and per word, in HJ.store (in backups like every jlpt* key):
     // { c: { 天: rec }, w: { '천지:天地': rec } }, rec = { l: level 0..11, s: 1/0 the last verdict, ok, ng: counts, t, fx: 1 when 판정 고치기 set it }.
     var HJ = {
-        id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.bd9922b5.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
+        id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.e544d690.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
         lv: ['8級', '7級Ⅱ', '7級', '6級Ⅱ', '6級', '5級Ⅱ', '5級', '4級Ⅱ', '4級', '3級Ⅱ', '3級', '2級'],
         total: {"c": [50, 50, 50, 75, 75, 99, 100, 250, 250, 500, 316, 526], "w": [150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150]},
         color: '#2b5fa8', badge: '韓', pattern: ['kikkohanabishi', '#2d4f7f'],
@@ -18384,7 +18454,7 @@
         return hjShuffle(pool.slice(0, HJ.size));
     }
     function hjStart() {
-        hj.items = hjPick(); hj.i = 0; hj.res = [];
+        hj.items = hjPick(); hj.i = 0; hj.res = []; hj.logged = 0;
         if (!hj.items.length) { hjEnd(); return; }
         hjQuestion();
     }
@@ -18495,11 +18565,14 @@
         J.forEach(function(j) { reads.push(j.read); cands.push(j.cands); });
         // △: every character's shape right, a stroke order wrong (hj.cur.tri; counted apart in the record, practised again with the ×)
         hj.cur.tri = !skip && J.every(function(j) { return j.v !== 'x'; }) && J.some(function(j) { return j.v === 't'; }) ? 1 : 0;
-        var k = reads.map(function(c, i) { return c === ans[i] ? 1 : 0; });
+        // strict: the right shape written wrongly (stroke count, length, passing through) is ×, with the reasons
+        var k = reads.map(function(c, i) { return c === ans[i] && !J[i].w ? 1 : 0; });
+        J.forEach(function(j) { (j.w || []).forEach(function(w) { notes.push(escapeHtml(kpadWhyText(w, HJ.lang))); }); });
+        var readsS = reads.map(function(c, i) { return J[i].w ? '？' : c; });     // a strict × never passes as another reading
         // the same 훈음: another character that has every 훈음 of the prompt (오를 등: 登 and 騰) answers it too
-        if (HJ.same) HJ.same(it, reads, k, notes);
-        else if (it.k === 'c' && !k[0] && all.at.hasOwnProperty(reads[0])) {
-            var mine = D.hun[all.at[reads[0]]].split('|');
+        if (HJ.same) HJ.same(it, readsS, k, notes);
+        else if (it.k === 'c' && !k[0] && all.at.hasOwnProperty(readsS[0])) {
+            var mine = D.hun[all.at[readsS[0]]].split('|');
             if (it.hun.split('|').every(function(h) { return mine.indexOf(h) > -1; })) {
                 k[0] = 1; notes.push(hjFmt(t.noteSame, { c: hjHan(reads[0]), h: escapeHtml(hjHun(it.hun)), a: hjHan(ans[0]) }));
             }
@@ -18507,14 +18580,15 @@
         var ok = !skip && !hj.cur.tri && k.every(function(x) { return x; });
         // why a character is ×: a Japanese (or simplified) form of the answer, a character outside the test, or another word read the same
         reads.forEach(function(c, i) {
-            if (k[i] || c === '？') return;
+            if (k[i] || c === '？' || J[i].w) return;
             if ((D.shin[ans[i]] || '').indexOf(c) > -1) notes.push(hjFmt(t.noteShin, { c: escapeHtml(c), a: hjHan(ans[i]), ro: hjRo(ans[i]), kind: (D.simp[ans[i]] || '').indexOf(c) > -1 ? t.jpcn : t.jp }));
             else if (!all.at.hasOwnProperty(c)) notes.push(hjFmt(t.noteOut, { c: escapeHtml(c) }));
         });
         var s = reads.join('');
-        if (!ok && it.k === 'w' && (all.byKo[it.ko] || []).indexOf(s) > -1) notes.push(hjFmt(t.noteWord, { c: hjHan(s) }));
+        if (!ok && it.k === 'w' && s !== it.a && (all.byKo[it.ko] || []).indexOf(s) > -1) notes.push(hjFmt(t.noteWord, { c: hjHan(s) }));
         hj.mark = { r: reads, c: cands, k: k, ok: ok ? 1 : 0, v: ok ? 1 : 0, fx: 0, skip: skip ? 1 : 0, notes: notes, d: hj.cur.boxes.map(kpadEnc), anim: 1 };
         if (hj.cur.tri) { hj.mark.tri = 1; hj.mark.tv = J.map(function(j) { return j.v === 't' ? 1 : 0; }); hj.mark.o = J.map(function(j) { return j.o || []; }); }
+        if (J.some(function(j) { return j.w; })) hj.mark.w = J.map(function(j) { return j.w || 0; });
         if (!skip) hjInkSave(it, hj.mark);
         hjRecord(it, ok, null);
         hj.res[hj.i] = ok ? 1 : 0;
@@ -18555,6 +18629,14 @@
         if (!ok && miss === 'tr') r.tri = 1; else delete r.tri;
         if (fix && fix.fx) r.fx = 1; else delete r.fx;
         hjSave();
+        if (!fix) writeLogAdd();
+    }
+    // 書き取り練習, both decks: { d: { 'YYYY-MM-DD': answers }, p: [time of each round finished all ○] } (for the badges)
+    function writeLog() { var l = loadJSON('jlptWriteLog', {}); if (!l || typeof l !== 'object') l = {}; if (!l.d || typeof l.d !== 'object') l.d = {}; if (!Array.isArray(l.p)) l.p = []; return l; }
+    function writeLogAdd(perfect) {
+        var l = writeLog();
+        if (perfect) l.p.push(Date.now()); else { var k = getTodayDateString(); l.d[k] = (l.d[k] || 0) + 1; }
+        try { localStorage.setItem('jlptWriteLog', JSON.stringify(l)); } catch (e) {}
     }
     function hjFlip() {
         var m = hj.mark, it = hj.items[hj.i];
@@ -18593,6 +18675,7 @@
             var bi = +cv.dataset.i, bx = kpadDec(m.d[bi]);
             kpadDraw(cv, bx, 0.045);
             if (m.tri && !m.v && m.o) kpadMarks(cv, bx, m.o[bi]);
+            if (m.w && m.w[bi] && !m.v) kpadWhyMarks(cv, bx, m.w[bi]);
         });
         if (!HJ_ORDER_LAB) HJ_ORDER_LAB = { unit: t.strokeUnit, aria: function(c, n) { return hjFmt(t.orderAria, { c: c, n: n }); }, cls: 'hj-han' };
         var fill = function() {
@@ -18609,6 +18692,9 @@
         var t = HJ.t, v = document.getElementById('hj-view'), body = v.querySelector('.hj-body'), foot = v.querySelector('.hj-foot');
         var ok = hj.res.filter(function(x) { return x === 1; }).length, ng = hj.res.length - ok;
         v.querySelector('.hj-status').textContent = hjLvName(hj.lv, hj.cum);
+        // a round of 5 or more, every one ○: 花丸 (once per round)
+        if (!hj.logged && hj.items.length >= 5 && hj.res.length === hj.items.length && ok === hj.items.length) { hj.logged = 1; writeLogAdd(true); }
+        setTimeout(function() { checkNewBadges(); }, 500);
         hj.mark = null;
         if (!hj.items.length) {
             body.innerHTML = '<div class="hj-loading">' + (hj.miss ? t.noMiss : t.noItems) + '</div>';
@@ -18625,7 +18711,7 @@
         var am = document.getElementById('hj-again-miss');
         if (am) am.addEventListener('click', function() {
             var miss = hj.items.filter(function(it, i) { return !hj.res[i]; });
-            hj.items = hjShuffle(miss); hj.i = 0; hj.res = []; hjQuestion();
+            hj.items = hjShuffle(miss); hj.i = 0; hj.res = []; hj.logged = 0; hjQuestion();
         });
         var ag = document.getElementById('hj-again');
         if (ag) ag.addEventListener('click', function() { hj.miss = false; hjStart(); });
@@ -18764,7 +18850,7 @@
             if (skip || !b.length) return { read: '？', cands: '', v: 'x' };
             if (R.judge) {
                 var j = R.judge(b, ans[i], 6), rd = j.read || '？';
-                return { read: rd, cands: (j.cands || []).map(function(x) { return x.c || x; }).filter(function(x) { return x !== rd; }).slice(0, 4).join(''), v: j.v, o: j.v === 't' ? j.marks || [] : [] };
+                return { read: rd, cands: (j.cands || []).map(function(x) { return x.c || x; }).filter(function(x) { return x !== rd; }).slice(0, 4).join(''), v: j.v, o: j.v === 't' ? j.marks || [] : [], w: j.why && j.why.length ? j.why : 0 };
             }
             var r = R.recognize(b, 6);
             return { read: r.length ? r[0].c : '？', cands: r.slice(1, 5).map(function(x) { return x.c; }).join(''), v: r.length && r[0].c === ans[i] ? 'o' : 'x' };
@@ -29316,7 +29402,7 @@
             Object.keys(lg).forEach(function(k) { if (/^(pace|fastread|measure)(#|$)/.test(k)) delete lg[k]; });
             localStorage.setItem('jlptBadgeLog', JSON.stringify(lg)); } catch (e) {}
     })();
-    var BADGE_CATS = [['habit', '習慣'], ['garden', '学びの庭'], ['skill', '実力'], ['review', '誤答と復習'], ['speed', '読む速さ'], ['words', '単語'], ['adv', '読解'], ['mock', '模擬試験'], ['book', '教材'], ['collect', 'コレクション']];
+    var BADGE_CATS = [['habit', '習慣'], ['garden', '学びの庭'], ['skill', '実力'], ['qtype', '問題の種類'], ['qdiff', '難易度'], ['review', '誤答と復習'], ['speed', '読む速さ'], ['words', '単語'], ['write', '書き取り'], ['adv', '読解'], ['mock', '模擬試験'], ['book', '教材'], ['collect', 'コレクション']];
     var TIER_NAMES = ['銅', '銀', '金', 'プラチナ', 'ダイヤ'];
     var TIER_COLORS = ['#b0703a', '#8a95a1', '#c4960f', '#4f8f8c', '#2f7fd6'];
     // every tiered badge has five levels: 銅・銀・金・プラチナ・ダイヤ
@@ -29413,6 +29499,65 @@
     }
     // a reading that was understood: its question answered correctly, or 理解度 よく分かった／だいたい (読む速さを測る)
     function paceUnderstood(r) { return r.ok === 1 || r.ok === true || r.und >= 1; }
+    // 問題の種類・難易度: each question (a 文章の文法 blank each) answered correctly at least once, with the time it first was
+    // (from the answer history; an answer right now in 成績表 without a history entry counts, undated)
+    var QTYPE_ICONS = { 'Kanji Reading': '🀄', 'Context': '🧩', 'Paraphrases': '🔁', 'Usage': '🧭', 'Grammar': '⚙️', 'Composition': '🧱', 'Text Grammar': '📜',
+        'Comprehension:short': '📄', 'Comprehension:mid': '📃', 'Comprehension:long': '📘', 'Comprehension:compare': '⚖️', 'Comprehension:search': '🔎',
+        'Kanken Reading': '🎴', 'Kanken Writing': '✒️', 'Kanken Homophone': '👥', 'Kanken Radical': '🔣' };
+    var QDIFF_ICONS = ['🟢', '🔵', '🟡', '🟠', '🔴'];
+    function qBadgeStats() {
+        var units = {}, first = {};
+        quizData.forEach(function(q) {
+            var d = diffOf(q), info = { cat: statCat(q), lv: d ? d[0] : 0 };
+            if (q.type === 'Text Grammar') q.blanks.forEach(function(bl, bi) { units[unitKey(q.id, bi)] = info; });
+            else units[unitKey(q.id, -1)] = info;
+        });
+        attemptLog.forEach(function(x) {
+            if (!x || !x.ok) return;
+            var k = unitKey(x.id, x.b == null ? -1 : x.b);
+            if (units[k] && (first[k] === undefined || (x.t || 0) < first[k])) first[k] = x.t || 0;
+        });
+        quizData.forEach(function(q) {
+            var a = reportAnswers[q.id];
+            if (typeof a !== 'string') return;
+            if (q.type === 'Text Grammar') { var parts = a.split('|'); q.blanks.forEach(function(bl, bi) { var k = unitKey(q.id, bi); if (parts[bi] && parts[bi] === bl.options[bl.correct] && first[k] === undefined) first[k] = 0; }); }
+            else { var k = unitKey(q.id, -1); if (first[k] === undefined && getEarnedPoints(q).earned > 0) first[k] = 0; }
+        });
+        var cat = {}, lv = {};
+        var add = function(m, key, k) { var e = m[key] || (m[key] = { total: 0, times: [] }); e.total++; if (first[k] !== undefined) e.times.push(first[k]); };
+        Object.keys(units).forEach(function(k) { add(cat, units[k].cat, k); if (units[k].lv) add(lv, units[k].lv, k); });
+        return { cat: cat, lv: lv };
+    }
+    // 10% / 25% / 50% / 75% / 100% of a total, each step at least one more than the last
+    function pctTiers(total) {
+        var out = [], prev = 0;
+        [10, 25, 50, 75, 100].forEach(function(p) { var n = Math.max(prev + 1, Math.ceil(total * p / 100)); out.push({ n: n, label: p + '%（' + n + '問）' }); prev = n; });
+        return out;
+    }
+    // 書き取り練習 (both decks): every record, the days written, the all-○ rounds and each deck's levels written through
+    function writeBadgeStats() {
+        var decks = typeof HJ_DECKS !== 'undefined' ? HJ_DECKS : [], wl = writeLog(), days = {};
+        Object.keys(wl.d).forEach(function(k) { if (wl.d[k] > 0) days[k] = 1; });
+        var tries = 0, okNow = 0, fixed = 0, lvDone = {};
+        decks.forEach(function(d) {
+            var st = (typeof HJ !== 'undefined' && HJ === d) ? hjStore : loadJSON(d.store, {});
+            var perLv = d.lv.map(function() { return 0; });
+            ['c', 'w'].forEach(function(k) {
+                var m = st && st[k] && typeof st[k] === 'object' ? st[k] : {};
+                Object.keys(m).forEach(function(id) {
+                    var r = m[id];
+                    if (!r) return;
+                    tries += (r.ok || 0) + (r.ng || 0) + (r.tr || 0);
+                    if (r.s === 1) okNow++;
+                    if (r.s === 1 && r.tr > 0) fixed++;
+                    if (k === 'c' && r.ok > 0 && perLv[r.l] !== undefined) perLv[r.l]++;
+                    if (r.t) days[dateKey(new Date(r.t))] = 1;
+                });
+            });
+            lvDone[d.id] = perLv.filter(function(n, i) { return d.total.c[i] && n >= d.total.c[i]; }).length;
+        });
+        return { tries: tries, ok: okNow, fixed: fixed, days: Object.keys(days).length, perfect: wl.p.length, lvDone: lvDone, decks: decks };
+    }
     var BOOK_TIERS = [{ n: 25, label: '25%' }, { n: 50, label: '50%' }, { n: 75, label: '75%' }, { n: 100, label: '100%' }];
     function computeBadges(streaks, bestDay, masteredCount) {
         streaks = streaks || computeStreaks();
@@ -29453,7 +29598,7 @@
         var learnedCards = wordAll.mine.concat(wordAll.deck).filter(wordLearnedAny).length;
         var hourDays = function(h0, h1) { var d = {}; attemptLog.forEach(function(a) { var h = new Date(a.t).getHours(); if (h >= h0 && h < h1) d[dateKey(new Date(a.t))] = 1; }); return Object.keys(d).length; };
         var earlyDays = hourDays(5, 8);
-        var nb = newBadgeStats();
+        var nb = newBadgeStats(), wb = writeBadgeStats(), qb = qBadgeStats();
         // 読む速さ badges count only readings since they were last reset (the reading history itself is kept)
         var speedFrom = +(localStorage.getItem('jlptSpeedBadgeFrom') || 0), sinceReset = function(r) { return (r.t || 0) >= speedFrom; };
         var fastReads = readingLog.filter(function(r) { return sinceReset(r) && r.target && r.ms <= r.target; }).length;
@@ -29492,10 +29637,10 @@
             { id: 'early', cat: 'habit', icon: '🌅', name: '朝活', value: earlyDays, unit: '日', tiers: tiers([1, 10, 30, 60, 100], '日'), hint: '朝5時〜8時に解答した日の数' },
             { id: 'late', cat: 'habit', icon: '🌙', name: '夜更かし', secret: true, ok: nb.late.length > 0, hint: '夜0時〜4時に解答する' },
             { id: 'weekend', cat: 'habit', icon: '⚔️', name: '週末戦士', value: nb.weekends.length, unit: '回', tiers: tiers([4, 12, 30, 52, 100], '回'), hint: '土曜と日曜の両方に学習した週末の数' },
-            { id: 'readdaily', cat: 'habit', icon: '📖', name: '一日一文', value: nb.readBest, unit: '日', tiers: tiers([7, 14, 30, 60, 100], '日'), hint: '毎日1つ以上の文章（内容理解・文章の文法）を解き続けた日数（最長）' },
+            { id: 'readdaily', cat: 'habit', icon: '📖', name: '一日一文', value: nb.readBest, unit: '日', tiers: tiers([7, 14, 30, 60, 100], '日'), hint: '毎日1つ以上の文章（読解〈内容理解・統合理解・情報検索〉・文章の文法）を解き続けた日数（最長）' },
             { id: 'rush', cat: 'habit', icon: '🏁', name: '追い込み', value: nb.rush.length, unit: '日', tiers: tiers([10, 20, 25, 28, 30], '日'), hint: getSetting('examDate', '') ? '試験日までの30日間に学習した日の数（30日すべてで最高位）' : '試験日を設定すると、試験前の30日間に学習した日を数えます' },
             // 学びの庭 (only once the garden is in the app)
-            { id: 'gdhours', cat: gardenLive() ? 'garden' : 'off', icon: '🌱', name: '庭づくり', value: Math.floor(gdT.total / 3600), unit: '時間', tiers: tiers([1, 10, 50, 150, gdEndHours()], '時間'), hint: '問題・読解・模試・単語帳のゲームで、手を動かして学習した時間の合計（' + gdEndHours() + '時間で庭が完成）' },
+            { id: 'gdhours', cat: gardenLive() ? 'garden' : 'off', icon: '🌱', name: '庭づくり', value: Math.floor(gdT.total / 3600), unit: '時間', tiers: tiers([1, 10, 50, 150, gdEndHours()], '時間'), hint: '問題・読解・模試・単語帳のゲーム・書き取り練習で、手を動かして学習した時間の合計（' + gdEndHours() + '時間で庭が完成）' },
             { id: 'gdfocus', cat: gardenLive() ? 'garden' : 'off', icon: '🍵', name: '集中', value: gdBestDay, unit: '分', tiers: [{ n: 30, label: '30分' }, { n: 60, label: '1時間' }, { n: 120, label: '2時間' }, { n: 180, label: '3時間' }, { n: 300, label: '5時間' }], hint: '1日に手を動かして学習した時間（いちばん長かった日）' },
             { id: 'gdwater', cat: gardenLive() ? 'garden' : 'off', icon: '💧', name: '水やり', value: gdBestRun, unit: '日', tiers: tiers([3, 7, 14, 30, 100], '日'), hint: '毎日15分以上、手を動かして学習した連続日数（最長）' },
             { id: 'gdseasons', cat: gardenLive() ? 'garden' : 'off', icon: '🍁', name: '四季の庭', value: Object.keys(gdSeasons).length, unit: '季', tiers: [{ n: 1, label: '1季' }, { n: 2, label: '2季' }, { n: 3, label: '3季' }, { n: 4, label: '四季（1年）' }, { n: 8, label: '四季を2巡（2年）' }], hint: '1日1時間以上学習した日がある季節の数。年ごとに数えるので、同じ季節も次の年にまた数えます（8季で四季を2巡）' },
@@ -29518,11 +29663,16 @@
             { id: 'comeback', cat: 'skill', icon: '📈', name: 'リベンジ', value: comebacks, unit: '回', tiers: tiers([1, 5, 20, 50, 100], '回'), hint: '解き直して前回より点数を上げた回数' },
             { id: 'intime', cat: 'skill', icon: '⏱️', name: '時間内', value: beatTargets, unit: '回', tiers: tiers([1, 5, 20, 50, 100], '回'), hint: '目標解答時間がある日を、時間内に正答率75%以上で終えた回数' },
             // 読む速さ
-            { id: 'pace', cat: 'speed', icon: '⚡', name: '読む速さ', value: bestPace, unit: '字/分', tiers: tiers([400, 600, 800, 900, 1000], '字/分'), hint: '文章を1分あたり何字で読めたか（内容理解・「読む速さを測る」の最高。問いに正解した文章、または理解度「よく分かった」「だいたい」の文章だけを数えます。母語話者は約650〜800字/分）' },
-            { id: 'fastread', cat: 'speed', icon: '👀', name: '目標ペース', value: fastReads, unit: '回', tiers: tiers([5, 20, 50, 100, 200], '回'), hint: '内容理解の文章を目標ペース内で読んだ回数' },
+            { id: 'pace', cat: 'speed', icon: '⚡', name: '読む速さ', value: bestPace, unit: '字/分', tiers: tiers([400, 600, 800, 900, 1000], '字/分'), hint: '文章を1分あたり何字で読めたか（読解〈内容理解・統合理解・情報検索〉・「読む速さを測る」の最高。問いに正解した文章、または理解度「よく分かった」「だいたい」の文章だけを数えます。母語話者は約650〜800字/分）' },
+            { id: 'fastread', cat: 'speed', icon: '👀', name: '目標ペース', value: fastReads, unit: '回', tiers: tiers([5, 20, 50, 100, 200], '回'), hint: '読解（内容理解・統合理解・情報検索）の文章を目標ペース内で読んだ回数' },
             { id: 'measure', cat: 'speed', icon: '📏', name: '計測', value: roAllB.length, unit: '回', tiers: tiers([1, 10, 30, 60, 100], '回'), hint: 'ホームの「読む速さを測る」で読んだ回数' },
             // 単語
             { id: 'wordlist', cat: 'words', icon: '📒', name: '単語帳', value: wordsStudied, unit: '語', tiers: tiers([10, 100, 500, 1000, 3000], '語'), hint: 'マイ単語帳にためた語と、本の単語帳で学習を始めた語の数' },
+            { id: 'wtries', cat: 'write', icon: '✍️', name: '書き取り', value: wb.tries, unit: '回', tiers: tiers([10, 100, 500, 1000, 3000], '回'), hint: '漢検 書き取り練習・漢字 쓰기 練習で書いた回数（問題の解答には数えません）' },
+            { id: 'wok', cat: 'write', icon: '🖌️', name: '書けた字', value: wb.ok, unit: '個', tiers: tiers([10, 50, 200, 500, 1000], '個'), hint: '書き取り練習で、最後に○（形も筆順も正しい）で書けた漢字と単語の数' },
+            { id: 'wfix', cat: 'write', icon: '🪶', name: '筆順なおし', value: wb.fixed, unit: '個', tiers: tiers([1, 5, 20, 50, 100], '個'), hint: '△（形は正しく、筆順がちがう）になった漢字や単語を、そのあと○で書けた数' },
+            { id: 'wdays', cat: 'write', icon: '🗒️', name: '筆まめ', value: wb.days, unit: '日', tiers: tiers([3, 10, 30, 60, 100], '日'), hint: '書き取り練習をした日の数' },
+            { id: 'wperfect', cat: 'write', icon: '💮', name: '花丸', value: wb.perfect, unit: '回', tiers: tiers([1, 5, 20, 50, 100], '回'), hint: '書き取り練習の1回分（5問以上）を、全問○で終えた回数' },
             { id: 'cards', cat: 'words', icon: '🃏', name: 'カード', value: learnedCards, unit: '語', tiers: tiers([10, 50, 200, 800, 1500], '語'), hint: 'カード・書いて覚えるで覚えた語の数（次の復習まで1週間以上あいた語。本の単語帳も含む）' },
             // 上級読解
             { id: 'advread', cat: 'adv', icon: '📖', name: '通読', ok: advP.some(function(pr) { return pr.read; }), hint: '読解の文章を通読する（「通読」にチェック）' },
@@ -29533,6 +29683,32 @@
             { id: 'kwclear', cat: 'adv', icon: '👂', name: '聞き取り', value: advIds.filter(function(id) { return advState(id).kaiwaClear; }).length, unit: '課', tiers: tiers([1, 3, 6, 10, 15], '課'), hint: '「会話」の（　）を、「答えを見る」を使わずに全部正解する（課の数）' },
             { id: 'advall', cat: 'adv', icon: '🏮', name: '一課修了', value: advP.filter(function(pr) { return pr.pct === 100; }).length, unit: '編', tiers: tiers([1, 3, 6, 10, 15], '編'), hint: '1編（1課）の本文・問い・練習・会話をすべて終える（進み具合100%）' }
         ];
+        // 書き取り: each deck's levels whose 漢字 have all been written ○ at least once
+        wb.decks.forEach(function(d) {
+            var n = d.lv.length, steps = [1, Math.round(n * 0.3), Math.round(n * 0.5), Math.round(n * 0.75), n];
+            for (var i = 1; i < steps.length; i++) steps[i] = Math.max(steps[i], steps[i - 1] + 1);
+            var nm = d.id === 'kanken-jp' ? '漢検の級' : '語文會の級';
+            badges.push({ id: 'wlv:' + d.id, cat: 'write', icon: d.id === 'kanken-jp' ? '🏯' : '🎐', name: nm, value: wb.lvDone[d.id] || 0, unit: '級', noRemain: true,
+                tiers: steps.map(function(s, i) { return { n: s, label: i === steps.length - 1 ? '全' + n + '級' : s + 'つの級' }; }),
+                hint: '「' + d.t.title + '」で、その級の漢字をすべて一度は○で書けた級の数（' + d.lv[0] + '〜' + d.lv[n - 1] + '）' });
+        });
+        // 問題の種類 and 難易度: questions answered correctly at least once
+        STAT_CATS.forEach(function(c) {
+            var e = qb.cat[c];
+            if (!e || !e.total) return;
+            var nm = statCatName(c), got = e.times.length;
+            if (e.total < 5) { badges.push({ id: 'qt:' + c, cat: 'qtype', icon: QTYPE_ICONS[c] || '📝', name: nm, ok: got >= e.total, progress: got + ' / ' + e.total, hint: '「' + nm + '」の問題（全' + e.total + '問）をすべて一度は正解する' }); return; }
+            badges.push({ id: 'qt:' + c, cat: 'qtype', icon: QTYPE_ICONS[c] || '📝', name: nm, value: got, unit: '問', tiers: pctTiers(e.total),
+                hint: '「' + nm + '」の問題（全' + e.total + '問）のうち、一度でも正解した問題の数（文章の文法は空欄ごと）' });
+        });
+        DIFF_NAMES.forEach(function(dn, i) {
+            var e = qb.lv[i + 1];
+            if (!e || !e.total) return;
+            var nm = '難易度' + (i + 1) + '・' + dn, got = e.times.length;
+            if (e.total < 5) { badges.push({ id: 'qd:' + (i + 1), cat: 'qdiff', icon: QDIFF_ICONS[i], name: nm, ok: got >= e.total, progress: got + ' / ' + e.total, hint: '難易度' + (i + 1) + '（' + dn + '）の問題（全' + e.total + '問）をすべて一度は正解する' }); return; }
+            badges.push({ id: 'qd:' + (i + 1), cat: 'qdiff', icon: QDIFF_ICONS[i], name: nm, value: got, unit: '問', tiers: pctTiers(e.total),
+                hint: '難易度' + (i + 1) + '（' + dn + '）の問題（全' + e.total + '問）のうち、一度でも正解した問題の数' });
+        });
         // 模擬試験 (from the finished sittings in jlptMockHistory)
         if (mockLibs().length) {
             var mkAll = [], mkComebacks = 0;
@@ -29642,7 +29818,7 @@
         mocks.sort(byT);
         var seenOp = loadJSON('jlptOpeningsSeen', {});
         var seenAt = function(k) { return typeof seenOp[k] === 'string' ? dayTs(seenOp[k]) : 0; };
-        var nbs = newBadgeStats();
+        var nbs = newBadgeStats(), qbs = qBadgeStats();
         badges.forEach(function(b) {
             var lv = badgeLevel(b), tiers = b.tiers || [{ n: 1 }];
             for (var i = 1; i <= lv; i++) {
@@ -29722,6 +29898,11 @@
                     case 'jlptday': t = seenAt('jlpt'); break;
                     case 'fuji': case 'ootama': case 'hoo': case 'nagare': t = seenAt(b.id); break;
                     default:
+                        if (b.cat === 'qtype' || b.cat === 'qdiff') {
+                            var e = b.cat === 'qtype' ? qbs.cat[b.id.slice(3)] : qbs.lv[+b.id.slice(3)];
+                            t = e ? nth(e.times, b.tiers ? n : e.total) : 0;
+                            break;
+                        }
                         if (b.cat === 'book' && n === 100 && b.id.indexOf('book:') === 0) {      // the date the whole book was finished
                             // finished when the last question of the book was first answered (成績表 answers)
                             var libId = b.id.slice(5), firstOk = {}, missing = false;
@@ -29745,12 +29926,16 @@
             // badges that gained levels or new thresholds (2026-11): what was already reached is recorded quietly once,
             // keeping a one-time badge's old date for its first level (a book's for its 100%), instead of a burst of stamps
             var migrate = !first && localStorage.getItem('jlptBadgeTiers2') !== '1';
+            // 問題の種類・難易度・書き取り (2026-11): what was already reached is recorded quietly once, with its date where known
+            var migrate3 = !first && localStorage.getItem('jlptBadgeNew3') !== '1';
+            var isNew3 = function(b) { return b.cat === 'qtype' || b.cat === 'qdiff' || b.cat === 'write'; };
             var quiet = function(b) { return b.cat === 'book' || ['perfectday', 'nanakoro', 'comeback', 'mockagain', 'early', 'advkanji', 'advlisten', 'mastery', 'cards', 'wordlist', 'pace'].indexOf(b.id) >= 0; };
-            var fill = first || migrate || localStorage.getItem('jlptBadgeDatesFilled') !== '1', orig = fill ? badgeBackfill(badges) : {};
+            var fill = first || migrate || migrate3 || localStorage.getItem('jlptBadgeDatesFilled') !== '1', orig = fill ? badgeBackfill(badges) : {};
             badges.forEach(function(b) {
                 var lv = badgeLevel(b), top = 0;
                 for (var i = 1; i <= lv; i++) {
                     var k = b.tiers ? b.id + '#' + i : b.id;
+                    if (log[k] === undefined && migrate3 && isNew3(b)) { log[k] = orig[k] || Date.now(); continue; }
                     if (log[k] === undefined && migrate && b.tiers && quiet(b)) {
                         var old = log[b.id] && (b.cat === 'book' ? i === b.tiers.length : i === 1) ? log[b.id] : 0;
                         log[k] = old || orig[k] || Date.now();
@@ -29764,6 +29949,7 @@
             localStorage.setItem('jlptBadgeLog', JSON.stringify(log));
             if (fill) localStorage.setItem('jlptBadgeDatesFilled', '1');
             if (migrate) localStorage.setItem('jlptBadgeTiers2', '1');
+            if (migrate3) localStorage.setItem('jlptBadgeNew3', '1');
             if (fresh.length) { badgeQueue = badgeQueue.concat(fresh); if (!badgeStamping) nextBadgeStamp(); }
         } catch (e) { /* badges are a bonus: never break the app */ }
     }
