@@ -1875,6 +1875,61 @@
         .kk-answer.ng { border-color: var(--incorrect-color, #d9534f); }
         .kk-lab { font-size: 0.75rem; color: var(--text-sub); }
         .kk-val { font-size: 1.2rem; }
+        /* 漢検 書き取り: the handwriting pad (one box per character, a large pad for the one being written) */
+        :root { --kp-guide: rgba(0,0,0,0.13); --kp-line: #cfd3d8; }
+        html.dark { --kp-guide: rgba(255,255,255,0.14); --kp-line: #4a525c; }
+        .kp { margin: 14px 0 6px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .kp-row { display: flex; gap: 8px; justify-content: center; }
+        .kp-slot { width: 54px; height: 54px; padding: 0; border: 1.5px solid var(--border-light); border-radius: var(--radius-sm, 8px); background: var(--surface); cursor: pointer; position: relative; }
+        .kp-slot canvas { width: 100%; height: 100%; display: block; }
+        .kp-slot.on { border-color: var(--lib-color, #5e9e3a); box-shadow: 0 0 0 2px var(--lib-color, #5e9e3a); }
+        .kp-pad-wrap { position: relative; width: min(100%, 340px); aspect-ratio: 1 / 1; border: 1.5px solid var(--border-dark); border-radius: var(--radius, 10px); background-color: var(--surface);
+            background-image: repeating-linear-gradient(to right, var(--kp-guide) 0 7px, transparent 7px 13px), repeating-linear-gradient(to bottom, var(--kp-guide) 0 7px, transparent 7px 13px);
+            background-size: 100% 1.5px, 1.5px 100%; background-position: 0 50%, 50% 0; background-repeat: no-repeat; overflow: hidden; }
+        .kp-pad { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; cursor: crosshair; }
+        .kp-which { position: absolute; left: 8px; top: 6px; font-size: 0.72rem; color: var(--text-sub); pointer-events: none; }
+        .kp-tools { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; width: min(100%, 340px); }
+        .kp-tools button { flex: 1 1 auto; min-height: 40px; padding: 8px 10px; border: 1px solid var(--border-dark); border-radius: var(--radius-sm, 8px); background: var(--surface); color: var(--text-main); font-size: 0.85rem; font-weight: bold; cursor: pointer; }
+        .kp-tools button:disabled { color: var(--text-sub); border-color: var(--border-light); cursor: default; }
+        .kp-check { width: min(100%, 340px); flex: none; }
+        .kp-msg { font-size: 0.8rem; color: var(--incorrect-color); text-align: center; }
+        .kp-msg:empty { display: none; }
+        .kp-kbd { display: block; margin: 6px auto 0; background: none; border: none; color: var(--active-blue); text-decoration: underline; font-size: 0.8rem; cursor: pointer; }
+        .kp-res { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+        .kp-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .kp-cell { position: relative; width: 104px; height: 104px; border: 1.5px solid var(--kp-line); border-radius: var(--radius-sm, 8px); background-color: var(--surface);
+            background-image: repeating-linear-gradient(to right, var(--kp-guide) 0 5px, transparent 5px 9px), repeating-linear-gradient(to bottom, var(--kp-guide) 0 5px, transparent 5px 9px);
+            background-size: 100% 1px, 1px 100%; background-position: 0 50%, 50% 0; background-repeat: no-repeat; }
+        .kp-cell.ok { border-color: var(--correct-color); }
+        .kp-cell.ng { border-color: var(--incorrect-color); }
+        .kp-cell canvas { width: 100%; height: 100%; display: block; }
+        .kp-pen { position: absolute; right: -10px; top: -10px; width: 44px; height: 44px; font-size: 18px; pointer-events: none; }
+        .kp-done.fixed .kp-pen { opacity: 0.45; }
+        .kp-read { display: flex; align-items: baseline; gap: 6px; }
+        .kp-read b { font-size: 1.5rem; font-weight: normal; font-family: var(--mincho, serif); line-height: 1.2; }
+        .kp-cands { display: flex; align-items: baseline; gap: 5px; font-size: 0.95rem; color: var(--text-sub); }
+        .kp-fixnote { font-size: 0.78rem; color: var(--text-sub); }
+        .kp-order { margin: 12px 0 4px; padding: 10px 12px; border: 1px solid var(--border-light); border-radius: var(--radius, 10px); background: var(--surface-2); }
+        .kp-order-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .kp-replay { background: none; border: 1px solid var(--border-dark); border-radius: var(--radius-sm, 8px); color: var(--text-main); font-size: 0.78rem; padding: 4px 10px; cursor: pointer; }
+        .kp-order-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+        .kp-order-cell { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+        .kp-order-svg { width: 128px; height: 128px; background: var(--surface); border: 1px solid var(--kp-line); border-radius: var(--radius-sm, 8px); }
+        .kp-order-svg path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+        .kp-o-base path { stroke: var(--kp-line); stroke-width: 3; }
+        .kp-o-ink path { stroke: var(--text-main); stroke-width: 3.2; animation-name: kpInk; animation-timing-function: linear; animation-fill-mode: forwards; }
+        .kp-o-num text { fill: var(--pen); font-size: 7.5px; text-anchor: middle; opacity: 0; animation: kpNum 0.01s linear forwards; font-family: 'Helvetica Neue', Arial, sans-serif; }
+        @keyframes kpInk { to { stroke-dashoffset: 0; } }
+        @keyframes kpNum { to { opacity: 1; } }
+        @media (prefers-reduced-motion: reduce) { .kp-o-ink path { animation: none; stroke-dashoffset: 0 !important; } .kp-o-num text { animation: none; opacity: 1; } }
+        .kp-order-cap { font-size: 0.75rem; color: var(--text-sub); display: flex; align-items: baseline; gap: 4px; }
+        .kp-order-cap b { font-size: 1rem; color: var(--text-main); font-weight: normal; }
+        .kp-order-none { font-size: 3rem; font-family: var(--mincho, serif); }
+        .kp-fix-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 8px 0 2px; }
+        .kp-fix { background: none; border: none; padding: 4px 0; color: var(--active-blue); text-decoration: underline; font-size: 0.8rem; cursor: pointer; }
+        .kp-fix-note { font-size: 0.72rem; color: var(--text-sub); }
+        .lib-notice { font-size: 0.72rem; color: var(--text-sub); }
+        .lib-notice a, .credit-note a { color: var(--active-blue); }
         /* 콕콕 情報検索 tables: compact enough for a phone-width reading box */
         .notice-grid.kd-tbl { width: 100%; font-size: 0.82em; line-height: 1.5; }
         .notice-grid.kd-tbl th, .notice-grid.kd-tbl td { padding: 4px 5px; white-space: nowrap; vertical-align: middle; }
@@ -2061,19 +2116,22 @@
         .comp-sentence { font-size: calc(1.1rem * var(--rs)); }
         html.no-furigana rt { display: none; }
 
-        /* Circled answer numbers + red pen */
+        /* Circled answer numbers + ○/× marks */
         .option-prefix { border-right: none !important; padding-right: 0; margin-right: 12px; font-size: 1.25em; line-height: 1; position: relative;
                          display: inline-flex; align-items: center; justify-content: center; min-width: 1.4em; font-weight: normal; }
-        .pen-mark { position: absolute; left: 50%; top: 50%; width: 2.4em; height: 2.4em; transform: translate(-50%, -50%) rotate(-8deg); pointer-events: none; overflow: visible; }
-        .pen-mark circle, .pen-mark path { fill: none; stroke: var(--pen); stroke-width: 3.2; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 0; }
-        .pen-mark.draw circle, .pen-mark.draw path { stroke-dashoffset: 100; animation: penDraw 0.45s ease-out forwards; }
-        .pen-mark.draw path.pen-2 { animation-delay: 0.18s; }
-        @keyframes penDraw { to { stroke-dashoffset: 0; } }
+        :root { --mark-ok: #1f9d4a; --mark-ng: #d62f2f; }
+        html.dark { --mark-ok: #5fd47e; --mark-ng: #ff6b6b; }
+        .pen-mark { position: absolute; left: 50%; top: 50%; width: 2.4em; height: 2.4em; transform: translate(-50%, -50%); pointer-events: none; overflow: visible; }
+        .pen-mark circle, .pen-mark path { fill: none; stroke-width: 4; stroke-linecap: butt; }
+        .pen-mark.ok circle { stroke: var(--mark-ok); }
+        .pen-mark.ng path { stroke: var(--mark-ng); }
+        .pen-mark.draw { animation: markIn 0.18s ease-out both; }
+        @keyframes markIn { from { opacity: 0; transform: translate(-50%, -50%) scale(0.6); } }
         .pen-mini { position: relative; display: inline-block; width: 1.1em; height: 1em; margin-left: 2px; vertical-align: -0.1em; }
         .pen-mini .pen-mark { width: 1.3em; height: 1.3em; }
         .option-btn.correct, .option-btn.incorrect { font-weight: bold; }
         .option-btn.correct .option-prefix, .option-btn.incorrect .option-prefix { color: var(--text-main); }
-        @media (prefers-reduced-motion: reduce) { .pen-mark.draw circle, .pen-mark.draw path { animation: none; stroke-dashoffset: 0; } }
+        @media (prefers-reduced-motion: reduce) { .pen-mark.draw { animation: none; } }
 
         /* Explanation card */
         .explain-card { margin-top: 10px; padding: 12px 14px; background: var(--surface-2); border-left: 4px solid var(--active-blue); border-radius: 0 var(--radius-sm) var(--radius-sm) 0;

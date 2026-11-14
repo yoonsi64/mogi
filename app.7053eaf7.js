@@ -9455,6 +9455,7 @@
             fullTitle: '書き込み式 漢字検定4級問題集',
             publisher: '成美堂出版',
             isbn: '978-4-415-23272-0',
+            notice: '書き取りは手書きで答えます。判定と筆順には <a href="https://kanjivg.tagaini.net" target="_blank" rel="noopener">KanjiVG</a>（CC BY-SA 3.0）のデータを使っています。',
             badge: '漢',
             color: '#5e9e3a',
             cover: 'data:image/jpeg;base64,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',
@@ -11893,6 +11894,7 @@
                 '<div class="lib-info">' + escapeHtml(lib.fullTitle) +
                     (lib.authors ? '<br>' + escapeHtml(lib.authors) + ' 著' : '') +
                     '<br>' + escapeHtml(lib.publisher) + (lib.edition ? '　' + escapeHtml(lib.edition) : '') + (lib.isbn ? '　<span class="nowrap">ISBN ' + escapeHtml(lib.isbn) + '</span>' : '') +
+                    (lib.notice ? '<br><span class="lib-notice">' + lib.notice + '</span>' : '') +
                 '</div>' +
             '</div>' +
         '</section>';
@@ -16766,18 +16768,19 @@
             }
 
         } else if (q.input) {
-            // 漢検 読み・書き取り: type the answer (options[0] is the answer, so it is checked like a choice)
-            var typed = userAnswers[q.id], okT = isAnswered && typed === q.options[0];
+            // 漢検 読み・書き取り: type the reading; write the kanji by hand on the pad (options[0] is the answer, so it is checked like a choice)
+            var typed = userAnswers[q.id], okT = isAnswered && typed === q.options[0], kpOn = q.input === 'kanji' && !kpadKeyboard[q.id];
             var fbT = !isAnswered ? '' : '<div class="feedback ' + (okT ? 'correct' : 'incorrect') + '" id="feedback">' + (okT ? '正解！' : '不正解… 正解は「' + q.options[0] + '」です。') + '</div>';
             var noteT = isAnswered && q.note ? '<div class="explain-card"><div class="explain-title">解説</div><div>' + q.note + '</div></div>' : '';
             quizContainer.innerHTML = '<div class="question-card">' +
                 renderHeader(q, qTypeName(q)) +
                 '<div class="sentence kk-sentence"><span class="sentence-text">' + sentenceHtml + '</span></div>' +
-                (isAnswered
+                (kpOn ? kpadHtml(q, isAnswered, okT) : isAnswered
                     ? '<div class="kk-answer ' + (okT ? 'ok' : 'ng') + '"><span class="kk-lab">あなたの答え</span><span class="kk-val">' + escapeHtml(typed || '') + '</span></div>'
                     : '<form class="kk-form" id="kk-form" autocomplete="off"><input class="kk-input" id="kk-input" type="text" lang="ja" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="' + (q.input === 'kana' ? 'ひらがなで入力' : '漢字で入力') + '"><button class="check-btn" id="kk-check" type="submit" disabled>解答する</button></form>') +
-                fbT + noteT + '</div>';
-            if (!isAnswered) {
+                fbT + (kpOn ? kpadAfterHtml(q, isAnswered) : '') + noteT + '</div>';
+            if (kpOn) kpadBind(q, isAnswered);
+            else if (!isAnswered) {
                 var inp = document.getElementById('kk-input'), btnT = document.getElementById('kk-check');
                 inp.addEventListener('input', function() { btnT.disabled = !inp.value.trim(); });
                 document.getElementById('kk-form').addEventListener('submit', function(ev) { ev.preventDefault(); handleTypedAnswer(q, inp.value); });
@@ -16822,7 +16825,7 @@
                     else tappable = (opt === q.options[q.correct] && !!wordDefinitions[opt]);
                     if (tappable) optionText = '<span class="tappable-word" data-word="' + opt + '">' + opt + '</span>';
                 }
-                // Red-pen ◯/✕ marks are only used on the Week 4 passages; answer choices just change color
+                // ○/× marks (green ring, red cross) are only used on the 文章の文法 blanks and the 書き取り pad; answer choices just change color
                 var pen = '';
                 optionsHtml += '<button class="' + classes + '" data-index="' + index + '" ' + (isAnswered ? 'disabled' : '') + '><span class="option-prefix">' + (CIRCLED[index] || (index + 1)) + pen + '</span><span class="option-text">' + optionText + '</span></button>';
             });
@@ -17045,6 +17048,307 @@
         recordStats(q, ok);
         justAnsweredId = q.id;
         vibrateFor(ok);
+        loadQuestion();
+    }
+
+    // ---------- 漢検 書き取り: the handwriting pad ----------
+    // One box per character of the answer (the book's answer box shows the count too); the character being written is
+    // drawn on a large pad below them. 答え合わせ reads each box on the device against all 2,136 常用漢字
+    // (kanjistrokes.*.js: the recogniser and KanjiVG stroke data, CC BY-SA 3.0; loaded only when a writing question
+    // opens). A character is right only when the top reading is the answer's. 判定を直す overrules a misread both ways:
+    // the user's word stands, and it flips the recorded result (attempt log, day, 成績表 counts, 誤答ノート).
+    var KPAD_SRC = 'kanjistrokes.193f65c3.js';
+    var kpadWait = null, kpadKeyboard = {};
+    function kpadLoad(cb) {
+        if (window.MogiKanji) { if (cb) cb(true); return; }
+        if (!kpadWait) {
+            kpadWait = [];
+            var s = document.createElement('script');
+            s.src = KPAD_SRC;
+            s.onload = function() {
+                setTimeout(function() {
+                    try { MogiKanji.init(); } catch (e) {}
+                    var w = kpadWait; kpadWait = null;
+                    w.forEach(function(f) { f(!!window.MogiKanji); });
+                }, 30);
+            };
+            s.onerror = function() {
+                var w = kpadWait; kpadWait = null;
+                if (s.parentNode) s.parentNode.removeChild(s);
+                w.forEach(function(f) { f(false); });
+            };
+            document.head.appendChild(s);
+        }
+        if (cb) kpadWait.push(cb);
+    }
+    // what was drawn and read, per question: { a: the stored answer, r: the reading, c: other candidates per box,
+    // k: 1/0 per box as read, ok: the reading's verdict, fx: 1 when 判定を直す changed it, d: the drawing, t: attempt time,
+    // cb: which 成績表 counts that answer went into }. Shown again only while the stored answer is still this one.
+    var kpadRecs = loadJSON('jlptKanjiPad', {});
+    function kpadSaveRecs() {
+        var ids = Object.keys(kpadRecs);
+        if (ids.length > 200) ids.sort(function(a, b) { return (kpadRecs[a].t || 0) - (kpadRecs[b].t || 0); }).slice(0, ids.length - 200).forEach(function(id) { delete kpadRecs[id]; });
+        try { localStorage.setItem('jlptKanjiPad', JSON.stringify(kpadRecs)); } catch (e) {}
+    }
+    function kpadRec(q) { var r = kpadRecs[q.id]; return r && r.a === userAnswers[q.id] ? r : null; }
+    var KP_A = (function() { var s = ''; for (var c = 35; c < 127; c++) if (c !== 92) s += String.fromCharCode(c); return s; })();
+    function kpadEnc(box) {
+        return box.map(function(st) {
+            var o = '', lx = -1, ly = -1;
+            for (var i = 0; i < st.length; i += 2) {
+                var x = Math.max(0, Math.min(90, Math.round(st[i] * 90))), y = Math.max(0, Math.min(90, Math.round(st[i + 1] * 90)));
+                if (x === lx && y === ly) continue;
+                o += KP_A.charAt(x) + KP_A.charAt(y); lx = x; ly = y;
+            }
+            return o.length === 2 ? o + o : o;
+        }).join('!');
+    }
+    function kpadDec(s) {
+        if (!s) return [];
+        return s.split('!').map(function(t) { var o = []; for (var i = 0; i < t.length; i++) o.push(KP_A.indexOf(t.charAt(i)) / 90); return o; });
+    }
+    var kp = null;
+    function kpadState(q) {
+        var n = q.options[0].length;
+        if (!kp || kp.id !== q.id) kp = { id: q.id, n: n, boxes: [], active: 0 };
+        while (kp.boxes.length < n) kp.boxes.push([]);
+        return kp;
+    }
+    function kpadInk() { return getComputedStyle(document.documentElement).getPropertyValue('--text-main').trim() || '#111'; }
+    // strokes are kept as fractions of the box (0..1), so a drawing looks the same at any size
+    function kpadDraw(cv, box, widthFrac) {
+        var r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1, w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
+        if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+        var g = cv.getContext('2d');
+        g.clearRect(0, 0, w, h);
+        g.strokeStyle = kpadInk(); g.fillStyle = g.strokeStyle; g.lineCap = 'round'; g.lineJoin = 'round'; g.lineWidth = Math.max(1.5, w * widthFrac);
+        box.forEach(function(s) { kpadPath(g, s, w, h); });
+    }
+    function kpadPath(g, s, w, h) {
+        if (s.length < 4 || (s.length === 4 && s[0] === s[2] && s[1] === s[3])) {
+            g.beginPath(); g.arc(s[0] * w, s[1] * h, g.lineWidth / 2, 0, Math.PI * 2); g.fill(); return;
+        }
+        g.beginPath(); g.moveTo(s[0] * w, s[1] * h);
+        for (var i = 2; i < s.length; i += 2) g.lineTo(s[i] * w, s[i + 1] * h);
+        g.stroke();
+    }
+
+    function kpadHtml(q, isAnswered, okT) {
+        var ans = q.options[0].split('');
+        if (!isAnswered) {
+            var st = kpadState(q), many = ans.length > 1;
+            return '<div class="kp" id="kp">' +
+                '<div class="kp-row" role="group" aria-label="答えの枠（' + ans.length + '文字）">' + ans.map(function(c, i) {
+                    return '<button type="button" class="kp-slot' + (i === st.active ? ' on' : '') + '" data-i="' + i + '" aria-label="' + (i + 1) + '文字目" aria-pressed="' + (i === st.active) + '"><canvas></canvas></button>';
+                }).join('') + '</div>' +
+                '<div class="kp-pad-wrap"><canvas class="kp-pad" id="kp-pad" aria-label="ここに書く"></canvas>' +
+                (many ? '<span class="kp-which" id="kp-which">' + (st.active + 1) + '文字目</span>' : '') + '</div>' +
+                '<div class="kp-tools"><button type="button" id="kp-undo">一つ戻す</button><button type="button" id="kp-clear">消す</button>' +
+                (many ? '<button type="button" id="kp-prev" aria-label="前の字">‹ 前の字</button><button type="button" id="kp-next" aria-label="次の字">次の字 ›</button>' : '') + '</div>' +
+                '<button class="check-btn kp-check" id="kp-check" type="button" disabled>答え合わせ</button>' +
+                '<div class="kp-msg" id="kp-msg" aria-live="polite"></div>' +
+                '</div>';
+        }
+        var rec = kpadRec(q);
+        if (!rec) return '<div class="kk-answer ' + (okT ? 'ok' : 'ng') + '"><span class="kk-lab">あなたの答え</span><span class="kk-val">' + escapeHtml(userAnswers[q.id] || '') + '</span></div>';
+        var reads = rec.r.split(''), anim = justAnsweredId === q.id;
+        return '<div class="kp kp-done' + (rec.fx ? ' fixed' : '') + '">' +
+            '<div class="kp-res">' + ans.map(function(c, i) {
+                var ok = rec.k[i] === 1, cand = (rec.c[i] || '').split('').filter(Boolean);
+                return '<div class="kp-col">' +
+                    '<div class="kp-cell ' + (ok ? 'ok' : 'ng') + '"><canvas data-i="' + i + '"></canvas><span class="kp-pen">' + penMark(ok ? 'ok' : 'ng', anim) + '</span></div>' +
+                    '<div class="kp-read"><span class="kk-lab">読み取り</span><b lang="ja">' + escapeHtml(reads[i] || '？') + '</b></div>' +
+                    (cand.length ? '<div class="kp-cands"><span class="kk-lab">候補</span>' + cand.map(function(x) { return '<span lang="ja">' + escapeHtml(x) + '</span>'; }).join('') + '</div>' : '') +
+                    '</div>';
+            }).join('') + '</div>' +
+            (rec.fx ? '<div class="kp-fixnote">判定を直しました（読み取りは' + (rec.ok ? '○' : '×') + '）</div>' : '') +
+            '</div>';
+    }
+    function kpadAfterHtml(q, isAnswered) {
+        if (!isAnswered) return '';
+        var rec = kpadRec(q), right = userAnswers[q.id] === q.options[0];
+        return '<div class="kp-order" id="kp-order"><div class="kp-order-head"><span class="kk-lab">筆順</span><button type="button" class="kp-replay" id="kp-replay">もう一度</button></div>' +
+            '<div class="kp-order-row" id="kp-order-row">' + q.options[0].split('').map(function(c) { return '<div class="kp-order-cell" data-c="' + escapeHtml(c) + '"></div>'; }).join('') + '</div></div>' +
+            (rec ? '<div class="kp-fix-row"><button type="button" class="kp-fix" id="kp-fix">判定を直す（' + (right ? '×' : '○') + 'にする）</button>' +
+                '<span class="kp-fix-note">読み取りが違うときに。記録も' + (right ? '×' : '○') + 'に変わります。</span></div>' : '');
+    }
+    // the correct kanji, stroke by stroke (numbered), from the KanjiVG data
+    function kpadOrderSvg(ch) {
+        var st = window.MogiKanji && MogiKanji.strokes(ch);
+        if (!st) return '<span class="kp-order-none" lang="ja">' + escapeHtml(ch) + '</span>';
+        var n = st.length, dur = Math.min(0.55, 7 / n), base = '', ink = '', nums = '';
+        st.forEach(function(s, i) {
+            var d = 'M' + s[0].toFixed(1) + ' ' + s[1].toFixed(1), L = 0;
+            for (var k = 2; k < s.length; k += 2) { d += ' L' + s[k].toFixed(1) + ' ' + s[k + 1].toFixed(1); L += Math.hypot(s[k] - s[k - 2], s[k + 1] - s[k - 1]); }
+            L = Math.max(1, Math.ceil(L + 1));
+            var dx = s.length > 2 ? s[2] - s[0] : 1, dy = s.length > 2 ? s[3] - s[1] : 0, dl = Math.hypot(dx, dy) || 1;
+            var tx = Math.max(5, Math.min(104, s[0] - dx / dl * 6 - 1)), ty = Math.max(8, Math.min(106, s[1] - dy / dl * 6 + 3));
+            var delay = (i * dur).toFixed(2) + 's';
+            base += '<path d="' + d + '"/>';
+            ink += '<path d="' + d + '" style="stroke-dasharray:' + L + ';stroke-dashoffset:' + L + ';animation-duration:' + (dur * 0.9).toFixed(2) + 's;animation-delay:' + delay + '"/>';
+            nums += '<text x="' + tx.toFixed(1) + '" y="' + ty.toFixed(1) + '" style="animation-delay:' + delay + '">' + (i + 1) + '</text>';
+        });
+        return '<svg class="kp-order-svg" viewBox="0 0 109 109" role="img" aria-label="「' + ch + '」の筆順（' + n + '画）"><g class="kp-o-base">' + base + '</g><g class="kp-o-ink">' + ink + '</g><g class="kp-o-num">' + nums + '</g></svg>' +
+            '<span class="kp-order-cap"><b lang="ja">' + escapeHtml(ch) + '</b>' + n + '画</span>';
+    }
+    function kpadFillOrder() {
+        var row = document.getElementById('kp-order-row');
+        if (!row) return;
+        row.querySelectorAll('.kp-order-cell').forEach(function(cell) { cell.innerHTML = kpadOrderSvg(cell.dataset.c); });
+    }
+
+    function kpadBind(q, isAnswered) {
+        justAnsweredId = null;
+        kpadLoad(isAnswered ? function() { kpadFillOrder(); } : null);
+        if (isAnswered) {
+            var rec = kpadRec(q);
+            if (rec) document.querySelectorAll('.kp-cell canvas').forEach(function(cv) { kpadDraw(cv, kpadDec(rec.d[+cv.dataset.i]), 0.045); });
+            var rp = document.getElementById('kp-replay');
+            if (rp) rp.addEventListener('click', kpadFillOrder);
+            var fx = document.getElementById('kp-fix');
+            if (fx) fx.addEventListener('click', function() { kpadFlip(q); });
+            return;
+        }
+        var st = kpadState(q), pad = document.getElementById('kp-pad'), slots = document.querySelectorAll('.kp-slot');
+        var undoB = document.getElementById('kp-undo'), clearB = document.getElementById('kp-clear'), checkB = document.getElementById('kp-check');
+        var prevB = document.getElementById('kp-prev'), nextB = document.getElementById('kp-next'), which = document.getElementById('kp-which');
+        function refresh() {
+            kpadDraw(pad, st.boxes[st.active], 0.03);
+            slots.forEach(function(sl, i) {
+                sl.classList.toggle('on', i === st.active); sl.setAttribute('aria-pressed', String(i === st.active));
+                sl.classList.toggle('filled', st.boxes[i].length > 0);
+                kpadDraw(sl.querySelector('canvas'), st.boxes[i], 0.06);
+            });
+            if (which) which.textContent = (st.active + 1) + '文字目';
+            undoB.disabled = clearB.disabled = !st.boxes[st.active].length;
+            if (prevB) prevB.disabled = st.active === 0;
+            if (nextB) nextB.disabled = st.active === st.n - 1;
+            checkB.disabled = !st.boxes.some(function(b) { return b.length; });
+        }
+        function go(i) { st.active = Math.max(0, Math.min(st.n - 1, i)); refresh(); }
+        slots.forEach(function(sl, i) { sl.addEventListener('click', function() { go(i); }); });
+        if (prevB) prevB.addEventListener('click', function() { go(st.active - 1); });
+        if (nextB) nextB.addEventListener('click', function() { go(st.active + 1); });
+        undoB.addEventListener('click', function() { st.boxes[st.active].pop(); refresh(); });
+        clearB.addEventListener('click', function() { st.boxes[st.active] = []; refresh(); });
+        checkB.addEventListener('click', function() { kpadMark(q); });
+        var cur = null, pid = null, rect = null, g = null;
+        function pt(e) { return [Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)), Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height))]; }
+        pad.addEventListener('pointerdown', function(e) {
+            if (pid !== null || (e.pointerType === 'mouse' && e.button !== 0)) return;
+            e.preventDefault();
+            pid = e.pointerId; rect = pad.getBoundingClientRect();
+            try { pad.setPointerCapture(pid); } catch (er) {}
+            var p = pt(e); cur = [p[0], p[1]];
+            st.boxes[st.active].push(cur);
+            g = pad.getContext('2d');
+            g.beginPath(); g.arc(p[0] * pad.width, p[1] * pad.height, g.lineWidth / 2, 0, Math.PI * 2); g.fill();
+        });
+        pad.addEventListener('pointermove', function(e) {
+            if (e.pointerId !== pid || !cur) return;
+            e.preventDefault();
+            var evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
+            if (!evs.length) evs = [e];
+            evs.forEach(function(ev) {
+                var p = pt(ev), lx = cur[cur.length - 2], ly = cur[cur.length - 1];
+                if (Math.abs(p[0] - lx) + Math.abs(p[1] - ly) < 0.004) return;
+                cur.push(p[0], p[1]);
+                g.beginPath(); g.moveTo(lx * pad.width, ly * pad.height); g.lineTo(p[0] * pad.width, p[1] * pad.height); g.stroke();
+            });
+        });
+        function end(e) {
+            if (e.pointerId !== pid) return;
+            pid = null;
+            if (cur && cur.length === 2) cur.push(cur[0], cur[1]);
+            cur = null; refresh();
+        }
+        pad.addEventListener('pointerup', end);
+        pad.addEventListener('pointercancel', end);
+        pad.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+        refresh();
+    }
+    function kpadMark(q) {
+        var st = kpadState(q), btn = document.getElementById('kp-check'), msg = document.getElementById('kp-msg');
+        btn.disabled = true; btn.textContent = '読み取り中…';
+        kpadLoad(function(ok) {
+            btn = document.getElementById('kp-check'); msg = document.getElementById('kp-msg');
+            if (currentQuestions[currentIndex] !== q || !btn || kpadState(q) !== st) return;
+            if (!ok) {
+                btn.disabled = false; btn.textContent = '答え合わせ';
+                msg.innerHTML = '手書きのデータを読み込めませんでした。インターネットにつないで、もう一度押してください。<button type="button" class="kp-kbd" id="kp-kbd">キーボードで答える</button>';
+                document.getElementById('kp-kbd').addEventListener('click', function() { kpadKeyboard[q.id] = true; loadQuestion(); });
+                return;
+            }
+            var ans = q.options[0].split(''), reads = [], cands = [];
+            st.boxes.forEach(function(b) {
+                var r = b.length ? MogiKanji.recognize(b, 6) : [];
+                reads.push(r.length ? r[0].c : '？');
+                cands.push(r.slice(1, 5).map(function(x) { return x.c; }).join(''));
+            });
+            var s = reads.join(''), right = s === q.options[0] || (q.alt || []).indexOf(s) > -1;
+            var k = reads.map(function(c, i) { return right || c === ans[i] ? 1 : 0; });
+            kpadAnswer(q, s, right, { r: s, c: cands, k: k, ok: right ? 1 : 0, fx: 0, d: st.boxes.map(kpadEnc) });
+        });
+    }
+    // the same path as a typed answer (handleTypedAnswer), plus the drawing and which 成績表 counts it went into
+    function kpadAnswer(q, s, ok, rec) {
+        var counts = !(selectedWeek === 'all' || isBookmarkMode || isAllModeActive());
+        rec.cb = counts ? (progressData[q.id + '_answered'] ? 0 : 1) | (statsAnsweredFlags[q.id] ? 0 : 2) | (categoryStats[q.id + '_cat'] ? 0 : 4) : 0;
+        var val = ok ? q.options[0] : s;
+        userAnswers[q.id] = val;
+        saveAnswers();
+        recordCorrectness(q, ok);
+        recordStats(q, ok);
+        var last = attemptLog[attemptLog.length - 1];
+        rec.a = val; rec.t = last && last.id === q.id ? last.t : 0;
+        kpadRecs[q.id] = rec; kpadSaveRecs();
+        kp = null;
+        justAnsweredId = q.id;
+        vibrateFor(ok);
+        loadQuestion();
+    }
+    // 判定を直す: the stored answer, this answer's entry in the attempt log (and its day), the set's score, the 誤答ノート
+    // and the 成績表 counts it went into all change to the user's verdict. Pressing it again goes back.
+    function kpadFlip(q) {
+        var rec = kpadRec(q);
+        if (!rec) return;
+        var now = userAnswers[q.id] !== q.options[0], d = now ? 1 : -1, i;
+        var val = now ? q.options[0] : (rec.r !== q.options[0] ? rec.r : rec.r + '（×に直した）');
+        userAnswers[q.id] = val;
+        saveAnswers();
+        rec.a = val; rec.fx = (now ? 1 : 0) !== rec.ok ? 1 : 0;
+        for (i = attemptLog.length - 1; i >= 0; i--) {
+            var at = attemptLog[i];
+            if (at.id !== q.id || at.b !== -1 || at.t !== rec.t) continue;
+            if (at.ok !== (now ? 1 : 0)) {
+                at.ok = now ? 1 : 0;
+                var dt = new Date(at.t), key = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
+                if (dailyStats[key]) dailyStats[key].correct = Math.max(0, dailyStats[key].correct + d);
+                try {
+                    localStorage.setItem('jlptAttempts', JSON.stringify(attemptLog));
+                    localStorage.setItem('jlptDaily', JSON.stringify(dailyStats));
+                } catch (e) {}
+                masteryMemoKey = '';
+            }
+            break;
+        }
+        for (i = answerHistory.length - 1; i >= 0; i--) {
+            if (answerHistory[i].questionId !== q.id) continue;
+            if (answerHistory[i].correct !== now) { answerHistory[i].correct = now; score = Math.max(0, score + d); }
+            break;
+        }
+        if (!isAllModeActive()) {
+            if (now) delete mistakeTimestamps[q.id]; else mistakeTimestamps[q.id] = Date.now();
+            localStorage.setItem('jlptMistakeTimestamps', JSON.stringify(mistakeTimestamps));
+        }
+        var pk = qDayKey(q);
+        if ((rec.cb & 1) && progressData[pk]) { progressData[pk].correct = Math.max(0, progressData[pk].correct + d); localStorage.setItem('jlptProgress', JSON.stringify(progressData)); }
+        if (rec.cb & 2) { statsData.correct = Math.max(0, statsData.correct + d); localStorage.setItem('jlptStatsData', JSON.stringify(statsData)); }
+        if ((rec.cb & 4) && categoryStats[q.type]) { categoryStats[q.type].correct = Math.max(0, categoryStats[q.type].correct + d); localStorage.setItem('jlptCategoryStats', JSON.stringify(categoryStats)); }
+        updateAllModeMistakeLog(q);
+        kpadSaveRecs();
+        justAnsweredId = q.id;
+        vibrateFor(now);
         loadQuestion();
     }
 
@@ -17569,8 +17873,8 @@
     var justAnsweredId = null;   // the pen animation plays only right after answering
     function penMark(kind, animate) {
         var path = kind === 'ok'
-            ? '<circle cx="22" cy="22" r="17" pathLength="100"/>'
-            : '<path d="M10 10 L34 34" pathLength="100"/><path d="M34 10 L10 34" pathLength="100" class="pen-2"/>';
+            ? '<circle cx="22" cy="22" r="15"/>'
+            : '<path d="M9 9 L35 35 M35 9 L9 35"/>';
         return '<svg class="pen-mark ' + kind + (animate ? ' draw' : '') + '" viewBox="0 0 44 44" aria-hidden="true">' + path + '</svg>';
     }
     var CIRCLED = ['①', '②', '③', '④', '⑤', '⑥'];
