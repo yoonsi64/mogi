@@ -11755,19 +11755,6 @@
         return { lib: lib, week: last.week, day: last.day, status: st };
     }
 
-    // After a finished day: the next day in that book not yet finished (null when the book is done or nothing was started)
-    function getNextDay() {
-        var last = loadJSON('jlptLastSession', null);
-        if (!last || !last.week || !last.day || getLastSession()) return null;
-        var lib = getLib(last.lib && LIBRARIES.some(function(l) { return l.id === last.lib; }) ? last.lib : DEFAULT_LIB);
-        for (var w = last.week; w <= (lib.units ? lib.units.length : lib.weeks); w++) {
-            for (var d = (w === last.week ? last.day + 1 : 1); d <= daysIn(lib, w); d++) {
-                var st = dayStatus(w, d, lib.id);
-                if (st.state === 'none' || st.state === 'partial') return { lib: lib.id, week: w, day: d, status: st };
-            }
-        }
-        return null;
-    }
     function startDay(w, d, lib) {
         rememberHomeSpot(d === 'unit' || w === 'all' ? '.lib-card[data-lib="' + (lib || DEFAULT_LIB) + '"]' : '.day-cell[data-lib="' + (lib || DEFAULT_LIB) + '"][data-week="' + w + '"][data-day="' + d + '"]');
         isBookmarkMode = false; isMistakeMode = false;
@@ -11877,7 +11864,7 @@
         var goalPct = Math.min(100, Math.round(todayRec.answered / dailyGoal * 100));
         var streaks = computeStreaks();
         var rvToday = todaysReview(), due = rvToday.remaining.length || rvToday.more;
-        var last = getLastSession(), nextDay = last ? null : getNextDay();
+        var last = getLastSession();
 
         // Home, top to bottom: today (goal, week, streak, exam countdown), start / review, the garden, a row of
         // tools (模擬試験 opens its panel below the row), today's word. The books are in 学ぶ › 教材 (showLibrary).
@@ -11889,9 +11876,14 @@
         // the next things to do, as small pills in the today card: carry on (or start) and, when any are due, 復習
         var startBtn = last
             ? '<button id="home-resume" class="home-pill go">▶ 続きから<small>' + (isMultiLib() ? escapeHtml(getLib(last.lib).short || getLib(last.lib).title) + '・' : '') + escapeHtml(placeLabel(getLib(last.lib), last.week, last.day)) + ' ' + last.status.answered + '/' + last.status.max + '</small></button>'
-            : nextDay ? '<button id="home-next" class="home-pill go">▶ 次へ<small>' + (isMultiLib() ? escapeHtml(getLib(nextDay.lib).short || getLib(nextDay.lib).title) + '・' : '') + escapeHtml(placeLabel(getLib(nextDay.lib), nextDay.week, nextDay.day)) + '</small></button>'
             : first ? '<button id="home-start" class="home-pill go">▶ 教材を選ぶ</button>' : '';
-        var pills = startBtn + (due ? '<button id="home-review" class="home-pill">復習<small>' + (rvToday.remaining.length ? reviewLabel(rvToday) : '完了・もう1回分') + '</small></button>' : '');
+        var pills = startBtn;
+        // 今日の復習 as a bar under the week's graph: how much of today's set is done; tap it to review (or, once done, for one more set)
+        var rvDone = rvToday.ids.length && !rvToday.remaining.length;
+        var rvBar = rvToday.ids.length ? '<button id="home-review" class="home-rv' + (rvDone ? ' done' : '') + '"' + (rvDone && !rvToday.more ? ' disabled' : '') + '>' +
+            '<span class="home-rv-top"><span class="home-rv-label">今日の復習</span><span class="home-rv-n">' +
+            (rvDone ? '完了 ✓' + (rvToday.more ? '<small>もう1回分 ›</small>' : '') : '<b>' + rvToday.done + '</b> / ' + rvToday.ids.length + '問<small>›</small>') + '</span></span>' +
+            '<span class="home-rv-track" aria-hidden="true"><i style="width:' + Math.round(rvToday.done / rvToday.ids.length * 100) + '%"></i></span></button>' : '';
         var hasMock = mockLibs().length > 0;
         var lastR = readOnlyEntries().slice(-1)[0];
 
@@ -11904,6 +11896,7 @@
             weekBarsSvg() +
             '<div class="home-today-meta"><span>連続 <b>' + streaks.current + '日</b></span><span>正答率 <b>' + (todayRec.answered ? Math.round(todayRec.correct / todayRec.answered * 100) + '%' : '—') + '</b></span>' + examChip + '</div>' +
             '</div>' +
+            rvBar +
             (pills ? '<div class="home-pills">' + pills + '</div>' : '') +
             '</div>' +
             backupReminderHtml() +
@@ -11934,8 +11927,6 @@
         if (last) document.getElementById('home-resume').addEventListener('click', function() { startDay(last.week, last.day, last.lib); });
         var startB = document.getElementById('home-start');
         if (startB) startB.addEventListener('click', function() { openSub('learn', 'library'); });
-        var nextB = document.getElementById('home-next');
-        if (nextB) nextB.addEventListener('click', function() { startDay(nextDay.week, nextDay.day, nextDay.lib); });
         document.getElementById('rp-home').addEventListener('click', openReadingPractice);
         var mockTile = document.getElementById('home-mock-tile');
         if (mockTile) mockTile.addEventListener('click', function() {
@@ -11950,7 +11941,7 @@
             if (!window.MogiSky || !gdEngine()) { showToast('空はまだ読み込み中です', 1600); return; }
             openGarden(false, true);
         });
-        if (due) document.getElementById('home-review').addEventListener('click', function() { pendingOrigin = 'home'; startReviewPractice(); });
+        if (rvBar && (!rvDone || rvToday.more)) document.getElementById('home-review').addEventListener('click', function() { pendingOrigin = 'home'; startReviewPractice(); });
         bindOmikujiHome();
         var wordCard = document.getElementById('home-word');
         if (wordCard) {
@@ -27853,21 +27844,81 @@
     // 今日の復習: a set of the chosen size (設定 › 1日の復習: 10/20/30/50) picked each day from the questions due, wrong answers
     // first. It stays fixed for the day so it counts down; the set grows only to its size (questions that fall due later in
     // the day top it up), and 'もう1回分' adds another set once it is done.
+    // What 今日の復習 draws on: only questions you have missed (a blank of a passage counts as its question). A miss is due
+    // the next day; answered right, it comes back 3 days later, then 10 days after that; right both times, it leaves the
+    // review (and the 誤答ノート). Wrong at any point: due again the next day. Anything answered today waits for tomorrow, so a
+    // review never repeats a question the same day. Questions answered right the first time never come up.
+    // Order: misses from the last 7 days (newest first, while they are fresh), then the checks that are due, then older misses.
+    function reviewMissedIds() {
+        var state = computeMastery(), now = Date.now(), due = {}, dayStart = new Date().setHours(0, 0, 0, 0);
+        Object.keys(state).forEach(function(k) {
+            var st = state[k];
+            if (!st.attempts || st.correct >= st.attempts) return;          // never missed
+            if (st.lastOk && st.streak >= 3) return;                           // missed, then right at 3 and 10 days: done
+            if (st.lastOk && now - st.lastT < (st.streak >= 2 ? 10 : 3) * 86400000) return;   // right once: 3 days; twice: 10
+            if (st.lastT >= dayStart) return;                                   // answered today: tomorrow
+            var id = parseInt(k, 10);
+            if (!findQuestion(id)) return;
+            var prio = st.lastOk ? 1 : now - st.lastT < 7 * 86400000 ? 0 : 2;
+            if (!due[id] || prio < due[id].prio) due[id] = { prio: prio, t: st.lastT };
+        });
+        return Object.keys(due).map(Number).sort(function(a, b) {
+            return (due[a].prio - due[b].prio) || (due[a].prio === 0 ? due[b].t - due[a].t : due[a].t - due[b].t);
+        });
+    }
     function reviewPerDay() { var n = getSetting('reviewPerDay', 20); return [10, 20, 30, 50].indexOf(n) > -1 ? n : 20; }
     function todaysReview(addSet) {
-        var today = getTodayDateString(), due = getReviewQuestionIds(), isDueNow = {};
+        var today = getTodayDateString(), due = reviewMissedIds(), isDueNow = {};
         due.forEach(function(id) { isDueNow[id] = true; });
         var t = loadJSON('jlptReviewToday', null);
-        if (!t || t.date !== today || !Array.isArray(t.ids)) t = { date: today, ids: [], sets: 1 };
+        if (!t || t.date !== today || !Array.isArray(t.ids) || t.v !== 2) t = { date: today, ids: [], sets: 1, v: 2 };
         if (addSet) t.sets = (t.sets || 1) + 1;
         var size = reviewPerDay() * (t.sets || 1);
         t.ids = t.ids.filter(function(id) { return !!findQuestion(id); });
         for (var i = t.ids.length - 1; i >= 0 && t.ids.length > size; i--) if (isDueNow[t.ids[i]]) t.ids.splice(i, 1);     // the size was lowered
         var inSet = {};
         t.ids.forEach(function(id) { inSet[id] = true; });
-        for (var j = 0; j < due.length && t.ids.length < size; j++) if (!inSet[due[j]]) { t.ids.push(due[j]); inSet[due[j]] = true; }
+        // a mix of question types: one of each type in turn (each type's own queue keeps wrong answers first, then the
+        // longest ago), types taken in the order of their most urgent question; a type already in the set waits its turn.
+        // Passages: for every 20 questions at most one 長文 and three 中文; a passage counts once, and only its missed
+        // questions come (they follow one another, so the passage is read once).
+        var queues = {}, order = [];
+        due.forEach(function(id) {
+            if (inSet[id]) return;
+            var c = statCat(findQuestion(id));
+            if (!queues[c]) { queues[c] = []; order.push(c); }
+            queues[c].push(id);
+        });
+        var per20 = Math.ceil(size / 20), cap = { 'Comprehension:long': per20, 'Comprehension:mid': 3 * per20 };
+        var pkey = function(q) { return q.group || 'p' + q.id; };
+        var held = {}, passages = {};
+        t.ids.forEach(function(id) {
+            var q = findQuestion(id), c = statCat(q);
+            held[c] = (held[c] || 0) + 1;
+            if (cap[c]) (passages[c] = passages[c] || {})[pkey(q)] = true;
+        });
+        var take = function(id, c) { t.ids.push(id); inSet[id] = true; held[c] = (held[c] || 0) + 1; };
+        while (t.ids.length < size && order.length) {
+            var low = Math.min.apply(null, order.map(function(c) { return held[c] || 0; }));
+            for (var oi = 0; oi < order.length && t.ids.length < size; oi++) {
+                var c = order[oi];
+                if ((held[c] || 0) > low || !queues[c].length) continue;
+                var id = queues[c].shift(), q = findQuestion(id);
+                if (cap[c]) {
+                    var ps = passages[c] = passages[c] || {}, k = pkey(q);
+                    if (!ps[k] && Object.keys(ps).length >= cap[c]) { queues[c] = []; continue; }
+                    ps[k] = true;
+                    take(id, c);
+                    queues[c] = queues[c].filter(function(x) {          // the passage's other missed questions come with it
+                        if (pkey(findQuestion(x)) !== k || t.ids.length >= size) return true;
+                        take(x, c); return false;
+                    });
+                } else take(id, c);
+            }
+            order = order.filter(function(c) { return queues[c].length; });
+        }
         localStorage.setItem('jlptReviewToday', JSON.stringify(t));
-        var remaining = due.filter(function(id) { return inSet[id]; });
+        var remaining = t.ids.filter(function(id) { return isDueNow[id]; });
         return { ids: t.ids, remaining: remaining, done: t.ids.length - remaining.length, more: due.length - remaining.length };
     }
     var PRACTICE_SIZE = 20;
@@ -28949,7 +29000,7 @@
         var list = [];
         for (var id in userAnswers) {
             var q = findQuestion(id);
-            if (q && isQuestionAnswered(q) && !isQuestionCorrect(q) && list.indexOf(q) === -1) list.push(q);
+            if (q && isQuestionAnswered(q) && !isQuestionCorrect(q) && list.indexOf(q) === -1 && !reviewCleared(q.id, mistakeTimestamps[q.id])) list.push(q);
         }
         return list;
     }
@@ -28980,10 +29031,24 @@
     }
 
     function getRetakeMistakeIds() {
-        return Object.keys(retakeMistakes).map(Number).filter(function(id) { return !!findQuestion(id) && typeof reportAnswers[id] !== 'string'; });
+        return Object.keys(retakeMistakes).map(Number).filter(function(id) { return !!findQuestion(id) && typeof reportAnswers[id] !== 'string' && !reviewCleared(id, retakeMistakes[id].time); });
     }
     function getAllModeMistakeIds() {
-        return Object.keys(allModeMistakes).map(Number).filter(function(id) { return !!findQuestion(id); });
+        return Object.keys(allModeMistakes).map(Number).filter(function(id) { return !!findQuestion(id) && !reviewCleared(id, allModeMistakes[id].time); });
+    }
+    // A mistake the review has passed (right three times in a row since it was made: the next day or later, then 3 and 10 days
+    // on) leaves the 誤答ノート; the 成績表 keeps the book's answer as it was. Missing it again brings it back.
+    var masteryMemo = null, masteryMemoKey = '';
+    function masteryNow() {
+        var tail = attemptLog.length ? attemptLog[attemptLog.length - 1] : null, key = attemptLog.length + ':' + (tail ? tail.t + ':' + tail.id : '');
+        if (key !== masteryMemoKey) { masteryMemo = computeMastery(); masteryMemoKey = key; }
+        return masteryMemo;
+    }
+    function reviewCleared(id, missT) {
+        var q = findQuestion(id);
+        if (!q) return false;
+        var state = masteryNow(), keys = q.type === 'Text Grammar' && q.blanks ? q.blanks.map(function(b, i) { return unitKey(id, i); }) : [unitKey(id, -1)];
+        return keys.every(function(k) { var st = state[k]; return st && st.lastOk && st.streak >= 3 && st.lastT > (missT || 0); });
     }
 
     // 誤答ノート by question type: a deck per type (内容理解 split 短文・中文・長文), each with its count, the type's overall

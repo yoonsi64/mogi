@@ -3521,3 +3521,16 @@ html.dark .mx-drill { background: transparent; }
 html.dark .mx-type, html.dark .mx-dn, html.dark .mx-drill { color: color-mix(in srgb, var(--tc) 55%, white); }
 html.dark .mx-all .mx-dn { color: var(--text-main); }
 html.dark .mx-drill { border-color: color-mix(in srgb, var(--tc) 55%, white); }
+
+/* home: 今日の復習 as a progress bar under the week's graph */
+.home-rv { flex-basis: 100%; display: flex; flex-direction: column; gap: 5px; padding: 8px 0 2px; border: 0; border-top: 1px solid var(--border-light); background: none; color: var(--text-main); font-family: inherit; text-align: left; cursor: pointer; min-height: 44px; }
+.home-rv:disabled { cursor: default; }
+.home-rv-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 0.82rem; }
+.home-rv-label { font-weight: bold; }
+.home-rv-n { color: var(--text-sub); font-size: 0.8rem; white-space: nowrap; }
+.home-rv-n b { color: var(--text-main); font-size: 0.95rem; }
+.home-rv-n small { margin-left: 6px; color: var(--active-blue); font-size: 0.78rem; font-weight: bold; }
+.home-rv.done .home-rv-n { color: var(--text-main); font-weight: bold; }
+.home-rv-track { display: block; height: 7px; border-radius: 4px; background: var(--track); overflow: hidden; }
+.home-rv-track i { display: block; height: 100%; border-radius: 4px; background: var(--active-blue); transition: width .3s; }
+.home-rv.done .home-rv-track i { background: #2f8f5b; }
