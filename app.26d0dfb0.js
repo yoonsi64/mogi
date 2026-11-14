@@ -17248,7 +17248,7 @@
     // (kanjistrokes.*.js: the recogniser and KanjiVG stroke data, CC BY-SA 3.0; loaded only when a writing question
     // opens). A character is right only when the top reading is the answer's. 判定を直す overrules a misread both ways:
     // the user's word stands, and it flips the recorded result (attempt log, day, 成績表 counts, 誤答ノート).
-    var KPAD_SRC = 'kanjistrokes.305d3032.js';
+    var KPAD_SRC = 'kanjistrokes.efab0909.js';
     var kpadWait = null, kpadKeyboard = {};
     function kpadLoad(cb) {
         if (window.MogiKanji) { if (cb) cb(true); return; }
@@ -18225,7 +18225,7 @@
     // Progress per character and per word, in HJ.store (in backups like every jlpt* key):
     // { c: { 天: rec }, w: { '천지:天地': rec } }, rec = { l: level 0..11, s: 1/0 the last verdict, ok, ng: counts, t, fx: 1 when 판정 고치기 set it }.
     var HJ = {
-        id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.e544d690.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
+        id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.540e7525.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
         lv: ['8級', '7級Ⅱ', '7級', '6級Ⅱ', '6級', '5級Ⅱ', '5級', '4級Ⅱ', '4級', '3級Ⅱ', '3級', '2級'],
         total: {"c": [50, 50, 50, 75, 75, 99, 100, 250, 250, 500, 316, 526], "w": [150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150]},
         color: '#2b5fa8', badge: '韓', pattern: ['kikkohanabishi', '#2d4f7f'],
@@ -18325,7 +18325,7 @@
             var c = hjCounts(i, op.kind, op.cum), p = c.n ? Math.round(c.ok / c.n * 100) : 0;
             return '<button type="button" class="hj-lv' + (i === op.lv ? ' on' : '') + '" data-lv="' + i + '" aria-pressed="' + (i === op.lv) + '">' +
                 '<span class="hj-lv-name">' + name + '</span><span class="hj-lv-n">' + c.n + unit + '</span>' +
-                '<span class="hj-lv-st"><span class="ok">○' + c.ok + '</span>' + (c.tr ? '<span class="tri">△' + c.tr + '</span>' : '') + '<span class="ng">×' + (c.ng - c.tr) + '</span></span>' +
+                '<span class="hj-lv-st"><span class="ok">' + HJ_ST_IC.ok + c.ok + '</span>' + (c.tr ? '<span class="tri">' + HJ_ST_IC.tri + c.tr + '</span>' : '') + '<span class="ng">' + HJ_ST_IC.ng + (c.ng - c.tr) + '</span></span>' +
                 '<span class="day-bar"><i style="width:' + p + '%"></i></span></button>';
         }).join('');
         var cur = hjCounts(op.lv, op.kind, op.cum);
@@ -18647,6 +18647,12 @@
         vibrateFor(!!m.v);
         hjRender();
     }
+    // ○ △ × in the level cells: drawn the same size, centred on the numbers (the text glyphs sit at different heights)
+    var HJ_ST_IC = {
+        ok: '<svg class="st-ic" viewBox="0 0 12 12" aria-label="○"><circle cx="6" cy="6" r="4.4"/></svg>',
+        tri: '<svg class="st-ic" viewBox="0 0 12 12" aria-label="△"><path d="M6 1.6 L10.6 10 L1.4 10 Z"/></svg>',
+        ng: '<svg class="st-ic" viewBox="0 0 12 12" aria-label="×"><path d="M2.4 2.4 L9.6 9.6 M9.6 2.4 L2.4 9.6"/></svg>'
+    };
     var HJ_ORDER_LAB = null;
     // the result screen without scrolling: when a long reading list (生: セイ・ショウ・い-きる…) or notes make it too tall,
     // the readings, the stroke-order drawings and the cells get smaller, one step at a time

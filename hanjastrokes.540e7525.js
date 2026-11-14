@@ -54,7 +54,7 @@ var MogiHanja = (function() {
         // strict (漢検-style): the stroke count must match; a stroke clearly too long or too short for the character (by itself,
         // or against a parallel stroke that should be longer or shorter, 土/士 未/末); a stroke that passes through another where it
         // should stop at it, or stops where it should pass through (田/由/甲/申)
-        strict: 1, lhi: 1.6, llo: 0.55, labs: 0.12, ldot: 0.12, pr: 0.8, pr2: 1.0, pang: 0.3, plen: 0.2, pov: 0.5, pgap: 0.7, t0: 0.025, tgap: 0.05, thru: 0.10, tmax: 0.3, need: 0.1, tnear: 0.12, corner: 0.05
+        strict: 1, lhi: 1.8, llo: 0.45, labs: 0.15, ldot: 0.12, pr: 0.75, pr2: 1.1, pang: 0.3, plen: 0.2, pov: 0.5, pgap: 0.7, t0: 0.025, tgap: 0.05, thru: 0.13, tmax: 0.35, need: 0.12, tnear: 0.12, corner: 0.05
     };
 
     function load(k, d) {
