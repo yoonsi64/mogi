@@ -12055,7 +12055,7 @@
         return '<div class="sort-controls lib-sort" role="group" aria-label="並び替え"><span class="lib-sort-label" aria-hidden="true">並び替え</span>' +
             LIB_SORTS.map(function(s) { return '<button data-sort="' + s[0] + '" class="' + (s[0] === cur && !libEditing ? 'active' : '') + '" aria-pressed="' + (s[0] === cur && !libEditing) + '">' + s[1] + '</button>'; }).join('') +
             '<button class="lib-edit-btn' + (libEditing ? ' active' : '') + '" aria-pressed="' + libEditing + '">' + (libEditing ? '完了' : '編集') + '</button></div>' +
-            (libEditing ? '<div class="lib-edit-note">≡ をドラッグするか ▲ ▼ で本の並びを変えると、それが「標準」の順になります。表紙のない本は「表紙」で柄を選べます。</div>' : '');
+            (libEditing ? '<div class="lib-edit-note">≡ をドラッグして本の並びを変えると、それが「標準」の順になります。表紙のない本は「表紙」で柄を選べます。</div>' : '');
     }
     function eachReading(b, fn) { b.toc.forEach(function(sec) { sec.chapters.forEach(function(ch) { ch.items.forEach(function(it) { if (it.id && READINGS[it.id]) fn(it.id); }); }); }); }
     function libLastStudied() {
@@ -12090,19 +12090,22 @@
                 var cv = card.querySelector('.lib-head .lib-cover');
                 var bar = document.createElement('div');
                 bar.className = 'lib-edit';
-                bar.innerHTML = '<button type="button" class="lib-grip" aria-label="ドラッグして並べ替え">≡</button><button type="button" class="lib-mv" data-d="-1" aria-label="上へ">▲</button><button type="button" class="lib-mv" data-d="1" aria-label="下へ">▼</button>' +
+                bar.innerHTML = '<button type="button" class="lib-grip" aria-label="並べ替え（ドラッグ、または ↑ ↓ キー）">≡</button>' +
                     (cv && !cv.classList.contains('has-img') ? '<button type="button" class="lib-cv">表紙</button>' : '');
                 card.insertBefore(bar, card.firstChild);
-                bar.querySelectorAll('.lib-mv').forEach(function(b) {
-                    b.addEventListener('click', function() {
-                        var d = +b.dataset.d, sib = d < 0 ? card.previousElementSibling : card.nextElementSibling;
+                var g = bar.querySelector('.lib-grip');
+                g.addEventListener('keydown', function(e) {
+                    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+                    e.preventDefault();
+                    (function(b) {
+                        var d = e.key === 'ArrowUp' ? -1 : 1, sib = d < 0 ? card.previousElementSibling : card.nextElementSibling;
                         while (sib && !sib.classList.contains('lib-card')) sib = d < 0 ? sib.previousElementSibling : sib.nextElementSibling;
                         if (!sib) return;
                         if (d < 0) sh.insertBefore(card, sib); else sh.insertBefore(sib, card);
                         libSaveShelf(sh);
                         b.focus({ preventScroll: true });
                         card.scrollIntoView({ block: 'nearest' });
-                    });
+                    })(g);
                 });
                 var cb = bar.querySelector('.lib-cv');
                 if (cb) cb.addEventListener('click', function() { libCoverSheet(card.dataset.lib); });
