@@ -17265,8 +17265,30 @@
         pad.addEventListener('pointerup', end);
         pad.addEventListener('pointercancel', end);
         pad.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+        kpadRefit = function() { if (pid !== null) return; kpadFit(); refresh(); };
+        kpadFit();
         refresh();
     }
+    // The pad fits between the question and the bottom bar (次の問題へ): it shrinks, to no less than 200px, so 答え合わせ shows
+    // without scrolling; on a very short screen the page scrolls just far enough to show it. Refitted when the screen size changes.
+    var kpadRefit = null, kpadFitTimer = null;
+    function kpadFit() {
+        var wrap = document.querySelector('.kp-pad-wrap'), checkB = document.getElementById('kp-check'), foot = document.getElementById('quiz-footer');
+        if (!wrap || !checkB) return;
+        wrap.style.width = '';
+        var limit = window.innerHeight - (foot ? foot.offsetHeight : 0) - 8;
+        var low = function() { return Math.max(checkB.getBoundingClientRect().bottom, wrap.getBoundingClientRect().bottom); };
+        var over = low() - limit;
+        if (over <= 0) return;
+        var w = wrap.getBoundingClientRect().width, nw = Math.max(200, Math.floor(w - over));
+        if (nw < w) wrap.style.width = nw + 'px';
+        var rest = low() - limit;
+        if (rest > 0) window.scrollBy(0, Math.ceil(rest));
+    }
+    window.addEventListener('resize', function() {
+        clearTimeout(kpadFitTimer);
+        kpadFitTimer = setTimeout(function() { if (kpadRefit && document.getElementById('kp-pad')) kpadRefit(); }, 150);
+    });
     function kpadMark(q) {
         var st = kpadState(q), btn = document.getElementById('kp-check'), msg = document.getElementById('kp-msg');
         btn.disabled = true; btn.textContent = '読み取り中…';
