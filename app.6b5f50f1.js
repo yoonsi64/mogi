@@ -12106,6 +12106,7 @@
         jlptLibs.forEach(function(lib) { html += libCardHtml(lib, last, dueMap); });
         html += '</div><div class="home-shelf" data-shelf="kanken"' + (shelf === 'kanken' ? '' : ' hidden') + '>';
         kankenLibs.forEach(function(lib) { html += libCardHtml(lib, last, dueMap); });
+        html += hjCardHtml();
         html += '</div><div class="home-shelf" data-shelf="read"' + (shelf === 'read' ? '' : ' hidden') + '>';
         readBooks.forEach(function(b) { html += readingBookCardHtml(b); });
         html += '</div></div>';
@@ -12158,6 +12159,7 @@
                 if (nb) nb.focus({ preventScroll: true });
             });
         });
+        hjBindCard();
         stopQuoteRotation();
     }
 
@@ -17173,9 +17175,11 @@
                 '<span class="kp-fix-note">読み取りが違うときに。記録も' + (right ? '×' : '○') + 'に変わります。</span></div>' : '');
     }
     // the correct kanji, stroke by stroke (numbered), from the KanjiVG data
-    function kpadOrderSvg(ch) {
-        var st = window.MogiKanji && MogiKanji.strokes(ch);
-        if (!st) return '<span class="kp-order-none" lang="ja">' + escapeHtml(ch) + '</span>';
+    // rec: the recogniser whose strokes it shows (the 漢検 pad's by default); lab: { unit, aria(ch, n), cls } for another practice's language
+    function kpadOrderSvg(ch, rec, lab) {
+        rec = rec || window.MogiKanji;
+        var st = rec && rec.strokes(ch);
+        if (!st) return '<span class="kp-order-none' + (lab ? ' ' + lab.cls : '') + '"' + (lab ? '' : ' lang="ja"') + '>' + escapeHtml(ch) + '</span>';
         var n = st.length, dur = Math.min(0.55, 7 / n), base = '', ink = '', nums = '';
         st.forEach(function(s, i) {
             var d = 'M' + s[0].toFixed(1) + ' ' + s[1].toFixed(1), L = 0;
@@ -17188,8 +17192,8 @@
             ink += '<path d="' + d + '" style="stroke-dasharray:' + L + ';stroke-dashoffset:' + L + ';animation-duration:' + (dur * 0.9).toFixed(2) + 's;animation-delay:' + delay + '"/>';
             nums += '<text x="' + tx.toFixed(1) + '" y="' + ty.toFixed(1) + '" style="animation-delay:' + delay + '">' + (i + 1) + '</text>';
         });
-        return '<svg class="kp-order-svg" viewBox="0 0 109 109" role="img" aria-label="「' + ch + '」の筆順（' + n + '画）"><g class="kp-o-base">' + base + '</g><g class="kp-o-ink">' + ink + '</g><g class="kp-o-num">' + nums + '</g></svg>' +
-            '<span class="kp-order-cap"><b lang="ja">' + escapeHtml(ch) + '</b>' + n + '画</span>';
+        return '<svg class="kp-order-svg" viewBox="0 0 109 109" role="img" aria-label="' + (lab ? lab.aria(ch, n) : '「' + ch + '」の筆順（' + n + '画）') + '"><g class="kp-o-base">' + base + '</g><g class="kp-o-ink">' + ink + '</g><g class="kp-o-num">' + nums + '</g></svg>' +
+            '<span class="kp-order-cap"><b' + (lab ? ' class="' + lab.cls + '"' : ' lang="ja"') + '>' + escapeHtml(ch) + '</b>' + n + (lab ? lab.unit : '画') + '</span>';
     }
     function kpadFillOrder() {
         var row = document.getElementById('kp-order-row');
@@ -17889,6 +17893,464 @@
     function vibrateFor(isCorrect) {
         if (!getSetting('vibrate', true) || !navigator.vibrate) return;
         try { navigator.vibrate(isCorrect ? 12 : [25, 40, 25]); } catch (e) {}
+    }
+
+    // ---------- 한자 쓰기: writing practice by level (한국어문회 한자능력검정시험 8급–2급) ----------
+    // In 学ぶ › 教材 › 漢検, next to the 漢検 books: a card where the learner picks what to write (한자, 단어 or both), a level
+    // (only its own characters, or the lower levels' too) and practises a set: the prompt (the 훈음 "하늘 천" → 天, or a 한자어
+    // "천지 — 하늘과 땅" → 天地, one box per character as in the 漢検 書き取り), 채점, ○/× with what was read and the
+    // candidates, the stroke order, 판정 고치기, 다음. This practice speaks Korean (its learners are Korean); the rest of the app,
+    // and the 漢検 pad, stay Japanese.
+    // The answer is the 舊字體 the test uses: hanjastrokes.*.js (loaded when the practice opens) holds the same recogniser as the
+    // 漢検 pad, named MogiHanja (so the 漢検 pad's MogiKanji and its 新字体 set stay as they are), the KanjiVG strokes of the set
+    // and of the Japanese 常用漢字 outside it, so a Japanese form (学, 説) is read as itself and marked ×, with a note that names it
+    // 日本字, or 日本字·簡體字 when Unihan gives it as the simplified form too. Simplified-only shapes (说, 读) have no strokes here.
+    // Everything particular to this test is in HJ (a "deck"): its id, storage key, data file and the globals it defines, level
+    // names and counts, the prompt, and the UI strings. Another writing practice (e.g. 漢検 10級–2級, Japanese forms and strings)
+    // can reuse the screen, the progress records and the card with its own deck; see /tmp/claude-0/hanja/notes.md.
+    // Progress per character and per word, in HJ.store (in backups like every jlpt* key):
+    // { c: { 天: rec }, w: { '천지:天地': rec } }, rec = { l: level 0..11, s: 1/0 the last verdict, ok, ng: counts, t, fx: 1 when 판정 고치기 set it }.
+    var HJ = {
+        id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.47169ab0.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
+        lv: ['8級', '7級Ⅱ', '7級', '6級Ⅱ', '6級', '5級Ⅱ', '5級', '4級Ⅱ', '4級', '3級Ⅱ', '3級', '2級'],
+        total: {"c": [50, 50, 50, 75, 75, 99, 100, 250, 250, 500, 316, 526], "w": [150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150]},
+        color: '#2b5fa8', badge: '韓',
+        // 國漢文混用: Sino-Korean words in 漢字 (舊字體 only), native words, particles and endings in 한글; the 訓音 itself in 한글
+        t: {
+            title: '漢字 쓰기 練習', sub: '韓國語文會 漢字能力檢定試驗', range: '8級~2級',
+            chars: '字', words: '單語', items: '問題', kindC: '漢字', kindW: '單語', kindB: '둘 다', own: '이 級만', cum: '아래 級 包含',
+            upTo: '까지', go: '{lv} 練習하기 ({n}問題)', miss: '틀린 것만 練習 ({n})',
+            info: '韓國語文會 漢字能力檢定試驗 8級~2級. 訓音(하늘 천)이나 漢字語를 보고, 試驗과 같은 正字로 씁니다. 日本字나 簡體字로 쓰면 誤答입니다.',
+            credit: '配定漢字: (社)韓國語文會 · 級數·訓音 資料: vera3422/hanja-study-app-for-CY (MIT) · 單語: <a href="https://github.com/ongocompany/hanjahanja-dict" target="_blank" rel="noopener">한자한자 漢字語 辭典</a> (國立國語院 우리말샘·標準國語大辭典, CC BY-SA 2.0 KR) · 筆順: KanjiVG (CC BY-SA 3.0)',
+            close: '닫기', loading: '불러오는 中…', loadFail: '筆記 認識 데이터를 불러오지 못했습니다. 인터넷에 連結한 뒤 다시 열어 주십시오.',
+            askChar: '다음 訓音에 맞는 漢字를 쓰시오', askWord: '다음 漢字語를 漢字로 쓰시오 ({n}字)', boxes: '答 칸 ({n}字)', nth: '{n}番째 글자', pad: '여기에 쓰시오',
+            undo: '한 劃 지우기', clear: '다 지우기', prev: '‹ 앞 글자', next: '다음 글자 ›', prevA: '앞 글자', nextA: '다음 글자',
+            check: '採點', skip: '모르겠음',
+            right: '正答', wrong: '誤答', skipped: '모름', fixed: '(判定을 고쳤습니다 · 認識 結果는 {m})',
+            read: '認識 結果', cands: '候補', answer: '正答', order: '筆順', replay: '다시 보기',
+            fix: '判定 고치기 ({m}로 바꾸기)', fixNote: '認識이 잘못되었을 때 누르십시오. 記錄도 {m}로 바뀝니다.',
+            nextQ: '다음', toEnd: '結果 보기', again: '다음 {n}問題', againMiss: '틀린 것만 다시', noMiss: '틀린 問題가 없습니다.', noItems: '이 範圍에는 問題가 없습니다.',
+            noteShin: '「{c}」: {kind}입니다. 이 試驗에서는 {a}{ro} 씁니다.', jp: '日本字', jpcn: '日本字·簡體字',
+            noteOut: '「{c}」: 이 試驗(8級~2級)의 配定 漢字가 아닙니다(日本 字形 等).',
+            noteSame: '{c}도 訓音이 「{h}」이므로 正答으로 處理했습니다(出題 漢字는 {a}).',
+            noteWord: '{c}: 소리가 같은 다른 單語입니다.',
+            strokeUnit: '劃', orderAria: '「{c}」 筆順 ({n}劃)'
+        },
+        // the prompt: a character's 훈음, or a word in 한글 with its meaning
+        prompt: function(it, small) {
+            var t = HJ.t;
+            if (it.k === 'c') return '<div class="hj-prompt' + (small ? ' small' : '') + '"><span class="hj-kind">' + t.askChar + '</span><div class="hj-hun">' + escapeHtml(hjHun(it.hun)) + '</div></div>';
+            return '<div class="hj-prompt' + (small ? ' small' : '') + '"><span class="hj-kind">' + hjFmt(t.askWord, { n: it.a.length }) + '</span><div class="hj-word">' + escapeHtml(it.ko) + '</div>' +
+                (it.mean ? '<div class="hj-mean">' + escapeHtml(it.mean) + '</div>' : '') + '</div>';
+        }
+    };
+    function hjFmt(s, o) { return s.replace(/\{(\w+)\}/g, function(m, k) { return o[k] !== undefined ? o[k] : m; }); }
+    function hjRec() { return window[HJ.rec]; }
+    function hjData() { return window[HJ.data]; }
+    var hjWait = null;
+    function hjLoad(cb) {
+        if (hjRec() && hjData()) { cb(true); return; }
+        if (!hjWait) {
+            hjWait = [];
+            var s = document.createElement('script');
+            s.src = HJ.src;
+            s.onload = function() {
+                setTimeout(function() {
+                    try { hjRec().init(); } catch (e) {}
+                    var w = hjWait; hjWait = null;
+                    w.forEach(function(f) { f(!!(hjRec() && hjData())); });
+                }, 30);
+            };
+            s.onerror = function() {
+                var w = hjWait; hjWait = null;
+                if (s.parentNode) s.parentNode.removeChild(s);
+                w.forEach(function(f) { f(false); });
+            };
+            document.head.appendChild(s);
+        }
+        hjWait.push(cb);
+    }
+    var hjStore = loadJSON(HJ.store, {});
+    if (!hjStore || typeof hjStore !== 'object') hjStore = {};
+    if (!hjStore.c || typeof hjStore.c !== 'object') hjStore.c = {};
+    if (!hjStore.w || typeof hjStore.w !== 'object') hjStore.w = {};
+    function hjSave() { try { localStorage.setItem(HJ.store, JSON.stringify(hjStore)); } catch (e) {} }
+    function hjOpt() {
+        var o = getSetting(HJ.opt, null) || {};
+        return { kind: o.kind === 'w' || o.kind === 'b' ? o.kind : 'c', cum: !!o.cum, lv: o.lv >= 0 && o.lv < HJ.lv.length ? o.lv : 0 };
+    }
+    function hjSetOpt(k, v) { var o = hjOpt(); o[k] = v; setSetting(HJ.opt, o); }
+    function hjInRange(l, lv, cum) { return cum ? l <= lv : l === lv; }
+    // learned (last verdict ○) / missed (last verdict ×) / all, for a level and the chosen kind and range
+    function hjCounts(lv, kind, cum) {
+        var o = { n: 0, ok: 0, ng: 0 };
+        ['c', 'w'].forEach(function(k) {
+            if (kind !== 'b' && kind !== k) return;
+            for (var i = 0; i <= lv; i++) if (hjInRange(i, lv, cum)) o.n += HJ.total[k][i] || 0;
+            Object.keys(hjStore[k]).forEach(function(id) {
+                var r = hjStore[k][id];
+                if (!r || !hjInRange(r.l, lv, cum)) return;
+                if (r.s === 1) o.ok++; else if (r.s === 0) o.ng++;
+            });
+        });
+        return o;
+    }
+    function hjHun(s) { return s.split('|').join(' · '); }
+    function hjLvName(lv, cum) { return HJ.lv[lv] + (cum ? HJ.t.upTo : ''); }
+
+    // the card (学ぶ › 教材 › 漢検)
+    function hjCardHtml() {
+        var t = HJ.t, op = hjOpt(), open = !!libOpenNow[HJ.id], unit = op.kind === 'c' ? t.chars : op.kind === 'w' ? t.words : t.items;
+        var all = hjCounts(HJ.lv.length - 1, op.kind, true), pct = all.n ? Math.round(all.ok / all.n * 100) : 0;
+        var nc = HJ.total.c.reduce(function(a, b) { return a + b; }, 0), nw = HJ.total.w.reduce(function(a, b) { return a + b; }, 0);
+        var seg = function(name, val, list) {
+            return '<div class="hj-seg" role="group" data-k="' + name + '">' + list.map(function(x) {
+                return '<button type="button" data-v="' + x[0] + '" aria-pressed="' + (String(val) === x[0]) + '">' + x[1] + '</button>';
+            }).join('') + '</div>';
+        };
+        var cells = HJ.lv.map(function(name, i) {
+            var c = hjCounts(i, op.kind, op.cum), p = c.n ? Math.round(c.ok / c.n * 100) : 0;
+            return '<button type="button" class="hj-lv' + (i === op.lv ? ' on' : '') + '" data-lv="' + i + '" aria-pressed="' + (i === op.lv) + '">' +
+                '<span class="hj-lv-name">' + name + '</span><span class="hj-lv-n">' + c.n + unit + '</span>' +
+                '<span class="hj-lv-st"><span class="ok">○' + c.ok + '</span><span class="ng">×' + c.ng + '</span></span>' +
+                '<span class="day-bar"><i style="width:' + p + '%"></i></span></button>';
+        }).join('');
+        var cur = hjCounts(op.lv, op.kind, op.cum);
+        return '<section class="lib-card hj-card' + (open ? ' open' : '') + '" data-lib="' + HJ.id + '" lang="' + HJ.lang + '" style="--lib-color:' + HJ.color + '">' +
+            '<button class="lib-head" aria-expanded="' + open + '">' +
+                '<span class="lib-cover" aria-hidden="true"><span>' + HJ.badge + '</span></span>' +
+                '<span class="lib-head-text"><span class="lib-title">' + t.title + '</span>' +
+                    '<span class="lib-meta">' + t.sub + ' ' + t.range + ' · ' + nc.toLocaleString() + t.chars + ' · ' + nw.toLocaleString() + t.words + '</span>' +
+                    '<span class="lib-progress"><span class="lib-progress-track"><i style="width:' + pct + '%"></i></span><span class="lib-progress-num">' + pct + '%</span></span></span>' +
+                '<span class="lib-chevron" aria-hidden="true">›</span>' +
+            '</button>' +
+            '<div class="lib-body">' +
+                '<div class="hj-opts">' + seg('kind', op.kind, [['c', t.kindC], ['w', t.kindW], ['b', t.kindB]]) +
+                    seg('cum', op.cum ? '1' : '0', [['0', t.own], ['1', t.cum]]) + '</div>' +
+                '<div class="hj-levels">' + cells + '</div>' +
+                '<div class="hj-go-row"><button type="button" class="home-all-btn hj-go" data-miss="0">' + hjFmt(t.go, { lv: hjLvName(op.lv, op.cum), n: Math.min(HJ.size, cur.n) }) + '</button>' +
+                    '<button type="button" class="home-all-btn hj-go hj-go-miss" data-miss="1"' + (cur.ng ? '' : ' disabled') + '>' + hjFmt(t.miss, { n: cur.ng }) + '</button></div>' +
+                '<div class="lib-info">' + t.info + '<br><span class="lib-notice">' + t.credit + '</span></div>' +
+            '</div></section>';
+    }
+    function hjBindCard() {
+        var card = document.querySelector('.hj-card');
+        if (!card) return;
+        var redraw = function() {
+            var y = window.scrollY, tmp = document.createElement('div');
+            tmp.innerHTML = hjCardHtml();
+            card.parentNode.replaceChild(tmp.firstChild, card);
+            hjBindCard();
+            window.scrollTo(0, y);
+        };
+        card.querySelectorAll('.hj-seg button').forEach(function(b) {
+            b.addEventListener('click', function() {
+                var k = b.parentNode.dataset.k;
+                hjSetOpt(k, k === 'cum' ? b.dataset.v === '1' : b.dataset.v); redraw();
+            });
+        });
+        card.querySelectorAll('.hj-lv').forEach(function(b) {
+            b.addEventListener('click', function() { hjSetOpt('lv', +b.dataset.lv); redraw(); });
+        });
+        card.querySelectorAll('.hj-go').forEach(function(b) {
+            b.addEventListener('click', function() { openHanja(b.dataset.miss === '1'); });
+        });
+    }
+
+    // ---------- the practice ----------
+    var hj = null;
+    function hjOpen() { var v = document.getElementById('hj-view'); return !!(v && v.classList.contains('active')); }
+    function buildHjView() {
+        if (document.getElementById('hj-view')) return;
+        var v = document.createElement('div');
+        v.id = 'hj-view'; v.className = 'rp-view hj-view';
+        v.setAttribute('role', 'dialog'); v.setAttribute('aria-label', HJ.t.title); v.setAttribute('lang', HJ.lang);
+        v.innerHTML = '<div class="rp-head"><button class="flash-close hj-close" aria-label="' + HJ.t.close + '">✕</button><span class="rp-title">' + HJ.t.title + '</span><span class="rp-status hj-status"></span></div>' +
+            '<div class="rp-body hj-body"></div><div class="rp-foot hj-foot"></div>';
+        v.querySelector('.hj-close').addEventListener('click', closeHanja);
+        document.body.appendChild(v);
+        var t = null;
+        window.addEventListener('resize', function() {
+            clearTimeout(t);
+            t = setTimeout(function() { if (hjOpen() && hj && hj.items && !hj.mark && hj.pid === null) { hjFit(); hjRefresh(); } }, 150);
+        });
+    }
+    function openHanja(missOnly) {
+        rememberHomeSpot('.lib-card[data-lib="' + HJ.id + '"]');
+        buildHjView();
+        var op = hjOpt();
+        hj = { lv: op.lv, kind: op.kind, cum: op.cum, miss: !!missOnly, items: null, i: 0, res: [], pid: null };
+        document.getElementById('hj-view').classList.add('active');
+        document.querySelector('#hj-view .hj-body').innerHTML = '<div class="hj-loading">' + HJ.t.loading + '</div>';
+        document.querySelector('#hj-view .hj-foot').innerHTML = '';
+        document.querySelector('#hj-view .hj-status').textContent = hjLvName(hj.lv, hj.cum);
+        var me = hj;
+        hjLoad(function(ok) {
+            if (hj !== me) return;
+            if (!ok) {
+                document.querySelector('#hj-view .hj-body').innerHTML = '<div class="hj-loading">' + HJ.t.loadFail + '</div>';
+                return;
+            }
+            hjStart();
+        });
+    }
+    function closeHanja() {
+        var v = document.getElementById('hj-view');
+        if (v) v.classList.remove('active');
+        hj = null;
+        if (onLibraryNow()) showLibrary();
+    }
+    // every character and word of the data, with its level (data: chars, n, lv (one digit per character, 0-b), hun, words, shin)
+    var hjAll = null;
+    function hjItems() {
+        if (hjAll) return hjAll;
+        var D = hjData(), chars = [], at = {}, set = Array.from(D.chars), i;
+        for (i = 0; i < D.n; i++) {
+            var c = set[i];
+            at[c] = i;
+            chars.push({ k: 'c', id: c, a: c, l: parseInt(D.lv.charAt(i), 16), hun: D.hun[i] });
+        }
+        var words = D.words.map(function(w) {
+            var l = 0;
+            Array.from(w[1]).forEach(function(c) { l = Math.max(l, parseInt(D.lv.charAt(at[c]), 16)); });
+            return { k: 'w', id: w[0] + ':' + w[1], a: w[1], l: l, ko: w[0], mean: w[2] };
+        });
+        var byKo = {};
+        words.forEach(function(w) { (byKo[w.ko] = byKo[w.ko] || []).push(w.a); });
+        hjAll = { c: chars, w: words, at: at, byKo: byKo };
+        return hjAll;
+    }
+    function hjShuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+    // a set: never written first, then the ones last marked ×, then the rest (longest ago first); 틀린 것만: only those marked ×
+    function hjPick() {
+        var all = hjItems(), pool = [];
+        ['c', 'w'].forEach(function(k) {
+            if (hj.kind !== 'b' && hj.kind !== k) return;
+            all[k].forEach(function(it) { if (hjInRange(it.l, hj.lv, hj.cum)) pool.push(it); });
+        });
+        var rank = function(it) { var r = hjStore[it.k][it.id]; return !r ? 0 : r.s === 0 ? 1 : 2; };
+        pool = hjShuffle(pool);
+        if (hj.miss) pool = pool.filter(function(it) { return rank(it) === 1; });
+        pool.sort(function(x, y) {
+            var a = rank(x), b = rank(y);
+            if (a !== b) return a - b;
+            return a === 2 ? (hjStore[x.k][x.id].t || 0) - (hjStore[y.k][y.id].t || 0) : 0;
+        });
+        return hjShuffle(pool.slice(0, HJ.size));
+    }
+    function hjStart() {
+        hj.items = hjPick(); hj.i = 0; hj.res = [];
+        if (!hj.items.length) { hjEnd(); return; }
+        hjQuestion();
+    }
+    function hjQuestion() {
+        var it = hj.items[hj.i];
+        hj.mark = null;
+        hj.cur = { boxes: Array.from(it.a).map(function() { return []; }), active: 0 };
+        hjRender();
+    }
+    function hjRender() {
+        var t = HJ.t, v = document.getElementById('hj-view'), body = v.querySelector('.hj-body'), foot = v.querySelector('.hj-foot'), it = hj.items[hj.i];
+        v.querySelector('.hj-status').textContent = hjLvName(hj.lv, hj.cum) + ' · ' + (hj.i + 1) + ' / ' + hj.items.length;
+        body.scrollTop = 0;
+        if (hj.mark) { hjResult(body, foot, it); return; }
+        var n = it.a.length, many = n > 1, st = hj.cur;
+        body.innerHTML = HJ.prompt(it) +
+            '<div class="kp hj-kp" id="hj-kp">' +
+                (many ? '<div class="kp-row" role="group" aria-label="' + hjFmt(t.boxes, { n: n }) + '">' + Array.from(it.a).map(function(c, i) {
+                    return '<button type="button" class="kp-slot" data-i="' + i + '" aria-label="' + hjFmt(t.nth, { n: i + 1 }) + '"><canvas></canvas></button>';
+                }).join('') + '</div>' : '') +
+                '<div class="kp-pad-wrap"><canvas class="kp-pad" id="hj-pad" aria-label="' + t.pad + '"></canvas>' + (many ? '<span class="kp-which" id="hj-which"></span>' : '') + '</div>' +
+                '<div class="kp-tools"><button type="button" id="hj-undo">' + t.undo + '</button><button type="button" id="hj-clear">' + t.clear + '</button>' +
+                    (many ? '<button type="button" id="hj-prev" aria-label="' + t.prevA + '">' + t.prev + '</button><button type="button" id="hj-next" aria-label="' + t.nextA + '">' + t.next + '</button>' : '') + '</div>' +
+            '</div>';
+        foot.innerHTML = '<button type="button" class="hj-skip" id="hj-skip">' + t.skip + '</button><button type="button" class="primary hj-check" id="hj-check" disabled>' + t.check + '</button>';
+        var pad = document.getElementById('hj-pad');
+        body.querySelectorAll('.kp-slot').forEach(function(sl, i) { sl.addEventListener('click', function() { hjGo(i); }); });
+        var on = function(id, f) { var b = document.getElementById(id); if (b) b.addEventListener('click', f); };
+        on('hj-prev', function() { hjGo(st.active - 1); });
+        on('hj-next', function() { hjGo(st.active + 1); });
+        on('hj-undo', function() { st.boxes[st.active].pop(); hjRefresh(); });
+        on('hj-clear', function() { st.boxes[st.active] = []; hjRefresh(); });
+        on('hj-check', function() { hjMark(false); });
+        on('hj-skip', function() { hjMark(true); });
+        var cur = null, rect = null, g = null;
+        var pt = function(e) { return [Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)), Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height))]; };
+        pad.addEventListener('pointerdown', function(e) {
+            if (hj.pid !== null || (e.pointerType === 'mouse' && e.button !== 0)) return;
+            e.preventDefault();
+            hj.pid = e.pointerId; rect = pad.getBoundingClientRect();
+            try { pad.setPointerCapture(hj.pid); } catch (er) {}
+            var p = pt(e); cur = [p[0], p[1]];
+            st.boxes[st.active].push(cur);
+            g = pad.getContext('2d');
+            g.beginPath(); g.arc(p[0] * pad.width, p[1] * pad.height, g.lineWidth / 2, 0, Math.PI * 2); g.fill();
+        });
+        pad.addEventListener('pointermove', function(e) {
+            if (e.pointerId !== hj.pid || !cur) return;
+            e.preventDefault();
+            var evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
+            if (!evs.length) evs = [e];
+            evs.forEach(function(ev) {
+                var p = pt(ev), lx = cur[cur.length - 2], ly = cur[cur.length - 1];
+                if (Math.abs(p[0] - lx) + Math.abs(p[1] - ly) < 0.004) return;
+                cur.push(p[0], p[1]);
+                g.beginPath(); g.moveTo(lx * pad.width, ly * pad.height); g.lineTo(p[0] * pad.width, p[1] * pad.height); g.stroke();
+            });
+        });
+        var end = function(e) {
+            if (!hj || e.pointerId !== hj.pid) return;
+            hj.pid = null;
+            if (cur && cur.length === 2) cur.push(cur[0], cur[1]);
+            cur = null; hjRefresh();
+        };
+        pad.addEventListener('pointerup', end);
+        pad.addEventListener('pointercancel', end);
+        pad.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+        hjFit();
+        hjRefresh();
+    }
+    function hjGo(i) { var st = hj.cur; st.active = Math.max(0, Math.min(st.boxes.length - 1, i)); hjRefresh(); }
+    function hjRefresh() {
+        var st = hj.cur, pad = document.getElementById('hj-pad');
+        if (!pad) return;
+        kpadDraw(pad, st.boxes[st.active], 0.03);
+        document.querySelectorAll('#hj-kp .kp-slot').forEach(function(sl, i) {
+            sl.classList.toggle('on', i === st.active); sl.setAttribute('aria-pressed', String(i === st.active));
+            sl.classList.toggle('filled', st.boxes[i].length > 0);
+            kpadDraw(sl.querySelector('canvas'), st.boxes[i], 0.06);
+        });
+        var w = document.getElementById('hj-which'); if (w) w.textContent = hjFmt(HJ.t.nth, { n: st.active + 1 });
+        var none = !st.boxes[st.active].length;
+        document.getElementById('hj-undo').disabled = document.getElementById('hj-clear').disabled = none;
+        var pv = document.getElementById('hj-prev'), nx = document.getElementById('hj-next');
+        if (pv) pv.disabled = st.active === 0;
+        if (nx) nx.disabled = st.active === st.boxes.length - 1;
+        document.getElementById('hj-check').disabled = !st.boxes.some(function(b) { return b.length; });
+    }
+    // as the 漢検 pad does (kpadFit): the pad shrinks, to no less than 200px, so the screen never needs scrolling
+    function hjFit() {
+        var body = document.querySelector('#hj-view .hj-body'), wrap = body && body.querySelector('.kp-pad-wrap');
+        if (!wrap) return;
+        wrap.style.width = '';
+        var over = body.scrollHeight - body.clientHeight;
+        if (over > 0) wrap.style.width = Math.max(200, Math.floor(wrap.getBoundingClientRect().width - over)) + 'px';
+    }
+    // 로 or 으로 after the character's reading (the 音 of its first 訓音): 로 after a vowel or ㄹ (說로, 字로), else 으로 (學으로)
+    function hjRo(c) {
+        var i = hjItems().at[c], h = i === undefined ? '' : hjData().hun[i].split('|')[0], code = h.charCodeAt(h.length - 1) - 0xAC00;
+        if (!(code >= 0 && code < 11172)) return '(으)로';
+        var fin = code % 28;
+        return fin === 0 || fin === 8 ? '로' : '으로';
+    }
+    function hjHan(c) { return '<b class="hj-han">' + escapeHtml(c) + '</b>'; }
+    function hjMark(skip) {
+        var t = HJ.t, it = hj.items[hj.i], ans = Array.from(it.a), D = hjData(), all = hjItems(), reads = [], cands = [], notes = [];
+        hj.cur.boxes.forEach(function(b) {
+            var r = !skip && b.length ? hjRec().recognize(b, 6) : [];
+            reads.push(r.length ? r[0].c : '？');
+            cands.push(r.slice(1, 5).map(function(x) { return x.c; }).join(''));
+        });
+        var k = reads.map(function(c, i) { return c === ans[i] ? 1 : 0; });
+        // the same 훈음: another character that has every 훈음 of the prompt (오를 등: 登 and 騰) answers it too
+        if (it.k === 'c' && !k[0] && all.at.hasOwnProperty(reads[0])) {
+            var mine = D.hun[all.at[reads[0]]].split('|');
+            if (it.hun.split('|').every(function(h) { return mine.indexOf(h) > -1; })) {
+                k[0] = 1; notes.push(hjFmt(t.noteSame, { c: hjHan(reads[0]), h: escapeHtml(hjHun(it.hun)), a: hjHan(ans[0]) }));
+            }
+        }
+        var ok = !skip && k.every(function(x) { return x; });
+        // why a character is ×: a Japanese (or simplified) form of the answer, a character outside the test, or another word read the same
+        reads.forEach(function(c, i) {
+            if (k[i] || c === '？') return;
+            if ((D.shin[ans[i]] || '').indexOf(c) > -1) notes.push(hjFmt(t.noteShin, { c: escapeHtml(c), a: hjHan(ans[i]), ro: hjRo(ans[i]), kind: (D.simp[ans[i]] || '').indexOf(c) > -1 ? t.jpcn : t.jp }));
+            else if (!all.at.hasOwnProperty(c)) notes.push(hjFmt(t.noteOut, { c: escapeHtml(c) }));
+        });
+        var s = reads.join('');
+        if (!ok && it.k === 'w' && (all.byKo[it.ko] || []).indexOf(s) > -1) notes.push(hjFmt(t.noteWord, { c: hjHan(s) }));
+        hj.mark = { r: reads, c: cands, k: k, ok: ok ? 1 : 0, v: ok ? 1 : 0, fx: 0, skip: skip ? 1 : 0, notes: notes, d: hj.cur.boxes.map(kpadEnc), anim: 1 };
+        hjRecord(it, ok, null);
+        hj.res[hj.i] = ok ? 1 : 0;
+        vibrateFor(ok);
+        hjRender();
+    }
+    // the item's record: a new verdict counts one more ○ or ×; 판정 고치기 (fix) moves that count to the other side
+    function hjRecord(it, ok, fix) {
+        var r = hjStore[it.k][it.id] || (hjStore[it.k][it.id] = { l: it.l, ok: 0, ng: 0 });
+        r.l = it.l;
+        if (fix) { if (ok) { r.ok++; r.ng = Math.max(0, r.ng - 1); } else { r.ng++; r.ok = Math.max(0, r.ok - 1); } }
+        else { if (ok) r.ok++; else r.ng++; r.t = Date.now(); }
+        r.s = ok ? 1 : 0;
+        if (fix && fix.fx) r.fx = 1; else delete r.fx;
+        hjSave();
+    }
+    function hjFlip() {
+        var m = hj.mark, it = hj.items[hj.i];
+        m.v = m.v ? 0 : 1; m.fx = m.v !== m.ok ? 1 : 0; m.anim = 1;
+        hjRecord(it, !!m.v, { fx: m.fx });
+        hj.res[hj.i] = m.v;
+        vibrateFor(!!m.v);
+        hjRender();
+    }
+    var HJ_ORDER_LAB = null;
+    function hjResult(body, foot, it) {
+        var t = HJ.t, m = hj.mark, ans = Array.from(it.a), D = hjData(), all = hjItems(), anim = m.anim;
+        m.anim = 0;
+        var hunOf = function(c) { var i = all.at[c]; return i === undefined ? '' : hjHun(D.hun[i]); };
+        body.innerHTML = HJ.prompt(it, true) +
+            '<div class="hj-verdict ' + (m.v ? 'ok' : 'ng') + '">' + (m.v ? t.right : m.skip ? t.skipped : t.wrong) + (m.fx ? '<span>' + hjFmt(t.fixed, { m: m.ok ? '○' : '×' }) + '</span>' : '') + '</div>' +
+            (m.skip ? '' : '<div class="kp kp-done' + (m.fx ? ' fixed' : '') + '"><div class="kp-res">' + ans.map(function(c, i) {
+                var ok = m.k[i] === 1, cand = Array.from(m.c[i] || '');
+                return '<div class="kp-col">' +
+                    '<div class="kp-cell ' + (ok ? 'ok' : 'ng') + '"><canvas data-i="' + i + '"></canvas><span class="kp-pen">' + penMark(ok ? 'ok' : 'ng', anim) + '</span></div>' +
+                    '<div class="kp-read"><span class="kk-lab">' + t.read + '</span>' + hjHan(m.r[i]) + '</div>' +
+                    (cand.length ? '<div class="kp-cands"><span class="kk-lab">' + t.cands + '</span>' + cand.map(function(x) { return '<span class="hj-han">' + escapeHtml(x) + '</span>'; }).join('') + '</div>' : '') +
+                    '</div>';
+            }).join('') + '</div></div>') +
+            (m.notes.length ? '<div class="hj-notes">' + m.notes.map(function(x) { return '<div>' + x + '</div>'; }).join('') + '</div>' : '') +
+            '<div class="hj-ans"><span class="kk-lab">' + t.answer + '</span>' + hjHan(it.a) +
+                '<span class="hj-ans-hun">' + ans.map(function(c) { return escapeHtml(hunOf(c)); }).join('　') + '</span></div>' +
+            '<div class="kp-order"><div class="kp-order-head"><span class="kk-lab">' + t.order + '</span><button type="button" class="kp-replay" id="hj-replay">' + t.replay + '</button></div>' +
+                '<div class="kp-order-row" id="hj-order-row">' + ans.map(function(c) { return '<div class="kp-order-cell" data-c="' + escapeHtml(c) + '"></div>'; }).join('') + '</div></div>' +
+            (m.skip ? '' : '<div class="kp-fix-row"><button type="button" class="kp-fix" id="hj-fix">' + hjFmt(t.fix, { m: m.v ? '×' : '○' }) + '</button>' +
+                '<span class="kp-fix-note">' + hjFmt(t.fixNote, { m: m.v ? '×' : '○' }) + '</span></div>');
+        foot.innerHTML = '<button type="button" class="primary" id="hj-nextq">' + (hj.i + 1 < hj.items.length ? t.nextQ : t.toEnd) + '</button>';
+        body.querySelectorAll('.kp-cell canvas').forEach(function(cv) { kpadDraw(cv, kpadDec(m.d[+cv.dataset.i]), 0.045); });
+        if (!HJ_ORDER_LAB) HJ_ORDER_LAB = { unit: t.strokeUnit, aria: function(c, n) { return hjFmt(t.orderAria, { c: c, n: n }); }, cls: 'hj-han' };
+        var fill = function() {
+            body.querySelectorAll('#hj-order-row .kp-order-cell').forEach(function(cell) { cell.innerHTML = kpadOrderSvg(cell.dataset.c, hjRec(), HJ_ORDER_LAB); });
+        };
+        fill();
+        document.getElementById('hj-replay').addEventListener('click', fill);
+        var fx = document.getElementById('hj-fix'); if (fx) fx.addEventListener('click', hjFlip);
+        document.getElementById('hj-nextq').addEventListener('click', function() {
+            if (hj.i + 1 < hj.items.length) { hj.i++; hjQuestion(); } else hjEnd();
+        });
+    }
+    function hjEnd() {
+        var t = HJ.t, v = document.getElementById('hj-view'), body = v.querySelector('.hj-body'), foot = v.querySelector('.hj-foot');
+        var ok = hj.res.filter(function(x) { return x === 1; }).length, ng = hj.res.length - ok;
+        v.querySelector('.hj-status').textContent = hjLvName(hj.lv, hj.cum);
+        hj.mark = null;
+        if (!hj.items.length) {
+            body.innerHTML = '<div class="hj-loading">' + (hj.miss ? t.noMiss : t.noItems) + '</div>';
+            foot.innerHTML = '<button type="button" id="hj-done">' + t.close + '</button>';
+        } else {
+            body.innerHTML = '<div class="hj-sum"><div class="hj-sum-n"><span class="ok">○ ' + ok + '</span><span class="ng">× ' + ng + '</span></div>' +
+                '<div class="hj-sum-list">' + hj.items.map(function(it, i) {
+                    return '<span class="hj-chip ' + (hj.res[i] ? 'ok' : 'ng') + '">' + hjHan(it.a) + '<i>' + (hj.res[i] ? '○' : '×') + '</i></span>';
+                }).join('') + '</div></div>';
+            foot.innerHTML = '<button type="button" id="hj-done">' + t.close + '</button>' + (ng ? '<button type="button" id="hj-again-miss">' + t.againMiss + '</button>' : '') +
+                '<button type="button" class="primary" id="hj-again">' + hjFmt(t.again, { n: HJ.size }) + '</button>';
+        }
+        document.getElementById('hj-done').addEventListener('click', closeHanja);
+        var am = document.getElementById('hj-again-miss');
+        if (am) am.addEventListener('click', function() {
+            var miss = hj.items.filter(function(it, i) { return !hj.res[i]; });
+            hj.items = hjShuffle(miss); hj.i = 0; hj.res = []; hjQuestion();
+        });
+        var ag = document.getElementById('hj-again');
+        if (ag) ag.addEventListener('click', function() { hj.miss = false; hjStart(); });
     }
 
     // ---------- Red-pen marks ----------
@@ -27111,6 +27573,7 @@
         if (typeof focusOpen === 'function' && focusOpen()) d++;
         if (typeof zukanOpen === 'function' && zukanOpen()) d++;
         if (typeof fullOpen === 'function' && fullOpen()) d++;          // the 画廊 sits on top of the results (or 設定): Back closes it first
+        if (typeof hjOpen === 'function' && hjOpen()) d++;
         if (typeof rpOpen === 'function' && rpOpen()) d += (rp && rp.state !== 'list') ? 2 : 1;
         if (typeof arOpen === 'function' && arOpen()) d++;
         if (typeof mockOpen === 'function' && mockOpen()) d += mockGridOpen() ? 2 : 1;
@@ -27144,6 +27607,7 @@
         if (exrOpen()) { closeExplainReader(); return; }
         if (dictPanelOpen()) { closeDictionaryPanel(); return; }
         if (flashOpen()) { closeFlashcards(); return; }
+        if (hjOpen()) { closeHanja(); return; }
         if (rpOpen()) { rpBackOneLevel(); return; }
         if (arOpen()) { closeReading(); return; }
         var tour = document.querySelector('.tour-overlay');

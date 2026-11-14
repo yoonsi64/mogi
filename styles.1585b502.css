@@ -1937,6 +1937,60 @@
         .kp-fix-note { font-size: 0.72rem; color: var(--text-sub); }
         .lib-notice { font-size: 0.72rem; color: var(--text-sub); }
         .lib-notice a, .credit-note a { color: var(--active-blue); }
+        /* 韓国の漢字検定 書き取り: the card on the 漢検 shelf, and the practice (the 読む速さ screen's frame, the 漢検 pad's parts) */
+        .hj-han { font-family: 'Noto Serif KR', 'Noto Serif CJK KR', 'Source Han Serif K', 'AppleMyungjo', 'Batang', var(--mincho, serif); }
+        .hj-opts { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 10px; }
+        .hj-seg { display: inline-flex; border: 1px solid var(--border-dark); border-radius: var(--radius-sm, 8px); overflow: hidden; }
+        .hj-seg button { padding: 8px 12px; min-height: 38px; border: none; background: var(--surface); color: var(--text-main); font-size: 0.85rem; cursor: pointer; }
+        .hj-seg button + button { border-left: 1px solid var(--border-light); }
+        .hj-seg button[aria-pressed="true"] { background: var(--lib-color); color: #fff; font-weight: bold; }
+        html.dark .hj-seg button[aria-pressed="true"] { background: var(--text-main); color: var(--bg-paper); }
+        .hj-levels { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        @media (min-width: 600px) { .hj-levels { grid-template-columns: repeat(6, 1fr); } }
+        .hj-lv { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 7px 2px 6px; border: 1px solid var(--border-light); border-radius: var(--radius-sm, 8px); background: var(--surface); color: var(--text-main); cursor: pointer; }
+        .hj-lv.on { border-color: var(--lib-color); box-shadow: 0 0 0 2px var(--lib-color); }
+        html.dark .hj-lv.on { border-color: var(--text-main); box-shadow: 0 0 0 2px var(--text-main); }
+        .hj-lv-name { font-weight: bold; font-size: 0.95rem; }
+        .hj-lv-n { font-size: 0.7rem; color: var(--text-sub); }
+        .hj-lv-st { font-size: 0.72rem; display: flex; gap: 6px; }
+        .hj-lv-st .ok, .hj-sum-n .ok, .hj-chip.ok i, .hj-verdict.ok { color: var(--mark-ok); }
+        .hj-lv-st .ng, .hj-sum-n .ng, .hj-chip.ng i, .hj-verdict.ng { color: var(--mark-ng); }
+        .hj-lv .day-bar { display: block; width: 80%; height: 3px; margin-top: 3px; background: var(--track); border-radius: 2px; overflow: hidden; }
+        .hj-lv .day-bar i { display: block; height: 100%; background: var(--mark-ok); }
+        .hj-go-row { display: flex; gap: 8px; margin-top: 10px; }
+        .hj-go-row .hj-go { flex: 1; margin: 0; width: auto; }
+        .hj-go-row .hj-go-miss { flex: 0 0 auto; padding: 14px 16px; }
+        .hj-go-miss:disabled { color: var(--text-sub); border-color: var(--border-light); }
+        .hj-loading { padding: 40px 0; text-align: center; color: var(--text-sub); }
+        .hj-prompt { text-align: center; }
+        .hj-kind { display: block; font-size: 0.8rem; color: var(--text-sub); }
+        .hj-hun { font-size: 1.9rem; font-weight: bold; margin-top: 6px; line-height: 1.25; }
+        .hj-word { font-size: 2rem; font-weight: bold; margin-top: 4px; letter-spacing: 0.08em; line-height: 1.2; }
+        .hj-mean { font-size: 0.9rem; color: var(--text-sub); margin-top: 2px; }
+        .hj-prompt.small .hj-hun, .hj-prompt.small .hj-word { font-size: 1.25rem; margin-top: 2px; }
+        .hj-prompt.small .hj-mean { font-size: 0.8rem; }
+        .hj-prompt.small .hj-kind { display: none; }
+        .hj-kp { margin-top: 10px; }
+        .hj-foot .hj-skip { flex: 0 0 auto; padding: 13px 16px; font-size: 0.9rem; color: var(--text-sub); border-color: var(--border-light); }
+        .hj-foot button:disabled { opacity: 0.45; cursor: default; }
+        .hj-verdict { text-align: center; font-weight: bold; margin: 8px 0 0; }
+        .hj-verdict span { font-weight: normal; font-size: 0.78rem; color: var(--text-sub); }
+        .hj-body .kp-done { margin-top: 8px; }
+        .hj-notes { margin: 10px auto 0; max-width: 420px; padding: 8px 12px; border-left: 3px solid var(--mark-ng); background: var(--surface-2); font-size: 0.85rem; border-radius: 0 6px 6px 0; }
+        .hj-notes b { font-size: 1.15rem; font-weight: normal; }
+        .hj-ans { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; justify-content: center; margin: 10px 0 0; }
+        .hj-ans b { font-size: 1.7rem; font-weight: normal; }
+        .hj-ans-hun { font-size: 0.9rem; color: var(--text-sub); }
+        .hj-body .kp-order { margin-top: 10px; }
+        .hj-body .kp-order-svg { width: 112px; height: 112px; }
+        .hj-sum { text-align: center; padding: 16px 0; }
+        .hj-sum-n { display: flex; justify-content: center; gap: 24px; font-size: 1.6rem; font-weight: bold; }
+        .hj-sum-list { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 16px; }
+        .hj-chip { display: inline-flex; align-items: baseline; gap: 4px; padding: 4px 10px; border: 1px solid var(--border-light); border-radius: 99px; background: var(--surface); }
+        .hj-chip.ng { border-color: var(--mark-ng); }
+        .hj-chip b { font-weight: normal; font-size: 1.1rem; }
+        .hj-chip i { font-style: normal; font-size: 0.8rem; }
+        .hj-body .kp-pad-wrap, .hj-body .kp-tools { width: min(100%, 400px); }
         /* 콕콕 情報検索 tables: compact enough for a phone-width reading box */
         .notice-grid.kd-tbl { width: 100%; font-size: 0.82em; line-height: 1.5; }
         .notice-grid.kd-tbl th, .notice-grid.kd-tbl td { padding: 4px 5px; white-space: nowrap; vertical-align: middle; }
