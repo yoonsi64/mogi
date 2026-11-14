@@ -30198,7 +30198,7 @@
             var plainPassage = q.passage.replace(/<p class="reading-source">[\s\S]*?<\/p>/g, '').replace(/<rt>.*?<\/rt>/g, '').replace(/<[^>]+>/g, '').replace(/\s+/g, '');
             return (plainPassage.length > 60 ? plainPassage.slice(0, 60) + '…' : plainPassage) + '<br>問：' + q.sentence;
         }
-        var text = q.sentence.replace(/<rt>.*?<\/rt>/g, '').replace(/<[^>]*>?/gm, '').replace(/\[\s*\]/g, '[&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]');
+        var text = q.sentence.replace(/<rt>.*?<\/rt>/g, '').replace(/<[^>]*>?/gm, '').replace(/\[\s*(★?)\s*\]/g, function(m, s) { return '<span class="pv-blank">[<span' + (s ? ' class="pv-star"' : '') + '>' + (s || '&nbsp;') + '</span>]</span>'; });
         if (q.type === 'Text Grammar') {
             text = text.replace(/\[\[(\d+b?)\]\]/g, '[ $1 ]');
             if (text.length > 120) text = text.slice(0, 120) + '…';

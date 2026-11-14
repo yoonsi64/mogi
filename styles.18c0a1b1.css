@@ -638,7 +638,9 @@
         .exr-foot .dev-btn:disabled { opacity: 0.4; }
         /* 解説: 文の組み立て (the correct order) and 文章の文法 (one row per blank) */
         .explain-card.mx .mx-order { margin: 2px 0 4px; line-height: 2; }
-        .explain-card.mx .mx-order span, .explain-card.mx .mx-order b { padding: 1px 5px; border: 1px solid var(--border-light); border-radius: 4px; background: var(--surface); white-space: nowrap; }
+        .explain-card.mx .mx-order span, .explain-card.mx .mx-order b { display: inline-block; margin: 3px 0; padding: 1px 5px; line-height: 1.5; border: 1px solid var(--border-light); border-radius: 4px; background: var(--surface); white-space: nowrap; }
+        .explain-card.mx .mx-order rt { line-height: 1.1; }
+        .explain-card.mx .mx-order span:has(rt), .explain-card.mx .mx-order b:has(rt) { padding-top: 8px; }
         .explain-card.mx .mx-order b.mx-star { color: var(--active-blue); border-color: var(--active-blue); }
         .mx-sep { margin: 0 3px; color: var(--text-sub); font-size: 0.85em; font-style: normal; }
         .rationale-content.explain-card { margin-top: 8px; padding: 8px 0 0; border-left: none; border-radius: 0; background: none; }
@@ -1712,6 +1714,8 @@
         .bookmark-item, .mistake-item { border: 1px solid var(--border-dark); padding: 12px 12px 35px 12px; margin-bottom: 10px; background: #fff; cursor: pointer; position: relative; }
         .bookmark-item-header, .mistake-item-header { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-sub); margin-bottom: 6px; font-weight: bold; padding-right: 30px; }
         .bookmark-item-sentence, .mistake-item-sentence { font-size: 0.95rem; line-height: 1.4; margin-bottom: 4px; }
+        .pv-blank { display: inline-flex; width: 4.6em; justify-content: space-between; vertical-align: baseline; }
+        .pv-blank > span { flex: 1; text-align: center; }
         .bookmark-delete-btn { position: absolute; bottom: 10px; right: 10px; background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--incorrect-color); padding: 4px; }
         .answer-status { font-weight: bold; }
         .answer-status.correct { color: var(--correct-color); }
