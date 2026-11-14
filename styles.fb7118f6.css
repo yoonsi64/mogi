@@ -1990,6 +1990,7 @@
         .hj-lv-st { font-size: 0.72rem; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 1px 7px; max-width: 100%; font-variant-numeric: tabular-nums; line-height: 1.3; }
         .hj-lv-st > span { display: inline-flex; align-items: center; gap: 2px; white-space: nowrap; }
         .hj-lv-st .st-ic { width: 0.85em; height: 0.85em; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+        .hj-lv-st .st-t { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
         .hj-lv-st .ok, .hj-sum-n .ok, .hj-chip.ok i, .hj-verdict.ok { color: var(--mark-ok); }
         .hj-lv-st .ng, .hj-sum-n .ng, .hj-chip.ng i, .hj-verdict.ng { color: var(--mark-ng); }
         .hj-lv .day-bar { display: block; width: 80%; height: 3px; margin-top: 3px; background: var(--track); border-radius: 2px; overflow: hidden; }
