@@ -1724,6 +1724,28 @@
         .sort-controls button.active { background: var(--border-dark); color: #fff; border-color: var(--border-dark); }
         .lib-sort { align-items: center; flex-wrap: wrap; gap: 6px 5px; margin: -4px 0 10px; padding-bottom: 0; border-bottom: none; }
         .lib-sort button { white-space: nowrap; padding: 6px 9px; }
+        .lib-sort .lib-edit-btn { margin-left: auto; }
+        .lib-edit-note { font-size: 0.78rem; color: var(--text-sub); margin: -4px 0 10px; line-height: 1.5; }
+        .lib-edit { display: flex; gap: 6px; padding: 8px 12px 0; }
+        .lib-edit button { min-width: 44px; min-height: 34px; padding: 4px 10px; border: 1px solid var(--border-dark); border-radius: var(--radius-sm, 8px); background: var(--surface); color: var(--text-main); font-size: 0.85rem; font-weight: bold; cursor: pointer; }
+        .lib-edit .lib-cv { margin-left: auto; }
+        .cover-sheet { position: fixed; inset: 0; z-index: 3500; display: none; align-items: flex-end; justify-content: center; background: rgba(0,0,0,0.35); }
+        .cover-sheet.active { display: flex; }
+        .cs-box { width: min(100%, 560px); max-height: 82vh; overflow-y: auto; background: var(--surface); border-radius: 14px 14px 0 0; padding: 14px 14px calc(14px + env(safe-area-inset-bottom)); box-shadow: 0 -4px 20px rgba(0,0,0,0.2); }
+        .cs-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .cs-head .cs-book { flex: 1; min-width: 0; font-size: 0.8rem; color: var(--text-sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cs-head .cs-close { position: static; }
+        .cs-inks { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+        .cs-inks button { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; min-height: 36px; border: 1px solid var(--border-light); border-radius: 999px; background: var(--surface); color: var(--text-main); font-size: 0.82rem; cursor: pointer; }
+        .cs-inks button i { width: 14px; height: 14px; border-radius: 50%; background: var(--ink); }
+        .cs-inks button[aria-pressed="true"] { border-color: var(--ink); box-shadow: 0 0 0 2px var(--ink); font-weight: bold; }
+        .cs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 10px; }
+        .cs-pat { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 2px; border: 1px solid transparent; border-radius: var(--radius-sm, 8px); background: none; color: var(--text-main); font-size: 0.72rem; cursor: pointer; }
+        .cs-pat.on { border-color: var(--active-blue); background: var(--surface-2, rgba(0,0,0,0.04)); }
+        .cs-pat .lib-cover { width: 44px; height: 60px; }
+        .cs-pat .lib-cover > span { display: none; }
+        .cs-reset { margin-top: 14px; width: 100%; min-height: 40px; border: 1px solid var(--border-dark); border-radius: var(--radius-sm, 8px); background: var(--surface); color: var(--text-main); font-weight: bold; cursor: pointer; }
+        .cs-reset:disabled { color: var(--text-sub); border-color: var(--border-light); cursor: default; }
         .lib-sort-label { font-size: 0.72rem; font-weight: bold; color: var(--text-sub); margin-right: 2px; white-space: nowrap; }
         @media (max-width: 399px) { .lib-sort-label { display: none; } }
         .mistake-timestamp { position: absolute; bottom: 10px; right: 10px; font-size: 0.65rem; color: #aaa; font-weight: bold; z-index: 10; }
