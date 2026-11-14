@@ -18270,10 +18270,32 @@
         var s = reads.join('');
         if (!ok && it.k === 'w' && (all.byKo[it.ko] || []).indexOf(s) > -1) notes.push(hjFmt(t.noteWord, { c: hjHan(s) }));
         hj.mark = { r: reads, c: cands, k: k, ok: ok ? 1 : 0, v: ok ? 1 : 0, fx: 0, skip: skip ? 1 : 0, notes: notes, d: hj.cur.boxes.map(kpadEnc), anim: 1 };
+        if (!skip) hjInkSave(it, hj.mark);
         hjRecord(it, ok, null);
         hj.res[hj.i] = ok ? 1 : 0;
         vibrateFor(ok);
         hjRender();
+    }
+    // The last 300 drawings with what they were read as (jlptHanjaInk, in backups like every jlpt* key), kept to tune the
+    // recogniser on real handwriting: { a: answer, r: read, c: other candidates per box, v: verdict (1 = ○), fx: 1 when
+    // 判定 고치기 changed it, d: the drawing per box, t: time }
+    var HJ_INK_KEY = 'jlptHanjaInk', HJ_INK_MAX = 300;
+    function hjInkSave(it, m) {
+        try {
+            var ink = JSON.parse(localStorage.getItem(HJ_INK_KEY) || '[]');
+            if (!Array.isArray(ink)) ink = [];
+            ink.push({ s: HJ.id, a: it.a, r: m.r.join(''), c: m.c, v: m.v, d: m.d, t: Date.now() });
+            if (ink.length > HJ_INK_MAX) ink = ink.slice(ink.length - HJ_INK_MAX);
+            localStorage.setItem(HJ_INK_KEY, JSON.stringify(ink));
+            m.inkT = ink[ink.length - 1].t;
+        } catch (e) {}
+    }
+    function hjInkFlip(m) {
+        try {
+            var ink = JSON.parse(localStorage.getItem(HJ_INK_KEY) || '[]');
+            for (var i = ink.length - 1; i >= 0; i--) if (ink[i].t === m.inkT) { ink[i].v = m.v; if (m.fx) ink[i].fx = 1; else delete ink[i].fx; break; }
+            localStorage.setItem(HJ_INK_KEY, JSON.stringify(ink));
+        } catch (e) {}
     }
     // the item's record: a new verdict counts one more ○ or ×; 판정 고치기 (fix) moves that count to the other side
     function hjRecord(it, ok, fix) {
@@ -18289,6 +18311,7 @@
         var m = hj.mark, it = hj.items[hj.i];
         m.v = m.v ? 0 : 1; m.fx = m.v !== m.ok ? 1 : 0; m.anim = 1;
         hjRecord(it, !!m.v, { fx: m.fx });
+        if (m.inkT) hjInkFlip(m);
         hj.res[hj.i] = m.v;
         vibrateFor(!!m.v);
         hjRender();
