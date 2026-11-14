@@ -12055,7 +12055,7 @@
         return '<div class="sort-controls lib-sort" role="group" aria-label="並び替え"><span class="lib-sort-label" aria-hidden="true">並び替え</span>' +
             LIB_SORTS.map(function(s) { return '<button data-sort="' + s[0] + '" class="' + (s[0] === cur && !libEditing ? 'active' : '') + '" aria-pressed="' + (s[0] === cur && !libEditing) + '">' + s[1] + '</button>'; }).join('') +
             '<button class="lib-edit-btn' + (libEditing ? ' active' : '') + '" aria-pressed="' + libEditing + '">' + (libEditing ? '完了' : '編集') + '</button></div>' +
-            (libEditing ? '<div class="lib-edit-note">▲ ▼ で本の並びを変えると、それが「標準」の順になります。表紙のない本は「表紙」で柄を選べます。</div>' : '');
+            (libEditing ? '<div class="lib-edit-note">≡ をドラッグするか ▲ ▼ で本の並びを変えると、それが「標準」の順になります。表紙のない本は「表紙」で柄を選べます。</div>' : '');
     }
     function eachReading(b, fn) { b.toc.forEach(function(sec) { sec.chapters.forEach(function(ch) { ch.items.forEach(function(it) { if (it.id && READINGS[it.id]) fn(it.id); }); }); }); }
     function libLastStudied() {
@@ -12090,7 +12090,7 @@
                 var cv = card.querySelector('.lib-head .lib-cover');
                 var bar = document.createElement('div');
                 bar.className = 'lib-edit';
-                bar.innerHTML = '<button type="button" class="lib-mv" data-d="-1" aria-label="上へ">▲</button><button type="button" class="lib-mv" data-d="1" aria-label="下へ">▼</button>' +
+                bar.innerHTML = '<button type="button" class="lib-grip" aria-label="ドラッグして並べ替え">≡</button><button type="button" class="lib-mv" data-d="-1" aria-label="上へ">▲</button><button type="button" class="lib-mv" data-d="1" aria-label="下へ">▼</button>' +
                     (cv && !cv.classList.contains('has-img') ? '<button type="button" class="lib-cv">表紙</button>' : '');
                 card.insertBefore(bar, card.firstChild);
                 bar.querySelectorAll('.lib-mv').forEach(function(b) {
@@ -12099,16 +12099,98 @@
                         while (sib && !sib.classList.contains('lib-card')) sib = d < 0 ? sib.previousElementSibling : sib.nextElementSibling;
                         if (!sib) return;
                         if (d < 0) sh.insertBefore(card, sib); else sh.insertBefore(sib, card);
-                        libSaveOrder(sh.dataset.shelf, [].map.call(sh.querySelectorAll(':scope > .lib-card'), function(e) { return e.dataset.lib; }));
-                        libShownOrder = {};
-                        [].forEach.call(quizContainer.querySelectorAll('.home-shelf > .lib-card'), function(c, i) { libShownOrder[c.dataset.lib] = i; });
+                        libSaveShelf(sh);
                         b.focus({ preventScroll: true });
                         card.scrollIntoView({ block: 'nearest' });
                     });
                 });
                 var cb = bar.querySelector('.lib-cv');
                 if (cb) cb.addEventListener('click', function() { libCoverSheet(card.dataset.lib); });
+                libDrag(sh, card, bar.querySelector('.lib-grip'));
             });
+        });
+    }
+    function libSaveShelf(sh) {
+        libSaveOrder(sh.dataset.shelf, [].map.call(sh.querySelectorAll(':scope > .lib-card'), function(e) { return e.dataset.lib; }));
+        libShownOrder = {};
+        [].forEach.call(quizContainer.querySelectorAll('.home-shelf > .lib-card'), function(c, i) { libShownOrder[c.dataset.lib] = i; });
+    }
+    // drag by the grip: the card follows the finger, the others make room (sliding into place), the page scrolls when the
+    // book is dragged toward the top or bottom edge; let go and the shelf's order is saved
+    function libDrag(sh, card, grip) {
+        if (!grip) return;
+        function scroller() {
+            for (var e = sh.parentElement; e && e !== document.body; e = e.parentElement) {
+                var oy = getComputedStyle(e).overflowY;
+                if ((oy === 'auto' || oy === 'scroll') && e.scrollHeight > e.clientHeight) return e;
+            }
+            return document.scrollingElement || document.documentElement;
+        }
+        grip.addEventListener('click', function(e) { e.preventDefault(); });
+        grip.addEventListener('pointerdown', function(e) {
+            if (e.button > 0 || card.classList.contains('lib-dragging')) return;
+            e.preventDefault();
+            try { grip.setPointerCapture(e.pointerId); } catch (x) {}
+            var sc = scroller(), pid = e.pointerId, y = e.clientY, y0 = e.clientY, moved = false, raf = 0;
+            var off = e.clientY - card.getBoundingClientRect().top;
+            card.classList.add('lib-dragging');
+            // no scroll anchoring while dragging: the browser would scroll the page each time the book changes place
+            var anc = [document.documentElement, document.body, sc];
+            anc.forEach(function(x) { x.style.overflowAnchor = 'none'; });
+            function cards() { return [].filter.call(sh.children, function(x) { return x.classList.contains('lib-card'); }); }
+            function place() {
+                card.style.transform = '';
+                var want = y - off, mid = want + card.offsetHeight / 2;
+                var others = cards().filter(function(x) { return x !== card; }), before = null;
+                for (var i = 0; i < others.length; i++) {
+                    var r = others[i].getBoundingClientRect();
+                    if (mid < r.top + r.height / 2) { before = others[i]; break; }
+                }
+                var next = card.nextElementSibling;
+                while (next && !next.classList.contains('lib-card')) next = next.nextElementSibling;
+                if (before !== next) {
+                    var was = others.map(function(x) { return x.getBoundingClientRect().top; });
+                    if (before) sh.insertBefore(card, before); else sh.appendChild(card);
+                    moved = true;
+                    others.forEach(function(x, i) {
+                        var dy = was[i] - x.getBoundingClientRect().top;
+                        if (!dy) return;
+                        x.style.transition = 'none'; x.style.transform = 'translateY(' + dy + 'px)';
+                        x.getBoundingClientRect();
+                        x.style.transition = 'transform 0.16s ease'; x.style.transform = '';
+                    });
+                    if (navigator.vibrate) try { navigator.vibrate(8); } catch (x) {}
+                }
+                card.style.transform = 'translateY(' + (want - card.getBoundingClientRect().top) + 'px)';
+            }
+            function edge() {
+                raf = 0;
+                var top = sc === document.scrollingElement || sc === document.documentElement ? 0 : sc.getBoundingClientRect().top;
+                var bot = sc === document.scrollingElement || sc === document.documentElement ? window.innerHeight : sc.getBoundingClientRect().bottom;
+                var nav = document.getElementById('bottom-nav'), m = 56;
+                if (nav && nav.offsetHeight) bot = Math.min(bot, nav.getBoundingClientRect().top);
+                var v = y < top + m && y < y0 - 12 ? -Math.ceil((top + m - y) / 4) : y > bot - m && y > y0 + 12 ? Math.ceil((y - bot + m) / 4) : 0;
+                if (!v) return;
+                var s0 = sc.scrollTop; sc.scrollTop += v;
+                if (sc.scrollTop !== s0) { place(); raf = requestAnimationFrame(edge); }
+            }
+            function move(ev) {
+                if (ev.pointerId !== pid) return;
+                ev.preventDefault();
+                y = ev.clientY; place();
+                if (!raf) raf = requestAnimationFrame(edge);
+            }
+            function end(ev) {
+                if (ev.pointerId !== pid) return;
+                window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', end); window.removeEventListener('pointercancel', end);
+                if (raf) cancelAnimationFrame(raf);
+                card.classList.remove('lib-dragging'); card.style.transform = '';
+                anc.forEach(function(x) { x.style.overflowAnchor = ''; });
+                cards().forEach(function(x) { x.style.transition = ''; x.style.transform = ''; });
+                if (moved) libSaveShelf(sh);
+            }
+            // on the window: moving the card in the page ends the grip's pointer capture
+            window.addEventListener('pointermove', move, { passive: false }); window.addEventListener('pointerup', end); window.addEventListener('pointercancel', end);
         });
     }
     // 表紙: the 和柄 in the chosen ink, as covers; tapping one sets it (元に戻す: the book's own cover)

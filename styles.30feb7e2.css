@@ -1729,6 +1729,9 @@
         .lib-edit { display: flex; gap: 6px; padding: 8px 12px 0; }
         .lib-edit button { min-width: 44px; min-height: 34px; padding: 4px 10px; border: 1px solid var(--border-dark); border-radius: var(--radius-sm, 8px); background: var(--surface); color: var(--text-main); font-size: 0.85rem; font-weight: bold; cursor: pointer; }
         .lib-edit .lib-cv { margin-left: auto; }
+        .lib-edit .lib-grip { font-size: 1.15rem; line-height: 1; cursor: grab; touch-action: none; -webkit-user-select: none; user-select: none; }
+        .lib-card.lib-dragging { position: relative; z-index: 6; box-shadow: 0 10px 28px rgba(0,0,0,0.28); -webkit-user-select: none; user-select: none; }
+        .lib-card.lib-dragging .lib-grip { cursor: grabbing; }
         .cover-sheet { position: fixed; inset: 0; z-index: 3500; display: none; align-items: flex-end; justify-content: center; background: rgba(0,0,0,0.35); }
         .cover-sheet.active { display: flex; }
         .cs-box { width: min(100%, 560px); max-height: 82vh; overflow-y: auto; background: var(--surface); border-radius: 14px 14px 0 0; padding: 14px 14px calc(14px + env(safe-area-inset-bottom)); box-shadow: 0 -4px 20px rgba(0,0,0,0.2); }
