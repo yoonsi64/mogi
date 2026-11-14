@@ -16765,7 +16765,7 @@
         if (currentQuestions.length === 0) return;
         var q = currentQuestions[currentIndex];
         var unsureBtn = document.getElementById('unsure-btn');
-        if (unsureBtn) unsureBtn.setAttribute('aria-pressed', String(!!unsureNow[q.id]));
+        if (unsureBtn) { unsureBtn.hidden = false; unsureBtn.setAttribute('aria-pressed', String(!!unsureNow[q.id])); }
         var key = currentModeKey();
         var currentActiveIndex = resumeData[key] || 0;
         isReviewing = currentIndex < currentActiveIndex;
@@ -18648,6 +18648,13 @@
         hjRender();
     }
     var HJ_ORDER_LAB = null;
+    // the result screen without scrolling: when a long reading list (生: セイ・ショウ・い-きる…) or notes make it too tall,
+    // the readings, the stroke-order drawings and the cells get smaller, one step at a time
+    function hjFitResult(body) {
+        body.classList.remove('hj-fit1', 'hj-fit2');
+        if (body.scrollHeight > body.clientHeight + 1) body.classList.add('hj-fit1');
+        if (body.scrollHeight > body.clientHeight + 1) body.classList.add('hj-fit2');
+    }
     function hjResult(body, foot, it) {
         var t = HJ.t, m = hj.mark, ans = Array.from(it.a), D = hjData(), all = hjItems(), anim = m.anim;
         m.anim = 0;
@@ -18671,6 +18678,7 @@
             (m.skip ? '' : '<div class="kp-fix-row"><button type="button" class="kp-fix" id="hj-fix">' + hjFmt(t.fix, { m: m.v ? (m.tri ? '△' : '×') : '○' }) + '</button>' +
                 '<span class="kp-fix-note">' + hjFmt(t.fixNote, { m: m.v ? (m.tri ? '△' : '×') : '○' }) + '</span></div>');
         foot.innerHTML = '<button type="button" class="primary" id="hj-nextq">' + (hj.i + 1 < hj.items.length ? t.nextQ : t.toEnd) + '</button>';
+        hjFitResult(body);
         body.querySelectorAll('.kp-cell canvas').forEach(function(cv) {
             var bi = +cv.dataset.i, bx = kpadDec(m.d[bi]);
             kpadDraw(cv, bx, 0.045);
@@ -18682,6 +18690,14 @@
             body.querySelectorAll('#hj-order-row .kp-order-cell').forEach(function(cell) { cell.innerHTML = kpadOrderSvg(cell.dataset.c, hjRec(), HJ_ORDER_LAB); });
         };
         fill();
+        var fitWas = body.className;
+        hjFitResult(body);
+        if (body.className !== fitWas) body.querySelectorAll('.kp-cell canvas').forEach(function(cv) {
+            var bi = +cv.dataset.i, bx = kpadDec(m.d[bi]);
+            kpadDraw(cv, bx, 0.045);
+            if (m.tri && !m.v && m.o) kpadMarks(cv, bx, m.o[bi]);
+            if (m.w && m.w[bi] && !m.v) kpadWhyMarks(cv, bx, m.w[bi]);
+        });
         document.getElementById('hj-replay').addEventListener('click', fill);
         var fx = document.getElementById('hj-fix'); if (fx) fx.addEventListener('click', hjFlip);
         document.getElementById('hj-nextq').addEventListener('click', function() {
@@ -27900,6 +27916,8 @@
         localStorage.setItem('jlptResume', JSON.stringify(resumeData));
         localStorage.setItem('jlptShuffledOrders', JSON.stringify(shuffledOrders));
         nextBtn.disabled = false; nextBtn.textContent = 'もう一度解く';
+        var unsureB = document.getElementById('unsure-btn');
+        if (unsureB) unsureB.hidden = true;           // 自信なし is about one question, not the results
 
         var total = 0, max = 0, byType = {}, missed = [];
         currentQuestions.forEach(function(q, idx) {

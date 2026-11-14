@@ -3743,10 +3743,31 @@ html.dark .mx-drill { border-color: color-mix(in srgb, var(--tc) 55%, white); }
 /* 自信なし beside 次の問題へ */
 body.in-quiz #quiz-footer { display: flex; gap: 8px; align-items: stretch; }
 #quiz-footer #next-btn { flex: 1; width: auto; }
-.unsure-btn { flex: none; min-width: 84px; padding: 0 12px; border: 2px dashed var(--border-light); background: var(--bg-paper); color: var(--text-sub); font-family: inherit; font-size: 0.85rem; font-weight: bold; cursor: pointer; }
-.unsure-btn[aria-pressed="true"] { border-style: solid; border-color: #d08a2a; background: color-mix(in srgb, #d08a2a 14%, var(--bg-paper)); color: #a8661a; }
+.unsure-btn { flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 100px; padding: 0 14px; border: 2px solid var(--border-light); border-radius: var(--radius-sm, 8px); background: var(--bg-paper); color: var(--text-sub); font-family: inherit; font-size: 0.85rem; font-weight: bold; cursor: pointer; user-select: none; transition: border-color .15s, background-color .15s, color .15s; }
+.unsure-btn[hidden] { display: none; }
+.unsure-btn::before { content: '？'; display: inline-grid; place-items: center; width: 18px; height: 18px; border: 1.5px solid currentColor; border-radius: 50%; font-size: 0.68rem; line-height: 1; box-sizing: border-box; }
+@media (hover: hover) { .unsure-btn:hover { border-color: var(--border-dark); color: var(--text-main); } }
+.unsure-btn[aria-pressed="true"] { border-color: #d08a2a; background: color-mix(in srgb, #d08a2a 14%, var(--bg-paper)); color: #a8661a; }
+.unsure-btn[aria-pressed="true"]::before { content: '✓'; border-color: #d08a2a; background: #d08a2a; color: var(--bg-paper); }
 html.dark .unsure-btn[aria-pressed="true"] { color: #f0b860; }
 
 /* 誤答ノート: a heading over each group of types */
 .mx-ghead { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 6px; margin: 6px 2px -2px; font-size: 0.8rem; font-weight: bold; color: var(--text-sub); letter-spacing: 0.04em; }
 .mx-ghead small { font-weight: normal; font-size: 0.72rem; }
+
+/* the practice result, when it would not fit (hjFitResult) */
+.hj-body.hj-fit1 .hj-ans { margin-top: 6px; }
+.hj-body.hj-fit1 .hj-ans-hun { font-size: 0.78rem; line-height: 1.35; }
+.hj-body.hj-fit1 .kp-order { margin-top: 6px; padding-top: 6px; padding-bottom: 6px; }
+.hj-body.hj-fit1 .kp-order-svg { width: 88px; height: 88px; }
+.hj-body.hj-fit1 .kp-fix-note { display: none; }
+.hj-body.hj-fit2 .kp-cell { width: 72px; height: 72px; }
+.hj-body.hj-fit2 .kp-order-svg { width: 72px; height: 72px; }
+.hj-body.hj-fit2 .kp-cands { display: none; }
+@media (orientation: landscape) and (max-height: 520px) {
+    .hj-body.hj-fit1 .kp-order-svg { width: 60px; height: 60px; }
+    .hj-body.hj-fit2 .kp-order-svg { width: 52px; height: 52px; }
+    .hj-body.hj-fit2 .kp-cell { width: 60px; height: 60px; }
+    .hj-body.hj-fit2:has(> .kp-order) { row-gap: 2px; padding-top: 4px; padding-bottom: 4px; }
+    .hj-body.hj-fit2 > .kp-order { padding: 4px 8px; }
+}
