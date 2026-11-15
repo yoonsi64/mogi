@@ -18972,7 +18972,7 @@
     // 読解 help: a reading question missed 3 times or more in 今日の復習 shows, once answered there again, the part(s) of the
     // passage the answer rests on (highlighted) and why the answer is right and the others are not. The notes are in
     // readex.*.js (READ_EX, written by Claude, not from the books), loaded the first time one is needed.
-    var READ_EX_SRC = 'readex.6aaffcc7.js', readExLoading = false;
+    var READ_EX_SRC = 'readex.712ba698.js', readExLoading = false;
     function reviewMisses(id) { var n = 0; attemptLog.forEach(function(at) { if (at.id === id && at.rv && !at.ok) n++; }); return n; }
     function readExFor(q) {
         if (!inReview || q.type !== 'Comprehension' || reviewMisses(q.id) < 3) return null;
