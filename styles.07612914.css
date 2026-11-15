@@ -2245,6 +2245,12 @@
         .explain-opts li:first-child { border-top: none; }
         .explain-opts li.explain-mine { font-weight: bold; }
         .explain-tag { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 8px; font-size: 0.7rem; font-weight: normal; background: var(--border-light); color: var(--text-sub); }
+        mark.rx-hl { background: rgba(255, 205, 40, 0.42); color: inherit; border-radius: 2px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+        html.dark mark.rx-hl { background: rgba(255, 196, 0, 0.26); }
+        .rx-tag { display: inline-block; margin-left: 8px; padding: 0 7px; border-radius: 8px; font-size: 0.7rem; font-weight: normal; background: rgba(255, 205, 40, 0.42); color: var(--text-main); vertical-align: 1px; }
+        html.dark .rx-tag { background: rgba(255, 196, 0, 0.26); }
+        .rx-jump { display: block; margin: 6px 0 8px; padding: 6px 12px; border: 1px solid var(--border-dark); border-radius: 4px; background: none; color: var(--text-main); font-size: 0.82rem; font-weight: bold; }
+        .rx-why { line-height: 1.75; }
         /* Exam-booklet Mincho for question and reading text; menus and buttons stay sans */
         .sentence-text, .sentence-text *, .reading-box, .reading-box *, .reading-intro, .comp-sentence, .comp-sentence *,
         .explain-card, .explain-card *, .missed-text, .fp-passage, .fp-passage * {

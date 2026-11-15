@@ -17034,7 +17034,8 @@
                     '<div class="reading-box passage-lined' + (q.vertical ? ' vertical' : '') + '">' + passageHtml + '</div>' +
                     (q.vertical ? '<div class="vertical-hint" id="vertical-hint" style="display:none;">縦書き：右から左へ読みます（横にスクロールできます）</div>' : '');
             }
-            var meaningHtml = isAnswered ? buildExplanation(q, selectedText, isCorrect) : '';
+            var rx = isAnswered ? readExFor(q) : null;          // 読解 missed 3+ times in 今日の復習: where the answer is and why
+            var meaningHtml = isAnswered ? (rx ? readExHtml(q, rx, selectedText, isCorrect) : buildExplanation(q, selectedText, isCorrect)) : '';
 
             var answerPart = '<div class="sentence' + (q.type === 'Comprehension' ? ' question-text' : '') + '"><span class="sentence-text">' + sentenceHtml + '</span>' + ttsHtml + '</div>' +
                 '<div class="options">' + optionsHtml + '</div>' +
@@ -17048,6 +17049,7 @@
                     ? '<div class="comp-split"><div class="comp-left">' + readingHtml + '</div><div class="comp-right">' + answerPart + '</div></div>'
                     : answerPart) +
                 '</div>';
+            if (rx) markReadEx(quizContainer, rx.hl);
             justAnsweredId = null;
 
             if (isAnswered) {
@@ -18966,6 +18968,75 @@
         }
         if (ex.ex) rows.push('<div class="explain-sub">例文</div><div class="mx-ex">' + String(ex.ex).replace(/<(?!\/?b>)[^>]*>/g, '') + '</div>');
         return '<div class="explain-card mx"><div class="explain-title">解説</div>' + rows.join('') + '</div>';
+    }
+    // 読解 help: a reading question missed 3 times or more in 今日の復習 shows, once answered there again, the part(s) of the
+    // passage the answer rests on (highlighted) and why the answer is right and the others are not. The notes are in
+    // readex.*.js (READ_EX, written by Claude, not from the books), loaded the first time one is needed.
+    var READ_EX_SRC = 'readex.6aaffcc7.js', readExLoading = false;
+    function reviewMisses(id) { var n = 0; attemptLog.forEach(function(at) { if (at.id === id && at.rv && !at.ok) n++; }); return n; }
+    function readExFor(q) {
+        if (!inReview || q.type !== 'Comprehension' || reviewMisses(q.id) < 3) return null;
+        if (typeof READ_EX === 'undefined') {
+            if (!readExLoading) {
+                readExLoading = true;
+                var sc = document.createElement('script');
+                sc.src = READ_EX_SRC;
+                sc.onload = function() { var cur = currentQuestions[currentIndex]; if (cur && cur.id === q.id && !isViewingResults) loadQuestion(); };
+                sc.onerror = function() { readExLoading = false; };
+                document.head.appendChild(sc);
+            }
+            return null;
+        }
+        return READ_EX[q.id] || null;
+    }
+    function readExHtml(q, ex, selectedText, isCorrect) {
+        var plain = function(h) { return String(h || '').replace(/<rt>.*?<\/rt>/g, '').replace(/<[^>]+>/g, ''); };
+        var orig = findQuestion(q.id) || q, picked = plain(selectedText);
+        // the notes are in the book's order; the choices on screen are shuffled, so match them by text
+        var opts = q.options.map(function(o, i) {
+            var k = orig.options.indexOf(o), note = k > -1 ? ex.opts[k] : '';
+            if (i === q.correct || !note) return '';
+            var mine = !isCorrect && plain(o) === picked;
+            return '<li' + (mine ? ' class="explain-mine"' : '') + '>' + CIRCLED[i] + ' ' + escapeHtml(note) + (mine ? '<span class="explain-tag">あなたの答え</span>' : '') + '</li>';
+        }).join('');
+        return '<div class="explain-card rx-card"><div class="explain-title">解説<span class="rx-tag">何度もまちがえた問題</span></div>' +
+            (ex.hl.length ? '<button type="button" class="rx-jump">本文の答えの場所を見る</button>' : '') +
+            '<div class="rx-why">' + escapeHtml(ex.why) + '</div>' +
+            (opts ? '<div class="explain-sub">ほかの選択肢</div><ul class="explain-opts">' + opts + '</ul>' : '') + '</div>';
+    }
+    // highlight the spans in the passage: matched on its text without furigana and spaces, so ruby, footnote words and
+    // line breaks inside a span don't matter
+    function markReadEx(root, spans) {
+        var box = root.querySelector('.reading-box');
+        if (!box || !spans || !spans.length) return;
+        var text = '', map = [];
+        var walk = document.createTreeWalker(box, NodeFilter.SHOW_TEXT, null);
+        for (var n = walk.nextNode(); n; n = walk.nextNode()) {
+            if (n.parentNode.closest('rt, rp')) continue;
+            for (var i = 0; i < n.nodeValue.length; i++) { if (/[\s|]/.test(n.nodeValue[i])) continue; text += n.nodeValue[i]; map.push([n, i]); }
+        }
+        var segs = [], used = [];
+        spans.forEach(function(h) {
+            var key = String(h).replace(/[\s|]/g, ''), at = key ? text.indexOf(key) : -1;
+            if (at < 0 || used.some(function(u) { return at < u[1] && at + key.length > u[0]; })) return;
+            used.push([at, at + key.length]);
+            for (var j = at; j < at + key.length; j++) {
+                var m = map[j], last = segs[segs.length - 1];
+                if (last && last.n === m[0] && last.j === j - 1) { last.e = m[1] + 1; last.j = j; } else segs.push({ n: m[0], s: m[1], e: m[1] + 1, j: j, first: j === at });
+            }
+        });
+        // wrap from the end, so the offsets still to do stay valid
+        segs.sort(function(a, b) { return b.j - a.j; }).forEach(function(g) {
+            var r = document.createRange(), mk = document.createElement('mark');
+            mk.className = 'rx-hl' + (g.first ? ' rx-start' : '');
+            r.setStart(g.n, g.s); r.setEnd(g.n, g.e);
+            try { r.surroundContents(mk); } catch (e) {}
+        });
+        var jump = root.querySelector('.rx-jump'), firstMark = box.querySelector('mark.rx-hl');
+        if (jump) {
+            if (!firstMark) jump.remove();
+            else jump.addEventListener('click', function() { firstMark.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' }); });
+        }
     }
     function buildExplanation(q, selectedText, isCorrect) {
         if (!explainOn()) return '';
