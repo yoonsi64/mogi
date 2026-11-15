@@ -12541,7 +12541,7 @@
             '<div class="lib-body">' + weeksHtml +
                 '<button class="home-all-btn lib-all-btn" data-lib="' + lib.id + '">全範囲で解く（' + qs.length + '問・ランダム）</button>' +
                 '<div class="lib-info">' + escapeHtml(lib.fullTitle) +
-                    (lib.authors ? '<br>' + escapeHtml(lib.authors) + ' 著' : '') +
+                    (lib.authors ? '<br>' + escapeHtml(lib.authors) + (/(著|編|監修|지음|공저|엮음|감수)/.test(lib.authors) ? '' : ' 著') : '')          // 김성곤 지음 (→ 著) already says it +
                     '<br>' + escapeHtml(lib.publisher) + (lib.edition ? '　' + escapeHtml(lib.edition).replace(/（[^）]*）/g, function(m) { return '<span class="nowrap">' + m + '</span>'; }) : '') + (lib.isbn ? '　<span class="nowrap">ISBN ' + escapeHtml(lib.isbn) + '</span>' : '') +
                     (lib.notice ? '<br><span class="lib-notice">' + lib.notice + '</span>' : '') +
                 '</div>' +
