@@ -12455,38 +12455,10 @@
         if (!sub || sub.indexOf('〜') !== 0) return '';
         return '<div class="gram-pills">' + sub.split(/・(?=〜)/).map(function(g) { return '<span class="gram-pill">' + escapeHtml(g) + '</span>'; }).join('') + '</div>';
     }
-    // any other section label that is a list (内容理解（短文・中文・長文）・統合理解・…, 漢字読み・文脈規定・…): a pill per item,
-    // like the grammar; a description (「〜てくる・〜ていく」の使い分け) stays beside the heading, and moves to its own
-    // smaller line under it where it doesn't fit (a phone held upright).
-    function labelItems(sub) {
-        if (!sub) return null;
-        var items = [], cur = '', depth = 0;
-        Array.from(sub).forEach(function(ch) {
-            if ('（(「『'.indexOf(ch) > -1) depth++;
-            else if ('）)」』'.indexOf(ch) > -1) depth = Math.max(0, depth - 1);
-            if (ch === '・' && !depth) { items.push(cur); cur = ''; } else cur += ch;
-        });
-        items.push(cur);
-        // not a list: a phrase about all of them (受身・使役・使役受身の使い分け), a clause (、), a heading with a number (問題1〜4 文字・語彙)
-        return items.length < 2 || /の使い分け$/.test(sub) || items.some(function(x) { return !x || /[、\s]/.test(x); }) ? null : items;
-    }
-    function listPills(sub) {
-        var items = labelItems(sub);
-        return items ? '<div class="gram-pills">' + items.map(function(g) { return '<span class="gram-pill">' + escapeHtml(g) + '</span>'; }).join('') + '</div>' : '';
-    }
-    function subLine(sub) { return sub && !labelItems(sub) ? '<div class="sub-line">' + escapeHtml(sub) + '</div>' : ''; }
-    var subCutObserver = null;          // made on first use: the first home page is drawn before this line runs
-    function watchCutSubs(root) {
-        if (typeof ResizeObserver === 'undefined') return;
-        if (!subCutObserver) subCutObserver = new ResizeObserver(function(entries) {
-            entries.forEach(function(en) {
-                var el = en.target, row = el.closest('.week-row');
-                if (row && el.clientWidth) row.classList.toggle('sub-cut', el.scrollWidth > el.clientWidth + 1);
-            });
-        });
-        subCutObserver.disconnect();
-        root.querySelectorAll('.week-row .week-sub').forEach(function(el) { if (el.textContent && el.parentNode.nextElementSibling && el.parentNode.nextElementSibling.classList.contains('sub-line')) subCutObserver.observe(el); });
-    }
+    // Every section in every book is laid out the same way: the title and the score on the first line, then what is in
+    // it: the grammar points as pills (新完全マスター文法), anything else (問題の種類, a description, 001〜030) as one
+    // line of text under the title, shown whole on every screen
+    function secLine(sub) { return grammarPills(sub) || (sub ? '<div class="sec-line">' + escapeHtml(sub) + '</div>' : ''); }
     function libCardHtml(lib, last, dueMap) {
         var qs = libQuestions(lib.id);
         var libMax = 0, libAnswered = 0, weeksHtml = '';
@@ -12517,15 +12489,14 @@
                     weeksHtml += '<div class="toc-head toc-l' + lvl + '">' + escapeHtml(h) + '</div>';
                 });
                 if (!nDays) {
-                    var pillsE = grammarPills(lib.units[w - 1].sub) || listPills(lib.units[w - 1].sub);
-                    weeksHtml += '<div class="week-row toc-empty"><div class="week-head"><b>' + escapeHtml(unitTitle(lib, w)) + '</b><span class="week-sub">' + (pillsE ? '' : escapeHtml(lib.units[w - 1].sub || '')) + '</span>' +
-                        '<span class="toc-page">未追加</span></div>' + (pillsE || subLine(lib.units[w - 1].sub)) + '</div>';
+                    weeksHtml += '<div class="week-row toc-empty"><div class="week-head"><b>' + escapeHtml(unitTitle(lib, w)) + '</b>' +
+                        '<span class="toc-page">未追加</span></div>' + secLine(lib.units[w - 1].sub) + '</div>';
                     continue;
                 }
             }
-            var subText = lib.units ? lib.units[w - 1].sub || '' : weekSubtitle(w, lib.id), pills = (lib.units ? grammarPills(subText) : '') || listPills(subText);
-            weeksHtml += '<div class="week-row' + (tocTop ? ' toc-top' : '') + '"><div class="week-head"><b>' + escapeHtml(unitTitle(lib, w)) + '</b><span class="week-sub">' + (pills ? '' : escapeHtml(subText)) + '</span>' +
-                (weekMax ? '<span class="week-score">' + weekEarned + '/' + weekMax + '</span>' : '') + '</div>' + (pills || subLine(subText)) +
+            var subText = lib.units ? lib.units[w - 1].sub || '' : weekSubtitle(w, lib.id);
+            weeksHtml += '<div class="week-row' + (tocTop ? ' toc-top' : '') + '"><div class="week-head"><b>' + escapeHtml(unitTitle(lib, w)) + '</b>' +
+                (weekMax ? '<span class="week-score">' + weekEarned + '/' + weekMax + '</span>' : '') + '</div>' + secLine(subText) +
                 '<div class="day-grid" style="grid-template-columns:repeat(' + (lib.units ? 5 : lib.days) + ',1fr)">' + cells + '</div>' +
                 (lib.units && nDays > 1 ? '<button class="unit-all-btn" data-lib="' + lib.id + '" data-week="' + w + '" aria-label="' + escapeHtml((lib.units[w - 1].short || unitTitle(lib, w)).replace(/^(?:\d+회|第\d+回) /, '')) + 'をまとめて解く（' + nDays + '問・順番どおり）"><span class="ua-play" aria-hidden="true">▶</span><span class="ua-label">まとめて解く</span><span class="ua-sub">' + nDays + '問・順番どおり</span></button>' : '') +
                 '</div>';
@@ -12941,7 +12912,6 @@
         readBooks.forEach(function(b) { html += readingBookCardHtml(b); });
         html += '</div></div>';
         quizContainer.innerHTML = html;
-        watchCutSubs(quizContainer);
         if (keepOrder) { var shown = libShownOrder; libReorderShelves(function(s, id) { return shown[id]; }); }
         else if (sortBy === 'std') { var ord = libOrders(); libReorderShelves(function(s, id) { var i = (ord[s] || []).indexOf(id); return i < 0 ? undefined : i; }); }
         if (libEditing) libEditDecorate();
