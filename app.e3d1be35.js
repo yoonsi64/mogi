@@ -18886,7 +18886,7 @@
     // Progress per character and per word, in HJ.store (in backups like every jlpt* key):
     // { c: { 天: rec }, w: { '천지:天地': rec } }, rec = { l: level 0..11, s: 1/0 the last verdict, ok, ng: counts, t, fx: 1 when 판정 고치기 set it }.
     var HJ = {
-        id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.447e434d.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
+        id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.5249383a.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
         lv: ['8級', '7級Ⅱ', '7級', '6級Ⅱ', '6級', '5級Ⅱ', '5級', '4級Ⅱ', '4級', '3級Ⅱ', '3級', '2級'],
         total: {"c": [50, 50, 50, 75, 75, 99, 100, 250, 250, 500, 316, 526], "w": [150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150]},
         color: '#2b5fa8', badge: '韓', pattern: ['kikkohanabishi', '#2d4f7f'],
@@ -18895,7 +18895,7 @@
             title: '漢字 쓰기 練習', sub: '韓國語文會 漢字能力檢定試驗', range: '8級~2級',
             chars: '字', words: '單語', items: '問題', kindC: '漢字', kindW: '單語', kindB: '둘 다', own: '이 級만', cum: '아래 級 包含',
             upTo: '까지', go: '{lv} 練習하기 ({n}問題)', miss: '틀린 것만 練習 ({n}問題)',
-            info: '韓國語文會 漢字能力檢定試驗 8級~2級. 訓音(하늘 천)이나 漢字語를 보고, 試驗과 같은 正字로 씁니다. 日本字나 簡體字로 쓰면 誤答입니다.',
+            info: '韓國語文會 漢字能力檢定試驗 8級~2級. 訓音(하늘 천)이나 漢字語를 보고, 試驗과 같은 正字로 씁니다. 日本字나 簡體字로 쓰면 誤答입니다. ː는 長音, ‣는 長·短音 漢字입니다.',
             credit: '配定漢字: (社)韓國語文會 · 級數·訓音 資料: vera3422/hanja-study-app-for-CY (MIT) · 單語: <a href="https://github.com/ongocompany/hanjahanja-dict" target="_blank" rel="noopener">한자한자 漢字語 辭典</a> (國立國語院 우리말샘·標準國語大辭典, CC BY-SA 2.0 KR) · 筆順: KanjiVG (CC BY-SA 3.0)',
             close: '닫기', loading: '불러오는 中…', loadFail: '筆記 認識 데이터를 불러오지 못했습니다. 인터넷에 連結한 뒤 다시 열어 주십시오.',
             askChar: '다음 訓音에 맞는 漢字를 쓰시오', askWord: '다음 漢字語를 漢字로 쓰시오 ({n}字)', boxes: '答 칸 ({n}字)', nth: '{n}番째 글자', pad: '여기에 쓰시오',
@@ -19214,7 +19214,7 @@
     }
     // 로 or 으로 after the character's reading (the 音 of its first 訓音): 로 after a vowel or ㄹ (說로, 字로), else 으로 (學으로)
     function hjRo(c) {
-        var i = hjItems().at[c], h = i === undefined ? '' : hjData().hun[i].split('|')[0], code = h.charCodeAt(h.length - 1) - 0xAC00;
+        var i = hjItems().at[c], h = i === undefined ? '' : hjData().hun[i].split('|')[0].replace(/[ː‣]/g, ''), code = h.charCodeAt(h.length - 1) - 0xAC00;
         if (!(code >= 0 && code < 11172)) return '(으)로';
         var fin = code % 28;
         return fin === 0 || fin === 8 ? '로' : '으로';
@@ -19233,8 +19233,9 @@
         // the same 훈음: another character that has every 훈음 of the prompt (오를 등: 登 and 騰) answers it too
         if (HJ.same) HJ.same(it, readsS, k, notes);
         else if (it.k === 'c' && !k[0] && all.at.hasOwnProperty(readsS[0])) {
-            var mine = D.hun[all.at[readsS[0]]].split('|');
-            if (it.hun.split('|').every(function(h) { return mine.indexOf(h) > -1; })) {
+            var bare = function(h) { return h.replace(/[ː‣]/g, ''); };          // 長短音 marks don't make a different 訓音
+            var mine = D.hun[all.at[readsS[0]]].split('|').map(bare);
+            if (it.hun.split('|').every(function(h) { return mine.indexOf(bare(h)) > -1; })) {
                 k[0] = 1; notes.push(hjFmt(t.noteSame, { c: hjHan(reads[0]), h: escapeHtml(hjHun(it.hun)), a: hjHan(ans[0]) }));
             }
         }
