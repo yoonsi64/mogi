@@ -12474,6 +12474,15 @@
         var items = labelItems(sub);
         return items ? '<div class="gram-pills">' + items.map(function(g) { return '<span class="gram-pill">' + escapeHtml(g) + '</span>'; }).join('') + '</div>' : '';
     }
+    // a label above the sections that is a list (言語知識（文字・語彙・文法）・読解), or a part name and a list
+    // (第一部 文字・語彙・文法): the list as pills; a description (第1部 評論・解説・エッセイなど) stays as it is
+    function tocHeadInner(h) {
+        var p = listPills(h);
+        if (p) return p;
+        var m = /^(\S+)\s+(.+)$/.exec(h);
+        if (m && !/など$/.test(m[2]) && (p = listPills(m[2]))) return '<span>' + escapeHtml(m[1]) + '</span>' + p;
+        return escapeHtml(h);
+    }
     function subLine(sub) { return sub && !labelItems(sub) ? '<div class="sub-line">' + escapeHtml(sub) + '</div>' : ''; }
     var subCutObserver = null;          // made on first use: the first home page is drawn before this line runs
     function watchCutSubs(root) {
@@ -12514,7 +12523,7 @@
                     if (!h) return;      // an empty level: the heading sits at this depth without a heading above it
                     if (lvl === path.length - 1 && h === lib.units[w - 1].title) { tocTop = true; return; }   // an entry that is its own unit (模擬試験): the unit row is the heading
                     if (prevPath[lvl] === h && path.slice(0, lvl).join('|') === prevPath.slice(0, lvl).join('|')) return;
-                    weeksHtml += '<div class="toc-head toc-l' + lvl + '">' + escapeHtml(h) + '</div>';
+                    weeksHtml += '<div class="toc-head toc-l' + lvl + '">' + tocHeadInner(h) + '</div>';
                 });
                 if (!nDays) {
                     var pillsE = grammarPills(lib.units[w - 1].sub) || listPills(lib.units[w - 1].sub);
