@@ -140,8 +140,10 @@
         .home-actions button:disabled { opacity: 0.45; }
         .home-section { font-size: 0.8rem; font-weight: bold; color: var(--text-sub); letter-spacing: 1px; margin: 4px 0 8px; display: flex; justify-content: space-between; }
         .week-row { margin-bottom: 14px; }
-        .week-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 2px; }
+        .week-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; margin-bottom: 2px; }
         .week-head b { font-size: 0.95rem; }
+        .sec-title { display: flex; flex-direction: column; }
+        .sec-no { font-size: 0.68rem; font-weight: bold; color: var(--text-sub); letter-spacing: 0.5px; line-height: 1.2; }
         .sec-line { font-size: 0.74rem; line-height: 1.45; color: var(--text-sub); margin: 0 0 8px; }
         .week-head .week-score { font-size: 0.75rem; color: var(--text-sub); font-weight: bold; }
         .gram-pills { display: flex; flex-wrap: wrap; gap: 4px; margin: 2px 0 8px; }

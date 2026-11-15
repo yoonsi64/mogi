@@ -12458,6 +12458,23 @@
     // Every section in every book is laid out the same way: the title and the score on the first line, then what is in
     // it: the grammar points as pills (新完全マスター文法), anything else (問題の種類, a description, 001〜030) as one
     // line of text under the title, shown whole on every screen
+    // One naming scheme in every book: the book's number for the section sits small above the title (1課, 1, 第2回, 問題1)
+    // and the title is the topic, without the numbering's brackets and full stops (1)［対比］ → 1 / 対比). The line under
+    // it is left out where it only repeats the title, and a 問題 number in it moves up to the small label.
+    function secHead(t, sub) {
+        var m, no = '', title = t;
+        if ((m = /^(\d+課)\s*(.+)$/.exec(t))) { no = m[1]; title = m[2]; }
+        else if ((m = /^(\d+)\)\s*［(.+)］$/.exec(t))) { no = m[1]; title = m[2]; }
+        else if ((m = /^(\d+)\.\s*(.+)$/.exec(t))) { no = m[1]; title = m[2]; }
+        else if ((m = /^(I{1,3}|IV|V)\s+(.+)$/.exec(t))) { no = m[1]; title = m[2]; }
+        else if ((m = /^(模擬試験)\s*(第\d+回)$/.exec(t))) { no = m[2]; title = m[1]; }
+        else if ((m = /^(第\d+回)\s+(.+)$/.exec(t))) { no = m[1]; title = m[2]; }
+        if (sub === title) sub = '';
+        else if (sub && (m = /^(問題\d+)\s+(.+)$/.exec(sub)) && m[2] === title && !no) { no = m[1]; sub = ''; }
+        return { title: '<b class="sec-title">' + (no ? '<small class="sec-no">' + escapeHtml(no) + '</small>' : '') + escapeHtml(title) + '</b>', line: secLine(sub) };
+    }
+    // a button's label without zero padding or a space before its number (予想問題 01 → 予想問題1, 01 書簡文 → 1 書簡文)
+    function partName(p) { return String(p).replace(/^(\D*?)\s*0*(\d+)/, '$1$2'); }
     function secLine(sub) { return grammarPills(sub) || (sub ? '<div class="sec-line">' + escapeHtml(sub) + '</div>' : ''); }
     function libCardHtml(lib, last, dueMap) {
         var qs = libQuestions(lib.id);
@@ -12475,7 +12492,7 @@
                 cells += '<button class="day-cell ' + st.state + (isResume ? ' resume' : '') + '" data-lib="' + lib.id + '" data-week="' + w + '" data-day="' + d + '" ' + (st.state === 'empty' ? 'disabled' : '') +
                     ' aria-label="' + escapeHtml(placeLabel(lib, w, d, '')) + ' ' + (st.held ? '前回 ' : '') + label + '"' + (st.held ? ' title="前回の得点（解き直し中）"' : '') + '>' +
                     (dueMap[dk] ? '<span class="day-due" title="復習' + dueMap[dk] + '問">' + dueMap[dk] + '</span>' : '') +
-                    '<span class="day-label">' + escapeHtml(partShort(lib, w, d)) + '</span><span class="day-score">' + label + '</span>' +
+                    '<span class="day-label">' + escapeHtml(partName(partShort(lib, w, d))) + '</span><span class="day-score">' + label + '</span>' +
                     '<span class="day-bar"><i style="width:' + pct + '%"></i></span></button>';
             }
             // 目次 headings (実力養成編 › 第1部 › 1.) whenever they change from the section before
@@ -12489,14 +12506,15 @@
                     weeksHtml += '<div class="toc-head toc-l' + lvl + '">' + escapeHtml(h) + '</div>';
                 });
                 if (!nDays) {
-                    weeksHtml += '<div class="week-row toc-empty"><div class="week-head"><b>' + escapeHtml(unitTitle(lib, w)) + '</b>' +
-                        '<span class="toc-page">未追加</span></div>' + secLine(lib.units[w - 1].sub) + '</div>';
+                    var shE = secHead(unitTitle(lib, w), lib.units[w - 1].sub);
+                    weeksHtml += '<div class="week-row toc-empty"><div class="week-head">' + shE.title +
+                        '<span class="toc-page">未追加</span></div>' + shE.line + '</div>';
                     continue;
                 }
             }
-            var subText = lib.units ? lib.units[w - 1].sub || '' : weekSubtitle(w, lib.id);
-            weeksHtml += '<div class="week-row' + (tocTop ? ' toc-top' : '') + '"><div class="week-head"><b>' + escapeHtml(unitTitle(lib, w)) + '</b>' +
-                (weekMax ? '<span class="week-score">' + weekEarned + '/' + weekMax + '</span>' : '') + '</div>' + secLine(subText) +
+            var sh = secHead(unitTitle(lib, w), lib.units ? lib.units[w - 1].sub || '' : weekSubtitle(w, lib.id));
+            weeksHtml += '<div class="week-row' + (tocTop ? ' toc-top' : '') + '"><div class="week-head">' + sh.title +
+                (weekMax ? '<span class="week-score">' + weekEarned + '/' + weekMax + '</span>' : '') + '</div>' + sh.line +
                 '<div class="day-grid" style="grid-template-columns:repeat(' + (lib.units ? 5 : lib.days) + ',1fr)">' + cells + '</div>' +
                 (lib.units && nDays > 1 ? '<button class="unit-all-btn" data-lib="' + lib.id + '" data-week="' + w + '" aria-label="' + escapeHtml((lib.units[w - 1].short || unitTitle(lib, w)).replace(/^(?:\d+회|第\d+回) /, '')) + 'をまとめて解く（' + nDays + '問・順番どおり）"><span class="ua-play" aria-hidden="true">▶</span><span class="ua-label">まとめて解く</span><span class="ua-sub">' + nDays + '問・順番どおり</span></button>' : '') +
                 '</div>';
