@@ -9735,6 +9735,7 @@
         var modeCode = { report: isBookmarkMode ? 'b' : 'r', all: 'a', allMistakes: 'x', practice: 'p' }[answerMode] || 'r';
         var at = { id: q.id, b: blankIdx, ok: isCorrect ? 1 : 0, t: now, ms: ms, m: modeCode };
         if (unsureNow[q.id]) at.u = 1;          // 自信なし: a right answer still counts for the 正答率, but the review treats it as a miss
+        if (inReview) at.rv = 1;               // answered in 今日の復習
         attemptLog.push(at);
         if (attemptLog.length > MAX_ATTEMPTS) attemptLog.splice(0, attemptLog.length - MAX_ATTEMPTS);
         questionShownAt = now;
@@ -11681,6 +11682,7 @@
     }
 
     function enterQuizMode(title) {
+        reviewRound = false; inReview = false;          // startReviewPractice sets them again for its rounds
         document.body.classList.add('in-quiz');
         subnav.classList.remove('show');
         document.getElementById('quiz-title').textContent = title || '';
@@ -27892,6 +27894,7 @@
         var ms = readTimer.ms;
         readTimer = { qid: null, ms: 0, last: Date.now() };
         if (readSaved[q.id]) { delete readSaved[q.id]; saveReadTimers(); }
+        if (inReview) return;                 // 今日の復習: not a reading-speed measurement
         var chars = passageChars(findQuestion(q.id));
         if (!chars || ms < 5000 || ms > 30 * 60000) return;   // skip accidental taps and abandoned screens
         var entry = { id: q.id, chars: chars, ms: ms, t: Date.now(), ok: isCorrect ? 1 : 0, target: passageTargetMs(q) };
@@ -27905,7 +27908,7 @@
     }
     function readingSpeedHtml(q) {
         var r = lastReading(q.id);
-        if (!r) return '';
+        if (!r || inReview) return '';
         var html = '<div class="reading-speed">' +
             '<span class="rs-main">読む速さ <b>' + charsPerMin(r.chars, r.ms) + '</b>字/分</span>' +
             '<span class="rs-sub">' + r.chars + '字・' + minSec(r.ms / 1000) + '</span>';
@@ -28002,7 +28005,7 @@
         if (elapsed > 0) metaBits.push(tKey ? timeVsTarget(elapsed, selectedWeek) : '所要時間 ' + formatDuration(elapsed / 1000));
         var rsChars = 0, rsMs = 0;
         currentQuestions.forEach(function(cq) { var r = cq.type === 'Comprehension' ? lastReading(cq.id) : null; if (r) { rsChars += r.chars; rsMs += r.ms; } });
-        if (rsMs > 0) metaBits.push('読む速さ 平均' + charsPerMin(rsChars, rsMs) + '字/分');
+        if (rsMs > 0 && !inReview) metaBits.push('読む速さ 平均' + charsPerMin(rsChars, rsMs) + '字/分');
         if (fromReplay) metaBits.push('前回の結果');
 
         var typeRows = Object.keys(byType).map(function(t) {
@@ -28017,6 +28020,9 @@
                 (m.lost > 1 ? '（−' + m.lost + '）' : '') + '</span><span class="missed-text">' + previewSentence(m.q) + '</span></button>';
         }).join('') : '<div class="stat-sub" style="padding:8px 0;">間違えた問題はありません。</div>';
 
+        var nextLeft = reviewRound && !fromReplay ? todaysReview().remaining : [];         // 今日の復習: the next round
+        var nextRound = nextLeft.length, nextSize = nextRound ? reviewRounds(nextLeft)[0].length : 0;
+        var readLater = reviewRound && !fromReplay && !nextRound ? todaysReview().readLater : 0;
         quizContainer.innerHTML = '<div class="results-screen">' +
             '<div class="result-hero">' +
             stampHtml(pct) +
@@ -28026,7 +28032,9 @@
             (metaBits.length ? '<div class="result-meta">' + metaBits.join('　') + '</div>' : '') +
             '<p class="result-msg">' + msg + '</p>' +
             '</div>' +
-            (missed.length ? '<button class="practice-btn" id="retry-missed">間違えた問題だけ解き直す（' + missed.length + '問）</button>' : '') +
+            (nextRound ? '<button class="practice-btn" id="review-next">次の' + nextSize + '問へ（あと' + nextRound + '問）</button>' : '') +
+            (readLater ? '<p class="review-later">読解の問題 ' + readLater + '問は、疲れないように次の回に回しました。</p>' : '') +
+            (missed.length ? '<button class="practice-btn' + (nextRound ? ' sub' : '') + '" id="retry-missed">間違えた問題だけ解き直す（' + missed.length + '問）</button>' : '') +
             '<div class="stat-card" style="margin-top:14px;"><div class="stat-card-title">分野別</div>' + typeRows + '</div>' +
             libTestReportHtml() +
             '<div class="stat-card"><div class="stat-card-title">間違えた問題</div>' + missedHtml + '</div>' +
@@ -28041,11 +28049,15 @@
                 window.scrollTo(0, 0);
             });
         });
+        var rvNext = document.getElementById('review-next');
+        if (rvNext) rvNext.addEventListener('click', function() { pendingOrigin = sessionOrigin; startReviewPractice(); });
         var retry = document.getElementById('retry-missed');
         if (retry) retry.addEventListener('click', function() {
             var ids = missed.map(function(m) { return m.q.id; });
             pendingOrigin = sessionOrigin; pendingTitle = 'ミスの解き直し';
+            var fromReview = inReview;
             startListQuiz(ids, ids[0], false, 'practice');
+            inReview = fromReview;
         });
         updateHistoryUI();
         window.scrollTo(0, 0);
@@ -29276,8 +29288,9 @@
         t.ids.forEach(function(id) { inSet[id] = true; });
         // a mix of question types: one of each type in turn (each type's own queue keeps wrong answers first, then the
         // longest ago), types taken in the order of their most urgent question; a type already in the set waits its turn.
-        // Passages: for every 20 questions at most one 長文, three 中文, one 統合理解 and one 情報検索; a passage counts once, and only its missed
-        // questions come (they follow one another, so the passage is read once).
+        // Reading is held to a budget so a set is never mostly reading: 3 points for every 10 questions, a 短文 1 point, a 中文 2,
+        // 統合理解 or 情報検索 2, a 長文 3. A passage comes whole (all its missed questions, one after another, so it is read once);
+        // one that doesn't fit stays due for the next set.
         var queues = {}, order = [];
         due.forEach(function(id) {
             if (inSet[id]) return;
@@ -29285,13 +29298,13 @@
             if (!queues[c]) { queues[c] = []; order.push(c); }
             queues[c].push(id);
         });
-        var per20 = Math.ceil(size / 20), cap = { 'Comprehension:long': per20, 'Comprehension:mid': 3 * per20, 'Comprehension:compare': per20, 'Comprehension:search': per20 };
+        var budget = Math.round(size * 3 / 10), pts = 0;
         var pkey = function(q) { return q.group || 'p' + q.id; };
         var held = {}, passages = {};
         t.ids.forEach(function(id) {
             var q = findQuestion(id), c = statCat(q);
             held[c] = (held[c] || 0) + 1;
-            if (cap[c]) (passages[c] = passages[c] || {})[pkey(q)] = true;
+            if (readWeight(c) && !passages[pkey(q)]) { passages[pkey(q)] = true; pts += readWeight(c); }
         });
         var take = function(id, c) { t.ids.push(id); inSet[id] = true; held[c] = (held[c] || 0) + 1; };
         while (t.ids.length < size && order.length) {
@@ -29300,30 +29313,71 @@
                 var c = order[oi];
                 if ((held[c] || 0) > low || !queues[c].length) continue;
                 var id = queues[c].shift(), q = findQuestion(id);
-                if (cap[c]) {
-                    var ps = passages[c] = passages[c] || {}, k = pkey(q);
-                    if (!ps[k] && Object.keys(ps).length >= cap[c]) { queues[c] = []; continue; }
-                    ps[k] = true;
+                if (readWeight(c)) {
+                    var k = pkey(q), rest = queues[c].filter(function(x) { return pkey(findQuestion(x)) === k; });
+                    queues[c] = queues[c].filter(function(x) { return pkey(findQuestion(x)) !== k; });
+                    if (!passages[k] && (pts + readWeight(c) > budget || t.ids.length + 1 + rest.length > size)) continue;     // over the budget: the next set
+                    if (!passages[k]) { passages[k] = true; pts += readWeight(c); }
                     take(id, c);
-                    queues[c] = queues[c].filter(function(x) {          // the passage's other missed questions come with it
-                        if (pkey(findQuestion(x)) !== k || t.ids.length >= size) return true;
-                        take(x, c); return false;
-                    });
+                    rest.forEach(function(x) { take(x, c); });          // the passage's other missed questions come with it
                 } else take(id, c);
             }
             order = order.filter(function(c) { return queues[c].length; });
         }
         localStorage.setItem('jlptReviewToday', JSON.stringify(t));
         var remaining = t.ids.filter(function(id) { return isDueNow[id]; });
-        return { ids: t.ids, remaining: remaining, done: t.ids.length - remaining.length, more: due.length - remaining.length };
+        var readLater = due.filter(function(id) { return !inSet[id] && readWeight(statCat(findQuestion(id))); }).length;
+        return { ids: t.ids, remaining: remaining, done: t.ids.length - remaining.length, more: due.length - remaining.length, readLater: readLater };
     }
     var PRACTICE_SIZE = 20;
+    // 今日の復習 goes in rounds of 10, each ending on its results screen with the next round a tap away. Reading is light in
+    // every round: at most 3 points of it (短文 1, 中文・統合理解・情報検索 2, 長文 3), so one 長文, or a 中文 and a 短文, or three
+    // 短文; never a 長文 two rounds running (the round after one takes at most 2 points). A passage comes whole. The
+    // rest of the round is quick questions, a few of them first as a warm-up before the reading, spread evenly over the
+    // rounds (so the texts don't end up alone at the end). When only reading is left, a round is just its text.
+    var REVIEW_ROUND = 10, REVIEW_READ_PTS = 3, reviewRound = false;
+    // inReview: answering in 今日の復習 (or redoing its misses): the reading isn't timed for 読む速さ (a passage seen before reads
+    // faster), and its answers are marked (at.rv) so a reading question missed there again and again can get extra help
+    var inReview = false;
+    function readWeight(c) { return c.indexOf('Comprehension:') === 0 ? ({ short: 1, mid: 2, compare: 2, search: 2 })[c.split(':')[1]] || 3 : 0; }
+    function reviewRounds(list, quickMax) {
+        if (quickMax === undefined) {          // a first pass for the number of rounds, then the quick ones shared out evenly
+            var r0 = reviewRounds(list, REVIEW_ROUND), nq = 0;
+            list.forEach(function(id) { var q = findQuestion(id); if (q && !readWeight(statCat(q))) nq++; });
+            return r0.length > 1 && nq < list.length ? reviewRounds(list, Math.ceil(nq / r0.length)) : r0;     // no reading: plain rounds of 10
+        }
+        var units = [], pk = function(q) { return q.group || 'p' + q.id; };
+        list.forEach(function(id) {
+            var q = findQuestion(id); if (!q) return;
+            var w = readWeight(statCat(q)), last = units[units.length - 1];
+            if (w && last && last.key === pk(q)) last.ids.push(id); else units.push({ key: pk(q), w: w, ids: [id] });
+        });
+        var rounds = [], prevHeavy = false;
+        while (units.length) {
+            var quick = [], reading = [], n = 0, p = 0, limit = prevHeavy ? REVIEW_READ_PTS - 1 : REVIEW_READ_PTS, heavy = false;
+            for (var i = 0; i < units.length && n < REVIEW_ROUND; i++) {
+                var u = units[i];
+                if (!u.w) { if (quick.length >= quickMax) continue; quick.push(u.ids[0]); n++; }
+                else if (p + u.w <= limit && n + u.ids.length <= REVIEW_ROUND) { reading = reading.concat(u.ids); n += u.ids.length; p += u.w; if (u.w >= 3) heavy = true; }
+                else continue;
+                units.splice(i, 1); i--;
+            }
+            if (!n) { var u0 = units.shift(); reading = u0.ids; heavy = u0.w >= 3; }        // only a text the round can't take is left: it alone
+            var warm = Math.min(3, quick.length);
+            rounds.push(quick.slice(0, warm).concat(reading, quick.slice(warm)));
+            prevHeavy = heavy;
+        }
+        return rounds;
+    }
     function startReviewPractice() {
         var rv = todaysReview();
         if (!rv.remaining.length && rv.more) rv = todaysReview(true);
-        var ids = rv.remaining;
-        if (!pendingTitle) pendingTitle = '今日の復習';
-        if (ids.length) startListQuiz(ids, ids[0], false, 'practice');
+        var left = reviewRounds(rv.remaining), ids = left[0] || [];
+        var isLeft = {}; rv.remaining.forEach(function(id) { isLeft[id] = true; });
+        var done = reviewRounds(rv.ids.filter(function(id) { return !isLeft[id]; })).length;
+        var rounds = done + left.length;
+        if (!pendingTitle) pendingTitle = '今日の復習' + (rounds > 1 ? '（' + (done + 1) + '／' + rounds + '）' : '');
+        if (ids.length) { startListQuiz(ids, ids[0], false, 'practice'); reviewRound = true; inReview = true; }
     }
     function reviewLabel(rv) {
         return rv.remaining.length ? 'あと' + rv.remaining.length + '問' : rv.ids.length ? '今日の分 完了' : '';

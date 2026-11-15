@@ -473,6 +473,9 @@
         .hm-cell.future { visibility: hidden; }
         .hm-cell.today { outline: 1.5px solid var(--text-main); outline-offset: 0; }
         .practice-btn { width: 100%; margin-top: 12px; padding: 12px; background: var(--text-main); color: #fff; border: none; font-weight: bold; font-size: 0.9rem; border-radius: 4px; }
+        .practice-btn.sub { background: transparent; color: var(--text-main); border: 1px solid var(--border-dark); }
+        html.dark .practice-btn.sub { color: var(--text-main); }
+        .review-later { margin: 12px 2px 0; font-size: 0.82rem; color: var(--text-sub); text-align: center; }
         .practice-btn:disabled { background: var(--border-light); color: var(--text-sub); }
         .weak-tag { font-size: 0.65rem; color: var(--incorrect-color); border: 1px solid var(--incorrect-color); padding: 0 4px; margin-left: 4px; font-weight: bold; }
         .mastery-bar { display: flex; height: 16px; border: 1px solid var(--border-light); background: #eee; margin: 8px 0 6px; }
