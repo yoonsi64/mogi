@@ -10349,6 +10349,7 @@
         if (unsureNow[q.id]) at.u = 1;          // 自信なし: a right answer still counts for the 正答率, but the review treats it as a miss
         if (inReview) at.rv = 1;               // answered in 今日の復習
         attemptLog.push(at);
+        if (!isCorrect && blankIdx < 0) { try { missedWordToList(q); } catch (e) {} }
         if (attemptLog.length > MAX_ATTEMPTS) attemptLog.splice(0, attemptLog.length - MAX_ATTEMPTS);
         questionShownAt = now;
         var key = getTodayDateString();
@@ -10359,6 +10360,41 @@
             localStorage.setItem('jlptAttempts', JSON.stringify(attemptLog));
             localStorage.setItem('jlptDaily', JSON.stringify(dailyStats));
         } catch (e) { /* storage full: keep going with in-memory data */ }
+    }
+    // A missed 読み・語彙 question puts its word in your own 単語帳 (not a book's), so the word itself is reviewed (cards,
+    // 意味を書く) and not only this question: 漢字読み・漢検の読み the underlined word with the right reading; 書き取り the
+    // answer's kanji (read as the underlined kana); 文脈規定 the right choice; 言い換え類義 and 用法 the underlined word
+    // (言い換え with its paraphrase as the meaning when there is no other). A word already there gets this place added.
+    var MISSED_WORD_TYPES = { 'Kanji Reading': 1, 'Kanken Reading': 1, 'Kanken Writing': 1, 'Context': 1, 'Paraphrases': 1, 'Usage': 1 };
+    function missedWordToList(q) {
+        if (!q || !MISSED_WORD_TYPES[q.type]) return;
+        var um = /<u>([\s\S]*?)<\/u>/.exec(q.sentence || ''), u = um ? plainWord(um[1]) : '', ans = q.options ? plainWord(q.options[q.correct || 0]) : '';
+        var word = '', reading = '', hint = '';
+        if (q.type === 'Kanji Reading' || q.type === 'Kanken Reading') { word = u; reading = toHiragana(ans); }
+        else if (q.type === 'Kanken Writing') { word = ans; reading = toHiragana(u); }
+        else if (q.type === 'Context') word = ans;
+        else { word = u; if (q.type === 'Paraphrases') hint = '≒ ' + ans; }
+        word = String(word || '').trim();
+        if (!word || word.length > 20) return;
+        var list = activeDeck ? myWordList : wordList;
+        if (!list) return;
+        var place = qWhere(q, '') + '・' + qTypeName(q), k = normWord(word), ctx = plainWord(q.sentence || '');
+        if (normWord(ctx) === k) ctx = '';
+        var e = list.find(function(x) { return normWord(x.word) === k; });
+        if (e) { addWordPlace(e, q.id, place, ctx); }
+        else {
+            var meaning = (q.notes && q.notes[word]) || (wordDefinitions[word] ? wordDefinitions[word].jp : '') || hint;
+            e = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), added: Date.now(), qid: q.id, source: place,
+                  word: word, meaning: meaning, furigana: '', fromMiss: 1 };
+            if (reading && hasKanji(word)) { e.reading = reading; e.readingChecked = true; }
+            else { e.reading = localReading(word); e.readingChecked = !!e.reading || !hasKanji(word); }
+            if (ctx) e.context = ctx;
+            list.push(e);
+            showToast('「' + word + '」を単語帳に入れました');
+        }
+        if (activeDeck) { try { localStorage.setItem('jlptWordList', JSON.stringify(myWordList)); } catch (err) {} }
+        else saveWordList();
+        setTimeout(fillMissingReadings, 0);
     }
     // True whenever answers should NOT touch the 成績表, report mistake note or statistics
     function isAllModeActive() {
@@ -14901,38 +14937,86 @@
         });
     }
 
-    // ---------- 単語帳 flashcards: Anki's scheduler (FSRS-5) ----------
-    // FSRS is the open-source scheduler Anki uses (open-spaced-repetition, MIT licence); this follows FSRS-5 with its
-    // default parameters. Each card keeps its memory state in e.srs = { state, step, s (stability, days),
-    // d (difficulty 1–10), last (date of the last review), reps, lapses }, and e.due (the date it is next shown).
-    // Like Anki: new cards go through learning steps (1分・10分), forgotten ones through a relearning step (10分),
-    // and the 4 buttons are もう一度・難しい・普通・簡単. Steps under a day come back later in the same session.
-    // (意味を書く still uses the simple 1・2・4・8… schedule below.)
+    // ---------- 単語帳 flashcards ----------
+    // Each card keeps its memory state in e.srs = { state, step, s, f, d (FSRS-7, below), last (date of the last review),
+    // lt (its time), reps, lapses }, and e.due (the date it is next shown). Like Anki: new cards go through learning steps
+    // (1分・10分), forgotten ones through a relearning step (10分), and the 4 buttons are もう一度・難しい・普通・簡単.
+    // Steps under a day come back later in the same session. (Cards scheduled by FSRS-5 before carry on: their fast trace
+    // starts at 0.8 of their stability, as FSRS-7 starts a new card.)
     var FLASH_DAYS = [1, 2, 4, 8, 16, 32];
-    var FSRS_W = [0.40255, 1.18385, 3.173, 15.69105, 7.1949, 0.5345, 1.4604, 0.0046, 1.54575, 0.1192, 1.01925, 1.9395, 0.11, 0.29605, 2.2698, 0.2315, 2.9898, 0.51655, 0.6621];
-    var FSRS_DECAY = -0.5, FSRS_FACTOR = 19 / 81, SRS_LEARN = [1, 10], SRS_RELEARN = [10];
+    var SRS_LEARN = [1, 10], SRS_RELEARN = [10];
     function srsRetention() { var r = getSetting('srsRetention', 0.9); return r >= 0.7 && r <= 0.99 ? r : 0.9; }
-    function fsrsD0(g) { return Math.min(10, Math.max(1, FSRS_W[4] - Math.exp(FSRS_W[5] * (g - 1)) + 1)); }
-    function fsrsNextD(d, g) {
-        var dd = d - FSRS_W[6] * (g - 3);
-        dd = d + (dd - d) * (10 - d) / 9;                                   // linear damping
-        return Math.min(10, Math.max(1, FSRS_W[7] * fsrsD0(4) + (1 - FSRS_W[7]) * dd));   // mean reversion
+    // ---------- FSRS-7: the scheduler every review in the app uses ----------
+    // FSRS-7 (open-spaced-repetition, MIT licence), ported from ts-fsrs 6 / fsrs-rs 7 with its default parameters. A memory
+    // state is { s (stability, days), f (the fast trace's stability), d (difficulty 1–10) }; recall falls on two curves
+    // mixed together, so a review an hour later and one a month later are handled by the same model (time in fractional
+    // days). Grades: 1 もう一度, 2 難しい, 3 普通, 4 簡単.
+    var FSRS7_W = [0.1104, 2.2395, 3.9221, 11.7841, 6.1686, 0.6457, 3.6807, 1.9795, 0, 1.3826, 0.7024, 0.5999, 0.8146, 0.6398, 1,
+        1.3207, 0.6707, 3.8668, 0.4416, 0.0934, 1.8631, 0.6162, 1.0869, 0.1567, 0.0801, 0.2421, 0.9464, 0.1433, 0.7145, 0, 0.5667,
+        0.3734, 0.5333, 0.3048];
+    var FSRS7_SMIN = 0.0001, FSRS7_SMAX = 36500;
+    function fsrsClamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
+    function fsrsRound(v) { return Math.round(v * 1e8) / 1e8; }
+    function fsrs7Fast(sf) {
+        var w = FSRS7_W, decay = -fsrsClamp(w[23] * Math.pow(sf, w[33] - 0.3), 0.01, 0.95);
+        return { decay: decay, scale: (Math.exp(Math.min(Math.log(w[25]) / decay, 60)) - 1) / sf };
     }
-    function fsrsR(t, s) { return Math.pow(1 + FSRS_FACTOR * t / s, FSRS_DECAY); }
-    function fsrsInterval(s) {
-        var i = s / FSRS_FACTOR * (Math.pow(srsRetention(), 1 / FSRS_DECAY) - 1);
-        return Math.min(36500, Math.max(1, Math.round(i)));
+    function fsrs7Prep(st) {
+        var w = FSRS7_W, s = fsrsClamp(st.s, FSRS7_SMIN, FSRS7_SMAX), sf = fsrsClamp(st.f || st.s * 0.8, FSRS7_SMIN, FSRS7_SMAX), d = fsrsClamp(st.d, 1, 10);
+        var decay = -fsrsClamp(w[24], 0.01, 0.95);
+        return { fast: fsrs7Fast(sf), decay: decay, scale: (Math.pow(w[26], 1 / decay) - 1) * Math.exp((d - 5) * (w[32] - 0.3)) / s,
+                 w1: w[27] * Math.pow(sf, -w[29]), w2: w[28] * Math.pow(s, w[30]) * Math.exp((d - 5) * (w[31] - 0.5)) };
     }
-    // the memory state after answering with grade g (1–4), `elapsed` days after the last review
-    function fsrsMemory(srs, g, elapsed) {
-        if (!srs.s) return { s: FSRS_W[g - 1], d: fsrsD0(g) };
-        var s = srs.s, d = srs.d;
-        if (elapsed <= 0) return { s: s * Math.exp(FSRS_W[17] * (g - 3 + FSRS_W[18])), d: fsrsNextD(d, g) };   // same day
-        var r = fsrsR(elapsed, s), ns;
-        if (g === 1) ns = Math.min(s, FSRS_W[11] * Math.pow(d, -FSRS_W[12]) * (Math.pow(s + 1, FSRS_W[13]) - 1) * Math.exp(FSRS_W[14] * (1 - r)));
-        else ns = s * (Math.exp(FSRS_W[8]) * (11 - d) * Math.pow(s, -FSRS_W[9]) * (Math.exp(FSRS_W[10] * (1 - r)) - 1) * (g === 2 ? FSRS_W[15] : 1) * (g === 4 ? FSRS_W[16] : 1) + 1);
-        return { s: Math.max(0.01, ns), d: fsrsNextD(d, g) };
+    function fsrs7Curve(t, p) {
+        var days = Math.max(t, 0), fb = 1 + p.fast.scale * days, sb = 1 + p.scale * days;
+        var fr = Math.pow(fb, p.fast.decay), sr = Math.pow(sb, p.decay), tot = p.w1 + p.w2;
+        return { r: ((p.w1 * fr + p.w2 * sr) / tot) * (1 - 2e-5) + 1e-5,
+                 dr: ((p.w1 * p.fast.decay * Math.pow(fb, p.fast.decay - 1) * p.fast.scale + p.w2 * p.decay * Math.pow(sb, p.decay - 1) * p.scale) / tot) * (1 - 2e-5) };
     }
+    // chance of recall t days after the last review
+    function fsrs7R(st, t) { return fsrs7Curve(t, fsrs7Prep(st)).r; }
+    // days (fractional) until recall falls to `ret`
+    function fsrs7Interval(st, ret) {
+        var target = fsrsClamp(ret, 0.0001, 0.9999), p = fsrs7Prep(st), lmin = Math.log(1 / 86400), lmax = Math.log(FSRS7_SMAX);
+        var mx = Math.max(fsrsClamp(st.s, FSRS7_SMIN, FSRS7_SMAX), fsrsClamp(st.f || st.s * 0.8, FSRS7_SMIN, FSRS7_SMAX)), lt = Math.log(mx);
+        for (var i = 0; i < 7; i++) {
+            lt = fsrsClamp(lt, lmin, lmax);
+            var t = fsrsClamp(Math.exp(lt), 1 / 86400, FSRS7_SMAX), c = fsrs7Curve(t, p);
+            lt -= fsrsClamp((c.r - target) / Math.min(c.dr * t, -1e-12), -4, 4);
+            if (!isFinite(lt)) break;
+        }
+        var iv = fsrsClamp(Math.exp(lt), 0, FSRS7_SMAX);
+        if (Math.abs(fsrs7Curve(iv, p).r - target) <= 1e-3) return iv;
+        var lo = 0, hi = Math.min(Math.max(mx, 1), FSRS7_SMAX);
+        while (fsrs7Curve(hi, p).r > target && hi < FSRS7_SMAX) hi = Math.min(hi * 2, FSRS7_SMAX);
+        for (var j = 0; j < 50; j++) { var mid = (lo + hi) / 2; if (fsrs7Curve(mid, p).r > target) lo = mid; else hi = mid; }
+        return (lo + hi) / 2;
+    }
+    function fsrs7InitD(g) { return FSRS7_W[4] - Math.exp(FSRS7_W[5] * (g - 1)) + 1; }
+    function fsrs7NextS(s, d, r, g, k) {
+        var w = FSRS7_W, pls = Math.min(s, w[k + 3] * (Math.pow(s + 1, w[k + 4]) - 1) * Math.exp((1 - r) * w[k + 5]));
+        if (g === 1) return pls;
+        var inc = Math.exp(w[k] - 1.5) * (11 - d) * Math.pow(s, -w[k + 1]) * (Math.exp((1 - r) * w[k + 2]) - 1) * (g === 2 ? w[k + 6] : 1) * (g === 4 ? w[k + 7] : 1) + 1;
+        return Math.max(pls, s * inc);
+    }
+    // the memory state after grade g, `elapsed` days (fractional) after the last review; st null (or no s): the first review
+    function fsrs7Next(st, elapsed, g) {
+        if (!st || !st.s) {
+            var s0 = fsrsClamp(FSRS7_W[g - 1], FSRS7_SMIN, FSRS7_SMAX);
+            return { s: fsrsClamp(fsrsRound(s0), FSRS7_SMIN, FSRS7_SMAX), f: fsrsClamp(fsrsRound(s0 * 0.8), FSRS7_SMIN, FSRS7_SMAX), d: fsrsClamp(fsrsRound(fsrs7InitD(g)), 1, 10) };
+        }
+        var s = fsrsClamp(st.s, FSRS7_SMIN, FSRS7_SMAX), sf = fsrsClamp(st.f || st.s * 0.8, FSRS7_SMIN, FSRS7_SMAX), d = fsrsClamp(st.d || 5, 1, 10);
+        var t = Math.max(0, elapsed || 0), r = fsrs7Curve(t, fsrs7Prep({ s: s, f: sf, d: d })).r;
+        var ns = fsrs7NextS(s, d, r, g, 7), fp = fsrs7Fast(sf), fr = Math.pow(1 + fp.scale * t, fp.decay);
+        var nf = fsrs7NextS(sf, d, fr, g, 15);
+        if (g === 1) nf = Math.min(nf, ns * 0.8);
+        var dd = -FSRS7_W[6] * (g - 3);
+        if (g === 1) dd *= r + 0.1;
+        var nd = 0.01 * fsrs7InitD(4) + 0.99 * (d + (10 - d) * dd / 9);
+        return { s: fsrsClamp(fsrsRound(ns), FSRS7_SMIN, FSRS7_SMAX), f: fsrsClamp(fsrsRound(nf), FSRS7_SMIN, FSRS7_SMAX), d: fsrsClamp(fsrsRound(nd), 1, 10) };
+    }
+    // whole days until a card is next due at the chosen 記憶率
+    function fsrsInterval(st) { return Math.min(36500, Math.max(1, Math.round(fsrs7Interval(st, srsRetention())))); }
     function daysBetween(a, b) { return Math.round((parseDateKey(b) - parseDateKey(a)) / 86400000); }
     // What each button would do: { srs, minutes } for a step later today, or { srs, days } for a later day
     // Three FSRS decks over the same words: the cards, and the two 意味を書く directions (each its own memory state)
@@ -14942,24 +15026,25 @@
     function srsK(m) { var k = SRS_MODES[m] || SRS_MODES.card; return activeDeck ? Object.assign({}, k, { newDay: k.newDay + '_' + activeDeck }) : k; }
     function srsMode() { return flash && flash.write ? flash.write : 'card'; }
     function srsOutcomes(e, mode) {
-        var today = getTodayDateString(), cur = e[srsK(mode).srs] || { state: 'new', step: 0, reps: 0, lapses: 0 };
-        var elapsed = cur.last ? Math.max(0, daysBetween(cur.last, today)) : 0;
+        var today = getTodayDateString(), now = Date.now(), cur = e[srsK(mode).srs] || { state: 'new', step: 0, reps: 0, lapses: 0 };
+        // fractional days since the last review: from its time when kept (lt), else from its date
+        var elapsed = cur.lt ? Math.max(0, (now - cur.lt) / 86400000) : cur.last ? Math.max(0, daysBetween(cur.last, today)) : 0;
         var out = {}, days = {};
         [1, 2, 3, 4].forEach(function(g) {
-            var m = fsrsMemory(cur, g, elapsed);
-            var n = { state: cur.state, step: cur.step || 0, s: m.s, d: m.d, last: today, reps: (cur.reps || 0) + 1, lapses: cur.lapses || 0 };
+            var m = fsrs7Next(cur.state === 'new' ? null : cur, elapsed, g);
+            var n = { state: cur.state, step: cur.step || 0, s: m.s, f: m.f, d: m.d, last: today, lt: now, reps: (cur.reps || 0) + 1, lapses: cur.lapses || 0 };
             var learning = cur.state === 'new' || cur.state === 'learning', relearning = cur.state === 'relearning';
             if (learning || relearning) {
                 var steps = learning ? SRS_LEARN : SRS_RELEARN, st = cur.state === 'new' ? 0 : (cur.step || 0);
                 if (g === 1) { n.state = learning ? 'learning' : 'relearning'; n.step = 0; out[g] = { srs: n, minutes: steps[0] }; return; }
                 if (g === 2) { n.state = learning ? 'learning' : 'relearning'; n.step = st; out[g] = { srs: n, minutes: st === 0 && steps.length > 1 ? Math.round((steps[0] + steps[1]) / 2) : steps[st] }; return; }
                 if (g === 3 && st + 1 < steps.length) { n.state = learning ? 'learning' : 'relearning'; n.step = st + 1; out[g] = { srs: n, minutes: steps[st + 1] }; return; }
-                n.state = 'review'; n.step = 0; days[g] = fsrsInterval(n.s); out[g] = { srs: n, days: days[g] };
+                n.state = 'review'; n.step = 0; days[g] = fsrsInterval(n); out[g] = { srs: n, days: days[g] };
                 return;
             }
             // review card
             if (g === 1) { n.state = 'relearning'; n.step = 0; n.lapses++; out[g] = { srs: n, minutes: SRS_RELEARN[0] }; return; }
-            n.state = 'review'; days[g] = fsrsInterval(n.s); out[g] = { srs: n, days: days[g] };
+            n.state = 'review'; days[g] = fsrsInterval(n); out[g] = { srs: n, days: days[g] };
         });
         // keep 難しい ≤ 普通 < 簡単, as Anki does
         if (out[2].days && out[3].days) { out[2].days = Math.min(out[2].days, out[3].days); out[3].days = Math.max(out[3].days, out[2].days + 1); }
@@ -14973,16 +15058,16 @@
     }
     // The old 覚えた/まだ boxes become FSRS states once (box n ≈ stability of its last interval)
     function srsMigrate(e, mode) {
-        var k = srsK(mode);
+        var k = srsK(mode), m1 = fsrs7Next(null, 0, 1);
         if (e[k.srs]) return;
         if (e[k.box] > 0 && e[k.due]) {
             var s = FLASH_DAYS[Math.min(e[k.box], FLASH_DAYS.length) - 1];
-            e[k.srs] = { state: 'review', step: 0, s: s, d: 5, last: dateKey(addDays(parseDateKey(e[k.due]), -s)), reps: e[k.box], lapses: 0 };
+            e[k.srs] = { state: 'review', step: 0, s: s, f: s * 0.8, d: 5, last: dateKey(addDays(parseDateKey(e[k.due]), -s)), reps: e[k.box], lapses: 0 };
         } else if (k.srs === 'srs' && e.box === 0 && e.lastReviewed) {      // the old まだ (write mode never sets box)
-            e.srs = { state: 'learning', step: 0, s: FSRS_W[0], d: fsrsD0(1), last: dateKey(new Date(e.lastReviewed)), reps: 1, lapses: 0 };
+            e.srs = { state: 'learning', step: 0, s: m1.s, f: m1.f, d: m1.d, last: dateKey(new Date(e.lastReviewed)), lt: e.lastReviewed, reps: 1, lapses: 0 };
             e.due = getTodayDateString();
         } else if (e[k.box] === 0 && e[k.due]) {
-            e[k.srs] = { state: 'learning', step: 0, s: FSRS_W[0], d: fsrsD0(1), last: e[k.due], reps: 1, lapses: 0 };
+            e[k.srs] = { state: 'learning', step: 0, s: m1.s, f: m1.f, d: m1.d, last: e[k.due], reps: 1, lapses: 0 };
         }
     }
     function srsIsNew(e, mode) { var st = e[srsK(mode).srs]; return !st || st.state === 'new'; }
@@ -15116,7 +15201,7 @@
             var tot = flash.known + flash.again, missedE = (flash.missedIds || []).map(function(id) { return wordList.find(function(w) { return w.id === id; }); }).filter(Boolean);
             wqResult({ title: flash.practiceAll ? 'ひととおり復習しました' : '今日の復習はおわりです', pct: tot ? flash.known / tot * 100 : 100,
                 chips: [['正解', flash.known], ['もう一度', flash.again], ['時間', wqClock(Date.now() - (flash.start || Date.now()))]],
-                missed: missedE, note: flash.practiceAll ? 'おさらいなので、次に出てくる日は変わりません。' : '次に出てくる日は、Ankiと同じFSRSで決まります。' + srsTomorrowNote() });
+                missed: missedE, note: flash.practiceAll ? 'おさらいなので、次に出てくる日は変わりません。' : '次に出てくる日は、FSRS-7で決まります。' + srsTomorrowNote() });
             return;
             body.innerHTML = '<div class="flash-done"><div class="flash-done-mark">✓</div>' +
                 '<div class="flash-done-title">' + (flash.practiceAll ? 'ひととおり復習しました' : '今日の復習はおわりです') + '</div>' +
@@ -18137,6 +18222,40 @@
         return '<svg class="kp-order-svg" viewBox="0 0 109 109" role="img" aria-label="' + (lab ? lab.aria(ch, n) : '「' + ch + '」の筆順（' + n + '画）') + '"><g class="kp-o-base">' + base + '</g><g class="kp-o-ink">' + ink + '</g><g class="kp-o-num">' + nums + '</g></svg>' +
             '<span class="kp-order-cap"><b' + (lab ? ' class="' + lab.cls + '"' : ' lang="ja"') + '>' + escapeHtml(ch) + '</b>' + n + (lab ? lab.unit : '画') + '</span>';
     }
+    // The same diagram from a font: f = [the glyph's outline (half-units, relative), a cell per stroke (half-units, absolute M then relative),
+    // the stroke's centre-line fitted to the glyph (half-units: x y dx dy ...), half the width that covers the stroke].
+    // The glyph is shown faint; stroke i is a thick line along its centre-line, clipped to the glyph and to cell i, drawn
+    // on like the line diagram, so the stroke fills in with the font's own shape. Cells overlap a little (no seams).
+    var KF_UID = 0;
+    function kpadFontSvg(ch, f, lab) {
+        var id = 'kf' + (++KF_UID), n = f[2].length, defs = '', ink = '', nums = '', lines = [], total = 0;
+        defs += '<clipPath id="' + id + 'g"><path transform="scale(.5)" d="' + f[0] + '"/></clipPath>';
+        f[2].forEach(function(ln) {
+            var v = ln.match(/-?\d+/g).map(Number), x = v[0] / 2, y = v[1] / 2, d = 'M' + x + ' ' + y, L = 0, pts = [x, y];
+            for (var k = 2; k < v.length; k += 2) { var dx = v[k] / 2, dy = v[k + 1] / 2; x += dx; y += dy; d += 'L' + x + ' ' + y; L += Math.hypot(dx, dy); pts.push(x, y); }
+            lines.push({ d: d, L: L, pts: pts }); total += L;
+        });
+        // each stroke takes time for its length (a dot is quick, a long sweep slower), with a short lift between strokes;
+        // the whole character in about as long as the line diagram takes
+        var T = Math.min(7, Math.max(1.6, n * 0.55)) - 0.08 * n, t = 0;
+        lines.forEach(function(o, i) {
+            var W = f[3][i], len = Math.ceil(o.L + 1), du = Math.max(0.18, T * (0.35 / n + 0.65 * o.L / (total || 1))), at = t.toFixed(2) + 's';
+            defs += '<clipPath id="' + id + 'c' + i + '"><path transform="scale(.5)" clip-rule="evenodd" d="' + f[1][i] + '"/></clipPath>';
+            // dash = the line, gap = the line and both round caps, so nothing shows before the stroke's turn; drawn in the
+            // pen colour, then settling into ink
+            ink += '<g clip-path="url(#' + id + 'c' + i + ')"><path d="' + o.d + '" style="stroke-width:' + (2 * W) + ';stroke-dasharray:' + len + ' ' + (len + 2 * W) +
+                ';stroke-dashoffset:' + (len + W) + ';animation-duration:' + du.toFixed(2) + 's,0.35s;animation-delay:' + at + ',' + (t + du).toFixed(2) + 's"/></g>';
+            var p = o.pts, ddx = p.length > 2 ? p[2] - p[0] : 1, ddy = p.length > 2 ? p[3] - p[1] : 0, dl = Math.hypot(ddx, ddy) || 1;
+            var tx = Math.max(5, Math.min(104, p[0] - ddx / dl * 6 - 1)), ty = Math.max(8, Math.min(106, p[1] - ddy / dl * 6 + 3));
+            nums += '<text x="' + tx.toFixed(1) + '" y="' + ty.toFixed(1) + '" style="animation-delay:' + at + '">' + (i + 1) + '</text>';
+            t += du + 0.08;
+        });
+        return '<svg class="kp-order-svg kp-order-font" viewBox="0 0 109 109" role="img" aria-label="' + (lab ? lab.aria(ch, n) : '「' + ch + '」の筆順（' + n + '画）') + '"><defs>' + defs + '</defs>' +
+            '<path class="kp-f-base" transform="scale(.5)" d="' + f[0] + '"/><g class="kp-o-ink" clip-path="url(#' + id + 'g)">' + ink + '</g>' +
+            // once the last stroke is in, the whole glyph in one piece (no hairlines where the strokes' cells meet)
+            '<path class="kp-f-done" transform="scale(.5)" d="' + f[0] + '" style="animation-delay:' + (t + 0.3).toFixed(2) + 's"/><g class="kp-o-num">' + nums + '</g></svg>' +
+            '<span class="kp-order-cap"><b' + (lab ? ' class="' + lab.cls + '"' : ' lang="ja"') + '>' + escapeHtml(ch) + '</b>' + n + (lab ? lab.unit : '画') + '</span>';
+    }
     function kpadFillOrder() {
         var row = document.getElementById('kp-order-row');
         if (!row) return;
@@ -18944,6 +19063,29 @@
         };
         document.head.appendChild(s);
     }
+    // A deck with d.font (one file per level) shows 筆順 from the font: the file for a question's level is fetched while the
+    // question is written; until it is here (or offline, or for a character the fit left out) the line diagram is shown.
+    function hjFontGet(c) { var F = HJ.font && window[HJ.font.glob]; return F && F[c] || null; }
+    function hjFontNeed(chars, cb) {
+        var d = HJ, D = hjData(), need = {}, lvs, left, got = false;
+        if (!d.font || !D) { if (cb) cb(false); return; }
+        var st = d.font.st || (d.font.st = {}), at = hjItems().at;
+        chars.forEach(function(c) { if (!hjFontGet(c) && at[c] !== undefined) need[parseInt(D.lv.charAt(at[c]), 16)] = 1; });
+        lvs = Object.keys(need).filter(function(l) { return st[l] !== 1 && st[l] !== -1; });
+        if (!lvs.length) { if (cb) cb(false); return; }
+        left = lvs.length;
+        lvs.forEach(function(l) {
+            var fin = function(ok) { if (ok) got = true; if (--left === 0 && cb) cb(got); };
+            if (Array.isArray(st[l])) { st[l].push(fin); return; }
+            st[l] = [fin];
+            var s = document.createElement('script');
+            var end = function(ok) { var w = st[l]; st[l] = ok ? 1 : -1; w.forEach(function(f) { f(ok); }); };
+            s.src = d.font.files[l];
+            s.onload = function() { end(true); };
+            s.onerror = function() { if (s.parentNode) s.parentNode.removeChild(s); end(false); };
+            document.head.appendChild(s);
+        });
+    }
     var hjStore = loadJSON(HJ.store, {});
     if (!hjStore || typeof hjStore !== 'object') hjStore = {};
     if (!hjStore.c || typeof hjStore.c !== 'object') hjStore.c = {};
@@ -19097,20 +19239,36 @@
         return hjAll;
     }
     function hjShuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
-    // a set: never written first, then the ones last marked ×, then the rest (longest ago first); 틀린 것만: only those marked ×
+    // Each item's memory is an FSRS-7 state (r.m = { s, f, d, t: time of the last answer }), moved on by every verdict:
+    // ○ 普通, × or △ もう一度. Records from before carry their last verdict over as a first review at its time.
+    var HJ_RETENTION = 0.9;
+    function hjMem(r) {
+        if (!r) return null;
+        if (r.m) return r.m;
+        if (!r.t) return null;
+        var m = fsrs7Next(null, 0, r.s === 1 ? 3 : 1); m.t = r.t; return m;
+    }
+    // a set: the ones due (recall down to 90%, and a day or more since they were last written), least likely to be
+    // remembered first; then ones never written; then the rest, those nearest to due first. 틀린 것만: only those last marked ×
     function hjPick() {
-        var all = hjItems(), pool = [];
+        var all = hjItems(), pool = [], now = Date.now();
         ['c', 'w'].forEach(function(k) {
             if (hj.kind !== 'b' && hj.kind !== k) return;
             all[k].forEach(function(it) { if (hjInRange(it.l, hj.lv, hj.cum)) pool.push(it); });
         });
-        var rank = function(it) { var r = hjStore[it.k][it.id]; return !r ? 0 : r.s === 0 ? 1 : 2; };
+        var info = function(it) {
+            var r = hjStore[it.k][it.id], m = hjMem(r);
+            if (!m) return { rank: 1, r: 1 };
+            var el = (now - m.t) / 86400000, rr = fsrs7R(m, el);
+            return { rank: el >= 1 && rr <= HJ_RETENTION ? 0 : 2, r: rr };
+        };
         pool = hjShuffle(pool);
-        if (hj.miss) pool = pool.filter(function(it) { return rank(it) === 1; });
+        if (hj.miss) pool = pool.filter(function(it) { var r = hjStore[it.k][it.id]; return r && r.s === 0; });
+        var I = {};
+        pool.forEach(function(it) { I[it.k + it.id] = info(it); });
         pool.sort(function(x, y) {
-            var a = rank(x), b = rank(y);
-            if (a !== b) return a - b;
-            return a === 2 ? (hjStore[x.k][x.id].t || 0) - (hjStore[y.k][y.id].t || 0) : 0;
+            var a = I[x.k + x.id], b = I[y.k + y.id];
+            return (a.rank - b.rank) || (a.rank !== 1 ? a.r - b.r : 0);
         });
         return hjShuffle(pool.slice(0, HJ.size));
     }
@@ -19124,6 +19282,7 @@
         hj.mark = null;
         hj.cur = { boxes: Array.from(it.a).map(function() { return []; }), active: 0 };
         hjRender();
+        hjFontNeed(Array.from(it.a));
     }
     function hjRender() {
         var t = HJ.t, v = document.getElementById('hj-view'), body = v.querySelector('.hj-body'), foot = v.querySelector('.hj-foot'), it = hj.items[hj.i];
@@ -19284,6 +19443,11 @@
     function hjRecord(it, ok, fix) {
         var r = hjStore[it.k][it.id] || (hjStore[it.k][it.id] = { l: it.l, ok: 0, ng: 0 });
         r.l = it.l;
+        // memory: a new answer moves it on from where it was (kept in r.pm, so 判定 고치기 can redo this answer's grade)
+        var now = Date.now();
+        if (!fix) { r.pm = hjMem(r) || 0; r.m = null; }
+        var prev = r.pm || null, m = fsrs7Next(prev, prev ? Math.max(0, ((fix ? r.m && r.m.t : now) - prev.t) / 86400000) : 0, ok ? 3 : 1);
+        m.t = fix && r.m ? r.m.t : now; r.m = m;
         // a △ counts in r.tr instead of r.ng; its last verdict is a miss (s 0) marked tri
         var miss = hj && hj.cur && hj.cur.tri ? 'tr' : 'ng';
         if (fix) { if (ok) { r.ok++; r[miss] = Math.max(0, (r[miss] || 0) - 1); } else { r[miss] = (r[miss] || 0) + 1; r.ok = Math.max(0, r.ok - 1); } }
@@ -19362,9 +19526,13 @@
         });
         if (!HJ_ORDER_LAB) HJ_ORDER_LAB = { unit: t.strokeUnit, aria: function(c, n) { return hjFmt(t.orderAria, { c: c, n: n }); }, cls: 'hj-han' };
         var fill = function() {
-            body.querySelectorAll('#hj-order-row .kp-order-cell').forEach(function(cell) { cell.innerHTML = kpadOrderSvg(cell.dataset.c, hjRec(), HJ_ORDER_LAB); });
+            body.querySelectorAll('#hj-order-row .kp-order-cell').forEach(function(cell) {
+                var c = cell.dataset.c, f = hjFontGet(c);
+                cell.innerHTML = f ? kpadFontSvg(c, f, HJ_ORDER_LAB) : kpadOrderSvg(c, hjRec(), HJ_ORDER_LAB);
+            });
         };
         fill();
+        hjFontNeed(ans, function(got) { if (got && body.isConnected && hj && hj.mark === m) fill(); });
         var fitWas = body.className;
         hjFitResult(body);
         if (body.className !== fitWas) body.querySelectorAll('.kp-cell canvas').forEach(function(cv) {
@@ -29981,26 +30149,65 @@
     // 今日の復習: a set of the chosen size (設定 › 1日の復習: 10/20/30/50) picked each day from the questions due, wrong answers
     // first. It stays fixed for the day so it counts down; the set grows only to its size (questions that fall due later in
     // the day top it up), and 'もう1回分' adds another set once it is done.
-    // What 今日の復習 draws on: only questions you have missed (a blank of a passage counts as its question). A miss is due
-    // the next day; answered right, it comes back 3 days later, then 10 days after that; right both times, it leaves the
-    // review (and the 誤答ノート). Wrong at any point: due again the next day. Anything answered today waits for tomorrow, so a
-    // review never repeats a question the same day. Questions answered right the first time never come up.
-    // Order: misses from the last 7 days (newest first, while they are fresh), then the checks that are due, then older misses.
+    // What 今日の復習 draws on: only questions you have missed (a blank of a passage counts as its question; 自信なし counts
+    // as a miss). From the first miss on, each one is scheduled by FSRS-7, as everything in the app is: its memory state is
+    // replayed from the attempt log, every answer graded もう一度 (wrong, or 自信なし) or 普通 (right), and it is next due
+    // when its chance of being remembered falls to 90%. So that the review practises the point and not the question:
+    // - it waits at least 3 days after any answer (more when FSRS says so), so the last answer is not fresh in mind;
+    // - its choices come in a new order each time (startListQuiz shuffles them);
+    // - once it has been right twice when due (spaced answers, not a same-day redo), it leaves the review, and the
+    //   誤答ノート with it. Missing it again anywhere brings it back.
+    // Questions answered right the first time never come up.
+    // Order: misses from the last 7 days (newest first, while they are fresh), then the due ones least likely to be
+    // remembered, then older misses.
+    var REVIEW_RETENTION = 0.9, DAY_MS = 86400000, REVIEW_WAIT_MISS = 3, REVIEW_WAIT_OK = 3, REVIEW_RETIRE = 2;
+    // FSRS-7 state of every point that has been missed: { s, f, d, lastT, lastOk, due, rights (spaced rights since the
+    // last miss), done (retired) }
+    function reviewDue(st) { return st.lastT + Math.max(st.lastOk ? REVIEW_WAIT_OK : REVIEW_WAIT_MISS, fsrs7Interval(st, REVIEW_RETENTION)) * DAY_MS; }
+    function reviewFsrs() {
+        var out = {};
+        quizData.forEach(function(q) {           // answers saved before the attempt log: a wrong one is due now
+            var a = reportAnswers[q.id];
+            if (typeof a !== 'string') return;
+            var miss = function(k) { var m = fsrs7Next(null, 0, 1); out[k] = { s: m.s, f: m.f, d: m.d, lastT: 0, lastOk: false, rights: 0, seeded: true }; };
+            if (q.type === 'Text Grammar') {
+                var parts = a.split('|');
+                q.blanks.forEach(function(blank, i) { if (parts[i] && parts[i] !== blank.options[blank.correct]) miss(unitKey(q.id, i)); });
+            } else if (getEarnedPoints(q).earned !== 1) miss(unitKey(q.id, -1));
+        });
+        var seen = {};
+        attemptLog.forEach(function(at) {
+            var k = unitKey(at.id, at.b), st = out[k];
+            if (!seen[k]) { seen[k] = true; if (st && st.seeded) { delete out[k]; st = null; } }     // the log replaces the old answer
+            var g = at.ok && !at.u ? 3 : 1;
+            if (!st) {
+                if (g === 3) return;                                      // right: not in the review (yet)
+                var m0 = fsrs7Next(null, 0, 1);
+                out[k] = { s: m0.s, f: m0.f, d: m0.d, lastT: at.t, lastOk: false, rights: 0 };
+                return;
+            }
+            var wasDue = at.t >= reviewDue(st);
+            var m = fsrs7Next(st, Math.max(0, (at.t - st.lastT) / DAY_MS), g);
+            st.s = m.s; st.f = m.f; st.d = m.d; st.lastT = at.t; st.lastOk = g === 3;
+            st.rights = g === 3 ? st.rights + (wasDue ? 1 : 0) : 0;
+        });
+        Object.keys(out).forEach(function(k) { var st = out[k]; st.due = reviewDue(st); st.done = st.rights >= REVIEW_RETIRE; });
+        return out;
+    }
     function reviewMissedIds() {
-        var state = computeMastery(), now = Date.now(), due = {}, dayStart = new Date().setHours(0, 0, 0, 0);
+        var state = reviewFsrs(), now = Date.now(), due = {};
         Object.keys(state).forEach(function(k) {
             var st = state[k];
-            if (!st.attempts || st.correct >= st.attempts) return;          // never missed
-            if (st.lastOk && st.streak >= 3) return;                           // missed, then right at 3 and 10 days: done
-            if (st.lastOk && now - st.lastT < (st.streak >= 2 ? 10 : 3) * 86400000) return;   // right once: 3 days; twice: 10
-            if (st.lastT >= dayStart) return;                                   // answered today: tomorrow
+            if (st.done || now < st.due) return;                          // retired; not due yet (never within a day of the last answer)
             var id = parseInt(k, 10);
             if (!findQuestion(id)) return;
-            var prio = st.lastOk ? 1 : now - st.lastT < 7 * 86400000 ? 0 : 2;
-            if (!due[id] || prio < due[id].prio) due[id] = { prio: prio, t: st.lastT };
+            var r = fsrs7R(st, (now - st.lastT) / DAY_MS);
+            var prio = st.lastOk ? 1 : now - st.lastT < 7 * DAY_MS ? 0 : 2;
+            if (!due[id] || prio < due[id].prio || (prio === due[id].prio && r < due[id].r)) due[id] = { prio: prio, t: st.lastT, r: r };
         });
         return Object.keys(due).map(Number).sort(function(a, b) {
-            return (due[a].prio - due[b].prio) || (due[a].prio === 0 ? due[b].t - due[a].t : due[a].t - due[b].t);
+            var x = due[a], y = due[b];
+            return (x.prio - y.prio) || (x.prio === 0 ? y.t - x.t : x.prio === 1 ? x.r - y.r : x.t - y.t);
         });
     }
     function reviewPerDay() { var n = getSetting('reviewPerDay', 20); return [10, 20, 30, 50].indexOf(n) > -1 ? n : 20; }
@@ -31320,19 +31527,29 @@
     function getAllModeMistakeIds() {
         return Object.keys(allModeMistakes).map(Number).filter(function(id) { return !!findQuestion(id) && !reviewCleared(id, allModeMistakes[id].time); });
     }
-    // A mistake the review has passed (right three times in a row since it was made: the next day or later, then 3 and 10 days
-    // on) leaves the 誤答ノート; the 成績表 keeps the book's answer as it was. Missing it again brings it back.
+    // A mistake the review has passed (answered since, and retired from 今日の復習: right twice when due) leaves the 誤答ノート;
+    // the 成績表 keeps the book's answer as it was. Missing it again brings it back.
     var masteryMemo = null, masteryMemoKey = '';
     function masteryNow() {
         var tail = attemptLog.length ? attemptLog[attemptLog.length - 1] : null, key = attemptLog.length + ':' + (tail ? tail.t + ':' + tail.id : '');
         if (key !== masteryMemoKey) { masteryMemo = computeMastery(); masteryMemoKey = key; }
         return masteryMemo;
     }
+    var reviewMemoV = null, reviewMemoKey = '';
+    function reviewMemo() {
+        var tail = attemptLog.length ? attemptLog[attemptLog.length - 1] : null, key = attemptLog.length + ':' + (tail ? tail.t + ':' + tail.id + ':' + (tail.u || 0) : '');
+        if (key !== reviewMemoKey) { reviewMemoV = reviewFsrs(); reviewMemoKey = key; }
+        return reviewMemoV;
+    }
     function reviewCleared(id, missT) {
         var q = findQuestion(id);
         if (!q) return false;
         var state = masteryNow(), keys = q.type === 'Text Grammar' && q.blanks ? q.blanks.map(function(b, i) { return unitKey(id, i); }) : [unitKey(id, -1)];
-        return keys.every(function(k) { var st = state[k]; return st && st.lastOk && st.streak >= 3 && st.lastT > (missT || 0); });
+        var rv = reviewMemo();
+        return keys.every(function(k) {
+            var st = state[k], r = rv[k];
+            return st && st.lastT > (missT || 0) && (r ? r.done : st.lastOk && st.streak >= 3);
+        });
     }
 
     // 誤答ノート by question type: a deck per type (読解 split 短文・中文・長文・統合理解・情報検索), each with its count, the type's overall

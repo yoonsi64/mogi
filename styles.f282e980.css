@@ -1965,11 +1965,16 @@
         .kp-order-svg { width: 128px; height: 128px; background: var(--surface); border: 1px solid var(--kp-line); border-radius: var(--radius-sm, 8px); }
         .kp-order-svg path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
         .kp-o-base path { stroke: var(--kp-line); stroke-width: 3; }
+        .kp-order-font .kp-f-base { fill: var(--kp-line); stroke: none; }
+        .kp-order-font .kp-f-done { fill: var(--text-main); stroke: none; opacity: 0; animation: kpNum 0.01s linear forwards; }
+        .kp-order-font .kp-o-ink path { stroke: var(--pen); animation-name: kpInk, kpSettle; animation-timing-function: cubic-bezier(.3, 0, .55, 1), ease-out; animation-fill-mode: forwards, forwards; }
+        .kp-order-font .kp-o-num text { paint-order: stroke; stroke: var(--surface); stroke-width: 1.6px; stroke-linejoin: round; }
+        @keyframes kpSettle { to { stroke: var(--text-main); } }
         .kp-o-ink path { stroke: var(--text-main); stroke-width: 3.2; animation-name: kpInk; animation-timing-function: linear; animation-fill-mode: forwards; }
         .kp-o-num text { fill: var(--pen); font-size: 7.5px; text-anchor: middle; opacity: 0; animation: kpNum 0.01s linear forwards; font-family: 'Helvetica Neue', Arial, sans-serif; }
         @keyframes kpInk { to { stroke-dashoffset: 0; } }
         @keyframes kpNum { to { opacity: 1; } }
-        @media (prefers-reduced-motion: reduce) { .kp-o-ink path { animation: none; stroke-dashoffset: 0 !important; } .kp-o-num text { animation: none; opacity: 1; } }
+        @media (prefers-reduced-motion: reduce) { .kp-o-ink path { animation: none; stroke-dashoffset: 0 !important; } .kp-o-num text, .kp-order-font .kp-f-done { animation: none; opacity: 1; } .kp-order-font .kp-o-ink path { animation: none; stroke-dashoffset: 0 !important; stroke: var(--text-main); } }
         .kp-order-cap { font-size: 0.75rem; color: var(--text-sub); display: flex; align-items: baseline; gap: 4px; }
         .kp-order-cap b { font-size: 1rem; color: var(--text-main); font-weight: normal; }
         .kp-order-none { font-size: 3rem; font-family: var(--mincho, serif); }
