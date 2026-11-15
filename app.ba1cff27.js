@@ -12455,9 +12455,9 @@
         if (!sub || sub.indexOf('〜') !== 0) return '';
         return '<div class="gram-pills">' + sub.split(/・(?=〜)/).map(function(g) { return '<span class="gram-pill">' + escapeHtml(g) + '</span>'; }).join('') + '</div>';
     }
-    // any other section label that is cut off where it is shown (a phone held upright): the same pills, kept hidden until
-    // the label doesn't fit. A list (内容理解（短文・中文・長文）・統合理解・…) gets a pill per item; a description
-    // (「〜てくる・〜ていく」の使い分け) stays whole in one pill.
+    // any other section label that is a list and is cut off where it is shown (a phone held upright): the same pills, kept hidden until
+    // the label doesn't fit. Lists only (内容理解（短文・中文・長文）・統合理解・…), a pill per item; a description
+    // (「〜てくる・〜ていく」の使い分け) moves to its own smaller line under the heading.
     function subPills(sub) {
         if (!sub) return '';
         var items = [], cur = '', depth = 0;
@@ -12467,7 +12467,7 @@
             if (ch === '・' && !depth) { items.push(cur); cur = ''; } else cur += ch;
         });
         items.push(cur);
-        if (items.length < 2 || items.some(function(x) { return !x || /[の、]/.test(x); })) items = [sub];
+        if (items.length < 2 || items.some(function(x) { return !x || /[の、]/.test(x); })) return '<div class="sub-line">' + escapeHtml(sub) + '</div>';
         return '<div class="gram-pills sub-pills">' + items.map(function(g) { return '<span class="gram-pill">' + escapeHtml(g) + '</span>'; }).join('') + '</div>';
     }
     var subCutObserver = null;          // made on first use: the first home page is drawn before this line runs
@@ -12480,7 +12480,7 @@
             });
         });
         subCutObserver.disconnect();
-        root.querySelectorAll('.week-row .week-sub').forEach(function(el) { if (el.textContent && el.parentNode.nextElementSibling && el.parentNode.nextElementSibling.classList.contains('sub-pills')) subCutObserver.observe(el); });
+        root.querySelectorAll('.week-row .week-sub').forEach(function(el) { if (el.textContent && el.parentNode.nextElementSibling && /(^| )sub-(pills|line)( |$)/.test(el.parentNode.nextElementSibling.className)) subCutObserver.observe(el); });
     }
     function libCardHtml(lib, last, dueMap) {
         var qs = libQuestions(lib.id);
