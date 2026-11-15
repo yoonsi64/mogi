@@ -144,6 +144,12 @@
         .week-head b { font-size: 0.95rem; }
         .week-head .week-sub { font-size: 0.75rem; color: var(--text-sub); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .week-head .week-score { font-size: 0.75rem; color: var(--text-sub); font-weight: bold; }
+        .gram-pills { display: flex; flex-wrap: wrap; gap: 4px; margin: -2px 0 8px; }
+        .gram-pill { font-size: 0.72rem; line-height: 1.35; padding: 3px 9px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--lib-color, var(--active-blue)) 30%, var(--border-light)); background: color-mix(in srgb, var(--lib-color, var(--active-blue)) 7%, var(--surface)); color: var(--text-main); }
+        .toc-empty .gram-pills { opacity: 0.6; }
+        .sub-pills { display: none; }
+        .week-row.sub-cut > .sub-pills { display: flex; }
+        .week-row.sub-cut > .week-head .week-sub { visibility: hidden; }
         .day-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
         .day-cell { border: 1px solid var(--border-light); background: var(--surface); padding: 8px 2px 6px; min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 3px; color: var(--text-main); }
         .day-cell .day-label { font-size: 0.7rem; color: var(--text-sub); font-weight: bold; }

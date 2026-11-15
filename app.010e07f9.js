@@ -12449,6 +12449,39 @@
     function libIsOpen(lib, last) {
         return !!libOpenNow[lib.id];
     }
+    // a section whose subtitle lists grammar (新完全マスター文法: 〜が早いか・〜や／〜や否や・…): one pill per grammar point,
+    // under the heading, alternatives of one point (／) kept together in its pill
+    function grammarPills(sub) {
+        if (!sub || sub.indexOf('〜') !== 0) return '';
+        return '<div class="gram-pills">' + sub.split(/・(?=〜)/).map(function(g) { return '<span class="gram-pill">' + escapeHtml(g) + '</span>'; }).join('') + '</div>';
+    }
+    // any other section label that is cut off where it is shown (a phone held upright): the same pills, kept hidden until
+    // the label doesn't fit. A list (内容理解（短文・中文・長文）・統合理解・…) gets a pill per item; a description
+    // (「〜てくる・〜ていく」の使い分け) stays whole in one pill.
+    function subPills(sub) {
+        if (!sub) return '';
+        var items = [], cur = '', depth = 0;
+        Array.from(sub).forEach(function(ch) {
+            if ('（(「『'.indexOf(ch) > -1) depth++;
+            else if ('）)」』'.indexOf(ch) > -1) depth = Math.max(0, depth - 1);
+            if (ch === '・' && !depth) { items.push(cur); cur = ''; } else cur += ch;
+        });
+        items.push(cur);
+        if (items.length < 2 || items.some(function(x) { return !x || /[の、]/.test(x); })) items = [sub];
+        return '<div class="gram-pills sub-pills">' + items.map(function(g) { return '<span class="gram-pill">' + escapeHtml(g) + '</span>'; }).join('') + '</div>';
+    }
+    var subCutObserver = null;          // made on first use: the first home page is drawn before this line runs
+    function watchCutSubs(root) {
+        if (typeof ResizeObserver === 'undefined') return;
+        if (!subCutObserver) subCutObserver = new ResizeObserver(function(entries) {
+            entries.forEach(function(en) {
+                var el = en.target, row = el.closest('.week-row');
+                if (row && el.clientWidth) row.classList.toggle('sub-cut', el.scrollWidth > el.clientWidth + 1);
+            });
+        });
+        subCutObserver.disconnect();
+        root.querySelectorAll('.week-row .week-sub').forEach(function(el) { if (el.textContent && el.parentNode.nextElementSibling && el.parentNode.nextElementSibling.classList.contains('sub-pills')) subCutObserver.observe(el); });
+    }
     function libCardHtml(lib, last, dueMap) {
         var qs = libQuestions(lib.id);
         var libMax = 0, libAnswered = 0, weeksHtml = '';
@@ -12479,13 +12512,15 @@
                     weeksHtml += '<div class="toc-head toc-l' + lvl + '">' + escapeHtml(h) + '</div>';
                 });
                 if (!nDays) {
-                    weeksHtml += '<div class="week-row toc-empty"><div class="week-head"><b>' + escapeHtml(unitTitle(lib, w)) + '</b><span class="week-sub">' + escapeHtml(lib.units[w - 1].sub || '') + '</span>' +
-                        '<span class="toc-page">未追加</span></div></div>';
+                    var pillsE = grammarPills(lib.units[w - 1].sub);
+                    weeksHtml += '<div class="week-row toc-empty"><div class="week-head"><b>' + escapeHtml(unitTitle(lib, w)) + '</b><span class="week-sub">' + (pillsE ? '' : escapeHtml(lib.units[w - 1].sub || '')) + '</span>' +
+                        '<span class="toc-page">未追加</span></div>' + (pillsE || subPills(lib.units[w - 1].sub)) + '</div>';
                     continue;
                 }
             }
-            weeksHtml += '<div class="week-row' + (tocTop ? ' toc-top' : '') + '"><div class="week-head"><b>' + escapeHtml(unitTitle(lib, w)) + '</b><span class="week-sub">' + (lib.units ? escapeHtml(lib.units[w - 1].sub || '') : weekSubtitle(w, lib.id)) + '</span>' +
-                (weekMax ? '<span class="week-score">' + weekEarned + '/' + weekMax + '</span>' : '') + '</div>' +
+            var pills = lib.units ? grammarPills(lib.units[w - 1].sub) : '', subText = lib.units ? lib.units[w - 1].sub || '' : weekSubtitle(w, lib.id);
+            weeksHtml += '<div class="week-row' + (tocTop ? ' toc-top' : '') + '"><div class="week-head"><b>' + escapeHtml(unitTitle(lib, w)) + '</b><span class="week-sub">' + (pills ? '' : escapeHtml(subText)) + '</span>' +
+                (weekMax ? '<span class="week-score">' + weekEarned + '/' + weekMax + '</span>' : '') + '</div>' + (pills || subPills(subText)) +
                 '<div class="day-grid" style="grid-template-columns:repeat(' + (lib.units ? 5 : lib.days) + ',1fr)">' + cells + '</div>' +
                 (lib.units && nDays > 1 ? '<button class="unit-all-btn" data-lib="' + lib.id + '" data-week="' + w + '" aria-label="' + escapeHtml((lib.units[w - 1].short || unitTitle(lib, w)).replace(/^(?:\d+회|第\d+回) /, '')) + 'をまとめて解く（' + nDays + '問・順番どおり）"><span class="ua-play" aria-hidden="true">▶</span><span class="ua-label">まとめて解く</span><span class="ua-sub">' + nDays + '問・順番どおり</span></button>' : '') +
                 '</div>';
@@ -12901,6 +12936,7 @@
         readBooks.forEach(function(b) { html += readingBookCardHtml(b); });
         html += '</div></div>';
         quizContainer.innerHTML = html;
+        watchCutSubs(quizContainer);
         if (keepOrder) { var shown = libShownOrder; libReorderShelves(function(s, id) { return shown[id]; }); }
         else if (sortBy === 'std') { var ord = libOrders(); libReorderShelves(function(s, id) { var i = (ord[s] || []).indexOf(id); return i < 0 ? undefined : i; }); }
         if (libEditing) libEditDecorate();
