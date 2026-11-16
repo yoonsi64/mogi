@@ -1970,6 +1970,8 @@
         .kp-order-font .kp-o-ink path { stroke: var(--pen); animation-name: kpInk, kpSettle; animation-timing-function: cubic-bezier(.3, 0, .55, 1), ease-out; animation-fill-mode: forwards, forwards; }
         .kp-order-font .kp-o-num text { paint-order: stroke; stroke: var(--surface); stroke-width: 1.6px; stroke-linejoin: round; }
         @keyframes kpSettle { to { stroke: var(--text-main); } }
+        .kp-order-kai .kp-f-base path { fill: var(--kp-line); stroke: none; }
+        .kp-order-kai .kp-f-done path { fill: var(--text-main); stroke: none; }
         .kp-o-ink path { stroke: var(--text-main); stroke-width: 3.2; animation-name: kpInk; animation-timing-function: linear; animation-fill-mode: forwards; }
         .kp-o-num text { fill: var(--pen); font-size: 7.5px; text-anchor: middle; opacity: 0; animation: kpNum 0.01s linear forwards; font-family: 'Helvetica Neue', Arial, sans-serif; }
         @keyframes kpInk { to { stroke-dashoffset: 0; } }

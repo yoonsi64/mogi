@@ -13094,6 +13094,7 @@
         refreshExamSetting();
         markSeg('set-tts', getSetting('ttsRate', 0.95));
         markSeg('set-korean', getSetting('showKorean', true) ? 'on' : 'off');
+        markSeg('set-stroke-style', getSetting('strokeStyle', 'mincho'));
         markSeg('set-omikuji-sound', getSetting('omikujiSound', true) ? 'on' : 'off');
         markSeg('set-game-scene', getSetting('gameScene', true) ? 'on' : 'off');
         markSeg('set-theme', getSetting('theme', 'auto'));
@@ -13180,7 +13181,7 @@
     });
     [['set-size', 'textSize', function(v) { return v; }], ['set-font', 'font', function(v) { return v; }], ['set-option-font', 'optionFont', function(v) { return v; }], ['set-furigana', 'furigana', function(v) { return v === 'on'; }],
      ['set-autonext', 'autoNext', function(v) { return v === 'on'; }], ['set-vibrate', 'vibrate', function(v) { return v === 'on'; }], ['set-timer', 'showTimer', function(v) { return v === 'on'; }],
-     ['set-explain', 'showExplain', function(v) { return v === 'on'; }], ['set-rep-score', 'repScore', function(v) { return v; }], ['set-review-day', 'reviewPerDay', function(v) { return Number(v); }]].forEach(function(cfg) {
+     ['set-explain', 'showExplain', function(v) { return v === 'on'; }], ['set-rep-score', 'repScore', function(v) { return v; }], ['set-review-day', 'reviewPerDay', function(v) { return Number(v); }], ['set-stroke-style', 'strokeStyle', function(v) { return v; }]].forEach(function(cfg) {
         document.querySelectorAll('#' + cfg[0] + ' button').forEach(function(b) {
             b.addEventListener('click', function() {
                 setSetting(cfg[1], cfg[2](b.dataset.v));
@@ -18222,8 +18223,8 @@
         return '<svg class="kp-order-svg" viewBox="0 0 109 109" role="img" aria-label="' + (lab ? lab.aria(ch, n) : '「' + ch + '」の筆順（' + n + '画）') + '"><g class="kp-o-base">' + base + '</g><g class="kp-o-ink">' + ink + '</g><g class="kp-o-num">' + nums + '</g></svg>' +
             '<span class="kp-order-cap"><b' + (lab ? ' class="' + lab.cls + '"' : ' lang="ja"') + '>' + escapeHtml(ch) + '</b>' + n + (lab ? lab.unit : '画') + '</span>';
     }
-    // The same diagram from a font: f = [the glyph's outline (half-units, relative), a cell per stroke (half-units, absolute M then relative),
-    // the stroke's centre-line fitted to the glyph (half-units: x y dx dy ...), half the width that covers the stroke].
+    // The same diagram from a font: f = [the glyph's outline (half-units, relative), a cell per stroke (quarter-units, absolute M then relative),
+    // the stroke's centre-line fitted to the glyph (half-units: x y dx dy ...), half the width that covers the stroke, (optional) where each number goes].
     // The glyph is shown faint; stroke i is a thick line along its centre-line, clipped to the glyph and to cell i, drawn
     // on like the line diagram, so the stroke fills in with the font's own shape. Cells overlap a little (no seams).
     var KF_UID = 0;
@@ -18240,13 +18241,16 @@
         var T = Math.min(7, Math.max(1.6, n * 0.55)) - 0.08 * n, t = 0;
         lines.forEach(function(o, i) {
             var W = f[3][i], len = Math.ceil(o.L + 1), du = Math.max(0.18, T * (0.35 / n + 0.65 * o.L / (total || 1))), at = t.toFixed(2) + 's';
-            defs += '<clipPath id="' + id + 'c' + i + '"><path transform="scale(.5)" clip-rule="evenodd" d="' + f[1][i] + '"/></clipPath>';
+            defs += '<clipPath id="' + id + 'c' + i + '"><path transform="scale(.25)" clip-rule="evenodd" d="' + f[1][i] + '"/></clipPath>';
             // dash = the line, gap = the line and both round caps, so nothing shows before the stroke's turn; drawn in the
             // pen colour, then settling into ink
             ink += '<g clip-path="url(#' + id + 'c' + i + ')"><path d="' + o.d + '" style="stroke-width:' + (2 * W) + ';stroke-dasharray:' + len + ' ' + (len + 2 * W) +
                 ';stroke-dashoffset:' + (len + W) + ';animation-duration:' + du.toFixed(2) + 's,0.35s;animation-delay:' + at + ',' + (t + du).toFixed(2) + 's"/></g>';
+            // the number: at the spot chosen for it when the outlines were cut (f[4]: label centres, half-units: near the
+            // stroke's start, clear of the ink and of the other numbers); else just behind the start, as in the line diagram
             var p = o.pts, ddx = p.length > 2 ? p[2] - p[0] : 1, ddy = p.length > 2 ? p[3] - p[1] : 0, dl = Math.hypot(ddx, ddy) || 1;
             var tx = Math.max(5, Math.min(104, p[0] - ddx / dl * 6 - 1)), ty = Math.max(8, Math.min(106, p[1] - ddy / dl * 6 + 3));
+            if (f[4] && f[4].length > 2 * i + 1) { tx = f[4][2 * i] / 2; ty = f[4][2 * i + 1] / 2 + 2.7; }
             nums += '<text x="' + tx.toFixed(1) + '" y="' + ty.toFixed(1) + '" style="animation-delay:' + at + '">' + (i + 1) + '</text>';
             t += du + 0.08;
         });
@@ -18254,6 +18258,34 @@
             '<path class="kp-f-base" transform="scale(.5)" d="' + f[0] + '"/><g class="kp-o-ink" clip-path="url(#' + id + 'g)">' + ink + '</g>' +
             // once the last stroke is in, the whole glyph in one piece (no hairlines where the strokes' cells meet)
             '<path class="kp-f-done" transform="scale(.5)" d="' + f[0] + '" style="animation-delay:' + (t + 0.3).toFixed(2) + 's"/><g class="kp-o-num">' + nums + '</g></svg>' +
+            '<span class="kp-order-cap"><b' + (lab ? ' class="' + lab.cls + '"' : ' lang="ja"') + '>' + escapeHtml(ch) + '</b>' + n + (lab ? lab.unit : '画') + '</span>';
+    }
+    // 楷書: f = { a: each stroke's own outline (half-units, relative), m: its centre-line (half-units: x y dx dy ...),
+    // w: half the width that covers the stroke, n: where each number goes }. Stroke i is the thick line along its
+    // centre-line clipped to its own outline, so it fills exactly that stroke and nothing of the next.
+    function kpadKaiSvg(ch, f, lab) {
+        var id = 'kf' + (++KF_UID), n = f.m.length, defs = '', ink = '', nums = '', lines = [], total = 0, glyph = '';
+        f.m.forEach(function(ln) {
+            var v = ln.match(/-?\d+/g).map(Number), x = v[0] / 2, y = v[1] / 2, d = 'M' + x + ' ' + y, L = 0, pts = [x, y];
+            for (var k = 2; k < v.length; k += 2) { var dx = v[k] / 2, dy = v[k + 1] / 2; x += dx; y += dy; d += 'L' + x + ' ' + y; L += Math.hypot(dx, dy); pts.push(x, y); }
+            lines.push({ d: d, L: L, pts: pts }); total += L;
+        });
+        f.a.forEach(function(p) { glyph += '<path d="' + p + '"/>'; });
+        var T = Math.min(7, Math.max(1.6, n * 0.55)) - 0.08 * n, t = 0;
+        lines.forEach(function(o, i) {
+            var W = f.w[i], len = Math.ceil(o.L + 1), du = Math.max(0.18, T * (0.35 / n + 0.65 * o.L / (total || 1))), at = t.toFixed(2) + 's';
+            defs += '<clipPath id="' + id + 'c' + i + '"><path transform="scale(.5)" d="' + f.a[i] + '"/></clipPath>';
+            ink += '<g clip-path="url(#' + id + 'c' + i + ')"><path d="' + o.d + '" style="stroke-width:' + (2 * W) + ';stroke-dasharray:' + len + ' ' + (len + 2 * W) +
+                ';stroke-dashoffset:' + (len + W) + ';animation-duration:' + du.toFixed(2) + 's,0.35s;animation-delay:' + at + ',' + (t + du).toFixed(2) + 's"/></g>';
+            var p = o.pts, ddx = p.length > 2 ? p[2] - p[0] : 1, ddy = p.length > 2 ? p[3] - p[1] : 0, dl = Math.hypot(ddx, ddy) || 1;
+            var tx = Math.max(5, Math.min(104, p[0] - ddx / dl * 6 - 1)), ty = Math.max(8, Math.min(106, p[1] - ddy / dl * 6 + 3));
+            if (f.n && f.n.length > 2 * i + 1) { tx = f.n[2 * i] / 2; ty = f.n[2 * i + 1] / 2 + 2.7; }
+            nums += '<text x="' + tx.toFixed(1) + '" y="' + ty.toFixed(1) + '" style="animation-delay:' + at + '">' + (i + 1) + '</text>';
+            t += du + 0.08;
+        });
+        return '<svg class="kp-order-svg kp-order-font kp-order-kai" viewBox="0 0 109 109" role="img" aria-label="' + (lab ? lab.aria(ch, n) : '「' + ch + '」の筆順（' + n + '画）') + '"><defs>' + defs + '</defs>' +
+            '<g class="kp-f-base" transform="scale(.5)">' + glyph + '</g><g class="kp-o-ink">' + ink + '</g>' +
+            '<g class="kp-f-done" transform="scale(.5)" style="animation-delay:' + (t + 0.3).toFixed(2) + 's">' + glyph + '</g><g class="kp-o-num">' + nums + '</g></svg>' +
             '<span class="kp-order-cap"><b' + (lab ? ' class="' + lab.cls + '"' : ' lang="ja"') + '>' + escapeHtml(ch) + '</b>' + n + (lab ? lab.unit : '画') + '</span>';
     }
     function kpadFillOrder() {
@@ -19005,7 +19037,9 @@
     // Progress per character and per word, in HJ.store (in backups like every jlpt* key):
     // { c: { 天: rec }, w: { '천지:天地': rec } }, rec = { l: level 0..11, s: 1/0 the last verdict, ok, ng: counts, t, fx: 1 when 판정 고치기 set it }.
     var HJ = {
-        id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.80a10850.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
+        id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.a89ca50e.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
+        // two sets of 筆順 diagrams, chosen in 設定: 明朝 (Noto Serif CJK KR) and 楷書 (AnimCJK, Noto where it has no character)
+        fonts: { mincho: { glob: 'MogiHanjaFont', files: ["hanjafont0.bd64e55d.js", "hanjafont1.79a09114.js", "hanjafont2.300a941f.js", "hanjafont3.642b64f4.js", "hanjafont4.8e41976b.js", "hanjafont5.47ecc27c.js", "hanjafont6.5d376b6e.js", "hanjafont7.22150a6f.js", "hanjafont8.edb8a54f.js", "hanjafont9.81be63af.js", "hanjafont10.53db9306.js", "hanjafont11.b3a3f52c.js"] }, kai: { glob: 'MogiHanjaKai', files: ["hanjakai0.a097c7f5.js", "hanjakai1.21931973.js", "hanjakai2.864d10f4.js", "hanjakai3.e7b83260.js", "hanjakai4.792b43be.js", "hanjakai5.85669349.js", "hanjakai6.360db651.js", "hanjakai7.366cc156.js", "hanjakai8.60fee4e9.js", "hanjakai9.720ef31a.js", "hanjakai10.04232619.js", "hanjakai11.c2f4f18c.js"] } },
         lv: ['8級', '7級Ⅱ', '7級', '6級Ⅱ', '6級', '5級Ⅱ', '5級', '4級Ⅱ', '4級', '3級Ⅱ', '3級', '2級'],
         total: {"c": [50, 50, 50, 75, 75, 100, 100, 250, 250, 500, 317, 538], "w": [150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150]},
         color: '#2b5fa8', badge: '韓', pattern: ['kikkohanabishi', '#2d4f7f'],
@@ -19015,7 +19049,7 @@
             chars: '字', words: '單語', items: '問題', kindC: '漢字', kindW: '單語', kindB: '둘 다', own: '이 級만', cum: '아래 級 包含',
             upTo: '까지', go: '{lv} 練習하기 ({n}問題)', miss: '틀린 것만 練習 ({n}問題)',
             info: '韓國語文會 漢字能力檢定試驗 8級~2級. 訓音(하늘 천)이나 漢字語를 보고, 試驗과 같은 正字로 씁니다. 日本字나 簡體字로 쓰면 誤答입니다. ː는 長音, ‣는 長·短音 漢字입니다.',
-            credit: '配定漢字: (社)韓國語文會 · 級數·訓音 資料: vera3422/hanja-study-app-for-CY (MIT) · 單語: <a href="https://github.com/ongocompany/hanjahanja-dict" target="_blank" rel="noopener">한자한자 漢字語 辭典</a> (國立國語院 우리말샘·標準國語大辭典, CC BY-SA 2.0 KR) · 筆順: KanjiVG (CC BY-SA 3.0)',
+            credit: '配定漢字: (社)韓國語文會 · 級數·訓音 資料: vera3422/hanja-study-app-for-CY (MIT) · 單語: <a href="https://github.com/ongocompany/hanjahanja-dict" target="_blank" rel="noopener">한자한자 漢字語 辭典</a> (國立國語院 우리말샘·標準國語大辭典, CC BY-SA 2.0 KR) · 筆順: KanjiVG (CC BY-SA 3.0), 韓國 筆順 · 筆順 그림: Noto Serif CJK KR (<a href="hanjafont-OFL.txt" target="_blank" rel="noopener">SIL OFL 1.1</a>)',
             close: '닫기', loading: '불러오는 中…', loadFail: '筆記 認識 데이터를 불러오지 못했습니다. 인터넷에 連結한 뒤 다시 열어 주십시오.',
             askChar: '다음 訓音에 맞는 漢字를 쓰시오', askWord: '다음 漢字語를 漢字로 쓰시오 ({n}字)', boxes: '答 칸 ({n}字)', nth: '{n}番째 글자', pad: '여기에 쓰시오',
             undo: '한 劃 지우기', clear: '다 지우기', prev: '‹ 앞 글자', next: '다음 글자 ›', prevA: '앞 글자', nextA: '다음 글자',
@@ -19065,11 +19099,12 @@
     }
     // A deck with d.font (one file per level) shows 筆順 from the font: the file for a question's level is fetched while the
     // question is written; until it is here (or offline, or for a character the fit left out) the line diagram is shown.
-    function hjFontGet(c) { var F = HJ.font && window[HJ.font.glob]; return F && F[c] || null; }
+    function hjFontSet() { return HJ.fonts && (HJ.fonts[getSetting('strokeStyle', 'mincho')] || HJ.fonts.mincho); }
+    function hjFontGet(c) { var S = hjFontSet(), F = S && window[S.glob]; return F && F[c] || null; }
     function hjFontNeed(chars, cb) {
-        var d = HJ, D = hjData(), need = {}, lvs, left, got = false;
-        if (!d.font || !D) { if (cb) cb(false); return; }
-        var st = d.font.st || (d.font.st = {}), at = hjItems().at;
+        var fs = hjFontSet(), D = hjData(), need = {}, lvs, left, got = false;
+        if (!fs || !D) { if (cb) cb(false); return; }
+        var st = fs.st || (fs.st = {}), at = hjItems().at;
         chars.forEach(function(c) { if (!hjFontGet(c) && at[c] !== undefined) need[parseInt(D.lv.charAt(at[c]), 16)] = 1; });
         lvs = Object.keys(need).filter(function(l) { return st[l] !== 1 && st[l] !== -1; });
         if (!lvs.length) { if (cb) cb(false); return; }
@@ -19080,7 +19115,7 @@
             st[l] = [fin];
             var s = document.createElement('script');
             var end = function(ok) { var w = st[l]; st[l] = ok ? 1 : -1; w.forEach(function(f) { f(ok); }); };
-            s.src = d.font.files[l];
+            s.src = fs.files[l];
             s.onload = function() { end(true); };
             s.onerror = function() { if (s.parentNode) s.parentNode.removeChild(s); end(false); };
             document.head.appendChild(s);
@@ -19528,7 +19563,7 @@
         var fill = function() {
             body.querySelectorAll('#hj-order-row .kp-order-cell').forEach(function(cell) {
                 var c = cell.dataset.c, f = hjFontGet(c);
-                cell.innerHTML = f ? kpadFontSvg(c, f, HJ_ORDER_LAB) : kpadOrderSvg(c, hjRec(), HJ_ORDER_LAB);
+                cell.innerHTML = f ? (Array.isArray(f) ? kpadFontSvg(c, f, HJ_ORDER_LAB) : kpadKaiSvg(c, f, HJ_ORDER_LAB)) : kpadOrderSvg(c, hjRec(), HJ_ORDER_LAB);
             });
         };
         fill();
