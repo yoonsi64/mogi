@@ -19037,9 +19037,9 @@
     // Progress per character and per word, in HJ.store (in backups like every jlpt* key):
     // { c: { 天: rec }, w: { '천지:天地': rec } }, rec = { l: level 0..11, s: 1/0 the last verdict, ok, ng: counts, t, fx: 1 when 판정 고치기 set it }.
     var HJ = {
-        id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.a89ca50e.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
+        id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.aa18cfac.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
         // two sets of 筆順 diagrams, chosen in 設定: 明朝 (Noto Serif CJK KR) and 楷書 (AnimCJK, Noto where it has no character)
-        fonts: { mincho: { glob: 'MogiHanjaFont', files: ["hanjafont0.bd64e55d.js", "hanjafont1.79a09114.js", "hanjafont2.300a941f.js", "hanjafont3.642b64f4.js", "hanjafont4.8e41976b.js", "hanjafont5.47ecc27c.js", "hanjafont6.5d376b6e.js", "hanjafont7.22150a6f.js", "hanjafont8.edb8a54f.js", "hanjafont9.81be63af.js", "hanjafont10.53db9306.js", "hanjafont11.b3a3f52c.js"] }, kai: { glob: 'MogiHanjaKai', files: ["hanjakai0.a097c7f5.js", "hanjakai1.21931973.js", "hanjakai2.864d10f4.js", "hanjakai3.e7b83260.js", "hanjakai4.792b43be.js", "hanjakai5.85669349.js", "hanjakai6.360db651.js", "hanjakai7.366cc156.js", "hanjakai8.60fee4e9.js", "hanjakai9.720ef31a.js", "hanjakai10.04232619.js", "hanjakai11.c2f4f18c.js"] } },
+        fonts: { mincho: { glob: 'MogiHanjaFont', files: ["hanjafont0.fcdfb686.js", "hanjafont1.4f28b98c.js", "hanjafont2.616549fd.js", "hanjafont3.1b6b6d34.js", "hanjafont4.24942fd3.js", "hanjafont5.9af93ece.js", "hanjafont6.581c8e08.js", "hanjafont7.9564d6a6.js", "hanjafont8.7f631524.js", "hanjafont9.91d824c1.js", "hanjafont10.831b7482.js", "hanjafont11.863ae41c.js"] }, kai: { glob: 'MogiHanjaKai', files: ["hanjakai0.a097c7f5.js", "hanjakai1.21931973.js", "hanjakai2.864d10f4.js", "hanjakai3.e7b83260.js", "hanjakai4.792b43be.js", "hanjakai5.85669349.js", "hanjakai6.360db651.js", "hanjakai7.366cc156.js", "hanjakai8.60fee4e9.js", "hanjakai9.720ef31a.js", "hanjakai10.c7a68691.js", "hanjakai11.0abd2f66.js"] } },
         lv: ['8級', '7級Ⅱ', '7級', '6級Ⅱ', '6級', '5級Ⅱ', '5級', '4級Ⅱ', '4級', '3級Ⅱ', '3級', '2級'],
         total: {"c": [50, 50, 50, 75, 75, 100, 100, 250, 250, 500, 317, 538], "w": [150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150]},
         color: '#2b5fa8', badge: '韓', pattern: ['kikkohanabishi', '#2d4f7f'],
@@ -19099,7 +19099,8 @@
     }
     // A deck with d.font (one file per level) shows 筆順 from the font: the file for a question's level is fetched while the
     // question is written; until it is here (or offline, or for a character the fit left out) the line diagram is shown.
-    function hjFontSet() { return HJ.fonts && (HJ.fonts[getSetting('strokeStyle', 'mincho')] || HJ.fonts.mincho); }
+    // 'line': the drawn line diagram (KanjiVG strokes, the same order), no font set
+    function hjFontSet() { var v = getSetting('strokeStyle', 'mincho'); return v === 'line' ? null : HJ.fonts && (HJ.fonts[v] || HJ.fonts.mincho); }
     function hjFontGet(c) { var S = hjFontSet(), F = S && window[S.glob]; return F && F[c] || null; }
     function hjFontNeed(chars, cb) {
         var fs = hjFontSet(), D = hjData(), need = {}, lvs, left, got = false;
