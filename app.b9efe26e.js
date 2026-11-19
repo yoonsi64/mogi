@@ -14983,12 +14983,18 @@
         if (!rb.dataset.rs) splitRubyPerKanji(rb);
         try { rubyFit(rb); } catch (err) { /* leave it to the browser */ }
     }
-    // Furigana wider than its kanji: rather than the browser pushing the kanji apart (入　社), the reading reaches a little
-    // over the characters beside the word, as in print: up to half a character over kana or punctuation, a quarter over a
-    // kanji, none over another word's furigana. Readings within one word sit side by side, each as near its own kanji as it
-    // can. Widths are counted in characters (kanji and kana are square), so nothing has to be measured. If the reading is too
-    // long even so (承 うけたまわ), it takes what room there is and the browser spaces the rest. Logical margins, so the same
-    // holds in vertical text.
+    // Furigana are centred over the kanji they read. A reading wider than its kanji would make the browser push the kanji apart
+    // (入　社), so it may reach a little over the characters beside the word, as in print: up to half a character over kana or
+    // punctuation, a quarter over a kanji, none over another word's furigana, and always the same amount on both sides so it
+    // stays centred. What still doesn't fit is spaced evenly around the word (ruby-align: center), never between its kanji.
+    // Widths are counted in characters (kanji and kana are square), so nothing has to be measured. Logical margins, so the
+    // same holds in vertical text.
+    function rubyCharsW(t) { var w = 0; Array.from(t).forEach(function(c) { w += /[\u0000-ɏ｡-ﾟ]/.test(c) ? 0.55 : 1; }); return w; }
+    function rubyRatio(rb, rt) {
+        var bs = parseFloat(getComputedStyle(rb).fontSize), rs = parseFloat(getComputedStyle(rt).fontSize);
+        return bs && rs ? rs / bs : 0;
+    }
+    var RUBY_TOUCH = 0.12;          // how far two neighbouring readings in one word may close up (kana have side bearings)
     function rubyFit(rb) {
         var pairs = [], base = '', ok = true;
         Array.prototype.forEach.call(rb.childNodes, function(n) {
@@ -14999,13 +15005,16 @@
         });
         if (!ok || !pairs.length || base.trim() || pairs.some(function(p) { return !p.b; })) return;
         pairs.forEach(function(p) { p.rt.style.marginInlineStart = p.rt.style.marginInlineEnd = ''; });
-        var cw = function(t) { var w = 0; Array.from(t).forEach(function(c) { w += /[\u0000-\u024f\uff61-\uff9f]/.test(c) ? 0.55 : 1; }); return w; };
-        var bs = parseFloat(getComputedStyle(rb).fontSize), rs = parseFloat(getComputedStyle(pairs[0].rt).fontSize);
-        if (!bs || !rs || getComputedStyle(pairs[0].rt).display === 'none') return;
-        var r = rs / bs, x = 0, over = false, W = 0;
-        pairs.forEach(function(p) { p.B = cw(p.b); p.w = cw(p.rt.textContent.trim()) * r; p.x = x; x += p.B; W += p.w; if (p.w > p.B + 0.02) over = true; });
+        if (getComputedStyle(pairs[0].rt).display === 'none') return;
+        var r = rubyRatio(rb, pairs[0].rt);
+        if (!r) return;
+        var over = false;
+        pairs.forEach(function(p) { p.o = (rubyCharsW(p.rt.textContent.trim()) * r - rubyCharsW(p.b)) / 2; if (p.o > 0.01) over = true; });
         if (!over) return;
-        var T = x;
+        for (var k = 1; k < pairs.length; k++) if (pairs[k - 1].o + pairs[k].o > RUBY_TOUCH) {          // readings that would run into each other: one reading over the word
+            rb.innerHTML = escapeHtml(pairs.map(function(p) { return p.b; }).join('')) + '<rt>' + escapeHtml(pairs.map(function(p) { return p.rt.textContent.trim(); }).join('')) + '</rt>';
+            return rubyFit(rb);
+        }
         var room = function(dir) {
             var n = rb, ch = '';
             while (n) {
@@ -15025,32 +15034,16 @@
                 break;
             }
             if (!ch || /\s/.test(ch)) return 0;
-            return /[\u3040-\u30ff\u3000-\u303f\uff01-\uff0f\uff1a-\uff20]/.test(ch) ? 0.5 : 0.25;
+            return /[぀-ヿ　-〿！-／：-＠]/.test(ch) ? 0.5 : 0.25;
         };
         var L = room(-1), R = room(1);
-        if (W > T + L + R + 0.001) {
-            pairs[0].rt.style.marginInlineStart = (-L / r).toFixed(3) + 'em';
-            pairs[pairs.length - 1].rt.style.marginInlineEnd = (-R / r).toFixed(3) + 'em';
-            return;
-        }
-        // each reading centred on its kanji without overlapping the next (pool-adjacent-violators on the shifted starts),
-        // then kept within the room beside the word
-        var blocks = [], cum = 0;
         pairs.forEach(function(p, i) {
-            blocks.push({ s: p.x + (p.B - p.w) / 2 - cum, n: 1, from: i, to: i }); cum += p.w;
-            while (blocks.length > 1) {
-                var b1 = blocks[blocks.length - 2], b2 = blocks[blocks.length - 1];
-                if (b1.s / b1.n <= b2.s / b2.n) break;
-                b1.s += b2.s; b1.n += b2.n; b1.to = b2.to; blocks.pop();
-            }
-        });
-        cum = 0;
-        blocks.forEach(function(b) { for (var i = b.from; i <= b.to; i++) { pairs[i].p = b.s / b.n + cum; cum += pairs[i].w; } });
-        cum = 0; pairs.forEach(function(p) { p.p = Math.max(p.p, -L + cum); cum += p.w; });
-        cum = 0; for (var i = pairs.length - 1; i >= 0; i--) { cum += pairs[i].w; pairs[i].p = Math.min(pairs[i].p, T + R - cum); }
-        pairs.forEach(function(p) {
-            p.rt.style.marginInlineStart = ((p.p - p.x) / r).toFixed(3) + 'em';
-            p.rt.style.marginInlineEnd = ((p.x + p.B - p.p - p.w) / r).toFixed(3) + 'em';
+            if (p.o <= 0.01) return;
+            var left = i ? Math.max(0, -pairs[i - 1].o) + RUBY_TOUCH / 2 : L;
+            var right = i < pairs.length - 1 ? Math.max(0, -pairs[i + 1].o) + RUBY_TOUCH / 2 : R;
+            var m = Math.min(p.o, left, right);
+            if (m <= 0) return;
+            p.rt.style.marginInlineStart = p.rt.style.marginInlineEnd = (-m / r).toFixed(3) + 'em';
         });
     }
     function splitRubyPerKanji(rb) {
@@ -15067,6 +15060,13 @@
         var sp = null;
         try { sp = rubySplitFor(base, rd); } catch (err) { sp = null; }
         if (!sp || sp.length !== chars.length || sp.map(function(x) { return x[1]; }).join('') !== rd || sp.some(function(x) { return !x[1]; })) return;
+        // Split only if each reading can sit centred over its own kanji without running into the next one's (入[にゅう]社[しゃ]
+        // can't: にゅう is wider than 入), otherwise the whole reading stays centred over the whole word.
+        var r = rubyRatio(rb, rts[0]);
+        if (r) {
+            var o = sp.map(function(x) { return (rubyCharsW(x[1]) * r - rubyCharsW(x[0])) / 2; });
+            for (var i = 1; i < o.length; i++) if (o[i - 1] + o[i] > RUBY_TOUCH) return;
+        }
         rb.innerHTML = sp.map(function(x) { return escapeHtml(x[0]) + '<rt>' + escapeHtml(x[1]) + '</rt>'; }).join('');
     }
     function splitGroupRubyIn(root) {
