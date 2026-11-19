@@ -14979,7 +14979,81 @@
     // (二[に]重[じゅう]太[たい]鼓[こ]) with the app's own splits. Readings that can't be split confidently
     // (熟字訓 like 田舎・親父, or unknown ones) stay over the whole word. Applies to everything on screen.
     function splitGroupRuby(rb) {
-        if (!rb || rb.dataset.rs) return;
+        if (!rb) return;
+        if (!rb.dataset.rs) splitRubyPerKanji(rb);
+        try { rubyFit(rb); } catch (err) { /* leave it to the browser */ }
+    }
+    // Furigana wider than its kanji: rather than the browser pushing the kanji apart (入　社), the reading reaches a little
+    // over the characters beside the word, as in print: up to half a character over kana or punctuation, a quarter over a
+    // kanji, none over another word's furigana. Readings within one word sit side by side, each as near its own kanji as it
+    // can. Widths are counted in characters (kanji and kana are square), so nothing has to be measured. If the reading is too
+    // long even so (承 うけたまわ), it takes what room there is and the browser spaces the rest. Logical margins, so the same
+    // holds in vertical text.
+    function rubyFit(rb) {
+        var pairs = [], base = '', ok = true;
+        Array.prototype.forEach.call(rb.childNodes, function(n) {
+            if (n.nodeType === 3) base += n.data;
+            else if (n.nodeName === 'RB') base += n.textContent;
+            else if (n.nodeName === 'RT') { pairs.push({ b: base.trim(), rt: n }); base = ''; }
+            else if (n.nodeName !== 'RP') ok = false;
+        });
+        if (!ok || !pairs.length || base.trim() || pairs.some(function(p) { return !p.b; })) return;
+        pairs.forEach(function(p) { p.rt.style.marginInlineStart = p.rt.style.marginInlineEnd = ''; });
+        var cw = function(t) { var w = 0; Array.from(t).forEach(function(c) { w += /[\u0000-\u024f\uff61-\uff9f]/.test(c) ? 0.55 : 1; }); return w; };
+        var bs = parseFloat(getComputedStyle(rb).fontSize), rs = parseFloat(getComputedStyle(pairs[0].rt).fontSize);
+        if (!bs || !rs || getComputedStyle(pairs[0].rt).display === 'none') return;
+        var r = rs / bs, x = 0, over = false, W = 0;
+        pairs.forEach(function(p) { p.B = cw(p.b); p.w = cw(p.rt.textContent.trim()) * r; p.x = x; x += p.B; W += p.w; if (p.w > p.B + 0.02) over = true; });
+        if (!over) return;
+        var T = x;
+        var room = function(dir) {
+            var n = rb, ch = '';
+            while (n) {
+                var sib = dir < 0 ? n.previousSibling : n.nextSibling;
+                if (!sib) {
+                    n = n.parentNode;
+                    if (!n || n.nodeType !== 1 || getComputedStyle(n).display !== 'inline') return 0;
+                    continue;
+                }
+                n = sib;
+                if (n.nodeType === 1) {
+                    if (n.nodeName === 'RUBY' || n.nodeName === 'BR' || (n.querySelector && n.querySelector('rt')) || getComputedStyle(n).display !== 'inline') return 0;
+                }
+                var t = n.textContent || '';
+                if (!t.length) continue;
+                ch = dir < 0 ? t[t.length - 1] : t[0];
+                break;
+            }
+            if (!ch || /\s/.test(ch)) return 0;
+            return /[\u3040-\u30ff\u3000-\u303f\uff01-\uff0f\uff1a-\uff20]/.test(ch) ? 0.5 : 0.25;
+        };
+        var L = room(-1), R = room(1);
+        if (W > T + L + R + 0.001) {
+            pairs[0].rt.style.marginInlineStart = (-L / r).toFixed(3) + 'em';
+            pairs[pairs.length - 1].rt.style.marginInlineEnd = (-R / r).toFixed(3) + 'em';
+            return;
+        }
+        // each reading centred on its kanji without overlapping the next (pool-adjacent-violators on the shifted starts),
+        // then kept within the room beside the word
+        var blocks = [], cum = 0;
+        pairs.forEach(function(p, i) {
+            blocks.push({ s: p.x + (p.B - p.w) / 2 - cum, n: 1, from: i, to: i }); cum += p.w;
+            while (blocks.length > 1) {
+                var b1 = blocks[blocks.length - 2], b2 = blocks[blocks.length - 1];
+                if (b1.s / b1.n <= b2.s / b2.n) break;
+                b1.s += b2.s; b1.n += b2.n; b1.to = b2.to; blocks.pop();
+            }
+        });
+        cum = 0;
+        blocks.forEach(function(b) { for (var i = b.from; i <= b.to; i++) { pairs[i].p = b.s / b.n + cum; cum += pairs[i].w; } });
+        cum = 0; pairs.forEach(function(p) { p.p = Math.max(p.p, -L + cum); cum += p.w; });
+        cum = 0; for (var i = pairs.length - 1; i >= 0; i--) { cum += pairs[i].w; pairs[i].p = Math.min(pairs[i].p, T + R - cum); }
+        pairs.forEach(function(p) {
+            p.rt.style.marginInlineStart = ((p.p - p.x) / r).toFixed(3) + 'em';
+            p.rt.style.marginInlineEnd = ((p.x + p.B - p.p - p.w) / r).toFixed(3) + 'em';
+        });
+    }
+    function splitRubyPerKanji(rb) {
         rb.dataset.rs = '1';
         var rts = rb.getElementsByTagName('rt');
         if (rts.length !== 1) return;
