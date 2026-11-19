@@ -7895,7 +7895,8 @@
         {"type": "Grammar", "label": "問6", "direction": "（　　）に入れるのに最もよいものを、a・b・cから一つ選びなさい。", "optPrefix": ["a", "b", "c"], "sentence": "[    ]毎日歩いて学校に通った。", "options": ["4キロすらある道を", "4キロあっての道を", "4キロからある道を"], "correct": 2, "meaning": "～からある：～以上もある（長さ・重さ・大きさの多さを強調）。", "week": 24, "day": 7, "id": 52476, "lib": "shinkanzen-bunpo-n1"}
     );
     // ===== JLPT 콕콕 찍어주마 N1 문법 4th EDITION (다락원): 콕콕 실전문제 01〜04 =====
-    // ids 53000 + (set-1)*100 + n. Answers are our own picks (the book gives them only by QR code); meanings and rationales are our own.
+    // ids 53000 + (set-1)*100 + n. The book gives its answers only by QR code (darakwon.co.kr): 01〜03 have been checked against those pages
+    // and match (keys of printings before the 7th; from the 7th, 問21〜24 differ); 04 are still our own picks. Meanings and rationales are our own.
     quizData.push(
         {"type": "Grammar", "label": "問1", "direction": "次の文の（　　）に入れるのに最もよいものを、1・2・3・4から一つ選びなさい。", "sentence": "日本文学の<ruby>山田<rt>やまだ</rt></ruby>先生と<ruby>相談<rt>そうだん</rt></ruby>した[    ]、<ruby>修士論文<rt>しゅうしろんぶん</rt></ruby>の<ruby>題目<rt>だいもく</rt></ruby>を<ruby>決<rt>き</rt></ruby>めた。", "options": ["うえで", "うえに", "うえから", "うえにも"], "correct": 0, "meaning": "～たうえで：～してから（その結果に基づいて）", "week": 1, "day": 1, "id": 53001, "lib": "kokkok-n1-bunpo"},
         {"type": "Grammar", "label": "問2", "direction": "次の文の（　　）に入れるのに最もよいものを、1・2・3・4から一つ選びなさい。", "sentence": "この病気は、たばこをやめないかぎり、[    ]。", "options": ["治るようだ", "治りそうだ", "治らないだろう", "治るかもしれない"], "correct": 2, "meaning": "～ないかぎり：～しなければ（…ない）", "week": 1, "day": 1, "id": 53002, "lib": "kokkok-n1-bunpo"},
