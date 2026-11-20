@@ -19398,13 +19398,14 @@
     }
 
     // ===== Text-to-speech with natural pauses =====
-    // Text is split into short chunks that are spoken one after another, with a pause after each chunk.
-    // Pauses go at sentence ends, speaker changes, paragraph breaks, after sentence-opening
-    // conjunctions, and after clause-linking grammar points (e.g. ～ながら, ～ものの, ～はおろか).
-    var SPEECH_PAUSE = { sentence: 450, paragraph: 600, speaker: 350, grammar: 250 };
+    // Text is spoken a sentence at a time, with a pause after each sentence, speaker change and paragraph break.
+    // A sentence is always one utterance, so the voice gives it one intonation from start to end. A pause inside it
+    // (after a sentence-opening conjunction, or a clause-linking grammar point such as ～ものの, ～はおろか) is a comma
+    // put into the spoken text: cut into separate utterances, each piece was read as a sentence of its own.
+    var SPEECH_PAUSE = { sentence: 450, paragraph: 600, speaker: 350 };
 
     // Conjunctions that open a sentence; a short pause follows them
-    var speechConjunctions = ['しかしながら', 'しかし', 'あるいは', 'そこで', 'すると', 'むしろ', '確かに', '決して',
+    var speechConjunctions = ['しかしながら', 'しかし', 'あるいは', 'そこで', 'すると', 'むしろ', '確かに',
         'つまり', 'ちなみに', 'それゆえ', 'したがって', 'ところが', 'だから', 'そして', 'また', 'さらに', 'ただし', 'すなわち'];
 
     // Clause-linking grammar points; a short pause follows them when no comma is already there
@@ -19430,9 +19431,15 @@
     }
     function buildSpeechChunks(htmlText) {
         var t = htmlText;
-        // Markers: ⟦S⟧ speaker, ⟦P⟧ paragraph, ⟦E⟧ sentence end, ⟦G⟧ grammar pause
+        // Markers: ⟦S⟧ speaker, ⟦P⟧ paragraph, ⟦E⟧ sentence end; ⟦C⟧ after a conjunction and ⟦G⟧ after a grammar point (commas, below)
         t = t.replace(/<rt>.*?<\/rt>|<rp>.*?<\/rp>/gi, '');   // read the kanji, not the furigana twice
-        t = t.replace(/<\/b>/gi, '⟦S⟧');
+        // Bold is a speaker's name or a label (a pause follows) when 「 or ： comes after it, or when it opens a line;
+        // anywhere else it is only emphasis inside a sentence, which is read straight through
+        t = t.replace(/<b>((?:(?!<\/b>)[\s\S])*)<\/b>(\s*[「：:])?/gi, function(m, inner, mark, at) {
+            var plain = inner.replace(/<[^>]*>/g, '');
+            var label = mark || /[：:]\s*$/.test(plain) || (/(^|<br\s*\/?>|<(?:p|div|li|td|th|h\d)[^>]*>)\s*$/i.test(t.slice(0, at)) && !/^[0-9０-９]+$/.test(plain));
+            return inner + (label ? '⟦S⟧' : '') + (mark || '');
+        });
         t = t.replace(/(<br\s*\/?>\s*)+/gi, '⟦P⟧');
         t = t.replace(/<span class="blank-number[^"]*">\d+(-[ab])?<\/span>/g, '');
         t = t.replace(/<[^>]*>?/gm, '');
@@ -19447,13 +19454,17 @@
 
         // Sentence-opening conjunctions (at the very start, or after a sentence end / break)
         speechConjunctions.forEach(function(c) {
-            var re = new RegExp('(^|[。！？」]\\s*|⟦[PS]⟧\\s*)(' + c + ')(?![、，]|ながら)', 'g');
-            t = t.replace(re, '$1$2⟦G⟧');
+            var re = new RegExp('(^|[。！？」]\\s*|⟦[PS]⟧\\s*)(' + c + ')(?![、，]|ながら|こそ|といって|って)', 'g');
+            t = t.replace(re, '$1$2⟦C⟧');
         });
         // Clause-linking grammar points
         // (skipped when the next character continues the phrase, e.g. であれば, ながらも)
         speechGrammarPoints.forEach(function(g) {
-            t = t.replace(new RegExp(g + '(?![ばもにのがはをるたえ])', 'g'), g + '⟦G⟧');
+            // (ところで: not the end of ～ところです / ～ところでした; ながら: not つながらない; ものの and としても: after a verb
+            // or adjective, not the noun in 調べものの / ものの見方 / もののこと, nor 手段としても)
+            var not = '(?![ばもにのがはをるたえ' + (g === 'ところで' ? 'すし' : g === 'ながら' ? 'なず' : g === 'ものの' ? 'こ中上下内間一方見考名数量種形色' : '') + '])';
+            if (g === 'ものの' || g === 'としても') t = t.replace(new RegExp('([たるいだなうくすつぬむぐぶ])' + g + not, 'g'), '$1' + g + '⟦G⟧');
+            else t = t.replace(new RegExp(g + not, 'g'), g + '⟦G⟧');
         });
         // Ordinary phrases that only look like grammar points (e.g. 身をもって知る, そのものの)
         ['身をもって', 'そのものの', 'ものの見事'].forEach(function(p) {
@@ -19462,15 +19473,23 @@
         // 「をもっている」 is the ordinary verb 持つ, not the grammar point 「をもって」
         t = t.replace(/もって⟦G⟧(?=い)/g, 'もって');
         // No extra pause where punctuation already gives one, or at the very end
-        t = t.replace(/⟦G⟧(?=\s*[、。，！？」）)])/g, '');
-        t = t.replace(/(⟦G⟧)+/g, '⟦G⟧');
+        t = t.replace(/⟦[GC]⟧(?=\s*[、。，！？」）)：:・…～])/g, '');
+        t = t.replace(/(⟦[GC]⟧)+/g, function(m) { return m.slice(0, 3); });
+        // The pause is a comma, and only where both sides are long enough to be phrases of their own
+        // (また、しくじった / 我ながら、情けない would be pauses nobody makes)
+        t = t.replace(/⟦([GC])⟧/g, function(m, kind, at) {
+            var before = t.slice(0, at).replace(/⟦[GC]⟧/g, ''), after = t.slice(at + 3);
+            var b = before.length - 1 - Math.max(before.lastIndexOf('、'), before.lastIndexOf('。'), before.lastIndexOf('「'), before.lastIndexOf('⟧'));
+            var a = after.search(/[、。，！？」）)⟦]|$/);
+            return (kind === 'C' ? a >= (/また$/.test(before) ? 12 : 5) : b >= 5 && a >= 6) ? '、' : '';       // (また is as often 'again')
+        });
 
         // Sentence ends (keep a closing quote attached to its sentence)
         t = t.replace(/([。！？])(」?)/g, '$1$2⟦E⟧');
 
         var chunks = [];
-        var parts = t.split(/(⟦[SPEG]⟧)/);
-        var pauseFor = { '⟦S⟧': SPEECH_PAUSE.speaker, '⟦P⟧': SPEECH_PAUSE.paragraph, '⟦E⟧': SPEECH_PAUSE.sentence, '⟦G⟧': SPEECH_PAUSE.grammar };
+        var parts = t.split(/(⟦[SPE]⟧)/);
+        var pauseFor = { '⟦S⟧': SPEECH_PAUSE.speaker, '⟦P⟧': SPEECH_PAUSE.paragraph, '⟦E⟧': SPEECH_PAUSE.sentence };
         parts.forEach(function(part) {
             if (pauseFor[part] !== undefined) {
                 if (chunks.length) chunks[chunks.length - 1].pause = Math.max(chunks[chunks.length - 1].pause, pauseFor[part]);
@@ -19722,7 +19741,7 @@
     var HJ = {
         id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.0579f08f.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
         // two sets of 筆順 diagrams, chosen in 設定: 明朝 (Noto Serif CJK KR) and 楷書 (AnimCJK, Noto where it has no character)
-        fonts: { mincho: { glob: 'MogiHanjaFont', files: ["hanjafont0.a4cc105b.js", "hanjafont1.b9d64bf5.js", "hanjafont2.41c168e6.js", "hanjafont3.7780cf4e.js", "hanjafont4.cc8ea3c0.js", "hanjafont5.c3f524d0.js", "hanjafont6.e5144528.js", "hanjafont7.d4db187f.js", "hanjafont8.44b18253.js", "hanjafont9.014c0618.js", "hanjafont10.9e9196d7.js", "hanjafont11.d7c74f46.js"] }, kai: { glob: 'MogiHanjaKai', files: ["hanjakai0.49150467.js", "hanjakai1.b48caee0.js", "hanjakai2.5c95fe97.js", "hanjakai3.6d919c82.js", "hanjakai4.7089cf11.js", "hanjakai5.1df3f8ce.js", "hanjakai6.749fa378.js", "hanjakai7.ca9a4334.js", "hanjakai8.d609cd81.js", "hanjakai9.c023889b.js", "hanjakai10.f723271f.js", "hanjakai11.efe168b9.js"] } },
+        fonts: { mincho: { glob: 'MogiHanjaFont', files: ["hanjafont0.fbef2b59.js", "hanjafont1.0be41483.js", "hanjafont2.2cfc5376.js", "hanjafont3.7780cf4e.js", "hanjafont4.97914bff.js", "hanjafont5.c3f524d0.js", "hanjafont6.6d35430e.js", "hanjafont7.c5e5230c.js", "hanjafont8.44b18253.js", "hanjafont9.014c0618.js", "hanjafont10.9e9196d7.js", "hanjafont11.d7c74f46.js"] }, kai: { glob: 'MogiHanjaKai', files: ["hanjakai0.49150467.js", "hanjakai1.b48caee0.js", "hanjakai2.5c95fe97.js", "hanjakai3.6d919c82.js", "hanjakai4.7089cf11.js", "hanjakai5.1df3f8ce.js", "hanjakai6.749fa378.js", "hanjakai7.ca9a4334.js", "hanjakai8.d609cd81.js", "hanjakai9.c023889b.js", "hanjakai10.f723271f.js", "hanjakai11.efe168b9.js"] } },
         lv: ['8級', '7級Ⅱ', '7級', '6級Ⅱ', '6級', '5級Ⅱ', '5級', '4級Ⅱ', '4級', '3級Ⅱ', '3級', '2級'],
         total: {"c": [50, 50, 50, 75, 75, 100, 100, 250, 250, 500, 317, 538], "w": [150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150]},
         color: '#2b5fa8', badge: '韓', pattern: ['kikkohanabishi', '#2d4f7f'],
