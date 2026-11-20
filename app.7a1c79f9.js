@@ -13703,7 +13703,7 @@
         refreshExamSetting();
         markSeg('set-tts', getSetting('ttsRate', 0.95));
         markSeg('set-korean', getSetting('showKorean', true) ? 'on' : 'off');
-        markSeg('set-stroke-style', getSetting('strokeStyle', 'mincho'));
+        markSeg('set-stroke-style', getSetting('strokeStyle', 'kai') === 'line' ? 'line' : 'kai');
         markSeg('set-omikuji-sound', getSetting('omikujiSound', true) ? 'on' : 'off');
         markSeg('set-game-scene', getSetting('gameScene', true) ? 'on' : 'off');
         markSeg('set-theme', getSetting('theme', 'auto'));
@@ -18906,43 +18906,7 @@
         return '<svg class="kp-order-svg" viewBox="0 0 109 109" role="img" aria-label="' + (lab ? lab.aria(ch, n) : '「' + ch + '」の筆順（' + n + '画）') + '"><g class="kp-o-base">' + base + '</g><g class="kp-o-ink">' + ink + '</g><g class="kp-o-num">' + nums + '</g></svg>' +
             '<span class="kp-order-cap"><b' + (lab ? ' class="' + lab.cls + '"' : ' lang="ja"') + '>' + escapeHtml(ch) + '</b>' + n + (lab ? lab.unit : '画') + '</span>';
     }
-    // The same diagram from a font: f = [the glyph's outline (half-units, relative), a cell per stroke (quarter-units, absolute M then relative),
-    // the stroke's centre-line fitted to the glyph (half-units: x y dx dy ...), half the width that covers the stroke, (optional) where each number goes].
-    // The glyph is shown faint; stroke i is a thick line along its centre-line, clipped to the glyph and to cell i, drawn
-    // on like the line diagram, so the stroke fills in with the font's own shape. Cells overlap a little (no seams).
     var KF_UID = 0;
-    function kpadFontSvg(ch, f, lab) {
-        var id = 'kf' + (++KF_UID), n = f[2].length, defs = '', ink = '', nums = '', lines = [], total = 0;
-        defs += '<clipPath id="' + id + 'g"><path transform="scale(.5)" d="' + f[0] + '"/></clipPath>';
-        f[2].forEach(function(ln) {
-            var v = ln.match(/-?\d+/g).map(Number), x = v[0] / 2, y = v[1] / 2, d = 'M' + x + ' ' + y, L = 0, pts = [x, y];
-            for (var k = 2; k < v.length; k += 2) { var dx = v[k] / 2, dy = v[k + 1] / 2; x += dx; y += dy; d += 'L' + x + ' ' + y; L += Math.hypot(dx, dy); pts.push(x, y); }
-            lines.push({ d: d, L: L, pts: pts }); total += L;
-        });
-        // each stroke takes time for its length (a dot is quick, a long sweep slower), with a short lift between strokes;
-        // the whole character in about as long as the line diagram takes
-        var T = Math.min(7, Math.max(1.6, n * 0.55)) - 0.08 * n, t = 0;
-        lines.forEach(function(o, i) {
-            var W = f[3][i], len = Math.ceil(o.L + 1), du = Math.max(0.18, T * (0.35 / n + 0.65 * o.L / (total || 1))), at = t.toFixed(2) + 's';
-            defs += '<clipPath id="' + id + 'c' + i + '"><path transform="scale(.25)" clip-rule="evenodd" d="' + f[1][i] + '"/></clipPath>';
-            // dash = the line, gap = the line and both round caps, so nothing shows before the stroke's turn; drawn in the
-            // pen colour, then settling into ink
-            ink += '<g clip-path="url(#' + id + 'c' + i + ')"><path d="' + o.d + '" style="stroke-width:' + (2 * W) + ';stroke-dasharray:' + len + ' ' + (len + 2 * W) +
-                ';stroke-dashoffset:' + (len + W) + ';animation-duration:' + du.toFixed(2) + 's,0.35s;animation-delay:' + at + ',' + (t + du).toFixed(2) + 's"/></g>';
-            // the number: at the spot chosen for it when the outlines were cut (f[4]: label centres, half-units: near the
-            // stroke's start, clear of the ink and of the other numbers); else just behind the start, as in the line diagram
-            var p = o.pts, ddx = p.length > 2 ? p[2] - p[0] : 1, ddy = p.length > 2 ? p[3] - p[1] : 0, dl = Math.hypot(ddx, ddy) || 1;
-            var tx = Math.max(5, Math.min(104, p[0] - ddx / dl * 6 - 1)), ty = Math.max(8, Math.min(106, p[1] - ddy / dl * 6 + 3));
-            if (f[4] && f[4].length > 2 * i + 1) { tx = f[4][2 * i] / 2; ty = f[4][2 * i + 1] / 2 + 2.7; }
-            nums += '<text x="' + tx.toFixed(1) + '" y="' + ty.toFixed(1) + '" style="animation-delay:' + at + '">' + (i + 1) + '</text>';
-            t += du + 0.08;
-        });
-        return '<svg class="kp-order-svg kp-order-font" viewBox="0 0 109 109" role="img" aria-label="' + (lab ? lab.aria(ch, n) : '「' + ch + '」の筆順（' + n + '画）') + '"><defs>' + defs + '</defs>' +
-            '<path class="kp-f-base" transform="scale(.5)" d="' + f[0] + '"/><g class="kp-o-ink" clip-path="url(#' + id + 'g)">' + ink + '</g>' +
-            // once the last stroke is in, the whole glyph in one piece (no hairlines where the strokes' cells meet)
-            '<path class="kp-f-done" transform="scale(.5)" d="' + f[0] + '" style="animation-delay:' + (t + 0.3).toFixed(2) + 's"/><g class="kp-o-num">' + nums + '</g></svg>' +
-            '<span class="kp-order-cap"><b' + (lab ? ' class="' + lab.cls + '"' : ' lang="ja"') + '>' + escapeHtml(ch) + '</b>' + n + (lab ? lab.unit : '画') + '</span>';
-    }
     // 楷書: f = { a: each stroke's own outline (half-units, relative), m: its centre-line (half-units: x y dx dy ...),
     // w: half the width that covers the stroke, n: where each number goes }. Stroke i is the thick line along its
     // centre-line clipped to its own outline, so it fills exactly that stroke and nothing of the next.
@@ -19740,8 +19704,8 @@
     // { c: { 天: rec }, w: { '천지:天地': rec } }, rec = { l: level 0..11, s: 1/0 the last verdict, ok, ng: counts, t, fx: 1 when 판정 고치기 set it }.
     var HJ = {
         id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.9754d4a8.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
-        // two sets of 筆順 diagrams, chosen in 設定: 明朝 (Noto Serif CJK KR) and 楷書 (AnimCJK, Noto where it has no character)
-        fonts: { mincho: { glob: 'MogiHanjaFont', files: ["hanjafont0.fbef2b59.js", "hanjafont1.0be41483.js", "hanjafont2.2cfc5376.js", "hanjafont3.7780cf4e.js", "hanjafont4.97914bff.js", "hanjafont5.c3f524d0.js", "hanjafont6.6d35430e.js", "hanjafont7.c5e5230c.js", "hanjafont8.44b18253.js", "hanjafont9.014c0618.js", "hanjafont10.9e9196d7.js", "hanjafont11.5ef3c776.js"] }, kai: { glob: 'MogiHanjaKai', files: ["hanjakai0.49150467.js", "hanjakai1.b48caee0.js", "hanjakai2.ce5f9b95.js", "hanjakai3.76ed2b80.js", "hanjakai4.ed1ad885.js", "hanjakai5.f75dfa16.js", "hanjakai6.ffd343d3.js", "hanjakai7.c529b94d.js", "hanjakai8.5b654f8d.js", "hanjakai9.dffd69bf.js", "hanjakai10.ab082145.js", "hanjakai11.1e49ecf3.js"] } },
+        // 筆順 diagrams with each stroke's own outline (楷書: AnimCJK, Make Me a Hanzi); 設定 chooses these or the drawn line diagram
+        fonts: { kai: { glob: 'MogiHanjaKai', files: ["hanjakai0.2373f4c9.js", "hanjakai1.efb4278e.js", "hanjakai2.67320898.js", "hanjakai3.94e00c17.js", "hanjakai4.2a8a724a.js", "hanjakai5.8f928215.js", "hanjakai6.bb64e7ab.js", "hanjakai7.fa0854e5.js", "hanjakai8.611611b8.js", "hanjakai9.a2cf61f8.js", "hanjakai10.d4c1fd11.js", "hanjakai11.9271d321.js"] } },
         lv: ['8級', '7級Ⅱ', '7級', '6級Ⅱ', '6級', '5級Ⅱ', '5級', '4級Ⅱ', '4級', '3級Ⅱ', '3級', '2級'],
         total: {"c": [50, 50, 50, 75, 75, 100, 100, 250, 250, 500, 317, 538], "w": [150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150]},
         color: '#2b5fa8', badge: '韓', pattern: ['kikkohanabishi', '#2d4f7f'],
@@ -19751,7 +19715,7 @@
             chars: '字', words: '單語', items: '問題', kindC: '漢字', kindW: '單語', kindB: '둘 다', own: '이 級만', cum: '아래 級 包含',
             upTo: '까지', go: '{lv} 練習하기 ({n}問題)', miss: '틀린 것만 練習 ({n}問題)',
             info: '韓國語文會 漢字能力檢定試驗 8級~2級. 訓音(하늘 천)이나 漢字語를 보고, 試驗과 같은 正字로 씁니다. 日本字나 簡體字로 쓰면 誤答입니다. ː는 長音, ‣는 長·短音 漢字입니다.',
-            credit: '配定漢字: (社)韓國語文會 · 級數·訓音 資料: vera3422/hanja-study-app-for-CY (MIT) · 單語: <a href="https://github.com/ongocompany/hanjahanja-dict" target="_blank" rel="noopener">한자한자 漢字語 辭典</a> (國立國語院 우리말샘·標準國語大辭典, CC BY-SA 2.0 KR) · 筆順: KanjiVG (CC BY-SA 3.0), 韓國 筆順 · 筆順 그림: Noto Serif CJK KR (<a href="hanjafont-OFL.txt" target="_blank" rel="noopener">SIL OFL 1.1</a>)',
+            credit: '配定漢字: (社)韓國語文會 · 級數·訓音 資料: vera3422/hanja-study-app-for-CY (MIT) · 單語: <a href="https://github.com/ongocompany/hanjahanja-dict" target="_blank" rel="noopener">한자한자 漢字語 辭典</a> (國立國語院 우리말샘·標準國語大辭典, CC BY-SA 2.0 KR) · 筆順: KanjiVG (CC BY-SA 3.0), 韓國 筆順 · 筆順 그림: AnimCJK · Make Me a Hanzi (<a href="hanjakai-APL.txt" target="_blank" rel="noopener">Arphic Public License</a>)',
             close: '닫기', loading: '불러오는 中…', loadFail: '筆記 認識 데이터를 불러오지 못했습니다. 인터넷에 連結한 뒤 다시 열어 주십시오.',
             askChar: '다음 訓音에 맞는 漢字를 쓰시오', askWord: '다음 漢字語를 漢字로 쓰시오 ({n}字)', boxes: '答 칸 ({n}字)', nth: '{n}番째 글자', pad: '여기에 쓰시오',
             undo: '한 劃 지우기', clear: '다 지우기', prev: '‹ 앞 글자', next: '다음 글자 ›', prevA: '앞 글자', nextA: '다음 글자',
@@ -19802,7 +19766,7 @@
     // A deck with d.font (one file per level) shows 筆順 from the font: the file for a question's level is fetched while the
     // question is written; until it is here (or offline, or for a character the fit left out) the line diagram is shown.
     // 'line': the drawn line diagram (KanjiVG strokes, the same order), no font set
-    function hjFontSet() { var v = getSetting('strokeStyle', 'mincho'); return v === 'line' ? null : HJ.fonts && (HJ.fonts[v] || HJ.fonts.mincho); }
+    function hjFontSet() { return getSetting('strokeStyle', 'kai') === 'line' ? null : HJ.fonts && HJ.fonts.kai; }
     function hjFontGet(c) { var S = hjFontSet(), F = S && window[S.glob]; return F && F[c] || null; }
     function hjFontNeed(chars, cb) {
         var fs = hjFontSet(), D = hjData(), need = {}, lvs, left, got = false;
@@ -20266,7 +20230,8 @@
         var fill = function() {
             body.querySelectorAll('#hj-order-row .kp-order-cell').forEach(function(cell) {
                 var c = cell.dataset.c, f = hjFontGet(c);
-                cell.innerHTML = f ? (Array.isArray(f) ? kpadFontSvg(c, f, HJ_ORDER_LAB) : kpadKaiSvg(c, f, HJ_ORDER_LAB)) : kpadOrderSvg(c, hjRec(), HJ_ORDER_LAB);
+                cell.classList.toggle('kp-order-mj', !!hjFontSet());
+                cell.innerHTML = f && !Array.isArray(f) ? kpadKaiSvg(c, f, HJ_ORDER_LAB) : kpadOrderSvg(c, hjRec(), HJ_ORDER_LAB);
             });
         };
         fill();

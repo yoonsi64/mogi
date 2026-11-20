@@ -1980,6 +1980,9 @@
         .kp-order-cap { font-size: 0.75rem; color: var(--text-sub); display: flex; align-items: baseline; gap: 4px; }
         .kp-order-cap b { font-size: 1rem; color: var(--text-main); font-weight: normal; }
         .kp-order-none { font-size: 3rem; font-family: var(--mincho, serif); }
+        /* under a 楷書 diagram: the printed (明朝) form of the character, large */
+        .kp-order-mj .kp-order-cap { align-items: center; gap: 6px; }
+        .kp-order-mj .kp-order-cap b { font-size: 2.5rem; line-height: 1.2; }
         .kp-fix-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 8px 0 2px; }
         .kp-fix { background: none; border: none; padding: 4px 0; color: var(--active-blue); text-decoration: underline; font-size: 0.8rem; cursor: pointer; }
         .kp-fix-note { font-size: 0.72rem; color: var(--text-sub); }
@@ -3792,13 +3795,18 @@ html.dark .unsure-btn[aria-pressed="true"] { color: #f0b860; }
 .hj-body.hj-fit1 .hj-ans-hun { font-size: 0.78rem; line-height: 1.35; }
 .hj-body.hj-fit1 .kp-order { margin-top: 6px; padding-top: 6px; padding-bottom: 6px; }
 .hj-body.hj-fit1 .kp-order-svg { width: 88px; height: 88px; }
+.hj-body.hj-fit1 .kp-order-mj .kp-order-cap b { font-size: 2rem; }
 .hj-body.hj-fit1 .kp-fix-note { display: none; }
 .hj-body.hj-fit2 .kp-cell { width: 72px; height: 72px; }
 .hj-body.hj-fit2 .kp-order-svg { width: 72px; height: 72px; }
+.hj-body.hj-fit2 .kp-order-mj .kp-order-cap b { font-size: 1.6rem; }
 .hj-body.hj-fit2 .kp-cands { display: none; }
 @media (orientation: landscape) and (max-height: 520px) {
     .hj-body.hj-fit1 .kp-order-svg { width: 60px; height: 60px; }
     .hj-body.hj-fit2 .kp-order-svg { width: 52px; height: 52px; }
+    .hj-body .kp-order-mj .kp-order-cap b { font-size: 1.6rem; }
+    .hj-body.hj-fit1 .kp-order-mj .kp-order-cap b { font-size: 1.4rem; }
+    .hj-body.hj-fit2 .kp-order-mj .kp-order-cap b { font-size: 1.25rem; }
     .hj-body.hj-fit2 .kp-cell { width: 60px; height: 60px; }
     .hj-body.hj-fit2:has(> .kp-order) { row-gap: 2px; padding-top: 4px; padding-bottom: 4px; }
     .hj-body.hj-fit2 > .kp-order { padding: 4px 8px; }
