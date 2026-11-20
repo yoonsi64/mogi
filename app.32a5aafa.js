@@ -18910,7 +18910,8 @@
     // 楷書: f = { a: each stroke's own outline (half-units, relative), m: its centre-line (half-units: x y dx dy ...),
     // w: half the width that covers the stroke, n: where each number goes }. Stroke i is the thick line along its
     // centre-line clipped to its own outline, so it fills exactly that stroke and nothing of the next.
-    function kpadKaiSvg(ch, f, lab) {
+    // count: the stroke count to state, where the outlines have another number of strokes than the data (槪 鄧 庾 珽 邢 姬).
+    function kpadKaiSvg(ch, f, lab, count) {
         var id = 'kf' + (++KF_UID), n = f.m.length, defs = '', ink = '', nums = '', lines = [], total = 0, glyph = '';
         f.m.forEach(function(ln) {
             var v = ln.match(/-?\d+/g).map(Number), x = v[0] / 2, y = v[1] / 2, d = 'M' + x + ' ' + y, L = 0, pts = [x, y];
@@ -18930,10 +18931,10 @@
             nums += '<text x="' + tx.toFixed(1) + '" y="' + ty.toFixed(1) + '" style="animation-delay:' + at + '">' + (i + 1) + '</text>';
             t += du + 0.08;
         });
-        return '<svg class="kp-order-svg kp-order-font kp-order-kai" viewBox="0 0 109 109" role="img" aria-label="' + (lab ? lab.aria(ch, n) : '「' + ch + '」の筆順（' + n + '画）') + '"><defs>' + defs + '</defs>' +
+        return '<svg class="kp-order-svg kp-order-font kp-order-kai" viewBox="0 0 109 109" role="img" aria-label="' + (lab ? lab.aria(ch, count || n) : '「' + ch + '」の筆順（' + (count || n) + '画）') + '"><defs>' + defs + '</defs>' +
             '<g class="kp-f-base" transform="scale(.5)">' + glyph + '</g><g class="kp-o-ink">' + ink + '</g>' +
             '<g class="kp-f-done" transform="scale(.5)" style="animation-delay:' + (t + 0.3).toFixed(2) + 's">' + glyph + '</g><g class="kp-o-num">' + nums + '</g></svg>' +
-            '<span class="kp-order-cap"><b' + (lab ? ' class="' + lab.cls + '"' : ' lang="ja"') + '>' + escapeHtml(ch) + '</b>' + n + (lab ? lab.unit : '画') + '</span>';
+            '<span class="kp-order-cap"><b' + (lab ? ' class="' + lab.cls + '"' : ' lang="ja"') + '>' + escapeHtml(ch) + '</b>' + (count || n) + (lab ? lab.unit : '画') + '</span>';
     }
     function kpadFillOrder() {
         var row = document.getElementById('kp-order-row');
@@ -20231,7 +20232,8 @@
             body.querySelectorAll('#hj-order-row .kp-order-cell').forEach(function(cell) {
                 var c = cell.dataset.c, f = hjFontGet(c);
                 cell.classList.toggle('kp-order-mj', !!hjFontSet());
-                cell.innerHTML = f && !Array.isArray(f) ? kpadKaiSvg(c, f, HJ_ORDER_LAB) : kpadOrderSvg(c, hjRec(), HJ_ORDER_LAB);
+                var own = hjRec() && hjRec().strokes(c);
+                cell.innerHTML = f && !Array.isArray(f) ? kpadKaiSvg(c, f, HJ_ORDER_LAB, own ? own.length : 0) : kpadOrderSvg(c, hjRec(), HJ_ORDER_LAB);
             });
         };
         fill();
