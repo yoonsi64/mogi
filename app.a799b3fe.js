@@ -19705,7 +19705,7 @@
     var HJ = {
         id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.9754d4a8.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
         // 筆順 diagrams with each stroke's own outline (楷書: AnimCJK, Make Me a Hanzi); 設定 chooses these or the drawn line diagram
-        fonts: { kai: { glob: 'MogiHanjaKai', files: ["hanjakai0.2373f4c9.js", "hanjakai1.efb4278e.js", "hanjakai2.67320898.js", "hanjakai3.94e00c17.js", "hanjakai4.2a8a724a.js", "hanjakai5.8f928215.js", "hanjakai6.bb64e7ab.js", "hanjakai7.fa0854e5.js", "hanjakai8.611611b8.js", "hanjakai9.a2cf61f8.js", "hanjakai10.d4c1fd11.js", "hanjakai11.9271d321.js"] } },
+        fonts: { kai: { glob: 'MogiHanjaKai', files: ["hanjakai0.2373f4c9.js", "hanjakai1.efb4278e.js", "hanjakai2.67320898.js", "hanjakai3.94e00c17.js", "hanjakai4.2a8a724a.js", "hanjakai5.8f928215.js", "hanjakai6.bb64e7ab.js", "hanjakai7.fa0854e5.js", "hanjakai8.611611b8.js", "hanjakai9.a618472c.js", "hanjakai10.d4c1fd11.js", "hanjakai11.c249be8c.js"] } },
         lv: ['8級', '7級Ⅱ', '7級', '6級Ⅱ', '6級', '5級Ⅱ', '5級', '4級Ⅱ', '4級', '3級Ⅱ', '3級', '2級'],
         total: {"c": [50, 50, 50, 75, 75, 100, 100, 250, 250, 500, 317, 538], "w": [150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 150]},
         color: '#2b5fa8', badge: '韓', pattern: ['kikkohanabishi', '#2d4f7f'],
