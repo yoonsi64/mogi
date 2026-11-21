@@ -14531,8 +14531,10 @@
         return { start: start, end: end };
     }
 
-    // を is never the word picked: when the finger (or a double-click) lands on a lone を, the word before it or the one
-    // after it is taken, whichever is nearer the point; を stays only when it has no word on either side.
+    // No word begins with を, so the word box never opens with を first, and ＋前 never puts it first (adjustWord); only
+    // 前－ can leave it there, when the user cuts the character before it. A pick that is を alone becomes the word before
+    // it or the one after it, whichever is nearer the point (を stays only when it has no word on either side); a pick
+    // that begins with を loses it.
     function charRectAt(collected, i) {
         for (var p = collected.parts.length - 1; p >= 0; p--) {
             var part = collected.parts[p];
@@ -14546,7 +14548,13 @@
     }
     function notLoneWo(collected, b, x, y) {
         var text = collected.text;
-        if (!b || text.slice(b.start, b.end) !== 'を') return b;
+        if (!b) return b;
+        if (b.end - b.start > 1 && text[b.start] === 'を') {
+            var s0 = b.start;
+            while (s0 < b.end - 1 && text[s0] === 'を') s0++;
+            b = { start: s0, end: b.end };
+        }
+        if (text.slice(b.start, b.end) !== 'を') return b;
         var prev = b.start > 0 ? wordBoundsAt(text, b.start - 1) : null, next = b.end < text.length ? wordBoundsAt(text, b.end) : null;
         if (prev && text.slice(prev.start, prev.end) === 'を') prev = null;
         if (next && text.slice(next.start, next.end) === 'を') next = null;
@@ -15382,7 +15390,11 @@
     function adjustWord(which) {
         var st = wordSheetState;
         if (!st || !st.text) return;
-        if (which === 'grow-left' && st.start > 0 && charKind(st.text[st.start - 1]) !== 'other') st.start--;
+        if (which === 'grow-left' && st.start > 0 && charKind(st.text[st.start - 1]) !== 'other') {
+            var k = st.start - 1;
+            while (k > 0 && st.text[k] === 'を') k--;          // を is never first: the character before it comes along
+            if (st.text[k] !== 'を' && charKind(st.text[k]) !== 'other') st.start = k;
+        }
         if (which === 'trim-left' && st.end - st.start > 1) st.start++;
         if (which === 'trim-right' && st.end - st.start > 1) st.end--;
         if (which === 'grow-right' && st.end < st.text.length && charKind(st.text[st.end]) !== 'other') st.end++;
@@ -15529,7 +15541,7 @@
         while (st < en && /[\s　、。「」『』（）・]/.test(collected.text[st])) st++;
         while (en > st && /[\s　、。「」『』（）・]/.test(collected.text[en - 1])) en--;
         if (en <= st || en - st > 30) return;
-        if (!moved) { var nb = notLoneWo(collected, { start: st, end: en }, e.clientX, e.clientY); st = nb.start; en = nb.end; }      // a double-click on を
+        var nb = notLoneWo(collected, { start: st, end: en }, e.clientX, e.clientY); st = nb.start; en = nb.end;      // を is not first
         suppressClickUntil = Date.now() + 400;          // the click that ends the drag doesn't also answer or open a popup
         var inReader = !!block.closest('#ar-view');
         setTimeout(function() {
