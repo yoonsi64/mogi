@@ -14508,21 +14508,99 @@
         return 'other';
     }
 
-    // Word boundaries around index: Intl.Segmenter when available, otherwise runs of the same script
+    // ---- The app's own words (SEG_SRC, window.MogiSeg): every sentence of the questions, passages and reader was cut into
+    // words beforehand with a Japanese analyser, an inflected word kept whole (築いた, 否めない, 洗って). The file holds the
+    // words and, for the clauses the cutter below would cut differently, the right cut, so the app's text is cut exactly
+    // as the analyser cut it; other text is cut from the same words. Loaded a few seconds after the app starts.
+    var SEG_SRC = 'wordseg.bd5ebcae.js', segLoading = false, mogiSeg = null;
+    function segLoad() {
+        if (segLoading || window.MogiSeg) return;
+        segLoading = true;
+        var sc = document.createElement('script');
+        sc.src = SEG_SRC;
+        sc.onerror = function() { segLoading = false; if (sc.parentNode) sc.parentNode.removeChild(sc); };
+        document.head.appendChild(sc);
+    }
+    setTimeout(segLoad, 4000);
+    // (SEG: the cutter, the same code the data file was checked with)
+    function mogiSegMake(D) {
+        var LEX = new Map(), EXC = new Map(), LEM = new Map(), maxLen = 0, UNK = 30;
+        D.w.forEach(function(g, k) {
+            if (!g) return;
+            var cost = -Math.log(Math.pow(2, k) * 1.4 / D.n);
+            g.split(' ').forEach(function(w) {
+                var at = w.indexOf('/');
+                if (at > 0) { var m = /^(\d+)(.*)$/.exec(w.slice(at + 1)); w = w.slice(0, at); if (m) LEM.set(w, w.slice(0, w.length - +m[1]) + m[2]); }
+                LEX.set(w, cost); if (w.length > maxLen) maxLen = w.length;
+            });
+        });
+        if (maxLen > 24) maxLen = 24;
+        if (D.x) D.x.split(' ').forEach(function(e) { EXC.set(e.split('|').join(''), e); });
+        function cut(s) {
+            var e = EXC.get(s);
+            if (e) { var we = e.split('|'); return { w: we, known: we.map(function() { return true; }) }; }
+            var n = s.length, best = new Float64Array(n + 1), back = new Int32Array(n + 1), i, j;
+            for (i = 1; i <= n; i++) {
+                best[i] = best[i - 1] + UNK; back[i] = i - 1;
+                for (j = Math.max(0, i - maxLen); j < i; j++) {
+                    var c = LEX.get(s.slice(j, i));
+                    if (c !== undefined && best[j] + c < best[i]) { best[i] = best[j] + c; back[i] = j; }
+                }
+            }
+            var out = [];
+            for (i = n; i > 0; i = back[i]) out.push(s.slice(back[i], i));
+            out.reverse();
+            return { w: out, known: out.map(function(w) { return LEX.has(w); }) };
+        }
+        return { cut: cut, size: LEX.size, lemma: function(w) { return LEM.get(w) || null; } };
+    }
+    // the listed word at idx: { start, end, lone: a single kanji beside another kanji }, or null when the data is not in
+    // yet or the character is in no listed word (a word the app's text never uses)
+    function segBoundsAt(text, idx) {
+        if (!window.MogiSeg) { segLoad(); return null; }
+        if (!mogiSeg) { try { mogiSeg = mogiSegMake(window.MogiSeg); } catch (e) { return null; } }
+        var a = idx, b = idx + 1;
+        while (a > 0 && charKind(text[a - 1]) !== 'other') a--;
+        while (b < text.length && charKind(text[b]) !== 'other') b++;
+        if (b - a > 600) return null;
+        var r = mogiSeg.cut(text.slice(a, b)), p = a;
+        for (var i = 0; i < r.w.length; i++) {
+            var e = p + r.w[i].length;
+            if (idx < e) {
+                if (!r.known[i]) return null;
+                return { start: p, end: e, lone: e - p === 1 && charKind(text[p]) === 'kanji' &&
+                    ((p > a && charKind(text[p - 1]) === 'kanji') || (e < b && charKind(text[e]) === 'kanji')) };
+            }
+            p = e;
+        }
+        return null;
+    }
+    // an inflected word's dictionary form, as the analyser gave it (思って → 思う), or null
+    function segLemma(w) {
+        if (!window.MogiSeg) return null;
+        if (!mogiSeg) { try { mogiSeg = mogiSegMake(window.MogiSeg); } catch (e) { return null; } }
+        return mogiSeg.lemma(w);
+    }
+    // Word boundaries around index: the app's own words (above) first; then Intl.Segmenter when available, otherwise runs of
+    // the same script. A single kanji beside another kanji (可能|性) gives way to the browser's longer word (可能性).
     function wordBoundsAt(text, idx) {
         if (idx < 0 || idx >= text.length || charKind(text[idx]) === 'other') return null;
+        var own = segBoundsAt(text, idx);
+        if (own && !own.lone) return { start: own.start, end: own.end };
         if (window.Intl && Intl.Segmenter) {
             try {
                 var segs = Array.from(new Intl.Segmenter('ja', { granularity: 'word' }).segment(text));
                 for (var i = 0; i < segs.length; i++) {
                     var sg = segs[i];
                     if (idx >= sg.index && idx < sg.index + sg.segment.length) {
+                        if (own) return sg.isWordLike !== false && sg.segment.length > 1 ? { start: sg.index, end: sg.index + sg.segment.length } : { start: own.start, end: own.end };
                         if (sg.isWordLike === false) return null;
                         return { start: sg.index, end: sg.index + sg.segment.length };
                     }
                 }
             } catch (e) { /* fall through to the simple rule */ }
         }
+        if (own) return { start: own.start, end: own.end };
         var kind = charKind(text[idx]), start = idx, end = idx + 1;
         while (start > 0 && charKind(text[start - 1]) === kind) start--;
         while (end < text.length && charKind(text[end]) === kind) end++;
@@ -14673,7 +14751,7 @@
         var meaningEl = document.getElementById('word-sheet-meaning');
         meaningEl.value = existing && existing.meaning ? existing.meaning : lookUpMeaning(word);
         if (!existing) {
-            var plain = (parseBracketFurigana(word) || { word: word }).word, dForm = dictionaryForm(plain);
+            var plain = (parseBracketFurigana(word) || { word: word }).word, lem = segLemma(plain), dForm = lem ? { form: lem } : dictionaryForm(plain);
             if (dForm) meaningEl.value = dForm.form + '\n' + (meaningEl.value || lookUpMeaning(dForm.form));
             meaningEl.value = meaningEl.value.replace(/\n$/, '');
         }
@@ -15541,6 +15619,10 @@
         while (st < en && /[\s　、。「」『』（）・]/.test(collected.text[st])) st++;
         while (en > st && /[\s　、。「」『』（）・]/.test(collected.text[en - 1])) en--;
         if (en <= st || en - st > 30) return;
+        if (!moved) {                                   // a double-click picks the same word a long press would
+            var wb = wordBoundsAt(collected.text, charIndexAtPoint(collected, e.clientX, e.clientY, false));
+            if (wb) { st = wb.start; en = wb.end; }
+        }
         var nb = notLoneWo(collected, { start: st, end: en }, e.clientX, e.clientY); st = nb.start; en = nb.end;      // を is not first
         suppressClickUntil = Date.now() + 400;          // the click that ends the drag doesn't also answer or open a popup
         var inReader = !!block.closest('#ar-view');
