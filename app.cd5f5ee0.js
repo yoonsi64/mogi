@@ -19704,7 +19704,7 @@
     // Progress per character and per word, in HJ.store (in backups like every jlpt* key):
     // { c: { 天: rec }, w: { '천지:天地': rec } }, rec = { l: level 0..11, s: 1/0 the last verdict, ok, ng: counts, t, fx: 1 when 판정 고치기 set it }.
     var HJ = {
-        id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.9754d4a8.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
+        id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.ac431c2f.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
         // 筆順 diagrams with each stroke's own outline (楷書: AnimCJK, Make Me a Hanzi); 設定 chooses these or the drawn line diagram
         fonts: { kai: { glob: 'MogiHanjaKai', files: ["hanjakai0.2373f4c9.js", "hanjakai1.efb4278e.js", "hanjakai2.67320898.js", "hanjakai3.94e00c17.js", "hanjakai4.2a8a724a.js", "hanjakai5.8f928215.js", "hanjakai6.bb64e7ab.js", "hanjakai7.fa0854e5.js", "hanjakai8.611611b8.js", "hanjakai9.a618472c.js", "hanjakai10.d4c1fd11.js", "hanjakai11.c249be8c.js"] } },
         lv: ['8級', '7級Ⅱ', '7級', '6級Ⅱ', '6級', '5級Ⅱ', '5級', '4級Ⅱ', '4級', '3級Ⅱ', '3級', '2級'],
@@ -19730,7 +19730,8 @@
             noteSame: '{c}도 訓音이 「{h}」이므로 正答으로 處理했습니다(出題 漢字는 {a}).',
             noteWord: '{c}: 소리가 같은 다른 單語입니다.',
             strokeUnit: '劃', orderAria: '「{c}」 筆順 ({n}劃)',
-            list: '{lv} 漢字 目錄 ({n}字)', listHint: '漢字를 누르면 筆順이 나옵니다.', toList: '目錄'
+            list: '{lv} 漢字 目錄 ({n}字)', listHint: '漢字를 누르면 筆順이 나옵니다.', toList: '目錄',
+            sortBase: '基本順', sortRad: '部首順', rad: '部首'
         },
         // the prompt: a character's 훈음, or a word in 한글 with its meaning
         prompt: function(it, small) {
@@ -19978,9 +19979,22 @@
             hjListRender();
         });
     }
-    function hjListChars(lv) { return hjItems().c.filter(function(x) { return x.l === lv; }); }
+    // the list's order: the data's (基本順), or by 部首 in 康熙 order and, within one 部首, by stroke count (部首順; data with rad)
+    function hjListSort() { var D = hjData(); return D && D.rad && getSetting('hanjaListSort', 'b') === 'r' ? 'r' : 'b'; }
+    function hjListChars(lv) {
+        var sort = hjListSort(), key = lv + sort;
+        if (hj && hj.cache && hj.cache.key === key) return hj.cache.list;
+        var list = hjItems().c.filter(function(x) { return x.l === lv; });
+        if (sort === 'r') {
+            var D = hjData(), R = hjRec();
+            list = list.map(function(x, i) { var s = R && R.strokes(x.a); return { x: x, i: i, r: D.rads.indexOf(x.rad), n: s ? s.length : 99 }; })
+                .sort(function(a, b) { return a.r - b.r || a.n - b.n || a.i - b.i; }).map(function(o) { return o.x; });
+        }
+        if (hj) hj.cache = { key: key, list: list };
+        return list;
+    }
     function hjListRender() {
-        var t = HJ.t, v = document.getElementById('hj-view'), body = v.querySelector('.hj-body'), list = hjListChars(hj.lv);
+        var t = HJ.t, v = document.getElementById('hj-view'), body = v.querySelector('.hj-body'), list = hjListChars(hj.lv), D = hjData(), sort = hjListSort();
         hj.sel = null;
         body.className = 'rp-body hj-body hj-list';
         v.querySelector('.hj-status').textContent = HJ.lv[hj.lv] + ' · ' + list.length + t.chars;
@@ -19988,14 +20002,26 @@
         body.innerHTML = '<div class="hj-ls-lv" role="group">' + HJ.lv.map(function(n, i) {
                 return '<button type="button" data-lv="' + i + '" aria-pressed="' + (i === hj.lv) + '">' + n + '</button>';
             }).join('') + '</div>' +
-            '<p class="hj-ls-hint">' + t.listHint + '</p>' +
-            '<div class="hj-ls-grid">' + list.map(function(x, i) {
-                return '<button type="button" class="hj-ls-c" data-i="' + i + '"><b class="hj-han">' + escapeHtml(x.a) + '</b><span>' + escapeHtml(hjHun(x.hun)) + '</span></button>';
-            }).join('') + '</div>';
+            '<div class="hj-ls-bar"><p class="hj-ls-hint">' + t.listHint + '</p>' +
+                (D.rad && t.sortRad ? '<div class="hj-seg hj-ls-sort" role="group">' + [['b', t.sortBase], ['r', t.sortRad]].map(function(o) {
+                    return '<button type="button" data-v="' + o[0] + '" aria-pressed="' + (sort === o[0]) + '">' + o[1] + '</button>';
+                }).join('') + '</div>' : '') + '</div>' +
+            '<div class="hj-ls-all' + (sort === 'r' ? ' rad' : '') + '">' + (sort === 'r' ? '' : '<div class="hj-ls-grid">') + list.map(function(x, i) {
+                var head = '';
+                if (sort === 'r' && (!i || list[i - 1].rad !== x.rad)) {            // a new 部首: its heading (部首, its strokes, how many characters)
+                    var k = 0; while (i + k < list.length && list[i + k].rad === x.rad) k++;
+                    head = (i ? '</div></div>' : '') + '<div class="hj-ls-g"><h4 class="hj-ls-rad"><b class="hj-han">' + escapeHtml(x.rad) + '</b><span>' +
+                        parseInt(D.radn.charAt(D.rads.indexOf(x.rad)), 36) + t.strokeUnit + ' · ' + k + t.chars + '</span></h4><div class="hj-ls-grid">';
+                }
+                return head + '<button type="button" class="hj-ls-c" data-i="' + i + '"><b class="hj-han">' + escapeHtml(x.a) + '</b><span>' + escapeHtml(hjHun(x.hun)) + '</span></button>';
+            }).join('') + (sort === 'r' && list.length ? '</div></div></div>' : '</div></div>');
+        body.querySelectorAll('.hj-ls-sort button').forEach(function(b) {
+            b.addEventListener('click', function() { setSetting('hanjaListSort', b.dataset.v); hj.top = 0; hjListRender(); });
+        });
         body.querySelectorAll('.hj-ls-lv button').forEach(function(b) {
             b.addEventListener('click', function() { hj.lv = +b.dataset.lv; hj.top = 0; hjListRender(); });
         });
-        body.querySelector('.hj-ls-grid').addEventListener('click', function(e) {
+        body.querySelector('.hj-ls-all').addEventListener('click', function(e) {
             var b = e.target.closest ? e.target.closest('.hj-ls-c') : null;
             if (!b) return;
             hj.top = body.scrollTop;
@@ -20013,7 +20039,8 @@
         hj.sel = i;
         body.className = 'rp-body hj-body hj-list hj-ld';
         v.querySelector('.hj-status').textContent = HJ.lv[hj.lv] + ' · ' + (i + 1) + ' / ' + list.length;
-        body.innerHTML = '<div class="hj-ld-in"><div class="hj-ld-top">' + hjHan(x.a) + '<div class="hj-ld-hun">' + escapeHtml(hjHun(x.hun)) + '</div></div>' +
+        body.innerHTML = '<div class="hj-ld-in"><div class="hj-ld-top">' + hjHan(x.a) + '<div class="hj-ld-hun">' + escapeHtml(hjHun(x.hun)) + '</div>' +
+            (x.rad && t.rad ? '<div class="hj-ld-rad">' + t.rad + ' <b class="hj-han">' + escapeHtml(x.rad) + '</b></div>' : '') + '</div>' +
             '<div class="kp-order"><div class="kp-order-head"><span class="kk-lab">' + t.order + '</span><button type="button" class="kp-replay" id="hj-ld-replay">' + t.replay + '</button></div>' +
                 '<div class="kp-order-row"><div class="kp-order-cell" data-c="' + escapeHtml(x.a) + '"></div></div></div></div>';
         foot.innerHTML = '<button type="button" id="hj-ld-prev"' + (i ? '' : ' disabled') + '>' + t.prev + '</button>' +
@@ -20036,7 +20063,7 @@
         for (i = 0; i < D.n; i++) {
             var c = set[i];
             at[c] = i;
-            chars.push({ k: 'c', id: c, a: c, l: parseInt(D.lv.charAt(i), 16), hun: D.hun[i] });
+            chars.push({ k: 'c', id: c, a: c, l: parseInt(D.lv.charAt(i), 16), hun: D.hun[i], rad: D.rad ? D.rad.charAt(i) : '' });
         }
         var words = D.words.map(function(w) {
             var l = 0;
