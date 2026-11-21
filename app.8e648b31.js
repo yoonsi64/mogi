@@ -14531,6 +14531,35 @@
         return { start: start, end: end };
     }
 
+    // を is never the word picked: when the finger (or a double-click) lands on a lone を, the word before it or the one
+    // after it is taken, whichever is nearer the point; を stays only when it has no word on either side.
+    function charRectAt(collected, i) {
+        for (var p = collected.parts.length - 1; p >= 0; p--) {
+            var part = collected.parts[p];
+            if (i < part.start || i >= part.start + part.node.data.length) continue;
+            var r = document.createRange();
+            r.setStart(part.node, i - part.start); r.setEnd(part.node, i - part.start + 1);
+            var rc = r.getClientRects();
+            return rc.length ? rc[0] : null;
+        }
+        return null;
+    }
+    function notLoneWo(collected, b, x, y) {
+        var text = collected.text;
+        if (!b || text.slice(b.start, b.end) !== 'を') return b;
+        var prev = b.start > 0 ? wordBoundsAt(text, b.start - 1) : null, next = b.end < text.length ? wordBoundsAt(text, b.end) : null;
+        if (prev && text.slice(prev.start, prev.end) === 'を') prev = null;
+        if (next && text.slice(next.start, next.end) === 'を') next = null;
+        if (!prev || !next) return prev || next || b;
+        var dist = function(i) {
+            var rc = charRectAt(collected, i);
+            if (!rc) return Infinity;
+            var dx = Math.max(rc.left - x, 0, x - rc.right), dy = Math.max(rc.top - y, 0, y - rc.bottom);
+            return dx * dx + dy * dy;
+        };
+        return dist(prev.end - 1) < dist(next.start) ? prev : next;
+    }
+
     function contextAround(text, start, end) {
         var a = start, b = end;
         while (a > 0 && !/[。！？\n]/.test(text[a - 1])) a--;
@@ -15423,7 +15452,7 @@
         if (!collected.text) return false;
         // On buttons and word pieces, pressing anywhere on them picks the nearest word
         var idx = charIndexAtPoint(collected, x, y, block.matches('.option-btn, .drag-item, .inline-slot'));
-        var bounds = wordBoundsAt(collected.text, idx);
+        var bounds = notLoneWo(collected, wordBoundsAt(collected.text, idx), x, y);
         if (!bounds) return false;
         if (navigator.vibrate) { try { navigator.vibrate(15); } catch (e) {} }
         var inReader = !!block.closest('#ar-view');
@@ -15500,6 +15529,7 @@
         while (st < en && /[\s　、。「」『』（）・]/.test(collected.text[st])) st++;
         while (en > st && /[\s　、。「」『』（）・]/.test(collected.text[en - 1])) en--;
         if (en <= st || en - st > 30) return;
+        if (!moved) { var nb = notLoneWo(collected, { start: st, end: en }, e.clientX, e.clientY); st = nb.start; en = nb.end; }      // a double-click on を
         suppressClickUntil = Date.now() + 400;          // the click that ends the drag doesn't also answer or open a popup
         var inReader = !!block.closest('#ar-view');
         setTimeout(function() {
