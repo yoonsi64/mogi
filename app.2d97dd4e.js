@@ -19790,6 +19790,16 @@
             document.head.appendChild(s);
         });
     }
+    // 楷書 is chosen and this character's level file has not arrived yet (nor failed): its diagram waits for it, so the
+    // line diagram never shows first and then swaps
+    function hjFontPending(c) {
+        var fs = hjFontSet(), D = hjData();
+        if (!fs || !D || hjFontGet(c)) return false;
+        var i = hjItems().at[c];
+        if (i === undefined) return false;
+        var s = (fs.st || {})[parseInt(D.lv.charAt(i), 16)];
+        return s !== 1 && s !== -1;
+    }
     var hjStore = loadJSON(HJ.store, {});
     if (!hjStore || typeof hjStore !== 'object') hjStore = {};
     if (!hjStore.c || typeof hjStore.c !== 'object') hjStore.c = {};
@@ -19932,14 +19942,21 @@
         return HJ_ORDER_LAB;
     }
     // the 筆順 diagram of each cell (data-c): 楷書 where 設定 asks for it and the character has outlines, else the line diagram
+    // Returns true when a cell is still waiting for its 楷書 file (an empty box with the caption): fill again when it is in.
     function hjOrderFill(cells) {
-        var lab = hjOrderLab();
+        var lab = hjOrderLab(), wait = false;
         cells.forEach(function(cell) {
             var c = cell.dataset.c, f = hjFontGet(c);
             cell.classList.toggle('kp-order-mj', !!hjFontSet());
             var own = hjRec() && hjRec().strokes(c);
-            cell.innerHTML = f && !Array.isArray(f) ? kpadKaiSvg(c, f, lab, own ? own.length : 0) : kpadOrderSvg(c, hjRec(), lab);
+            if (f && !Array.isArray(f)) cell.innerHTML = kpadKaiSvg(c, f, lab, own ? own.length : 0);
+            else if (own && hjFontPending(c)) {
+                wait = true;
+                cell.innerHTML = '<svg class="kp-order-svg kp-order-wait" viewBox="0 0 109 109" aria-hidden="true"></svg>' +
+                    '<span class="kp-order-cap"><b class="' + lab.cls + '">' + escapeHtml(c) + '</b>' + own.length + lab.unit + '</span>';
+            } else cell.innerHTML = kpadOrderSvg(c, hjRec(), lab);
         });
+        return wait;
     }
     function hjListOpen() { return !!(hjOpen() && hj && hj.list); }
     function hjListDetail() { return hjListOpen() && hj.sel !== null; }
@@ -19985,6 +20002,7 @@
             hjListShow(+b.dataset.i);
         });
         body.scrollTop = hj.top;
+        hjFontNeed(list.map(function(x) { return x.a; }));
         var on = body.querySelector('.hj-ls-lv button[aria-pressed="true"]'), bar = body.querySelector('.hj-ls-lv');
         if (on && bar) bar.scrollLeft = Math.max(0, on.offsetLeft - (bar.clientWidth - on.offsetWidth) / 2);
     }
@@ -20001,9 +20019,9 @@
         foot.innerHTML = '<button type="button" id="hj-ld-prev"' + (i ? '' : ' disabled') + '>' + t.prev + '</button>' +
             '<button type="button" id="hj-ld-list">' + t.toList + '</button>' +
             '<button type="button" id="hj-ld-next"' + (i + 1 < list.length ? '' : ' disabled') + '>' + t.next + '</button>';
-        var fill = function() { hjOrderFill(body.querySelectorAll('.kp-order-cell')); };
-        fill();
-        hjFontNeed([x.a], function(got) { if (got && body.isConnected && hj === me && hj.sel === i) fill(); });
+        var fill = function() { return hjOrderFill(body.querySelectorAll('.kp-order-cell')); };
+        var wait = fill();
+        hjFontNeed([x.a], function() { if (wait && body.isConnected && hj === me && hj.sel === i) fill(); });
         body.scrollTop = 0;
         document.getElementById('hj-ld-replay').addEventListener('click', fill);
         document.getElementById('hj-ld-prev').addEventListener('click', function() { hjListShow(i - 1); });
@@ -20316,9 +20334,9 @@
             if (m.tri && !m.v && m.o) kpadMarks(cv, bx, m.o[bi]);
             if (m.w && m.w[bi] && !m.v) kpadWhyMarks(cv, bx, m.w[bi]);
         });
-        var fill = function() { hjOrderFill(body.querySelectorAll('#hj-order-row .kp-order-cell')); };
-        fill();
-        hjFontNeed(ans, function(got) { if (got && body.isConnected && hj && hj.mark === m) fill(); });
+        var fill = function() { return hjOrderFill(body.querySelectorAll('#hj-order-row .kp-order-cell')); };
+        var wait = fill();
+        hjFontNeed(ans, function() { if (wait && body.isConnected && hj && hj.mark === m) fill(); });
         var fitWas = body.className;
         hjFitResult(body);
         if (body.className !== fitWas) body.querySelectorAll('.kp-cell canvas').forEach(function(cv) {
