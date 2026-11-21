@@ -19437,7 +19437,9 @@
         });
         t = t.replace(/(<br\s*\/?>\s*)+/gi, '⟦P⟧');
         t = t.replace(/<span class="blank-number[^"]*">\d+(-[ab])?<\/span>/g, '');
-        t = t.replace(/<[^>]*>?/gm, '');
+        // tags go, whole: a quoted attribute may itself hold tags (a filled-in answer: data-word="<ruby>否<rt>いな</rt></ruby>めない"),
+        // and stopping at its first > left the answer's text behind, to be read a second time
+        t = t.replace(/<(?:"[^"]*"|'[^']*'|[^>"'])*>?/g, '');
         t = ttsKanaAll(t);
         t = t.replace(/&nbsp;/g, ' ').replace(/\[\s*\]|\(\s*\)/g, '').replace(/\s+/g, ' ');
         // Web and e-mail addresses are not read out: letter by letter they are long and meaningless to hear
