@@ -19704,7 +19704,7 @@
     // Progress per character and per word, in HJ.store (in backups like every jlpt* key):
     // { c: { 天: rec }, w: { '천지:天地': rec } }, rec = { l: level 0..11, s: 1/0 the last verdict, ok, ng: counts, t, fx: 1 when 판정 고치기 set it }.
     var HJ = {
-        id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.1283f93a.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
+        id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.cabdf141.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
         // 筆順 diagrams with each stroke's own outline (楷書: AnimCJK, Make Me a Hanzi); 設定 chooses these or the drawn line diagram
         fonts: { kai: { glob: 'MogiHanjaKai', files: ["hanjakai0.2373f4c9.js", "hanjakai1.efb4278e.js", "hanjakai2.67320898.js", "hanjakai3.94e00c17.js", "hanjakai4.2a8a724a.js", "hanjakai5.8f928215.js", "hanjakai6.bb64e7ab.js", "hanjakai7.fa0854e5.js", "hanjakai8.611611b8.js", "hanjakai9.a618472c.js", "hanjakai10.d4c1fd11.js", "hanjakai11.c249be8c.js"] } },
         lv: ['8級', '7級Ⅱ', '7級', '6級Ⅱ', '6級', '5級Ⅱ', '5級', '4級Ⅱ', '4級', '3級Ⅱ', '3級', '2級'],
