@@ -19704,7 +19704,7 @@
     // Progress per character and per word, in HJ.store (in backups like every jlpt* key):
     // { c: { 天: rec }, w: { '천지:天地': rec } }, rec = { l: level 0..11, s: 1/0 the last verdict, ok, ng: counts, t, fx: 1 when 판정 고치기 set it }.
     var HJ = {
-        id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.ac431c2f.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
+        id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.1283f93a.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
         // 筆順 diagrams with each stroke's own outline (楷書: AnimCJK, Make Me a Hanzi); 設定 chooses these or the drawn line diagram
         fonts: { kai: { glob: 'MogiHanjaKai', files: ["hanjakai0.2373f4c9.js", "hanjakai1.efb4278e.js", "hanjakai2.67320898.js", "hanjakai3.94e00c17.js", "hanjakai4.2a8a724a.js", "hanjakai5.8f928215.js", "hanjakai6.bb64e7ab.js", "hanjakai7.fa0854e5.js", "hanjakai8.611611b8.js", "hanjakai9.a618472c.js", "hanjakai10.d4c1fd11.js", "hanjakai11.c249be8c.js"] } },
         lv: ['8級', '7級Ⅱ', '7級', '6級Ⅱ', '6級', '5級Ⅱ', '5級', '4級Ⅱ', '4級', '3級Ⅱ', '3級', '2級'],
@@ -19980,6 +19980,8 @@
         });
     }
     // the list's order: the data's (基本順), or by 部首 in 康熙 order and, within one 部首, by stroke count (部首順; data with rad)
+    // a 部首 as the book prints it (辶 for 辵), where the data names another form for it
+    function hjRadShow(r) { var D = hjData(); return D && D.radshow && D.radshow[r] || r; }
     function hjListSort() { var D = hjData(); return D && D.rad && getSetting('hanjaListSort', 'b') === 'r' ? 'r' : 'b'; }
     function hjListChars(lv) {
         var sort = hjListSort(), key = lv + sort;
@@ -20010,7 +20012,7 @@
                 var head = '';
                 if (sort === 'r' && (!i || list[i - 1].rad !== x.rad)) {            // a new 部首: its heading (部首, its strokes, how many characters)
                     var k = 0; while (i + k < list.length && list[i + k].rad === x.rad) k++;
-                    head = (i ? '</div></div>' : '') + '<div class="hj-ls-g"><h4 class="hj-ls-rad"><b class="hj-han">' + escapeHtml(x.rad) + '</b><span>' +
+                    head = (i ? '</div></div>' : '') + '<div class="hj-ls-g"><h4 class="hj-ls-rad"><b class="hj-han">' + escapeHtml(hjRadShow(x.rad)) + '</b><span>' +
                         parseInt(D.radn.charAt(D.rads.indexOf(x.rad)), 36) + t.strokeUnit + ' · ' + k + t.chars + '</span></h4><div class="hj-ls-grid">';
                 }
                 return head + '<button type="button" class="hj-ls-c" data-i="' + i + '"><b class="hj-han">' + escapeHtml(x.a) + '</b><span>' + escapeHtml(hjHun(x.hun)) + '</span></button>';
@@ -20040,7 +20042,7 @@
         body.className = 'rp-body hj-body hj-list hj-ld';
         v.querySelector('.hj-status').textContent = HJ.lv[hj.lv] + ' · ' + (i + 1) + ' / ' + list.length;
         body.innerHTML = '<div class="hj-ld-in"><div class="hj-ld-top">' + hjHan(x.a) + '<div class="hj-ld-hun">' + escapeHtml(hjHun(x.hun)) + '</div>' +
-            (x.rad && t.rad ? '<div class="hj-ld-rad">' + t.rad + ' <b class="hj-han">' + escapeHtml(x.rad) + '</b></div>' : '') + '</div>' +
+            (x.rad && t.rad ? '<div class="hj-ld-rad">' + t.rad + ' <b class="hj-han">' + escapeHtml(hjRadShow(x.rad)) + '</b></div>' : '') + '</div>' +
             '<div class="kp-order"><div class="kp-order-head"><span class="kk-lab">' + t.order + '</span><button type="button" class="kp-replay" id="hj-ld-replay">' + t.replay + '</button></div>' +
                 '<div class="kp-order-row"><div class="kp-order-cell" data-c="' + escapeHtml(x.a) + '"></div></div></div></div>';
         foot.innerHTML = '<button type="button" id="hj-ld-prev"' + (i ? '' : ' disabled') + '>' + t.prev + '</button>' +
