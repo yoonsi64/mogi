@@ -19704,7 +19704,7 @@
     // Progress per character and per word, in HJ.store (in backups like every jlpt* key):
     // { c: { 天: rec }, w: { '천지:天地': rec } }, rec = { l: level 0..11, s: 1/0 the last verdict, ok, ng: counts, t, fx: 1 when 판정 고치기 set it }.
     var HJ = {
-        id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.1448471e.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
+        id: 'hanja-kr', store: 'jlptHanja', opt: 'hanjaOpt', src: 'hanjastrokes.1a0b52ba.js', rec: 'MogiHanja', data: 'MogiHanjaData', lang: 'ko', size: 20,
         // 筆順 diagrams with each stroke's own outline (楷書: AnimCJK, Make Me a Hanzi); 設定 chooses these or the drawn line diagram
         fonts: { kai: { glob: 'MogiHanjaKai', files: ["hanjakai0.2373f4c9.js", "hanjakai1.efb4278e.js", "hanjakai2.67320898.js", "hanjakai3.94e00c17.js", "hanjakai4.2a8a724a.js", "hanjakai5.8f928215.js", "hanjakai6.bb64e7ab.js", "hanjakai7.fa0854e5.js", "hanjakai8.7c2107e3.js", "hanjakai9.a618472c.js", "hanjakai10.d4c1fd11.js", "hanjakai11.c249be8c.js"] } },
         lv: ['8級', '7級Ⅱ', '7級', '6級Ⅱ', '6級', '5級Ⅱ', '5級', '4級Ⅱ', '4級', '3級Ⅱ', '3級', '2級'],
@@ -19731,7 +19731,9 @@
             noteWord: '{c}: 소리가 같은 다른 單語입니다.',
             strokeUnit: '劃', orderAria: '「{c}」 筆順 ({n}劃)',
             list: '{lv} 漢字 目錄 ({n}字)', listHint: '漢字를 누르면 筆順이 나옵니다.', toList: '目錄',
-            sortBase: '基本順', sortRad: '部首順', rad: '部首'
+            sortBase: '基本順', sortRad: '部首順', rad: '部首',
+            all: '全體', sortSnd: '長短音順', snd: ['長音 ː', '長·短音 ‣', '短音'],
+            nm: '名', nmFull: '人名·地名用 漢字', nmHint: '名: 人名·地名用 漢字 (2級 {n}字)'
         },
         // the prompt: a character's 훈음, or a word in 한글 with its meaning
         prompt: function(it, small) {
@@ -19978,7 +19980,7 @@
         body.className = 'rp-body hj-body hj-list';
         body.innerHTML = '<div class="hj-loading">' + HJ.t.loading + '</div>';
         v.querySelector('.hj-foot').innerHTML = '';
-        v.querySelector('.hj-status').textContent = HJ.lv[hj.lv];
+        v.querySelector('.hj-status').textContent = hjListLvName();
         var me = hj;
         hjLoad(function(ok) {
             if (hj !== me) return;
@@ -19986,44 +19988,64 @@
             hjListRender();
         });
     }
-    // the list's order: the data's (基本順), or by 部首 in 康熙 order and, within one 部首, by stroke count (部首順; data with rad)
+    // The list: one level or every level (hj.lv === -1, 全體), in one of three orders (設定 hanjaListSort):
+    // 'b' 基本順 the data's order (全體: a heading per level); 'r' 部首順 by 部首 in 康熙 order, within one by stroke count;
+    // 's' 長短音順 長音 (ː), then 長·短音 (‣), then the rest, by the first reading that carries a mark.
     // a 部首 as the book prints it (辶 for 辵), where the data names another form for it
     function hjRadShow(r) { var D = hjData(); return D && D.radshow && D.radshow[r] || r; }
-    function hjListSort() { var D = hjData(); return D && D.rad && getSetting('hanjaListSort', 'b') === 'r' ? 'r' : 'b'; }
+    function hjListSort() { var D = hjData(), v = getSetting('hanjaListSort', 'b'); return v === 'r' && D && D.rad ? 'r' : v === 's' && HJ.t.snd ? 's' : 'b'; }
+    function hjListLvName() { return hj.lv < 0 ? HJ.t.all : HJ.lv[hj.lv]; }
+    // 人名·地名用 漢字 (the data's nm)
+    function hjIsName(c) { var D = hjData(); if (!D || !D.nm) return false; if (!D._nm) { D._nm = {}; Array.from(D.nm).forEach(function(k) { D._nm[k] = 1; }); } return !!D._nm[c]; }
+    function hjSnd(hun) { var m = hun.match(/[ː‣]/); return !m ? 2 : m[0] === 'ː' ? 0 : 1; }
+    // each item of the list: { x: the character's item, g: its group's key }
     function hjListChars(lv) {
         var sort = hjListSort(), key = lv + sort;
         if (hj && hj.cache && hj.cache.key === key) return hj.cache.list;
-        var list = hjItems().c.filter(function(x) { return x.l === lv; });
+        var D = hjData(), R = hjRec();
+        var list = hjItems().c.filter(function(x) { return lv < 0 || x.l === lv; }).map(function(x, i) { return { x: x, i: i, g: lv < 0 ? x.l : 0 }; });
         if (sort === 'r') {
-            var D = hjData(), R = hjRec();
-            list = list.map(function(x, i) { var s = R && R.strokes(x.a); return { x: x, i: i, r: D.rads.indexOf(x.rad), n: s ? s.length : 99 }; })
-                .sort(function(a, b) { return a.r - b.r || a.n - b.n || a.i - b.i; }).map(function(o) { return o.x; });
+            list.forEach(function(o) { var s = R && R.strokes(o.x.a); o.g = D.rads.indexOf(o.x.rad); o.n = s ? s.length : 99; });
+            list.sort(function(a, b) { return a.g - b.g || a.n - b.n || a.i - b.i; });
+        } else if (sort === 's') {
+            list.forEach(function(o) { o.g = hjSnd(o.x.hun); });
+            list.sort(function(a, b) { return a.g - b.g || a.i - b.i; });
         }
         if (hj) hj.cache = { key: key, list: list };
         return list;
     }
     function hjListRender() {
         var t = HJ.t, v = document.getElementById('hj-view'), body = v.querySelector('.hj-body'), list = hjListChars(hj.lv), D = hjData(), sort = hjListSort();
+        var grouped = sort !== 'b' || hj.lv < 0, sorts = [['b', t.sortBase]];
+        var names = !!(D.nm && t.nm) && list.some(function(o) { return hjIsName(o.x.a); });
+        if (D.rad && t.sortRad) sorts.push(['r', t.sortRad]);
+        if (t.snd) sorts.push(['s', t.sortSnd]);
+        var headOf = function(o, k) {            // a group's heading: what it is, and how many characters
+            if (sort === 'r') return '<b class="hj-han">' + escapeHtml(hjRadShow(o.x.rad)) + '</b><span>' + parseInt(D.radn.charAt(o.g), 36) + t.strokeUnit + ' · ' + k + t.chars + '</span>';
+            return '<b>' + (sort === 's' ? t.snd[o.g] : HJ.lv[o.g]) + '</b><span>' + k + t.chars + '</span>';
+        };
         hj.sel = null;
         body.className = 'rp-body hj-body hj-list';
-        v.querySelector('.hj-status').textContent = HJ.lv[hj.lv] + ' · ' + list.length + t.chars;
+        v.querySelector('.hj-status').textContent = hjListLvName() + ' · ' + list.length.toLocaleString() + t.chars;
         v.querySelector('.hj-foot').innerHTML = '';
-        body.innerHTML = '<div class="hj-ls-lv" role="group">' + HJ.lv.map(function(n, i) {
+        body.innerHTML = '<div class="hj-ls-lv" role="group">' + (t.all ? '<button type="button" data-lv="-1" aria-pressed="' + (hj.lv < 0) + '">' + t.all + '</button>' : '') +
+            HJ.lv.map(function(n, i) {
                 return '<button type="button" data-lv="' + i + '" aria-pressed="' + (i === hj.lv) + '">' + n + '</button>';
             }).join('') + '</div>' +
-            '<div class="hj-ls-bar"><p class="hj-ls-hint">' + t.listHint + '</p>' +
-                (D.rad && t.sortRad ? '<div class="hj-seg hj-ls-sort" role="group">' + [['b', t.sortBase], ['r', t.sortRad]].map(function(o) {
+            '<div class="hj-ls-bar"><p class="hj-ls-hint">' + t.listHint + (names && t.nmHint ? '<br><span class="hj-ls-nmk">' + hjFmt(t.nmHint, { n: Array.from(D.nm).length }) + '</span>' : '') + '</p>' +
+                (sorts.length > 1 ? '<div class="hj-seg hj-ls-sort" role="group">' + sorts.map(function(o) {
                     return '<button type="button" data-v="' + o[0] + '" aria-pressed="' + (sort === o[0]) + '">' + o[1] + '</button>';
                 }).join('') + '</div>' : '') + '</div>' +
-            '<div class="hj-ls-all' + (sort === 'r' ? ' rad' : '') + '">' + (sort === 'r' ? '' : '<div class="hj-ls-grid">') + list.map(function(x, i) {
+            '<div class="hj-ls-all' + (sort === 'r' ? ' rad' : grouped ? ' grp' : '') + '">' + (grouped ? '' : '<div class="hj-ls-grid">') + list.map(function(o, i) {
                 var head = '';
-                if (sort === 'r' && (!i || list[i - 1].rad !== x.rad)) {            // a new 部首: its heading (部首, its strokes, how many characters)
-                    var k = 0; while (i + k < list.length && list[i + k].rad === x.rad) k++;
-                    head = (i ? '</div></div>' : '') + '<div class="hj-ls-g"><h4 class="hj-ls-rad"><b class="hj-han">' + escapeHtml(hjRadShow(x.rad)) + '</b><span>' +
-                        parseInt(D.radn.charAt(D.rads.indexOf(x.rad)), 36) + t.strokeUnit + ' · ' + k + t.chars + '</span></h4><div class="hj-ls-grid">';
+                if (grouped && (!i || list[i - 1].g !== o.g)) {
+                    var k = 0; while (i + k < list.length && list[i + k].g === o.g) k++;
+                    head = (i ? '</div></div>' : '') + '<div class="hj-ls-g"><h4 class="hj-ls-rad">' + headOf(o, k) + '</h4><div class="hj-ls-grid">';
                 }
-                return head + '<button type="button" class="hj-ls-c" data-i="' + i + '"><b class="hj-han">' + escapeHtml(x.a) + '</b><span>' + escapeHtml(hjHun(x.hun)) + '</span></button>';
-            }).join('') + (sort === 'r' && list.length ? '</div></div></div>' : '</div></div>');
+                var nm = names && hjIsName(o.x.a);
+                return head + '<button type="button" class="hj-ls-c' + (nm ? ' nm' : '') + '" data-i="' + i + '">' + (nm ? '<i class="hj-ls-nm" title="' + t.nmFull + '">' + t.nm + '</i>' : '') +
+                    '<b class="hj-han">' + escapeHtml(o.x.a) + '</b><span>' + escapeHtml(hjHun(o.x.hun)) + '</span></button>';
+            }).join('') + (grouped && list.length ? '</div></div></div>' : '</div></div>');
         body.querySelectorAll('.hj-ls-sort button').forEach(function(b) {
             b.addEventListener('click', function() { setSetting('hanjaListSort', b.dataset.v); hj.top = 0; hjListRender(); });
         });
@@ -20037,19 +20059,20 @@
             hjListShow(+b.dataset.i);
         });
         body.scrollTop = hj.top;
-        hjFontNeed(list.map(function(x) { return x.a; }));
+        if (hj.lv >= 0) hjFontNeed(list.map(function(o) { return o.x.a; }));      // one level: its 楷書 file now; 全體: when a character is opened
         var on = body.querySelector('.hj-ls-lv button[aria-pressed="true"]'), bar = body.querySelector('.hj-ls-lv');
         if (on && bar) bar.scrollLeft = Math.max(0, on.offsetLeft - (bar.clientWidth - on.offsetWidth) / 2);
     }
     function hjListShow(i) {
         var t = HJ.t, v = document.getElementById('hj-view'), body = v.querySelector('.hj-body'), foot = v.querySelector('.hj-foot'), list = hjListChars(hj.lv);
         i = Math.max(0, Math.min(list.length - 1, i));
-        var x = list[i], me = hj;
+        var x = list[i].x, me = hj;
         hj.sel = i;
         body.className = 'rp-body hj-body hj-list hj-ld';
-        v.querySelector('.hj-status').textContent = HJ.lv[hj.lv] + ' · ' + (i + 1) + ' / ' + list.length;
+        v.querySelector('.hj-status').textContent = (hj.lv < 0 ? HJ.lv[x.l] : hjListLvName()) + ' · ' + (i + 1).toLocaleString() + ' / ' + list.length.toLocaleString();
         body.innerHTML = '<div class="hj-ld-in"><div class="hj-ld-top">' + hjHan(x.a) + '<div class="hj-ld-hun">' + escapeHtml(hjHun(x.hun)) + '</div>' +
-            (x.rad && t.rad ? '<div class="hj-ld-rad">' + t.rad + ' <b class="hj-han">' + escapeHtml(hjRadShow(x.rad)) + '</b></div>' : '') + '</div>' +
+            (x.rad && t.rad ? '<div class="hj-ld-rad">' + t.rad + ' <b class="hj-han">' + escapeHtml(hjRadShow(x.rad)) + '</b></div>' : '') +
+            (t.nmFull && hjIsName(x.a) ? '<div class="hj-ld-nm">' + t.nmFull + '</div>' : '') + '</div>' +
             '<div class="kp-order"><div class="kp-order-head"><span class="kk-lab">' + t.order + '</span><button type="button" class="kp-replay" id="hj-ld-replay">' + t.replay + '</button></div>' +
                 '<div class="kp-order-row"><div class="kp-order-cell" data-c="' + escapeHtml(x.a) + '"></div></div></div></div>';
         foot.innerHTML = '<button type="button" id="hj-ld-prev"' + (i ? '' : ' disabled') + '>' + t.prev + '</button>' +
