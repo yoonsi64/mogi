@@ -15270,6 +15270,7 @@
             muts.forEach(function(m) { Array.prototype.forEach.call(m.addedNodes, splitGroupRubyIn); });
         }).observe(document.documentElement, { childList: true, subtree: true });
     }
+    if (document.body) splitGroupRubyIn(document.body);          // and those already on the page
     function rubySegHtml(base, r) {
         var split = base.length > 1 ? rubySplitFor(base, r) : null;
         return '<ruby>' + (split ? split.map(function(x) { return escapeHtml(x[0]) + '<rt>' + escapeHtml(x[1]) + '</rt>'; }).join('')
@@ -31817,6 +31818,7 @@
             var on = !getSetting('arFuri', true);
             setSetting('arFuri', on);
             document.getElementById('ar-view').classList.toggle('ar-nofuri', !on);
+            if (on) splitGroupRubyIn(document.getElementById('ar-view'));          // furigana shown again: fit them (hidden ones were skipped)
             showToast(on ? 'ふりがなを表示' : 'ふりがなを非表示', 1200);
             arRefreshTools();
             if (ar.tab === 'text' && arLayout(advState(ar.id)) === 'h') arPlacePageBadges(document.querySelector('#ar-view .ar-book.ar-h'));
@@ -32625,9 +32627,9 @@
             inner.replace(/([^<]+)<rt>([^<]*)<\/rt>/g, function(mm, a, r) { segs.push([a, r]); });
             if (segs.length === 1) { var sp = awSplitFor(segs[0][0], segs[0][1]); if (sp) segs = Array.from(segs[0][0]).map(function(ch, i) { return [ch, sp[i]]; }); }
             // one kanji, one reading: a ruby per kanji, so each reading sits under its own kanji (a long one widens its kanji a little, as in print)
-            // (one ruby with a reading per kanji, so readings that would run into each other can be joined under the word: 周到 しゅうとう)
-            if (segs.length > 1) return '<ruby class="aw-rb">' + segs.map(function(x) { return x[0] + '<rt>' + x[1] + '</rt>'; }).join('') + '</ruby>';
-            return '<span class="aw-fg">' + segs[0][0] + '<i>' + segs[0][1] + '</i></span>';
+            // (one ruby with a reading per kanji, so readings that would run into each other can be joined under the word: 周到 しゅうとう;
+            // a ruby here too for one kanji, so a long reading follows the same rules as everywhere: 承 うけたまわ)
+            return '<ruby class="aw-rb">' + segs.map(function(x) { return x[0] + '<rt>' + x[1] + '</rt>'; }).join('') + '</ruby>';
         });
     }
     function renderArWords(body, r) {
