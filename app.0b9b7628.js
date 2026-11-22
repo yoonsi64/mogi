@@ -31605,7 +31605,7 @@
 
     // ---------- Home: 上級読解 book cards ----------
     function readingBookCardHtml(b) {
-        var open = libIsOpen(b, null), body = '', n = 0, pctSum = 0, total = 0, lb = b.labels || { q: '問い', kanji: '漢字' };
+        var open = libIsOpen(b, null), body = '', n = 0, added = 0, pctSum = 0, total = 0, lb = b.labels || { q: '問い', kanji: '漢字' };
         b.toc.forEach(function(sec) {
             body += '<div class="toc-head toc-l0">' + escapeHtml(sec.part) + '</div>';
             sec.chapters.forEach(function(ch) {
@@ -31622,6 +31622,7 @@
                     }
                     var p = arProgress(it.id);
                     n++; pctSum += p.pct;
+                    if (!it.kind) added++;          // ふくしゅう and the like are not counted as 課 (45課中45課)
                     body += '<button class="ar-item" data-id="' + it.id + '">' +
                         '<span class="ar-item-main">' + label + '<b>' + escapeHtml(it.title) + '</b><small>' + escapeHtml(it.author) + '</small>' +
                         '<span class="ar-chips"><span class="ar-chip' + (p.read ? ' done' : '') + '" data-t="text" title="本文を開く">' + (p.read ? '通読 ✓' : '未読') + '</span>' +
@@ -31636,7 +31637,7 @@
         return '<section class="lib-card ar-lib' + (open ? ' open' : '') + '" data-lib="' + b.id + '" style="--lib-color:' + b.color + '">' +
             '<button class="lib-head" aria-expanded="' + open + '">' + libCoverHtml(b, '') +
                 '<span class="lib-head-text"><span class="lib-title">' + escapeHtml(b.title) + '</span>' +
-                '<span class="lib-meta">' + escapeHtml(b.publisher) + '・' + total + (b.unit || '編') + '中' + n + (b.unit || '編') + '</span>' +
+                '<span class="lib-meta">' + escapeHtml(b.publisher) + '・' + total + (b.unit || '編') + '中' + added + (b.unit || '編') + '</span>' +
                 '<span class="lib-progress"><span class="lib-progress-track"><i style="width:' + pct + '%"></i></span><span class="lib-progress-num">' + pct + '%</span></span></span>' +
                 '<span class="lib-chevron" aria-hidden="true">›</span></button>' +
             '<div class="lib-body">' + body +
