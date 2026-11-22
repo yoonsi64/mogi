@@ -31595,12 +31595,13 @@
         var kj = arKanjiItems(r), ok = kj.filter(function(x) { return st.kanji[x.key] && st.kanji[x.key].ok; }).length;
         var kwAns = r.kaiwa ? r.kaiwa.answers : [], kwOk = kwAns.filter(function(a, i) { return st.kaiwa[i + 1] === a; }).length;
         // a book without 問い (or without 漢字) is measured only by the parts it has
-        var parts = [st.done.t1 ? 1 : 0];
-        if (qs.length || r.tebiki) parts.push(qs.length ? answered / qs.length : 0);
+        // (and one without 本文, such as 情報検索 or ふくしゅう, by its questions alone)
+        var hasText = !!(r.pages && r.pages.length), parts = hasText ? [st.done.t1 ? 1 : 0] : [];
+        if (qs.length || (r.tebiki && r.tebiki.length)) parts.push(qs.length ? answered / qs.length : 0);
         if (kj.length) parts.push(ok / kj.length);
         if (kwAns.length) parts.push(kwOk / kwAns.length);
-        return { read: !!st.done.t1, answered: answered, qTotal: qs.length, kanjiOk: ok, kanjiTotal: kj.length, kaiwaOk: kwOk, kaiwaTotal: kwAns.length,
-                 pct: Math.round(parts.reduce(function(a, b) { return a + b; }, 0) / parts.length * 100) };
+        return { hasText: hasText, read: !!st.done.t1, answered: answered, qTotal: qs.length, kanjiOk: ok, kanjiTotal: kj.length, kaiwaOk: kwOk, kaiwaTotal: kwAns.length,
+                 pct: parts.length ? Math.round(parts.reduce(function(a, b) { return a + b; }, 0) / parts.length * 100) : 0 };
     }
 
     // ---------- Home: 上級読解 book cards ----------
@@ -31625,7 +31626,7 @@
                     if (!it.kind) added++;          // ふくしゅう and the like are not counted as 課 (45課中45課)
                     body += '<button class="ar-item" data-id="' + it.id + '">' +
                         '<span class="ar-item-main">' + label + '<b>' + escapeHtml(it.title) + '</b><small>' + escapeHtml(it.author) + '</small>' +
-                        '<span class="ar-chips"><span class="ar-chip' + (p.read ? ' done' : '') + '" data-t="text" title="本文を開く">' + (p.read ? '通読 ✓' : '未読') + '</span>' +
+                        '<span class="ar-chips">' + (p.hasText ? '<span class="ar-chip' + (p.read ? ' done' : '') + '" data-t="text" title="本文を開く">' + (p.read ? '通読 ✓' : '未読') + '</span>' : '') +
                         (p.qTotal ? '<span class="ar-chip' + (p.answered === p.qTotal ? ' done' : '') + '" data-t="q" title="' + lb.q + 'を開く">' + lb.q + ' ' + p.answered + '/' + p.qTotal + '</span>' : '') +
                         (p.kanjiTotal ? '<span class="ar-chip' + (p.kanjiOk === p.kanjiTotal ? ' done' : '') + '" data-t="kanji" title="' + lb.kanji + 'を開く">' + lb.kanji + ' ' + p.kanjiOk + '/' + p.kanjiTotal + '</span>' : '') +
                         (p.kaiwaTotal ? '<span class="ar-chip' + (p.kaiwaOk === p.kaiwaTotal ? ' done' : '') + '" data-t="kaiwa" title="会話を開く">会話 ' + p.kaiwaOk + '/' + p.kaiwaTotal + '</span>' : '') + '</span></span>' +
@@ -31688,7 +31689,7 @@
         st.at = Date.now(); saveAdv();
         ar = { id: id, r: READINGS[id], tab: tab || st.tab || 'text' };
         var tabs = ar.r.tabs || AR_TABS;
-        if (!tabs.some(function(t) { return t[0] === ar.tab; })) ar.tab = 'text';
+        if (!tabs.some(function(t) { return t[0] === ar.tab; })) ar.tab = tabs[0][0];          // a reading without 本文 (情報検索, ふくしゅう) opens on its first tab
         document.querySelector('#ar-view .ar-tabs').innerHTML = tabs.map(function(t) { return '<button data-t="' + t[0] + '">' + t[1] + '</button>'; }).join('');
         document.getElementById('ar-view').style.setProperty('--ar-zoom', arZoom());
         document.getElementById('ar-view').classList.add('active');
