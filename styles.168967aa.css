@@ -482,6 +482,26 @@
         html.dark .practice-btn.sub { color: var(--text-main); }
         .review-later { margin: 12px 2px 0; font-size: 0.82rem; color: var(--text-sub); text-align: center; }
         .practice-btn:disabled { background: var(--border-light); color: var(--text-sub); }
+        /* 苦手な文型 (統計): one row per grammar pattern, most missed first; a row opens to the questions missed */
+        .gp-row { border-bottom: 1px solid var(--border-light); }
+        .gp-row:last-child { border-bottom: none; }
+        .gp-row.rest { display: none; }
+        .gp-list.all .gp-row.rest { display: block; }
+        .gp-head { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 2px; background: none; border: none; color: var(--text-main); font: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .gp-rank { flex: none; width: 1.7em; text-align: center; font-size: 0.8rem; color: var(--text-sub); font-variant-numeric: tabular-nums; }
+        .gp-name { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+        .gp-name b { font-size: 0.95rem; line-height: 1.4; word-break: keep-all; overflow-wrap: anywhere; }
+        .gp-gloss { font-size: 0.75rem; color: var(--text-sub); line-height: 1.4; }
+        .gp-num { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .gp-miss { font-size: 0.8rem; }
+        .gp-miss b { color: var(--incorrect-color); font-size: 1.05rem; margin-right: 1px; }
+        .gp-of { font-size: 0.7rem; color: var(--text-sub); }
+        .gp-body { padding: 0 2px 12px calc(1.7em + 12px); }
+        .gp-q { display: flex; gap: 8px; align-items: flex-start; padding: 6px 0; border-top: 1px dashed var(--border-light); font-size: 0.8rem; line-height: 1.5; }
+        .gp-q-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+        .gp-q-where { display: block; font-size: 0.7rem; color: var(--text-sub); }
+        .gp-q-n { flex: none; color: var(--incorrect-color); font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .gp-body .practice-btn { margin-top: 8px; }
         .weak-tag { font-size: 0.65rem; color: var(--incorrect-color); border: 1px solid var(--incorrect-color); padding: 0 4px; margin-left: 4px; font-weight: bold; }
         .mastery-bar { display: flex; height: 16px; border: 1px solid var(--border-light); background: #eee; margin: 8px 0 6px; }
         .mastery-bar div { height: 100%; }

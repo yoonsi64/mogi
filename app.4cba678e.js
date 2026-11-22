@@ -35389,7 +35389,7 @@
     // 統計: the cards in four groups, each under its own heading
     var STATS_GROUPS = [
         ['sg-habit', '今日と習慣', ['今日', '学習日数', '記録']],
-        ['sg-skill', '実力', ['習得状況', '解答範囲', '分野別の正答率', '初回正答率', '正答率の推移']],
+        ['sg-skill', '実力', ['習得状況', '解答範囲', '分野別の正答率', '苦手な文型', '初回正答率', '正答率の推移']],
         ['sg-speed', 'スピード', ['解答スピード', '読解スピード']],
         ['sg-collect', 'コレクション', ['達成バッジ', 'おみくじ']]
     ];
@@ -36406,6 +36406,146 @@
         var padT = setInterval(function() { if (closed) clearInterval(padT); else if (padUp()) { clearInterval(padT); close(); } }, 150);
     }
 
+    // ===== 苦手な文型 (統計) =====
+    // GRAM_SRC (window.MogiGram) says which grammar pattern each 文法 question tests (made from the 解説 and the books' notes);
+    // the card counts your answers by pattern, most missed first. Loaded when 統計 is first opened.
+    var GRAM_SRC = 'grampat.6868e2c7.js', gramLoading = false, gramWaiters = [], gramExtra = {}, GRAM_TOP = 10;
+    function gramLoad(cb) {
+        if (window.MogiGram) { if (cb) cb(); return; }
+        if (cb) gramWaiters.push(cb);
+        if (gramLoading) return;
+        gramLoading = true;
+        var sc = document.createElement('script');
+        var done = function(failed) { gramLoading = false; var w = gramWaiters; gramWaiters = []; w.forEach(function(f) { try { f(failed); } catch (e) {} }); };
+        sc.src = GRAM_SRC;
+        sc.onload = function() { done(false); };
+        sc.onerror = function() { if (sc.parentNode) sc.parentNode.removeChild(sc); done(true); };
+        document.head.appendChild(sc);
+    }
+    function gramStrip(t) { return String(t || '').replace(/<rt>.*?<\/rt>/g, '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim(); }
+    // a pattern as written (〜をよそに, Nをよそに, 名詞＋をよそに) down to its bare words, to find it in the index
+    function gramClean(p) {
+        return p.replace(/[（(][^）)]*[）)]/g, '')
+            .replace(/(名詞|動詞|疑問詞|数量|助数詞|[いなイナ]形容詞)(の)?(辞書形|ます形|て形|た形|ない形|意向形|普通形|語幹)?/g, '')
+            .replace(/辞書形|ます形の語幹|ます形|て形|た形|ない形|意向形|普通形|連用形|可能形/g, '')
+            .replace(/V(る|た|て|ない|ます|よう)?/g, '').replace(/[ABN]/g, '').replace(/[～〜\s　…＋+・\/]/g, '');
+    }
+    function gramIsQ(q) { return !!q && (q.type === 'Grammar' || q.type === 'Composition' || q.type === 'Text Grammar'); }
+    // The pattern one unit (a question, or one blank of 文章の文法) tests: an index into MogiGram.p, 'x:…' for a pattern of a
+    // question added after the index was made (read from the book's note or the 解説), or null when it tests no single pattern
+    function gramUnit(q, b) {
+        var G = window.MogiGram; if (!G) return null;
+        var v = G.q[unitKey(q.id, b)];
+        if (v !== undefined) return v < 0 ? null : v;
+        var txt = '', gl = '', m = b >= 0 ? '' : gramStrip(q.meaning), cut = m.indexOf('：');
+        if (cut > 0 && /[～〜]/.test(m.slice(0, cut)) && !/・[～〜]/.test(m.slice(0, cut))) { txt = m.slice(0, cut); gl = m.slice(cut + 1); }
+        else {
+            var ex = explainFor(q, b >= 0 ? b : undefined), pt = gramStrip(ex && ex.point), re = /「([^「」]{1,30})」(?:の形)?(?:は|とは|も)/g, mm;
+            while ((mm = re.exec(pt))) { if (/[～〜＋]/.test(mm[1])) { txt = mm[1]; break; } }
+        }
+        if (!txt) return q.type === 'Text Grammar' ? G.c : null;
+        var c = gramClean(txt); if (!c) return null;
+        if (G.a[c] !== undefined) return G.a[c];
+        if (!gramExtra[c]) gramExtra[c] = [txt.replace(/～/g, '〜').trim(), gl.replace(/～/g, '〜').replace(/。$/, '').trim()];
+        return 'x:' + c;
+    }
+    function gramInfo(p) { return (typeof p === 'number' ? window.MogiGram.p[p] : gramExtra[String(p).slice(2)]) || ['', '']; }
+    // your answers to 文法 questions, by pattern: { p, att, miss, units: { unitKey: { id, b, att, miss, t } } }, only patterns missed at least once
+    function gramStats() {
+        var by = {};
+        attemptLog.forEach(function(at) {
+            var q = findQuestion(at.id); if (!gramIsQ(q)) return;
+            var b = q.type === 'Text Grammar' ? at.b : -1;
+            if (q.type === 'Text Grammar' && !(b >= 0 && q.blanks[b])) return;
+            var p = gramUnit(q, b); if (p === null) return;
+            var s = by[p] || (by[p] = { p: p, att: 0, miss: 0, units: {} });
+            var uk = unitKey(q.id, b), u = s.units[uk] || (s.units[uk] = { id: q.id, b: b, att: 0, miss: 0, t: 0 });
+            s.att++; u.att++; if (at.t > u.t) u.t = at.t;
+            if (!at.ok) { s.miss++; u.miss++; }
+        });
+        return Object.keys(by).map(function(k) { return by[k]; }).filter(function(s) { return s.miss > 0; })
+            .sort(function(a, b) { return b.miss - a.miss || b.miss / b.att - a.miss / a.att || b.att - a.att; });
+    }
+    function gramMissed(s) {
+        return Object.keys(s.units).map(function(k) { return s.units[k]; }).filter(function(u) { return u.miss; })
+            .sort(function(a, b) { return b.miss - a.miss || b.t - a.t; });
+    }
+    function gramQuestions(p) {          // every question that tests this pattern
+        var ids = [];
+        quizData.forEach(function(q) {
+            if (!gramIsQ(q)) return;
+            var hit = q.type === 'Text Grammar' ? q.blanks.some(function(bl, i) { return gramUnit(q, i) === p; }) : gramUnit(q, -1) === p;
+            if (hit) ids.push(q.id);
+        });
+        return ids;
+    }
+    // the questions you missed first (most missed first), then others of the same pattern, PRACTICE_SIZE at most
+    function gramPracticeIds(s) {
+        var ids = [], seen = {}, rest = gramQuestions(s.p);
+        shuffleInPlace(rest);
+        gramMissed(s).map(function(u) { return u.id; }).concat(rest).forEach(function(id) { if (!seen[id]) { seen[id] = 1; ids.push(id); } });
+        return ids.slice(0, PRACTICE_SIZE);
+    }
+    function gramPreview(q, b) {
+        if (q.type === 'Text Grammar') { var bl = q.blanks[b]; return '正解：' + escapeHtml(gramStrip(bl && bl.options[bl.correct])); }
+        var t = gramStrip(q.sentence).replace(/\[\s*(★?)\s*\]/g, function(m, s) { return s ? '（★）' : '（　）'; });
+        return escapeHtml(t.length > 64 ? t.slice(0, 64) + '…' : t);
+    }
+    function gramCardHtml() {
+        return '<div class="stat-card"><div class="stat-card-title">苦手な文型</div><div id="gp-box"></div>' +
+            '<div class="stat-sub" style="margin-top:8px;">文法形式の判断・文の組み立て・文章の文法の解答を、問われている文型ごとに数えます。まちがえた回数の多い順。全モードの解答が対象です。</div></div>';
+    }
+    function gramFill(failed) {
+        var box = document.getElementById('gp-box'); if (!box) return;
+        var note = function(t) { box.innerHTML = '<div class="stat-sub" style="padding:12px 0; text-align:center;">' + t + '</div>'; };
+        if (!window.MogiGram) {
+            if (failed === true) note('文型のデータを読み込めませんでした。通信できるときにもう一度開いてください。');
+            else { note('読み込み中…'); gramLoad(gramFill); }
+            return;
+        }
+        var list = gramStats();
+        if (!list.length) { note('文法の問題でまちがえると、その文型がここに並びます。'); return; }
+        var html = '<div class="gp-list">';
+        list.forEach(function(s, i) {
+            var info = gramInfo(s.p), pct = Math.round((s.att - s.miss) / s.att * 100);
+            html += '<div class="gp-row' + (i >= GRAM_TOP ? ' rest' : '') + '">' +
+                '<button class="gp-head" data-gp="' + i + '" aria-expanded="false">' +
+                '<span class="gp-rank">' + (i + 1) + '</span>' +
+                '<span class="gp-name"><b>' + escapeHtml(info[0]).replace(/／/g, '／<wbr>') + '</b>' + (info[1] ? '<span class="gp-gloss">' + escapeHtml(info[1]) + '</span>' : '') + '</span>' +
+                '<span class="gp-num"><span class="gp-miss"><b>' + s.miss + '</b>回ミス</span><span class="gp-of">' + s.att + '回中・正答率' + pct + '%</span></span>' +
+                '</button><div class="gp-body" hidden></div></div>';
+        });
+        html += '</div>';
+        if (list.length > GRAM_TOP) html += '<button class="practice-btn sub" id="gp-more">すべて見る（' + list.length + '文型）</button>';
+        box.innerHTML = html;
+        box.querySelectorAll('.gp-head').forEach(function(h) {
+            h.addEventListener('click', function() {
+                var s = list[+h.getAttribute('data-gp')], body = h.nextElementSibling, open = body.hidden;
+                if (open && !body.firstChild) {
+                    var us = gramMissed(s), n = gramPracticeIds(s).length;
+                    body.innerHTML = us.slice(0, 8).map(function(u) {
+                        var q = findQuestion(u.id);
+                        return '<div class="gp-q"><span class="gp-q-text"><span class="gp-q-where">' + escapeHtml(qWhere(q) + (q.label ? '・' + q.label : '') + (u.b >= 0 ? '・空欄' + (u.b + 1) : '')) + '</span>' +
+                            gramPreview(q, u.b) + '</span><span class="gp-q-n">' + u.miss + '／' + u.att + '</span></div>';
+                    }).join('') +
+                        (us.length > 8 ? '<div class="stat-sub" style="padding-top:6px;">ほか' + (us.length - 8) + '問</div>' : '') +
+                        '<button class="practice-btn gp-go">この文型を練習（' + n + '問）</button>';
+                    body.querySelector('.gp-go').addEventListener('click', function() {
+                        var ids = gramPracticeIds(s);
+                        pendingOrigin = 'records'; pendingTitle = '文型：' + gramInfo(s.p)[0];
+                        if (ids.length) startListQuiz(ids, ids[0], false, 'practice');
+                    });
+                }
+                body.hidden = !open; h.setAttribute('aria-expanded', String(open));
+            });
+        });
+        var more = document.getElementById('gp-more');
+        if (more) more.addEventListener('click', function() {
+            var on = box.querySelector('.gp-list').classList.toggle('all');
+            more.textContent = on ? '上位' + GRAM_TOP + '文型だけにする' : 'すべて見る（' + list.length + '文型）';
+        });
+    }
+
     var statsResizeT = null, statsLastW = 0;
     window.addEventListener('resize', function() {
         clearTimeout(statsResizeT);
@@ -36535,6 +36675,9 @@
             '</button>' +
             '<div class="stat-sub" style="margin-top:8px;">全モードの解答が対象。（ ）内は解答数。練習の結果は成績表に影響しません。</div>' +
             '</div>';
+
+        // ---------- 苦手な文型 (filled by gramFill once its index is in) ----------
+        html += gramCardHtml();
 
         // ---------- 6. Accuracy trend ----------
         var weeks = [];
@@ -36765,6 +36908,7 @@
         if (reviewIds.length) reviewBtn.addEventListener('click', function() { pendingOrigin = 'records'; startReviewPractice(); });
         var weakBtn = document.getElementById('weak-btn');
         if (weak.length) weakBtn.addEventListener('click', startWeakPractice);
+        gramFill();
         statsContent.querySelectorAll('[data-tip]').forEach(function(el) {
             el.addEventListener('click', function(e) { e.stopPropagation(); showTip(el, el.getAttribute('data-tip')); });
         });
