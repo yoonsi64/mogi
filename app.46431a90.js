@@ -15173,12 +15173,11 @@
         if (!rb.dataset.rs) splitRubyPerKanji(rb);
         try { rubyFit(rb); } catch (err) { /* leave it to the browser */ }
     }
-    // Furigana are centred over the kanji they read. A reading wider than its kanji would make the browser push the kanji apart
-    // (入　社), so it may reach a little over the characters beside the word, as in print: up to half a character over kana or
-    // punctuation, a quarter over a kanji, none over another word's furigana, and always the same amount on both sides so it
-    // stays centred. What still doesn't fit is spaced evenly around the word (ruby-align: center), never between its kanji.
-    // Widths are counted in characters (kanji and kana are square), so nothing has to be measured. Logical margins, so the
-    // same holds in vertical text.
+    // Furigana as in Japanese typesetting (JIS X 4051): each reading is centred over its kanji. A compound gets a reading per
+    // kanji when each fits over its own kanji; when they don't (入社: にゅう is wider than 入), the whole reading is centred over
+    // the whole word (熟語ルビ). A reading wider than its base may reach over neighbouring kana or punctuation, up to half a
+    // character, never over a kanji or another reading; the rest is space around the base. The same amount on both sides,
+    // so it stays centred. Widths are counted in characters (kanji and kana are square). Logical margins, for vertical text too.
     function rubyCharsW(t) { var w = 0; Array.from(t).forEach(function(c) { w += /[\u0000-ɏ｡-ﾟ]/.test(c) ? 0.55 : 1; }); return w; }
     function rubyRatio(rb, rt) {
         var bs = parseFloat(getComputedStyle(rb).fontSize), rs = parseFloat(getComputedStyle(rt).fontSize);
@@ -15212,7 +15211,7 @@
                 if (!sib) {
                     n = n.parentNode;
                     if (!n || n.nodeType !== 1) return 0;
-                    if (getComputedStyle(n).display !== 'inline') return n.closest('.aw-say') ? 0.5 : 0;          // a word in the 語彙 list: its button has room around it
+                    if (getComputedStyle(n).display !== 'inline') return 0;
                     continue;
                 }
                 n = sib;
@@ -15225,7 +15224,7 @@
                 break;
             }
             if (!ch || /\s/.test(ch)) return 0;
-            return /[぀-ヿ　-〿！-／：-＠]/.test(ch) ? 0.5 : 0.25;
+            return /[\u3040-\u30ff\u3000-\u303f\uff01-\uff0f\uff1a-\uff20]/.test(ch) ? 0.5 : 0;          // kana, ー and punctuation; not a kanji
         };
         var L = room(-1), R = room(1);
         pairs.forEach(function(p, i) {
