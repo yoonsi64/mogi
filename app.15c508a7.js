@@ -13936,7 +13936,7 @@
     // ===================== Navigation (bottom bar, sub-tabs, quiz mode) =====================
     var bottomNav = document.getElementById('bottom-nav');
     var subnav = document.getElementById('subnav');
-    var currentReviewSub = 'library';   // the sub-tab of 学ぶ: 'library' (教材) | 'mistakes' | 'bookmarks' (the name is from when the lists were 復習's)
+    var currentReviewSub = 'library';   // the sub-tab of 学ぶ: 'library' (教材) | 'mistakes' | 'bookmarks' | 'grammar' (文型さくいん) (the name is from when the lists were 復習's)
     var currentRecordsSub = 'stats';          // 記録 opens on 統計
     var pendingOrigin = 'home';      // where × returns to after a quiz started from a list
     var sessionOrigin = 'home';
@@ -13975,6 +13975,7 @@
         if (activeDeck && tab !== 'words') switchDeck(null);
         if (homeReturn && !(homeReturn.tab === tab && homeReturn.sub === sub)) homeReturn = null;
         navTab = tab;
+        if (grammarView) grammarView.style.display = 'none';          // 文型さくいん: every other page hides it on the way in
         document.body.classList.remove('in-quiz');
         bottomNav.style.display = 'flex';
         bottomNav.querySelectorAll('button').forEach(function(b) { b.classList.toggle('active', b.dataset.tab === (tab === 'settings' ? settingsFrom.tab : tab)); });
@@ -13989,11 +13990,13 @@
             items = [
                 ['library', '教材'],
                 ['mistakes', '誤答ノート', getMistakeQuestions().length + getAllModeMistakeIds().length + getRetakeMistakeIds().length],
-                ['bookmarks', 'ブックマーク', bookmarkedQuestions.length]
+                ['bookmarks', 'ブックマーク', bookmarkedQuestions.length],
+                ['grammar', '文型']
             ];
         } else if (tab === 'records') {
             items = [['stats', '統計'], ['dashboard', '成績表'], ['collection', 'コレクション']];
         }
+        subnav.classList.toggle('four', !!items && items.length > 3);          // four tabs: each as wide as its words need
         if (!items) { subnav.classList.remove('show'); subnav.innerHTML = ''; return; }
         subnav.innerHTML = items.map(function(it) {
             return '<button data-sub="' + it[0] + '" class="' + (it[0] === sub ? 'active' : '') + '">' + it[1] +
@@ -14008,9 +14011,10 @@
     function openSub(tab, sub) {
         if (tab === 'review') tab = sub === 'words' ? 'words' : 'learn';      // the old 復習 tab: its lists are in 学ぶ now, its 単語帳 is 単語
         if (tab === 'learn') {
-            currentReviewSub = sub === 'mistakes' || sub === 'bookmarks' ? sub : 'library';
+            currentReviewSub = sub === 'mistakes' || sub === 'bookmarks' || sub === 'grammar' ? sub : 'library';
             if (sub === 'mistakes') showMistakes();
             else if (sub === 'bookmarks') showBookmarks();
+            else if (sub === 'grammar') showGrammarIndex();
             else showLibrary();
         } else if (tab === 'words') {
             showWordList();
@@ -14023,6 +14027,7 @@
     function enterQuizMode(title) {
         reviewRound = false; inReview = false;          // startReviewPractice sets them again for its rounds
         document.body.classList.add('in-quiz');
+        if (grammarView) grammarView.style.display = 'none';
         subnav.classList.remove('show');
         document.getElementById('quiz-title').textContent = title || '';
         window.scrollTo(0, 0);
@@ -36546,7 +36551,8 @@
     }
     function gramInfo(p) { return (typeof p === 'number' ? window.MogiGram.p[p] : gramExtra[String(p).slice(2)]) || ['', '']; }
     // your answers to 文法 questions, by pattern: { p, att, miss, units: { unitKey: { id, b, att, miss, t } } }, only patterns missed at least once
-    function gramStats() {
+    // (all: every pattern you answered, as a map by pattern)
+    function gramStats(all) {
         var by = {};
         attemptLog.forEach(function(at) {
             var q = findQuestion(at.id); if (!gramIsQ(q)) return;
@@ -36558,6 +36564,7 @@
             s.att++; u.att++; if (at.t > u.t) u.t = at.t;
             if (!at.ok) { s.miss++; u.miss++; }
         });
+        if (all) return by;
         return Object.keys(by).map(function(k) { return by[k]; }).filter(function(s) { return s.miss > 0; })
             .sort(function(a, b) { return b.miss - a.miss || b.miss / b.att - a.miss / a.att || b.att - a.att; });
     }
@@ -36598,6 +36605,7 @@
             else { note('読み込み中…'); gramLoad(gramFill); }
             return;
         }
+        gidxLoad();          // 文型さくいん, for the link from each pattern to its meaning and examples
         var list = gramStats();
         if (!list.length) { note('文法の問題でまちがえると、その文型がここに並びます。'); return; }
         var html = '<div class="gp-list">';
@@ -36624,7 +36632,10 @@
                             gramPreview(q, u.b) + '</span><span class="gp-q-n">' + u.miss + '／' + u.att + '</span></div>';
                     }).join('') +
                         (us.length > 8 ? '<div class="stat-sub" style="padding-top:6px;">ほか' + (us.length - 8) + '問</div>' : '') +
-                        '<button class="practice-btn gp-go">この文型を練習（' + n + '問）</button>';
+                        '<button class="practice-btn gp-go">この文型を練習（' + n + '問）</button>' +
+                        (gidxByPat && gidxByPat[s.p] !== undefined ? '<button class="practice-btn sub gp-idx">意味と例文を見る（文型さくいん）</button>' : '');
+                    var toIdx = body.querySelector('.gp-idx');
+                    if (toIdx) toIdx.addEventListener('click', function() { showGrammarIndex(s.p); });
                     body.querySelector('.gp-go').addEventListener('click', function() {
                         var ids = gramPracticeIds(s);
                         pendingOrigin = 'records'; pendingTitle = '文型：' + gramInfo(s.p)[0];
@@ -36639,6 +36650,175 @@
             var on = box.querySelector('.gp-list').classList.toggle('all');
             more.textContent = on ? '上位' + GRAM_TOP + '文型だけにする' : 'すべて見る（' + list.length + '文型）';
         });
+    }
+
+    // ===== 文型さくいん (学ぶ › 文型) =====
+    // GIDX_SRC (window.MogiGramIdx.e) lists the grammar patterns the 文法 questions test, in あいうえお order. One entry:
+    // [pattern, reading, meaning in simple Japanese, Korean gloss, example sentences, the patterns of MogiGram.p it covers].
+    // Loaded when 文型 is first opened (and with 統計, for the link from 苦手な文型).
+    var GIDX_SRC = 'gramidx.ffdd99a3.js', gidxLoading = false, gidxWaiters = [], gidxByPat = null;
+    var grammarView = document.getElementById('grammar-view'), grammarContent = document.getElementById('grammar-content');
+    var gidxState = { q: '', missed: false, open: -1 };          // kept while the app is open: the search, the filter, the open entry
+    var GIDX_ROWS = ['あいうえお', 'かきくけこ', 'さしすせそ', 'たちつてと', 'なにぬねの', 'はひふへほ', 'まみむめも', 'やゆよ', 'らりるれろ', 'わをん'];
+    var GIDX_SMALL = { 'ぁ': 'あ', 'ぃ': 'い', 'ぅ': 'う', 'ぇ': 'え', 'ぉ': 'お', 'っ': 'つ', 'ゃ': 'や', 'ゅ': 'ゆ', 'ょ': 'よ', 'ゎ': 'わ' };
+    // for searching: かな and カナ alike, no 〜, brackets, slashes or spaces
+    function gidxFold(s) {
+        return String(s || '').toLowerCase().replace(/[ァ-ヶ]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0x60); })
+            .replace(/[〜～~\s　（）()・／\/…＋+、,]/g, '');
+    }
+    // the kana an entry is filed under: the first of its reading, が under か, っ under つ
+    function gidxKana(y) { var c = String(y || '').charAt(0).normalize('NFD').charAt(0); return GIDX_SMALL[c] || c; }
+    function gidxLoad(cb) {
+        if (window.MogiGramIdx) { if (cb) cb(); return; }
+        if (cb) gidxWaiters.push(cb);
+        if (gidxLoading) return;
+        gidxLoading = true;
+        var sc = document.createElement('script');
+        var done = function(failed) {
+            gidxLoading = false;
+            if (!failed && window.MogiGramIdx) {
+                gidxByPat = {};
+                window.MogiGramIdx.e.forEach(function(e, i) {
+                    e[5].forEach(function(p) { gidxByPat[p] = i; });
+                    e[6] = [e[0], e[1], e[2], e[3]].map(gidxFold).join('|');          // what the search looks in
+                    e[7] = gidxFold(e[0]) + '|' + e[1];                               // a hit in the pattern itself comes first,
+                    e[8] = '|' + (e[2] + '／' + e[3]).split(/[／\/,、・①②③]/).map(gidxFold).join('|');          // then a meaning that begins with the words
+                });
+            }
+            var w = gidxWaiters; gidxWaiters = []; w.forEach(function(f) { try { f(failed); } catch (e) {} });
+        };
+        sc.src = GIDX_SRC;
+        sc.onload = function() { done(false); };
+        sc.onerror = function() { if (sc.parentNode) sc.parentNode.removeChild(sc); done(true); };
+        document.head.appendChild(sc);
+    }
+    // your answers by entry: { entryIndex: { att, miss } }
+    function gidxCounts() {
+        var out = {}; if (!window.MogiGram || !gidxByPat) return out;
+        var by = gramStats(true);
+        Object.keys(by).forEach(function(k) {
+            var i = gidxByPat[k]; if (i === undefined) return;
+            var o = out[i] || (out[i] = { att: 0, miss: 0 });
+            o.att += by[k].att; o.miss += by[k].miss;
+        });
+        return out;
+    }
+    // questions that test an entry's pattern: the ones you missed first (most missed first), then the others, PRACTICE_SIZE at most
+    function gidxPracticeIds(e) {
+        if (!window.MogiGram) return [];
+        var set = {}, missed = [], rest = [], ids = [], seen = {}, by = gramStats(true);
+        e[5].forEach(function(p) { set[p] = 1; if (by[p]) missed = missed.concat(gramMissed(by[p])); });
+        missed.sort(function(a, b) { return b.miss - a.miss || b.t - a.t; });
+        quizData.forEach(function(q) {
+            if (!gramIsQ(q)) return;
+            var hit = q.type === 'Text Grammar' ? q.blanks.some(function(bl, i) { return set[gramUnit(q, i)] === 1; }) : set[gramUnit(q, -1)] === 1;
+            if (hit) rest.push(q.id);
+        });
+        shuffleInPlace(rest);
+        missed.map(function(u) { return u.id; }).concat(rest).forEach(function(id) { if (!seen[id]) { seen[id] = 1; ids.push(id); } });
+        return ids.slice(0, PRACTICE_SIZE);
+    }
+    function gidxOnScreen() { return navActiveTab() === 'learn' && currentReviewSub === 'grammar' && !document.body.classList.contains('in-quiz'); }
+    function gidxScrollTo(el) {
+        var go = function() { window.scrollTo(0, Math.max(0, el.getBoundingClientRect().top + window.scrollY - 10)); };
+        go(); requestAnimationFrame(go);
+    }
+    function gidxOpenRow(row, on) {
+        var head = row.querySelector('.gx-head'), body = row.querySelector('.gx-body'), i = +row.getAttribute('data-i'), e = window.MogiGramIdx.e[i];
+        if (on && !body.firstChild) {
+            var c = gidxCounts()[i], ids = gidxPracticeIds(e);
+            body.innerHTML = '<ul class="gx-ex">' + e[4].map(function(x) { return '<li>' + x + '</li>'; }).join('') + '</ul>' +
+                (c && c.att ? '<div class="gx-rec">あなたの解答：' + c.att + '回中' + c.miss + '回ミス（正答率' + Math.round((c.att - c.miss) / c.att * 100) + '%）</div>' : '') +
+                (ids.length ? '<button class="practice-btn gx-go">この文型を練習（' + ids.length + '問）</button>' : '');
+            var go = body.querySelector('.gx-go');
+            if (go) go.addEventListener('click', function() {
+                var list = gidxPracticeIds(e); if (!list.length) return;
+                pendingOrigin = 'learn'; pendingTitle = '文型：' + e[0];
+                startListQuiz(list, list[0], false, 'practice');
+            });
+        }
+        body.hidden = !on; head.setAttribute('aria-expanded', String(on));
+    }
+    function gidxRenderList() {
+        var box = document.getElementById('gx-list'); if (!box || !window.MogiGramIdx) return;
+        var E = window.MogiGramIdx.e, st = gidxState, cnt = gidxCounts(), q = gidxFold(st.q), flat = !!q || st.missed, html = '', n = 0, last = '', heads = {};
+        var order = E.map(function(e, i) { return i; });
+        if (q) {
+            var rank = function(i) { return E[i][7].indexOf(q) >= 0 ? 0 : E[i][8].indexOf('|' + q) >= 0 ? 1 : 2; };
+            order = [0, 1, 2].reduce(function(a, r) { return a.concat(order.filter(function(i) { return rank(i) === r; })); }, []);
+        }
+        order.forEach(function(i) {
+            var e = E[i];
+            if (q && e[6].indexOf(q) < 0) return;
+            var c = cnt[i];
+            if (st.missed && !(c && c.miss)) return;
+            n++;
+            var k = gidxKana(e[1]);
+            if (!flat && k !== last) { html += '<h3 class="gx-kana" id="gx-k-' + k.charCodeAt(0) + '">' + k + '</h3>'; last = k; heads[k] = 1; }
+            html += '<div class="gx-row" data-i="' + i + '"><button class="gx-head" aria-expanded="false"><span class="gx-main">' +
+                '<b class="gx-name">' + escapeHtml(e[0]).replace(/／/g, '／<wbr>') + '</b>' +
+                '<span class="gx-jp">' + escapeHtml(e[2]) + '</span>' +
+                '<span class="gx-kr" lang="ko">' + escapeHtml(e[3]) + '</span></span>' +
+                '<span class="gx-side">' + (c && c.miss ? '<span class="gx-missn">ミス' + c.miss + '</span>' : '') + '<span class="gx-caret" aria-hidden="true"></span></span>' +
+                '</button><div class="gx-body" hidden></div></div>';
+        });
+        if (!n) html = '<div class="empty-bookmarks">' + (q ? '「' + escapeHtml(st.q.trim()) + '」に合う文型は見つかりませんでした。' : '文法の問題でまちがえると、その文型がここに並びます。') + '</div>';
+        box.innerHTML = html;
+        document.getElementById('gx-count').textContent = flat ? n + '件' : E.length + '文型';
+        var jump = document.getElementById('gx-jump');
+        jump.hidden = flat;
+        jump.querySelectorAll('button').forEach(function(b) {
+            var row = GIDX_ROWS[+b.getAttribute('data-r')], first = '';
+            for (var j = 0; j < row.length && !first; j++) if (heads[row.charAt(j)]) first = row.charAt(j);
+            b.disabled = !first; b.setAttribute('data-k', first);
+        });
+        box.querySelectorAll('.gx-head').forEach(function(h) {
+            h.addEventListener('click', function() {
+                var row = h.parentNode, on = h.getAttribute('aria-expanded') !== 'true';
+                gidxOpenRow(row, on);
+                gidxState.open = on ? +row.getAttribute('data-i') : -1;
+            });
+        });
+        if (st.open >= 0) { var r = box.querySelector('.gx-row[data-i="' + st.open + '"]'); if (r) gidxOpenRow(r, true); }
+    }
+    // focusPat: a pattern of MogiGram.p to show (from 苦手な文型): its entry is opened and scrolled to
+    function showGrammarIndex(focusPat) {
+        setAnswerMode(false);
+        setNav('learn', 'grammar'); currentReviewSub = 'grammar';
+        quizView.style.display = 'none'; dashboardView.style.display = 'none'; statsView.style.display = 'none'; bookmarksView.style.display = 'none'; mistakesView.style.display = 'none'; wordlistView.style.display = 'none'; settingsView.style.display = 'none'; grammarView.style.display = 'block'; closePopup();
+        if (!window.MogiGramIdx) {
+            grammarContent.innerHTML = '<div class="empty-bookmarks">読み込み中…</div>';
+            gidxLoad(function(failed) {
+                if (!gidxOnScreen()) return;
+                if (failed || !window.MogiGramIdx) grammarContent.innerHTML = '<div class="empty-bookmarks">文型のデータを読み込めませんでした。通信できるときにもう一度開いてください。</div>';
+                else showGrammarIndex(focusPat);
+            });
+            return;
+        }
+        if (!window.MogiGram) gramLoad(function(failed) { if (!failed && gidxOnScreen()) gidxRenderList(); });          // for your misses and the practice sets
+        var st = gidxState, focus = -1;
+        if (focusPat !== undefined && gidxByPat && gidxByPat[focusPat] !== undefined) { focus = gidxByPat[focusPat]; st.q = ''; st.missed = false; st.open = focus; }
+        grammarContent.innerHTML = '<div class="gx-title"><h2>文型さくいん</h2><span id="gx-count"></span></div>' +
+            '<div class="gx-tools"><input type="search" id="gx-search" class="gx-search" placeholder="検索（文型・読み・意味・한국어）" aria-label="文型を検索（文型・読み・意味・韓国語）" autocomplete="off" lang="ja"></div>' +
+            '<div class="gx-chips"><button id="gx-missed" class="toggle-chip' + (st.missed ? ' on' : '') + '" aria-pressed="' + st.missed + '">まちがえた文型だけ</button></div>' +
+            '<div class="gx-jump" id="gx-jump">' + GIDX_ROWS.map(function(r, i) { return '<button data-r="' + i + '" aria-label="' + r.charAt(0) + '行へ">' + r.charAt(0) + '</button>'; }).join('') + '</div>' +
+            '<div id="gx-list"></div>';
+        var input = document.getElementById('gx-search');
+        input.value = st.q;
+        input.addEventListener('input', function() { st.q = input.value; st.open = -1; gidxRenderList(); });
+        document.getElementById('gx-missed').addEventListener('click', function() {
+            st.missed = !st.missed; st.open = -1;
+            this.classList.toggle('on', st.missed); this.setAttribute('aria-pressed', String(st.missed));
+            gidxRenderList();
+        });
+        document.getElementById('gx-jump').querySelectorAll('button').forEach(function(b) {
+            b.addEventListener('click', function() {
+                var k = b.getAttribute('data-k'), el = k ? document.getElementById('gx-k-' + k.charCodeAt(0)) : null;
+                if (el) gidxScrollTo(el);
+            });
+        });
+        gidxRenderList();
+        if (focus >= 0) { var row = grammarContent.querySelector('.gx-row[data-i="' + focus + '"]'); if (row) gidxScrollTo(row); }
     }
 
     var statsResizeT = null, statsLastW = 0;

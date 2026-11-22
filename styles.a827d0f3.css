@@ -3888,3 +3888,34 @@ html.dark .unsure-btn[aria-pressed="true"] { color: #f0b860; }
     .hj-body.hj-fit2:has(> .kp-order) { row-gap: 2px; padding-top: 4px; padding-bottom: 4px; }
     .hj-body.hj-fit2 > .kp-order { padding: 4px 8px; }
 }
+/* 学ぶ › 文型: 文型さくいん */
+#grammar-view { display: none; flex-direction: column; flex-grow: 1; }
+.gx-title { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.gx-title h2 { font-size: 1.1rem; }
+.gx-title span { font-size: 0.8rem; color: var(--text-sub); font-weight: bold; font-variant-numeric: tabular-nums; }
+.gx-tools { display: flex; margin-bottom: 8px; }
+.gx-search { flex: 1; min-width: 0; padding: 9px 10px 9px 36px; font-size: 0.9rem; border: 1px solid var(--border-light); color: var(--text-main); border-radius: 999px; background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='M15.5 15.5 21 21'/%3E%3C/svg%3E") no-repeat 12px 50% / 17px 17px; }
+.gx-search:focus { outline: none; border-color: var(--active-blue); box-shadow: 0 0 0 2px color-mix(in srgb, var(--active-blue) 25%, transparent); }
+.gx-chips { display: flex; gap: 8px; margin-bottom: 10px; }
+.gx-jump { display: flex; gap: 4px; margin-bottom: 2px; }
+.gx-jump[hidden] { display: none; }
+.gx-jump button { flex: 1; min-width: 0; min-height: 40px; padding: 0; border: 1px solid var(--border-light); background: var(--surface); color: var(--text-main); font-weight: bold; font-size: 0.9rem; border-radius: 6px; }
+.gx-jump button:disabled { color: var(--border-light); }
+.gx-kana { font-size: 0.85rem; color: var(--text-sub); padding: 16px 2px 4px; border-bottom: 2px solid var(--border-dark); }
+.gx-row { border-bottom: 1px solid var(--border-light); }
+.gx-head { display: flex; align-items: flex-start; gap: 10px; width: 100%; padding: 11px 2px; background: none; border: none; color: var(--text-main); font: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.gx-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.gx-name { font-size: 1rem; line-height: 1.4; word-break: keep-all; overflow-wrap: anywhere; }
+.gx-jp { font-size: 0.82rem; line-height: 1.5; overflow-wrap: anywhere; }
+.gx-kr { font-size: 0.8rem; line-height: 1.5; color: var(--text-sub); word-break: keep-all; overflow-wrap: anywhere; }
+.gx-side { flex: none; display: flex; align-items: center; gap: 6px; padding-top: 3px; }
+.gx-missn { font-size: 0.7rem; font-weight: bold; color: var(--incorrect-color); border: 1px solid currentColor; border-radius: 10px; padding: 1px 7px; white-space: nowrap; }
+.gx-caret { width: 8px; height: 8px; border-right: 2px solid var(--text-sub); border-bottom: 2px solid var(--text-sub); transform: rotate(45deg); margin: 1px 5px 0 3px; }
+.gx-head[aria-expanded="true"] .gx-caret { transform: rotate(-135deg); margin-top: 6px; }
+.gx-body { padding: 0 2px 14px; }
+.gx-ex { list-style: none; margin: 0; padding: 0; }
+.gx-ex li { position: relative; padding: 7px 0 7px 2.2em; border-top: 1px dashed var(--border-light); font-size: 0.92rem; line-height: 1.7; overflow-wrap: anywhere; }
+.gx-ex li::before { content: '例'; position: absolute; left: 0; top: 10px; font-size: 0.65rem; font-weight: bold; color: var(--text-sub); border: 1px solid var(--border-light); border-radius: 3px; padding: 0 4px; line-height: 1.5; }
+.gx-ex b { color: var(--active-blue); }
+.gx-rec { margin-top: 8px; font-size: 0.78rem; color: var(--text-sub); }
+.subnav.four button { flex: 1 1 auto; white-space: nowrap; padding: 11px 6px; }

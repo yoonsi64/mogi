@@ -2,7 +2,7 @@
 // The page itself (index.html) is always asked for fresh, so updates show right away; the big script and style
 // files carry a fingerprint in their names and never change once published, so they are kept on the device and
 // served from there, and only re-downloaded when a new version has a new name.
-var ASSETS = ["kankenprac.a5ce6863.js", "hanjastrokes.1a0b52ba.js", "kanjistrokes.9f373bbe.js", "glyphs.d5166e4c.js", "ambience.5574ca6b.js", "atmos.8047965f.js", "app.c88baaec.js", "explain.0ecc570e.js", "readex.e3e670fd.js", "garden.75091cb3.js", "gistsync.419c20f9.js", "omikuji.3243c2a2.js", "opening.941aac6c.js", "styles.4537e4ad.css", "town.5b7fc45d.js", "wordseg.bd5ebcae.js", "grampat.6868e2c7.js", "ttssafe.3624e9c8.js"];
+var ASSETS = ["kankenprac.a5ce6863.js", "hanjastrokes.1a0b52ba.js", "kanjistrokes.9f373bbe.js", "glyphs.d5166e4c.js", "ambience.5574ca6b.js", "atmos.8047965f.js", "app.15c508a7.js", "explain.0ecc570e.js", "readex.e3e670fd.js", "garden.75091cb3.js", "gistsync.419c20f9.js", "omikuji.3243c2a2.js", "opening.941aac6c.js", "styles.a827d0f3.css", "town.5b7fc45d.js", "wordseg.bd5ebcae.js", "grampat.6868e2c7.js", "gramidx.ffdd99a3.js", "ttssafe.3624e9c8.js"];
 var CACHE = 'mogi-' + ASSETS.join('|').length + '-' + ASSETS.map(function(a) { return a.split('.')[1]; }).join('');
 var FINGERPRINTED = /\.[0-9a-f]{8}\.(js|css)$/;
 var ART = 'mogi-art-1';           // the prints: kept across app updates
