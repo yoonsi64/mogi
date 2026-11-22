@@ -15211,7 +15211,8 @@
                 var sib = dir < 0 ? n.previousSibling : n.nextSibling;
                 if (!sib) {
                     n = n.parentNode;
-                    if (!n || n.nodeType !== 1 || getComputedStyle(n).display !== 'inline') return 0;
+                    if (!n || n.nodeType !== 1) return 0;
+                    if (getComputedStyle(n).display !== 'inline') return n.closest('.aw-say') ? 0.5 : 0;          // a word in the 語彙 list: its button has room around it
                     continue;
                 }
                 n = sib;
@@ -32625,7 +32626,8 @@
             inner.replace(/([^<]+)<rt>([^<]*)<\/rt>/g, function(mm, a, r) { segs.push([a, r]); });
             if (segs.length === 1) { var sp = awSplitFor(segs[0][0], segs[0][1]); if (sp) segs = Array.from(segs[0][0]).map(function(ch, i) { return [ch, sp[i]]; }); }
             // one kanji, one reading: a ruby per kanji, so each reading sits under its own kanji (a long one widens its kanji a little, as in print)
-            if (segs.length > 1) return segs.map(function(x) { return '<ruby class="aw-rb">' + x[0] + '<rt>' + x[1] + '</rt></ruby>'; }).join('');
+            // (one ruby with a reading per kanji, so readings that would run into each other can be joined under the word: 周到 しゅうとう)
+            if (segs.length > 1) return '<ruby class="aw-rb">' + segs.map(function(x) { return x[0] + '<rt>' + x[1] + '</rt>'; }).join('') + '</ruby>';
             return '<span class="aw-fg">' + segs[0][0] + '<i>' + segs[0][1] + '</i></span>';
         });
     }
@@ -32637,7 +32639,10 @@
             html += '<section class="ar-sec"><h3 class="ar-sec-title">' + escapeHtml(sec.sec) + '</h3><div class="aw-list">' + sec.list.map(function(w, i) {
                 total++;
                 var inList = !!findWordEntry(w[0]);
-                return '<div class="aw-row"><button class="aw-say" data-s="' + si + '" data-i="' + i + '"><b class="aw-w">' + (w[1] && w[1] !== w[0] ? awUnderHtml(furiganaHtml(w[0], w[1])) : escapeHtml(w[0])) + '</b></button>' +
+                // a part of speech in brackets after the word (無際限(な), 診察（する）) takes no furigana: the reading goes under the word itself
+                var pm = w[0].match(/^(.+?)([（(][^（）()]+[）)])$/), base = pm ? pm[1] : w[0], tail = pm ? pm[2] : '', rd = w[1] || '';
+                if (tail && rd) { var tk = tail.slice(1, -1); if (rd.length > tk.length && rd.slice(-tk.length) === tk && !base.endsWith(tk)) rd = rd.slice(0, -tk.length); }
+                return '<div class="aw-row"><button class="aw-say" data-s="' + si + '" data-i="' + i + '"><b class="aw-w">' + (rd && rd !== base ? awUnderHtml(furiganaHtml(base, rd)) : escapeHtml(base)) + escapeHtml(tail) + '</b></button>' +
                     '<span class="aw-ko" lang="' + (/[\uac00-\ud7a3]/.test(w[2]) ? 'ko' : 'ja') + '">' + escapeHtml(w[2]) + '</span>' +
                     '<button class="aw-add' + (inList ? ' in' : '') + '" data-s="' + si + '" data-i="' + i + '" aria-label="' + escapeHtml(w[0]) + 'を単語帳に追加">' + (inList ? '✓' : '＋') + '</button></div>';
             }).join('') + '</div></section>';
