@@ -269,6 +269,7 @@
         html.dark .bookmark-delete-btn, html.dark .word-item-delete { color: var(--incorrect-color); }
 
         /* Stats quick links */
+        .stats-off { display: none !important; }          /* 記録: a card or heading that belongs to the other tab (統計 / コレクション) */
         .stats-jump { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 0 12px; padding-bottom: 2px; }
         .stats-jump::-webkit-scrollbar { display: none; }
         .stats-jump button.stats-foldall { border-color: var(--text-sub); color: var(--text); }
@@ -936,7 +937,10 @@
         .ar-title { font-size: 1.5em; height: calc(var(--ar-len) / 1.5); font-weight: bold; letter-spacing: 0.08em; padding-top: 0.4em; margin-left: 0.6em; white-space: nowrap; }
         .ar-author { height: var(--ar-len); text-align: end; margin-left: 1.3em; letter-spacing: 0.15em; white-space: nowrap; }
         .ar-boxch { display: inline-block; border: 1.5px solid currentColor; line-height: 1.15; padding: 0.08em 0.1em; margin-inline-end: 0.25em; }
-        .ar-h p:has(> .ar-boxch:first-child), .ar-h p:has(> .ar-pganchor:first-child + .ar-boxch) { text-indent: 0; }
+        .ar-h p:has(> .ar-boxch:first-child), .ar-h p:has(> .ar-pganchor:first-child + .ar-boxch), .ar-h p:has(> .ar-lnanchor:first-child + .ar-boxch) { text-indent: 0; }
+        /* a line with only ＊ (the end of a section): in the middle of the line, with room around it */
+        .ar-line.ar-sep { text-align: center; }
+        .ar-h p.ar-sep { text-indent: 0; text-align: center; margin: 0.4em 0 0.9em; }
         .ar-right { display: block; text-align: end; white-space: nowrap; font-size: 0.8em; }   /* a credit line (（『…』…より）): smaller, all the same size; arFitRight breaks a long one between its parts */
         .ar-right-part { white-space: nowrap; }
         .ar-bio-note { font-size: 0.78rem; color: var(--text-sub); border-top: 1px dashed var(--border-light); margin-top: 8px; padding-top: 6px; }
@@ -996,6 +1000,9 @@
         .ar-book.ar-h { position: relative; padding-right: 2.1em; }
         .ar-pganchor::before { content: '\200b'; }
         .ar-pgbadge { position: absolute; right: 0; line-height: calc(2.3em - 2px); pointer-events: none; }
+        /* …and so do the book's line numbers (every fifth line of the page), small and grey like 縦書き's */
+        .ar-lnanchor::before { content: '\200b'; }
+        .ar-lnbadge { position: absolute; right: 0; width: 2.3em; text-align: center; text-indent: 0; font-family: var(--gothic, sans-serif); font-size: 0.55em; line-height: 1.2; color: var(--text-sub); font-variant-numeric: tabular-nums; pointer-events: none; }
         .ar-hint .nowrap { white-space: nowrap; }
         .ar-hint { font-size: 0.7rem; color: var(--text-sub); margin-top: 10px; line-height: 1.6; }
         .ar-intro { font-size: 0.8rem; color: var(--text-sub); margin-bottom: 10px; line-height: 1.6; }

@@ -13992,7 +13992,7 @@
                 ['bookmarks', 'ブックマーク', bookmarkedQuestions.length]
             ];
         } else if (tab === 'records') {
-            items = [['stats', '統計'], ['dashboard', '成績表']];
+            items = [['stats', '統計'], ['dashboard', '成績表'], ['collection', 'コレクション']];
         }
         if (!items) { subnav.classList.remove('show'); subnav.innerHTML = ''; return; }
         subnav.innerHTML = items.map(function(it) {
@@ -20591,6 +20591,40 @@
 
     // words the speech voices misread everywhere (拝聴 comes out as わいちょう): spoken in kana in every mode
     var TTS_KANA_ALL = { '拝聴': 'ハイチョウ' };   // (in katakana: a は on its own is read as the particle わ)
+    // 読み上げ follows the furigana. SAY_SRC (window.MogiSay) lists the furigana words whose kanji a voice can be trusted to read
+    // the way the furigana says; those are spoken from the kanji (the accent is more natural), every other furigana word from its
+    // furigana. Until the list is in, all of them are spoken from the furigana.
+    var SAY_SRC = 'ttssafe.3624e9c8.js', sayLoading = false, saySafe = null;
+    function sayLoad() {
+        if (sayLoading || saySafe) return;
+        sayLoading = true;
+        var sc = document.createElement('script');
+        sc.src = SAY_SRC;
+        sc.onload = function() {
+            sayLoading = false;
+            var m = {};
+            String(window.MogiSay || '').split(',').forEach(function(x) { var i = x.indexOf(':'); if (i > 0) m[x.slice(0, i)] = x.slice(i + 1); });
+            saySafe = m;
+        };
+        sc.onerror = function() { sayLoading = false; if (sc.parentNode) sc.parentNode.removeChild(sc); };
+        document.head.appendChild(sc);
+    }
+    setTimeout(sayLoad, 5000);
+    function ttsRubySay(base, rd) {
+        base = String(base || ''); rd = String(rd || '').replace(/[\s　]/g, '');
+        if (!rd || !/^[\u3040-\u30ffー]+$/.test(rd) || !/[\u3400-\u9fff々〆ヶ]/.test(base)) return base;      // no kana reading over kanji: as written
+        if (saySafe && saySafe[base] === toHiragana(rd)) return base;
+        // は and へ inside a word would be taken for the particles (かわはば → かわ・わ・ば): such a reading goes in katakana
+        return /[はへ]/.test(rd) ? rd.replace(/[ぁ-ゖ]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) + 0x60); }) : rd;
+    }
+    // <ruby>…</ruby> in a piece of HTML → what the voice is given for it
+    function ttsRubyHtml(html) {
+        return String(html).replace(/<ruby\b[^>]*>([\s\S]*?)<\/ruby>/gi, function(m, inner) {
+            var rd = (inner.match(/<rt\b[^>]*>[\s\S]*?<\/rt>/gi) || []).map(function(x) { return x.replace(/<[^>]*>/g, ''); }).join('');
+            var base = inner.replace(/<rt\b[^>]*>[\s\S]*?<\/rt>|<rp\b[^>]*>[\s\S]*?<\/rp>/gi, '').replace(/<[^>]*>/g, '');
+            return ttsRubySay(base, rd);
+        });
+    }
     function ttsKanaAll(t) { Object.keys(TTS_KANA_ALL).forEach(function(k) { if (t.indexOf(k) > -1) t = t.split(k).join(TTS_KANA_ALL[k]); }); return t; }
     // a word spoken from its reading (cards, matches, quizzes): when a word written with kanji reads with は or へ first, the voice
     // takes that kana for the particle (拝聴 → はいちょう → わいちょう), so that one kana is given in katakana; words without kanji
@@ -20604,6 +20638,8 @@
     function buildSpeechChunks(htmlText) {
         var t = htmlText;
         // Markers: ⟦S⟧ speaker, ⟦P⟧ paragraph, ⟦E⟧ sentence end; ⟦C⟧ after a conjunction and ⟦G⟧ after a grammar point (commas, below)
+        sayLoad();
+        t = ttsRubyHtml(t);          // a word with furigana is read as its furigana says (see ttsRubySay)
         t = t.replace(/<rt>.*?<\/rt>|<rp>.*?<\/rp>/gi, '');   // read the kanji, not the furigana twice
         // Bold is a speaker's name or a label (a pause follows) when 「 or ： comes after it, or when it opens a line;
         // anywhere else it is only emphasis inside a sentence, which is read straight through
@@ -20618,6 +20654,7 @@
         // and stopping at its first > left the answer's text behind, to be read a second time
         t = t.replace(/<(?:"[^"]*"|'[^']*'|[^>"'])*>?/g, '');
         t = ttsKanaAll(t);
+        t = t.replace(/[＊*]+/g, ' ');          // ＊ is a mark on the page (a note, a list item, the end of a section), not a word to say
         t = t.replace(/&nbsp;/g, ' ').replace(/\[\s*\]|\(\s*\)/g, '').replace(/\s+/g, ' ');
         // Web and e-mail addresses are not read out: letter by letter they are long and meaningless to hear
         // (with its label, e.g. From：, e-mail：, 宛先：, so the label is not left on its own)
@@ -32690,6 +32727,7 @@
         document.body.appendChild(v);
     }
     function openReading(id, tab) {
+        sayLoad();
         rememberHomeSpot('.ar-item[data-id="' + id + '"]');
         buildArView();
         var st = advState(id);
@@ -32753,6 +32791,8 @@
         arPagesCache[r.id] = { src: r.pages, pages: pages };
         return pages;
     }
+    // a line with nothing but ＊: the mark for the end of a section. It is set in the middle of the line, and 読み上げ leaves it out.
+    var AR_SEP = /^[\s　]*[＊*]+[\s　]*$/;
     function arBookHtml(r) {
         var maxLen = 0, pages = arPages(r);
         pages.forEach(function(pg) { pg.lines.forEach(function(l) { maxLen = Math.max(maxLen, l.replace(/\{s\|[^{}]+\}|\{i\}/g, '＿＿＿＿').replace(/\{r\|([^|{}]+)\|[^{}]+\}/g, '$1').replace(/\{[n*]\d*\|([^{}]+)\}/g, '$1').replace(/\{\?\d+\}/g, '').replace(/\{□\|([^{}]+)\}|\{□_\}/g, '$1＿＿').replace(/[{}]/g, '').length); }); });
@@ -32762,7 +32802,7 @@
         return '<div class="ar-book ar-v" style="--ar-len:' + (maxLen + 0.6) + 'em; --ar-fs:' + zoomed(fit) + '; --ar-fs:' + zoomed(fit.replace('100vh', '100dvh')) + '; font-size: var(--ar-fs)">' + pages.map(function(pg, pi) {
             return '<section class="ar-page" data-p="' + pg.p + '">' +
                 (pi === 0 ? '<div class="ar-title">' + arTitleHtml(r, arTateLatin(escapeHtml(r.title))) + '</div><div class="ar-author">' + r.authorHtml + '</div>' : '') +
-                pg.lines.map(function(line, i) { var n = i + 1, aside = /^\{<\}/.test(line), next = pg.lines[i + 1]; return '<div class="ar-line' + (aside ? ' ar-aside-line' + (next != null && !/^\{<\}/.test(next) ? ' ar-aside-end' : '') : '') + '"' + (n % 5 === 0 ? ' data-n="' + n + '"' : '') + '>' + arTateLatin(arMarkup(line)) + '</div>'; }).join('') +
+                pg.lines.map(function(line, i) { var n = i + 1, aside = /^\{<\}/.test(line), next = pg.lines[i + 1]; if (AR_SEP.test(line)) return '<div class="ar-line ar-sep"' + (n % 5 === 0 ? ' data-n="' + n + '"' : '') + '>＊</div>'; return '<div class="ar-line' + (aside ? ' ar-aside-line' + (next != null && !/^\{<\}/.test(next) ? ' ar-aside-end' : '') : '') + '"' + (n % 5 === 0 ? ' data-n="' + n + '"' : '') + '>' + arTateLatin(arMarkup(line)) + '</div>'; }).join('') +
                 '</section>';
         }).join('') + '</div>';
     }
@@ -32780,22 +32820,27 @@
             });
         }).join('');
     }
+    // 横書き: where every fifth line of the book's page begins (the same lines 縦書き numbers); its number is set in the margin
+    function arLnAnchor(i) { return (i + 1) % 5 === 0 ? '<span class="ar-lnanchor" data-n="' + (i + 1) + '"></span>' : ''; }
     function arParagraphsHtml(r) {
         if (r.verse) return arPages(r).map(function(pg) {
             return pg.lines.map(function(line, i) {
                 var a = i === 0 ? '<span class="ar-pganchor" data-p="' + pg.p + '"></span>' : '';
+                a += arLnAnchor(i);
+                if (AR_SEP.test(line)) return '<p class="ar-vl ar-sep">' + a + '＊</p>';
                 return line ? '<p class="ar-vl">' + a + arMarkup(line) + '</p>' : '<p class="ar-vgap">' + a + '</p>';
             }).join('');
         }).join('');
         var paras = [], cur = null;
         arPages(r).forEach(function(pg) {
             pg.lines.forEach(function(line, i) {
+                if (AR_SEP.test(line)) { var sp = [(i === 0 ? '<span class="ar-pganchor" data-p="' + pg.p + '"></span>' : '') + arLnAnchor(i) + '＊']; sp.sep = true; paras.push(sp); cur = null; return; }
                 var aside = /^\{<\}/.test(line); line = line.replace(/^\{<\}/, '');
                 if (!cur || line.charAt(0) === '　' || /^(\{>\||<b>|\{\^\})/.test(line) || aside !== !!cur.aside) { cur = []; cur.aside = aside; if (/^\{\^\}/.test(line)) cur.noIndent = true; paras.push(cur); line = line.replace(/^　/, ''); }
-                cur.push((i === 0 ? '<span class="ar-pganchor" data-p="' + pg.p + '"></span>' : '') + arMarkup(line.replace(/\{i\}/g, '')));
+                cur.push((i === 0 ? '<span class="ar-pganchor" data-p="' + pg.p + '"></span>' : '') + arLnAnchor(i) + arMarkup(line.replace(/\{i\}/g, '')));
             });
         });
-        return paras.map(function(p) { var c = (p.noIndent ? ' ar-noind' : '') + (p.aside ? ' ar-aside' : ''); return '<p' + (c ? ' class="' + c.slice(1) + '"' : '') + '>' + p.join('') + '</p>'; }).join('');
+        return paras.map(function(p) { var c = (p.noIndent ? ' ar-noind' : '') + (p.aside ? ' ar-aside' : '') + (p.sep ? ' ar-sep' : ''); return '<p' + (c ? ' class="' + c.slice(1) + '"' : '') + '>' + p.join('') + '</p>'; }).join('');
     }
     var AR_ICONS = {
         play: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9.5-5.5z"/></svg>',
@@ -32862,10 +32907,27 @@
     var AR_SECTION_NO = /^(第|その|其の)?[0-9０-９一二三四五六七八九十百〇ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]+(章|節|話|部|回|幕|場)?$/;
     function arSentenceList() {
         var r = ar.r, out = [{ text: r.title, el: '.ar-title, .ar-h-title' }, { text: r.author, say: arRubyReading(r.authorHtml) || r.author, el: '.ar-author, .ar-h-author' }];
-        var book = document.querySelector('#ar-view .ar-book'), text = arPlainText(book).text;
+        var book = document.querySelector('#ar-view .ar-book'), pt = arPlainText(book), text = pt.text, runs = [];      // runs: each furigana word's place in the text, and its furigana
         if (!book) {      // not on the 本文 tab: build the same text from the data
             text = '';
-            r.pages.forEach(function(pg) { pg.lines.forEach(function(l) { text += arMarkup(l).replace(/<rt>[^<]*<\/rt>/g, '').replace(/<span class="ar-spk">[^<]*<\/span>/g, '').replace(/<[^>]+>/g, ''); }); });
+            r.pages.forEach(function(pg) { pg.lines.forEach(function(l) {
+                if (AR_SEP.test(l)) return;
+                arMarkup(l).replace(/<span class="ar-spk">[^<]*<\/span>/g, '').split(/(<ruby>[\s\S]*?<\/ruby>)/).forEach(function(part, pi) {
+                    if (!(pi % 2)) { text += part.replace(/<[^>]+>/g, ''); return; }
+                    var base = part.replace(/<rt>[^<]*<\/rt>/g, '').replace(/<[^>]+>/g, '');
+                    runs.push({ s: text.length, e: text.length + base.length, rd: (part.match(/<rt>[^<]*<\/rt>/g) || []).map(function(x) { return x.replace(/<[^>]+>/g, ''); }).join('') });
+                    text += base;
+                });
+            }); });
+        } else {
+            var lastRb = null;
+            pt.nodes.forEach(function(x) {
+                var rb = x.n.parentElement && x.n.parentElement.closest('ruby');
+                if (!rb) { lastRb = null; return; }
+                if (rb === lastRb) { runs[runs.length - 1].e = x.s + x.n.data.length; return; }
+                var rd = ''; rb.querySelectorAll('rt').forEach(function(rt) { rd += rt.textContent; });
+                runs.push({ s: x.s, e: x.s + x.n.data.length, rd: rd }); lastRb = rb;
+            });
         }
         var start = 0;
         for (var i = 0; i < text.length; i++) {
@@ -32881,8 +32943,23 @@
         out = out.filter(function(x) { return x.text && !/[\uac00-\ud7af\u1100-\u11ff\u3130-\u318f]/.test(x.text); });
         // A section / chapter number (1, １, その二, 第三章 …) is followed by a pause of two sentences
         out.forEach(function(x) { if (!x.el && AR_SECTION_NO.test(x.text)) x.sec = true; });
-        out.text = text;
+        out.text = text; out.runs = runs;
         return out;
+    }
+    // What the voice is given for the text from `from` to `to`: each furigana word as its furigana says (ttsRubySay), the
+    // reading's own fixes (ttsKana, for words without furigana), no spaces and no ＊
+    function arSayText(list, from, to) {
+        var t = list.text || '', fix = [], m = ar && ar.r && ar.r.ttsKana;
+        var free = function(s, e) { return !fix.some(function(f) { return s < f[1] && f[0] < e; }); };
+        if (m) Object.keys(m).sort(function(a, b) { return b.length - a.length; }).forEach(function(k) {
+            for (var i = t.indexOf(k, from); i > -1 && i + k.length <= to; i = t.indexOf(k, i + k.length)) if (free(i, i + k.length)) fix.push([i, i + k.length, m[k]]);
+        });
+        (list.runs || []).forEach(function(r) { if (r.s >= from && r.e <= to && free(r.s, r.e)) fix.push([r.s, r.e, ttsRubySay(t.slice(r.s, r.e), r.rd)]); });
+        fix.sort(function(a, b) { return a[0] - b[0]; });
+        var out = '', at = from;
+        fix.forEach(function(f) { out += t.slice(at, f[0]) + f[2]; at = f[1]; });
+        out += t.slice(at, to);
+        return ttsKanaAll(out.replace(/[\s　\u2063]/g, '').replace(/[＊*]+/g, ''));
     }
     // Reading can start partway into a sentence (a tapped word): fromK = how many characters (not counting spaces) to skip
     function arTtsFromPos(list, sent) {
@@ -32935,7 +33012,7 @@
         var nodes = [], text = '';
         if (!book) return { nodes: nodes, text: text };
         var walker = document.createTreeWalker(book, NodeFilter.SHOW_TEXT, {
-            acceptNode: function(n) { return n.parentElement.closest('rt, .ar-pganchor, .ar-pgbadge, .ar-title, .ar-author, .ar-h-title, .ar-h-author, .ar-pre, .ar-spk') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; }
+            acceptNode: function(n) { return n.parentElement.closest('rt, .ar-pganchor, .ar-pgbadge, .ar-lnanchor, .ar-lnbadge, .ar-title, .ar-author, .ar-h-title, .ar-h-author, .ar-pre, .ar-spk, .ar-sep') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; }
         });
         var n;
         while ((n = walker.nextNode())) { nodes.push({ n: n, s: text.length }); text += n.data; }
@@ -33081,6 +33158,7 @@
     function arTtsPlay() {
         if (!window.speechSynthesis) { showToast('この端末では読み上げが使えません'); return; }
         if (!arTts || arTts.id !== ar.id) arTts = { id: ar.id, idx: advState(ar.id).ttsIdx || 0, fromK: advState(ar.id).ttsFrom || 0, session: 0 };
+        sayLoad();
         arTts.list = arSentenceList();
         if (arTts.idx >= arTts.list.length) { arTts.idx = 0; arTts.fromK = 0; }
         arTts.playing = true;
@@ -33091,7 +33169,7 @@
             if (arTts.idx >= arTts.list.length) { if ((arTts.heard || 0) >= arTts.list.length * 0.8) advState(arTts.id).heardAll = true; arTts.heard = 0; arTts.playing = false; arTts.idx = 0; arTts.fromK = 0; advState(arTts.id).ttsIdx = 0; advState(arTts.id).ttsFrom = 0; saveAdv(); arTtsShow(); arRefreshTools(); return; }
             arTtsShow();
             var sent = arTts.list[arTts.idx], from = arTtsFromPos(arTts.list, sent);
-            var u = new SpeechSynthesisUtterance(arTtsKana(from > sent.s ? arTts.list.text.slice(from, sent.e).replace(/[\s　]/g, '') || sent.text : sent.say || sent.text));
+            var u = new SpeechSynthesisUtterance(sent.el ? arTtsKana(sent.say || sent.text) : arSayText(arTts.list, from, sent.e) || arTtsKana(sent.text));
             u.lang = 'ja-JP';
             u.rate = arRate();
             applyVoice(u);
@@ -33396,7 +33474,7 @@
     // 横書き: put each page number in the right margin beside the line where that page starts
     function arPlacePageBadges(book) {
         if (!book || !book.classList.contains('ar-h') || !book.isConnected) return;
-        book.querySelectorAll('.ar-pgbadge').forEach(function(b) { b.remove(); });
+        book.querySelectorAll('.ar-pgbadge, .ar-lnbadge').forEach(function(b) { b.remove(); });
         var br = book.getBoundingClientRect();
         book.querySelectorAll('.ar-pganchor').forEach(function(a) {
             var r = a.getBoundingClientRect(), badge = document.createElement('span');
@@ -33405,6 +33483,18 @@
             badge.title = a.dataset.p + 'ページ';
             book.appendChild(badge);
             badge.style.top = Math.round(r.top + r.height / 2 - br.top - badge.offsetHeight / 2) + 'px';
+        });
+        // line numbers (5, 10, 15 … of the book's page), level with the line on screen in which that line of the book begins
+        var used = {};
+        book.querySelectorAll('.ar-lnanchor').forEach(function(a) {
+            var r = a.getBoundingClientRect(), b = document.createElement('span');
+            b.className = 'ar-lnbadge';
+            b.textContent = a.dataset.n;
+            b.title = a.dataset.n + '行目';
+            book.appendChild(b);
+            var top = Math.round(r.top + r.height / 2 - br.top - b.offsetHeight / 2);
+            if (used[top]) { b.remove(); return; }          // two of the book's lines begin in one line on screen: one number is enough
+            used[top] = 1; b.style.top = top + 'px';
         });
     }
     window.addEventListener('resize', function() { if (arOpen()) arPlacePageBadges(document.querySelector('#ar-view .ar-book.ar-h')); });
@@ -34113,6 +34203,7 @@
     }
     function rpGoToStats() {
         closeReadingPractice();
+        currentRecordsSub = 'stats';
         showStats();
         var card = document.getElementById('rs-card');
         if (card) setTimeout(function() { card.scrollIntoView({ block: 'start' }); }, 50);
@@ -35393,7 +35484,7 @@
         ['sg-speed', 'スピード', ['解答スピード', '読解スピード']],
         ['sg-collect', 'コレクション', ['達成バッジ', 'おみくじ']]
     ];
-    function groupStatsCards() {
+    function groupStatsCards(collTab) {
         var sc = document.getElementById('stats-content');
         var nodes = Array.prototype.slice.call(sc.childNodes);
         var cards = nodes.filter(function(n) { return n.classList && n.classList.contains('stat-card'); });
@@ -35409,10 +35500,14 @@
             if (!mine.length) return;
             var h = document.createElement('div');
             h.className = 'stats-group-head'; h.id = g[0]; h.textContent = g[1];
+            // the cards of the other tab stay on the page (their buttons are wired all the same) but are not shown;
+            // on コレクション the group's heading is left out too: the tab already says it
+            var isColl = g[0] === 'sg-collect', off = collTab ? !isColl : isColl;
+            if (off || collTab) h.classList.add('stats-off');
             frag.appendChild(h);
-            mine.forEach(function(c) { frag.appendChild(c); });
+            mine.forEach(function(c) { c.classList.toggle('stats-off', off); frag.appendChild(c); });
         });
-        rest.forEach(function(n) { frag.appendChild(n); });
+        rest.forEach(function(n) { if (collTab && n.classList) n.classList.add('stats-off'); frag.appendChild(n); });
         sc.innerHTML = '';
         sc.appendChild(frag);
     }
@@ -35426,7 +35521,7 @@
     function refreshFoldAll() {          // the 記録 page's すべて開く / すべてたたむ button follows the cards
         var b = document.querySelector('.stats-foldall'), sc = document.getElementById('stats-content');
         if (!b || !sc) return;
-        var folded = !!sc.querySelector('.stat-card.collapsed');
+        var folded = !!sc.querySelector('.stat-card.collapsed:not(.stats-off)');
         b.textContent = folded ? '▾ すべて開く' : '▴ すべてたたむ';
         b.classList.toggle('open-all', folded);
     }
@@ -36558,7 +36653,10 @@
     });
     function showStats() {
         setAnswerMode(false);
-        setNav('records', 'stats'); currentRecordsSub = 'stats';
+        // 統計 and コレクション are one page: 統計 shows every group of cards but コレクション (達成バッジ・おみくじ), the コレクション tab only that group
+        var collTab = currentRecordsSub === 'collection';
+        if (!collTab) currentRecordsSub = 'stats';
+        setNav('records', currentRecordsSub);
         quizView.style.display = 'none'; dashboardView.style.display = 'none'; bookmarksView.style.display = 'none'; mistakesView.style.display = 'none'; wordlistView.style.display = 'none'; settingsView.style.display = 'none'; statsView.style.display = 'block'; closePopup();
         saveTime();
 
@@ -36819,7 +36917,8 @@
             html += '<div class="stat-card" id="rs-card"><div class="stat-card-title">読解スピード</div>' + rsHtml + '</div>';
         }
 
-        html += omikujiStatsHtml();
+        // (before the first draw there is nothing to show yet: the コレクション tab says where the おみくじ comes from)
+        html += omikujiStatsHtml() || '<div class="stat-card"><div class="stat-card-title">おみくじ</div><div class="stat-sub" style="padding:6px 0;">今日の目標を達成すると、ホームでおみくじが引けます。引いたおみくじと御朱印帳は、ここに集まります。</div></div>';
 
         // ---------- 10. Milestones ----------
         var badges = computeBadges(streaks, bestDay, counts.mastered);
@@ -36845,7 +36944,7 @@
 
         statsContent.innerHTML = html;
         statsLastW = statsContent.clientWidth;
-        groupStatsCards();
+        groupStatsCards(collTab);
         // tap a card's title to fold it down to just the title (remembered)
         statsContent.querySelectorAll('.stat-card').forEach(function(card) {
             var t = card.querySelector('.stat-card-title');
@@ -36882,17 +36981,18 @@
         var foldAll = document.createElement('button');
         foldAll.className = 'stats-foldall';
         foldAll.addEventListener('click', function() {
-            var anyFolded = statsContent.querySelector('.stat-card.collapsed'), c = {};
-            statsContent.querySelectorAll('.stat-card').forEach(function(card) {
+            var anyFolded = statsContent.querySelector('.stat-card.collapsed:not(.stats-off)'), c = getSetting('statsCollapsed', {});
+            statsContent.querySelectorAll('.stat-card:not(.stats-off)').forEach(function(card) {
                 var t = card.querySelector('.stat-card-title'); if (!t) return;
                 card.classList.toggle('collapsed', !anyFolded); t.setAttribute('aria-expanded', String(!!anyFolded));
-                if (!anyFolded) c[t.textContent.replace(/（.*?）/g, '').trim()] = 1;
+                var fk = t.textContent.replace(/（.*?）/g, '').trim();
+                if (!anyFolded) c[fk] = 1; else delete c[fk];
             });
             setSetting('statsCollapsed', c); refreshFoldAll();
         });
         jump.appendChild(foldAll);
         // then one button per group (今日と習慣・実力・スピード・コレクション)
-        statsContent.querySelectorAll('.stats-group-head').forEach(function(head) {
+        statsContent.querySelectorAll('.stats-group-head:not(.stats-off)').forEach(function(head) {
             var b = document.createElement('button');
             b.textContent = head.textContent;
             b.addEventListener('click', function() { head.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
