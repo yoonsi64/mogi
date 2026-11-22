@@ -32143,10 +32143,13 @@
         var hint = '<div class="ar-hint-row"><div class="ar-hint"><span class="nowrap">タップ：<span class="ar-mark-demo"></span>問い・下線・＊</span>　<span class="nowrap">' + (window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches ? 'なぞる・長押し' : '長押し') + '：単語帳</span>　<span class="nowrap">ピンチ：文字の大きさ</span></div>' + toggle + '</div>';
         body.innerHTML = pagebar + (mode === 'v'
             ? arBookHtml(r)
-            : '<div class="ar-book ar-h"><h2 class="ar-h-title">' + arTitleHtml(r, escapeHtml(r.title)) + '</h2><div class="ar-h-author">' + r.authorHtml + '</div>' + (r.intro ? arIntroHtml(r) : '') + arParagraphsHtml(r) + '</div>') + hint;
+            : '<div class="ar-book ar-h"><h2 class="ar-h-title">' + arTitleHtml(r, escapeHtml(r.title)) + '</h2><div class="ar-h-author">' + r.authorHtml + '</div>' + (r.intro ? arIntroHtml(r) : '') + arParagraphsHtml(r) + '</div>') +
+            // at the end of the text: mark it read (the shelf's 未読 becomes 通読 ✓)
+            '<label class="ar-check ar-read-check"><input type="checkbox"' + (st.done.t1 ? ' checked' : '') + '> 最後まで読んだ（通読）</label>' + hint;
         var book = body.querySelector('.ar-book');
         book.classList.toggle('no-marks', !marksOn);
         if (mode === 'h') arPlacePageBadges(book);
+        body.querySelector('.ar-read-check input').addEventListener('change', function() { st.done.t1 = this.checked; saveAdv(); });
         body.querySelectorAll('.ar-pagebar button').forEach(function(b) {
             b.addEventListener('click', function() { arGoToPage(b.dataset.p); });
         });
