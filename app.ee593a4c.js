@@ -32136,20 +32136,17 @@
         else renderArAbout(body, r);
     }
 
-    // A credit line (（「作品」『書名』著者　出版社より）) stays on one line, made smaller if needed. One too long for that (it would
-    // get too small to read) is broken only between its parts: after a title (」』 that closes it) or at the space before the
-    // publisher, never inside a title or a name; the parts are then sized so the longest fits.
+    // A credit line (（「作品」『書名』著者　出版社より）): all the same size, on one line when it fits; one that doesn't is broken
+    // only between its parts, after a title (the 」』 that closes it) or at the space before the publisher, never inside a title
+    // or a name (a part longer than a whole line breaks where Japanese text may)
     function arFitRight(book) {
         if (!book) return;
         book.querySelectorAll('.ar-right').forEach(function(el) {
             if (el.dataset.txt) el.textContent = el.dataset.txt;
-            el.style.fontSize = el.style.whiteSpace = '';
+            el.style.whiteSpace = '';
             var h = /^horizontal/.test(getComputedStyle(el).writingMode || 'horizontal-tb');
-            var size = function(n) { return h ? n.scrollWidth : n.scrollHeight; }, room = h ? el.clientWidth : el.clientHeight;
-            var need = size(el);
-            if (!(need > room + 1 && room > 0)) return;
-            var fs = 0.8 * room / need * 0.97;
-            if (fs >= 0.62 || el.children.length) { el.style.fontSize = Math.max(fs, 0.5).toFixed(3) + 'em'; return; }
+            var room = h ? el.clientWidth : el.clientHeight, need = h ? el.scrollWidth : el.scrollHeight;
+            if (!(need > room + 1 && room > 0) || el.children.length) { if (el.children.length && need > room + 1) el.style.whiteSpace = 'normal'; return; }
             var t = el.textContent, parts = [], cur = '', depth = 0, base = /^[（(]/.test(t) ? 1 : 0;
             Array.from(t).forEach(function(ch) {
                 if (ch === '　' && depth === base && cur) { parts.push(cur + ch); cur = ''; return; }
@@ -32161,9 +32158,15 @@
             el.dataset.txt = t;
             el.innerHTML = parts.map(function(p) { return '<span class="ar-right-part">' + escapeHtml(p) + '</span>'; }).join('');
             el.style.whiteSpace = 'normal';
-            var widest = 0;
-            el.querySelectorAll('.ar-right-part').forEach(function(sp) { var r = sp.getBoundingClientRect(); widest = Math.max(widest, h ? r.width : r.height); });
-            if (widest > room) el.style.fontSize = Math.max(0.8 * room / widest * 0.97, 0.5).toFixed(3) + 'em';
+            // a part longer than a whole line (a long title): broken at a bracket or space inside it (『緑のマンハッタン／「環境」をめぐる…』)
+            el.querySelectorAll('.ar-right-part').forEach(function(sp) {
+                var r = sp.getBoundingClientRect();
+                if ((h ? r.width : r.height) <= room) return;
+                var sub = sp.textContent.split(/(?<=[」』　])|(?=[「『])/).filter(Boolean);
+                sp.innerHTML = sub.map(function(p) { return '<span class="ar-right-part">' + escapeHtml(p) + '</span>'; }).join('');
+                sp.style.whiteSpace = 'normal';
+                sp.querySelectorAll('.ar-right-part').forEach(function(x) { var q = x.getBoundingClientRect(); if ((h ? q.width : q.height) > room) x.style.whiteSpace = 'normal'; });
+            });
         });
     }
     function renderArText(body, r, st) {
@@ -32277,7 +32280,7 @@
         var v = document.getElementById('ar-view'), body = v.querySelector('.ar-body'), book = body.querySelector('.ar-book');
         v.style.setProperty('--ar-zoom', z);
         v.dataset.zoom = z;
-        clearTimeout(arSetZoom.fit); arSetZoom.fit = setTimeout(function() { arFitRight(book); }, 120);          // a credit line still fits at the new size
+        clearTimeout(arSetZoom.fit); arSetZoom.fit = setTimeout(function() { arFitRight(book); }, 120);          // a credit line: one line again, or broken between its parts, at the new size
         if (anchor && book) {
             body.scrollTop = anchor.fy * body.scrollHeight - anchor.y;
             if (anchor.fx !== undefined) arSetFromRight(book, anchor.fx * book.scrollWidth - anchor.x);

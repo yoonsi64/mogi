@@ -917,7 +917,7 @@
         .ar-author { height: var(--ar-len); text-align: end; margin-left: 1.3em; letter-spacing: 0.15em; white-space: nowrap; }
         .ar-boxch { display: inline-block; border: 1.5px solid currentColor; line-height: 1.15; padding: 0.08em 0.1em; margin-inline-end: 0.25em; }
         .ar-h p:has(> .ar-boxch:first-child), .ar-h p:has(> .ar-pganchor:first-child + .ar-boxch) { text-indent: 0; }
-        .ar-right { display: block; text-align: end; white-space: nowrap; font-size: 0.8em; }   /* a credit line (（『…』…より）): smaller, on one line; arFitRight shrinks it further if it still doesn't fit */
+        .ar-right { display: block; text-align: end; white-space: nowrap; font-size: 0.8em; }   /* a credit line (（『…』…より）): smaller, all the same size; arFitRight breaks a long one between its parts */
         .ar-right-part { white-space: nowrap; }
         .ar-bio-note { font-size: 0.78rem; color: var(--text-sub); border-top: 1px dashed var(--border-light); margin-top: 8px; padding-top: 6px; }
         .ar-bio-work { font-size: 0.8rem; color: var(--text-sub); margin-bottom: 2px; }
