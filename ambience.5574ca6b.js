@@ -7998,7 +7998,10 @@ function skyCSS() {
     '.mogisky-day .mogisky-here{color:rgba(255,255,255,0.95)}';
   document.head.appendChild(s);
 }
-function lightForDate(d) { var h = d.getHours() + d.getMinutes() / 60; return h >= 5 && h < 9 ? 'morning' : h >= 9 && h < 16.5 ? 'day' : h >= 16.5 && h < 19 ? 'dusk' : 'night'; }
+/* morning, day, dusk and night follow the sun through the year: Tokyo's sunrise and sunset for the date, on the local clock
+   (morning from half an hour before sunrise to three hours after; dusk from an hour before sunset to half an hour after) */
+function sunTimesFor(d){var n=Math.round((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(d.getFullYear(),0,0))/86400000),B=2*Math.PI*(n-81)/364,eot=9.87*Math.sin(2*B)-7.53*Math.cos(B)-1.5*Math.sin(B),dec=-0.40911*Math.cos(2*Math.PI*(n+10)/365),lat=0.62279,ha=Math.acos((-0.01454-Math.sin(lat)*Math.sin(dec))/(Math.cos(lat)*Math.cos(dec)))*12/Math.PI,noon=12-eot/60-0.3167;return[noon-ha,noon+ha];}
+function lightForDate(d) { var h = d.getHours() + d.getMinutes() / 60, s = sunTimesFor(d); return h >= s[0] - 0.5 && h < s[0] + 3 ? 'morning' : h >= s[0] + 3 && h < s[1] - 1 ? 'day' : h >= s[1] - 1 && h < s[1] + 0.5 ? 'dusk' : 'night'; }
 function seasonForDate(d) { var m = d.getMonth(); return m >= 2 && m <= 4 ? 'spring' : m >= 5 && m <= 7 ? 'summer' : m >= 8 && m <= 10 ? 'autumn' : 'winter'; }
 
 /* ---- 立つ場所: the spots you can stand at in each world. The foreground is painted round one eye, so a spot moves the eye (the
