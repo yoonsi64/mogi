@@ -36669,7 +36669,7 @@
     // 文型クイズの問題集 (grambank): 例文の穴うめ and 文の組み立て problems written for the quiz, by pattern name:
     // { f: { name: [[difficulty, sentence with （　　）, right, wrong, wrong, wrong]] }, c: { name: [[difficulty, before, piece ×4 in order, after, ★ place]] } }.
     // Difficulty is on the app's scale (3 N1標準, 4 むずかしい). A pattern that has them is asked from here, not from its index examples.
-    var GBANK_SRC = 'grambank.a15faadb.js';
+    var GBANK_SRC = 'grambank.a93c8d44.js';
     var GIDX_SRC = 'gramidx.c14abacd.js', gidxLoading = false, gidxWaiters = [], gidxByPat = null, gidxE = null, gidxSim = {};
     var grammarView = document.getElementById('grammar-view'), grammarContent = document.getElementById('grammar-content');
     var gidxState = { q: '', missed: false, lv: 0, open: -1 };          // kept while the app is open: the search, the filters, the open entry
@@ -36957,7 +36957,18 @@
         comp: '次の文の★に入る最もよいものを選びなさい。（言葉をタップしてから、入れたい空欄をタップしてください）'
     };
     // whether entry e can be asked as kind t: every pattern has a meaning; 例文の穴うめ and 文の組み立て need an example that works
-    function gidxCanAsk(e, t) { return t === 'cloze' ? gidxCanCloze(e) : t === 'comp' ? !!(e.bc || e.cp) : true; }
+    // 難易度 on the setup page (S.d: 0 all, 3 N1標準, 4 むずかしい and above): 穴うめ and 組み立て are then asked only from
+    // 問題集 problems of that difficulty; the two meaning kinds have no difficulty and are asked as always
+    function gidxBankList(e, kind) {
+        var list = kind === 'f' ? e.bf : e.bc, d = gidxQzSet.d || 0;
+        if (!list) return null;
+        if (d) list = list.filter(function(x) { return d >= 4 ? x[0] >= 4 : x[0] === d; });
+        return list.length ? list : null;
+    }
+    function gidxCanAsk(e, t) {
+        if (gidxQzSet.d && (t === 'cloze' || t === 'comp')) return !!gidxBankList(e, t === 'cloze' ? 'f' : 'c');
+        return t === 'cloze' ? gidxCanCloze(e) : t === 'comp' ? !!(e.bc || e.cp) : true;
+    }
     // the kinds pressed on the setup page (S.types); an older saved setting had one kind, ミックス or 穴うめ＋組み立て
     function gidxQzKinds(S) {
         var all = GIDX_QZ_TYPES.map(function(t) { return t[0]; });
@@ -36983,6 +36994,7 @@
         if (!gidxQzKinds(S).length) S.types = GIDX_QZ_TYPES.map(function(t) { return t[0]; });          // nothing pressed last time: start from all four
         if (['all', '1', '2', '3', 'keigo', 'weak'].indexOf(S.range) < 0) S.range = 'all';
         if ([10, 20, 30].indexOf(S.n) < 0) S.n = 10;
+        if ([0, 3, 4].indexOf(S.d) < 0) S.d = 0;
         var ranges = [['all', 'すべて'], ['1', 'N1'], ['2', 'N2'], ['3', 'N3'], ['keigo', '敬語'], ['weak', '苦手']];
         grammarContent.innerHTML = '<div class="gx-qs"><div class="gx-title"><h2>文型クイズ</h2><span></span><button class="gx-quizbtn gx-qs-back">さくいんにもどる</button></div>' +
             '<div class="gx-qs-h">出題形式<span>押した形式がまざって出ます</span></div><div class="gx-qs-types">' + GIDX_QZ_TYPES.map(function(t) {
@@ -36990,6 +37002,9 @@
             }).join('') + '</div>' +
             '<div class="gx-qs-h">範囲</div><div class="gx-qs-row">' + ranges.map(function(r) {
                 return '<button class="gx-qs-chip" data-r="' + r[0] + '" aria-pressed="false">' + r[1] + '<i>' + gidxQzPool(r[0], cnt).length + '</i></button>';
+            }).join('') + '</div>' +
+            '<div class="gx-qs-h">難易度<span>例文の穴うめ・文の組み立ての問題集から</span></div><div class="gx-qs-row">' + [[0, 'すべて'], [3, 'N1標準'], [4, 'むずかしい']].map(function(d) {
+                return '<button class="gx-qs-chip" data-d="' + d[0] + '" aria-pressed="false">' + d[1] + '</button>';
             }).join('') + '</div>' +
             '<div class="gx-qs-h">問題数</div><div class="gx-qs-row">' + [10, 20, 30].map(function(n) {
                 return '<button class="gx-qs-chip" data-n="' + n + '" aria-pressed="false">' + n + '問</button>';
@@ -36999,7 +37014,7 @@
         var sync = function() {
             grammarContent.querySelectorAll('.gx-qs-type').forEach(function(b) { var on = S.types.indexOf(b.getAttribute('data-t')) >= 0; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
             grammarContent.querySelectorAll('.gx-qs-chip').forEach(function(b) {
-                var on = b.hasAttribute('data-r') ? b.getAttribute('data-r') === S.range : +b.getAttribute('data-n') === S.n;
+                var on = b.hasAttribute('data-r') ? b.getAttribute('data-r') === S.range : b.hasAttribute('data-d') ? +b.getAttribute('data-d') === S.d : +b.getAttribute('data-n') === S.n;
                 b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
             });
             var poolN = function(r) { return gidxQzPool(r, cnt).filter(function(e) { return gidxCanAskAny(e, S.types); }).length; };
@@ -37010,7 +37025,8 @@
             var ex = S.types.filter(function(t) { return t === 'cloze' || t === 'comp'; }).length, only = ex === S.types.length;
             document.getElementById('gx-qs-note').textContent = !S.types.length ? '出題形式を一つ以上えらんでください。'
                 : S.range === 'weak' ? (n ? '苦手：文法の問題でまちがえた文型と、このクイズで最後にまちがえた文型です。' : '苦手な文型はまだありません。文法の問題やこのクイズでまちがえると、ここから出題できます。')
-                : ex ? '例文の穴うめ・文の組み立ては、その形式に使える例文のある文型だけから出題します' + (only ? '（敬語は出ません）。' : '。') : 'まちがえたことのある文型が先に出ます。';
+                : ex && S.d ? '例文の穴うめ・文の組み立ては、問題集の「' + (S.d === 4 ? 'むずかしい' : 'N1標準') + '」の問題がある文型だけから出題します。'
+                : ex ? '例文の穴うめ・文の組み立ては、その形式の問題がある文型だけから出題します。' : 'まちがえたことのある文型が先に出ます。';
             try { localStorage.setItem(GIDX_QZ_SET_KEY, JSON.stringify(S)); } catch (e) {}
         };
         grammarContent.querySelectorAll('.gx-qs-type').forEach(function(b) { b.addEventListener('click', function() {
@@ -37019,7 +37035,7 @@
             gidxQzKinds(S); sync();
         }); });
         grammarContent.querySelectorAll('.gx-qs-chip').forEach(function(b) {
-            b.addEventListener('click', function() { if (b.hasAttribute('data-r')) S.range = b.getAttribute('data-r'); else S.n = +b.getAttribute('data-n'); sync(); });
+            b.addEventListener('click', function() { if (b.hasAttribute('data-r')) S.range = b.getAttribute('data-r'); else if (b.hasAttribute('data-d')) S.d = +b.getAttribute('data-d'); else S.n = +b.getAttribute('data-n'); sync(); });
         });
         grammarContent.querySelector('.gx-qs-back').addEventListener('click', function() { showGrammarIndex(); });
         grammarContent.querySelector('.gx-qs-go').addEventListener('click', function() { gidxQuizStart(); });
@@ -37163,11 +37179,11 @@
     }
     function gidxCanCloze(e) { if (e.cq === undefined) e.cq = !!e.bf || !!gidxClozeMake(e, true); return e.cq; }
     // the next 問題集 problem of a pattern: they come round in turn, so the same one is not asked twice running
-    function gidxBankNext(e, kind) { var list = kind === 'f' ? e.bf : e.bc; return list[e.bn[kind]++ % list.length]; }
+    function gidxBankNext(e, kind) { var list = gidxBankList(e, kind); return list[e.bn[kind]++ % list.length]; }
     // one question: { e, t, opts: [{ html, ok }], sent (cloze: the sentence, \u0001 where the pattern is taken out), parts }
     function gidxQuizMake(item) {
         var e = gidxE[item.i], t = item.t, q = { e: e, t: t, opts: [] };
-        if (t === 'cloze' && e.bf) {
+        if (t === 'cloze' && gidxBankList(e, 'f')) {
             var bf = gidxBankNext(e, 'f');          // two blanks: the choices are pairs, "a／b"
             q.d = bf[0]; q.sent = bf[1].replace(/（　　）/g, '\u0001'); q.parts = bf[2].split('／');
             q.opts = bf.slice(2, 6).map(function(o, n) { return { html: o.replace(/／/g, ' ／ '), ok: n === 0 }; });
@@ -37176,7 +37192,7 @@
             if (c) { q.sent = c.sent; q.parts = c.parts; q.opts = c.opts; }
             else t = q.t = 'm2p';          // no example of this pattern has a blank that three other patterns fit: ask for the pattern instead
         }
-        if (t === 'comp' && e.bc) {
+        if (t === 'comp' && gidxBankList(e, 'c')) {
             var bc = gidxBankNext(e, 'c');
             q.d = bc[0]; q.frags = bc.slice(2, 6); q.star = bc[7];
             q.tpl = bc[1] + '\u0001\u0001\u0001\u0001' + bc[6]; q.full = bc[1] + q.frags.join('') + bc[6];
