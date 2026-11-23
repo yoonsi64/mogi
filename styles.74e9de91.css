@@ -3918,7 +3918,6 @@ html.dark .unsure-btn[aria-pressed="true"] { color: #f0b860; }
 .gx-ex li::before { content: '例'; position: absolute; left: 0; top: 10px; font-size: 0.65rem; font-weight: bold; color: var(--text-sub); border: 1px solid var(--border-light); border-radius: 3px; padding: 0 4px; line-height: 1.5; }
 .gx-ex b { color: var(--active-blue); }
 .gx-rec { margin-top: 8px; font-size: 0.78rem; color: var(--text-sub); }
-.subnav.four button { flex: 1 1 auto; white-space: nowrap; padding: 11px 6px; }
 /* 文型さくいん: levels, 接続, furigana, 読み上げ, look-alikes, 敬語, 意味クイズ, the sheet opened from a 解説 */
 .gx-title { align-items: center; }
 .gx-title #gx-count { margin-right: auto; }
@@ -3954,24 +3953,7 @@ html.no-furigana .gx-ex li::before { top: 10px; }
 button.gx-simrow { cursor: pointer; }
 button.gx-simrow:disabled { cursor: default; }
 .gx-rec { margin-top: 12px; }
-.gx-qz-bar { display: flex; align-items: center; gap: 10px; min-height: 36px; margin-bottom: 12px; }
-.gx-qz-bar b { font-size: 1.1rem; }
-.gx-qz-bar span { margin-right: auto; color: var(--text-sub); font-weight: bold; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
-.gx-qz-q { border: 1px solid var(--border-light); border-radius: 10px; background: var(--surface); padding: 14px; margin-bottom: 12px; }
-.gx-qz-jp { font-size: 1.05rem; font-weight: bold; line-height: 1.6; margin-top: 8px; }
-.gx-qz-kr { font-size: 0.95rem; color: var(--text-sub); line-height: 1.6; margin-top: 2px; word-break: keep-all; overflow-wrap: anywhere; }
-.gx-qz-opts { display: flex; flex-direction: column; gap: 8px; }
-.gx-qz-opts .option-btn { width: 100%; font-weight: bold; font-family: inherit; color: var(--text-main); }
-.gx-qz-fb { margin-top: 14px; }
-.gx-qz-res { font-weight: bold; margin-bottom: 10px; }
-.gx-qz-res.ok { color: var(--correct-color); }
-.gx-qz-res.ng { color: var(--incorrect-color); }
-.gx-qz .practice-btn { margin-top: 14px; }
-.gx-qz-fb .gx-qz-next { margin: 0 0 16px; }
 .gx-sheet-box:focus { outline: none; }
-.gx-qz-score { font-size: 1.15rem; margin: 6px 0 16px; }
-.gx-qz-score b { font-size: 1.7rem; }
-.gx-qz-all { color: var(--text-sub); }
 .gx-links { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border-light); }
 .gx-links:empty { display: none; }
 .gx-link { padding: 6px 12px; border: 1px solid var(--active-blue); background: var(--accent-soft); color: var(--active-blue); border-radius: 16px; font-size: 0.82rem; font-weight: bold; font-family: inherit; cursor: pointer; }
@@ -3982,3 +3964,54 @@ button.gx-simrow:disabled { cursor: default; }
 .gx-sheet-x { flex: none; width: 40px; height: 40px; margin: -6px -8px 0 0; border: none; background: none; color: var(--text-sub); font-size: 1.5rem; line-height: 1; cursor: pointer; }
 .gx-sheet-body { overflow-y: auto; padding-top: 10px; -webkit-overflow-scrolling: touch; }
 @media (min-width: 700px) { #gx-sheet { align-items: center; } .gx-sheet-box { border-radius: 16px; } }
+.gx-rec.two { margin-top: 2px; }
+/* 文型クイズ: laid out like the question screen (the same top bar, progress, 問題文, choices, 解説; 次の問題へ fixed at the bottom) */
+body.gx-quiz-on #app { padding-bottom: 16px; }
+body.gx-quiz-on header, body.gx-quiz-on .bottom-nav, body.gx-quiz-on #subnav { display: none !important; }
+.gx-qz .quiz-topbar { display: flex; }
+.gx-qz-footer { position: sticky; bottom: 0; display: flex; background: var(--bg-paper); padding: 10px 0 calc(10px + env(safe-area-inset-bottom)); margin-top: 12px; z-index: 50; border-top: 1px solid var(--border-light); }
+.gx-next { flex: 1; padding: 16px; background: var(--bg-paper); color: var(--text-main); border: 2px solid var(--border-dark); font-size: 1rem; font-weight: bold; font-family: inherit; user-select: none; }
+.gx-next:disabled { border-color: var(--border-light); color: var(--border-light); }
+.gx-qz-mean { display: block; font-weight: bold; }
+.gx-qz-mkr { display: block; font-size: 0.9em; color: var(--text-sub); margin-top: 4px; word-break: keep-all; overflow-wrap: anywhere; }
+.gx-qz-pat { font-weight: bold; font-size: 1.15em; }
+.gx-qz-okr { display: block; font-size: 0.85em; font-weight: normal; color: var(--text-sub); margin-top: 2px; word-break: keep-all; overflow-wrap: anywhere; }
+.gx-qz .option-text rt, .gx-qz .context-fill rt { font-size: 0.52em; font-weight: normal; }
+.gx-qz .explain-card { margin-top: 12px; }
+.gx-qz .explain-card .gx-conn { padding-top: 8px; }
+.gx-qz .practice-btn { margin-top: 10px; }
+.gx-qs-h { font-size: 0.8rem; font-weight: bold; color: var(--text-sub); margin: 18px 0 8px; }
+.gx-qs-types { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.gx-qs-type { display: flex; flex-direction: column; gap: 3px; text-align: left; padding: 12px; border: 1px solid var(--border-light); border-radius: 10px; background: var(--surface); color: var(--text-main); font: inherit; cursor: pointer; }
+.gx-qs-type b { font-size: 0.95rem; }
+.gx-qs-type span { font-size: 0.74rem; color: var(--text-sub); line-height: 1.45; }
+.gx-qs-type.on { border-color: var(--active-blue); background: var(--accent-soft); box-shadow: 0 0 0 1px var(--active-blue); }
+.gx-qs-type.on b { color: var(--active-blue); }
+.gx-qs-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.gx-qs-chip { min-height: 40px; padding: 6px 14px; border: 1px solid var(--border-light); border-radius: 20px; background: var(--surface); color: var(--text-main); font: inherit; font-size: 0.85rem; font-weight: bold; cursor: pointer; }
+.gx-qs-chip i { font-style: normal; font-weight: normal; font-size: 0.72rem; color: var(--text-sub); margin-left: 5px; font-variant-numeric: tabular-nums; }
+.gx-qs-chip.on { border-color: var(--active-blue); background: var(--active-blue); color: #fff; }
+.gx-qs-chip.on i { color: #fff; opacity: 0.85; }
+.gx-qs-note { font-size: 0.78rem; color: var(--text-sub); line-height: 1.6; margin: 16px 0 4px; }
+.gx-qs-go { margin-top: 12px; }
+.gx-qz-score { display: flex; align-items: baseline; gap: 8px; font-size: 1.05rem; margin: 6px 0 4px; }
+.gx-qz-score span { font-size: 0.8rem; color: var(--text-sub); font-weight: bold; margin-right: 4px; }
+.gx-qz-score b { font-size: 2rem; }
+.gx-qz-score i { font-style: normal; margin-left: auto; font-weight: bold; color: var(--text-sub); }
+.gx-qz-by { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.8rem; color: var(--text-sub); margin-bottom: 14px; }
+.gx-qz-by b { color: var(--text-main); }
+.gx-qz-list { border-top: 1px solid var(--border-light); margin-bottom: 6px; }
+.gx-qz-item { display: flex; align-items: flex-start; gap: 10px; width: 100%; padding: 10px 2px; border: none; border-bottom: 1px solid var(--border-light); background: none; color: var(--text-main); font: inherit; text-align: left; cursor: pointer; }
+.gx-qz-item > i { flex: none; width: 1.4em; font-style: normal; font-weight: bold; text-align: center; }
+.gx-qz-item.ok > i { color: var(--correct-color); }
+.gx-qz-item.ng > i { color: var(--incorrect-color); }
+.gx-qz-item > span { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.gx-qz-item b { font-size: 0.92rem; }
+.gx-qz-item span span { font-size: 0.78rem; color: var(--text-sub); line-height: 1.5; }
+/* 学ぶ's four tabs: equal widths, the count as a small badge in the corner */
+.subnav.four button { flex: 1 1 0; min-width: 0; white-space: nowrap; position: relative; padding: 18px 2px 9px; min-height: 48px; font-size: 0.8rem; }
+.subnav.four button[data-sub="mistakes"] { flex-grow: 1.3; }
+.subnav.four button[data-sub="bookmarks"] { flex-grow: 1.5; }
+.subnav.four .count { position: absolute; top: 3px; right: 4px; margin: 0; min-width: 15px; padding: 0 4px; border-radius: 8px; font-size: 0.58rem; line-height: 13px; font-weight: bold; opacity: 1; background: var(--text-sub); color: var(--surface); font-variant-numeric: tabular-nums; }
+.subnav.four .count.zero { display: none; }
+.subnav.four button.active .count { background: #fff; color: var(--active-blue); }
