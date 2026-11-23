@@ -13976,6 +13976,7 @@
         if (homeReturn && !(homeReturn.tab === tab && homeReturn.sub === sub)) homeReturn = null;
         navTab = tab;
         if (grammarView) grammarView.style.display = 'none';          // 文型さくいん: every other page hides it on the way in
+        gidxSheetClose();
         document.body.classList.remove('in-quiz');
         bottomNav.style.display = 'flex';
         bottomNav.querySelectorAll('button').forEach(function(b) { b.classList.toggle('active', b.dataset.tab === (tab === 'settings' ? settingsFrom.tab : tab)); });
@@ -21893,6 +21894,7 @@
             if (list) rows.push('<div class="explain-sub">ほかの選択肢</div><ul class="explain-opts">' + list + '</ul>');
         }
         if (ex.ex) rows.push('<div class="explain-sub">例文</div><div class="mx-ex">' + String(ex.ex).replace(/<(?!\/?b>)[^>]*>/g, '') + '</div>');
+        rows.push(gidxLinksHtml(orig));
         return '<div class="explain-card mx"><div class="explain-title">解説</div>' + rows.join('') + '</div>';
     }
     // 読解 help: a reading question missed 3 times or more in 今日の復習 shows, once answered there again, the part(s) of the
@@ -22024,6 +22026,7 @@
         if (ex.point) rows.push('<div class="explain-sub">ポイント</div><div class="mx-point">' + escapeHtml(ex.point) + '</div>');
         if (ex.steps) rows.push('<div class="explain-sub">組み立て方</div><div class="mx-point">' + escapeHtml(ex.steps) + '</div>');
         if (ex.ex) rows.push('<div class="explain-sub">例文</div><div class="mx-ex">' + String(ex.ex).replace(/<(?!\/?b>)[^>]*>/g, '') + '</div>');
+        rows.push(gidxLinksHtml(q));
         return bare ? rows.join('') : '<div class="explain-card mx"><div class="explain-title">解説</div>' + rows.join('') + '</div>';
     }
     // 文章の文法: one blank (bi) of the passage; picked = the learner's choice (text), if any
@@ -22045,6 +22048,7 @@
         }).join('');
         if (list) rows.push('<div class="explain-sub">ほかの選択肢</div><ul class="explain-opts">' + list + '</ul>');
         if (ex.ex) rows.push('<div class="explain-sub">例文</div><div class="mx-ex">' + String(ex.ex).replace(/<(?!\/?b>)[^>]*>/g, '') + '</div>');
+        rows.push(gidxLinksHtml(q, bi));
         return rows.join('');
     }
     // the whole passage answered: every blank's explanation, in one card (the blank just answered opened)
@@ -36653,14 +36657,19 @@
     }
 
     // ===== 文型さくいん (学ぶ › 文型) =====
-    // GIDX_SRC (window.MogiGramIdx.e) lists the grammar patterns the 文法 questions test, in あいうえお order. One entry:
-    // [pattern, reading, meaning in simple Japanese, Korean gloss, example sentences, the patterns of MogiGram.p it covers].
-    // Loaded when 文型 is first opened (and with 統計, for the link from 苦手な文型).
-    var GIDX_SRC = 'gramidx.ffdd99a3.js', gidxLoading = false, gidxWaiters = [], gidxByPat = null;
+    // GIDX_SRC (window.MogiGramIdx.e) lists the grammar patterns the 文法 questions test, in あいうえお order, then 敬語.
+    // One entry: [pattern, reading, meaning in simple Japanese, Korean gloss, example sentences ({漢字|よみ} for furigana,
+    // <b> on the pattern), the patterns of MogiGram.p it covers, level (1 = N1, 2 = N2, 3 = N3 and below), 接続,
+    // its group of look-alike patterns (-1: none), what sets it apart in that group, 敬語 kind ('' for a pattern)].
+    // The meanings, glosses, levels, 接続, look-alike notes and furigana are written for the app, not taken from the books.
+    // Loaded when 文型 is first opened, with 統計 (the link from 苦手な文型) and with the first 文法 解説 (its link).
+    var GIDX_SRC = 'gramidx.c43831f5.js', gidxLoading = false, gidxWaiters = [], gidxByPat = null, gidxE = null, gidxSim = {};
     var grammarView = document.getElementById('grammar-view'), grammarContent = document.getElementById('grammar-content');
-    var gidxState = { q: '', missed: false, open: -1 };          // kept while the app is open: the search, the filter, the open entry
+    var gidxState = { q: '', missed: false, lv: 0, open: -1 };          // kept while the app is open: the search, the filters, the open entry
+    var gidxQuiz = null;          // 意味クイズ in progress: { items, pos, right, wrong, opts, done }
     var GIDX_ROWS = ['あいうえお', 'かきくけこ', 'さしすせそ', 'たちつてと', 'なにぬねの', 'はひふへほ', 'まみむめも', 'やゆよ', 'らりるれろ', 'わをん'];
     var GIDX_SMALL = { 'ぁ': 'あ', 'ぃ': 'い', 'ぅ': 'う', 'ぇ': 'え', 'ぉ': 'お', 'っ': 'つ', 'ゃ': 'や', 'ゅ': 'ゆ', 'ょ': 'よ', 'ゎ': 'わ' };
+    var GIDX_KINDS = ['尊敬語', '謙譲語', '丁寧語', '依頼'], GIDX_QUIZ_N = 10;
     // for searching: かな and カナ alike, no 〜, brackets, slashes or spaces
     function gidxFold(s) {
         return String(s || '').toLowerCase().replace(/[ァ-ヶ]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 0x60); })
@@ -36668,8 +36677,11 @@
     }
     // the kana an entry is filed under: the first of its reading, が under か, っ under つ
     function gidxKana(y) { var c = String(y || '').charAt(0).normalize('NFD').charAt(0); return GIDX_SMALL[c] || c; }
+    // an example as stored → HTML with furigana (hidden with the 設定's ふりがな off, like everywhere else)
+    function gidxRuby(x) { return String(x).replace(/\{([^|{}]+)\|([^{}]+)\}/g, '<ruby>$1<rt>$2</rt></ruby>'); }
+    function gidxLv(e) { return '<span class="gx-lv l' + e.lv + '">N' + e.lv + '</span>'; }
     function gidxLoad(cb) {
-        if (window.MogiGramIdx) { if (cb) cb(); return; }
+        if (gidxE) { if (cb) cb(); return; }
         if (cb) gidxWaiters.push(cb);
         if (gidxLoading) return;
         gidxLoading = true;
@@ -36677,12 +36689,15 @@
         var done = function(failed) {
             gidxLoading = false;
             if (!failed && window.MogiGramIdx) {
-                gidxByPat = {};
-                window.MogiGramIdx.e.forEach(function(e, i) {
-                    e[5].forEach(function(p) { gidxByPat[p] = i; });
-                    e[6] = [e[0], e[1], e[2], e[3]].map(gidxFold).join('|');          // what the search looks in
-                    e[7] = gidxFold(e[0]) + '|' + e[1];                               // a hit in the pattern itself comes first,
-                    e[8] = '|' + (e[2] + '／' + e[3]).split(/[／\/,、・①②③]/).map(gidxFold).join('|');          // then a meaning that begins with the words
+                gidxByPat = {}; gidxSim = {};
+                gidxE = window.MogiGramIdx.e.map(function(a, i) {
+                    var e = { i: i, n: a[0], y: a[1], j: a[2], k: a[3], x: a[4], g: a[5], lv: a[6], c: a[7], s: a[8], sn: a[9], kd: a[10] };
+                    e.g.forEach(function(p) { gidxByPat[p] = i; });
+                    if (e.s >= 0) (gidxSim[e.s] || (gidxSim[e.s] = [])).push(i);
+                    e.f = [e.n, e.y, e.j, e.k, e.kd].map(gidxFold).join('|');          // what the search looks in
+                    e.f0 = gidxFold(e.n) + '|' + e.y;                                  // a hit in the pattern itself comes first,
+                    e.f1 = '|' + (e.j + '／' + e.k).split(/[／\/,、・①②③]/).map(gidxFold).join('|');          // then a meaning that begins with the words
+                    return e;
                 });
             }
             var w = gidxWaiters; gidxWaiters = []; w.forEach(function(f) { try { f(failed); } catch (e) {} });
@@ -36703,11 +36718,11 @@
         });
         return out;
     }
-    // questions that test an entry's pattern: the ones you missed first (most missed first), then the others, PRACTICE_SIZE at most
-    function gidxPracticeIds(e) {
-        if (!window.MogiGram) return [];
+    // questions that test the patterns ps: the ones you missed first (most missed first), then the others, PRACTICE_SIZE at most
+    function gidxPracticeIds(ps) {
+        if (!window.MogiGram || !ps.length) return [];
         var set = {}, missed = [], rest = [], ids = [], seen = {}, by = gramStats(true);
-        e[5].forEach(function(p) { set[p] = 1; if (by[p]) missed = missed.concat(gramMissed(by[p])); });
+        ps.forEach(function(p) { set[p] = 1; if (by[p]) missed = missed.concat(gramMissed(by[p])); });
         missed.sort(function(a, b) { return b.miss - a.miss || b.t - a.t; });
         quizData.forEach(function(q) {
             if (!gramIsQ(q)) return;
@@ -36723,51 +36738,104 @@
         var go = function() { window.scrollTo(0, Math.max(0, el.getBoundingClientRect().top + window.scrollY - 10)); };
         go(); requestAnimationFrame(go);
     }
+    // what an entry opens to: 接続, the examples (furigana, 読み上げ), the look-alike patterns and how each differs
+    function gidxDetailHtml(e) {
+        var sim = e.s >= 0 ? gidxSim[e.s] : null;
+        return (e.c ? '<div class="gx-conn"><span class="gx-key">接続</span><span>' + escapeHtml(e.c) + '</span></div>' : '') +
+            '<ul class="gx-ex">' + e.x.map(function(x, k) {
+                return '<li><span class="gx-ext">' + gidxRuby(x) + '</span><button class="gx-say" data-k="' + k + '" aria-label="例文を読み上げる">🔊</button></li>';
+            }).join('') + '</ul>' +
+            (sim ? '<div class="gx-sim"><div class="gx-key">似ている文型</div>' +
+                '<div class="gx-simrow me"><b>' + escapeHtml(e.n) + '</b><span>' + escapeHtml(e.sn) + '</span></div>' +
+                sim.filter(function(i) { return i !== e.i; }).map(function(i) {
+                    var o = gidxE[i];
+                    return '<button class="gx-simrow" data-i="' + i + '"><b>' + escapeHtml(o.n) + '</b><span>' + escapeHtml(o.sn) + '</span></button>';
+                }).join('') + '</div>' : '');
+    }
+    // the buttons of gidxDetailHtml in box: 読み上げ, and a look-alike pattern (toSim(index))
+    function gidxBindDetail(box, e, toSim) {
+        box.querySelectorAll('.gx-say').forEach(function(b) {
+            b.addEventListener('click', function(ev) {
+                ev.stopPropagation();
+                speakText(gidxRuby(e.x[+b.getAttribute('data-k')]).replace(/<\/?b>/g, ''));          // bold is only the highlight here, not a speaker's name
+            });
+        });
+        box.querySelectorAll('button.gx-simrow').forEach(function(b) { b.addEventListener('click', function() { toSim(+b.getAttribute('data-i')); }); });
+    }
     function gidxOpenRow(row, on) {
-        var head = row.querySelector('.gx-head'), body = row.querySelector('.gx-body'), i = +row.getAttribute('data-i'), e = window.MogiGramIdx.e[i];
+        var head = row.querySelector('.gx-head'), body = row.querySelector('.gx-body'), e = gidxE[+row.getAttribute('data-i')];
         if (on && !body.firstChild) {
-            var c = gidxCounts()[i], ids = gidxPracticeIds(e);
-            body.innerHTML = '<ul class="gx-ex">' + e[4].map(function(x) { return '<li>' + x + '</li>'; }).join('') + '</ul>' +
+            var c = gidxCounts()[e.i], ids = gidxPracticeIds(e.g);
+            body.innerHTML = gidxDetailHtml(e) +
                 (c && c.att ? '<div class="gx-rec">あなたの解答：' + c.att + '回中' + c.miss + '回ミス（正答率' + Math.round((c.att - c.miss) / c.att * 100) + '%）</div>' : '') +
                 (ids.length ? '<button class="practice-btn gx-go">この文型を練習（' + ids.length + '問）</button>' : '');
+            gidxBindDetail(body, e, function(i) { gidxFocus(i); });
             var go = body.querySelector('.gx-go');
             if (go) go.addEventListener('click', function() {
-                var list = gidxPracticeIds(e); if (!list.length) return;
-                pendingOrigin = 'learn'; pendingTitle = '文型：' + e[0];
+                var list = gidxPracticeIds(e.g); if (!list.length) return;
+                pendingOrigin = 'learn'; pendingTitle = '文型：' + e.n;
                 startListQuiz(list, list[0], false, 'practice');
             });
         }
         body.hidden = !on; head.setAttribute('aria-expanded', String(on));
     }
+    // show one entry in the list: filters that would hide it are cleared, it is opened and scrolled to
+    function gidxFocus(i) {
+        var st = gidxState, e = gidxE[i];
+        var row = document.querySelector('#gx-list .gx-row[data-i="' + i + '"]');
+        if (!row) {
+            st.q = ''; st.missed = false; if (st.lv && st.lv !== e.lv) st.lv = 0;
+            var input = document.getElementById('gx-search'); if (input) input.value = '';
+            gidxSyncChips(); st.open = i; gidxRenderList();
+            row = document.querySelector('#gx-list .gx-row[data-i="' + i + '"]');
+        } else gidxOpenRow(row, true);
+        st.open = i;
+        if (row) gidxScrollTo(row);
+    }
+    function gidxSyncChips() {
+        var st = gidxState;
+        document.querySelectorAll('#grammar-content .gx-f').forEach(function(b) {
+            var on = b.hasAttribute('data-lv') ? +b.getAttribute('data-lv') === st.lv : st.missed;
+            b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
+        });
+    }
     function gidxRenderList() {
-        var box = document.getElementById('gx-list'); if (!box || !window.MogiGramIdx) return;
-        var E = window.MogiGramIdx.e, st = gidxState, cnt = gidxCounts(), q = gidxFold(st.q), flat = !!q || st.missed, html = '', n = 0, last = '', heads = {};
+        var box = document.getElementById('gx-list'); if (!box || !gidxE) return;
+        var E = gidxE, st = gidxState, cnt = gidxCounts(), q = gidxFold(st.q), flat = !!q || st.missed, html = '', n = 0, last = '', heads = {}, keigo = false, lastKd = '';
         var order = E.map(function(e, i) { return i; });
         if (q) {
-            var rank = function(i) { return E[i][7].indexOf(q) >= 0 ? 0 : E[i][8].indexOf('|' + q) >= 0 ? 1 : 2; };
+            var rank = function(i) { return E[i].f0.indexOf(q) >= 0 ? 0 : E[i].f1.indexOf('|' + q) >= 0 ? 1 : 2; };
             order = [0, 1, 2].reduce(function(a, r) { return a.concat(order.filter(function(i) { return rank(i) === r; })); }, []);
         }
         order.forEach(function(i) {
-            var e = E[i];
-            if (q && e[6].indexOf(q) < 0) return;
-            var c = cnt[i];
+            var e = E[i], c = cnt[i];
+            if (q && e.f.indexOf(q) < 0) return;
             if (st.missed && !(c && c.miss)) return;
+            if (st.lv && e.lv !== st.lv) return;
             n++;
-            var k = gidxKana(e[1]);
-            if (!flat && k !== last) { html += '<h3 class="gx-kana" id="gx-k-' + k.charCodeAt(0) + '">' + k + '</h3>'; last = k; heads[k] = 1; }
+            if (!flat) {
+                if (e.kd) {
+                    if (!keigo) { keigo = true; html += '<h3 class="gx-kana" id="gx-k-keigo">敬語</h3><div id="gx-kgo"></div>'; }
+                    if (e.kd !== lastKd) { lastKd = e.kd; html += '<h4 class="gx-kind">' + (e.kd === '依頼' ? 'ていねいな依頼' : e.kd) + '</h4>'; }
+                } else {
+                    var k = gidxKana(e.y);
+                    if (k !== last) { html += '<h3 class="gx-kana" id="gx-k-' + k.charCodeAt(0) + '">' + k + '</h3>'; last = k; heads[k] = 1; }
+                }
+            }
             html += '<div class="gx-row" data-i="' + i + '"><button class="gx-head" aria-expanded="false"><span class="gx-main">' +
-                '<b class="gx-name">' + escapeHtml(e[0]).replace(/／/g, '／<wbr>') + '</b>' +
-                '<span class="gx-jp">' + escapeHtml(e[2]) + '</span>' +
-                '<span class="gx-kr" lang="ko">' + escapeHtml(e[3]) + '</span></span>' +
+                '<span class="gx-top"><b class="gx-name">' + escapeHtml(e.n).replace(/／/g, '／<wbr>') + '</b>' + gidxLv(e) + (flat && e.kd ? '<span class="gx-kd">' + e.kd + '</span>' : '') + '</span>' +
+                '<span class="gx-jp">' + escapeHtml(e.j) + '</span>' +
+                '<span class="gx-kr" lang="ko">' + escapeHtml(e.k) + '</span></span>' +
                 '<span class="gx-side">' + (c && c.miss ? '<span class="gx-missn">ミス' + c.miss + '</span>' : '') + '<span class="gx-caret" aria-hidden="true"></span></span>' +
                 '</button><div class="gx-body" hidden></div></div>';
         });
-        if (!n) html = '<div class="empty-bookmarks">' + (q ? '「' + escapeHtml(st.q.trim()) + '」に合う文型は見つかりませんでした。' : '文法の問題でまちがえると、その文型がここに並びます。') + '</div>';
+        if (!n) html = '<div class="empty-bookmarks">' + (q ? '「' + escapeHtml(st.q.trim()) + '」に合う文型は見つかりませんでした。' : st.missed ? '文法の問題でまちがえると、その文型がここに並びます。' : '文型がありません。') + '</div>';
         box.innerHTML = html;
-        document.getElementById('gx-count').textContent = flat ? n + '件' : E.length + '文型';
+        document.getElementById('gx-count').textContent = flat || st.lv ? n + '件' : E.length + '文型';
         var jump = document.getElementById('gx-jump');
         jump.hidden = flat;
         jump.querySelectorAll('button').forEach(function(b) {
+            if (b.getAttribute('data-r') === 'k') { b.disabled = !keigo; return; }
             var row = GIDX_ROWS[+b.getAttribute('data-r')], first = '';
             for (var j = 0; j < row.length && !first; j++) if (heads[row.charAt(j)]) first = row.charAt(j);
             b.disabled = !first; b.setAttribute('data-k', first);
@@ -36779,6 +36847,19 @@
                 gidxState.open = on ? +row.getAttribute('data-i') : -1;
             });
         });
+        // 敬語: the questions are not sorted by expression, so one practice set for the whole section
+        var kgo = document.getElementById('gx-kgo');
+        if (kgo && window.MogiGram) {
+            var kn = gidxPracticeIds([window.MogiGram.k]).length;
+            if (kn) {
+                kgo.innerHTML = '<button class="practice-btn sub gx-kgo-btn">敬語の問題を練習（' + kn + '問）</button>';
+                kgo.firstChild.addEventListener('click', function() {
+                    var list = gidxPracticeIds([window.MogiGram.k]); if (!list.length) return;
+                    pendingOrigin = 'learn'; pendingTitle = '文型：敬語';
+                    startListQuiz(list, list[0], false, 'practice');
+                });
+            }
+        }
         if (st.open >= 0) { var r = box.querySelector('.gx-row[data-i="' + st.open + '"]'); if (r) gidxOpenRow(r, true); }
     }
     // focusPat: a pattern of MogiGram.p to show (from 苦手な文型): its entry is opened and scrolled to
@@ -36786,40 +36867,178 @@
         setAnswerMode(false);
         setNav('learn', 'grammar'); currentReviewSub = 'grammar';
         quizView.style.display = 'none'; dashboardView.style.display = 'none'; statsView.style.display = 'none'; bookmarksView.style.display = 'none'; mistakesView.style.display = 'none'; wordlistView.style.display = 'none'; settingsView.style.display = 'none'; grammarView.style.display = 'block'; closePopup();
-        if (!window.MogiGramIdx) {
+        gidxQuiz = null;
+        if (!gidxE) {
             grammarContent.innerHTML = '<div class="empty-bookmarks">読み込み中…</div>';
             gidxLoad(function(failed) {
                 if (!gidxOnScreen()) return;
-                if (failed || !window.MogiGramIdx) grammarContent.innerHTML = '<div class="empty-bookmarks">文型のデータを読み込めませんでした。通信できるときにもう一度開いてください。</div>';
+                if (failed || !gidxE) grammarContent.innerHTML = '<div class="empty-bookmarks">文型のデータを読み込めませんでした。通信できるときにもう一度開いてください。</div>';
                 else showGrammarIndex(focusPat);
             });
             return;
         }
-        if (!window.MogiGram) gramLoad(function(failed) { if (!failed && gidxOnScreen()) gidxRenderList(); });          // for your misses and the practice sets
+        if (!window.MogiGram) gramLoad(function(failed) { if (!failed && gidxOnScreen() && !gidxQuiz) gidxRenderList(); });          // for your misses and the practice sets
+        sayLoad();
         var st = gidxState, focus = -1;
-        if (focusPat !== undefined && gidxByPat && gidxByPat[focusPat] !== undefined) { focus = gidxByPat[focusPat]; st.q = ''; st.missed = false; st.open = focus; }
-        grammarContent.innerHTML = '<div class="gx-title"><h2>文型さくいん</h2><span id="gx-count"></span></div>' +
+        if (focusPat !== undefined && gidxByPat && gidxByPat[focusPat] !== undefined) { focus = gidxByPat[focusPat]; st.q = ''; st.missed = false; st.lv = 0; st.open = focus; }
+        grammarContent.innerHTML = '<div class="gx-title"><h2>文型さくいん</h2><span id="gx-count"></span><button id="gx-quiz" class="gx-quizbtn">意味クイズ</button></div>' +
             '<div class="gx-tools"><input type="search" id="gx-search" class="gx-search" placeholder="検索（文型・読み・意味・한국어）" aria-label="文型を検索（文型・読み・意味・韓国語）" autocomplete="off" lang="ja"></div>' +
-            '<div class="gx-chips"><button id="gx-missed" class="toggle-chip' + (st.missed ? ' on' : '') + '" aria-pressed="' + st.missed + '">まちがえた文型だけ</button></div>' +
-            '<div class="gx-jump" id="gx-jump">' + GIDX_ROWS.map(function(r, i) { return '<button data-r="' + i + '" aria-label="' + r.charAt(0) + '行へ">' + r.charAt(0) + '</button>'; }).join('') + '</div>' +
+            '<div class="gx-chips">' + [[0, 'すべて'], [1, 'N1'], [2, 'N2'], [3, 'N3']].map(function(l) {
+                return '<button class="toggle-chip gx-f" data-lv="' + l[0] + '">' + l[1] + '</button>';
+            }).join('') + '<button id="gx-missed" class="toggle-chip gx-f">まちがえた文型だけ</button></div>' +
+            '<div class="gx-jump" id="gx-jump">' + GIDX_ROWS.map(function(r, i) { return '<button data-r="' + i + '" aria-label="' + r.charAt(0) + '行へ">' + r.charAt(0) + '</button>'; }).join('') +
+            '<button data-r="k" class="gx-jk" aria-label="敬語へ">敬語</button></div>' +
             '<div id="gx-list"></div>';
+        gidxSyncChips();
         var input = document.getElementById('gx-search');
         input.value = st.q;
         input.addEventListener('input', function() { st.q = input.value; st.open = -1; gidxRenderList(); });
-        document.getElementById('gx-missed').addEventListener('click', function() {
-            st.missed = !st.missed; st.open = -1;
-            this.classList.toggle('on', st.missed); this.setAttribute('aria-pressed', String(st.missed));
-            gidxRenderList();
+        grammarContent.querySelectorAll('.gx-f').forEach(function(b) {
+            b.addEventListener('click', function() {
+                if (b.hasAttribute('data-lv')) st.lv = +b.getAttribute('data-lv'); else st.missed = !st.missed;
+                st.open = -1; gidxSyncChips(); gidxRenderList();
+            });
         });
         document.getElementById('gx-jump').querySelectorAll('button').forEach(function(b) {
             b.addEventListener('click', function() {
-                var k = b.getAttribute('data-k'), el = k ? document.getElementById('gx-k-' + k.charCodeAt(0)) : null;
+                var k = b.getAttribute('data-k'), el = b.getAttribute('data-r') === 'k' ? document.getElementById('gx-k-keigo') : k ? document.getElementById('gx-k-' + k.charCodeAt(0)) : null;
                 if (el) gidxScrollTo(el);
             });
         });
+        document.getElementById('gx-quiz').addEventListener('click', gidxQuizStart);
         gidxRenderList();
         if (focus >= 0) { var row = grammarContent.querySelector('.gx-row[data-i="' + focus + '"]'); if (row) gidxScrollTo(row); }
     }
+
+    // ----- 意味クイズ: the meaning (Japanese and Korean) is shown, you pick the pattern. GIDX_QUIZ_N questions: the patterns
+    // you have missed in 文法 questions first (most missed first), the rest drawn at random from the level chosen in the
+    // index (all levels with すべて). Nothing is recorded: it is a quick check, not part of the statistics.
+    function gidxQuizStart() {
+        if (!gidxE) return;
+        var st = gidxState, cnt = gidxCounts(), pool = gidxE.filter(function(e) { return !st.lv || e.lv === st.lv; });
+        var missed = pool.filter(function(e) { return cnt[e.i] && cnt[e.i].miss; }).sort(function(a, b) { return cnt[b.i].miss - cnt[a.i].miss; }).slice(0, GIDX_QUIZ_N);
+        var rest = shuffleInPlace(pool.filter(function(e) { return missed.indexOf(e) < 0; })).slice(0, GIDX_QUIZ_N - missed.length);
+        var items = shuffleInPlace(missed.concat(rest)).map(function(e) { return e.i; });
+        if (items.length < 1) return;
+        gidxQuiz = { items: items, pos: 0, right: 0, wrong: [], opts: null, done: false };
+        window.scrollTo(0, 0);
+        gidxQuizRender();
+    }
+    // three wrong choices for entry e: other patterns that do not mean the same (not its look-alikes, not the same gloss), its level first
+    function gidxQuizChoices(e) {
+        var first = function(s) { return gidxFold(String(s).split(/[,、／\/]/)[0]); };
+        var ok = function(o) {
+            return o.i !== e.i && !!o.kd === !!e.kd && !(e.s >= 0 && o.s === e.s) && o.j !== e.j && first(o.k) !== first(e.k) &&
+                gidxFold(o.n).indexOf(gidxFold(e.n)) < 0 && gidxFold(e.n).indexOf(gidxFold(o.n)) < 0;
+        };
+        var same = shuffleInPlace(gidxE.filter(function(o) { return ok(o) && o.lv === e.lv; })), other = shuffleInPlace(gidxE.filter(function(o) { return ok(o) && o.lv !== e.lv; }));
+        return shuffleInPlace(same.concat(other).slice(0, 3).concat([e])).map(function(o) { return o.i; });
+    }
+    function gidxQuizRender() {
+        var Q = gidxQuiz; if (!Q) return;
+        if (Q.pos >= Q.items.length) {
+            grammarContent.innerHTML = '<div class="gx-qz"><div class="gx-qz-bar"><b>意味クイズ</b></div>' +
+                '<div class="gx-qz-score">' + Q.items.length + '問中 <b>' + Q.right + '</b>問正解</div>' +
+                (Q.wrong.length ? '<div class="gx-key">まちがえた文型</div>' + Q.wrong.map(function(i) {
+                    var e = gidxE[i];
+                    return '<button class="gx-simrow" data-i="' + i + '"><b>' + escapeHtml(e.n) + '</b><span>' + escapeHtml(e.j) + '</span><span lang="ko">' + escapeHtml(e.k) + '</span></button>';
+                }).join('') : '<div class="gx-qz-all">全問正解です。</div>') +
+                '<button class="practice-btn gx-qz-again">もう一度</button><button class="practice-btn sub gx-qz-back">さくいんにもどる</button></div>';
+            grammarContent.querySelectorAll('.gx-simrow').forEach(function(b) {
+                b.addEventListener('click', function() { var i = +b.getAttribute('data-i'); showGrammarIndex(); gidxFocus(i); });
+            });
+            grammarContent.querySelector('.gx-qz-again').addEventListener('click', gidxQuizStart);
+            grammarContent.querySelector('.gx-qz-back').addEventListener('click', function() { showGrammarIndex(); });
+            return;
+        }
+        var e = gidxE[Q.items[Q.pos]];
+        if (!Q.opts) Q.opts = gidxQuizChoices(e);
+        grammarContent.innerHTML = '<div class="gx-qz"><div class="gx-qz-bar"><b>意味クイズ</b><span>' + (Q.pos + 1) + ' / ' + Q.items.length + '</span><button class="gx-quizbtn gx-qz-quit">やめる</button></div>' +
+            '<div class="gx-qz-q"><div class="gx-key">この意味の文型は？</div><div class="gx-qz-jp">' + escapeHtml(e.j) + '</div><div class="gx-qz-kr" lang="ko">' + escapeHtml(e.k) + '</div></div>' +
+            '<div class="gx-qz-opts">' + Q.opts.map(function(i, k) {
+                return '<button class="option-btn" data-i="' + i + '"><span class="option-prefix">' + CIRCLED[k] + '</span><span>' + escapeHtml(gidxE[i].n) + '</span></button>';
+            }).join('') + '</div><div class="gx-qz-fb" hidden></div></div>';
+        grammarContent.querySelector('.gx-qz-quit').addEventListener('click', function() { showGrammarIndex(); });
+        var btns = grammarContent.querySelectorAll('.gx-qz-opts .option-btn'), fb = grammarContent.querySelector('.gx-qz-fb');
+        btns.forEach(function(b) {
+            b.addEventListener('click', function() {
+                if (Q.done) return;
+                Q.done = true;
+                var pick = +b.getAttribute('data-i'), ok = pick === e.i;
+                if (ok) Q.right++; else Q.wrong.push(e.i);
+                btns.forEach(function(x) { x.disabled = true; if (+x.getAttribute('data-i') === e.i) x.classList.add('correct'); });
+                if (!ok) b.classList.add('incorrect');
+                fb.innerHTML = '<div class="gx-qz-res ' + (ok ? 'ok' : 'ng') + '">' + (ok ? '○ 正解' : '✕ 正解は「' + escapeHtml(e.n) + '」') + '</div>' +
+                    '<button class="practice-btn gx-qz-next">' + (Q.pos + 1 >= Q.items.length ? '結果を見る' : '次へ') + '</button>' + gidxDetailHtml(e);
+                fb.hidden = false;
+                gidxBindDetail(fb, e, function() {});
+                fb.querySelectorAll('button.gx-simrow').forEach(function(x) { x.disabled = true; });
+                fb.querySelector('.gx-qz-next').addEventListener('click', function() { Q.pos++; Q.opts = null; Q.done = false; window.scrollTo(0, 0); gidxQuizRender(); });
+                fb.scrollIntoView({ block: 'nearest' });
+            });
+        });
+    }
+
+    // ----- 解説 → 文型さくいん: under a 文法 question's 解説, a chip for each pattern it names that the index has (the pattern
+    // the question is filed under, and any other written as 「〜…」 in its ポイント); a chip opens that entry in a sheet over
+    // the question, so the quiz stays where it is.
+    function gidxLinkEntries(q, b) {
+        var G = window.MogiGram, out = [];
+        if (!G || !gidxByPat || !q) return out;
+        var add = function(p) { var i = gidxByPat[p]; if (i !== undefined && out.indexOf(i) < 0) out.push(i); };
+        var u = gramUnit(q, b);
+        if (typeof u === 'number') add(u);
+        var ex = explainFor(q, b >= 0 ? b : undefined), txt = gramStrip((ex && ex.point) || '') + ' ' + gramStrip(q.rationale || '') + ' ' + (b >= 0 ? '' : gramStrip(q.meaning || '')), re = /「([^「」]{2,30})」/g, m;
+        while ((m = re.exec(txt))) {
+            if (!/[～〜]/.test(m[1])) continue;
+            var c = gramClean(m[1]);
+            if (c && G.a[c] !== undefined) add(G.a[c]);
+        }
+        return out.slice(0, 4);
+    }
+    function gidxLinksInner(q, b) {
+        var list = gidxLinkEntries(q, b);
+        return list.length ? '<span class="gx-key">文型さくいん</span>' + list.map(function(i) {
+            return '<button class="gx-link" data-i="' + i + '">' + escapeHtml(gidxE[i].n) + '</button>';
+        }).join('') : '';
+    }
+    // the row that goes at the end of a 文法 解説 (filled at once when the index is in, otherwise as soon as it has loaded)
+    function gidxLinksHtml(q, b) {
+        if (!gramIsQ(q)) return '';
+        var bb = b >= 0 ? b : -1, ready = gidxE && window.MogiGram;
+        if (!ready) {
+            var fill = function() {
+                if (!gidxE || !window.MogiGram) return;
+                document.querySelectorAll('.gx-links[data-q]').forEach(function(d) {
+                    if (d.firstChild) return;
+                    var qq = findQuestion(+d.getAttribute('data-q')); if (qq) d.innerHTML = gidxLinksInner(qq, +d.getAttribute('data-b'));
+                });
+            };
+            gidxLoad(fill); gramLoad(fill);
+        }
+        return '<div class="gx-links" data-q="' + q.id + '" data-b="' + bb + '">' + (ready ? gidxLinksInner(q, bb) : '') + '</div>';
+    }
+    function gidxSheetClose() { var s = document.getElementById('gx-sheet'); if (s) s.parentNode.removeChild(s); document.removeEventListener('keydown', gidxSheetKey); }
+    function gidxSheetKey(ev) { if (ev.key === 'Escape') gidxSheetClose(); }
+    function gidxSheet(i) {
+        var e = gidxE && gidxE[i]; if (!e) return;
+        gidxSheetClose(); sayLoad();
+        var s = document.createElement('div');
+        s.id = 'gx-sheet'; s.setAttribute('role', 'dialog'); s.setAttribute('aria-modal', 'true'); s.setAttribute('aria-label', '文型さくいん：' + e.n);
+        s.innerHTML = '<div class="gx-sheet-box"><div class="gx-sheet-head"><span class="gx-main"><span class="gx-top"><b class="gx-name">' + escapeHtml(e.n).replace(/／/g, '／<wbr>') + '</b>' + gidxLv(e) + '</span>' +
+            '<span class="gx-jp">' + escapeHtml(e.j) + '</span><span class="gx-kr" lang="ko">' + escapeHtml(e.k) + '</span></span>' +
+            '<button class="gx-sheet-x" aria-label="閉じる">×</button></div><div class="gx-sheet-body">' + gidxDetailHtml(e) + '</div></div>';
+        s.addEventListener('click', function(ev) { if (ev.target === s) gidxSheetClose(); });
+        document.body.appendChild(s);
+        s.querySelector('.gx-sheet-x').addEventListener('click', gidxSheetClose);
+        gidxBindDetail(s, e, function(j) { gidxSheet(j); });
+        document.addEventListener('keydown', gidxSheetKey);
+        var box = s.querySelector('.gx-sheet-box'); box.setAttribute('tabindex', '-1'); box.focus();
+    }
+    document.addEventListener('click', function(ev) {
+        var b = ev.target && ev.target.closest ? ev.target.closest('.gx-link') : null;
+        if (b) { ev.preventDefault(); ev.stopPropagation(); gidxSheet(+b.getAttribute('data-i')); }
+    }, true);
 
     var statsResizeT = null, statsLastW = 0;
     window.addEventListener('resize', function() {
