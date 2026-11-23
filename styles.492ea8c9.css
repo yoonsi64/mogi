@@ -3986,6 +3986,9 @@ body.gx-quiz-on header, body.gx-quiz-on .bottom-nav, body.gx-quiz-on #subnav { d
 .gx-qs-types { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .gx-qs-type { display: flex; flex-direction: column; gap: 3px; text-align: left; padding: 12px; border: 1px solid var(--border-light); border-radius: 10px; background: var(--surface); color: var(--text-main); font: inherit; cursor: pointer; }
 .gx-qs-type b { font-size: 0.95rem; }
+.gx-qs-h span { font-weight: normal; font-size: 0.72rem; margin-left: 8px; }
+.gx-qs-type { position: relative; }
+.gx-qs-type.on::after { content: '✓'; position: absolute; top: 10px; right: 12px; font-size: 0.95rem; font-weight: bold; color: var(--active-blue); }
 .gx-qs-type span { font-size: 0.74rem; color: var(--text-sub); line-height: 1.45; }
 .gx-qs-type.on { border-color: var(--active-blue); background: var(--accent-soft); box-shadow: 0 0 0 1px var(--active-blue); }
 .gx-qs-type.on b { color: var(--active-blue); }

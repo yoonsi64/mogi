@@ -36935,7 +36935,7 @@
     // you missed in 文法 questions, and patterns whose last answer here was wrong.
     var GIDX_QZ_KEY = 'jlptGramQuiz', GIDX_QZ_SET_KEY = 'jlptGramQuizSet';
     var gidxQzLog = loadJSON(GIDX_QZ_KEY, {}), gidxQzSet = loadJSON(GIDX_QZ_SET_KEY, null) || {};
-    var GIDX_QZ_TYPES = [['mix', 'ミックス', '4つの形式をまぜて出題'], ['m2p', '意味 → 文型', '意味を見て、文型を選ぶ'], ['p2m', '文型 → 意味', '文型を見て、意味を選ぶ'], ['cloze', '例文の穴うめ', '例文の［　］に入る文型を選ぶ'], ['comp', '文の組み立て', '言葉を並べて、★に入るものを決める'], ['sent', '穴うめ＋組み立て', '例文を使う2つの形式をまぜて出題']];
+    var GIDX_QZ_TYPES = [['m2p', '意味 → 文型', '意味を見て、文型を選ぶ'], ['p2m', '文型 → 意味', '文型を見て、意味を選ぶ'], ['cloze', '例文の穴うめ', '例文の［　］に入る文型を選ぶ'], ['comp', '文の組み立て', '言葉を並べて、★に入るものを決める']];
     var GIDX_QZ_DIR = {
         m2p: '次の意味を表す文型として最もよいものを、1・2・3・4から一つ選びなさい。',
         p2m: '次の文型の意味として最もよいものを、1・2・3・4から一つ選びなさい。',
@@ -36943,7 +36943,16 @@
         comp: '次の文の★に入る最もよいものを選びなさい。（言葉をタップしてから、入れたい空欄をタップしてください）'
     };
     // whether entry e can be asked as kind t: every pattern has a meaning; 例文の穴うめ and 文の組み立て need an example that works
-    function gidxCanAsk(e, t) { return t === 'cloze' ? gidxCanCloze(e) : t === 'comp' ? !!e.cp : t === 'sent' ? !!e.cp || gidxCanCloze(e) : true; }
+    function gidxCanAsk(e, t) { return t === 'cloze' ? gidxCanCloze(e) : t === 'comp' ? !!e.cp : true; }
+    // the kinds pressed on the setup page (S.types); an older saved setting had one kind, ミックス or 穴うめ＋組み立て
+    function gidxQzKinds(S) {
+        var all = GIDX_QZ_TYPES.map(function(t) { return t[0]; });
+        if (!Array.isArray(S.types)) S.types = S.type === 'sent' ? ['cloze', 'comp'] : all.indexOf(S.type) >= 0 ? [S.type] : all.slice();
+        S.types = all.filter(function(t) { return S.types.indexOf(t) >= 0; });
+        delete S.type;
+        return S.types;
+    }
+    function gidxCanAskAny(e, types) { return types.some(function(t) { return gidxCanAsk(e, t); }); }
     function gidxPlain(x) { return String(x).replace(/\{([^|{}]+)\|[^{}]+\}/g, '$1').replace(/<[^>]*>/g, ''); }
     function gidxWeak(e, cnt) { var l = gidxQzLog[e.n]; return !!((cnt[e.i] && cnt[e.i].miss) || (l && l[2] === 0)); }
     function gidxQzPool(range, cnt) {
@@ -36957,12 +36966,12 @@
         if (!gidxE) return;
         gidxQuizOff();
         var S = gidxQzSet, cnt = gidxCounts();
-        if (!GIDX_QZ_TYPES.some(function(t) { return t[0] === S.type; })) S.type = 'mix';
+        if (!gidxQzKinds(S).length) S.types = GIDX_QZ_TYPES.map(function(t) { return t[0]; });          // nothing pressed last time: start from all four
         if (['all', '1', '2', '3', 'keigo', 'weak'].indexOf(S.range) < 0) S.range = 'all';
         if ([10, 20, 30].indexOf(S.n) < 0) S.n = 10;
         var ranges = [['all', 'すべて'], ['1', 'N1'], ['2', 'N2'], ['3', 'N3'], ['keigo', '敬語'], ['weak', '苦手']];
         grammarContent.innerHTML = '<div class="gx-qs"><div class="gx-title"><h2>文型クイズ</h2><span></span><button class="gx-quizbtn gx-qs-back">さくいんにもどる</button></div>' +
-            '<div class="gx-qs-h">出題形式</div><div class="gx-qs-types">' + GIDX_QZ_TYPES.map(function(t) {
+            '<div class="gx-qs-h">出題形式<span>押した形式がまざって出ます</span></div><div class="gx-qs-types">' + GIDX_QZ_TYPES.map(function(t) {
                 return '<button class="gx-qs-type" data-t="' + t[0] + '" aria-pressed="false"><b>' + t[1] + '</b><span>' + t[2] + '</span></button>';
             }).join('') + '</div>' +
             '<div class="gx-qs-h">範囲</div><div class="gx-qs-row">' + ranges.map(function(r) {
@@ -36974,24 +36983,27 @@
             '<div class="gx-qs-note" id="gx-qs-note"></div>' +
             '<button class="practice-btn gx-qs-go">はじめる</button></div>';
         var sync = function() {
-            grammarContent.querySelectorAll('.gx-qs-type').forEach(function(b) { var on = b.getAttribute('data-t') === S.type; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+            grammarContent.querySelectorAll('.gx-qs-type').forEach(function(b) { var on = S.types.indexOf(b.getAttribute('data-t')) >= 0; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
             grammarContent.querySelectorAll('.gx-qs-chip').forEach(function(b) {
                 var on = b.hasAttribute('data-r') ? b.getAttribute('data-r') === S.range : +b.getAttribute('data-n') === S.n;
                 b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
             });
-            var poolN = function(r) { return gidxQzPool(r, cnt).filter(function(e) { return gidxCanAsk(e, S.type); }).length; };
+            var poolN = function(r) { return gidxQzPool(r, cnt).filter(function(e) { return gidxCanAskAny(e, S.types); }).length; };
             grammarContent.querySelectorAll('.gx-qs-chip[data-r]').forEach(function(b) { b.querySelector('i').textContent = poolN(b.getAttribute('data-r')); });
             var n = poolN(S.range), go = grammarContent.querySelector('.gx-qs-go');
             go.disabled = !n;
             go.textContent = n ? 'はじめる（' + Math.min(n, S.n) + '問）' : 'はじめる';
-            document.getElementById('gx-qs-note').textContent = S.range === 'weak'
-                ? (n ? '苦手：文法の問題でまちがえた文型と、このクイズで最後にまちがえた文型です。' : '苦手な文型はまだありません。文法の問題やこのクイズでまちがえると、ここから出題できます。')
-                : S.type === 'cloze' ? '例文の穴うめは、ほかの文型も同じ場所に入れられる例文だけから出題します（敬語は出ません）。'
-                : S.type === 'comp' ? '文の組み立ては、並べ方が一つに決まる例文だけから出題します（敬語は出ません）。'
-                : S.type === 'sent' ? '例文の穴うめと文の組み立てを、できるだけ半分ずつ出題します（敬語は出ません）。' : 'まちがえたことのある文型が先に出ます。';
+            var ex = S.types.filter(function(t) { return t === 'cloze' || t === 'comp'; }).length, only = ex === S.types.length;
+            document.getElementById('gx-qs-note').textContent = !S.types.length ? '出題形式を一つ以上えらんでください。'
+                : S.range === 'weak' ? (n ? '苦手：文法の問題でまちがえた文型と、このクイズで最後にまちがえた文型です。' : '苦手な文型はまだありません。文法の問題やこのクイズでまちがえると、ここから出題できます。')
+                : ex ? '例文の穴うめ・文の組み立ては、その形式に使える例文のある文型だけから出題します' + (only ? '（敬語は出ません）。' : '。') : 'まちがえたことのある文型が先に出ます。';
             try { localStorage.setItem(GIDX_QZ_SET_KEY, JSON.stringify(S)); } catch (e) {}
         };
-        grammarContent.querySelectorAll('.gx-qs-type').forEach(function(b) { b.addEventListener('click', function() { S.type = b.getAttribute('data-t'); sync(); }); });
+        grammarContent.querySelectorAll('.gx-qs-type').forEach(function(b) { b.addEventListener('click', function() {
+            var t = b.getAttribute('data-t'), at = S.types.indexOf(t);
+            if (at >= 0) S.types.splice(at, 1); else S.types.push(t);
+            gidxQzKinds(S); sync();
+        }); });
         grammarContent.querySelectorAll('.gx-qs-chip').forEach(function(b) {
             b.addEventListener('click', function() { if (b.hasAttribute('data-r')) S.range = b.getAttribute('data-r'); else S.n = +b.getAttribute('data-n'); sync(); });
         });
@@ -37003,40 +37015,38 @@
     // only: entries to ask again (the ones just missed), in place of a new draw
     function gidxQuizStart(only) {
         if (!gidxE) return;
-        var S = gidxQzSet, cnt = gidxCounts(), list;
+        var S = gidxQzSet, cnt = gidxCounts(), list, types = gidxQzKinds(S);
+        if (!types.length) return;
         if (only) list = shuffleInPlace(only.map(function(i) { return gidxE[i]; }));
         else {
             var pool = gidxQzPool(S.range, cnt);
-            pool = pool.filter(function(e) { return gidxCanAsk(e, S.type); });
+            pool = pool.filter(function(e) { return gidxCanAskAny(e, types); });
             // up to half are patterns you have missed (most missed first), the rest are drawn at random
             var weak = S.range === 'weak' ? [] : pool.filter(function(e) { return gidxWeak(e, cnt); })
                 .sort(function(a, b) { return ((cnt[b.i] && cnt[b.i].miss) || 0) - ((cnt[a.i] && cnt[a.i].miss) || 0); }).slice(0, Math.ceil(S.n / 2));
             var rest = shuffleInPlace(pool.filter(function(e) { return weak.indexOf(e) < 0; })).slice(0, S.n - weak.length);
             list = weak.concat(rest);
-            if (S.type === 'sent') {          // half of them have to be patterns with a 文の組み立て: swap some in if the draw came up short
-                var need = Math.floor(list.length / 2) - list.filter(function(e) { return e.cp; }).length;
-                var spare = need > 0 ? shuffleInPlace(pool.filter(function(e) { return e.cp && list.indexOf(e) < 0; })).slice(0, need) : [];
-                var drop = rest.filter(function(e) { return !e.cp; });
+            // each pressed kind gets an equal share, so enough of the patterns drawn must be askable that way
+            // (fewer have a 文の組み立て than a 穴うめ): swap some in if the draw came up short
+            var share = Math.floor(list.length / types.length);
+            types.forEach(function(t) {
+                if (t !== 'cloze' && t !== 'comp') return;
+                var need = share - list.filter(function(e) { return gidxCanAsk(e, t); }).length;
+                var spare = need > 0 ? shuffleInPlace(pool.filter(function(e) { return gidxCanAsk(e, t) && list.indexOf(e) < 0; })).slice(0, need) : [];
+                var drop = list.filter(function(e) { return rest.indexOf(e) >= 0 && !gidxCanAsk(e, 'cloze') && !gidxCanAsk(e, 'comp'); })
+                    .concat(list.filter(function(e) { return rest.indexOf(e) >= 0 && !gidxCanAsk(e, t) && (gidxCanAsk(e, 'cloze') || gidxCanAsk(e, 'comp')); }));
                 spare.forEach(function(e, n) { if (drop[n]) list[list.indexOf(drop[n])] = e; });
-            }
+            });
             shuffleInPlace(list);
         }
         if (!list.length) return;
-        var kinds = ['m2p', 'p2m', 'cloze', 'comp'], bag = [];
-        var items = list.map(function(e) {
-            var t = S.type;
-            if (t === 'sent') t = !gidxCanCloze(e) ? 'comp' : !e.cp ? 'cloze' : '';          // '' = either: shared out below
-            else if (t === 'mix' || kinds.indexOf(t) < 0) {
-                if (!bag.length) bag = shuffleInPlace(kinds.slice());
-                t = bag.pop();
-                if (!gidxCanAsk(e, t)) t = gidxCanAsk(e, 'cloze') && t !== 'cloze' && Math.random() < 0.5 ? 'cloze' : Math.random() < 0.5 ? 'm2p' : 'p2m';
-            }
-            return { i: e.i, t: t };
+        // hand out the kinds: patterns with the fewest possible kinds first, each taking the kind used least so far
+        var used = {}, items = list.map(function(e) { return { i: e.i, t: '', can: shuffleInPlace(types.filter(function(t) { return gidxCanAsk(e, t); })) }; });
+        items.slice().sort(function(a, b) { return a.can.length - b.can.length; }).forEach(function(it) {
+            it.t = it.can.slice().sort(function(a, b) { return (used[a] || 0) - (used[b] || 0); })[0] || 'm2p';
+            used[it.t] = (used[it.t] || 0) + 1;
+            delete it.can;
         });
-        if (S.type === 'sent') {          // 穴うめ＋組み立て: as near half and half as the patterns drawn allow
-            var nComp = items.filter(function(it) { return it.t === 'comp'; }).length, half = Math.floor(items.length / 2);
-            shuffleInPlace(items.filter(function(it) { return !it.t; })).forEach(function(it) { it.t = nComp < half ? (nComp++, 'comp') : 'cloze'; });
-        }
         gidxQuiz = { items: items, pos: 0, log: [], cur: null };
         document.body.classList.add('gx-quiz-on');
         gidxQuizRender();
