@@ -36666,7 +36666,7 @@
     // The meanings, glosses, levels, 接続, look-alike notes and furigana are written for the app, not taken from the books.
     // Loaded when 文型 is first opened, with 統計 (the link from 苦手な文型) and with the first 文法 解説 (its link).
     var gidxSlots = {}, gidxSlotsF = {};          // examples by the slot their pattern sits in ({ slot: [[entry, example]] }), exactly and loosely
-    var GIDX_SRC = 'gramidx.22183e9c.js', gidxLoading = false, gidxWaiters = [], gidxByPat = null, gidxE = null, gidxSim = {};
+    var GIDX_SRC = 'gramidx.c14abacd.js', gidxLoading = false, gidxWaiters = [], gidxByPat = null, gidxE = null, gidxSim = {};
     var grammarView = document.getElementById('grammar-view'), grammarContent = document.getElementById('grammar-content');
     var gidxState = { q: '', missed: false, lv: 0, open: -1 };          // kept while the app is open: the search, the filters, the open entry
     var gidxQuiz = null;          // 文型クイズ in progress: { items: [{ i, t }], pos, log, cur }
@@ -36935,7 +36935,7 @@
     // you missed in 文法 questions, and patterns whose last answer here was wrong.
     var GIDX_QZ_KEY = 'jlptGramQuiz', GIDX_QZ_SET_KEY = 'jlptGramQuizSet';
     var gidxQzLog = loadJSON(GIDX_QZ_KEY, {}), gidxQzSet = loadJSON(GIDX_QZ_SET_KEY, null) || {};
-    var GIDX_QZ_TYPES = [['mix', 'ミックス', '3つの形式をまぜて出題'], ['m2p', '意味 → 文型', '意味を見て、文型を選ぶ'], ['p2m', '文型 → 意味', '文型を見て、意味を選ぶ'], ['cloze', '例文の穴うめ', '例文の［　］に入る文型を選ぶ'], ['comp', '文の組み立て', '言葉を並べて、★に入るものを決める']];
+    var GIDX_QZ_TYPES = [['mix', 'ミックス', '4つの形式をまぜて出題'], ['m2p', '意味 → 文型', '意味を見て、文型を選ぶ'], ['p2m', '文型 → 意味', '文型を見て、意味を選ぶ'], ['cloze', '例文の穴うめ', '例文の［　］に入る文型を選ぶ'], ['comp', '文の組み立て', '言葉を並べて、★に入るものを決める'], ['sent', '穴うめ＋組み立て', '例文を使う2つの形式をまぜて出題']];
     var GIDX_QZ_DIR = {
         m2p: '次の意味を表す文型として最もよいものを、1・2・3・4から一つ選びなさい。',
         p2m: '次の文型の意味として最もよいものを、1・2・3・4から一つ選びなさい。',
@@ -36943,7 +36943,7 @@
         comp: '次の文の★に入る最もよいものを選びなさい。（言葉をタップしてから、入れたい空欄をタップしてください）'
     };
     // whether entry e can be asked as kind t: every pattern has a meaning; 例文の穴うめ and 文の組み立て need an example that works
-    function gidxCanAsk(e, t) { return t === 'cloze' ? gidxCanCloze(e) : t === 'comp' ? !!e.cp : true; }
+    function gidxCanAsk(e, t) { return t === 'cloze' ? gidxCanCloze(e) : t === 'comp' ? !!e.cp : t === 'sent' ? !!e.cp || gidxCanCloze(e) : true; }
     function gidxPlain(x) { return String(x).replace(/\{([^|{}]+)\|[^{}]+\}/g, '$1').replace(/<[^>]*>/g, ''); }
     function gidxWeak(e, cnt) { var l = gidxQzLog[e.n]; return !!((cnt[e.i] && cnt[e.i].miss) || (l && l[2] === 0)); }
     function gidxQzPool(range, cnt) {
@@ -36987,7 +36987,8 @@
             document.getElementById('gx-qs-note').textContent = S.range === 'weak'
                 ? (n ? '苦手：文法の問題でまちがえた文型と、このクイズで最後にまちがえた文型です。' : '苦手な文型はまだありません。文法の問題やこのクイズでまちがえると、ここから出題できます。')
                 : S.type === 'cloze' ? '例文の穴うめは、ほかの文型も同じ場所に入れられる例文だけから出題します（敬語は出ません）。'
-                : S.type === 'comp' ? '文の組み立ては、並べ方が一つに決まる例文だけから出題します（敬語は出ません）。' : 'まちがえたことのある文型が先に出ます。';
+                : S.type === 'comp' ? '文の組み立ては、並べ方が一つに決まる例文だけから出題します（敬語は出ません）。'
+                : S.type === 'sent' ? '例文の穴うめと文の組み立てを、できるだけ半分ずつ出題します（敬語は出ません）。' : 'まちがえたことのある文型が先に出ます。';
             try { localStorage.setItem(GIDX_QZ_SET_KEY, JSON.stringify(S)); } catch (e) {}
         };
         grammarContent.querySelectorAll('.gx-qs-type').forEach(function(b) { b.addEventListener('click', function() { S.type = b.getAttribute('data-t'); sync(); }); });
@@ -37011,19 +37012,31 @@
             var weak = S.range === 'weak' ? [] : pool.filter(function(e) { return gidxWeak(e, cnt); })
                 .sort(function(a, b) { return ((cnt[b.i] && cnt[b.i].miss) || 0) - ((cnt[a.i] && cnt[a.i].miss) || 0); }).slice(0, Math.ceil(S.n / 2));
             var rest = shuffleInPlace(pool.filter(function(e) { return weak.indexOf(e) < 0; })).slice(0, S.n - weak.length);
-            list = shuffleInPlace(weak.concat(rest));
+            list = weak.concat(rest);
+            if (S.type === 'sent') {          // half of them have to be patterns with a 文の組み立て: swap some in if the draw came up short
+                var need = Math.floor(list.length / 2) - list.filter(function(e) { return e.cp; }).length;
+                var spare = need > 0 ? shuffleInPlace(pool.filter(function(e) { return e.cp && list.indexOf(e) < 0; })).slice(0, need) : [];
+                var drop = rest.filter(function(e) { return !e.cp; });
+                spare.forEach(function(e, n) { if (drop[n]) list[list.indexOf(drop[n])] = e; });
+            }
+            shuffleInPlace(list);
         }
         if (!list.length) return;
         var kinds = ['m2p', 'p2m', 'cloze', 'comp'], bag = [];
         var items = list.map(function(e) {
             var t = S.type;
-            if (t === 'mix' || kinds.indexOf(t) < 0) {
+            if (t === 'sent') t = !gidxCanCloze(e) ? 'comp' : !e.cp ? 'cloze' : '';          // '' = either: shared out below
+            else if (t === 'mix' || kinds.indexOf(t) < 0) {
                 if (!bag.length) bag = shuffleInPlace(kinds.slice());
                 t = bag.pop();
                 if (!gidxCanAsk(e, t)) t = gidxCanAsk(e, 'cloze') && t !== 'cloze' && Math.random() < 0.5 ? 'cloze' : Math.random() < 0.5 ? 'm2p' : 'p2m';
             }
             return { i: e.i, t: t };
         });
+        if (S.type === 'sent') {          // 穴うめ＋組み立て: as near half and half as the patterns drawn allow
+            var nComp = items.filter(function(it) { return it.t === 'comp'; }).length, half = Math.floor(items.length / 2);
+            shuffleInPlace(items.filter(function(it) { return !it.t; })).forEach(function(it) { it.t = nComp < half ? (nComp++, 'comp') : 'cloze'; });
+        }
         gidxQuiz = { items: items, pos: 0, log: [], cur: null };
         document.body.classList.add('gx-quiz-on');
         gidxQuizRender();
@@ -37043,7 +37056,7 @@
     function gidxSlotFam(c) {
         var p = c.split('|'), L = p[0], R = p[1];
         if (L === 'Vd' || L === 'A' || L === 'X:た:基本形' || L === 'X:ない:基本形') L = 'F'; else if (L === 'Na') L = 'N';
-        if (R === 'x:だ' || R === 'x:です' || R === 'j:か' || R === 'j:ね' || R === 'j:よ') R = 'e';
+        if (R === 'x:だ' || R === 'x:です') R = 'c'; else if (R === 'j:か' || R === 'j:ね' || R === 'j:よ') R = 'e';          // before だ／です only what a noun could be: 〜の極み, never 〜はしない
         return L + '|' + R;
     }
     // A wrong choice must also not be a second right answer. Beyond what gidxQuizOthers leaves out (look-alikes, the same
@@ -37052,35 +37065,66 @@
     // not asked this way at all: いただきました and 拝見しました both follow お手紙を.
     var GIDX_FN = [/けれども|のに(?!対)|だが|ても|でも|事実だが|とは言っても|言うが/, /とは反対に|比べ|一方/, /ために|目的|目標|目指/, /ので|理由|原因|せい|おかげ|だから|からこそ|から（/,
         /だけでなく|加えて|さらに|もちろん|そのうえ/, /すぐ|同時|瞬間|ちょうどその時/, /かもしれない|だろう|らしい|ようだ|考えられる|きっと|はずだ/,
-        /しなければ|当然|べき|ほうがいい|必要|わけにはいかない|ほかに方法|しかない/, /できない|無理|絶対に|まったく|決して|少しも/, /もし|仮定|場合|すれば|したら|なら/,
-        /とても|この上なく|本当に|ほど|くらい|程度/, /とき|あとで|してから|ずっと|段階|最後/, /立場|から見ると|から考えると|によって|関係なく|合わせて|従って/, /だけだ|ただ〜|以外|しか/, /という|と聞いた|と言/];
+        /しなければ|当然|のが普通|べき|ほうがいい|いちばんいい|必要|わけにはいかない|ほかに方法|しかない/, /できない|無理|絶対に|まったく|決して|少しも/, /もし|仮定|場合|すれば|したら|なら/,
+        /とても|この上なく|本当に|ほど|くらい|程度|すぎる|我慢できない|抑えられない/, /とき|あとで|してから|ずっと|段階|最後/, /立場|から見ると|から考えると|によって|で決まる|関係なく|合わせて|従って/, /だけだ|ただ〜|以外|しか/, /という|と聞いた|と言/];
+    // read off the names: the patterns that end a sentence by passing judgement on it stand in for one another
+    // (〜に違いない, 〜らしい, 〜と言ってもいい, 〜にほかならない … all fit 彼の努力が優勝に導いた［　］。), and so do the
+    // ones for a habit and the ones for a bad ending
+    var GIDX_FN_N = [[20, /と言(え|って)|といえ|と思われ|と見られ|に違いない|に決まって|らしい|みたい|だろうに|ではないか|じゃない$|のでは|ものと|〜ものだ|〜もの／|ものがある|わけ(です|では)|〜んだ$|からだ|からであろう|からにほかならない|否めない|限らない|かぎらない|〜とか$|としている|〜とする$|〜たとする|同然|にすぎない|にほかならない|でしかない|以外のなにものでもない|おそれがある|かねない|〜ほどだ|次第です|というものだ|のやら/],
+        [21, /傾向|きらいがある|がちな|っぽい/], [22, /はめになる|始末だ|にいたる|ずじまい|そびれる/],
+        [23, /^〜は(ともかく|さておき|もとより|言うに|おろか|というと)/], [24, /を皮切り|をはじめ|を最後に|を限りに/]];
     function gidxFn(e) {
         if (!e.fn) {
             e.fn = GIDX_FN.map(function(rx, k) { return rx.test(e.j) ? k : -1; }).filter(function(k) { return k >= 0; });
+            GIDX_FN_N.forEach(function(c) { if (c[1].test(e.n)) e.fn.push(c[0]); });
             if (/^(ですら|すら|さえ|まで$|こそ|だけは|なんか|なんて|だって|とて|でも)/.test(e.nf)) e.fn.push(99);          // the particles that single a word out stand in for one another
         }
         return e.fn;
     }
+    // Never a wrong choice: a judgement pattern (it can close almost any sentence: 一日20人にすぎない is as good as
+    // 一日20人といったところだ), a pattern the answer's meaning is explained with (〜てしまう for 〜ちゃう), and a
+    // spoken-only pattern beside a written one (うれしいんだもん for うれしいかぎりだ).
     function gidxClozeOk(e, o) {
         if (!gidxOtherOk(e, o)) return false;
-        var same = 0, fn = gidxFn(e);
+        var same = 0, fn = gidxFn(e), fo = gidxFn(o);
         while (same < 3 && o.nf.charAt(same) && o.nf.charAt(same) === e.nf.charAt(same)) same++;
-        return same < 3 && !gidxFn(o).some(function(k) { return fn.indexOf(k) >= 0; });
+        if (same >= 3 || fo.indexOf(20) >= 0 || fo.some(function(k) { return fn.indexOf(k) >= 0; })) return false;
+        if (e.jf === undefined) e.jf = gidxFold(e.j);
+        if (o.jf === undefined) o.jf = gidxFold(o.j);
+        if ((o.nf.length >= 3 && e.jf.indexOf(o.nf) >= 0) || (e.nf.length >= 3 && o.jf.indexOf(e.nf) >= 0)) return false;
+        return /話し言葉/.test(e.j) === /話し言葉/.test(o.j);
     }
+    // In the looser list a blank after 引っ越した may only take patterns that can follow た: the pattern's own example
+    // has the same form on its left, or its 接続 says 普通形 or names that form.
+    var GIDX_LEFT = { 'Vd': '辞書形', 'X:た:基本形': 'た形', 'X:ない:基本形': 'ない形', 'A': 'い形容詞' };
+    function gidxLeftFits(L, o, oc) {
+        var want = GIDX_LEFT[L];
+        if (!want || oc.split('|')[0] === L) return true;
+        return o.c.indexOf('普通形') >= 0 || new RegExp('(^|[／・])' + want + '($|[／・（＋])').test(o.c);
+    }
+    function gidxPolite(t) { return /(ます|です|ません|ました|でした|でしょうか|ください)$/.test(t); }
     // check: only whether a question can be made (no shuffling, nothing built)
     function gidxClozeMake(e, check) {
         if (e.kd) return null;
         var found = null, order = e.x.map(function(x, k) { return k; });
-        var score = function(o) { return (o.c === e.c ? 2 : 0) + (o.lv === e.lv ? 1 : 0); };
+        // the wrong choices that look most like the answer come first: the same 接続 and level, the same first letter
+        // (に〜 beside に〜), about the same length, the same politeness; a little chance keeps the three from always being the same
+        var score = function(o, txt, ans) {
+            return (o.c === e.c ? 2 : 0) + (o.lv === e.lv ? 2 : Math.abs(o.lv - e.lv) === 1 ? 1 : 0) + (txt.charAt(0) === ans.charAt(0) ? 2 : 0) +
+                (Math.abs(txt.length - ans.length) <= 2 ? 1 : 0) + (gidxPolite(txt) === gidxPolite(ans) ? 4 : 0) + Math.random() * 1.5;
+        };
         (check ? order : shuffleInPlace(order)).some(function(k) {
             var code = e.cz[k]; if (!code) return false;
             var m = /<b>([\s\S]*?)<\/b>/.exec(e.x[k]), used = [gidxPlain(m[1])], seen = {}, opts = [{ html: gidxRuby(m[1]), ok: true }];
+            var L = code.split('|')[0], inn = function(c) { return /<b>([\s\S]*?)<\/b>/.exec(gidxE[c[0]].x[c[1]])[1]; };
+            // before だ／です and before だろう／でしょう are different places (〜といえるだろう, never 〜といえるだ)
+            var cop = /\|x:(だ|です)$/.test(code), tail = function(en, n) { return /^(だろ|でしょ)/.test(gidxPlain(en.x[n].split('</b>').pop())); }, myTail = cop && tail(e, k);
             [gidxSlots[code] || [], gidxSlotsF[gidxSlotFam(code)] || []].some(function(list) {
-                var cands = list.filter(function(c) { return !seen[c[0]] && gidxClozeOk(e, gidxE[c[0]]); });
-                if (!check) cands = shuffleInPlace(cands).map(function(c, n) { return [score(gidxE[c[0]]), n, c]; }).sort(function(a, b) { return b[0] - a[0] || a[1] - b[1]; }).map(function(x) { return x[2]; });
+                var cands = list.filter(function(c) { return !seen[c[0]] && gidxClozeOk(e, gidxE[c[0]]) && gidxLeftFits(L, gidxE[c[0]], gidxE[c[0]].cz[c[1]]) && (!cop || tail(gidxE[c[0]], c[1]) === myTail); });
+                if (!check) cands = cands.map(function(c) { return [score(gidxE[c[0]], gidxPlain(inn(c)), used[0]), c]; }).sort(function(a, b) { return b[0] - a[0]; }).map(function(x) { return x[1]; });
                 cands.some(function(c) {
                     if (seen[c[0]]) return false;
-                    var inner = /<b>([\s\S]*?)<\/b>/.exec(gidxE[c[0]].x[c[1]])[1], txt = gidxPlain(inner);
+                    var inner = inn(c), txt = gidxPlain(inner);
                     if (used.some(function(u) { return u.indexOf(txt) >= 0 || txt.indexOf(u) >= 0; })) return false;
                     seen[c[0]] = 1; used.push(txt); opts.push({ html: gidxRuby(inner), ok: false });
                     return opts.length >= 4;
