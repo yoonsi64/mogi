@@ -36660,11 +36660,12 @@
     // One entry: [pattern, reading, meaning in simple Japanese, Korean gloss, example sentences ({漢字|よみ} for furigana,
     // <b> on the pattern), the patterns of MogiGram.p it covers, level (1 = N1, 2 = N2, 3 = N3 and below), 接続,
     // its group of look-alike patterns (-1: none), what sets it apart in that group, 敬語 kind ('' for a pattern),
-    // for each example the slot its pattern sits in, 'left|right' ('' when it has more than one piece): see gidxClozeMake].
+    // for each example the slot its pattern sits in, 'left|right' ('' when it has more than one piece): see gidxClozeMake,
+    // a 文の組み立て question made from one example (0: none): see gidxQuizMake].
     // The meanings, glosses, levels, 接続, look-alike notes and furigana are written for the app, not taken from the books.
     // Loaded when 文型 is first opened, with 統計 (the link from 苦手な文型) and with the first 文法 解説 (its link).
     var gidxSlots = {}, gidxSlotsF = {};          // examples by the slot their pattern sits in ({ slot: [[entry, example]] }), exactly and loosely
-    var GIDX_SRC = 'gramidx.47b6a2c7.js', gidxLoading = false, gidxWaiters = [], gidxByPat = null, gidxE = null, gidxSim = {};
+    var GIDX_SRC = 'gramidx.22183e9c.js', gidxLoading = false, gidxWaiters = [], gidxByPat = null, gidxE = null, gidxSim = {};
     var grammarView = document.getElementById('grammar-view'), grammarContent = document.getElementById('grammar-content');
     var gidxState = { q: '', missed: false, lv: 0, open: -1 };          // kept while the app is open: the search, the filters, the open entry
     var gidxQuiz = null;          // 文型クイズ in progress: { items: [{ i, t }], pos, log, cur }
@@ -36692,7 +36693,7 @@
             if (!failed && window.MogiGramIdx) {
                 gidxByPat = {}; gidxSim = {}; gidxSlots = {}; gidxSlotsF = {};
                 gidxE = window.MogiGramIdx.e.map(function(a, i) {
-                    var e = { i: i, n: a[0], y: a[1], j: a[2], k: a[3], x: a[4], g: a[5], lv: a[6], c: a[7], s: a[8], sn: a[9], kd: a[10], cz: a[11] || [] };
+                    var e = { i: i, n: a[0], y: a[1], j: a[2], k: a[3], x: a[4], g: a[5], lv: a[6], c: a[7], s: a[8], sn: a[9], kd: a[10], cz: a[11] || [], cp: a[12] || null };
                     e.cz.forEach(function(c, k) {
                         // a highlight that takes in a word of the sentence (包まれ<b>たままだ</b> written as <b>包まれたままだ</b>) is no
                         // use as a blank: that word would mark the answer, and would be nonsense as a wrong choice elsewhere
@@ -36926,17 +36927,22 @@
     //   m2p  the meaning (Japanese and Korean) is shown, you pick the pattern
     //   p2m  the pattern is shown, you pick its meaning
     //   cloze  one of the entry's example sentences with the pattern taken out, you pick what goes in the [ ]
+    //   comp   文の組み立て: four pieces of an example sentence to put in order (e.cp, made and checked by hand when the
+    //          index is built: only sentences where no other order puts a different piece on the ★); marked on the ★ piece
     // You choose the kind (or a mix), the range (all, a level, 敬語, or 苦手) and how many. What you answer is kept by
     // pattern in GIDX_QZ_KEY ({ pattern: [right, wrong, last answer right 1/0] }); it is not part of the 統計. 苦手 = patterns
     // you missed in 文法 questions, and patterns whose last answer here was wrong.
     var GIDX_QZ_KEY = 'jlptGramQuiz', GIDX_QZ_SET_KEY = 'jlptGramQuizSet';
     var gidxQzLog = loadJSON(GIDX_QZ_KEY, {}), gidxQzSet = loadJSON(GIDX_QZ_SET_KEY, null) || {};
-    var GIDX_QZ_TYPES = [['mix', 'ミックス', '3つの形式をまぜて出題'], ['m2p', '意味 → 文型', '意味を見て、文型を選ぶ'], ['p2m', '文型 → 意味', '文型を見て、意味を選ぶ'], ['cloze', '例文の穴うめ', '例文の［　］に入る文型を選ぶ']];
+    var GIDX_QZ_TYPES = [['mix', 'ミックス', '3つの形式をまぜて出題'], ['m2p', '意味 → 文型', '意味を見て、文型を選ぶ'], ['p2m', '文型 → 意味', '文型を見て、意味を選ぶ'], ['cloze', '例文の穴うめ', '例文の［　］に入る文型を選ぶ'], ['comp', '文の組み立て', '言葉を並べて、★に入るものを決める']];
     var GIDX_QZ_DIR = {
         m2p: '次の意味を表す文型として最もよいものを、1・2・3・4から一つ選びなさい。',
         p2m: '次の文型の意味として最もよいものを、1・2・3・4から一つ選びなさい。',
-        cloze: '次の文の［　　］に入れるのに最もよいものを、1・2・3・4から一つ選びなさい。'
+        cloze: '次の文の［　　］に入れるのに最もよいものを、1・2・3・4から一つ選びなさい。',
+        comp: '次の文の★に入る最もよいものを選びなさい。（言葉をタップしてから、入れたい空欄をタップしてください）'
     };
+    // whether entry e can be asked as kind t: every pattern has a meaning; 例文の穴うめ and 文の組み立て need an example that works
+    function gidxCanAsk(e, t) { return t === 'cloze' ? gidxCanCloze(e) : t === 'comp' ? !!e.cp : true; }
     function gidxPlain(x) { return String(x).replace(/\{([^|{}]+)\|[^{}]+\}/g, '$1').replace(/<[^>]*>/g, ''); }
     function gidxWeak(e, cnt) { var l = gidxQzLog[e.n]; return !!((cnt[e.i] && cnt[e.i].miss) || (l && l[2] === 0)); }
     function gidxQzPool(range, cnt) {
@@ -36972,14 +36978,15 @@
                 var on = b.hasAttribute('data-r') ? b.getAttribute('data-r') === S.range : +b.getAttribute('data-n') === S.n;
                 b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
             });
-            var poolN = function(r) { return gidxQzPool(r, cnt).filter(function(e) { return S.type !== 'cloze' || gidxCanCloze(e); }).length; };
+            var poolN = function(r) { return gidxQzPool(r, cnt).filter(function(e) { return gidxCanAsk(e, S.type); }).length; };
             grammarContent.querySelectorAll('.gx-qs-chip[data-r]').forEach(function(b) { b.querySelector('i').textContent = poolN(b.getAttribute('data-r')); });
             var n = poolN(S.range), go = grammarContent.querySelector('.gx-qs-go');
             go.disabled = !n;
             go.textContent = n ? 'はじめる（' + Math.min(n, S.n) + '問）' : 'はじめる';
             document.getElementById('gx-qs-note').textContent = S.range === 'weak'
                 ? (n ? '苦手：文法の問題でまちがえた文型と、このクイズで最後にまちがえた文型です。' : '苦手な文型はまだありません。文法の問題やこのクイズでまちがえると、ここから出題できます。')
-                : S.type === 'cloze' ? '例文の穴うめは、ほかの文型も同じ場所に入れられる例文だけから出題します（敬語は出ません）。' : 'まちがえたことのある文型が先に出ます。';
+                : S.type === 'cloze' ? '例文の穴うめは、ほかの文型も同じ場所に入れられる例文だけから出題します（敬語は出ません）。'
+                : S.type === 'comp' ? '文の組み立ては、並べ方が一つに決まる例文だけから出題します（敬語は出ません）。' : 'まちがえたことのある文型が先に出ます。';
             try { localStorage.setItem(GIDX_QZ_SET_KEY, JSON.stringify(S)); } catch (e) {}
         };
         grammarContent.querySelectorAll('.gx-qs-type').forEach(function(b) { b.addEventListener('click', function() { S.type = b.getAttribute('data-t'); sync(); }); });
@@ -36998,7 +37005,7 @@
         if (only) list = shuffleInPlace(only.map(function(i) { return gidxE[i]; }));
         else {
             var pool = gidxQzPool(S.range, cnt);
-            if (S.type === 'cloze') pool = pool.filter(gidxCanCloze);
+            pool = pool.filter(function(e) { return gidxCanAsk(e, S.type); });
             // up to half are patterns you have missed (most missed first), the rest are drawn at random
             var weak = S.range === 'weak' ? [] : pool.filter(function(e) { return gidxWeak(e, cnt); })
                 .sort(function(a, b) { return ((cnt[b.i] && cnt[b.i].miss) || 0) - ((cnt[a.i] && cnt[a.i].miss) || 0); }).slice(0, Math.ceil(S.n / 2));
@@ -37006,13 +37013,13 @@
             list = shuffleInPlace(weak.concat(rest));
         }
         if (!list.length) return;
-        var kinds = ['m2p', 'p2m', 'cloze'], bag = [];
+        var kinds = ['m2p', 'p2m', 'cloze', 'comp'], bag = [];
         var items = list.map(function(e) {
             var t = S.type;
             if (t === 'mix' || kinds.indexOf(t) < 0) {
                 if (!bag.length) bag = shuffleInPlace(kinds.slice());
                 t = bag.pop();
-                if (t === 'cloze' && !gidxCanCloze(e)) t = Math.random() < 0.5 ? 'm2p' : 'p2m';
+                if (!gidxCanAsk(e, t)) t = gidxCanAsk(e, 'cloze') && t !== 'cloze' && Math.random() < 0.5 ? 'cloze' : Math.random() < 0.5 ? 'm2p' : 'p2m';
             }
             return { i: e.i, t: t };
         });
@@ -37094,6 +37101,16 @@
             if (c) { q.sent = c.sent; q.parts = c.parts; q.opts = c.opts; }
             else t = q.t = 'm2p';          // no example of this pattern has a blank that three other patterns fit: ask for the pattern instead
         }
+        if (t === 'comp') {
+            if (e.cp) {
+                var p = e.cp;          // [example, before, piece, between, piece, between, piece, between, piece, after, ★ position]
+                q.k = p[0]; q.frags = [p[2], p[4], p[6], p[8]]; q.star = p[10];
+                q.tpl = p[1] + '\u0001' + p[3] + '\u0001' + p[5] + '\u0001' + p[7] + '\u0001' + p[9];
+                do { q.order = shuffleInPlace([0, 1, 2, 3]); } while (q.order.join('') === '0123');          // q.order[shown position] = its place in the sentence
+                return q;
+            }
+            t = q.t = 'm2p';
+        }
         if (t !== 'cloze') {
             var others = gidxQuizOthers(e, function(o) { return o.lv === e.lv ? 1 : 0; }).slice(0, 3);
             q.opts = [e].concat(others).map(function(o) {
@@ -37117,52 +37134,106 @@
     function gidxQuizRender() {
         var Q = gidxQuiz; if (!Q) return;
         if (Q.pos >= Q.items.length) { gidxQuizResult(); return; }
-        var q = Q.cur || (Q.cur = gidxQuizMake(Q.items[Q.pos])), e = q.e, n = Q.items.length;
+        var q = Q.cur || (Q.cur = gidxQuizMake(Q.items[Q.pos])), e = q.e, n = Q.items.length, comp = q.t === 'comp';
         var kind = GIDX_QZ_TYPES.filter(function(t) { return t[0] === q.t; })[0][1];
+        var slot = 0, body = !comp
+            ? '<div class="sentence"><span class="sentence-text" id="gx-qz-sent">' + gidxQuizSentence(q, false) + '</span></div>' +
+              '<div class="options">' + q.opts.map(function(o, k) {
+                  return '<button class="option-btn" data-k="' + k + '"><span class="option-prefix">' + CIRCLED[k] + '</span><span class="option-text">' + o.html + '</span></button>';
+              }).join('') + '</div>'
+            // 文の組み立て: the same pieces as the question screen's (slots in the sentence, the words below, 解答する / リセット)
+            : '<div class="comp-container"><div class="comp-sentence gx-ext">' + gidxRuby(q.tpl).replace(/\u0001/g, function() {
+                  var s = slot++, star = s === q.star;
+                  return '<span class="inline-slot drop-zone' + (star ? ' star-zone' : '') + '" data-slot="' + s + '">' + (star ? '<span class="star-mark">★</span>' : '') + '</span>';
+              }) + '</div><div class="drag-pool" id="gx-pool"></div><div class="comp-hint" id="gx-comp-hint"></div>' +
+              '<div class="btn-group"><button class="check-btn" id="gx-comp-check" disabled>解答する</button><button class="reset-btn" id="gx-comp-reset" disabled>リセット</button></div></div>';
         grammarContent.innerHTML = '<div class="gx-qz">' + gidxQuizTop() + '<div class="question-card">' +
             '<div class="question-header"><div class="q-progress-row">' +
             '<div class="q-progress" role="progressbar" aria-valuemin="1" aria-valuemax="' + n + '" aria-valuenow="' + (Q.pos + 1) + '"><div class="q-progress-fill" style="width:' + Math.round((Q.pos + 1) / n * 100) + '%"></div></div>' +
             '<span class="q-progress-label">' + (Q.pos + 1) + ' / ' + n + '</span></div>' +
             '<div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><span class="question-type">文型さくいん - ' + kind + '</span></div>' +
-            '<div class="direction-box">' + GIDX_QZ_DIR[q.t] + '</div></div>' +
-            '<div class="sentence"><span class="sentence-text" id="gx-qz-sent">' + gidxQuizSentence(q, false) + '</span></div>' +
-            '<div class="options">' + q.opts.map(function(o, k) {
-                return '<button class="option-btn" data-k="' + k + '"><span class="option-prefix">' + CIRCLED[k] + '</span><span class="option-text">' + o.html + '</span></button>';
-            }).join('') + '</div>' +
+            '<div class="direction-box">' + GIDX_QZ_DIR[q.t] + '</div></div>' + body +
             '<div class="feedback" id="gx-qz-fb"></div><div id="gx-qz-ex"></div></div>' +
             '<footer class="gx-qz-footer"><button class="gx-next" disabled>' + (Q.pos + 1 >= n ? '結果を見る' : '次の問題へ') + '</button></footer></div>';
         grammarContent.querySelector('.gx-qz-quit').addEventListener('click', function() { showGrammarIndex(); });
-        var btns = grammarContent.querySelectorAll('.options .option-btn'), next = grammarContent.querySelector('.gx-next'), done = false;
+        var next = grammarContent.querySelector('.gx-next'), done = false;
         next.addEventListener('click', function() { if (!done) return; Q.pos++; Q.cur = null; gidxQuizRender(); window.scrollTo(0, 0); });
-        btns.forEach(function(b) {
-            b.addEventListener('click', function() {
-                if (done) return;
-                done = true;
-                var pick = q.opts[+b.getAttribute('data-k')], ok = !!pick.ok, right = q.opts.filter(function(o) { return o.ok; })[0];
-                Q.log.push({ i: e.i, t: q.t, ok: ok });
-                var l = gidxQzLog[e.n] || [0, 0, 1];
-                l[ok ? 0 : 1]++; l[2] = ok ? 1 : 0; gidxQzLog[e.n] = l;
-                try { localStorage.setItem(GIDX_QZ_KEY, JSON.stringify(gidxQzLog)); } catch (er) {}
-                btns.forEach(function(x) { x.disabled = true; if (q.opts[+x.getAttribute('data-k')].ok) x.classList.add('correct'); });
-                if (!ok) b.classList.add('incorrect');
-                if (q.t === 'cloze') document.getElementById('gx-qz-sent').innerHTML = gidxQuizSentence(q, true);
-                var fb = document.getElementById('gx-qz-fb');
-                fb.className = 'feedback ' + (ok ? 'correct' : 'incorrect');
-                fb.innerHTML = ok ? '正解！' : '不正解… 正解は「' + right.html.replace(/<span class="gx-qz-okr"[\s\S]*$/, '') + '」です。';
-                var box = document.getElementById('gx-qz-ex');
-                box.innerHTML = '<div class="explain-card mx"><div class="explain-title">解説</div>' +
-                    '<div class="mx-head"><b>' + escapeHtml(e.n) + '</b>' + gidxLv(e) + '</div>' +
-                    '<div class="mx-mean"><span class="mx-k">意味</span>' + escapeHtml(e.j) + '<span class="explain-kr" lang="ko">' + escapeHtml(e.k) + '</span></div>' +
-                    gidxDetailHtml(e) + '</div>';
-                gidxBindDetail(box, e, function(i) { gidxSheet(i); });
-                next.disabled = false;          // the page stays where it is: 次の問題へ is fixed at the bottom
+        // the answer is in: record it, say 正解／不正解, show the 解説. The page stays where it is: 次の問題へ is fixed at the bottom.
+        var finish = function(ok, fbHtml, extra) {
+            done = true;
+            Q.log.push({ i: e.i, t: q.t, ok: ok });
+            var l = gidxQzLog[e.n] || [0, 0, 1];
+            l[ok ? 0 : 1]++; l[2] = ok ? 1 : 0; gidxQzLog[e.n] = l;
+            try { localStorage.setItem(GIDX_QZ_KEY, JSON.stringify(gidxQzLog)); } catch (er) {}
+            var fb = document.getElementById('gx-qz-fb');
+            fb.className = 'feedback ' + (ok ? 'correct' : 'incorrect');
+            fb.innerHTML = fbHtml;
+            var box = document.getElementById('gx-qz-ex');
+            box.innerHTML = '<div class="explain-card mx"><div class="explain-title">解説</div>' + (extra || '') +
+                '<div class="mx-head"><b>' + escapeHtml(e.n) + '</b>' + gidxLv(e) + '</div>' +
+                '<div class="mx-mean"><span class="mx-k">意味</span>' + escapeHtml(e.j) + '<span class="explain-kr" lang="ko">' + escapeHtml(e.k) + '</span></div>' +
+                gidxDetailHtml(e) + '</div>';
+            gidxBindDetail(box, e, function(i) { gidxSheet(i); });
+            var say = box.querySelector('.gx-say-all');
+            if (say) say.addEventListener('click', function() { speakText(gidxRuby(e.x[q.k]).replace(/<\/?b>/g, '')); });
+            next.disabled = false;
+        };
+        if (!comp) {
+            var btns = grammarContent.querySelectorAll('.options .option-btn');
+            btns.forEach(function(b) {
+                b.addEventListener('click', function() {
+                    if (done) return;
+                    var pick = q.opts[+b.getAttribute('data-k')], ok = !!pick.ok, right = q.opts.filter(function(o) { return o.ok; })[0];
+                    btns.forEach(function(x) { x.disabled = true; if (q.opts[+x.getAttribute('data-k')].ok) x.classList.add('correct'); });
+                    if (!ok) b.classList.add('incorrect');
+                    if (q.t === 'cloze') document.getElementById('gx-qz-sent').innerHTML = gidxQuizSentence(q, true);
+                    finish(ok, ok ? '正解！' : '不正解… 正解は「' + right.html.replace(/<span class="gx-qz-okr"[\s\S]*$/, '') + '」です。');
+                });
             });
+            return;
+        }
+        // 文の組み立て: tap a word, then the blank it goes in; a word in a blank goes back when tapped. Marked on the ★ blank, as on the question screen.
+        var slots = [-1, -1, -1, -1], sel = -1, pool = document.getElementById('gx-pool'), hint = document.getElementById('gx-comp-hint');
+        var check = document.getElementById('gx-comp-check'), reset = document.getElementById('gx-comp-reset');
+        var item = function(f) { return '<div class="drag-item' + (f === sel ? ' selected' : '') + '" data-idx="' + f + '">' + gidxRuby(q.frags[q.order[f]]) + '</div>'; };
+        var draw = function() {
+            grammarContent.querySelectorAll('.comp-sentence .inline-slot').forEach(function(sp) {
+                var s = +sp.getAttribute('data-slot'), f = slots[s], star = s === q.star;
+                sp.className = 'inline-slot drop-zone' + (star ? ' star-zone' : '') + (f >= 0 ? ' filled' : '') + (!done && sel >= 0 && f < 0 ? ' awaiting' : '') +
+                    (done ? (f >= 0 && q.order[f] === s ? ' correct-slot' : ' incorrect-slot') : '');
+                sp.innerHTML = (star && f < 0 ? '<span class="star-mark">★</span>' : '') + (f >= 0 ? item(f) : '');
+            });
+            pool.innerHTML = [0, 1, 2, 3].filter(function(f) { return slots.indexOf(f) < 0; }).map(item).join('');
+            hint.textContent = done ? '' : sel >= 0 ? '入れたい空欄をタップしてください' : '';
+            check.disabled = done || slots.indexOf(-1) >= 0;
+            reset.disabled = done || slots.every(function(f) { return f < 0; });
+        };
+        grammarContent.querySelector('.comp-container').addEventListener('click', function(ev) {
+            if (done) return;
+            var it = ev.target.closest ? ev.target.closest('.drag-item') : null, sp = ev.target.closest ? ev.target.closest('.inline-slot') : null;
+            if (sp) {
+                var s = +sp.getAttribute('data-slot');
+                if (sel >= 0) { slots[s] = sel; sel = -1; }          // a word is chosen: it goes here (the one that was here goes back)
+                else if (slots[s] >= 0) slots[s] = -1;
+                draw();
+            } else if (it) { var f = +it.getAttribute('data-idx'); sel = sel === f ? -1 : f; draw(); }
         });
+        reset.addEventListener('click', function() { if (done) return; slots = [-1, -1, -1, -1]; sel = -1; draw(); });
+        check.addEventListener('click', function() {
+            if (done || slots.indexOf(-1) >= 0) return;
+            var ok = q.order[slots[q.star]] === q.star;
+            finish(ok, ok ? '正解' : '不正解',
+                '<div class="explain-sub">正しい文 <button class="speak-btn gx-say-all" style="padding: 4px 8px; font-size: 0.8rem; display: inline-block; margin-left: 10px; vertical-align: middle;">🔊 正解を読む</button></div>' +
+                '<div class="mx-ex gx-ext">' + gidxRuby(e.x[q.k]) + '</div>');
+            draw();
+            [pool, hint, check.parentNode].forEach(function(el) { if (el && el.parentNode) el.parentNode.removeChild(el); });          // answered: only the sentence stays, as on the question screen
+        });
+        draw();
     }
     function gidxQuizResult() {
         var Q = gidxQuiz; if (!Q) return;
         var n = Q.log.length, right = Q.log.filter(function(l) { return l.ok; }).length, wrong = Q.log.filter(function(l) { return !l.ok; });
-        var by = ['m2p', 'p2m', 'cloze'].map(function(t) {
+        var by = ['m2p', 'p2m', 'cloze', 'comp'].map(function(t) {
             var all = Q.log.filter(function(l) { return l.t === t; });
             return all.length ? '<span>' + GIDX_QZ_TYPES.filter(function(x) { return x[0] === t; })[0][1] + '　<b>' + all.filter(function(l) { return l.ok; }).length + '</b> / ' + all.length + '</span>' : '';
         }).join('');

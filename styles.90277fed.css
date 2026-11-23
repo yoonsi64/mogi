@@ -4010,3 +4010,6 @@ body.gx-quiz-on header, body.gx-quiz-on .bottom-nav, body.gx-quiz-on #subnav { d
 .gx-qz-item > span { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .gx-qz-item b { font-size: 0.92rem; }
 .gx-qz-item span span { font-size: 0.78rem; color: var(--text-sub); line-height: 1.5; }
+.gx-qz .comp-sentence rt, .gx-qz .drag-item rt { font-size: 0.52em; font-weight: normal; }
+.gx-qz .comp-sentence.gx-ext { line-height: 2.6; }
+.gx-qz .explain-sub .speak-btn { font-family: inherit; }
