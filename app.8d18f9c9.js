@@ -12218,7 +12218,7 @@
     }
 
     // ---------- 学びの庭: active study time ----------
-    // Stricter than 学習時間 above: it counts only while a question, reading, mock test, 単語帳 game or 書き取り練習 is open,
+    // Stricter than 学習時間 above: it counts only while a question, reading, mock test, 単語帳 game, 文型クイズ or 書き取り練習 is open,
     // and you touched something in the last 90 s (150 s while reading), or audio / 読み上げ is playing.
     // Each device keeps its own record (jlptStudyTime_<device>), so studying on two devices adds up instead of
     // one copy replacing the other when they sync; the garden adds all of them together.
@@ -12236,6 +12236,7 @@
         var b = document.body;
         if (typeof focusCounting === 'function' && focusCounting()) return 'focus';
         if (b.classList.contains('in-quiz') || b.classList.contains('mock-open')) return 'quiz';
+        if (b.classList.contains('gx-quiz-on')) return 'quiz';            // 文型クイズ
         var ar = document.getElementById('ar-view');
         if (ar && ar.classList.contains('active')) return 'read';
         var fv = document.getElementById('flash-view');
@@ -13031,7 +13032,7 @@
         ws.hidden = !window.MogiTown || !window.MogiGarden;
         ws.querySelectorAll('button').forEach(function(b) { b.classList.toggle('active', b.dataset.w === (dev ? gdViewWorld() : worldActive())); });
         GD.view.querySelector('.gd-info').innerHTML = gdInfoHtml(s, shown, dev) +
-            (dev ? '' : '<div class="gd-today">今日 ' + gdFmt(s.today) + '　問題・読解・模試・単語帳のゲームを開いて手を動かしている時間だけを数えます。' +
+            (dev ? '' : '<div class="gd-today">今日 ' + gdFmt(s.today) + '　問題・読解・模試・単語帳のゲーム・文型クイズを開いて手を動かしている時間だけを数えます。' +
             (window.MogiTown ? '育つのは選んでいる方だけです（上の「庭・町」で切り替え。もう一方はそのまま残ります）。' : '') + '</div>');
         GD.view.querySelector('.gd-back').hidden = dev || GD.preview == null;
         // only what has been reached is shown; the stages still to come are ？？？ with the time they need
@@ -36151,7 +36152,7 @@
             { id: 'readdaily', cat: 'habit', icon: '📖', name: '一日一文', value: nb.readBest, unit: '日', tiers: tiers([7, 14, 30, 60, 100], '日'), hint: '毎日1つ以上の文章（読解〈内容理解・統合理解・情報検索〉・文章の文法）を解き続けた日数（最長）' },
             { id: 'rush', cat: 'habit', icon: '🏁', name: '追い込み', value: nb.rush.length, unit: '日', tiers: tiers([10, 20, 25, 28, 30], '日'), hint: getSetting('examDate', '') ? '試験日までの30日間に学習した日の数（30日すべてで最高位）' : '試験日を設定すると、試験前の30日間に学習した日を数えます' },
             // 学びの庭 (only once the garden is in the app)
-            { id: 'gdhours', cat: gardenLive() ? 'garden' : 'off', icon: '🌱', name: '庭づくり', value: Math.floor(gdT.total / 3600), unit: '時間', tiers: tiers([1, 10, 50, 150, gdEndHours()], '時間'), hint: '問題・読解・模試・単語帳のゲーム・書き取り練習で、手を動かして学習した時間の合計（' + gdEndHours() + '時間で庭が完成）' },
+            { id: 'gdhours', cat: gardenLive() ? 'garden' : 'off', icon: '🌱', name: '庭づくり', value: Math.floor(gdT.total / 3600), unit: '時間', tiers: tiers([1, 10, 50, 150, gdEndHours()], '時間'), hint: '問題・読解・模試・単語帳のゲーム・文型クイズ・書き取り練習で、手を動かして学習した時間の合計（' + gdEndHours() + '時間で庭が完成）' },
             { id: 'gdfocus', cat: gardenLive() ? 'garden' : 'off', icon: '🍵', name: '集中', value: gdBestDay, unit: '分', tiers: [{ n: 30, label: '30分' }, { n: 60, label: '1時間' }, { n: 120, label: '2時間' }, { n: 180, label: '3時間' }, { n: 300, label: '5時間' }], hint: '1日に手を動かして学習した時間（いちばん長かった日）' },
             { id: 'gdwater', cat: gardenLive() ? 'garden' : 'off', icon: '💧', name: '水やり', value: gdBestRun, unit: '日', tiers: tiers([3, 7, 14, 30, 100], '日'), hint: '毎日15分以上、手を動かして学習した連続日数（最長）' },
             { id: 'gdseasons', cat: gardenLive() ? 'garden' : 'off', icon: '🍁', name: '四季の庭', value: Object.keys(gdSeasons).length, unit: '季', tiers: [{ n: 1, label: '1季' }, { n: 2, label: '2季' }, { n: 3, label: '3季' }, { n: 4, label: '四季（1年）' }, { n: 8, label: '四季を2巡（2年）' }], hint: '1日1時間以上学習した日がある季節の数。年ごとに数えるので、同じ季節も次の年にまた数えます（8季で四季を2巡）' },
