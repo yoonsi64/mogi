@@ -36986,6 +36986,45 @@
         });
     }
     function gidxQuizOff() { gidxQuiz = null; document.body.classList.remove('gx-quiz-on'); }
+    // A quiz left midway (× , another tab, the app closed) can be taken up again from the setup page. What is kept:
+    // the questions by pattern name and kind (and which 問題集 problem, so the same one comes back), how far you got,
+    // and the answers so far. It is written at every question and every answer, and removed when the result is shown.
+    var GIDX_QZ_RESUME_KEY = 'jlptGramQuizResume';
+    function gidxQzSave() {
+        var Q = gidxQuiz; if (!Q) return;
+        var pos = Q.pos + (Q.answered ? 1 : 0);
+        try {
+            if (pos >= Q.items.length) { localStorage.removeItem(GIDX_QZ_RESUME_KEY); return; }
+            var cur = null;          // the question on screen, as made (its choices and their order), so that the very same one comes back
+            if (!Q.answered && Q.cur) { cur = {}; Object.keys(Q.cur).forEach(function(k) { if (k !== 'e') cur[k] = Q.cur[k]; }); }
+            localStorage.setItem(GIDX_QZ_RESUME_KEY, JSON.stringify({ v: 1, at: Date.now(), pos: pos, cur: cur,
+                items: Q.items.map(function(it) { return [gidxE[it.i].n, it.t, it.b == null ? -1 : it.b]; }),
+                log: Q.log.map(function(l) { return [gidxE[l.i].n, l.t, l.ok ? 1 : 0]; }) }));
+        } catch (e) {}
+    }
+    function gidxQzForget() { try { localStorage.removeItem(GIDX_QZ_RESUME_KEY); } catch (e) {} }
+    // the quiz that was left, ready to go on with ({ items, pos, log }), or null (none, finished, or its patterns are gone)
+    function gidxQzSaved() {
+        var R = loadJSON(GIDX_QZ_RESUME_KEY, null);
+        if (!R || !gidxE || !Array.isArray(R.items) || !Array.isArray(R.log)) return null;
+        var by = {}; gidxE.forEach(function(e) { by[e.n] = e.i; });
+        var kinds = GIDX_QZ_TYPES.map(function(t) { return t[0]; });
+        var items = R.items.map(function(a) { return { i: by[a[0]], t: a[1], b: a[2] >= 0 ? a[2] : undefined }; });
+        var log = R.log.map(function(a) { return { i: by[a[0]], t: a[1], ok: !!a[2] }; });
+        var bad = function(x) { return x.i === undefined || kinds.indexOf(x.t) < 0; };
+        if (items.some(bad) || log.some(bad) || !(R.pos >= 0 && R.pos < items.length) || log.length > R.pos) return null;
+        var cur = R.cur && R.cur.t === items[R.pos].t && (Array.isArray(R.cur.opts) || Array.isArray(R.cur.frags)) ? R.cur : null;
+        return { items: items, pos: R.pos, log: log, cur: cur };
+    }
+    function gidxQuizResume() {
+        var R = gidxQzSaved(); if (!R) return false;
+        gidxQuiz = { items: R.items, pos: R.pos, log: R.log, cur: null };
+        if (R.cur) { R.cur.e = gidxE[R.items[R.pos].i]; gidxQuiz.cur = R.cur; }
+        document.body.classList.add('gx-quiz-on');
+        gidxQuizRender();
+        window.scrollTo(0, 0);
+        return true;
+    }
     // the page where you choose what to be asked
     function gidxQuizSetup() {
         if (!gidxE) return;
@@ -36996,7 +37035,11 @@
         if ([10, 20, 30].indexOf(S.n) < 0) S.n = 10;
         if ([0, 3, 4].indexOf(S.d) < 0) S.d = 0;
         var ranges = [['all', 'すべて'], ['1', 'N1'], ['2', 'N2'], ['3', 'N3'], ['keigo', '敬語'], ['weak', '苦手']];
+        var left = gidxQzSaved();
         grammarContent.innerHTML = '<div class="gx-qs"><div class="gx-title"><h2>文型クイズ</h2><span></span><button class="gx-quizbtn gx-qs-back">さくいんにもどる</button></div>' +
+            (left ? '<div class="gx-qs-resume" id="gx-qs-resume"><div class="gx-qs-resume-t"><b>前回のつづき</b><span>' + left.items.length + '問中 ' + (left.pos + 1) + '問目から（ここまで ' +
+                left.log.filter(function(l) { return l.ok; }).length + ' / ' + left.log.length + ' 問正解）</span></div>' +
+                '<button class="gx-qs-resume-go">つづける</button><button class="gx-qs-resume-x" aria-label="前回のクイズを消す">×</button></div>' : '') +
             '<div class="gx-qs-h">出題形式<span>押した形式がまざって出ます</span></div><div class="gx-qs-types">' + GIDX_QZ_TYPES.map(function(t) {
                 return '<button class="gx-qs-type" data-t="' + t[0] + '" aria-pressed="false"><b>' + t[1] + '</b><span>' + t[2] + '</span></button>';
             }).join('') + '</div>' +
@@ -37038,6 +37081,11 @@
             b.addEventListener('click', function() { if (b.hasAttribute('data-r')) S.range = b.getAttribute('data-r'); else if (b.hasAttribute('data-d')) S.d = +b.getAttribute('data-d'); else S.n = +b.getAttribute('data-n'); sync(); });
         });
         grammarContent.querySelector('.gx-qs-back').addEventListener('click', function() { showGrammarIndex(); });
+        var rs = document.getElementById('gx-qs-resume');
+        if (rs) {
+            rs.querySelector('.gx-qs-resume-go').addEventListener('click', function() { if (!gidxQuizResume()) { gidxQzForget(); gidxQuizSetup(); } });
+            rs.querySelector('.gx-qs-resume-x').addEventListener('click', function() { gidxQzForget(); if (rs.parentNode) rs.parentNode.removeChild(rs); });
+        }
         grammarContent.querySelector('.gx-qs-go').addEventListener('click', function() { gidxQuizStart(); });
         sync();
         window.scrollTo(0, 0);
@@ -37183,8 +37231,9 @@
     // one question: { e, t, opts: [{ html, ok }], sent (cloze: the sentence, \u0001 where the pattern is taken out), parts }
     function gidxQuizMake(item) {
         var e = gidxE[item.i], t = item.t, q = { e: e, t: t, opts: [] };
-        if (t === 'cloze' && gidxBankList(e, 'f')) {
-            var bf = gidxBankNext(e, 'f');          // two blanks: the choices are pairs, "a／b"
+        if (t === 'cloze' && e.bf && (item.b != null && e.bf[item.b] || gidxBankList(e, 'f'))) {
+            var bf = item.b != null && e.bf[item.b] ? e.bf[item.b] : gidxBankNext(e, 'f');          // two blanks: the choices are pairs, "a／b"
+            item.b = e.bf.indexOf(bf);
             q.d = bf[0]; q.sent = bf[1].replace(/（　　）/g, '\u0001'); q.parts = bf[2].split('／');
             q.opts = bf.slice(2, 6).map(function(o, n) { return { html: o.replace(/／/g, ' ／ '), ok: n === 0 }; });
         } else if (t === 'cloze') {
@@ -37192,8 +37241,9 @@
             if (c) { q.sent = c.sent; q.parts = c.parts; q.opts = c.opts; }
             else t = q.t = 'm2p';          // no example of this pattern has a blank that three other patterns fit: ask for the pattern instead
         }
-        if (t === 'comp' && gidxBankList(e, 'c')) {
-            var bc = gidxBankNext(e, 'c');
+        if (t === 'comp' && e.bc && (item.b != null && e.bc[item.b] || gidxBankList(e, 'c'))) {
+            var bc = item.b != null && e.bc[item.b] ? e.bc[item.b] : gidxBankNext(e, 'c');
+            item.b = e.bc.indexOf(bc);
             q.d = bc[0]; q.frags = bc.slice(2, 6); q.star = bc[7];
             q.tpl = bc[1] + '\u0001\u0001\u0001\u0001' + bc[6]; q.full = bc[1] + q.frags.join('') + bc[6];
             do { q.order = shuffleInPlace([0, 1, 2, 3]); } while (q.order.join('') === '0123');
@@ -37231,9 +37281,10 @@
     function gidxQuizTop() { return '<div class="quiz-topbar"><button class="quiz-close gx-qz-quit" aria-label="終了して戻る">×</button><span class="quiz-title">文型クイズ</span></div>'; }
     function gidxQuizRender() {
         var Q = gidxQuiz; if (!Q) return;
-        if (Q.pos >= Q.items.length) { gidxQuizResult(); return; }
+        if (Q.pos >= Q.items.length) { gidxQzForget(); gidxQuizResult(); return; }
         var q = Q.cur || (Q.cur = gidxQuizMake(Q.items[Q.pos])), e = q.e, n = Q.items.length, comp = q.t === 'comp';
         var kind = GIDX_QZ_TYPES.filter(function(t) { return t[0] === q.t; })[0][1];
+        Q.answered = false; gidxQzSave();
         var slot = 0, body = !comp
             ? '<div class="sentence"><span class="sentence-text" id="gx-qz-sent">' + gidxQuizSentence(q, false) + '</span></div>' +
               '<div class="options">' + q.opts.map(function(o, k) {
@@ -37261,6 +37312,7 @@
         var finish = function(ok, fbHtml, extra) {
             done = true;
             Q.log.push({ i: e.i, t: q.t, ok: ok });
+            Q.answered = true; gidxQzSave();
             var l = gidxQzLog[e.n] || [0, 0, 1];
             l[ok ? 0 : 1]++; l[2] = ok ? 1 : 0; gidxQzLog[e.n] = l;
             try { localStorage.setItem(GIDX_QZ_KEY, JSON.stringify(gidxQzLog)); } catch (er) {}
