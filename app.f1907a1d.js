@@ -36666,6 +36666,10 @@
     // The meanings, glosses, levels, 接続, look-alike notes and furigana are written for the app, not taken from the books.
     // Loaded when 文型 is first opened, with 統計 (the link from 苦手な文型) and with the first 文法 解説 (its link).
     var gidxSlots = {}, gidxSlotsF = {};          // examples by the slot their pattern sits in ({ slot: [[entry, example]] }), exactly and loosely
+    // 文型クイズの問題集 (grambank): 例文の穴うめ and 文の組み立て problems written for the quiz, by pattern name:
+    // { f: { name: [[difficulty, sentence with （　　）, right, wrong, wrong, wrong]] }, c: { name: [[difficulty, before, piece ×4 in order, after, ★ place]] } }.
+    // Difficulty is on the app's scale (3 N1標準, 4 むずかしい). A pattern that has them is asked from here, not from its index examples.
+    var GBANK_SRC = 'grambank.a15faadb.js';
     var GIDX_SRC = 'gramidx.c14abacd.js', gidxLoading = false, gidxWaiters = [], gidxByPat = null, gidxE = null, gidxSim = {};
     var grammarView = document.getElementById('grammar-view'), grammarContent = document.getElementById('grammar-content');
     var gidxState = { q: '', missed: false, lv: 0, open: -1 };          // kept while the app is open: the search, the filters, the open entry
@@ -36693,6 +36697,7 @@
             gidxLoading = false;
             if (!failed && window.MogiGramIdx) {
                 gidxByPat = {}; gidxSim = {}; gidxSlots = {}; gidxSlotsF = {};
+                var GB = window.MogiGramBank || {};
                 gidxE = window.MogiGramIdx.e.map(function(a, i) {
                     var e = { i: i, n: a[0], y: a[1], j: a[2], k: a[3], x: a[4], g: a[5], lv: a[6], c: a[7], s: a[8], sn: a[9], kd: a[10], cz: a[11] || [], cp: a[12] || null };
                     e.cz.forEach(function(c, k) {
@@ -36707,6 +36712,7 @@
                     if (e.s >= 0) (gidxSim[e.s] || (gidxSim[e.s] = [])).push(i);
                     e.f = [e.n, e.y, e.j, e.k, e.kd].map(gidxFold).join('|');          // what the search looks in
                     e.nf = gidxFold(e.n); e.k1 = gidxFold(String(e.k).split(/[,、／\/]/)[0]);          // for telling like patterns apart in the quiz
+                    e.bf = (GB.f && GB.f[e.n]) || null; e.bc = (GB.c && GB.c[e.n]) || null; e.bn = { f: Math.floor(Math.random() * 8), c: Math.floor(Math.random() * 8) };
                     e.f0 = e.nf + '|' + e.y;                                  // a hit in the pattern itself comes first,
                     e.f1 = '|' + (e.j + '／' + e.k).split(/[／\/,、・①②③]/).map(gidxFold).join('|');          // then a meaning that begins with the words
                     return e;
@@ -36714,10 +36720,18 @@
             }
             var w = gidxWaiters; gidxWaiters = []; w.forEach(function(f) { try { f(failed); } catch (e) {} });
         };
-        sc.src = GIDX_SRC;
-        sc.onload = function() { done(false); };
-        sc.onerror = function() { if (sc.parentNode) sc.parentNode.removeChild(sc); done(true); };
-        document.head.appendChild(sc);
+        var go = function() {
+            sc.src = GIDX_SRC;
+            sc.onload = function() { done(false); };
+            sc.onerror = function() { if (sc.parentNode) sc.parentNode.removeChild(sc); done(true); };
+            document.head.appendChild(sc);
+        };
+        if (window.MogiGramBank) { go(); return; }
+        var sb = document.createElement('script');          // the 問題集 first; without it the quiz still runs on the index examples
+        sb.src = GBANK_SRC;
+        sb.onload = go;
+        sb.onerror = function() { if (sb.parentNode) sb.parentNode.removeChild(sb); go(); };
+        document.head.appendChild(sb);
     }
     // your answers by entry: { entryIndex: { att, miss } }
     function gidxCounts() {
@@ -36943,7 +36957,7 @@
         comp: '次の文の★に入る最もよいものを選びなさい。（言葉をタップしてから、入れたい空欄をタップしてください）'
     };
     // whether entry e can be asked as kind t: every pattern has a meaning; 例文の穴うめ and 文の組み立て need an example that works
-    function gidxCanAsk(e, t) { return t === 'cloze' ? gidxCanCloze(e) : t === 'comp' ? !!e.cp : true; }
+    function gidxCanAsk(e, t) { return t === 'cloze' ? gidxCanCloze(e) : t === 'comp' ? !!(e.bc || e.cp) : true; }
     // the kinds pressed on the setup page (S.types); an older saved setting had one kind, ミックス or 穴うめ＋組み立て
     function gidxQzKinds(S) {
         var all = GIDX_QZ_TYPES.map(function(t) { return t[0]; });
@@ -37147,14 +37161,27 @@
         });
         return found;
     }
-    function gidxCanCloze(e) { if (e.cq === undefined) e.cq = !!gidxClozeMake(e, true); return e.cq; }
+    function gidxCanCloze(e) { if (e.cq === undefined) e.cq = !!e.bf || !!gidxClozeMake(e, true); return e.cq; }
+    // the next 問題集 problem of a pattern: they come round in turn, so the same one is not asked twice running
+    function gidxBankNext(e, kind) { var list = kind === 'f' ? e.bf : e.bc; return list[e.bn[kind]++ % list.length]; }
     // one question: { e, t, opts: [{ html, ok }], sent (cloze: the sentence, \u0001 where the pattern is taken out), parts }
     function gidxQuizMake(item) {
         var e = gidxE[item.i], t = item.t, q = { e: e, t: t, opts: [] };
-        if (t === 'cloze') {
+        if (t === 'cloze' && e.bf) {
+            var bf = gidxBankNext(e, 'f');          // two blanks: the choices are pairs, "a／b"
+            q.d = bf[0]; q.sent = bf[1].replace(/（　　）/g, '\u0001'); q.parts = bf[2].split('／');
+            q.opts = bf.slice(2, 6).map(function(o, n) { return { html: o.replace(/／/g, ' ／ '), ok: n === 0 }; });
+        } else if (t === 'cloze') {
             var c = gidxClozeMake(e);
             if (c) { q.sent = c.sent; q.parts = c.parts; q.opts = c.opts; }
             else t = q.t = 'm2p';          // no example of this pattern has a blank that three other patterns fit: ask for the pattern instead
+        }
+        if (t === 'comp' && e.bc) {
+            var bc = gidxBankNext(e, 'c');
+            q.d = bc[0]; q.frags = bc.slice(2, 6); q.star = bc[7];
+            q.tpl = bc[1] + '\u0001\u0001\u0001\u0001' + bc[6]; q.full = bc[1] + q.frags.join('') + bc[6];
+            do { q.order = shuffleInPlace([0, 1, 2, 3]); } while (q.order.join('') === '0123');
+            return q;
         }
         if (t === 'comp') {
             if (e.cp) {
@@ -37206,7 +37233,8 @@
             '<div class="question-header"><div class="q-progress-row">' +
             '<div class="q-progress" role="progressbar" aria-valuemin="1" aria-valuemax="' + n + '" aria-valuenow="' + (Q.pos + 1) + '"><div class="q-progress-fill" style="width:' + Math.round((Q.pos + 1) / n * 100) + '%"></div></div>' +
             '<span class="q-progress-label">' + (Q.pos + 1) + ' / ' + n + '</span></div>' +
-            '<div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><span class="question-type">文型さくいん - ' + kind + '</span></div>' +
+            '<div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><span class="question-type">文型さくいん - ' + kind + '</span>' +
+            (q.d ? '<span class="gx-qz-diff" style="--lv:' + DIFF_COLORS[q.d - 1] + '">' + DIFF_NAMES[q.d - 1] + '</span>' : '') + '</div>' +
             '<div class="direction-box">' + GIDX_QZ_DIR[q.t] + '</div></div>' + body +
             '<div class="feedback" id="gx-qz-fb"></div><div id="gx-qz-ex"></div></div>' +
             '<footer class="gx-qz-footer"><button class="gx-next" disabled>' + (Q.pos + 1 >= n ? '結果を見る' : '次の問題へ') + '</button></footer></div>';
@@ -37230,7 +37258,7 @@
                 gidxDetailHtml(e) + '</div>';
             gidxBindDetail(box, e, function(i) { gidxSheet(i); });
             var say = box.querySelector('.gx-say-all');
-            if (say) say.addEventListener('click', function() { speakText(gidxRuby(e.x[q.k]).replace(/<\/?b>/g, '')); });
+            if (say) say.addEventListener('click', function() { speakText(gidxRuby(q.full || e.x[q.k]).replace(/<\/?b>/g, '')); });
             next.disabled = false;
         };
         if (!comp) {
@@ -37279,7 +37307,7 @@
             var ok = q.order[slots[q.star]] === q.star;
             finish(ok, ok ? '正解' : '不正解',
                 '<div class="explain-sub">正しい文 <button class="speak-btn gx-say-all" style="padding: 4px 8px; font-size: 0.8rem; display: inline-block; margin-left: 10px; vertical-align: middle;">🔊 正解を読む</button></div>' +
-                '<div class="mx-ex gx-ext">' + gidxRuby(e.x[q.k]) + '</div>');
+                '<div class="mx-ex gx-ext">' + gidxRuby(q.full || e.x[q.k]) + '</div>');
             draw();
             [pool, hint, check.parentNode].forEach(function(el) { if (el && el.parentNode) el.parentNode.removeChild(el); });          // answered: only the sentence stays, as on the question screen
         });
