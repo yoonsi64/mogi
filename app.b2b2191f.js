@@ -36659,10 +36659,12 @@
     // GIDX_SRC (window.MogiGramIdx.e) lists the grammar patterns the 文法 questions test, in あいうえお order, then 敬語.
     // One entry: [pattern, reading, meaning in simple Japanese, Korean gloss, example sentences ({漢字|よみ} for furigana,
     // <b> on the pattern), the patterns of MogiGram.p it covers, level (1 = N1, 2 = N2, 3 = N3 and below), 接続,
-    // its group of look-alike patterns (-1: none), what sets it apart in that group, 敬語 kind ('' for a pattern)].
+    // its group of look-alike patterns (-1: none), what sets it apart in that group, 敬語 kind ('' for a pattern),
+    // for each example the slot its pattern sits in, 'left|right' ('' when it has more than one piece): see gidxClozeMake].
     // The meanings, glosses, levels, 接続, look-alike notes and furigana are written for the app, not taken from the books.
     // Loaded when 文型 is first opened, with 統計 (the link from 苦手な文型) and with the first 文法 解説 (its link).
-    var GIDX_SRC = 'gramidx.c43831f5.js', gidxLoading = false, gidxWaiters = [], gidxByPat = null, gidxE = null, gidxSim = {};
+    var gidxSlots = {}, gidxSlotsF = {};          // examples by the slot their pattern sits in ({ slot: [[entry, example]] }), exactly and loosely
+    var GIDX_SRC = 'gramidx.47b6a2c7.js', gidxLoading = false, gidxWaiters = [], gidxByPat = null, gidxE = null, gidxSim = {};
     var grammarView = document.getElementById('grammar-view'), grammarContent = document.getElementById('grammar-content');
     var gidxState = { q: '', missed: false, lv: 0, open: -1 };          // kept while the app is open: the search, the filters, the open entry
     var gidxQuiz = null;          // 文型クイズ in progress: { items: [{ i, t }], pos, log, cur }
@@ -36688,13 +36690,22 @@
         var done = function(failed) {
             gidxLoading = false;
             if (!failed && window.MogiGramIdx) {
-                gidxByPat = {}; gidxSim = {};
+                gidxByPat = {}; gidxSim = {}; gidxSlots = {}; gidxSlotsF = {};
                 gidxE = window.MogiGramIdx.e.map(function(a, i) {
-                    var e = { i: i, n: a[0], y: a[1], j: a[2], k: a[3], x: a[4], g: a[5], lv: a[6], c: a[7], s: a[8], sn: a[9], kd: a[10] };
+                    var e = { i: i, n: a[0], y: a[1], j: a[2], k: a[3], x: a[4], g: a[5], lv: a[6], c: a[7], s: a[8], sn: a[9], kd: a[10], cz: a[11] || [] };
+                    e.cz.forEach(function(c, k) {
+                        // a highlight that takes in a word of the sentence (包まれ<b>たままだ</b> written as <b>包まれたままだ</b>) is no
+                        // use as a blank: that word would mark the answer, and would be nonsense as a wrong choice elsewhere
+                        if (c && (gidxPlain((/<b>([\s\S]*?)<\/b>/.exec(e.x[k]) || ['', ''])[1]).match(/[\u4e00-\u9fff々]/g) || []).some(function(ch) { return e.n.indexOf(ch) < 0; })) c = e.cz[k] = '';
+                        if (!c) return;
+                        (gidxSlots[c] || (gidxSlots[c] = [])).push([i, k]);
+                        var f = gidxSlotFam(c); (gidxSlotsF[f] || (gidxSlotsF[f] = [])).push([i, k]);
+                    });
                     e.g.forEach(function(p) { gidxByPat[p] = i; });
                     if (e.s >= 0) (gidxSim[e.s] || (gidxSim[e.s] = [])).push(i);
                     e.f = [e.n, e.y, e.j, e.k, e.kd].map(gidxFold).join('|');          // what the search looks in
-                    e.f0 = gidxFold(e.n) + '|' + e.y;                                  // a hit in the pattern itself comes first,
+                    e.nf = gidxFold(e.n); e.k1 = gidxFold(String(e.k).split(/[,、／\/]/)[0]);          // for telling like patterns apart in the quiz
+                    e.f0 = e.nf + '|' + e.y;                                  // a hit in the pattern itself comes first,
                     e.f1 = '|' + (e.j + '／' + e.k).split(/[／\/,、・①②③]/).map(gidxFold).join('|');          // then a meaning that begins with the words
                     return e;
                 });
@@ -36961,12 +36972,14 @@
                 var on = b.hasAttribute('data-r') ? b.getAttribute('data-r') === S.range : +b.getAttribute('data-n') === S.n;
                 b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
             });
-            var n = gidxQzPool(S.range, cnt).length, go = grammarContent.querySelector('.gx-qs-go');
+            var poolN = function(r) { return gidxQzPool(r, cnt).filter(function(e) { return S.type !== 'cloze' || gidxCanCloze(e); }).length; };
+            grammarContent.querySelectorAll('.gx-qs-chip[data-r]').forEach(function(b) { b.querySelector('i').textContent = poolN(b.getAttribute('data-r')); });
+            var n = poolN(S.range), go = grammarContent.querySelector('.gx-qs-go');
             go.disabled = !n;
             go.textContent = n ? 'はじめる（' + Math.min(n, S.n) + '問）' : 'はじめる';
             document.getElementById('gx-qs-note').textContent = S.range === 'weak'
                 ? (n ? '苦手：文法の問題でまちがえた文型と、このクイズで最後にまちがえた文型です。' : '苦手な文型はまだありません。文法の問題やこのクイズでまちがえると、ここから出題できます。')
-                : 'まちがえたことのある文型が先に出ます。';
+                : S.type === 'cloze' ? '例文の穴うめは、ほかの文型も同じ場所に入れられる例文だけから出題します（敬語は出ません）。' : 'まちがえたことのある文型が先に出ます。';
             try { localStorage.setItem(GIDX_QZ_SET_KEY, JSON.stringify(S)); } catch (e) {}
         };
         grammarContent.querySelectorAll('.gx-qs-type').forEach(function(b) { b.addEventListener('click', function() { S.type = b.getAttribute('data-t'); sync(); }); });
@@ -36985,6 +36998,7 @@
         if (only) list = shuffleInPlace(only.map(function(i) { return gidxE[i]; }));
         else {
             var pool = gidxQzPool(S.range, cnt);
+            if (S.type === 'cloze') pool = pool.filter(gidxCanCloze);
             // up to half are patterns you have missed (most missed first), the rest are drawn at random
             var weak = S.range === 'weak' ? [] : pool.filter(function(e) { return gidxWeak(e, cnt); })
                 .sort(function(a, b) { return ((cnt[b.i] && cnt[b.i].miss) || 0) - ((cnt[a.i] && cnt[a.i].miss) || 0); }).slice(0, Math.ceil(S.n / 2));
@@ -36995,7 +37009,11 @@
         var kinds = ['m2p', 'p2m', 'cloze'], bag = [];
         var items = list.map(function(e) {
             var t = S.type;
-            if (t === 'mix' || kinds.indexOf(t) < 0) { if (!bag.length) bag = shuffleInPlace(kinds.slice()); t = bag.pop(); }
+            if (t === 'mix' || kinds.indexOf(t) < 0) {
+                if (!bag.length) bag = shuffleInPlace(kinds.slice());
+                t = bag.pop();
+                if (t === 'cloze' && !gidxCanCloze(e)) t = Math.random() < 0.5 ? 'm2p' : 'p2m';
+            }
             return { i: e.i, t: t };
         });
         gidxQuiz = { items: items, pos: 0, log: [], cur: null };
@@ -37003,33 +37021,78 @@
         gidxQuizRender();
     }
     // wrong choices for entry e: other patterns that do not mean the same (not its look-alikes, not the same gloss); score(o) puts the likelier ones first
+    function gidxOtherOk(e, o) {
+        return o.i !== e.i && !!o.kd === !!e.kd && !(e.s >= 0 && o.s === e.s) && o.j !== e.j && o.k1 !== e.k1 && o.nf.indexOf(e.nf) < 0 && e.nf.indexOf(o.nf) < 0;
+    }
     function gidxQuizOthers(e, score) {
-        var first = function(s) { return gidxFold(String(s).split(/[,、／\/]/)[0]); }, en = gidxFold(e.n);
-        var list = shuffleInPlace(gidxE.filter(function(o) {
-            var on = gidxFold(o.n);
-            return o.i !== e.i && !!o.kd === !!e.kd && !(e.s >= 0 && o.s === e.s) && o.j !== e.j && first(o.k) !== first(e.k) && on.indexOf(en) < 0 && en.indexOf(on) < 0;
-        }));
+        var list = shuffleInPlace(gidxE.filter(function(o) { return gidxOtherOk(e, o); }));
         return list.map(function(o, k) { return [score(o), k, o]; }).sort(function(a, b) { return b[0] - a[0] || a[1] - b[1]; }).map(function(x) { return x[2]; });
     }
-    // one question: { e, t, opts: [{ html, ok }], sent (cloze: the sentence, \u0001 where a piece is taken out), parts }
+    // 例文の穴うめ for entry e, or null. The wrong choices have to fit the blank the way the answer does, or the question
+    // gives itself away (a choice beginning with を cannot follow に): each example carries what its pattern sits between
+    // (e.cz: the form on its left | what follows it), and the wrong choices are taken only from other patterns' examples
+    // with the same slot; failing that, the same slot more loosely (any plain form on the left; any sentence end on the right).
+    function gidxSlotFam(c) {
+        var p = c.split('|'), L = p[0], R = p[1];
+        if (L === 'Vd' || L === 'A' || L === 'X:た:基本形' || L === 'X:ない:基本形') L = 'F'; else if (L === 'Na') L = 'N';
+        if (R === 'x:だ' || R === 'x:です' || R === 'j:か' || R === 'j:ね' || R === 'j:よ') R = 'e';
+        return L + '|' + R;
+    }
+    // A wrong choice must also not be a second right answer. Beyond what gidxQuizOthers leaves out (look-alikes, the same
+    // gloss), a blank never offers a pattern that does the same job as the answer (GIDX_FN, read off the meanings: both
+    // concessive, both a reason, …) or one that begins with the same words (〜こととする for 〜ことといたします). 敬語 is
+    // not asked this way at all: いただきました and 拝見しました both follow お手紙を.
+    var GIDX_FN = [/けれども|のに(?!対)|だが|ても|でも|事実だが|とは言っても|言うが/, /とは反対に|比べ|一方/, /ために|目的|目標|目指/, /ので|理由|原因|せい|おかげ|だから|からこそ|から（/,
+        /だけでなく|加えて|さらに|もちろん|そのうえ/, /すぐ|同時|瞬間|ちょうどその時/, /かもしれない|だろう|らしい|ようだ|考えられる|きっと|はずだ/,
+        /しなければ|当然|べき|ほうがいい|必要|わけにはいかない|ほかに方法|しかない/, /できない|無理|絶対に|まったく|決して|少しも/, /もし|仮定|場合|すれば|したら|なら/,
+        /とても|この上なく|本当に|ほど|くらい|程度/, /とき|あとで|してから|ずっと|段階|最後/, /立場|から見ると|から考えると|によって|関係なく|合わせて|従って/, /だけだ|ただ〜|以外|しか/, /という|と聞いた|と言/];
+    function gidxFn(e) {
+        if (!e.fn) {
+            e.fn = GIDX_FN.map(function(rx, k) { return rx.test(e.j) ? k : -1; }).filter(function(k) { return k >= 0; });
+            if (/^(ですら|すら|さえ|まで$|こそ|だけは|なんか|なんて|だって|とて|でも)/.test(e.nf)) e.fn.push(99);          // the particles that single a word out stand in for one another
+        }
+        return e.fn;
+    }
+    function gidxClozeOk(e, o) {
+        if (!gidxOtherOk(e, o)) return false;
+        var same = 0, fn = gidxFn(e);
+        while (same < 3 && o.nf.charAt(same) && o.nf.charAt(same) === e.nf.charAt(same)) same++;
+        return same < 3 && !gidxFn(o).some(function(k) { return fn.indexOf(k) >= 0; });
+    }
+    // check: only whether a question can be made (no shuffling, nothing built)
+    function gidxClozeMake(e, check) {
+        if (e.kd) return null;
+        var found = null, order = e.x.map(function(x, k) { return k; });
+        var score = function(o) { return (o.c === e.c ? 2 : 0) + (o.lv === e.lv ? 1 : 0); };
+        (check ? order : shuffleInPlace(order)).some(function(k) {
+            var code = e.cz[k]; if (!code) return false;
+            var m = /<b>([\s\S]*?)<\/b>/.exec(e.x[k]), used = [gidxPlain(m[1])], seen = {}, opts = [{ html: gidxRuby(m[1]), ok: true }];
+            [gidxSlots[code] || [], gidxSlotsF[gidxSlotFam(code)] || []].some(function(list) {
+                var cands = list.filter(function(c) { return !seen[c[0]] && gidxClozeOk(e, gidxE[c[0]]); });
+                if (!check) cands = shuffleInPlace(cands).map(function(c, n) { return [score(gidxE[c[0]]), n, c]; }).sort(function(a, b) { return b[0] - a[0] || a[1] - b[1]; }).map(function(x) { return x[2]; });
+                cands.some(function(c) {
+                    if (seen[c[0]]) return false;
+                    var inner = /<b>([\s\S]*?)<\/b>/.exec(gidxE[c[0]].x[c[1]])[1], txt = gidxPlain(inner);
+                    if (used.some(function(u) { return u.indexOf(txt) >= 0 || txt.indexOf(u) >= 0; })) return false;
+                    seen[c[0]] = 1; used.push(txt); opts.push({ html: gidxRuby(inner), ok: false });
+                    return opts.length >= 4;
+                });
+                return opts.length >= 4;
+            });
+            if (opts.length < 4) return false;
+            found = { sent: e.x[k].replace(/<b>[\s\S]*?<\/b>/, '\u0001'), parts: [m[1]], opts: opts };
+            return true;
+        });
+        return found;
+    }
+    function gidxCanCloze(e) { if (e.cq === undefined) e.cq = !!gidxClozeMake(e, true); return e.cq; }
+    // one question: { e, t, opts: [{ html, ok }], sent (cloze: the sentence, \u0001 where the pattern is taken out), parts }
     function gidxQuizMake(item) {
         var e = gidxE[item.i], t = item.t, q = { e: e, t: t, opts: [] };
         if (t === 'cloze') {
-            var x = e.x[Math.floor(Math.random() * e.x.length)], parts = [];
-            q.sent = x.replace(/<b>([\s\S]*?)<\/b>/g, function(m, inner) { parts.push(inner); return '\u0001'; });
-            q.parts = parts;
-            var key = function(ps) { return ps.map(gidxPlain).join('/'); }, mine = key(parts), used = [mine];
-            q.opts.push({ html: parts.map(gidxRuby).join(' / '), ok: true });
-            gidxQuizOthers(e, function(o) { return (o.c === e.c ? 2 : 0) + (o.lv === e.lv ? 1 : 0); }).some(function(o) {
-                var cands = shuffleInPlace(o.x.map(function(ox) { var ps = []; ox.replace(/<b>([\s\S]*?)<\/b>/g, function(m, inner) { ps.push(inner); return ''; }); return ps; }))
-                    .filter(function(ps) { return ps.length === parts.length; });
-                var ps = cands[0]; if (!ps) return false;
-                var k = key(ps);
-                if (used.some(function(u) { return u.indexOf(k) >= 0 || k.indexOf(u) >= 0; })) return false;
-                used.push(k); q.opts.push({ html: ps.map(gidxRuby).join(' / '), ok: false });
-                return q.opts.length >= 4;
-            });
-            if (q.opts.length < 4) { t = q.t = 'm2p'; q.opts = []; }          // nothing else has that many pieces: ask for the pattern instead
+            var c = gidxClozeMake(e);
+            if (c) { q.sent = c.sent; q.parts = c.parts; q.opts = c.opts; }
+            else t = q.t = 'm2p';          // no example of this pattern has a blank that three other patterns fit: ask for the pattern instead
         }
         if (t !== 'cloze') {
             var others = gidxQuizOthers(e, function(o) { return o.lv === e.lv ? 1 : 0; }).slice(0, 3);
