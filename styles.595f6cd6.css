@@ -3987,6 +3987,10 @@ body.gx-quiz-on header, body.gx-quiz-on .bottom-nav, body.gx-quiz-on #subnav { d
 .gx-qs-type { display: flex; flex-direction: column; gap: 3px; text-align: left; padding: 12px; border: 1px solid var(--border-light); border-radius: 10px; background: var(--surface); color: var(--text-main); font: inherit; cursor: pointer; }
 .gx-qs-type b { font-size: 0.95rem; }
 .gx-qz-diff { flex: 0 0 auto; font-size: 0.72rem; font-weight: bold; color: #fff; background: var(--lv); border-radius: 4px; padding: 2px 8px; white-space: nowrap; }
+.gx-full-h { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.gx-full-h .speak-btn, .gx-ko-btn { display: inline-flex; align-items: center; min-height: 32px; padding: 4px 12px; border: 1px solid var(--border-light); border-radius: 16px; background: var(--surface); color: var(--text-main); font: inherit; font-size: 0.8rem; font-weight: bold; cursor: pointer; margin: 0; width: auto; }
+.gx-ko-btn.on { border-color: var(--active-blue); color: var(--active-blue); background: var(--accent-soft); }
+.gx-ko { margin: 6px 0 2px; padding: 8px 10px; border-left: 3px solid var(--active-blue); background: var(--accent-soft); border-radius: 0 6px 6px 0; font-size: 0.9rem; line-height: 1.6; color: var(--text-main); }
 .gx-qs-resume { display: flex; align-items: center; gap: 10px; margin: 14px 0 2px; padding: 12px; border: 1px solid var(--active-blue); border-radius: 10px; background: var(--accent-soft); }
 .gx-qs-resume-t { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .gx-qs-resume-t b { font-size: 0.95rem; color: var(--active-blue); }

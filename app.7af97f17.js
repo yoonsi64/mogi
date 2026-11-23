@@ -36669,7 +36669,7 @@
     // 文型クイズの問題集 (grambank): 例文の穴うめ and 文の組み立て problems written for the quiz, by pattern name:
     // { f: { name: [[difficulty, sentence with （　　）, right, wrong, wrong, wrong]] }, c: { name: [[difficulty, before, piece ×4 in order, after, ★ place]] } }.
     // Difficulty is on the app's scale (3 N1標準, 4 むずかしい). A pattern that has them is asked from here, not from its index examples.
-    var GBANK_SRC = 'grambank.a93c8d44.js';
+    var GBANK_SRC = 'grambank.15152c24.js';
     var GIDX_SRC = 'gramidx.c14abacd.js', gidxLoading = false, gidxWaiters = [], gidxByPat = null, gidxE = null, gidxSim = {};
     var grammarView = document.getElementById('grammar-view'), grammarContent = document.getElementById('grammar-content');
     var gidxState = { q: '', missed: false, lv: 0, open: -1 };          // kept while the app is open: the search, the filters, the open entry
@@ -37234,7 +37234,7 @@
         if (t === 'cloze' && e.bf && (item.b != null && e.bf[item.b] || gidxBankList(e, 'f'))) {
             var bf = item.b != null && e.bf[item.b] ? e.bf[item.b] : gidxBankNext(e, 'f');          // two blanks: the choices are pairs, "a／b"
             item.b = e.bf.indexOf(bf);
-            q.d = bf[0]; q.sent = bf[1].replace(/（　　）/g, '\u0001'); q.parts = bf[2].split('／');
+            q.d = bf[0]; q.ko = bf[6] || ''; q.sent = bf[1].replace(/（　　）/g, '\u0001'); q.parts = bf[2].split('／');
             q.opts = bf.slice(2, 6).map(function(o, n) { return { html: o.replace(/／/g, ' ／ '), ok: n === 0 }; });
         } else if (t === 'cloze') {
             var c = gidxClozeMake(e);
@@ -37244,7 +37244,7 @@
         if (t === 'comp' && e.bc && (item.b != null && e.bc[item.b] || gidxBankList(e, 'c'))) {
             var bc = item.b != null && e.bc[item.b] ? e.bc[item.b] : gidxBankNext(e, 'c');
             item.b = e.bc.indexOf(bc);
-            q.d = bc[0]; q.frags = bc.slice(2, 6); q.star = bc[7];
+            q.d = bc[0]; q.ko = bc[8] || ''; q.frags = bc.slice(2, 6); q.star = bc[7];
             q.tpl = bc[1] + '\u0001\u0001\u0001\u0001' + bc[6]; q.full = bc[1] + q.frags.join('') + bc[6];
             do { q.order = shuffleInPlace([0, 1, 2, 3]); } while (q.order.join('') === '0123');
             return q;
@@ -37320,13 +37320,22 @@
             fb.className = 'feedback ' + (ok ? 'correct' : 'incorrect');
             fb.innerHTML = fbHtml;
             var box = document.getElementById('gx-qz-ex');
+            // 正しい文: the whole sentence with the answer in it, a button that reads it aloud, and (問題集 problems that
+            // have one) a 한국어 button that opens its Korean gloss
+            var k = 0, full = comp ? (q.full || e.x[q.k]) : q.t === 'cloze' ? q.sent.replace(/\u0001/g, function() { return '<b>' + q.parts[k++] + '</b>'; }) : '';
+            if (full) extra = '<div class="explain-sub gx-full-h">正しい文 <button class="speak-btn gx-say-all">🔊 読む</button>' +
+                (q.ko ? '<button class="gx-ko-btn" aria-expanded="false">한국어</button>' : '') + '</div>' +
+                '<div class="mx-ex gx-ext">' + gidxRuby(full) + '</div>' +
+                (q.ko ? '<div class="gx-ko" lang="ko" hidden>' + escapeHtml(q.ko) + '</div>' : '');
             box.innerHTML = '<div class="explain-card mx"><div class="explain-title">解説</div>' + (extra || '') +
                 '<div class="mx-head"><b>' + escapeHtml(e.n) + '</b>' + gidxLv(e) + '</div>' +
                 '<div class="mx-mean"><span class="mx-k">意味</span>' + escapeHtml(e.j) + '<span class="explain-kr" lang="ko">' + escapeHtml(e.k) + '</span></div>' +
                 gidxDetailHtml(e) + '</div>';
             gidxBindDetail(box, e, function(i) { gidxSheet(i); });
             var say = box.querySelector('.gx-say-all');
-            if (say) say.addEventListener('click', function() { speakText(gidxRuby(q.full || e.x[q.k]).replace(/<\/?b>/g, '')); });
+            if (say) say.addEventListener('click', function() { speakText(gidxRuby(full).replace(/<\/?b>/g, '')); });
+            var koBtn = box.querySelector('.gx-ko-btn'), ko = box.querySelector('.gx-ko');
+            if (koBtn) koBtn.addEventListener('click', function() { ko.hidden = !ko.hidden; koBtn.setAttribute('aria-expanded', ko.hidden ? 'false' : 'true'); koBtn.classList.toggle('on', !ko.hidden); });
             next.disabled = false;
         };
         if (!comp) {
@@ -37373,9 +37382,7 @@
         check.addEventListener('click', function() {
             if (done || slots.indexOf(-1) >= 0) return;
             var ok = q.order[slots[q.star]] === q.star;
-            finish(ok, ok ? '正解' : '不正解',
-                '<div class="explain-sub">正しい文 <button class="speak-btn gx-say-all" style="padding: 4px 8px; font-size: 0.8rem; display: inline-block; margin-left: 10px; vertical-align: middle;">🔊 正解を読む</button></div>' +
-                '<div class="mx-ex gx-ext">' + gidxRuby(q.full || e.x[q.k]) + '</div>');
+            finish(ok, ok ? '正解' : '不正解');
             draw();
             [pool, hint, check.parentNode].forEach(function(el) { if (el && el.parentNode) el.parentNode.removeChild(el); });          // answered: only the sentence stays, as on the question screen
         });
