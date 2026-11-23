@@ -13997,7 +13997,6 @@
         } else if (tab === 'records') {
             items = [['stats', '統計'], ['dashboard', '成績表'], ['collection', 'コレクション']];
         }
-        subnav.classList.toggle('four', !!items && items.length > 3);          // four tabs: equal widths, counts as corner badges
         if (!items) { subnav.classList.remove('show'); subnav.innerHTML = ''; return; }
         subnav.innerHTML = items.map(function(it) {
             return '<button data-sub="' + it[0] + '" class="' + (it[0] === sub ? 'active' : '') + '">' + it[1] +
