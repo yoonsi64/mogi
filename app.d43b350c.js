@@ -36765,8 +36765,8 @@
     // 文型クイズの問題集 (grambank): 例文の穴うめ and 文の組み立て problems written for the quiz, by pattern name:
     // { f: { name: [[difficulty, sentence with （　　）, right, wrong, wrong, wrong]] }, c: { name: [[difficulty, before, piece ×4 in order, after, ★ place]] } }.
     // Difficulty is on the app's scale (3 N1標準, 4 むずかしい). A pattern that has them is asked from here, not from its index examples.
-    var GBANK_SRC = 'grambank.5e91371a.js';
-    var GIDX_SRC = 'gramidx.c14abacd.js', gidxLoading = false, gidxWaiters = [], gidxByPat = null, gidxE = null, gidxSim = {};
+    var GBANK_SRC = 'grambank.082979d1.js';
+    var GIDX_SRC = 'gramidx.2c5c4a8e.js', gidxLoading = false, gidxWaiters = [], gidxByPat = null, gidxE = null, gidxSim = {};
     var grammarView = document.getElementById('grammar-view'), grammarContent = document.getElementById('grammar-content');
     var gidxState = { q: '', missed: false, lv: 0, open: -1 };          // kept while the app is open: the search, the filters, the open entry
     var gidxQuiz = null;          // 文型クイズ in progress: { items: [{ i, t }], pos, log, cur }
@@ -36795,7 +36795,7 @@
                 gidxByPat = {}; gidxSim = {}; gidxSlots = {}; gidxSlotsF = {};
                 var GB = window.MogiGramBank || {};
                 gidxE = window.MogiGramIdx.e.map(function(a, i) {
-                    var e = { i: i, n: a[0], y: a[1], j: a[2], k: a[3], x: a[4], g: a[5], lv: a[6], c: a[7], s: a[8], sn: a[9], kd: a[10], cz: a[11] || [], cp: a[12] || null };
+                    var e = { i: i, n: a[0], y: a[1], j: a[2], k: a[3], x: a[4], g: a[5], lv: a[6], c: a[7], s: a[8], sn: a[9], kd: a[10], cz: a[11] || [], cp: a[12] || null, xk: a[13] || [] };          // xk: Korean gloss of each example
                     e.cz.forEach(function(c, k) {
                         // a highlight that takes in a word of the sentence (包まれ<b>たままだ</b> written as <b>包まれたままだ</b>) is no
                         // use as a blank: that word would mark the answer, and would be nonsense as a wrong choice elsewhere
@@ -37392,7 +37392,7 @@
                 return opts.length >= 4;
             });
             if (opts.length < 4) return false;
-            found = { sent: e.x[k].replace(/<b>[\s\S]*?<\/b>/, '\u0001'), parts: [m[1]], opts: opts };
+            found = { k: k, sent: e.x[k].replace(/<b>[\s\S]*?<\/b>/, '\u0001'), parts: [m[1]], opts: opts };
             return true;
         });
         return found;
@@ -37410,7 +37410,7 @@
             q.opts = bf.slice(2, 6).map(function(o, n) { return { html: o.replace(/／/g, ' ／ '), ok: n === 0 }; });
         } else if (t === 'cloze') {
             var c = gidxClozeMake(e);
-            if (c) { q.sent = c.sent; q.parts = c.parts; q.opts = c.opts; }
+            if (c) { q.sent = c.sent; q.parts = c.parts; q.opts = c.opts; q.ko = e.xk[c.k] || ''; }
             else t = q.t = 'm2p';          // no example of this pattern has a blank that three other patterns fit: ask for the pattern instead
         }
         if (t === 'comp' && e.bc && (item.b != null && e.bc[item.b] || gidxBankList(e, 'c'))) {
@@ -37424,7 +37424,7 @@
         if (t === 'comp') {
             if (e.cp) {
                 var p = e.cp;          // [example, before, piece, between, piece, between, piece, between, piece, after, ★ position]
-                q.k = p[0]; q.frags = [p[2], p[4], p[6], p[8]]; q.star = p[10];
+                q.k = p[0]; q.frags = [p[2], p[4], p[6], p[8]]; q.star = p[10]; q.ko = e.xk[p[0]] || '';
                 q.tpl = p[1] + '\u0001' + p[3] + '\u0001' + p[5] + '\u0001' + p[7] + '\u0001' + p[9];
                 do { q.order = shuffleInPlace([0, 1, 2, 3]); } while (q.order.join('') === '0123');          // q.order[shown position] = its place in the sentence
                 q.key = gidxQKey(e, 'comp', '');
@@ -37495,8 +37495,8 @@
             fb.className = 'feedback ' + (ok ? 'correct' : 'incorrect');
             fb.innerHTML = fbHtml;
             var box = document.getElementById('gx-qz-ex');
-            // 正しい文: the whole sentence with the answer in it, a button that reads it aloud, and (問題集 problems that
-            // have one) a 한국어 button that opens its Korean gloss
+            // 正しい文: the whole sentence with the answer in it, a button that reads it aloud, and a 한국어 button that
+            // opens its Korean gloss (問題集 problems carry their own; questions made from an index example use that example's)
             var k = 0, full = comp ? (q.full || e.x[q.k]) : q.t === 'cloze' ? q.sent.replace(/\u0001/g, function() { return '<b>' + q.parts[k++] + '</b>'; }) : '';
             if (full) extra = '<div class="explain-sub gx-full-h">正しい文 <button class="speak-btn gx-say-all">🔊 読む</button>' +
                 (q.ko ? '<button class="gx-ko-btn" aria-expanded="false">한국어</button>' : '') + '</div>' +
