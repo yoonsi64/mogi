@@ -4009,6 +4009,10 @@ body.gx-quiz-on header, body.gx-quiz-on .bottom-nav, body.gx-quiz-on #subnav { d
 .gx-qs-chip.on { border-color: var(--active-blue); background: var(--active-blue); color: #fff; }
 .gx-qs-chip.on i { color: #fff; opacity: 0.85; }
 .gx-qs-note { font-size: 0.78rem; color: var(--text-sub); line-height: 1.6; margin: 16px 0 4px; }
+.gx-qs-rest { margin-top: 6px; }
+.gx-qs-rest b { font-weight: 700; color: var(--text-main); }
+.gx-qs-rest span { display: block; margin-top: 2px; }
+.gx-qs-rest .gx-qs-rest-low { color: var(--text-main); }
 .gx-qs-go { margin-top: 12px; }
 .gx-qz-score { display: flex; align-items: baseline; gap: 8px; font-size: 1.05rem; margin: 6px 0 4px; }
 .gx-qz-score span { font-size: 0.8rem; color: var(--text-sub); font-weight: bold; margin-right: 4px; }

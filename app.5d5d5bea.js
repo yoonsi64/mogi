@@ -36980,6 +36980,51 @@
     function gidxCanAskAny(e, types) { return types.some(function(t) { return gidxCanAsk(e, t); }); }
     function gidxPlain(x) { return String(x).replace(/\{([^|{}]+)\|[^{}]+\}/g, '$1').replace(/<[^>]*>/g, ''); }
     function gidxWeak(e, cnt) { var l = gidxQzLog[e.n]; return !!((cnt[e.i] && cnt[e.i].miss) || (l && l[2] === 0)); }
+    // A question answered correctly rests: it is not asked again until GIDX_REST[0] more questions have been answered here
+    // (the second correct answer in a row GIDX_REST[1], from the third on GIDX_REST[2]). One answered wrong is due again at
+    // once. Kept by question in GIDX_REST_KEY: { n: questions answered so far, q: { key: [n when it was answered, correct
+    // answers in a row (0 = the last one was wrong)] } }. A question is one 問題集 problem, or, for the kinds made from the
+    // index (意味→文型, 文型→意味, and 穴うめ／組み立て of patterns with no 問題集 problem), the pattern in that kind.
+    var GIDX_REST_KEY = 'jlptGramQuizRest', GIDX_REST = [100, 300, 1000];
+    var gidxSeen = (function() { var r = loadJSON(GIDX_REST_KEY, null); return r && r.q && typeof r.q === 'object' && r.n >= 0 ? r : { v: 1, n: 0, q: {} }; })();
+    function gidxQKey(e, t, text) {
+        var str = e.n + '|' + t + '|' + (text || ''), h = 2166136261;
+        for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+        return (h >>> 0).toString(36);
+    }
+    // [0 last answer wrong · 1 never asked · 2 rested long enough · 3 still resting, questions answered since]
+    function gidxQRank(key) {
+        var r = gidxSeen.q[key]; if (!r) return [1, 0];
+        var age = gidxSeen.n - r[0];
+        if (!(r[1] > 0)) return [0, age];
+        return [age >= GIDX_REST[Math.min(r[1], GIDX_REST.length) - 1] ? 2 : 3, age];
+    }
+    function gidxQMark(key, ok) {
+        if (!key) return;
+        var r = gidxSeen.q[key];
+        gidxSeen.n++;
+        gidxSeen.q[key] = [gidxSeen.n, ok ? (r && r[1] > 0 ? r[1] : 0) + 1 : 0];
+        try { localStorage.setItem(GIDX_REST_KEY, JSON.stringify(gidxSeen)); } catch (e) {}
+    }
+    // every question pattern e has in kind t (under the 難易度 chosen): [{ b: its place in the 問題集 list, key }]
+    function gidxQCands(e, t) {
+        if (!gidxCanAsk(e, t)) return [];
+        var kind = t === 'cloze' ? 'f' : t === 'comp' ? 'c' : '', all = kind === 'f' ? e.bf : kind === 'c' ? e.bc : null, list = kind ? gidxBankList(e, kind) : null;
+        if (list) return list.map(function(x) { return { b: all.indexOf(x), key: gidxQKey(e, t, kind === 'f' ? x[1] : x[1] + x.slice(2, 6).join('') + x[6]) }; });
+        return [{ key: gidxQKey(e, t, '') }];
+    }
+    // the question of kind t to ask now: one answered wrong first, then one never asked, then the one that has rested
+    // longest; null when all are resting (resting: take the longest-rested of those anyway)
+    function gidxQPick(e, t, resting) {
+        var best = null;
+        gidxQCands(e, t).forEach(function(c) {
+            var k = gidxQRank(c.key); c.rank = k[0]; c.age = k[1]; c.r = Math.random();
+            if (c.rank === 3 && !resting) return;
+            if (!best || c.rank < best.rank || (c.rank === best.rank && (c.rank >= 2 && c.age !== best.age ? c.age > best.age : c.r < best.r))) best = c;
+        });
+        return best;
+    }
+    function gidxRestingN() { var n = 0; Object.keys(gidxSeen.q).forEach(function(k) { if (gidxQRank(k)[0] === 3) n++; }); return n; }
     function gidxQzPool(range, cnt) {
         return gidxE.filter(function(e) {
             return range === 'weak' ? gidxWeak(e, cnt) : range === 'keigo' ? !!e.kd : range === '1' || range === '2' || range === '3' ? e.lv === +range : true;
@@ -37052,7 +37097,7 @@
             '<div class="gx-qs-h">問題数</div><div class="gx-qs-row">' + [10, 20, 30].map(function(n) {
                 return '<button class="gx-qs-chip" data-n="' + n + '" aria-pressed="false">' + n + '問</button>';
             }).join('') + '</div>' +
-            '<div class="gx-qs-note" id="gx-qs-note"></div>' +
+            '<div class="gx-qs-note" id="gx-qs-note"></div><div class="gx-qs-note gx-qs-rest" id="gx-qs-rest"></div>' +
             '<button class="practice-btn gx-qs-go">はじめる</button></div>';
         var sync = function() {
             grammarContent.querySelectorAll('.gx-qs-type').forEach(function(b) { var on = S.types.indexOf(b.getAttribute('data-t')) >= 0; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
@@ -37070,6 +37115,12 @@
                 : S.range === 'weak' ? (n ? '苦手：文法の問題でまちがえた文型と、このクイズで最後にまちがえた文型です。' : '苦手な文型はまだありません。文法の問題やこのクイズでまちがえると、ここから出題できます。')
                 : ex && S.d ? '例文の穴うめ・文の組み立ては、問題集の「' + (S.d === 4 ? 'むずかしい' : 'N1標準') + '」の問題がある文型だけから出題します。'
                 : ex ? '例文の穴うめ・文の組み立ては、その形式の問題がある文型だけから出題します。' : 'まちがえたことのある文型が先に出ます。';
+            var freshN = gidxQzPool(S.range, cnt).filter(function(e) { return S.types.some(function(t) { return !!gidxQPick(e, t, false); }); }).length;
+            var want = Math.min(n, S.n), restN = gidxRestingN();
+            document.getElementById('gx-qs-rest').innerHTML = !S.types.length ? '' :
+                '<b>正解した問題はしばらく休みます。</b>次に出るのは' + GIDX_REST[0] + '問あと（2回つづけて正解なら' + GIDX_REST[1] + '問あと、3回からは' + GIDX_REST[2].toLocaleString() + '問あと）です。まちがえた問題は、次のクイズでまた出ます。' +
+                (restN ? '<span>いま休んでいる問題：' + restN.toLocaleString() + '問</span>' : '') +
+                (freshN < want ? '<span class="gx-qs-rest-low">この範囲で休んでいない問題は' + freshN + '問分です。足りない' + (want - freshN) + '問は、いちばん長く休んでいる問題から出します。</span>' : '');
             try { localStorage.setItem(GIDX_QZ_SET_KEY, JSON.stringify(S)); } catch (e) {}
         };
         grammarContent.querySelectorAll('.gx-qs-type').forEach(function(b) { b.addEventListener('click', function() {
@@ -37095,10 +37146,16 @@
         if (!gidxE) return;
         var S = gidxQzSet, cnt = gidxCounts(), list, types = gidxQzKinds(S);
         if (!types.length) return;
-        if (only) list = shuffleInPlace(only.map(function(i) { return gidxE[i]; }));
+        // the question each pattern would be asked in each kind (see gidxQPick); late = patterns whose questions are all
+        // resting, taken only when the others are not enough
+        var picks = {}, late = [];
+        var pick = function(e, t, resting) { var k = e.i + t + (resting ? '+' : ''); return k in picks ? picks[k] : (picks[k] = gidxQPick(e, t, resting)); };
+        var fresh = function(e, t) { return !!pick(e, t, false); };
+        var freshAny = function(e) { return types.some(function(t) { return fresh(e, t); }); };
+        if (only) { list = shuffleInPlace(only.map(function(i) { return gidxE[i]; })); late = list.filter(function(e) { return !freshAny(e); }); }
         else {
-            var pool = gidxQzPool(S.range, cnt);
-            pool = pool.filter(function(e) { return gidxCanAskAny(e, types); });
+            var all = gidxQzPool(S.range, cnt).filter(function(e) { return gidxCanAskAny(e, types); });
+            var pool = all.filter(freshAny);
             // up to half are patterns you have missed (most missed first), the rest are drawn at random
             var weak = S.range === 'weak' ? [] : pool.filter(function(e) { return gidxWeak(e, cnt); })
                 .sort(function(a, b) { return ((cnt[b.i] && cnt[b.i].miss) || 0) - ((cnt[a.i] && cnt[a.i].miss) || 0); }).slice(0, Math.ceil(S.n / 2));
@@ -37109,21 +37166,40 @@
             var share = Math.floor(list.length / types.length);
             types.forEach(function(t) {
                 if (t !== 'cloze' && t !== 'comp') return;
-                var need = share - list.filter(function(e) { return gidxCanAsk(e, t); }).length;
-                var spare = need > 0 ? shuffleInPlace(pool.filter(function(e) { return gidxCanAsk(e, t) && list.indexOf(e) < 0; })).slice(0, need) : [];
-                var drop = list.filter(function(e) { return rest.indexOf(e) >= 0 && !gidxCanAsk(e, 'cloze') && !gidxCanAsk(e, 'comp'); })
-                    .concat(list.filter(function(e) { return rest.indexOf(e) >= 0 && !gidxCanAsk(e, t) && (gidxCanAsk(e, 'cloze') || gidxCanAsk(e, 'comp')); }));
+                var need = share - list.filter(function(e) { return fresh(e, t); }).length;
+                var spare = need > 0 ? shuffleInPlace(pool.filter(function(e) { return fresh(e, t) && list.indexOf(e) < 0; })).slice(0, need) : [];
+                var has = function(e, k) { return types.indexOf(k) >= 0 && fresh(e, k); };
+                var drop = list.filter(function(e) { return rest.indexOf(e) >= 0 && !has(e, 'cloze') && !has(e, 'comp'); })
+                    .concat(list.filter(function(e) { return rest.indexOf(e) >= 0 && !fresh(e, t) && (has(e, 'cloze') || has(e, 'comp')); }));
                 spare.forEach(function(e, n) { if (drop[n]) list[list.indexOf(drop[n])] = e; });
             });
+            // not enough that are not resting: the rest of the quiz is the patterns that have rested longest
+            if (list.length < S.n) {
+                late = all.filter(function(e) { return pool.indexOf(e) < 0; }).map(function(e) {
+                    return [Math.max.apply(null, types.map(function(t) { var c = pick(e, t, true); return c ? c.age : -1; })), Math.random(), e];
+                }).sort(function(a, b) { return b[0] - a[0] || a[1] - b[1]; }).slice(0, S.n - list.length).map(function(x) { return x[2]; });
+                list = list.concat(late);
+            }
             shuffleInPlace(list);
         }
         if (!list.length) return;
         // hand out the kinds: patterns with the fewest possible kinds first, each taking the kind used least so far
-        var used = {}, items = list.map(function(e) { return { i: e.i, t: '', can: shuffleInPlace(types.filter(function(t) { return gidxCanAsk(e, t); })) }; });
+        // (a kind in which the pattern has a question answered wrong goes before the others, so that question comes back)
+        var used = {}, items = list.map(function(e) {
+            var rs = late.indexOf(e) >= 0, can = types.filter(function(t) { return !!pick(e, t, rs); });
+            if (rs && can.length) {          // taken while resting: only in the kind whose question has rested longest
+                var top = Math.max.apply(null, can.map(function(t) { return pick(e, t, true).age; }));
+                can = can.filter(function(t) { return pick(e, t, true).age === top; });
+            }
+            return { i: e.i, t: '', rs: rs, can: shuffleInPlace(can) };
+        });
         items.slice().sort(function(a, b) { return a.can.length - b.can.length; }).forEach(function(it) {
-            it.t = it.can.slice().sort(function(a, b) { return (used[a] || 0) - (used[b] || 0); })[0] || 'm2p';
+            var e = gidxE[it.i], miss = function(t) { return pick(e, t, it.rs).rank === 0 ? 0 : 1; };
+            it.t = it.can.slice().sort(function(a, b) { return miss(a) - miss(b) || (used[a] || 0) - (used[b] || 0); })[0] || 'm2p';
             used[it.t] = (used[it.t] || 0) + 1;
-            delete it.can;
+            var c = pick(e, it.t, it.rs);
+            if (c && c.b != null && c.b >= 0) it.b = c.b;
+            delete it.can; delete it.rs;
         });
         gidxQuiz = { items: items, pos: 0, log: [], cur: null };
         document.body.classList.add('gx-quiz-on');
@@ -37234,7 +37310,7 @@
         if (t === 'cloze' && e.bf && (item.b != null && e.bf[item.b] || gidxBankList(e, 'f'))) {
             var bf = item.b != null && e.bf[item.b] ? e.bf[item.b] : gidxBankNext(e, 'f');          // two blanks: the choices are pairs, "a／b"
             item.b = e.bf.indexOf(bf);
-            q.d = bf[0]; q.ko = bf[6] || ''; q.sent = bf[1].replace(/（　　）/g, '\u0001'); q.parts = bf[2].split('／');
+            q.d = bf[0]; q.ko = bf[6] || ''; q.sent = bf[1].replace(/（　　）/g, '\u0001'); q.parts = bf[2].split('／'); q.key = gidxQKey(e, 'cloze', bf[1]);
             q.opts = bf.slice(2, 6).map(function(o, n) { return { html: o.replace(/／/g, ' ／ '), ok: n === 0 }; });
         } else if (t === 'cloze') {
             var c = gidxClozeMake(e);
@@ -37244,7 +37320,7 @@
         if (t === 'comp' && e.bc && (item.b != null && e.bc[item.b] || gidxBankList(e, 'c'))) {
             var bc = item.b != null && e.bc[item.b] ? e.bc[item.b] : gidxBankNext(e, 'c');
             item.b = e.bc.indexOf(bc);
-            q.d = bc[0]; q.ko = bc[8] || ''; q.frags = bc.slice(2, 6); q.star = bc[7];
+            q.d = bc[0]; q.ko = bc[8] || ''; q.frags = bc.slice(2, 6); q.star = bc[7]; q.key = gidxQKey(e, 'comp', bc[1] + q.frags.join('') + bc[6]);
             q.tpl = bc[1] + '\u0001\u0001\u0001\u0001' + bc[6]; q.full = bc[1] + q.frags.join('') + bc[6];
             do { q.order = shuffleInPlace([0, 1, 2, 3]); } while (q.order.join('') === '0123');
             return q;
@@ -37255,6 +37331,7 @@
                 q.k = p[0]; q.frags = [p[2], p[4], p[6], p[8]]; q.star = p[10];
                 q.tpl = p[1] + '\u0001' + p[3] + '\u0001' + p[5] + '\u0001' + p[7] + '\u0001' + p[9];
                 do { q.order = shuffleInPlace([0, 1, 2, 3]); } while (q.order.join('') === '0123');          // q.order[shown position] = its place in the sentence
+                q.key = gidxQKey(e, 'comp', '');
                 return q;
             }
             t = q.t = 'm2p';
@@ -37266,6 +37343,7 @@
             });
         }
         shuffleInPlace(q.opts);
+        if (!q.key) q.key = gidxQKey(e, q.t, '');
         return q;
     }
     function gidxQuizSentence(q, answered) {
@@ -37316,6 +37394,7 @@
             var l = gidxQzLog[e.n] || [0, 0, 1];
             l[ok ? 0 : 1]++; l[2] = ok ? 1 : 0; gidxQzLog[e.n] = l;
             try { localStorage.setItem(GIDX_QZ_KEY, JSON.stringify(gidxQzLog)); } catch (er) {}
+            gidxQMark(q.key || gidxQKey(e, q.t, ''), ok);
             var fb = document.getElementById('gx-qz-fb');
             fb.className = 'feedback ' + (ok ? 'correct' : 'incorrect');
             fb.innerHTML = fbHtml;
