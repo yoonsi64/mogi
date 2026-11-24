@@ -37103,20 +37103,26 @@
         for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
         return (h >>> 0).toString(36);
     }
-    // [0 last answer wrong · 1 never asked · 2 rested long enough · 3 still resting, questions answered since]
+    // A question answered wrong comes back in one of the next three quizzes (which one is drawn when it is missed): the
+    // store counts the quizzes started (z) and the question's record carries the quiz it is due in, [n, 0, z due].
+    var GIDX_WRONG_WITHIN = 3, gidxRetry = false;      // gidxRetry: まちがえた文型だけ もう一度 is being drawn, so a wrong answer is due now
+    // [0 answered wrong and due · 1 never asked · 2 rested long enough · 3 still resting · 4 answered wrong, its quiz
+    //  not yet come; questions answered since]
     function gidxQRank(key) {
         var r = gidxSeen.q[key]; if (!r) return [1, 0];
         var age = gidxSeen.n - r[0];
-        if (!(r[1] > 0)) return [0, age];
+        if (!(r[1] > 0)) return [r[2] > (gidxSeen.z || 0) && !gidxRetry ? 4 : 0, age];
         return [age >= GIDX_REST[Math.min(r[1], GIDX_REST.length) - 1] ? 2 : 3, age];
     }
     function gidxQMark(key, ok) {
         if (!key) return;
         var r = gidxSeen.q[key];
         gidxSeen.n++;
-        gidxSeen.q[key] = [gidxSeen.n, ok ? (r && r[1] > 0 ? r[1] : 0) + 1 : 0];
+        gidxSeen.q[key] = ok ? [gidxSeen.n, (r && r[1] > 0 ? r[1] : 0) + 1] : [gidxSeen.n, 0, (gidxSeen.z || 0) + 1 + Math.floor(Math.random() * GIDX_WRONG_WITHIN)];
         try { localStorage.setItem(GIDX_REST_KEY, JSON.stringify(gidxSeen)); } catch (e) {}
     }
+    // a new quiz begins (not a quiz taken up again, and not まちがえた文型だけ もう一度)
+    function gidxQuizCount() { gidxSeen.z = (gidxSeen.z || 0) + 1; try { localStorage.setItem(GIDX_REST_KEY, JSON.stringify(gidxSeen)); } catch (e) {} }
     // every question pattern e has in kind t (under the 難易度 chosen): [{ b: its place in the 問題集 list, key }]
     function gidxQCands(e, t) {
         if (!gidxCanAsk(e, t)) return [];
@@ -37124,18 +37130,20 @@
         if (list) return list.map(function(x) { return { b: all.indexOf(x), key: gidxQKey(e, t, kind === 'f' ? x[1] : x[1] + x.slice(2, 6).join('') + x[6]) }; });
         return [{ key: gidxQKey(e, t, '') }];
     }
-    // the question of kind t to ask now: one answered wrong first, then one never asked, then the one that has rested
-    // longest; null when all are resting (resting: take the longest-rested of those anyway)
+    // the question of kind t to ask now: one answered wrong and due first, then one never asked, then the one that has
+    // rested longest; null when all are resting or waiting (resting: take one of those anyway, a wrong one that is
+    // waiting before a right one that is resting, then the longest-rested)
     function gidxQPick(e, t, resting) {
         var best = null;
         gidxQCands(e, t).forEach(function(c) {
-            var k = gidxQRank(c.key); c.rank = k[0]; c.age = k[1]; c.r = Math.random();
-            if (c.rank === 3 && !resting) return;
-            if (!best || c.rank < best.rank || (c.rank === best.rank && (c.rank >= 2 && c.age !== best.age ? c.age > best.age : c.r < best.r))) best = c;
+            var k = gidxQRank(c.key); c.rank = k[0]; c.age = k[1]; c.r = Math.random(); c.ord = c.rank === 4 ? 2.5 : c.rank;
+            if (c.rank >= 3 && !resting) return;
+            if (!best || c.ord < best.ord || (c.ord === best.ord && (c.rank >= 2 && c.age !== best.age ? c.age > best.age : c.r < best.r))) best = c;
         });
         return best;
     }
     function gidxRestingN() { var n = 0; Object.keys(gidxSeen.q).forEach(function(k) { if (gidxQRank(k)[0] === 3) n++; }); return n; }
+    function gidxWrongN() { var n = 0; Object.keys(gidxSeen.q).forEach(function(k) { var r = gidxQRank(k)[0]; if (r === 0 || r === 4) n++; }); return n; }
     function gidxQzPool(range, cnt) {
         return gidxE.filter(function(e) {
             return range === 'weak' ? gidxWeak(e, cnt) : range === 'keigo' ? !!e.kd : range === '1' || range === '2' || range === '3' ? e.lv === +range : true;
@@ -37228,10 +37236,11 @@
                 : ex && S.d ? '例文の穴うめ・文の組み立ては、問題集の「' + (S.d === 4 ? 'むずかしい' : 'N1標準') + '」の問題がある文型だけから出題します。'
                 : ex ? '例文の穴うめ・文の組み立ては、その形式の問題がある文型だけから出題します。' : 'まちがえたことのある文型が先に出ます。';
             var freshN = gidxQzPool(S.range, cnt).filter(function(e) { return S.types.some(function(t) { return !!gidxQPick(e, t, false); }); }).length;
-            var want = Math.min(n, S.n), restN = gidxRestingN();
+            var want = Math.min(n, S.n), restN = gidxRestingN(), wrongN = gidxWrongN();
             document.getElementById('gx-qs-rest').innerHTML = !S.types.length ? '' :
-                '<b>正解した問題はしばらく休みます。</b>次に出るのは' + GIDX_REST[0] + '問あと（2回つづけて正解なら' + GIDX_REST[1] + '問あと、3回からは' + GIDX_REST[2].toLocaleString() + '問あと）です。まちがえた問題は、次のクイズでまた出ます。' +
+                '<b>正解した問題はしばらく休みます。</b>次に出るのは' + GIDX_REST[0] + '問あと（2回つづけて正解なら' + GIDX_REST[1] + '問あと、3回からは' + GIDX_REST[2].toLocaleString() + '問あと）です。まちがえた問題は、このあと' + GIDX_WRONG_WITHIN + '回のクイズのうちにまた出ます。' +
                 (restN ? '<span>いま休んでいる問題：' + restN.toLocaleString() + '問</span>' : '') +
+                (wrongN ? '<span>まちがえて、また出るのを待っている問題：' + wrongN.toLocaleString() + '問</span>' : '') +
                 (freshN < want ? '<span class="gx-qs-rest-low">この範囲で休んでいない問題は' + freshN + '問分です。足りない' + (want - freshN) + '問は、いちばん長く休んでいる問題から出します。</span>' : '');
             try { localStorage.setItem(GIDX_QZ_SET_KEY, JSON.stringify(S)); } catch (e) {}
         };
@@ -37255,9 +37264,14 @@
     }
     // only: entries to ask again (the ones just missed), in place of a new draw
     function gidxQuizStart(only) {
+        gidxRetry = !!only;
+        try { gidxQuizDraw(only); } finally { gidxRetry = false; }
+    }
+    function gidxQuizDraw(only) {
         if (!gidxE) return;
         var S = gidxQzSet, cnt = gidxCounts(), list, types = gidxQzKinds(S);
         if (!types.length) return;
+        if (!only) gidxQuizCount();
         // the question each pattern would be asked in each kind (see gidxQPick); late = patterns whose questions are all
         // resting, taken only when the others are not enough
         var picks = {}, late = [];
@@ -37299,14 +37313,15 @@
         // (a kind in which the pattern has a question answered wrong goes before the others, so that question comes back)
         var used = {}, items = list.map(function(e) {
             var rs = late.indexOf(e) >= 0, can = types.filter(function(t) { return !!pick(e, t, rs); });
-            if (rs && can.length) {          // taken while resting: only in the kind whose question has rested longest
+            if (rs && can.length) {          // taken while resting: a kind with a wrong answer waiting, else only the kind whose question has rested longest
+                var wait = can.filter(function(t) { return pick(e, t, true).rank === 4; });
                 var top = Math.max.apply(null, can.map(function(t) { return pick(e, t, true).age; }));
-                can = can.filter(function(t) { return pick(e, t, true).age === top; });
+                can = wait.length ? wait : can.filter(function(t) { return pick(e, t, true).age === top; });
             }
             return { i: e.i, t: '', rs: rs, can: shuffleInPlace(can) };
         });
         items.slice().sort(function(a, b) { return a.can.length - b.can.length; }).forEach(function(it) {
-            var e = gidxE[it.i], miss = function(t) { return pick(e, t, it.rs).rank === 0 ? 0 : 1; };
+            var e = gidxE[it.i], miss = function(t) { var r = pick(e, t, it.rs).rank; return r === 0 || r === 4 ? 0 : 1; };
             it.t = it.can.slice().sort(function(a, b) { return miss(a) - miss(b) || (used[a] || 0) - (used[b] || 0); })[0] || 'm2p';
             used[it.t] = (used[it.t] || 0) + 1;
             var c = pick(e, it.t, it.rs);
