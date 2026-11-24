@@ -15649,7 +15649,7 @@
     function collectText(block) {
         var walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, {
             acceptNode: function(n) {
-                return n.parentElement && n.parentElement.closest('rt, rp, .option-prefix, .blank-number, .kw-blank i, .ar-title, .ar-author, .ar-h-title, .ar-h-author, .ar-pgbadge, .gx-qz-mkr, .gx-qz-okr') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+                return n.parentElement && n.parentElement.closest('rt, rp, .option-prefix, .blank-number, .kw-blank i, .ar-title, .ar-author, .ar-h-title, .ar-h-author, .ar-pgbadge, .gx-qz-mkr, .gx-qz-okr, .gx-pb i') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
             }
         });
         var parts = [], text = '', n;
@@ -16725,7 +16725,7 @@
         if (block.closest('#ar-view')) place.source = arSource();
         else if (block.closest('.gx-qz')) {
             var q = typeof gidxQuiz !== 'undefined' && gidxQuiz && gidxQuiz.cur;
-            place.source = '文型クイズ' + (q && q.e ? '・' + q.e.n : '');
+            place.source = '文型クイズ' + (q && q.e ? '・' + q.e.n : q && q.t === 'pass' ? '・文章の文法' : '');
             var fullEl = document.querySelector('#gx-qz-ex .mx-ex.gx-ext');
             if (fullEl && !block.closest('#gx-qz-ex')) {
                 var full = collectText(fullEl).text, at = full.indexOf(text.slice(start, end));
@@ -36780,7 +36780,10 @@
     // 文型クイズの問題集 (grambank): 例文の穴うめ and 文の組み立て problems written for the quiz, by pattern name:
     // { f: { name: [[difficulty, sentence with （　　）, right, wrong, wrong, wrong]] }, c: { name: [[difficulty, before, piece ×4 in order, after, ★ place]] } }.
     // Difficulty is on the app's scale (3 N1標準, 4 むずかしい). A pattern that has them is asked from here, not from its index examples.
-    var GBANK_SRC = 'grambank.082979d1.js';
+    var GBANK_SRC = 'grambank.b76b5426.js';
+    // 文章の文法 (grampass): passages of about 750 characters with five blanks each, as in JLPT 問題7, written for the quiz:
+    // { p: [[difficulty, title, text (¶ between paragraphs, 【1】…【5】 at the blanks), [[right, wrong, wrong, wrong, note] ×5], Korean translation]] }
+    var GPASS_SRC = 'grampass.aafc0663.js', gidxPass = null;
     var GIDX_SRC = 'gramidx.2c5c4a8e.js', gidxLoading = false, gidxWaiters = [], gidxByPat = null, gidxE = null, gidxSim = {};
     var grammarView = document.getElementById('grammar-view'), grammarContent = document.getElementById('grammar-content');
     var gidxState = { q: '', missed: false, lv: 0, open: -1 };          // kept while the app is open: the search, the filters, the open entry
@@ -36809,6 +36812,7 @@
             if (!failed && window.MogiGramIdx) {
                 gidxByPat = {}; gidxSim = {}; gidxSlots = {}; gidxSlotsF = {};
                 var GB = window.MogiGramBank || {};
+                gidxPass = ((window.MogiGramPass || {}).p || []).map(function(a, b) { return { b: b, d: a[0], title: a[1], t: a[2], bl: a[3], ko: a[4] }; });
                 gidxE = window.MogiGramIdx.e.map(function(a, i) {
                     var e = { i: i, n: a[0], y: a[1], j: a[2], k: a[3], x: a[4], g: a[5], lv: a[6], c: a[7], s: a[8], sn: a[9], kd: a[10], cz: a[11] || [], cp: a[12] || null, xk: a[13] || [] };          // xk: Korean gloss of each example
                     e.cz.forEach(function(c, k) {
@@ -36836,6 +36840,15 @@
             sc.onload = function() { done(false); };
             sc.onerror = function() { if (sc.parentNode) sc.parentNode.removeChild(sc); done(true); };
             document.head.appendChild(sc);
+        };
+        var goIdx = go;          // the 文章の文法 passages come before the index; the quiz runs without them
+        go = function() {
+            if (window.MogiGramPass) { goIdx(); return; }
+            var sp = document.createElement('script');
+            sp.src = GPASS_SRC;
+            sp.onload = goIdx;
+            sp.onerror = function() { if (sp.parentNode) sp.parentNode.removeChild(sp); goIdx(); };
+            document.head.appendChild(sp);
         };
         if (window.MogiGramBank) { go(); return; }
         var sb = document.createElement('script');          // the 問題集 first; without it the quiz still runs on the index examples
@@ -37060,12 +37073,13 @@
     // you missed in 文法 questions, and patterns whose last answer here was wrong.
     var GIDX_QZ_KEY = 'jlptGramQuiz', GIDX_QZ_SET_KEY = 'jlptGramQuizSet';
     var gidxQzLog = loadJSON(GIDX_QZ_KEY, {}), gidxQzSet = loadJSON(GIDX_QZ_SET_KEY, null) || {};
-    var GIDX_QZ_TYPES = [['m2p', '意味 → 文型', '意味を見て、文型を選ぶ'], ['p2m', '文型 → 意味', '文型を見て、意味を選ぶ'], ['cloze', '例文の穴うめ', '例文の［　］に入る文型を選ぶ'], ['comp', '文の組み立て', '言葉を並べて、★に入るものを決める']];
+    var GIDX_QZ_TYPES = [['m2p', '意味 → 文型', '意味を見て、文型を選ぶ'], ['p2m', '文型 → 意味', '文型を見て、意味を選ぶ'], ['cloze', '例文の穴うめ', '例文の［　］に入る文型を選ぶ'], ['comp', '文の組み立て', '言葉を並べて、★に入るものを決める'], ['pass', '文章の文法', '長い文章の5つの空欄に入るものを選ぶ']];
     var GIDX_QZ_DIR = {
         m2p: '次の意味を表す文型として最もよいものを、1・2・3・4から一つ選びなさい。',
         p2m: '次の文型の意味として最もよいものを、1・2・3・4から一つ選びなさい。',
         cloze: '次の文の［　　］に入れるのに最もよいものを、1・2・3・4から一つ選びなさい。',
-        comp: '次の文の★に入る最もよいものを選びなさい。（言葉をタップしてから、入れたい空欄をタップしてください）'
+        comp: '次の文の★に入る最もよいものを選びなさい。（言葉をタップしてから、入れたい空欄をタップしてください）',
+        pass: '次の文章を読んで、文章全体の内容を考えて、（1）から（5）の中に入る最もよいものを、1・2・3・4から一つ選びなさい。（文章の空欄をタップすると、その選択肢へ進みます）'
     };
     // whether entry e can be asked as kind t: every pattern has a meaning; 例文の穴うめ and 文の組み立て need an example that works
     // 難易度 on the setup page (S.d: 0 all, 3 N1標準, 4 むずかしい and above): 穴うめ and 組み立て are then asked only from
@@ -37077,6 +37091,7 @@
         return list.length ? list : null;
     }
     function gidxCanAsk(e, t) {
+        if (t === 'pass') return false;          // 文章の文法 is not asked by pattern: see gidxPassPick
         if (gidxQzSet.d && (t === 'cloze' || t === 'comp')) return !!gidxBankList(e, t === 'cloze' ? 'f' : 'c');
         return t === 'cloze' ? gidxCanCloze(e) : t === 'comp' ? !!(e.bc || e.cp) : true;
     }
@@ -37144,6 +37159,31 @@
     }
     function gidxRestingN() { var n = 0; Object.keys(gidxSeen.q).forEach(function(k) { if (gidxQRank(k)[0] === 3) n++; }); return n; }
     function gidxWrongN() { var n = 0; Object.keys(gidxSeen.q).forEach(function(k) { var r = gidxQRank(k)[0]; if (r === 0 || r === 4) n++; }); return n; }
+    // ----- 文章の文法 (JLPT 問題7): a passage with five blanks. A passage does not belong to one pattern, so it stands
+    // outside the draw by pattern: when the kind is pressed, the quiz closes with passages, each counting as five
+    // questions. The texts are N1: asked when 範囲 is すべて or N1. A passage rests like any other question when all five
+    // are right, and comes back within three quizzes when one is wrong.
+    function gidxPassList() { var d = gidxQzSet.d || 0; return (gidxPass || []).filter(function(p) { return !d || (d >= 4 ? p.d >= 4 : p.d === d); }); }
+    function gidxPassOn(S) { return S.types.indexOf('pass') >= 0 && (S.range === 'all' || S.range === '1') && gidxPassList().length > 0; }
+    function gidxPassKey(p) { return gidxQKey({ n: '文章の文法' }, 'pass', p.title); }
+    // how many passages a quiz of S.n questions takes: the kind's equal share, five questions each, at least one
+    // (others: there are questions by pattern to share the quiz with)
+    function gidxPassWant(S, others) {
+        if (!gidxPassOn(S)) return 0;
+        var kinds = S.types.filter(function(t) { return t !== 'pass'; }).length;
+        var want = kinds && others ? Math.max(1, Math.round(S.n / (kinds + 1) / 5)) : Math.floor(S.n / 5);
+        return Math.min(gidxPassList().length, want);
+    }
+    // the n passages to ask now, in the order of gidxQPick: answered wrong and due, never asked, rested longest
+    function gidxPassPick(n) {
+        return gidxPassList().map(function(p) { var k = gidxQRank(gidxPassKey(p)); return { p: p, ord: k[0] === 4 ? 2.5 : k[0], age: k[1], r: Math.random() }; })
+            .sort(function(a, b) { return a.ord - b.ord || (a.ord >= 2 ? b.age - a.age : 0) || a.r - b.r; }).slice(0, n)
+            .map(function(x) { return { i: -1, t: 'pass', b: x.p.b }; });
+    }
+    // a passage counts as its blanks: how many questions a quiz has, and which of them are on the screen
+    function gidxQzN(it) { return it.t === 'pass' ? (gidxPass && gidxPass[it.b] ? gidxPass[it.b].bl.length : 5) : 1; }
+    function gidxQzTotal(items) { return items.reduce(function(sum, it) { return sum + gidxQzN(it); }, 0); }
+    function gidxQzAt(Q) { var from = gidxQzTotal(Q.items.slice(0, Q.pos)); return { from: from + 1, to: from + gidxQzN(Q.items[Q.pos]), total: gidxQzTotal(Q.items) }; }
     function gidxQzPool(range, cnt) {
         return gidxE.filter(function(e) {
             return range === 'weak' ? gidxWeak(e, cnt) : range === 'keigo' ? !!e.kd : range === '1' || range === '2' || range === '3' ? e.lv === +range : true;
@@ -37162,8 +37202,8 @@
             var cur = null;          // the question on screen, as made (its choices and their order), so that the very same one comes back
             if (!Q.answered && Q.cur) { cur = {}; Object.keys(Q.cur).forEach(function(k) { if (k !== 'e') cur[k] = Q.cur[k]; }); }
             localStorage.setItem(GIDX_QZ_RESUME_KEY, JSON.stringify({ v: 1, at: Date.now(), pos: pos, cur: cur,
-                items: Q.items.map(function(it) { return [gidxE[it.i].n, it.t, it.b == null ? -1 : it.b]; }),
-                log: Q.log.map(function(l) { return [gidxE[l.i].n, l.t, l.ok ? 1 : 0]; }) }));
+                items: Q.items.map(function(it) { return [it.t === 'pass' ? '' : gidxE[it.i].n, it.t, it.b == null ? -1 : it.b]; }),
+                log: Q.log.map(function(l) { return l.t === 'pass' ? ['', 'pass', l.ok ? 1 : 0, l.b, l.k] : [gidxE[l.i].n, l.t, l.ok ? 1 : 0]; }) }));
         } catch (e) {}
     }
     function gidxQzForget() { try { localStorage.removeItem(GIDX_QZ_RESUME_KEY); } catch (e) {} }
@@ -37173,11 +37213,11 @@
         if (!R || !gidxE || !Array.isArray(R.items) || !Array.isArray(R.log)) return null;
         var by = {}; gidxE.forEach(function(e) { by[e.n] = e.i; });
         var kinds = GIDX_QZ_TYPES.map(function(t) { return t[0]; });
-        var items = R.items.map(function(a) { return { i: by[a[0]], t: a[1], b: a[2] >= 0 ? a[2] : undefined }; });
-        var log = R.log.map(function(a) { return { i: by[a[0]], t: a[1], ok: !!a[2] }; });
-        var bad = function(x) { return x.i === undefined || kinds.indexOf(x.t) < 0; };
-        if (items.some(bad) || log.some(bad) || !(R.pos >= 0 && R.pos < items.length) || log.length > R.pos) return null;
-        var cur = R.cur && R.cur.t === items[R.pos].t && (Array.isArray(R.cur.opts) || Array.isArray(R.cur.frags)) ? R.cur : null;
+        var items = R.items.map(function(a) { return a[1] === 'pass' ? { i: -1, t: 'pass', b: a[2] } : { i: by[a[0]], t: a[1], b: a[2] >= 0 ? a[2] : undefined }; });
+        var log = R.log.map(function(a) { return a[1] === 'pass' ? { i: -1, t: 'pass', ok: !!a[2], b: a[3], k: a[4] } : { i: by[a[0]], t: a[1], ok: !!a[2] }; });
+        var bad = function(x) { return x.t === 'pass' ? !(gidxPass && gidxPass[x.b]) : x.i === undefined || kinds.indexOf(x.t) < 0; };
+        if (items.some(bad) || log.some(bad) || !(R.pos >= 0 && R.pos < items.length) || log.length > gidxQzTotal(items.slice(0, R.pos))) return null;
+        var cur = R.cur && R.cur.t === items[R.pos].t && (Array.isArray(R.cur.opts) || Array.isArray(R.cur.frags) || Array.isArray(R.cur.ord)) ? R.cur : null;
         return { items: items, pos: R.pos, log: log, cur: cur };
     }
     function gidxQuizResume() {
@@ -37194,14 +37234,14 @@
         if (!gidxE) return;
         gidxQuizOff();
         var S = gidxQzSet, cnt = gidxCounts();
-        if (!gidxQzKinds(S).length) S.types = GIDX_QZ_TYPES.map(function(t) { return t[0]; });          // nothing pressed last time: start from all four
+        if (!gidxQzKinds(S).length) S.types = GIDX_QZ_TYPES.map(function(t) { return t[0]; });          // nothing pressed last time: start from all of them
         if (['all', '1', '2', '3', 'keigo', 'weak'].indexOf(S.range) < 0) S.range = 'all';
         if ([10, 20, 30].indexOf(S.n) < 0) S.n = 10;
         if ([0, 3, 4].indexOf(S.d) < 0) S.d = 0;
         var ranges = [['all', 'すべて'], ['1', 'N1'], ['2', 'N2'], ['3', 'N3'], ['keigo', '敬語'], ['weak', '苦手']];
         var left = gidxQzSaved();
         grammarContent.innerHTML = '<div class="gx-qs"><div class="gx-title"><h2>文型クイズ</h2><span></span><button class="gx-quizbtn gx-qs-back">さくいんにもどる</button></div>' +
-            (left ? '<div class="gx-qs-resume" id="gx-qs-resume"><div class="gx-qs-resume-t"><b>前回のつづき</b><span>' + left.items.length + '問中 ' + (left.pos + 1) + '問目から（ここまで ' +
+            (left ? '<div class="gx-qs-resume" id="gx-qs-resume"><div class="gx-qs-resume-t"><b>前回のつづき</b><span>' + gidxQzTotal(left.items) + '問中 ' + (left.log.length + 1) + '問目から（ここまで ' +
                 left.log.filter(function(l) { return l.ok; }).length + ' / ' + left.log.length + ' 問正解）</span></div>' +
                 '<button class="gx-qs-resume-go">つづける</button><button class="gx-qs-resume-x" aria-label="前回のクイズを消す">×</button></div>' : '') +
             '<div class="gx-qs-h">出題形式<span>押した形式がまざって出ます</span></div><div class="gx-qs-types">' + GIDX_QZ_TYPES.map(function(t) {
@@ -37210,13 +37250,13 @@
             '<div class="gx-qs-h">範囲</div><div class="gx-qs-row">' + ranges.map(function(r) {
                 return '<button class="gx-qs-chip" data-r="' + r[0] + '" aria-pressed="false">' + r[1] + '<i>' + gidxQzPool(r[0], cnt).length + '</i></button>';
             }).join('') + '</div>' +
-            '<div class="gx-qs-h">難易度<span>例文の穴うめ・文の組み立ての問題集から</span></div><div class="gx-qs-row">' + [[0, 'すべて'], [3, 'N1標準'], [4, 'むずかしい']].map(function(d) {
+            '<div class="gx-qs-h">難易度<span>例文の穴うめ・文の組み立て・文章の文法の問題から</span></div><div class="gx-qs-row">' + [[0, 'すべて'], [3, 'N1標準'], [4, 'むずかしい']].map(function(d) {
                 return '<button class="gx-qs-chip" data-d="' + d[0] + '" aria-pressed="false">' + d[1] + '</button>';
             }).join('') + '</div>' +
             '<div class="gx-qs-h">問題数</div><div class="gx-qs-row">' + [10, 20, 30].map(function(n) {
                 return '<button class="gx-qs-chip" data-n="' + n + '" aria-pressed="false">' + n + '問</button>';
             }).join('') + '</div>' +
-            '<div class="gx-qs-note" id="gx-qs-note"></div><div class="gx-qs-note gx-qs-rest" id="gx-qs-rest"></div>' +
+            '<div class="gx-qs-note" id="gx-qs-note"></div><div class="gx-qs-note gx-qs-passnote" id="gx-qs-pass" hidden></div><div class="gx-qs-note gx-qs-rest" id="gx-qs-rest"></div>' +
             '<div class="gx-qs-note gx-qs-word">問題・選択肢・例文の言葉を長押しすると、単語帳に追加できます（マウスならドラッグかダブルクリック）。</div>' +
             '<button class="practice-btn gx-qs-go">はじめる</button></div>';
         var sync = function() {
@@ -37228,15 +37268,23 @@
             var poolN = function(r) { return gidxQzPool(r, cnt).filter(function(e) { return gidxCanAskAny(e, S.types); }).length; };
             grammarContent.querySelectorAll('.gx-qs-chip[data-r]').forEach(function(b) { b.querySelector('i').textContent = poolN(b.getAttribute('data-r')); });
             var n = poolN(S.range), go = grammarContent.querySelector('.gx-qs-go');
-            go.disabled = !n;
-            go.textContent = n ? 'はじめる（' + Math.min(n, S.n) + '問）' : 'はじめる';
+            // with 文章の文法 pressed the quiz closes with pw passages (five questions each); the rest are asked by pattern
+            var pw = gidxPassWant(S, n > 0), pattN = Math.min(n, Math.max(0, S.n - 5 * pw)), total = pattN + 5 * pw;
+            go.disabled = !total;
+            go.textContent = total ? 'はじめる（' + total + '問）' : 'はじめる';
+            var pn = document.getElementById('gx-qs-pass'), passOn = S.types.indexOf('pass') >= 0;
+            pn.hidden = !passOn;
+            pn.textContent = !passOn ? '' : !(S.range === 'all' || S.range === '1') ? '文章の文法はN1の文章です。範囲が「すべて」か「N1」のときに出ます。'
+                : !pw ? '文章の文法には、この難易度の文章がありません。'
+                : '文章の文法は、約750字の文章1つにつき5問です。この設定では、最後に文章が' + pw + 'つ出ます。';
             var ex = S.types.filter(function(t) { return t === 'cloze' || t === 'comp'; }).length, only = ex === S.types.length;
             document.getElementById('gx-qs-note').textContent = !S.types.length ? '出題形式を一つ以上えらんでください。'
+                : passOn && S.types.length === 1 ? ''
                 : S.range === 'weak' ? (n ? '苦手：文法の問題でまちがえた文型と、このクイズで最後にまちがえた文型です。' : '苦手な文型はまだありません。文法の問題やこのクイズでまちがえると、ここから出題できます。')
                 : ex && S.d ? '例文の穴うめ・文の組み立ては、問題集の「' + (S.d === 4 ? 'むずかしい' : 'N1標準') + '」の問題がある文型だけから出題します。'
                 : ex ? '例文の穴うめ・文の組み立ては、その形式の問題がある文型だけから出題します。' : 'まちがえたことのある文型が先に出ます。';
             var freshN = gidxQzPool(S.range, cnt).filter(function(e) { return S.types.some(function(t) { return !!gidxQPick(e, t, false); }); }).length;
-            var want = Math.min(n, S.n), restN = gidxRestingN(), wrongN = gidxWrongN();
+            var want = pattN, restN = gidxRestingN(), wrongN = gidxWrongN();
             document.getElementById('gx-qs-rest').innerHTML = !S.types.length ? '' :
                 '<b>正解した問題はしばらく休みます。</b>次に出るのは' + GIDX_REST[0] + '問あと（2回つづけて正解なら' + GIDX_REST[1] + '問あと、3回からは' + GIDX_REST[2].toLocaleString() + '問あと）です。まちがえた問題は、このあと' + GIDX_WRONG_WITHIN + '回のクイズのうちにまた出ます。' +
                 (restN ? '<span>いま休んでいる問題：' + restN.toLocaleString() + '問</span>' : '') +
@@ -37263,14 +37311,17 @@
         window.scrollTo(0, 0);
     }
     // only: entries to ask again (the ones just missed), in place of a new draw
-    function gidxQuizStart(only) {
+    // onlyPass: the 文章の文法 passages to ask again (their places in gidxPass)
+    function gidxQuizStart(only, onlyPass) {
         gidxRetry = !!only;
-        try { gidxQuizDraw(only); } finally { gidxRetry = false; }
+        try { gidxQuizDraw(only, onlyPass); } finally { gidxRetry = false; }
     }
-    function gidxQuizDraw(only) {
+    function gidxQuizDraw(only, onlyPass) {
         if (!gidxE) return;
-        var S = gidxQzSet, cnt = gidxCounts(), list, types = gidxQzKinds(S);
-        if (!types.length) return;
+        var S = gidxQzSet, cnt = gidxCounts(), list, allTypes = gidxQzKinds(S), types = allTypes.filter(function(t) { return t !== 'pass'; });
+        if (!allTypes.length) return;
+        // passItems: the 文章の文法 passages that close the quiz (five questions each); N: the questions asked by pattern
+        var passItems = only ? (onlyPass || []).filter(function(b) { return gidxPass && gidxPass[b]; }).map(function(b) { return { i: -1, t: 'pass', b: b }; }) : [], N = S.n;
         if (!only) gidxQuizCount();
         // the question each pattern would be asked in each kind (see gidxQPick); late = patterns whose questions are all
         // resting, taken only when the others are not enough
@@ -37281,11 +37332,12 @@
         if (only) { list = shuffleInPlace(only.map(function(i) { return gidxE[i]; })); late = list.filter(function(e) { return !freshAny(e); }); }
         else {
             var all = gidxQzPool(S.range, cnt).filter(function(e) { return gidxCanAskAny(e, types); });
+            passItems = gidxPassPick(gidxPassWant(S, all.length > 0)); N = Math.max(0, S.n - 5 * passItems.length);
             var pool = all.filter(freshAny);
             // up to half are patterns you have missed (most missed first), the rest are drawn at random
             var weak = S.range === 'weak' ? [] : pool.filter(function(e) { return gidxWeak(e, cnt); })
-                .sort(function(a, b) { return ((cnt[b.i] && cnt[b.i].miss) || 0) - ((cnt[a.i] && cnt[a.i].miss) || 0); }).slice(0, Math.ceil(S.n / 2));
-            var rest = shuffleInPlace(pool.filter(function(e) { return weak.indexOf(e) < 0; })).slice(0, S.n - weak.length);
+                .sort(function(a, b) { return ((cnt[b.i] && cnt[b.i].miss) || 0) - ((cnt[a.i] && cnt[a.i].miss) || 0); }).slice(0, Math.ceil(N / 2));
+            var rest = shuffleInPlace(pool.filter(function(e) { return weak.indexOf(e) < 0; })).slice(0, N - weak.length);
             list = weak.concat(rest);
             // each pressed kind gets an equal share, so enough of the patterns drawn must be askable that way
             // (fewer have a 文の組み立て than a 穴うめ): swap some in if the draw came up short
@@ -37300,15 +37352,15 @@
                 spare.forEach(function(e, n) { if (drop[n]) list[list.indexOf(drop[n])] = e; });
             });
             // not enough that are not resting: the rest of the quiz is the patterns that have rested longest
-            if (list.length < S.n) {
+            if (list.length < N) {
                 late = all.filter(function(e) { return pool.indexOf(e) < 0; }).map(function(e) {
                     return [Math.max.apply(null, types.map(function(t) { var c = pick(e, t, true); return c ? c.age : -1; })), Math.random(), e];
-                }).sort(function(a, b) { return b[0] - a[0] || a[1] - b[1]; }).slice(0, S.n - list.length).map(function(x) { return x[2]; });
+                }).sort(function(a, b) { return b[0] - a[0] || a[1] - b[1]; }).slice(0, N - list.length).map(function(x) { return x[2]; });
                 list = list.concat(late);
             }
             shuffleInPlace(list);
         }
-        if (!list.length) return;
+        if (!list.length && !passItems.length) return;
         // hand out the kinds: patterns with the fewest possible kinds first, each taking the kind used least so far
         // (a kind in which the pattern has a question answered wrong goes before the others, so that question comes back)
         var used = {}, items = list.map(function(e) {
@@ -37328,7 +37380,7 @@
             if (c && c.b != null && c.b >= 0) it.b = c.b;
             delete it.can; delete it.rs;
         });
-        gidxQuiz = { items: items, pos: 0, log: [], cur: null };
+        gidxQuiz = { items: items.concat(passItems), pos: 0, log: [], cur: null };
         document.body.classList.add('gx-quiz-on');
         gidxQuizRender();
     }
@@ -37511,7 +37563,8 @@
     function gidxQuizRender() {
         var Q = gidxQuiz; if (!Q) return;
         if (Q.pos >= Q.items.length) { gidxQzForget(); gidxQuizResult(); return; }
-        var q = Q.cur || (Q.cur = gidxQuizMake(Q.items[Q.pos])), e = q.e, n = Q.items.length, comp = q.t === 'comp';
+        if (Q.items[Q.pos].t === 'pass') { gidxPassRender(); return; }
+        var q = Q.cur || (Q.cur = gidxQuizMake(Q.items[Q.pos])), e = q.e, n = Q.items.length, comp = q.t === 'comp', at = gidxQzAt(Q);
         var kind = GIDX_QZ_TYPES.filter(function(t) { return t[0] === q.t; })[0][1];
         Q.answered = false; gidxQzSave();
         var slot = 0, body = !comp
@@ -37527,8 +37580,8 @@
               '<div class="btn-group"><button class="check-btn" id="gx-comp-check" disabled>解答する</button><button class="reset-btn" id="gx-comp-reset" disabled>リセット</button></div></div>';
         grammarContent.innerHTML = '<div class="gx-qz">' + gidxQuizTop() + '<div class="question-card">' +
             '<div class="question-header"><div class="q-progress-row">' +
-            '<div class="q-progress" role="progressbar" aria-valuemin="1" aria-valuemax="' + n + '" aria-valuenow="' + (Q.pos + 1) + '"><div class="q-progress-fill" style="width:' + Math.round((Q.pos + 1) / n * 100) + '%"></div></div>' +
-            '<span class="q-progress-label">' + (Q.pos + 1) + ' / ' + n + '</span></div>' +
+            '<div class="q-progress" role="progressbar" aria-valuemin="1" aria-valuemax="' + at.total + '" aria-valuenow="' + at.to + '"><div class="q-progress-fill" style="width:' + Math.round(at.to / at.total * 100) + '%"></div></div>' +
+            '<span class="q-progress-label">' + at.to + ' / ' + at.total + '</span></div>' +
             '<div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><span class="question-type">文型さくいん - ' + kind + '</span>' +
             (q.d ? '<span class="gx-qz-diff" style="--lv:' + DIFF_COLORS[q.d - 1] + '">' + DIFF_NAMES[q.d - 1] + '</span>' : '') + '</div>' +
             '<div class="direction-box">' + GIDX_QZ_DIR[q.t] + '</div></div>' + body +
@@ -37619,10 +37672,114 @@
         });
         draw();
     }
+    // ----- 文章の文法: one passage with five blanks, answered together (解答する) as in the test. Tapping a blank in the
+    // passage goes to its choices; tapping the number above the choices goes back to the blank.
+    function gidxPassMake(item) {
+        var p = gidxPass[item.b];
+        return { t: 'pass', b: item.b, key: gidxPassKey(p), ord: p.bl.map(function() { return shuffleInPlace([0, 1, 2, 3]); }) };          // ord[blank][shown place] = which choice (0 is the right one)
+    }
+    function gidxPassParas(text, each) { return String(text).split('¶').map(function(par) { return '<p class="gx-ext">' + each(escapeHtml(par.replace(/^[　\s]+/, ''))) + '</p>'; }).join(''); }
+    function gidxPassRender() {
+        var Q = gidxQuiz, item = Q.items[Q.pos], p = gidxPass[item.b], n = Q.items.length, at = gidxQzAt(Q);
+        var q = Q.cur && Q.cur.t === 'pass' && Q.cur.b === item.b && Array.isArray(Q.cur.ord) && Q.cur.ord.length === p.bl.length ? Q.cur : (Q.cur = gidxPassMake(item));
+        Q.answered = false; gidxQzSave();
+        var around = function(k) {          // the words on either side of blank k, shown above its choices
+            var plain = String(p.t).replace(/[¶　]/g, ''), at = plain.indexOf('【' + (k + 1) + '】');
+            var mark = function(x) { return x.replace(/【([1-5])】/g, '（$1）'); };
+            var L = mark(plain.slice(0, at)), R = mark(plain.slice(at + 3)), end = R.search(/[。、]/);
+            L = L.slice(L.lastIndexOf('。') + 1); if (L.length > 16) L = '…' + L.slice(-15);
+            R = R.slice(0, end >= 0 && end < 12 ? end + 1 : 10); if (!/。$/.test(R)) R += '…';
+            return escapeHtml(L) + '<u>（' + (k + 1) + '）</u>' + escapeHtml(R);
+        };
+        grammarContent.innerHTML = '<div class="gx-qz gx-pz">' + gidxQuizTop() + '<div class="question-card">' +
+            '<div class="question-header"><div class="q-progress-row">' +
+            '<div class="q-progress" role="progressbar" aria-valuemin="1" aria-valuemax="' + at.total + '" aria-valuenow="' + at.to + '"><div class="q-progress-fill" style="width:' + Math.round(at.to / at.total * 100) + '%"></div></div>' +
+            '<span class="q-progress-label">' + at.from + '–' + at.to + ' / ' + at.total + '</span></div>' +
+            '<div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><span class="question-type">文型さくいん - 文章の文法</span>' +
+            (p.d ? '<span class="gx-qz-diff" style="--lv:' + DIFF_COLORS[p.d - 1] + '">' + DIFF_NAMES[p.d - 1] + '</span>' : '') + '</div>' +
+            '<div class="direction-box">' + GIDX_QZ_DIR.pass + '</div></div>' +
+            '<div class="gx-pass" id="gx-pass">' + gidxPassParas(p.t, function(h) {
+                return h.replace(/【([1-5])】/g, function(m, k) { return '<button type="button" class="gx-pb" data-k="' + (+k - 1) + '" aria-label="空欄' + k + '"><i>' + k + '</i><b></b></button>'; });
+            }) + '</div>' +
+            '<div class="gx-pqs">' + p.bl.map(function(bl, k) {
+                return '<div class="gx-pq" data-k="' + k + '"><button type="button" class="gx-pq-h" aria-label="文章の空欄' + (k + 1) + 'を見る"><i>' + (k + 1) + '</i><span class="gx-pq-x">' + around(k) + '</span></button><div class="options">' + q.ord[k].map(function(o, j) {
+                    return '<button class="option-btn" data-j="' + j + '" aria-pressed="false"><span class="option-prefix">' + CIRCLED[j] + '</span><span class="option-text">' + escapeHtml(bl[o]) + '</span></button>';
+                }).join('') + '</div></div>';
+            }).join('') + '</div>' +
+            '<div class="comp-hint" id="gx-pass-hint"></div>' +
+            '<div class="btn-group"><button class="check-btn" id="gx-pass-check" disabled>解答する</button></div>' +
+            '<div class="feedback" id="gx-qz-fb"></div><div id="gx-qz-ex"></div></div>' +
+            '<footer class="gx-qz-footer"><button class="gx-next" disabled>' + (Q.pos + 1 >= n ? '結果を見る' : '次の問題へ') + '</button></footer></div>';
+        grammarContent.querySelector('.gx-qz-quit').addEventListener('click', function() { showGrammarIndex(); });
+        var next = grammarContent.querySelector('.gx-next'), done = false, picks = p.bl.map(function() { return -1; });
+        var check = document.getElementById('gx-pass-check'), hint = document.getElementById('gx-pass-hint');
+        var chips = grammarContent.querySelectorAll('#gx-pass .gx-pb'), groups = grammarContent.querySelectorAll('.gx-pq');
+        next.addEventListener('click', function() { if (!done) return; Q.pos++; Q.cur = null; gidxQuizRender(); window.scrollTo(0, 0); });
+        var go = function(el) { if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+        var draw = function() {
+            chips.forEach(function(c) {
+                var k = +c.getAttribute('data-k'), j = picks[k];
+                c.querySelector('b').textContent = j >= 0 ? p.bl[k][q.ord[k][j]] : '';
+                c.classList.toggle('filled', j >= 0);
+            });
+            groups.forEach(function(g) {
+                var k = +g.getAttribute('data-k');
+                g.querySelectorAll('.option-btn').forEach(function(b) { var on = +b.getAttribute('data-j') === picks[k]; b.classList.toggle('selected', on); b.setAttribute('aria-pressed', String(on)); });
+            });
+            var left = picks.filter(function(j) { return j < 0; }).length;
+            check.disabled = left > 0;
+            hint.textContent = left ? 'あと' + left + 'つえらんでください' : '';
+        };
+        chips.forEach(function(c) { c.addEventListener('click', function() { go(groups[+c.getAttribute('data-k')]); }); });
+        groups.forEach(function(g) {
+            var k = +g.getAttribute('data-k');
+            g.querySelector('.gx-pq-h').addEventListener('click', function() { go(chips[k]); });
+            g.querySelectorAll('.option-btn').forEach(function(b) { b.addEventListener('click', function() { if (done) return; picks[k] = +b.getAttribute('data-j'); draw(); }); });
+        });
+        check.addEventListener('click', function() {
+            if (done || picks.indexOf(-1) >= 0) return;
+            done = true;
+            var oks = picks.map(function(j, k) { return q.ord[k][j] === 0; }), right = oks.filter(function(x) { return x; }).length, all = right === oks.length;
+            oks.forEach(function(ok, k) { Q.log.push({ i: -1, t: 'pass', ok: ok, b: item.b, k: k }); });
+            Q.answered = true; gidxQzSave();
+            gidxQMark(q.key, all);
+            chips.forEach(function(c) { var k = +c.getAttribute('data-k'); c.querySelector('b').textContent = p.bl[k][0]; c.classList.add('filled'); c.classList.add(oks[k] ? 'ok' : 'ng'); });
+            groups.forEach(function(g) {
+                var k = +g.getAttribute('data-k');
+                g.querySelectorAll('.option-btn').forEach(function(b) {
+                    var j = +b.getAttribute('data-j');
+                    b.disabled = true; b.classList.remove('selected');
+                    if (q.ord[k][j] === 0) b.classList.add('correct'); else if (j === picks[k]) b.classList.add('incorrect');
+                });
+            });
+            [hint, check.parentNode].forEach(function(el) { if (el && el.parentNode) el.parentNode.removeChild(el); });
+            var fb = document.getElementById('gx-qz-fb');
+            fb.className = 'feedback ' + (all ? 'correct' : 'incorrect');
+            fb.textContent = oks.length + '問中' + right + '問正解' + (all ? '！' : '');
+            // 解説: for each blank the answer and why; then the whole passage with the answers in it (read aloud, 한국어)
+            var answer = function(h) { return h.replace(/【([1-5])】/g, function(m, k) { return '<b>' + escapeHtml(p.bl[+k - 1][0]) + '</b>'; }); };
+            var box = document.getElementById('gx-qz-ex');
+            box.innerHTML = '<div class="explain-card mx"><div class="explain-title">解説</div><div class="gx-pn-list">' + p.bl.map(function(bl, k) {
+                    return '<div class="gx-pn ' + (oks[k] ? 'ok' : 'ng') + '"><i>' + (k + 1) + '</i><div><b class="gx-ext">' + escapeHtml(bl[0]) + '</b>' +
+                        (oks[k] ? '' : '<s>' + escapeHtml(bl[q.ord[k][picks[k]]]) + '</s>') + '<span class="gx-ext">' + escapeHtml(bl[4] || '') + '</span></div></div>';
+                }).join('') + '</div>' +
+                '<div class="explain-sub gx-full-h">正しい文 <button class="speak-btn gx-say-all">🔊 読む</button>' + (p.ko ? '<button class="gx-ko-btn" aria-expanded="false">한국어</button>' : '') + '</div>' +
+                '<div class="mx-ex gx-ext gx-pass-full">' + gidxPassParas(p.t, answer).replace(/<p class="gx-ext">/g, '<p>') + '</div>' +
+                (p.ko ? '<div class="gx-ko gx-pass-ko" lang="ko" hidden>' + gidxPassParas(p.ko, function(h) { return h; }).replace(/<p class="gx-ext">/g, '<p>') + '</div>' : '') + '</div>';
+            box.querySelector('.gx-say-all').addEventListener('click', function() {
+                speakText(String(p.t).split('¶').map(function(par) { return escapeHtml(par.replace(/【([1-5])】/g, function(m, k) { return p.bl[+k - 1][0]; })); }).join('\n'));
+            });
+            var koBtn = box.querySelector('.gx-ko-btn'), ko = box.querySelector('.gx-ko');
+            if (koBtn) koBtn.addEventListener('click', function() { ko.hidden = !ko.hidden; koBtn.setAttribute('aria-expanded', ko.hidden ? 'false' : 'true'); koBtn.classList.toggle('on', !ko.hidden); });
+            gidxWordCtx(q);
+            next.disabled = false;
+        });
+        draw();
+    }
     function gidxQuizResult() {
         var Q = gidxQuiz; if (!Q) return;
         var n = Q.log.length, right = Q.log.filter(function(l) { return l.ok; }).length, wrong = Q.log.filter(function(l) { return !l.ok; });
-        var by = ['m2p', 'p2m', 'cloze', 'comp'].map(function(t) {
+        var by = ['m2p', 'p2m', 'cloze', 'comp', 'pass'].map(function(t) {
             var all = Q.log.filter(function(l) { return l.t === t; });
             return all.length ? '<span>' + GIDX_QZ_TYPES.filter(function(x) { return x[0] === t; })[0][1] + '　<b>' + all.filter(function(l) { return l.ok; }).length + '</b> / ' + all.length + '</span>' : '';
         }).join('');
@@ -37630,6 +37787,10 @@
             '<div class="gx-qz-score"><span>結果</span><b>' + right + '</b> / ' + n + '問正解<i>' + Math.round(right / n * 100) + '%</i></div>' +
             '<div class="gx-qz-by">' + by + '</div>' +
             '<div class="gx-qz-list">' + Q.log.map(function(l) {
+                if (l.t === 'pass') {          // a blank of a passage: the passage, which blank, its answer
+                    var ps = gidxPass[l.b];
+                    return '<div class="gx-qz-item gx-qz-pitem ' + (l.ok ? 'ok' : 'ng') + '"><i>' + (l.ok ? '○' : '✕') + '</i><span><b>文章の文法「' + escapeHtml(ps.title) + '」（' + (l.k + 1) + '）</b><span>' + escapeHtml(ps.bl[l.k][0]) + '</span></span></div>';
+                }
                 var e = gidxE[l.i];
                 return '<button class="gx-qz-item ' + (l.ok ? 'ok' : 'ng') + '" data-i="' + l.i + '"><i>' + (l.ok ? '○' : '✕') + '</i><span><b>' + escapeHtml(e.n) + '</b><span>' + escapeHtml(e.j) + '</span></span></button>';
             }).join('') + '</div>' +
@@ -37639,11 +37800,12 @@
             '<button class="practice-btn sub gx-qz-back">さくいんにもどる</button></div>';
         window.scrollTo(0, 0);
         grammarContent.querySelector('.gx-qz-quit').addEventListener('click', function() { showGrammarIndex(); });
-        grammarContent.querySelectorAll('.gx-qz-item').forEach(function(b) { b.addEventListener('click', function() { gidxSheet(+b.getAttribute('data-i')); }); });
+        grammarContent.querySelectorAll('button.gx-qz-item').forEach(function(b) { b.addEventListener('click', function() { gidxSheet(+b.getAttribute('data-i')); }); });
         var redo = grammarContent.querySelector('.gx-qz-redo');
         if (redo) redo.addEventListener('click', function() {
-            var ids = []; wrong.forEach(function(l) { if (ids.indexOf(l.i) < 0) ids.push(l.i); });
-            gidxQuizStart(ids); window.scrollTo(0, 0);
+            var ids = [], pbs = [];          // patterns, and passages (a passage with a blank wrong is asked again whole)
+            wrong.forEach(function(l) { if (l.t === 'pass') { if (pbs.indexOf(l.b) < 0) pbs.push(l.b); } else if (ids.indexOf(l.i) < 0) ids.push(l.i); });
+            gidxQuizStart(ids, pbs); window.scrollTo(0, 0);
         });
         grammarContent.querySelector('.gx-qz-again').addEventListener('click', function() { gidxQuizStart(); window.scrollTo(0, 0); });
         grammarContent.querySelector('.gx-qz-set').addEventListener('click', function() { gidxQuizSetup(); });
