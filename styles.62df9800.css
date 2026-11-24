@@ -1241,12 +1241,12 @@
         .backup-warning { color: var(--incorrect-color); font-weight: bold; }
         .backup-text { width: 100%; height: 160px; font-family: monospace; font-size: 0.7rem; border: 1px solid var(--border-light); padding: 8px; margin-bottom: 12px; resize: vertical; }
         /* ----- Word list ----- */
-        #quiz-container, #blank-popup-content { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+        #quiz-container, #blank-popup-content, .gx-qz { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
         /* the reader's text: long-press opens the 単語帳 sheet, so no native selection highlight or callout (answer boxes stay typeable) */
         #ar-view .ar-book, #ar-view .ar-card-q, #ar-view .kj-q, #ar-view .kj-res-sent, #ar-view .ar-ex > div, #ar-view .ab-say, #ar-view .kw-text { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
         /* with a mouse or trackpad, words can be selected (drag or double-click → 単語帳) */
         @media (hover: hover) and (pointer: fine) {
-            #quiz-container, #blank-popup-content, #ar-view .ar-book, #ar-view .ar-card-q, #ar-view .kj-q, #ar-view .kj-res-sent, #ar-view .ar-ex > div, #ar-view .ab-say, #ar-view .kw-text { -webkit-user-select: text; user-select: text; }
+            #quiz-container, #blank-popup-content, .gx-qz, #ar-view .ar-book, #ar-view .ar-card-q, #ar-view .kj-q, #ar-view .kj-res-sent, #ar-view .ar-ex > div, #ar-view .ab-say, #ar-view .kw-text { -webkit-user-select: text; user-select: text; }
         }
         .word-sheet { z-index: 1500; gap: 10px; }
         .word-sheet-row { display: flex; gap: 4px; align-items: center; }

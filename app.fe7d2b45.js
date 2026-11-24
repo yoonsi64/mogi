@@ -15257,8 +15257,8 @@
     var isResettingAll = false;
 
     // ===================== Word list (long press to add) =====================
-    // Long-press any word in a question (sentence, passage, answer choices, word-order pieces, passage blanks)
-    // to add it to 単語帳. The word under the finger is found with Intl.Segmenter, and can be adjusted before saving.
+    // Long-press any word in a question (sentence, passage, answer choices, word-order pieces, passage blanks), in the
+    // 上級読解 text or in the 文型クイズ (question, choices, pieces, 正しい文, 例文) to add it to 単語帳. The word under the finger is found with Intl.Segmenter, and can be adjusted before saving.
     var wordList = loadJSON('jlptWordList', []);
     if (!Array.isArray(wordList)) wordList = [];
     // ---- 単語帳: one card per word ----
@@ -15322,7 +15322,7 @@
     }
     var LONG_PRESS_MS = 500;
     var LONG_PRESS_MOVE_PX = 10;
-    var LONG_PRESS_TARGETS = '.ar-line, .ar-h p, .ar-card-q, .kj-q, .kj-res-sent, .ar-ex > div:first-of-type, .ab-say, .kw-text, .sentence-text, .reading-box p, .reading-box td, .reading-box, .reading-intro, .option-btn, .comp-sentence, .drag-item, .inline-slot, .direction-box, .reading-notes, .question-text';
+    var LONG_PRESS_TARGETS = '.ar-line, .ar-h p, .ar-card-q, .kj-q, .kj-res-sent, .ar-ex > div:first-of-type, .ab-say, .kw-text, .sentence-text, .reading-box p, .reading-box td, .reading-box, .reading-intro, .option-btn, .comp-sentence, .drag-item, .inline-slot, .direction-box, .reading-notes, .question-text, .gx-qz .gx-ext';
     var pressTimer = null, pressStart = null, suppressClickUntil = 0;
     var wordSheetState = null;   // { text, start, end, context, qid, editId }
     var currentWordSort = 'new';
@@ -15649,7 +15649,7 @@
     function collectText(block) {
         var walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, {
             acceptNode: function(n) {
-                return n.parentElement && n.parentElement.closest('rt, rp, .option-prefix, .blank-number, .kw-blank i, .ar-title, .ar-author, .ar-h-title, .ar-h-author, .ar-pgbadge') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+                return n.parentElement && n.parentElement.closest('rt, rp, .option-prefix, .blank-number, .kw-blank i, .ar-title, .ar-author, .ar-h-title, .ar-h-author, .ar-pgbadge, .gx-qz-mkr, .gx-qz-okr') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
             }
         });
         var parts = [], text = '', n;
@@ -16717,6 +16717,24 @@
         if (wordlistView.style.display !== 'none') renderWordListItems();
     }
 
+    // Where a picked word was found: a question (its id), the 上級読解 text (book・title) or the 文型クイズ (the pattern asked).
+    // In the 文型クイズ, once the question is answered the sentence kept with the word is the 正しい文 (the question's own
+    // still has its gap, or the pieces in the order you put them); before that it is what is on the screen.
+    function pressPlace(block, text, start, end) {
+        var place = { qid: null, source: '', context: contextAround(text, start, end) };
+        if (block.closest('#ar-view')) place.source = arSource();
+        else if (block.closest('.gx-qz')) {
+            var q = typeof gidxQuiz !== 'undefined' && gidxQuiz && gidxQuiz.cur;
+            place.source = '文型クイズ' + (q && q.e ? '・' + q.e.n : '');
+            var fullEl = document.querySelector('#gx-qz-ex .mx-ex.gx-ext');
+            if (fullEl && !block.closest('#gx-qz-ex')) {
+                var full = collectText(fullEl).text, at = full.indexOf(text.slice(start, end));
+                if (at >= 0) place.context = contextAround(full, at, at + (end - start));
+            } else if (!fullEl && q && place.context) { (q.wctx = q.wctx || []).push(place.context); gidxQzSave(); }      // see gidxWordCtx; saved so it survives 中断
+        } else place.qid = currentQuestionId();
+        return place;
+    }
+
     function handleLongPress(x, y, target) {
         var block = target.closest(LONG_PRESS_TARGETS);
         if (!block) return false;
@@ -16730,10 +16748,8 @@
         var bounds = notLoneWo(collected, wordBoundsAt(collected.text, idx), x, y);
         if (!bounds) return false;
         if (navigator.vibrate) { try { navigator.vibrate(15); } catch (e) {} }
-        var inReader = !!block.closest('#ar-view');
-        openWordSheet({ text: collected.text, start: bounds.start, end: bounds.end,
-                        context: contextAround(collected.text, bounds.start, bounds.end), qid: inReader ? null : currentQuestionId(),
-                        source: inReader ? arSource() : '' });
+        var place = pressPlace(block, collected.text, bounds.start, bounds.end);
+        openWordSheet({ text: collected.text, start: bounds.start, end: bounds.end, context: place.context, qid: place.qid, source: place.source });
         return true;
     }
 
@@ -16744,7 +16760,7 @@
     }
 
     function inPressArea(el) {
-        return !!(el && el.closest && (el.closest('#quiz-container') || el.closest('#blank-popup-content') || el.closest('#ar-view .ar-body')));
+        return !!(el && el.closest && (el.closest('#quiz-container') || el.closest('#blank-popup-content') || el.closest('#ar-view .ar-body') || el.closest('.gx-qz')));
     }
 
     document.addEventListener('pointerdown', function(e) {
@@ -16810,11 +16826,10 @@
         }
         var nb = notLoneWo(collected, { start: st, end: en }, e.clientX, e.clientY); st = nb.start; en = nb.end;      // を is not first
         suppressClickUntil = Date.now() + 400;          // the click that ends the drag doesn't also answer or open a popup
-        var inReader = !!block.closest('#ar-view');
+        var place = pressPlace(block, collected.text, st, en);
         setTimeout(function() {
             sel.removeAllRanges();
-            openWordSheet({ text: collected.text, start: st, end: en, context: contextAround(collected.text, st, en),
-                            qid: inReader ? null : currentQuestionId(), source: inReader ? arSource() : '' });
+            openWordSheet({ text: collected.text, start: st, end: en, context: place.context, qid: place.qid, source: place.source });
         }, 0);
     }, true);
 
@@ -37194,6 +37209,7 @@
                 return '<button class="gx-qs-chip" data-n="' + n + '" aria-pressed="false">' + n + '問</button>';
             }).join('') + '</div>' +
             '<div class="gx-qs-note" id="gx-qs-note"></div><div class="gx-qs-note gx-qs-rest" id="gx-qs-rest"></div>' +
+            '<div class="gx-qs-note gx-qs-word">問題・選択肢・例文の言葉を長押しすると、単語帳に追加できます（マウスならドラッグかダブルクリック）。</div>' +
             '<button class="practice-btn gx-qs-go">はじめる</button></div>';
         var sync = function() {
             grammarContent.querySelectorAll('.gx-qs-type').forEach(function(b) { var on = S.types.indexOf(b.getAttribute('data-t')) >= 0; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
@@ -37453,6 +37469,30 @@
         }) + '</span>';
     }
     function gidxQuizTop() { return '<div class="quiz-topbar"><button class="quiz-close gx-qz-quit" aria-label="終了して戻る">×</button><span class="quiz-title">文型クイズ</span></div>'; }
+    // Words put in the 単語帳 before the question was answered were kept with the question as it stood (a gap in the
+    // sentence, pieces not yet placed, or one choice on its own). Once the 正しい文 is on the screen they get that instead.
+    function gidxWordCtx(q) {
+        var fullEl = document.querySelector('#gx-qz-ex .mx-ex.gx-ext');
+        if (!q.wctx || !q.wctx.length || !fullEl) return;
+        var full = collectText(fullEl).text, changed = false;
+        myWords().forEach(function(e) {
+            var places = [e].concat(e.others || []), seen = {};
+            places.forEach(function(p) {
+                if (!p.context || p.qid || q.wctx.indexOf(p.context) < 0 || String(p.source || '').indexOf('文型クイズ') !== 0) return;
+                var at = full.indexOf(e.word);
+                p.context = at >= 0 ? contextAround(full, at, at + e.word.length) : contextAround(full, 0, 1); changed = true;
+            });
+            if (e.others) {                    // the same sentence twice (pressed before and after answering) is one place
+                seen[placeKey(wordPlaces(e)[0])] = 1;
+                e.others = e.others.filter(function(p) { var k = placeKey(p); if (seen[k]) return false; seen[k] = 1; return true; });
+                if (!e.others.length) delete e.others;
+            }
+        });
+        q.wctx = [];
+        if (!changed) return;
+        try { if (activeDeck) localStorage.setItem('jlptWordList', JSON.stringify(myWordList)); else saveWordList(); } catch (er) {}
+    }
+
     function gidxQuizRender() {
         var Q = gidxQuiz; if (!Q) return;
         if (Q.pos >= Q.items.length) { gidxQzForget(); gidxQuizResult(); return; }
@@ -37511,6 +37551,7 @@
             if (say) say.addEventListener('click', function() { speakText(gidxRuby(full).replace(/<\/?b>/g, '')); });
             var koBtn = box.querySelector('.gx-ko-btn'), ko = box.querySelector('.gx-ko');
             if (koBtn) koBtn.addEventListener('click', function() { ko.hidden = !ko.hidden; koBtn.setAttribute('aria-expanded', ko.hidden ? 'false' : 'true'); koBtn.classList.toggle('on', !ko.hidden); });
+            gidxWordCtx(q);
             next.disabled = false;
         };
         if (!comp) {
