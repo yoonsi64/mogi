@@ -36780,10 +36780,10 @@
     // 文型クイズの問題集 (grambank): 例文の穴うめ and 文の組み立て problems written for the quiz, by pattern name:
     // { f: { name: [[difficulty, sentence with （　　）, right, wrong, wrong, wrong]] }, c: { name: [[difficulty, before, piece ×4 in order, after, ★ place]] } }.
     // Difficulty is on the app's scale (3 N1標準, 4 むずかしい). A pattern that has them is asked from here, not from its index examples.
-    var GBANK_SRC = 'grambank.b76b5426.js';
+    var GBANK_SRC = 'grambank.cab6e952.js';
     // 文章の文法 (grampass): passages of about 750 characters with five blanks each, as in JLPT 問題7, written for the quiz:
     // { p: [[difficulty, title, text (¶ between paragraphs, 【1】…【5】 at the blanks), [[right, wrong, wrong, wrong, note] ×5], Korean translation]] }
-    var GPASS_SRC = 'grampass.aafc0663.js', gidxPass = null;
+    var GPASS_SRC = 'grampass.7c932415.js', gidxPass = null;
     var GIDX_SRC = 'gramidx.2c5c4a8e.js', gidxLoading = false, gidxWaiters = [], gidxByPat = null, gidxE = null, gidxSim = {};
     var grammarView = document.getElementById('grammar-view'), grammarContent = document.getElementById('grammar-content');
     var gidxState = { q: '', missed: false, lv: 0, open: -1 };          // kept while the app is open: the search, the filters, the open entry
@@ -36800,6 +36800,38 @@
     function gidxKana(y) { var c = String(y || '').charAt(0).normalize('NFD').charAt(0); return GIDX_SMALL[c] || c; }
     // an example as stored → HTML with furigana (hidden with the 設定's ふりがな off, like everywhere else)
     function gidxRuby(x) { return String(x).replace(/\{([^|{}]+)\|([^{}]+)\}/g, '<ruby>$1<rt>$2</rt></ruby>'); }
+    // ふりがな for the 正しい文 of a 問題集 problem or a 文章の文法 passage. The data carries only the readings: fu lists them
+    // in the order of the text's kanji words, "よみ" for the rest of a run of kanji and "2よみ" for its next two kanji.
+    // html is text with <b> tags; a reading never reaches across a tag.
+    var GIDX_KANJI = /[㐀-䶿一-鿿豈-﫿々〆]/;
+    function gidxFuri(html, fu) {
+        if (!fu) return html;
+        var toks = String(fu).split(' '), ti = 0, out = '', i = 0, n = html.length;
+        while (i < n) {
+            var ch = html[i];
+            if (ch === '<') { var j = html.indexOf('>', i); if (j < 0) j = n - 1; out += html.slice(i, j + 1); i = j + 1; continue; }
+            if (ti >= toks.length || !GIDX_KANJI.test(ch)) { out += ch; i++; continue; }
+            var t = toks[ti++], m = /^(\d)(.+)$/.exec(t), need = m ? +m[1] : 99, s = i;
+            while (i < n && i - s < need && GIDX_KANJI.test(html[i])) i++;
+            out += '<ruby>' + html.slice(s, i) + '<rt>' + (m ? m[2] : t) + '</rt></ruby>';
+        }
+        return out;
+    }
+    // the ふりがな button beside 正しい文 in the quiz's 解説: shows or hides the readings over that sentence. One switch
+    // for every kind of question, remembered; it also shows them when ふりがな is off in 設定.
+    var GIDX_FURI_KEY = 'jlptGramQuizFuri', gidxFuriOn = false;
+    try { gidxFuriOn = localStorage.getItem(GIDX_FURI_KEY) === '1'; } catch (e) {}
+    function gidxFuriBtn() { return '<button class="gx-furi-btn' + (gidxFuriOn ? ' on' : '') + '" aria-pressed="' + gidxFuriOn + '">ふりがな</button>'; }
+    function gidxFuriBind(box) {
+        var b = box.querySelector('.gx-furi-btn'), full = box.querySelector('.gx-full');
+        if (!b || !full) return;
+        b.addEventListener('click', function() {
+            gidxFuriOn = !gidxFuriOn;
+            try { localStorage.setItem(GIDX_FURI_KEY, gidxFuriOn ? '1' : '0'); } catch (e) {}
+            b.classList.toggle('on', gidxFuriOn); b.setAttribute('aria-pressed', String(gidxFuriOn));
+            full.classList.toggle('gx-furi-off', !gidxFuriOn);
+        });
+    }
     function gidxLv(e) { return '<span class="gx-lv l' + e.lv + '">N' + e.lv + '</span>'; }
     function gidxLoad(cb) {
         if (gidxE) { if (cb) cb(); return; }
@@ -36812,7 +36844,7 @@
             if (!failed && window.MogiGramIdx) {
                 gidxByPat = {}; gidxSim = {}; gidxSlots = {}; gidxSlotsF = {};
                 var GB = window.MogiGramBank || {};
-                gidxPass = ((window.MogiGramPass || {}).p || []).map(function(a, b) { return { b: b, d: a[0], title: a[1], t: a[2], bl: a[3], ko: a[4] }; });
+                gidxPass = ((window.MogiGramPass || {}).p || []).map(function(a, b) { return { b: b, d: a[0], title: a[1], t: a[2], bl: a[3], ko: a[4], fu: a[5] || null }; });
                 gidxE = window.MogiGramIdx.e.map(function(a, i) {
                     var e = { i: i, n: a[0], y: a[1], j: a[2], k: a[3], x: a[4], g: a[5], lv: a[6], c: a[7], s: a[8], sn: a[9], kd: a[10], cz: a[11] || [], cp: a[12] || null, xk: a[13] || [] };          // xk: Korean gloss of each example
                     e.cz.forEach(function(c, k) {
@@ -37489,7 +37521,7 @@
         if (t === 'cloze' && e.bf && (item.b != null && e.bf[item.b] || gidxBankList(e, 'f'))) {
             var bf = item.b != null && e.bf[item.b] ? e.bf[item.b] : gidxBankNext(e, 'f');          // two blanks: the choices are pairs, "a／b"
             item.b = e.bf.indexOf(bf);
-            q.d = bf[0]; q.ko = bf[6] || ''; q.sent = bf[1].replace(/（　　）/g, '\u0001'); q.parts = bf[2].split('／'); q.key = gidxQKey(e, 'cloze', bf[1]);
+            q.d = bf[0]; q.ko = bf[6] || ''; q.fu = bf[7] || ''; q.sent = bf[1].replace(/（　　）/g, '\u0001'); q.parts = bf[2].split('／'); q.key = gidxQKey(e, 'cloze', bf[1]);
             q.opts = bf.slice(2, 6).map(function(o, n) { return { html: o.replace(/／/g, ' ／ '), ok: n === 0 }; });
         } else if (t === 'cloze') {
             var c = gidxClozeMake(e);
@@ -37499,7 +37531,7 @@
         if (t === 'comp' && e.bc && (item.b != null && e.bc[item.b] || gidxBankList(e, 'c'))) {
             var bc = item.b != null && e.bc[item.b] ? e.bc[item.b] : gidxBankNext(e, 'c');
             item.b = e.bc.indexOf(bc);
-            q.d = bc[0]; q.ko = bc[8] || ''; q.frags = bc.slice(2, 6); q.star = bc[7]; q.key = gidxQKey(e, 'comp', bc[1] + q.frags.join('') + bc[6]);
+            q.d = bc[0]; q.ko = bc[8] || ''; q.fu = bc[9] || ''; q.frags = bc.slice(2, 6); q.star = bc[7]; q.key = gidxQKey(e, 'comp', bc[1] + q.frags.join('') + bc[6]);
             q.tpl = bc[1] + '\u0001\u0001\u0001\u0001' + bc[6]; q.full = bc[1] + q.frags.join('') + bc[6];
             do { q.order = shuffleInPlace([0, 1, 2, 3]); } while (q.order.join('') === '0123');
             return q;
@@ -37606,15 +37638,17 @@
             // 正しい文: the whole sentence with the answer in it, a button that reads it aloud, and a 한국어 button that
             // opens its Korean gloss (問題集 problems carry their own; questions made from an index example use that example's)
             var k = 0, full = comp ? (q.full || e.x[q.k]) : q.t === 'cloze' ? q.sent.replace(/\u0001/g, function() { return '<b>' + q.parts[k++] + '</b>'; }) : '';
-            if (full) extra = '<div class="explain-sub gx-full-h">正しい文 <button class="speak-btn gx-say-all">🔊 読む</button>' +
+            var fullHtml = full ? gidxFuri(gidxRuby(full), q.fu) : '';          // readings: the index example's own, or the 問題集 problem's
+            if (full) extra = '<div class="explain-sub gx-full-h">正しい文 <button class="speak-btn gx-say-all">🔊 読む</button>' + (fullHtml.indexOf('<rt>') >= 0 ? gidxFuriBtn() : '') +
                 (q.ko ? '<button class="gx-ko-btn" aria-expanded="false">한국어</button>' : '') + '</div>' +
-                '<div class="mx-ex gx-ext">' + gidxRuby(full) + '</div>' +
+                '<div class="mx-ex gx-ext gx-full' + (gidxFuriOn ? '' : ' gx-furi-off') + '">' + fullHtml + '</div>' +
                 (q.ko ? '<div class="gx-ko" lang="ko" hidden>' + escapeHtml(q.ko) + '</div>' : '');
             box.innerHTML = '<div class="explain-card mx"><div class="explain-title">解説</div>' + (extra || '') +
                 '<div class="mx-head"><b>' + escapeHtml(e.n) + '</b>' + gidxLv(e) + '</div>' +
                 '<div class="mx-mean"><span class="mx-k">意味</span>' + escapeHtml(e.j) + '<span class="explain-kr" lang="ko">' + escapeHtml(e.k) + '</span></div>' +
                 gidxDetailHtml(e) + '</div>';
             gidxBindDetail(box, e, function(i) { gidxSheet(i); });
+            gidxFuriBind(box);
             var say = box.querySelector('.gx-say-all');
             if (say) say.addEventListener('click', function() { speakText(gidxRuby(full).replace(/<\/?b>/g, '')); });
             var koBtn = box.querySelector('.gx-ko-btn'), ko = box.querySelector('.gx-ko');
@@ -37678,7 +37712,7 @@
         var p = gidxPass[item.b];
         return { t: 'pass', b: item.b, key: gidxPassKey(p), ord: p.bl.map(function() { return shuffleInPlace([0, 1, 2, 3]); }) };          // ord[blank][shown place] = which choice (0 is the right one)
     }
-    function gidxPassParas(text, each) { return String(text).split('¶').map(function(par) { return '<p class="gx-ext">' + each(escapeHtml(par.replace(/^[　\s]+/, ''))) + '</p>'; }).join(''); }
+    function gidxPassParas(text, each) { return String(text).split('¶').map(function(par, j) { return '<p class="gx-ext">' + each(escapeHtml(par.replace(/^[　\s]+/, '')), j) + '</p>'; }).join(''); }
     function gidxPassRender() {
         var Q = gidxQuiz, item = Q.items[Q.pos], p = gidxPass[item.b], n = Q.items.length, at = gidxQzAt(Q);
         var q = Q.cur && Q.cur.t === 'pass' && Q.cur.b === item.b && Array.isArray(Q.cur.ord) && Q.cur.ord.length === p.bl.length ? Q.cur : (Q.cur = gidxPassMake(item));
@@ -37763,14 +37797,15 @@
                     return '<div class="gx-pn ' + (oks[k] ? 'ok' : 'ng') + '"><i>' + (k + 1) + '</i><div><b class="gx-ext">' + escapeHtml(bl[0]) + '</b>' +
                         (oks[k] ? '' : '<s>' + escapeHtml(bl[q.ord[k][picks[k]]]) + '</s>') + '<span class="gx-ext">' + escapeHtml(bl[4] || '') + '</span></div></div>';
                 }).join('') + '</div>' +
-                '<div class="explain-sub gx-full-h">正しい文 <button class="speak-btn gx-say-all">🔊 読む</button>' + (p.ko ? '<button class="gx-ko-btn" aria-expanded="false">한국어</button>' : '') + '</div>' +
-                '<div class="mx-ex gx-ext gx-pass-full">' + gidxPassParas(p.t, answer).replace(/<p class="gx-ext">/g, '<p>') + '</div>' +
+                '<div class="explain-sub gx-full-h">正しい文 <button class="speak-btn gx-say-all">🔊 読む</button>' + (p.fu ? gidxFuriBtn() : '') + (p.ko ? '<button class="gx-ko-btn" aria-expanded="false">한국어</button>' : '') + '</div>' +
+                '<div class="mx-ex gx-ext gx-pass-full gx-full' + (gidxFuriOn ? '' : ' gx-furi-off') + '">' + gidxPassParas(p.t, function(h, j) { return gidxFuri(answer(h), p.fu && p.fu[j]); }).replace(/<p class="gx-ext">/g, '<p>') + '</div>' +
                 (p.ko ? '<div class="gx-ko gx-pass-ko" lang="ko" hidden>' + gidxPassParas(p.ko, function(h) { return h; }).replace(/<p class="gx-ext">/g, '<p>') + '</div>' : '') + '</div>';
             box.querySelector('.gx-say-all').addEventListener('click', function() {
                 speakText(String(p.t).split('¶').map(function(par) { return escapeHtml(par.replace(/【([1-5])】/g, function(m, k) { return p.bl[+k - 1][0]; })); }).join('\n'));
             });
             var koBtn = box.querySelector('.gx-ko-btn'), ko = box.querySelector('.gx-ko');
             if (koBtn) koBtn.addEventListener('click', function() { ko.hidden = !ko.hidden; koBtn.setAttribute('aria-expanded', ko.hidden ? 'false' : 'true'); koBtn.classList.toggle('on', !ko.hidden); });
+            gidxFuriBind(box);
             gidxWordCtx(q);
             next.disabled = false;
         });

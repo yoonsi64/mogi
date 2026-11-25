@@ -4063,3 +4063,12 @@ html.dark .gx-pb.ng { background: rgba(240, 128, 128, 0.16); }
 .gx-pn span { font-size: 0.86rem; line-height: 1.65; color: var(--text-sub); }
 .gx-pass-full { line-height: 2; }
 .gx-qz-pitem { cursor: default; }
+
+/* 文型クイズ › 解説 › 正しい文: the ふりがな button */
+.gx-furi-btn { display: inline-flex; align-items: center; min-height: 32px; padding: 4px 12px; border: 1px solid var(--border-light); border-radius: 16px; background: var(--surface); color: var(--text-main); font: inherit; font-size: 0.8rem; font-weight: bold; cursor: pointer; margin: 0; width: auto; }
+.gx-furi-btn.on { border-color: var(--active-blue); color: var(--active-blue); background: var(--accent-soft); }
+.gx-full ruby { ruby-position: over; }
+.gx-full rt { font-size: 0.5em; font-weight: normal; color: var(--text-sub); letter-spacing: 0; user-select: none; -webkit-user-select: none; }
+.gx-full:not(.gx-furi-off), .explain-card.mx .gx-full:not(.gx-furi-off) { line-height: 2.25; }
+.gx-full.gx-furi-off rt { display: none; }
+html.no-furigana .gx-full:not(.gx-furi-off) rt { display: revert; }
