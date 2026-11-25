@@ -36981,7 +36981,7 @@
     // 文章の文法 (grampass): passages of about 750 characters with five blanks each, as in JLPT 問題7, written for the quiz:
     // { p: [[difficulty, title, text (¶ between paragraphs, 【1】…【5】 at the blanks), [[right, wrong, wrong, wrong, note] ×5],
     //        Korean translation, [readings of each paragraph]]] }
-    var GPASS_SRC = 'grampass.7c932415.js', gidxPass = null;
+    var GPASS_SRC = 'grampass.a1ca0697.js', gidxPass = null;
     var GIDX_SRC = 'gramidx.2c5c4a8e.js', gidxLoading = false, gidxWaiters = [], gidxByPat = null, gidxE = null, gidxSim = {};
     var grammarView = document.getElementById('grammar-view'), grammarContent = document.getElementById('grammar-content');
     var gidxState = { q: '', missed: false, lv: 0, open: -1 };          // kept while the app is open: the search, the filters, the open entry
