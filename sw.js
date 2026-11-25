@@ -2,7 +2,7 @@
 // The page itself (index.html) is always asked for fresh, so updates show right away; the big script and style
 // files carry a fingerprint in their names and never change once published, so they are kept on the device and
 // served from there, and only re-downloaded when a new version has a new name.
-var ASSETS = ["kankenprac.a5ce6863.js", "hanjastrokes.1a0b52ba.js", "kanjistrokes.9f373bbe.js", "glyphs.d5166e4c.js", "ambience.5574ca6b.js", "atmos.8047965f.js", "app.f5d5281f.js", "explain.f2170728.js", "readex.0aed5d2e.js", "garden.75091cb3.js", "gistsync.419c20f9.js", "omikuji.3243c2a2.js", "opening.941aac6c.js", "styles.a4aa9c13.css", "town.5b7fc45d.js", "wordseg.bd5ebcae.js", "grampat.6868e2c7.js", "gramidx.2c5c4a8e.js", "grambank.cab6e952.js", "grampass.7c932415.js", "ttssafe.3624e9c8.js"];
+var ASSETS = ["kankenprac.a5ce6863.js", "hanjastrokes.1a0b52ba.js", "kanjistrokes.9f373bbe.js", "glyphs.d5166e4c.js", "ambience.5574ca6b.js", "atmos.8047965f.js", "app.4f86c782.js", "explain.f2170728.js", "readex.0aed5d2e.js", "garden.75091cb3.js", "gistsync.419c20f9.js", "omikuji.3243c2a2.js", "opening.941aac6c.js", "styles.a4aa9c13.css", "town.5b7fc45d.js", "wordseg.bd5ebcae.js", "grampat.6868e2c7.js", "gramidx.2c5c4a8e.js", "grambank.cab6e952.js", "grampass.7c932415.js", "ttssafe.3624e9c8.js"];
 var CACHE = 'mogi-' + ASSETS.join('|').length + '-' + ASSETS.map(function(a) { return a.split('.')[1]; }).join('');
 var FINGERPRINTED = /\.[0-9a-f]{8}\.(js|css)$/;
 var ART = 'mogi-art-1';           // the prints: kept across app updates

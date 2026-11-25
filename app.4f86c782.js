@@ -15476,6 +15476,44 @@
         try { localStorage.setItem('jlptWordList', JSON.stringify(wordList)); } catch (e) {}
         setTimeout(function() { if (typeof showToast === 'function') showToast('単語帳の重複を' + wordDupesMerged + '件まとめました'); }, 3000);
     }
+    // ---- 単語帳: a one-time fix of the learner's own words (2026-11-25) ----
+    // Each word picked by long press got a simple Japanese and a Korean meaning for its sentence, broken entries were
+    // repaired (cut-off words, wrong readings) and three removed. The changes are in WORDFIX_SRC, loaded once a few seconds
+    // after start; an entry is changed only when its id matches and it still has the word it had then. jlptWordFix
+    // remembers that it was done (it goes into backups and the online save too), so it runs once.
+    var WORDFIX_SRC = 'wordfix.2f8d7922.js', WORDFIX_ID = 'wordfix-2026-11-25';
+    function wordFixOnce() {
+        try { if (localStorage.getItem('jlptWordFix') === WORDFIX_ID) return; } catch (e) { return; }
+        var sc = document.createElement('script');
+        sc.src = WORDFIX_SRC;
+        sc.onload = function() {
+            var F = window.MogiWordFix, list = activeDeck ? myWordList : wordList;
+            if (!F || F.id !== WORDFIX_ID || !Array.isArray(list)) return;
+            var byId = {}, n = 0, gone = {};
+            list.forEach(function(e) { if (e && e.id) byId[e.id] = e; });
+            F.set.forEach(function(r) {
+                var e = byId[r[0]];
+                if (!e || normWord(e.word) !== normWord(r[1])) return;
+                e.word = r[2]; e.reading = r[3]; e.furigana = r[4]; e.readingChecked = true; e.meaning = r[5]; e.dictFor = r[2];
+                if (r[6]) e.dictForm = r[6]; else delete e.dictForm;
+                if (!r[7]) { delete e.dictAlts; delete e.dictChecked; }
+                n++;
+            });
+            F.del.forEach(function(r) { var e = byId[r[0]]; if (e && normWord(e.word) === normWord(r[1])) gone[r[0]] = 1; });
+            var kept = list.filter(function(e) { return !(e && gone[e.id]); }), m = list.length - kept.length;
+            if (activeDeck) myWordList = kept; else wordList = kept;
+            try {
+                if (n || m) localStorage.setItem('jlptWordList', JSON.stringify(kept));
+                localStorage.setItem('jlptWordFix', WORDFIX_ID);
+            } catch (e) { return; }
+            if (!n && !m) return;
+            if (!activeDeck && wordlistView && wordlistView.style.display === 'block') renderWordListItems();
+            if (typeof showToast === 'function') showToast('単語帳の' + n + '語の意味を新しくしました' + (m ? '（' + m + '語を削除）' : ''));
+        };
+        sc.onerror = function() { if (sc.parentNode) sc.parentNode.removeChild(sc); };   // offline: try again next start
+        document.head.appendChild(sc);
+    }
+    setTimeout(wordFixOnce, 2500);
     var LONG_PRESS_MS = 500;
     var LONG_PRESS_MOVE_PX = 10;
     var LONG_PRESS_TARGETS = '.ar-line, .ar-h p, .ar-card-q, .kj-q, .kj-res-sent, .ar-ex > div:first-of-type, .ab-say, .kw-text, .sentence-text, .reading-box p, .reading-box td, .reading-box, .reading-intro, .option-btn, .comp-sentence, .drag-item, .inline-slot, .direction-box, .reading-notes, .question-text, .gx-qz .gx-ext';
