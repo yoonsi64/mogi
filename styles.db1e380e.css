@@ -4032,35 +4032,15 @@ body.gx-quiz-on header, body.gx-quiz-on .bottom-nav, body.gx-quiz-on #subnav { d
 .gx-qz .comp-sentence.gx-ext { line-height: 2.6; }
 .gx-qz .explain-sub .speak-btn { font-family: inherit; }
 
-/* 文型クイズ › 文章の文法 (a passage with five blanks) */
+/* 文型クイズ › 文章の文法 (a passage with five blanks): set like the 文章の文法 of the problem sets (.passage-text,
+   .blank-number, .inline-slot, the #blank-popup sheet); only the paragraphs are its own */
 .gx-qs-type[data-t="pass"] { grid-column: 1 / -1; }
-.gx-pass { margin: 12px 0 4px; padding: 14px 14px 6px; border: 1px solid var(--border-light); border-radius: 10px; background: var(--surface); font-size: 1.02rem; line-height: 2.2; overflow-wrap: anywhere; }
-.gx-pass p, .gx-pass-full p, .gx-pass-ko p { margin: 0 0 8px; text-indent: 1em; }
+.gx-pass { overflow-wrap: anywhere; }
+.gx-pass p { margin: 0 0 2.15em; text-indent: 0; }                    /* a blank line between paragraphs, as there */
+.gx-pass p:last-of-type { margin-bottom: 0; }
+.gx-pass .blank-number:focus-visible, .gx-pass .inline-slot:focus-visible { outline: 2px solid var(--active-blue); outline-offset: 2px; }
+.gx-pass-full p, .gx-pass-ko p { margin: 0 0 8px; text-indent: 1em; }
 .gx-pass-ko p { text-indent: 0; }
-.gx-pb { display: inline-flex; align-items: center; gap: 5px; min-width: 4.8em; max-width: 100%; min-height: 1.9em; margin: 0 3px; padding: 1px 8px 1px 3px; border: 1px solid var(--active-blue); border-radius: 6px; background: var(--accent-soft); color: var(--text-main); font: inherit; line-height: 1.45; text-indent: 0; text-align: left; vertical-align: baseline; cursor: pointer; }
-.gx-pb i, .gx-pq-h i, .gx-pn > i { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 1.55em; height: 1.55em; border-radius: 4px; background: var(--active-blue); color: #fff; font-style: normal; font-size: 0.8em; font-weight: bold; }
-.gx-pb b { font-weight: bold; }
-.gx-pb.ok { border-color: var(--correct-color); background: #e6ffe6; }
-.gx-pb.ng { border-color: var(--incorrect-color); background: #ffe6e6; }
-.gx-pb.ok i, .gx-pn.ok > i { background: var(--correct-color); }
-.gx-pb.ng i, .gx-pn.ng > i { background: var(--incorrect-color); }
-html.dark .gx-pb.ok { background: rgba(111, 211, 138, 0.16); }
-html.dark .gx-pb.ng { background: rgba(240, 128, 128, 0.16); }
-.gx-pqs { display: flex; flex-direction: column; gap: 14px; margin-top: 16px; }
-.gx-pq-h { display: flex; align-items: flex-start; gap: 8px; width: 100%; min-height: 32px; margin: 0 0 4px; padding: 4px 0; border: none; background: none; color: var(--text-main); font: inherit; font-size: 1rem; text-align: left; cursor: pointer; }
-.gx-pq-h i { margin-top: 1px; }
-.gx-pq-x { min-width: 0; font-size: 0.86rem; line-height: 1.6; color: var(--text-sub); overflow-wrap: anywhere; }
-.gx-pq-x u { text-decoration: none; font-weight: bold; color: var(--active-blue); }
-.gx-pq .options { margin-top: 0; }
-.gx-pz .option-btn.selected { border-color: var(--active-blue); background: var(--accent-soft); box-shadow: 0 0 0 1px var(--active-blue); }
-.gx-pz .option-btn.selected .option-prefix { color: var(--active-blue); border-color: var(--active-blue); }
-.gx-pn-list { display: flex; flex-direction: column; gap: 10px; margin: 4px 0 14px; }
-.gx-pn { display: flex; gap: 8px; align-items: flex-start; }
-.gx-pn > i { margin-top: 2px; font-size: 0.78rem; }
-.gx-pn > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.gx-pn b { font-size: 0.98rem; }
-.gx-pn s { font-size: 0.85rem; color: var(--incorrect-color); }
-.gx-pn span { font-size: 0.86rem; line-height: 1.65; color: var(--text-sub); }
 .gx-pass-full { line-height: 2; }
 .gx-qz-pitem { cursor: default; }
 

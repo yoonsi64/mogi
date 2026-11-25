@@ -16723,7 +16723,7 @@
     function pressPlace(block, text, start, end) {
         var place = { qid: null, source: '', context: contextAround(text, start, end) };
         if (block.closest('#ar-view')) place.source = arSource();
-        else if (block.closest('.gx-qz')) {
+        else if (block.closest('.gx-qz') || (block.closest('#blank-popup') && blankPopup.getAttribute('data-gx'))) {
             var q = typeof gidxQuiz !== 'undefined' && gidxQuiz && gidxQuiz.cur;
             place.source = '文型クイズ' + (q && q.e ? '・' + q.e.n : q && q.t === 'pass' ? '・文章の文法' : '');
             var fullEl = document.querySelector('#gx-qz-ex .mx-ex.gx-ext');
@@ -19872,6 +19872,7 @@
     // a blank's number as the book prints it (公式問題集 numbers them 41–45)
     function blankNum(q, i) { return (q.blankBase || 0) + i + 1; }
     function openBlankPopup(q, bIdx, isReadOnly) {
+        blankPopup.removeAttribute('data-gx');          // (the 文型クイズ's 文章の文法 uses this sheet too: gidxPassRender)
         var blank = q.blanks[bIdx];
         var saved = userAnswers[q.id];
         var finalAnswers = (typeof saved === 'string') ? saved.split('|') : q.blanks.map(function() { return ''; });
@@ -22223,7 +22224,7 @@
         });
     }
     function refreshLineNumbers() {
-        document.querySelectorAll('#quiz-container .passage-lined').forEach(addLineNumbers);
+        document.querySelectorAll('#quiz-container .passage-lined, .gx-qz .passage-lined').forEach(addLineNumbers);
     }
     var lineNoTimer = null;
     window.addEventListener('resize', function() { clearTimeout(lineNoTimer); lineNoTimer = setTimeout(refreshLineNumbers, 200); });
@@ -37111,7 +37112,7 @@
         p2m: '次の文型の意味として最もよいものを、1・2・3・4から一つ選びなさい。',
         cloze: '次の文の［　　］に入れるのに最もよいものを、1・2・3・4から一つ選びなさい。',
         comp: '次の文の★に入る最もよいものを選びなさい。（言葉をタップしてから、入れたい空欄をタップしてください）',
-        pass: '次の文章を読んで、文章全体の内容を考えて、（1）から（5）の中に入る最もよいものを、1・2・3・4から一つ選びなさい。（文章の空欄をタップすると、その選択肢へ進みます）'
+        pass: '次の文章を読んで、文章全体の趣旨を踏まえて、1から5の中に入る最もよいものを、1・2・3・4から一つ選びなさい。'
     };
     // whether entry e can be asked as kind t: every pattern has a meaning; 例文の穴うめ and 文の組み立て need an example that works
     // 難易度 on the setup page (S.d: 0 all, 3 N1標準, 4 むずかしい and above): 穴うめ and 組み立て are then asked only from
@@ -37706,25 +37707,34 @@
         });
         draw();
     }
-    // ----- 文章の文法: one passage with five blanks, answered together (解答する) as in the test. Tapping a blank in the
-    // passage goes to its choices; tapping the number above the choices goes back to the blank.
+    // ----- 文章の文法: one passage with five blanks, set and answered like the 文章の文法 questions of the problem sets.
+    // Tap a numbered blank, choose in the sheet that comes up, and that blank is marked at once (your choice with ○ or ×)
+    // with its 解説 under the passage; an answered blank opens the sheet again, to look. The choices made are kept with
+    // the question (q.picks) so a quiz left in the middle comes back as it was; the passage counts as five questions
+    // and goes into the log when its last blank is answered.
     function gidxPassMake(item) {
         var p = gidxPass[item.b];
-        return { t: 'pass', b: item.b, key: gidxPassKey(p), ord: p.bl.map(function() { return shuffleInPlace([0, 1, 2, 3]); }) };          // ord[blank][shown place] = which choice (0 is the right one)
+        return { t: 'pass', b: item.b, key: gidxPassKey(p), ord: p.bl.map(function() { return shuffleInPlace([0, 1, 2, 3]); }),          // ord[blank][shown place] = which choice (0 is the right one)
+            picks: p.bl.map(function() { return -1; }) };                                                                             // picks[blank] = the shown place chosen, -1 not yet
     }
     function gidxPassParas(text, each) { return String(text).split('¶').map(function(par, j) { return '<p class="gx-ext">' + each(escapeHtml(par.replace(/^[　\s]+/, '')), j) + '</p>'; }).join(''); }
+    // the 解説 of one blank, laid out as buildBlankExplanation does: the answer, why, and the other choices
+    function gidxPassNote(p, q, k, titled) {
+        var bl = p.bl[k], j = q.picks[k], wrong = j >= 0 && q.ord[k][j] !== 0;
+        return '<div class="mx-head">' + (titled ? '空欄' + (k + 1) + '　' : '') + '正解「<b class="gx-ext">' + escapeHtml(bl[0]) + '</b>」</div>' +
+            (bl[4] ? '<div class="mx-point gx-ext">' + escapeHtml(bl[4]) + '</div>' : '') +
+            '<div class="explain-sub">ほかの選択肢</div><ul class="explain-opts">' + q.ord[k].map(function(o, x) {
+                if (o === 0) return '';
+                var mine = wrong && x === j;
+                return '<li' + (mine ? ' class="explain-mine"' : '') + '>' + CIRCLED[x] + ' <span class="gx-ext">' + escapeHtml(bl[o]) + '</span>' + (mine ? '<span class="explain-tag">あなたの答え</span>' : '') + '</li>';
+            }).join('') + '</ul>';
+    }
     function gidxPassRender() {
-        var Q = gidxQuiz, item = Q.items[Q.pos], p = gidxPass[item.b], n = Q.items.length, at = gidxQzAt(Q);
-        var q = Q.cur && Q.cur.t === 'pass' && Q.cur.b === item.b && Array.isArray(Q.cur.ord) && Q.cur.ord.length === p.bl.length ? Q.cur : (Q.cur = gidxPassMake(item));
+        var Q = gidxQuiz, item = Q.items[Q.pos], p = gidxPass[item.b], n = Q.items.length, at = gidxQzAt(Q), nb = p.bl.length;
+        var q = Q.cur && Q.cur.t === 'pass' && Q.cur.b === item.b && Array.isArray(Q.cur.ord) && Q.cur.ord.length === nb ? Q.cur : (Q.cur = gidxPassMake(item));
+        if (!Array.isArray(q.picks) || q.picks.length !== nb || q.picks.some(function(j) { return !(j >= -1 && j <= 3); })) q.picks = p.bl.map(function() { return -1; });
         Q.answered = false; gidxQzSave();
-        var around = function(k) {          // the words on either side of blank k, shown above its choices
-            var plain = String(p.t).replace(/[¶　]/g, ''), at = plain.indexOf('【' + (k + 1) + '】');
-            var mark = function(x) { return x.replace(/【([1-5])】/g, '（$1）'); };
-            var L = mark(plain.slice(0, at)), R = mark(plain.slice(at + 3)), end = R.search(/[。、]/);
-            L = L.slice(L.lastIndexOf('。') + 1); if (L.length > 16) L = '…' + L.slice(-15);
-            R = R.slice(0, end >= 0 && end < 12 ? end + 1 : 10); if (!/。$/.test(R)) R += '…';
-            return escapeHtml(L) + '<u>（' + (k + 1) + '）</u>' + escapeHtml(R);
-        };
+        blankPopup.classList.remove('active');
         grammarContent.innerHTML = '<div class="gx-qz gx-pz">' + gidxQuizTop() + '<div class="question-card">' +
             '<div class="question-header"><div class="q-progress-row">' +
             '<div class="q-progress" role="progressbar" aria-valuemin="1" aria-valuemax="' + at.total + '" aria-valuenow="' + at.to + '"><div class="q-progress-fill" style="width:' + Math.round(at.to / at.total * 100) + '%"></div></div>' +
@@ -37732,83 +37742,87 @@
             '<div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><span class="question-type">文型さくいん - 文章の文法</span>' +
             (p.d ? '<span class="gx-qz-diff" style="--lv:' + DIFF_COLORS[p.d - 1] + '">' + DIFF_NAMES[p.d - 1] + '</span>' : '') + '</div>' +
             '<div class="direction-box">' + GIDX_QZ_DIR.pass + '</div></div>' +
-            '<div class="gx-pass" id="gx-pass">' + gidxPassParas(p.t, function(h) {
-                return h.replace(/【([1-5])】/g, function(m, k) { return '<button type="button" class="gx-pb" data-k="' + (+k - 1) + '" aria-label="空欄' + k + '"><i>' + k + '</i><b></b></button>'; });
-            }) + '</div>' +
-            '<div class="gx-pqs">' + p.bl.map(function(bl, k) {
-                return '<div class="gx-pq" data-k="' + k + '"><button type="button" class="gx-pq-h" aria-label="文章の空欄' + (k + 1) + 'を見る"><i>' + (k + 1) + '</i><span class="gx-pq-x">' + around(k) + '</span></button><div class="options">' + q.ord[k].map(function(o, j) {
-                    return '<button class="option-btn" data-j="' + j + '" aria-pressed="false"><span class="option-prefix">' + CIRCLED[j] + '</span><span class="option-text">' + escapeHtml(bl[o]) + '</span></button>';
-                }).join('') + '</div></div>';
-            }).join('') + '</div>' +
-            '<div class="comp-hint" id="gx-pass-hint"></div>' +
-            '<div class="btn-group"><button class="check-btn" id="gx-pass-check" disabled>解答する</button></div>' +
-            '<div class="feedback" id="gx-qz-fb"></div><div id="gx-qz-ex"></div></div>' +
+            '<div class="sentence-text passage-text passage-lined gx-pass" id="gx-pass"></div>' +
+            '<div id="gx-qz-fb"></div><div id="gx-qz-ex"></div></div>' +
             '<footer class="gx-qz-footer"><button class="gx-next" disabled>' + (Q.pos + 1 >= n ? '結果を見る' : '次の問題へ') + '</button></footer></div>';
-        grammarContent.querySelector('.gx-qz-quit').addEventListener('click', function() { showGrammarIndex(); });
-        var next = grammarContent.querySelector('.gx-next'), done = false, picks = p.bl.map(function() { return -1; });
-        var check = document.getElementById('gx-pass-check'), hint = document.getElementById('gx-pass-hint');
-        var chips = grammarContent.querySelectorAll('#gx-pass .gx-pb'), groups = grammarContent.querySelectorAll('.gx-pq');
-        next.addEventListener('click', function() { if (!done) return; Q.pos++; Q.cur = null; gidxQuizRender(); window.scrollTo(0, 0); });
-        var go = function(el) { if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+        var passEl = document.getElementById('gx-pass'), fbEl = document.getElementById('gx-qz-fb'), box = document.getElementById('gx-qz-ex');
+        var next = grammarContent.querySelector('.gx-next'), done = false, last = -1, fresh = false;          // last: the blank just answered
+        grammarContent.querySelector('.gx-qz-quit').addEventListener('click', function() { blankPopup.classList.remove('active'); showGrammarIndex(); });
+        next.addEventListener('click', function() { if (!done) return; blankPopup.classList.remove('active'); Q.pos++; Q.cur = null; gidxQuizRender(); window.scrollTo(0, 0); });
+        var okAt = function(k) { return q.ord[k][q.picks[k]] === 0; };
+        var left = function() { return q.picks.filter(function(j) { return j < 0; }).length; };
         var draw = function() {
-            chips.forEach(function(c) {
-                var k = +c.getAttribute('data-k'), j = picks[k];
-                c.querySelector('b').textContent = j >= 0 ? p.bl[k][q.ord[k][j]] : '';
-                c.classList.toggle('filled', j >= 0);
-            });
-            groups.forEach(function(g) {
-                var k = +g.getAttribute('data-k');
-                g.querySelectorAll('.option-btn').forEach(function(b) { var on = +b.getAttribute('data-j') === picks[k]; b.classList.toggle('selected', on); b.setAttribute('aria-pressed', String(on)); });
-            });
-            var left = picks.filter(function(j) { return j < 0; }).length;
-            check.disabled = left > 0;
-            hint.textContent = left ? 'あと' + left + 'つえらんでください' : '';
-        };
-        chips.forEach(function(c) { c.addEventListener('click', function() { go(groups[+c.getAttribute('data-k')]); }); });
-        groups.forEach(function(g) {
-            var k = +g.getAttribute('data-k');
-            g.querySelector('.gx-pq-h').addEventListener('click', function() { go(chips[k]); });
-            g.querySelectorAll('.option-btn').forEach(function(b) { b.addEventListener('click', function() { if (done) return; picks[k] = +b.getAttribute('data-j'); draw(); }); });
-        });
-        check.addEventListener('click', function() {
-            if (done || picks.indexOf(-1) >= 0) return;
-            done = true;
-            var oks = picks.map(function(j, k) { return q.ord[k][j] === 0; }), right = oks.filter(function(x) { return x; }).length, all = right === oks.length;
-            oks.forEach(function(ok, k) { Q.log.push({ i: -1, t: 'pass', ok: ok, b: item.b, k: k }); });
-            Q.answered = true; gidxQzSave();
-            gidxQMark(q.key, all);
-            chips.forEach(function(c) { var k = +c.getAttribute('data-k'); c.querySelector('b').textContent = p.bl[k][0]; c.classList.add('filled'); c.classList.add(oks[k] ? 'ok' : 'ng'); });
-            groups.forEach(function(g) {
-                var k = +g.getAttribute('data-k');
-                g.querySelectorAll('.option-btn').forEach(function(b) {
-                    var j = +b.getAttribute('data-j');
-                    b.disabled = true; b.classList.remove('selected');
-                    if (q.ord[k][j] === 0) b.classList.add('correct'); else if (j === picks[k]) b.classList.add('incorrect');
+            // the passage: an open blank is its number, an answered one your choice with ○ or ×
+            passEl.innerHTML = gidxPassParas(p.t, function(h) {
+                return h.replace(/【([1-5])】/g, function(m, d) {
+                    var k = +d - 1, j = q.picks[k];
+                    if (!(j >= 0)) return '<span class="blank-number" data-blank="' + k + '" role="button" tabindex="0" aria-label="空欄' + d + '">' + d + '</span>';
+                    var ok = okAt(k);
+                    return '<span class="inline-slot ' + (ok ? 'correct-slot' : 'incorrect-slot') + '" data-blank="' + k + '" role="button" tabindex="0" aria-label="空欄' + d + '（' + (ok ? '正解' : '不正解') + '）">' +
+                        escapeHtml(p.bl[k][q.ord[k][j]]) + '<span class="pen-mini">' + penMark(ok ? 'ok' : 'ng', fresh && last === k) + '</span></span>';
                 });
             });
-            [hint, check.parentNode].forEach(function(el) { if (el && el.parentNode) el.parentNode.removeChild(el); });
-            var fb = document.getElementById('gx-qz-fb');
-            fb.className = 'feedback ' + (all ? 'correct' : 'incorrect');
-            fb.textContent = oks.length + '問中' + right + '問正解' + (all ? '！' : '');
-            // 解説: for each blank the answer and why; then the whole passage with the answers in it (read aloud, 한국어)
-            var answer = function(h) { return h.replace(/【([1-5])】/g, function(m, k) { return '<b>' + escapeHtml(p.bl[+k - 1][0]) + '</b>'; }); };
-            var box = document.getElementById('gx-qz-ex');
-            box.innerHTML = '<div class="explain-card mx"><div class="explain-title">解説</div><div class="gx-pn-list">' + p.bl.map(function(bl, k) {
-                    return '<div class="gx-pn ' + (oks[k] ? 'ok' : 'ng') + '"><i>' + (k + 1) + '</i><div><b class="gx-ext">' + escapeHtml(bl[0]) + '</b>' +
-                        (oks[k] ? '' : '<s>' + escapeHtml(bl[q.ord[k][picks[k]]]) + '</s>') + '<span class="gx-ext">' + escapeHtml(bl[4] || '') + '</span></div></div>';
-                }).join('') + '</div>' +
+            addLineNumbers(passEl);
+            // under it: the blank just answered, then (all five answered) how many were right
+            var fb = '', right = q.picks.filter(function(j, k) { return j >= 0 && okAt(k); }).length;
+            if (last >= 0) fb += '<div class="feedback ' + (okAt(last) ? 'correct' : 'incorrect') + '">空欄' + (last + 1) + '：' + (okAt(last) ? '正解！' : '不正解… 正解は「' + escapeHtml(p.bl[last][0]) + '」です。') + '</div>';
+            if (done) fb += '<div class="feedback ' + (right === nb ? 'correct' : 'incorrect') + '">' + (right === nb ? '全問正解！' : right + ' / ' + nb + ' 問正解') + '</div>';
+            fbEl.innerHTML = fb;
+            // 解説: of the blank just answered; once all are answered, of every blank (the last one open), then the whole
+            // passage with the answers in it (read aloud, ふりがな, 한국어)
+            if (!done) { box.innerHTML = last >= 0 ? '<div class="explain-card mx"><div class="explain-title">解説</div>' + gidxPassNote(p, q, last, true) + '</div>' : ''; return; }
+            var answer = function(h) { return h.replace(/【([1-5])】/g, function(m, d) { return '<b>' + escapeHtml(p.bl[+d - 1][0]) + '</b>'; }); };
+            box.innerHTML = '<div class="explain-card mx"><div class="explain-title">解説</div>' + p.bl.map(function(bl, k) {
+                    return '<details class="mx-blank"' + (k === last ? ' open' : '') + '><summary><span class="mx-bn">' + (k + 1) + '</span>' + (okAt(k) ? '○' : '✕') + ' ' + escapeHtml(bl[0]) + '</summary>' + gidxPassNote(p, q, k, false) + '</details>';
+                }).join('') +
                 '<div class="explain-sub gx-full-h">正しい文 <button class="speak-btn gx-say-all">🔊 読む</button>' + (p.fu ? gidxFuriBtn() : '') + (p.ko ? '<button class="gx-ko-btn" aria-expanded="false">한국어</button>' : '') + '</div>' +
                 '<div class="mx-ex gx-ext gx-pass-full gx-full' + (gidxFuriOn ? '' : ' gx-furi-off') + '">' + gidxPassParas(p.t, function(h, j) { return gidxFuri(answer(h), p.fu && p.fu[j]); }).replace(/<p class="gx-ext">/g, '<p>') + '</div>' +
                 (p.ko ? '<div class="gx-ko gx-pass-ko" lang="ko" hidden>' + gidxPassParas(p.ko, function(h) { return h; }).replace(/<p class="gx-ext">/g, '<p>') + '</div>' : '') + '</div>';
             box.querySelector('.gx-say-all').addEventListener('click', function() {
-                speakText(String(p.t).split('¶').map(function(par) { return escapeHtml(par.replace(/【([1-5])】/g, function(m, k) { return p.bl[+k - 1][0]; })); }).join('\n'));
+                speakText(String(p.t).split('¶').map(function(par) { return escapeHtml(par.replace(/【([1-5])】/g, function(m, d) { return p.bl[+d - 1][0]; })); }).join('\n'));
             });
             var koBtn = box.querySelector('.gx-ko-btn'), ko = box.querySelector('.gx-ko');
             if (koBtn) koBtn.addEventListener('click', function() { ko.hidden = !ko.hidden; koBtn.setAttribute('aria-expanded', ko.hidden ? 'false' : 'true'); koBtn.classList.toggle('on', !ko.hidden); });
             gidxFuriBind(box);
-            gidxWordCtx(q);
-            next.disabled = false;
-        });
+        };
+        // the sheet of choices for blank k (the one the problem sets use); for an answered blank it only shows, with the 解説
+        var sheet = function(k) {
+            if (gidxQuiz !== Q || Q.cur !== q) return;
+            var bl = p.bl[k], j0 = q.picks[k], ro = j0 >= 0;
+            var html = ro ? '<div class="popup-notice">解答済みのため、選択肢は変更できません。</div>' : '';
+            q.ord[k].forEach(function(o, x) {
+                html += '<button class="option-btn' + (ro && x === j0 ? ' selected-blank' : '') + (ro && o === 0 ? ' correct' : ro && x === j0 ? ' incorrect' : '') + '" data-j="' + x + '"' + (ro ? ' disabled' : '') + '>' +
+                    '<span class="option-prefix">' + CIRCLED[x] + '</span><span class="option-text">' + escapeHtml(bl[o]) + '</span></button>';
+            });
+            if (ro) html += '<div class="explain-card mx"><div class="explain-title">解説</div>' + gidxPassNote(p, q, k, false) + '</div>';
+            document.getElementById('blank-popup-title').textContent = '空欄 ' + (k + 1);
+            var content = document.getElementById('blank-popup-content');
+            content.innerHTML = html; content.scrollTop = 0; blankPopup.scrollTop = 0;
+            blankPopup.setAttribute('data-gx', '1');
+            blankPopup.classList.add('active');
+            if (ro) return;
+            content.querySelectorAll('.option-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    if (gidxQuiz !== Q || Q.cur !== q || q.picks[k] >= 0) return;
+                    blankPopup.classList.remove('active');
+                    q.picks[k] = +btn.getAttribute('data-j'); last = k; fresh = true;
+                    vibrateFor(okAt(k));
+                    if (!left()) {                    // the last blank: the passage is answered
+                        done = true;
+                        var oks = q.picks.map(function(j, x) { return okAt(x); }), all = oks.every(function(x) { return x; });
+                        oks.forEach(function(ok, x) { Q.log.push({ i: -1, t: 'pass', ok: ok, b: item.b, k: x }); });
+                        Q.answered = true;
+                        gidxQMark(q.key, all);
+                    }
+                    gidxQzSave();
+                    draw(); fresh = false;
+                    if (done) { gidxWordCtx(q); next.disabled = false; }
+                });
+            });
+        };
+        var open = function(ev) { var el = ev.target.closest ? ev.target.closest('.blank-number, .inline-slot') : null; if (el && passEl.contains(el)) { ev.stopPropagation(); sheet(+el.getAttribute('data-blank')); } };
+        passEl.addEventListener('click', open);
+        passEl.addEventListener('keydown', function(ev) { if (ev.key === 'Enter' || ev.key === ' ') { var el = ev.target.closest('.blank-number, .inline-slot'); if (el) { ev.preventDefault(); open(ev); } } });
         draw();
     }
     function gidxQuizResult() {
