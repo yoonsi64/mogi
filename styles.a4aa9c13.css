@@ -3892,59 +3892,56 @@ html.dark .unsure-btn[aria-pressed="true"] { color: #f0b860; }
 }
 /* 学ぶ › 文型: 文型さくいん */
 #grammar-view { display: none; flex-direction: column; flex-grow: 1; }
-.gx-title { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.gx-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
 .gx-title h2 { font-size: 1.1rem; }
 .gx-title span { font-size: 0.8rem; color: var(--text-sub); font-weight: bold; font-variant-numeric: tabular-nums; }
+.gx-title #gx-count { margin-right: auto; }
+.gx-quizbtn { flex: none; min-height: 36px; padding: 6px 13px; border: 1px solid var(--border-dark); background: var(--surface); color: var(--text-main); border-radius: 18px; font-size: 0.8rem; font-weight: bold; font-family: inherit; cursor: pointer; }
 .gx-tools { display: flex; margin-bottom: 8px; }
 .gx-search { flex: 1; min-width: 0; padding: 9px 10px 9px 36px; font-size: 0.9rem; border: 1px solid var(--border-light); color: var(--text-main); border-radius: 999px; background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='M15.5 15.5 21 21'/%3E%3C/svg%3E") no-repeat 12px 50% / 17px 17px; }
 .gx-search:focus { outline: none; border-color: var(--active-blue); box-shadow: 0 0 0 2px color-mix(in srgb, var(--active-blue) 25%, transparent); }
-.gx-chips { display: flex; gap: 8px; margin-bottom: 10px; }
+/* the filters (level chips in the colours of the level marks) and the row of kana to jump to */
+.gx-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.gx-f[data-lv="1"].on { background: #E60012; border-color: #E60012; color: #fff; }
+.gx-f[data-lv="2"].on { background: #1565C0; border-color: #1565C0; color: #fff; }
+.gx-f[data-lv="3"].on { background: #17803A; border-color: #17803A; color: #fff; }
 .gx-jump { display: flex; gap: 4px; margin-bottom: 2px; }
 .gx-jump[hidden] { display: none; }
 .gx-jump button { flex: 1; min-width: 0; min-height: 40px; padding: 0; border: 1px solid var(--border-light); background: var(--surface); color: var(--text-main); font-weight: bold; font-size: 0.9rem; border-radius: 6px; }
 .gx-jump button:disabled { color: var(--border-light); }
+.gx-jump .gx-jk { flex: 1.9; font-size: 0.78rem; }
+/* the list: headings by kana (and 敬語 by kind), one row per pattern that opens to its details */
 .gx-kana { font-size: 0.85rem; color: var(--text-sub); padding: 16px 2px 4px; border-bottom: 2px solid var(--border-dark); }
+.gx-kind { font-size: 0.8rem; color: var(--text-sub); margin: 16px 2px 2px; }
+#gx-kgo { margin-top: 10px; }
+#gx-kgo:empty { display: none; }
 .gx-row { border-bottom: 1px solid var(--border-light); }
 .gx-head { display: flex; align-items: flex-start; gap: 10px; width: 100%; padding: 11px 2px; background: none; border: none; color: var(--text-main); font: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .gx-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.gx-top { display: block; }
 .gx-name { font-size: 1rem; line-height: 1.4; word-break: keep-all; overflow-wrap: anywhere; }
+.gx-lv { display: inline-block; color: #fff; padding: 0 5px; border-radius: 3px; margin-left: 7px; font-size: 0.7rem; font-weight: bold; line-height: 1.55; vertical-align: 2px; letter-spacing: 0; }
+.gx-lv.l1 { background: #E60012; }
+.gx-lv.l2 { background: #1565C0; }
+.gx-lv.l3 { background: #17803A; }
+.gx-kd { display: inline-block; margin-left: 6px; font-size: 0.68rem; color: var(--text-sub); border: 1px solid var(--border-light); border-radius: 3px; padding: 0 4px; line-height: 1.55; vertical-align: 2px; }
 .gx-jp { font-size: 0.82rem; line-height: 1.5; overflow-wrap: anywhere; }
 .gx-kr { font-size: 0.8rem; line-height: 1.5; color: var(--text-sub); word-break: keep-all; overflow-wrap: anywhere; }
 .gx-side { flex: none; display: flex; align-items: center; gap: 6px; padding-top: 3px; }
 .gx-missn { font-size: 0.7rem; font-weight: bold; color: var(--incorrect-color); border: 1px solid currentColor; border-radius: 10px; padding: 1px 7px; white-space: nowrap; }
 .gx-caret { width: 8px; height: 8px; border-right: 2px solid var(--text-sub); border-bottom: 2px solid var(--text-sub); transform: rotate(45deg); margin: 1px 5px 0 3px; }
 .gx-head[aria-expanded="true"] .gx-caret { transform: rotate(-135deg); margin-top: 6px; }
+/* an entry's details (in the list, in the sheet, in a 解説): 接続, examples with furigana and 🔊, look-alikes, your record */
 .gx-body { padding: 0 2px 14px; }
-.gx-ex { list-style: none; margin: 0; padding: 0; }
-.gx-ex li { position: relative; padding: 7px 0 7px 2.2em; border-top: 1px dashed var(--border-light); font-size: 0.92rem; line-height: 1.7; overflow-wrap: anywhere; }
-.gx-ex li::before { content: '例'; position: absolute; left: 0; top: 10px; font-size: 0.65rem; font-weight: bold; color: var(--text-sub); border: 1px solid var(--border-light); border-radius: 3px; padding: 0 4px; line-height: 1.5; }
-.gx-ex b { color: var(--active-blue); }
-.gx-rec { margin-top: 8px; font-size: 0.78rem; color: var(--text-sub); }
-/* 文型さくいん: levels, 接続, furigana, 読み上げ, look-alikes, 敬語, 意味クイズ, the sheet opened from a 解説 */
-.gx-title { align-items: center; }
-.gx-title #gx-count { margin-right: auto; }
-.gx-quizbtn { flex: none; min-height: 36px; padding: 6px 13px; border: 1px solid var(--border-dark); background: var(--surface); color: var(--text-main); border-radius: 18px; font-size: 0.8rem; font-weight: bold; font-family: inherit; cursor: pointer; }
-.gx-chips { flex-wrap: wrap; }
-.gx-f[data-lv="1"].on { background: #E60012; border-color: #E60012; color: #fff; }
-.gx-f[data-lv="2"].on { background: #1565C0; border-color: #1565C0; color: #fff; }
-.gx-f[data-lv="3"].on { background: #17803A; border-color: #17803A; color: #fff; }
-.gx-top { display: block; }
-.gx-lv { display: inline-block; color: #fff; padding: 0 5px; border-radius: 3px; margin-left: 7px; font-size: 0.7rem; font-weight: bold; line-height: 1.55; vertical-align: 2px; letter-spacing: 0; }
-.gx-lv.l1 { background: #E60012; }
-.gx-lv.l2 { background: #1565C0; }
-.gx-lv.l3 { background: #17803A; }
-.gx-kd { display: inline-block; margin-left: 6px; font-size: 0.68rem; color: var(--text-sub); border: 1px solid var(--border-light); border-radius: 3px; padding: 0 4px; line-height: 1.55; vertical-align: 2px; }
-.gx-jump .gx-jk { flex: 1.9; font-size: 0.78rem; }
-.gx-kind { font-size: 0.8rem; color: var(--text-sub); margin: 16px 2px 2px; }
-#gx-kgo { margin-top: 10px; }
-#gx-kgo:empty { display: none; }
 .gx-key { display: inline-block; flex: none; font-size: 0.68rem; font-weight: bold; color: var(--text-sub); border: 1px solid var(--border-light); border-radius: 3px; padding: 0 5px; line-height: 1.6; margin-right: 8px; white-space: nowrap; }
 .gx-conn { display: flex; align-items: baseline; font-size: 0.85rem; line-height: 1.6; padding: 0 0 9px; }
-.gx-ex li { display: flex; align-items: flex-start; gap: 2px; }
-.gx-ex li::before { top: 14px; }
+.gx-ex { list-style: none; margin: 0; padding: 0; }
+.gx-ex li { position: relative; display: flex; align-items: flex-start; gap: 2px; padding: 7px 0 7px 2.2em; border-top: 1px dashed var(--border-light); font-size: 0.92rem; line-height: 1.7; overflow-wrap: anywhere; }
+.gx-ex li::before { content: '例'; position: absolute; left: 0; top: 14px; font-size: 0.65rem; font-weight: bold; color: var(--text-sub); border: 1px solid var(--border-light); border-radius: 3px; padding: 0 4px; line-height: 1.5; }
+html.no-furigana .gx-ex li::before { top: 10px; }
+.gx-ex b { color: var(--active-blue); }
 .gx-ext { flex: 1; min-width: 0; line-height: 2.1; }
 html.no-furigana .gx-ext { line-height: 1.7; }
-html.no-furigana .gx-ex li::before { top: 10px; }
 .gx-ext rt { font-size: 0.52em; font-weight: normal; color: var(--text-sub); }
 .gx-say { flex: none; width: 40px; height: 40px; margin: 0 -8px 0 0; border: none; background: none; font-size: 1rem; cursor: pointer; }
 .gx-sim { margin-top: 4px; padding-top: 10px; border-top: 1px dashed var(--border-light); }
@@ -3953,56 +3950,38 @@ html.no-furigana .gx-ex li::before { top: 10px; }
 .gx-simrow span { font-size: 0.78rem; color: var(--text-sub); line-height: 1.5; }
 .gx-simrow.me { border-color: var(--active-blue); background: var(--accent-soft); }
 button.gx-simrow { cursor: pointer; }
-button.gx-simrow:disabled { cursor: default; }
-.gx-rec { margin-top: 12px; }
-.gx-sheet-box:focus { outline: none; }
+.gx-rec { margin-top: 12px; font-size: 0.78rem; color: var(--text-sub); }
+.gx-rec.two { margin-top: 2px; }
+/* 文型さくいん under a 文法 解説, and the sheet it opens */
 .gx-links { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border-light); }
 .gx-links:empty { display: none; }
 .gx-link { padding: 6px 12px; border: 1px solid var(--active-blue); background: var(--accent-soft); color: var(--active-blue); border-radius: 16px; font-size: 0.82rem; font-weight: bold; font-family: inherit; cursor: pointer; }
 .gx-link::after { content: ' ›'; }
 #gx-sheet { position: fixed; inset: 0; z-index: 6000; background: rgba(0, 0, 0, 0.45); display: flex; align-items: flex-end; justify-content: center; }
 .gx-sheet-box { width: 100%; max-width: 640px; max-height: 82vh; display: flex; flex-direction: column; background: var(--bg-paper); color: var(--text-main); border-radius: 16px 16px 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.25); }
+.gx-sheet-box:focus { outline: none; }
 .gx-sheet-head { display: flex; align-items: flex-start; gap: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-light); }
 .gx-sheet-x { flex: none; width: 40px; height: 40px; margin: -6px -8px 0 0; border: none; background: none; color: var(--text-sub); font-size: 1.5rem; line-height: 1; cursor: pointer; }
 .gx-sheet-body { overflow-y: auto; padding-top: 10px; -webkit-overflow-scrolling: touch; }
 @media (min-width: 700px) { #gx-sheet { align-items: center; } .gx-sheet-box { border-radius: 16px; } }
-.gx-rec.two { margin-top: 2px; }
-/* 文型クイズ: laid out like the question screen (the same top bar, progress, 問題文, choices, 解説; 次の問題へ fixed at the bottom) */
-body.gx-quiz-on #app { padding-bottom: 16px; }
-body.gx-quiz-on header, body.gx-quiz-on .bottom-nav, body.gx-quiz-on #subnav { display: none !important; }
-.gx-qz .quiz-topbar { display: flex; }
-.gx-qz-footer { position: sticky; bottom: 0; display: flex; background: var(--bg-paper); padding: 10px 0 calc(10px + env(safe-area-inset-bottom)); margin-top: 12px; z-index: 50; border-top: 1px solid var(--border-light); }
-.gx-next { flex: 1; padding: 16px; background: var(--bg-paper); color: var(--text-main); border: 2px solid var(--border-dark); font-size: 1rem; font-weight: bold; font-family: inherit; user-select: none; }
-.gx-next:disabled { border-color: var(--border-light); color: var(--border-light); }
-.gx-qz-mean { display: block; font-weight: bold; }
-.gx-qz-mkr { display: block; font-size: 0.9em; color: var(--text-sub); margin-top: 4px; word-break: keep-all; overflow-wrap: anywhere; }
-.gx-qz-pat { font-weight: bold; font-size: 1.15em; }
-.gx-qz-okr { display: block; font-size: 0.85em; font-weight: normal; color: var(--text-sub); margin-top: 2px; word-break: keep-all; overflow-wrap: anywhere; }
-.gx-qz .option-text rt, .gx-qz .context-fill rt { font-size: 0.52em; font-weight: normal; }
-.gx-qz .explain-card { margin-top: 12px; }
-.gx-qz .explain-card .gx-conn { padding-top: 8px; }
-.gx-qz .practice-btn { margin-top: 10px; }
+
+/* 文型クイズ › the setup page */
 .gx-qs-h { font-size: 0.8rem; font-weight: bold; color: var(--text-sub); margin: 18px 0 8px; }
-.gx-qs-types { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.gx-qs-type { display: flex; flex-direction: column; gap: 3px; text-align: left; padding: 12px; border: 1px solid var(--border-light); border-radius: 10px; background: var(--surface); color: var(--text-main); font: inherit; cursor: pointer; }
-.gx-qs-type b { font-size: 0.95rem; }
-.gx-qz-diff { flex: 0 0 auto; font-size: 0.72rem; font-weight: bold; color: #fff; background: var(--lv); border-radius: 4px; padding: 2px 8px; white-space: nowrap; }
-.gx-full-h { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.gx-full-h .speak-btn, .gx-ko-btn { display: inline-flex; align-items: center; min-height: 32px; padding: 4px 12px; border: 1px solid var(--border-light); border-radius: 16px; background: var(--surface); color: var(--text-main); font: inherit; font-size: 0.8rem; font-weight: bold; cursor: pointer; margin: 0; width: auto; }
-.gx-ko-btn.on { border-color: var(--active-blue); color: var(--active-blue); background: var(--accent-soft); }
-.gx-ko { margin: 6px 0 2px; padding: 8px 10px; border-left: 3px solid var(--active-blue); background: var(--accent-soft); border-radius: 0 6px 6px 0; font-size: 0.9rem; line-height: 1.6; color: var(--text-main); }
+.gx-qs-h span { font-weight: normal; font-size: 0.72rem; margin-left: 8px; }
 .gx-qs-resume { display: flex; align-items: center; gap: 10px; margin: 14px 0 2px; padding: 12px; border: 1px solid var(--active-blue); border-radius: 10px; background: var(--accent-soft); }
 .gx-qs-resume-t { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .gx-qs-resume-t b { font-size: 0.95rem; color: var(--active-blue); }
 .gx-qs-resume-t span { font-size: 0.76rem; color: var(--text-sub); line-height: 1.45; }
 .gx-qs-resume-go { flex: 0 0 auto; min-height: 40px; padding: 6px 16px; border: 0; border-radius: 20px; background: var(--active-blue); color: #fff; font: inherit; font-size: 0.88rem; font-weight: bold; cursor: pointer; }
 .gx-qs-resume-x { flex: 0 0 auto; width: 36px; height: 36px; border: 1px solid var(--border-light); border-radius: 50%; background: var(--surface); color: var(--text-sub); font: inherit; font-size: 1rem; line-height: 1; cursor: pointer; }
-.gx-qs-h span { font-weight: normal; font-size: 0.72rem; margin-left: 8px; }
-.gx-qs-type { position: relative; }
-.gx-qs-type.on::after { content: '✓'; position: absolute; top: 10px; right: 12px; font-size: 0.95rem; font-weight: bold; color: var(--active-blue); }
+.gx-qs-types { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.gx-qs-type { position: relative; display: flex; flex-direction: column; gap: 3px; text-align: left; padding: 12px; border: 1px solid var(--border-light); border-radius: 10px; background: var(--surface); color: var(--text-main); font: inherit; cursor: pointer; }
+.gx-qs-type[data-t="pass"] { grid-column: 1 / -1; }
+.gx-qs-type b { font-size: 0.95rem; }
 .gx-qs-type span { font-size: 0.74rem; color: var(--text-sub); line-height: 1.45; }
 .gx-qs-type.on { border-color: var(--active-blue); background: var(--accent-soft); box-shadow: 0 0 0 1px var(--active-blue); }
 .gx-qs-type.on b { color: var(--active-blue); }
+.gx-qs-type.on::after { content: '✓'; position: absolute; top: 10px; right: 12px; font-size: 0.95rem; font-weight: bold; color: var(--active-blue); }
 .gx-qs-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .gx-qs-chip { min-height: 40px; padding: 6px 14px; border: 1px solid var(--border-light); border-radius: 20px; background: var(--surface); color: var(--text-main); font: inherit; font-size: 0.85rem; font-weight: bold; cursor: pointer; }
 .gx-qs-chip i { font-style: normal; font-weight: normal; font-size: 0.72rem; color: var(--text-sub); margin-left: 5px; font-variant-numeric: tabular-nums; }
@@ -4014,6 +3993,47 @@ body.gx-quiz-on header, body.gx-quiz-on .bottom-nav, body.gx-quiz-on #subnav { d
 .gx-qs-rest span { display: block; margin-top: 2px; }
 .gx-qs-rest .gx-qs-rest-low { color: var(--text-main); }
 .gx-qs-go { margin-top: 12px; }
+
+/* 文型クイズ › a question: laid out like the question screen (the same top bar, progress, 問題文, choices, 解説; 次の問題へ fixed at the bottom) */
+body.gx-quiz-on #app { padding-bottom: 16px; }
+body.gx-quiz-on header, body.gx-quiz-on .bottom-nav, body.gx-quiz-on #subnav { display: none !important; }
+.gx-qz .quiz-topbar { display: flex; }
+.gx-qz-diff { flex: 0 0 auto; font-size: 0.72rem; font-weight: bold; color: #fff; background: var(--lv); border-radius: 4px; padding: 2px 8px; white-space: nowrap; }
+.gx-qz-footer { position: sticky; bottom: 0; display: flex; background: var(--bg-paper); padding: 10px 0 calc(10px + env(safe-area-inset-bottom)); margin-top: 12px; z-index: 50; border-top: 1px solid var(--border-light); }
+.gx-next { flex: 1; padding: 16px; background: var(--bg-paper); color: var(--text-main); border: 2px solid var(--border-dark); font-size: 1rem; font-weight: bold; font-family: inherit; user-select: none; }
+.gx-next:disabled { border-color: var(--border-light); color: var(--border-light); }
+.gx-qz-mean { display: block; font-weight: bold; }
+.gx-qz-mkr { display: block; font-size: 0.9em; color: var(--text-sub); margin-top: 4px; word-break: keep-all; overflow-wrap: anywhere; }
+.gx-qz-pat { font-weight: bold; font-size: 1.15em; }
+.gx-qz-okr { display: block; font-size: 0.85em; font-weight: normal; color: var(--text-sub); margin-top: 2px; word-break: keep-all; overflow-wrap: anywhere; }
+.gx-qz .option-text rt, .gx-qz .context-fill rt, .gx-qz .comp-sentence rt, .gx-qz .drag-item rt { font-size: 0.52em; font-weight: normal; }
+.gx-qz .comp-sentence.gx-ext { line-height: 2.6; }
+.gx-qz .explain-card { margin-top: 12px; }
+.gx-qz .explain-card .gx-conn { padding-top: 8px; }
+.gx-qz .explain-sub .speak-btn { font-family: inherit; }
+.gx-qz .practice-btn { margin-top: 10px; }
+/* 解説 › 正しい文: 🔊 読む, ふりがな and 한국어 beside it; the readings over the sentence (shown by the ふりがな button, even when
+   ふりがな is off in 設定), the Korean gloss under it */
+.gx-full-h { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.gx-full-h .speak-btn, .gx-ko-btn, .gx-furi-btn { display: inline-flex; align-items: center; min-height: 32px; padding: 4px 12px; border: 1px solid var(--border-light); border-radius: 16px; background: var(--surface); color: var(--text-main); font: inherit; font-size: 0.8rem; font-weight: bold; cursor: pointer; margin: 0; width: auto; }
+.gx-ko-btn.on, .gx-furi-btn.on { border-color: var(--active-blue); color: var(--active-blue); background: var(--accent-soft); }
+.gx-full ruby { ruby-position: over; }
+.gx-full rt { font-size: 0.5em; font-weight: normal; color: var(--text-sub); letter-spacing: 0; user-select: none; -webkit-user-select: none; }
+.explain-card.mx .gx-full:not(.gx-furi-off) { line-height: 2.25; }
+.gx-full.gx-furi-off rt { display: none; }
+html.no-furigana .gx-full:not(.gx-furi-off) rt { display: revert; }
+.gx-ko { margin: 6px 0 2px; padding: 8px 10px; border-left: 3px solid var(--active-blue); background: var(--accent-soft); border-radius: 0 6px 6px 0; font-size: 0.9rem; line-height: 1.6; color: var(--text-main); }
+
+/* 文型クイズ › 文章の文法: set like the 文章の文法 of the problem sets (.passage-text, .blank-number, .inline-slot, the
+   #blank-popup sheet); only the paragraphs are its own */
+.gx-pass { overflow-wrap: anywhere; }
+.gx-pass p { margin: 0 0 2.15em; }                    /* a blank line between paragraphs, as there */
+.gx-pass p:last-of-type { margin-bottom: 0; }
+.gx-pass .blank-number:focus-visible, .gx-pass .inline-slot:focus-visible { outline: 2px solid var(--active-blue); outline-offset: 2px; }
+.gx-pass-full p, .gx-pass-ko p { margin: 0 0 8px; text-indent: 1em; }
+.gx-pass-ko p { text-indent: 0; }
+
+/* 文型クイズ › the result page */
 .gx-qz-score { display: flex; align-items: baseline; gap: 8px; font-size: 1.05rem; margin: 6px 0 4px; }
 .gx-qz-score span { font-size: 0.8rem; color: var(--text-sub); font-weight: bold; margin-right: 4px; }
 .gx-qz-score b { font-size: 2rem; }
@@ -4022,33 +4042,10 @@ body.gx-quiz-on header, body.gx-quiz-on .bottom-nav, body.gx-quiz-on #subnav { d
 .gx-qz-by b { color: var(--text-main); }
 .gx-qz-list { border-top: 1px solid var(--border-light); margin-bottom: 6px; }
 .gx-qz-item { display: flex; align-items: flex-start; gap: 10px; width: 100%; padding: 10px 2px; border: none; border-bottom: 1px solid var(--border-light); background: none; color: var(--text-main); font: inherit; text-align: left; cursor: pointer; }
+.gx-qz-pitem { cursor: default; }
 .gx-qz-item > i { flex: none; width: 1.4em; font-style: normal; font-weight: bold; text-align: center; }
 .gx-qz-item.ok > i { color: var(--correct-color); }
 .gx-qz-item.ng > i { color: var(--incorrect-color); }
 .gx-qz-item > span { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .gx-qz-item b { font-size: 0.92rem; }
 .gx-qz-item span span { font-size: 0.78rem; color: var(--text-sub); line-height: 1.5; }
-.gx-qz .comp-sentence rt, .gx-qz .drag-item rt { font-size: 0.52em; font-weight: normal; }
-.gx-qz .comp-sentence.gx-ext { line-height: 2.6; }
-.gx-qz .explain-sub .speak-btn { font-family: inherit; }
-
-/* 文型クイズ › 文章の文法 (a passage with five blanks): set like the 文章の文法 of the problem sets (.passage-text,
-   .blank-number, .inline-slot, the #blank-popup sheet); only the paragraphs are its own */
-.gx-qs-type[data-t="pass"] { grid-column: 1 / -1; }
-.gx-pass { overflow-wrap: anywhere; }
-.gx-pass p { margin: 0 0 2.15em; text-indent: 0; }                    /* a blank line between paragraphs, as there */
-.gx-pass p:last-of-type { margin-bottom: 0; }
-.gx-pass .blank-number:focus-visible, .gx-pass .inline-slot:focus-visible { outline: 2px solid var(--active-blue); outline-offset: 2px; }
-.gx-pass-full p, .gx-pass-ko p { margin: 0 0 8px; text-indent: 1em; }
-.gx-pass-ko p { text-indent: 0; }
-.gx-pass-full { line-height: 2; }
-.gx-qz-pitem { cursor: default; }
-
-/* 文型クイズ › 解説 › 正しい文: the ふりがな button */
-.gx-furi-btn { display: inline-flex; align-items: center; min-height: 32px; padding: 4px 12px; border: 1px solid var(--border-light); border-radius: 16px; background: var(--surface); color: var(--text-main); font: inherit; font-size: 0.8rem; font-weight: bold; cursor: pointer; margin: 0; width: auto; }
-.gx-furi-btn.on { border-color: var(--active-blue); color: var(--active-blue); background: var(--accent-soft); }
-.gx-full ruby { ruby-position: over; }
-.gx-full rt { font-size: 0.5em; font-weight: normal; color: var(--text-sub); letter-spacing: 0; user-select: none; -webkit-user-select: none; }
-.gx-full:not(.gx-furi-off), .explain-card.mx .gx-full:not(.gx-furi-off) { line-height: 2.25; }
-.gx-full.gx-furi-off rt { display: none; }
-html.no-furigana .gx-full:not(.gx-furi-off) rt { display: revert; }
