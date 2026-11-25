@@ -37676,6 +37676,7 @@
         // the answer is in: record it, say 正解／不正解, show the 解説. The page stays where it is: 次の問題へ is fixed at the bottom.
         var finish = function(ok, fbHtml) {
             done = true;
+            vibrateFor(ok);          // as the problem sets do (off when バイブ is off in 設定)
             Q.log.push({ i: e.i, t: q.t, ok: ok });
             Q.answered = true; gidxQzSave();
             var l = gidxQzLog[e.n] || [0, 0, 1];
