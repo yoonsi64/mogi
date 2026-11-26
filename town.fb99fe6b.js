@@ -321,7 +321,7 @@ var HAZA=[[-28.5,17.4],[-23.5,12.6]];
 var KAKI={x:-36.0,z:36.6};
 var MILL={x:-16.5,z:39.2,u:norm2([0.925,-0.38]),wr:2.0,wb:-3.4,ry:-0.15};
 var MILL_RACE=[[-6.2,5.0],[-5.7,1.9],[-4.9,-0.8],[-3.8,-2.75],[-2.5,-3.55],[2.5,-3.55],[3.8,-2.75],[4.9,-0.8],[5.7,1.9],[6.2,5.0]],MILL_RACE_HW=1.0;
-var SHRINE={x:3.8,z:29.6},TORII={x:3.38,z:25.42},ALTAR={x:0.55,z:25.75};          // ALTAR: the 金の羽's, beside the 祠 off its path
+var SHRINE={x:3.8,z:29.6},TORII={x:3.38,z:25.42},ALTAR={x:-0.75,z:25.6};          // ALTAR: the 金の羽's, left of the 鳥居 and clear of its のぼり (it stood behind the left one)
 var SHRINE_CEDARS=[[5.8,-1.6,8.6,702],[7.1,-3.2,9.2,701],[4.2,-0.6,8.4,704]];
 var TEMPLE={x:-28.22,z:93.66},BELL={x:-14.29,z:86.78},PAGODA={x:-47.44,z:94.37};
 var MARKET=(function(){var p=stPt(0.6,-10.2);return{x:p[0],z:p[1],rx:6.2,rz:4.0};})();
@@ -2411,7 +2411,7 @@ var a0=Pa(B.L(0,-d/2-0.05,cy)),a1=Pa(B.L(0,MILL.wb+G.w/2+0.1,cy)),ka=a0.k;
 ctx.lineCap='round';ctx.strokeStyle=S?'#000':rgb(shade([54,42,32],norm([LS[0],0.6,LS[1]])));ctx.lineWidth=Math.max(0.7,0.24*ka);ctx.beginPath();ctx.moveTo(a0.x,a0.y);ctx.lineTo(a1.x,a1.y);ctx.stroke();ctx.lineCap='butt';
 if(!S){ctx.strokeStyle='rgba(150,122,92,0.35)';ctx.lineWidth=Math.max(0.25,0.04*ka);ctx.beginPath();ctx.moveTo(a0.x,a0.y-0.07*ka);ctx.lineTo(a1.x,a1.y-0.07*ka);ctx.stroke();}
 }
-// the 金の羽's altar, beside the 祠's 鳥居 just off its path, nestled against the end of its fence: a low natural stone, mossy
+// the 金の羽's altar, on the grass to the left of the 祠's 鳥居, clear of the のぼり that flank it: a low natural stone, mossy
 // at its foot and spotted with lichen, a thin dressed slab of granite on it, and on the slab a small, weathered 三方 of hinoki
 // with a folded sheet of 半紙; a straw rope with two paper 紙垂 is tied round the stone, and three stepping stones lead to it
 // from the path. Quiet in colour, as old as the shrine it serves: part of the painted town (lit, weathered, rained and snowed on
@@ -2429,7 +2429,7 @@ if(o.tex&&!S)grainClip(ctx,all,o.tex);
 return{all:all,out:out};
 }
 function rockRadii(seed,n,r,v){var g=mulberry32(seed),o=[];for(var i=0;i<n;i++)o.push(r*(1-v+2*v*g()));return o;}
-var ALTAR_STEPS=[[1.02,23.78,0.2,0.4],[0.8,24.32,0.17,1.3],[0.64,24.84,0.15,2.2]];          // the stepping stones: x, z, size, turn
+var ALTAR_STEPS=[[-0.28,23.63,0.2,0.4],[-0.5,24.17,0.17,1.3],[-0.66,24.69,0.15,2.2]];          // the stepping stones: x, z, size, turn
 function drawAltarSteps(ctx){
 if(sil()||MODE!=='n'||SEA.snow>0.5)return;
 ALTAR_STEPS.forEach(function(s,si){var r=mulberry32(77+si),rim=[],top=[];
@@ -13588,7 +13588,7 @@ drawWader(ctx,hq.x,hq.y,hq.k,'heron',{face:Hn.face,ext:Hn.ext,strike:Hn.strike,s
 if(Hn.act==='strike'&&Hn.strike>0.9){ctx.strokeStyle='rgba(232,240,246,0.5)';ctx.lineWidth=0.4;var rp=P(Hn.x+Hn.face*0.55,WL,Hn.z);ctx.beginPath();ctx.ellipse(rp.x,rp.y,0.25*rp.k,0.06*rp.k,0,0,TAU);ctx.stroke();}
 }
 }
-var VERSION='1.3.22';
+var VERSION='1.3.23';
 var SEASON_KEYS=['spring','summer','autumn','winter'],LIGHT_KEYS=['morning','day','dusk','night'];
 var WEATHERS=['clear','cloudy','rain','storm','snow','typhoon','blizzard'];
 var EVENTS=['shogatsu','setsubun','hinamatsuri','kodomo','tanabata','obon','tsukimi'];
