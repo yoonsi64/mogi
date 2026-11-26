@@ -37570,6 +37570,19 @@
         gidxRetry = !!only;
         try { gidxQuizDraw(only, onlyPass); } finally { gidxRetry = false; }
     }
+    // One quiz, many different points: a pattern is asked at most once, and so is each group of look-alikes (〜がてら and
+    // 〜かたがた, 〜や否や and 〜が早いか …: e.s) and each meaning shared by two entries. kin(e): the keys that must not repeat;
+    // gidxKinTake(cands, n, taken): the first n of cands whose keys are not yet taken (taken grows as they are)
+    function gidxKin(e) { var k = ['i' + e.i, 'j' + e.j]; if (e.s >= 0) k.push('s' + e.s); return k; }
+    function gidxKinTake(cands, n, taken) {
+        var out = [];
+        for (var a = 0; a < cands.length && out.length < n; a++) {
+            var ks = gidxKin(cands[a]);
+            if (ks.some(function(k) { return taken[k]; })) continue;
+            ks.forEach(function(k) { taken[k] = 1; }); out.push(cands[a]);
+        }
+        return out;
+    }
     function gidxQuizDraw(only, onlyPass) {
         if (!gidxE) return;
         var S = gidxQzSet, cnt = gidxCounts(), list, allTypes = gidxQzKinds(S), types = allTypes.filter(function(t) { return t !== 'pass'; });
@@ -37589,9 +37602,15 @@
             passItems = gidxPassPick(gidxPassWant(S, all.length > 0)); N = Math.max(0, S.n - 5 * passItems.length);
             var pool = all.filter(freshAny);
             // up to half are patterns you have missed (most missed first), the rest are drawn at random
-            var weak = S.range === 'weak' ? [] : pool.filter(function(e) { return gidxWeak(e, cnt); })
-                .sort(function(a, b) { return ((cnt[b.i] && cnt[b.i].miss) || 0) - ((cnt[a.i] && cnt[a.i].miss) || 0); }).slice(0, Math.ceil(N / 2));
-            var rest = shuffleInPlace(pool.filter(function(e) { return weak.indexOf(e) < 0; })).slice(0, N - weak.length);
+            // (missed patterns with the same count in random order, so the same few do not always lead)
+            // a pattern with a question answered wrong and due now comes first of all (it was promised within three quizzes),
+            // so that no look-alike drawn before it can keep it out (two look-alikes both due are both asked: each is its own pattern)
+            var taken = {}, dueNow = function(e) { return types.some(function(t) { var c = pick(e, t, false); return !!c && c.rank === 0; }); };
+            var due = shuffleInPlace(pool.filter(dueNow)).slice(0, N);
+            due.forEach(function(e) { gidxKin(e).forEach(function(k) { taken[k] = 1; }); });
+            var weak = due.concat(S.range === 'weak' ? [] : gidxKinTake(shuffleInPlace(pool.filter(function(e) { return gidxWeak(e, cnt) && due.indexOf(e) < 0; }))
+                .sort(function(a, b) { return ((cnt[b.i] && cnt[b.i].miss) || 0) - ((cnt[a.i] && cnt[a.i].miss) || 0); }), Math.ceil(N / 2) - due.length, taken));
+            var rest = gidxKinTake(shuffleInPlace(pool.filter(function(e) { return weak.indexOf(e) < 0; })), N - weak.length, taken);
             list = weak.concat(rest);
             // each pressed kind gets an equal share, so enough of the patterns drawn must be askable that way
             // (fewer have a 文の組み立て than a 穴うめ): swap some in if the draw came up short
@@ -37599,17 +37618,24 @@
             types.forEach(function(t) {
                 if (t !== 'cloze' && t !== 'comp') return;
                 var need = share - list.filter(function(e) { return fresh(e, t); }).length;
-                var spare = need > 0 ? shuffleInPlace(pool.filter(function(e) { return fresh(e, t) && list.indexOf(e) < 0; })).slice(0, need) : [];
+                if (need <= 0) return;
                 var has = function(e, k) { return types.indexOf(k) >= 0 && fresh(e, k); };
                 var drop = list.filter(function(e) { return rest.indexOf(e) >= 0 && !has(e, 'cloze') && !has(e, 'comp'); })
                     .concat(list.filter(function(e) { return rest.indexOf(e) >= 0 && !fresh(e, t) && (has(e, 'cloze') || has(e, 'comp')); }));
-                spare.forEach(function(e, n) { if (drop[n]) list[list.indexOf(drop[n])] = e; });
+                var cands = shuffleInPlace(pool.filter(function(e) { return fresh(e, t) && list.indexOf(e) < 0; }));
+                for (var n = 0; n < drop.length && need > 0; n++) {          // a swap that would bring in a look-alike of one kept is not made
+                    var at = list.indexOf(drop[n]); if (at < 0) continue;
+                    var tk = {}; list.forEach(function(e, m) { if (m !== at) gidxKin(e).forEach(function(k) { tk[k] = 1; }); });
+                    var e2 = gidxKinTake(cands, 1, tk)[0]; if (!e2) break;
+                    list[at] = e2; cands.splice(cands.indexOf(e2), 1); need--;
+                }
             });
             // not enough that are not resting: the rest of the quiz is the patterns that have rested longest
             if (list.length < N) {
-                late = all.filter(function(e) { return pool.indexOf(e) < 0; }).map(function(e) {
+                var tl = {}; list.forEach(function(e) { gidxKin(e).forEach(function(k) { tl[k] = 1; }); });
+                late = gidxKinTake(all.filter(function(e) { return pool.indexOf(e) < 0; }).map(function(e) {
                     return [Math.max.apply(null, types.map(function(t) { var c = pick(e, t, true); return c ? c.age : -1; })), Math.random(), e];
-                }).sort(function(a, b) { return b[0] - a[0] || a[1] - b[1]; }).slice(0, N - list.length).map(function(x) { return x[2]; });
+                }).sort(function(a, b) { return b[0] - a[0] || a[1] - b[1]; }).map(function(x) { return x[2]; }), N - list.length, tl);
                 list = list.concat(late);
             }
             shuffleInPlace(list);
