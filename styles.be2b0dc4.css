@@ -1142,17 +1142,40 @@
         .rp-link { background: none; border: none; padding: 0; color: var(--active-blue); font-weight: bold; font-size: 0.8rem; cursor: pointer; white-space: nowrap; }
         .rp-random { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 14px 12px; border: 1px solid; border-radius: var(--radius-sm, 8px); font-size: 1.05rem; font-weight: bold; cursor: pointer; margin-bottom: 12px; }
         .rp-random small { font-weight: normal; font-size: 0.75rem; opacity: 0.85; }
-        .rp-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
-        .rp-filters .seg button { font-size: 0.78rem; padding: 6px 10px; }
-        #rp-lib { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
-        #rp-lib::-webkit-scrollbar { display: none; }
-        #rp-lib button { flex: none; white-space: nowrap; }
-        .rp-group { margin: 16px 0 6px; font-size: 0.78rem; font-weight: bold; color: var(--text-sub); display: flex; justify-content: space-between; }
-        .rp-item { width: 100%; display: flex; align-items: center; gap: 10px; padding: 11px 12px; margin-bottom: 6px; border: 1px solid var(--border-light); border-radius: var(--radius-sm, 8px); background: var(--surface); color: var(--text-main); text-align: left; cursor: pointer; font-size: 0.9rem; }
-        .rp-item-main { flex: 1; min-width: 0; }
-        .rp-item-label { font-weight: bold; display: block; }
-        .rp-item-meta { font-size: 0.74rem; color: var(--text-sub); }
+        .rp-filters { display: flex; flex-direction: column; gap: 8px; margin: 14px 0 4px; }
+        .rp-seg { display: flex; border: 1px solid var(--border-dark); border-radius: var(--radius-sm, 8px); overflow: hidden; background: var(--surface); }
+        .rp-seg button { flex: 1 1 auto; min-width: 0; padding: 8px 4px; min-height: 38px; border: none; background: none; color: var(--text-sub); font-size: 0.8rem; font-weight: bold; font-family: inherit; cursor: pointer; white-space: nowrap; }
+        .rp-seg button + button { border-left: 1px solid var(--border-light); }
+        .rp-seg button.active { background: var(--active-blue); color: #fff; }
+        @media (max-width: 400px) { .rp-seg button { font-size: 0.72rem; letter-spacing: -0.02em; } }
+        html.dark .rp-seg button.active { background: var(--text-main); color: var(--bg-paper); }
+        .rp-libsel { display: flex; align-items: center; gap: 10px; padding: 0 4px 0 12px; border: 1px solid var(--border-dark); border-radius: var(--radius-sm, 8px); background: var(--surface); }
+        .rp-libsel span { flex: none; font-size: 0.78rem; font-weight: bold; color: var(--text-sub); }
+        .rp-libsel select { flex: 1; min-width: 0; min-height: 38px; border: none; background: transparent; color: var(--text-main); font-size: 0.88rem; font-weight: bold; font-family: inherit; cursor: pointer; }
+        .rp-libsel select:focus { outline: none; }
+        .rp-libsel:focus-within { border-color: var(--active-blue); }
+        .rp-book { margin-top: 12px; border: 1px solid var(--border-light); border-radius: var(--radius-sm, 8px); background: var(--surface); overflow: hidden; }
+        .rp-book-head { width: 100%; display: grid; grid-template-columns: 1fr auto auto; align-items: center; column-gap: 10px; row-gap: 7px; padding: 12px 14px 11px; border: none; background: none; color: var(--text-main); font-family: inherit; text-align: left; cursor: pointer; }
+        .rp-book-head:disabled { cursor: default; opacity: 1; }
+        .rp-book-title { font-weight: bold; font-size: 0.92rem; min-width: 0; }
+        .rp-book-prog { font-size: 0.78rem; color: var(--text-sub); white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .rp-book-prog b { color: var(--text-main); }
+        .rp-book-chev { font-size: 1.2rem; line-height: 1; color: var(--text-sub); transition: transform 0.15s; }
+        .rp-book.open .rp-book-chev { transform: rotate(90deg); }
+        .rp-book-bar { grid-column: 1 / -1; height: 3px; border-radius: 2px; background: var(--track); overflow: hidden; }
+        .rp-book-bar i { display: block; height: 100%; background: var(--correct-color); border-radius: 2px; }
+        .rp-wk { padding: 10px 14px 4px; font-size: 0.72rem; font-weight: bold; color: var(--text-sub); letter-spacing: 0.04em; border-top: 1px solid var(--border-light); background: var(--surface-2); }
+        .rp-rows { background: var(--surface-2); padding: 0 8px 8px; }
+        .rp-rows .rp-item { margin: 0; border-radius: 0; border: none; border-bottom: 1px solid var(--border-light); background: var(--surface); }
+        .rp-rows .rp-item:first-child { border-radius: var(--radius-sm, 8px) var(--radius-sm, 8px) 0 0; }
+        .rp-rows .rp-item:last-child { border-bottom: none; border-radius: 0 0 var(--radius-sm, 8px) var(--radius-sm, 8px); }
+        .rp-rows .rp-item:only-child { border-radius: var(--radius-sm, 8px); }
+        .rp-item { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: var(--text-main); text-align: left; cursor: pointer; font-size: 0.88rem; font-family: inherit; }
+        .rp-item-main { flex: 1; min-width: 0; display: flex; align-items: baseline; flex-wrap: wrap; column-gap: 10px; row-gap: 1px; }
+        .rp-item-label { font-weight: bold; }
+        .rp-item-meta { font-size: 0.74rem; color: var(--text-sub); white-space: nowrap; }
         .rp-item-res { font-size: 0.78rem; color: var(--text-sub); white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .rp-item-res small { font-size: 0.7rem; font-weight: normal; margin-left: 2px; }
         .rp-item-res.done { color: var(--correct-color); font-weight: bold; }
         .rp-empty { padding: 20px 0; text-align: center; color: var(--text-sub); font-size: 0.85rem; }
         .rp-ready { text-align: center; padding: 18px 4px; }

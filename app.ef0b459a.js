@@ -34290,8 +34290,11 @@
         rpPassageCache = list.map(function(q) {
             var k = qDayKey(q), lib = getLib(q.lib);
             seen[k] = (seen[k] || 0) + 1;
+            var more = perDay[k] > 1 ? '　文章' + seen[k] : '', u = lib.units && lib.units[q.week - 1];
             return { q: q, lib: lib, size: qReadKind(q), chars: rpChars(q),
-                label: placeLabel(lib, q.week, q.day) + (perDay[k] > 1 ? '　文章' + seen[k] : '') };
+                label: placeLabel(lib, q.week, q.day) + more,
+                wk: u ? String(u.short || q.week) : q.week + '週',          // the list's heading (第1回, 3週) and the line under it (読解・問題8　文章1, 2日目)
+                part: (u ? u.parts[q.day - 1].short : q.day + '日目') + more };
         });
         return rpPassageCache;
     }
@@ -34320,6 +34323,7 @@
     function rpReadsOf(id) { return readOnlyEntries().filter(function(r) { return r.id === id; }); }
 
     var rp = null;     // { state: 'list' | 'ready' | 'reading' | 'done', p, q, ms, last, entry }
+    var rpOpenBooks = null;          // the books whose passages are shown in the list ({ lib id: 1 }; while the app is open)
     function rpOpen() { var v = document.getElementById('rp-view'); return !!(v && v.classList.contains('active')); }
     function buildRpView() {
         if (document.getElementById('rp-view')) return;
@@ -34424,28 +34428,59 @@
             var unreadN = pool.filter(function(p) { return !lastRead[p.q.id]; }).length;
             html += '<button class="rp-random" id="rp-random"' + (pool.length ? '' : ' disabled') + '>🎲 おまかせで読む<small>' +
                 (unreadN ? 'まだ読んでいない文章（' + unreadN + '）から選びます' : '下の文章からランダムに選びます') + '</small></button>';
-            html += '<div class="rp-filters"><span class="seg" id="rp-size">' +
-                [['all', 'すべて'], ['short', '短文'], ['mid', '中文'], ['long', '長文'], ['compare', '統合理解'], ['search', '情報検索']].map(function(x) { return '<button data-v="' + x[0] + '"' + (f.size === x[0] ? ' class="active"' : '') + '>' + x[1] + '</button>'; }).join('') + '</span>' +
-                (isMultiLib() ? '<span class="seg" id="rp-lib"><button data-v="all"' + (f.lib === 'all' ? ' class="active"' : '') + '>すべての本</button>' +
-                    LIBRARIES.filter(function(l) { return rpPassages().some(function(x) { return x.lib === l; }); }).map(function(l) { return '<button data-v="' + l.id + '"' + (f.lib === l.id ? ' class="active"' : '') + '>' + escapeHtml(l.short || l.title) + '</button>'; }).join('') + '</span>' : '') + '</div>';
+            // what to read: the kind as one bar of equal buttons, the book as a menu (with how many passages each has),
+            // then each book as a section that opens and closes, its passages under the 回／週 they belong to
+            var sizes = [['all', 'すべて'], ['short', '短文'], ['mid', '中文'], ['long', '長文'], ['compare', '統合理解'], ['search', '情報検索']];
+            html += '<div class="rp-filters"><div class="rp-seg" id="rp-size" role="group" aria-label="文章の種類">' + sizes.map(function(x) {
+                return '<button data-v="' + x[0] + '" aria-pressed="' + (f.size === x[0]) + '"' + (f.size === x[0] ? ' class="active"' : '') + '>' + x[1] + '</button>'; }).join('') + '</div>';
+            if (isMultiLib()) {
+                var ofSize = rpPassages().filter(function(p) { return f.size === 'all' || p.size === f.size; });
+                html += '<label class="rp-libsel"><span>本</span><select id="rp-lib">' + [{ id: 'all', title: 'すべての本' }].concat(LIBRARIES.filter(function(l) { return rpPassages().some(function(x) { return x.lib === l; }); })).map(function(l) {
+                    var n = ofSize.filter(function(p) { return l.id === 'all' || p.lib === l; }).length;
+                    return '<option value="' + escapeHtml(l.id) + '"' + (f.lib === l.id ? ' selected' : '') + '>' + escapeHtml(l.title) + '（' + n + '）</option>'; }).join('') + '</select></label>';
+            }
+            html += '</div>';
             if (!pool.length) html += '<div class="rp-empty">この条件の文章はありません。</div>';
-            var curLib = null;
-            pool.forEach(function(p) {
-                if (p.lib !== curLib) {
-                    curLib = p.lib;
-                    var n = pool.filter(function(x) { return x.lib === curLib; }).length;
-                    html += '<div class="rp-group"><span>' + escapeHtml(curLib.title) + '</span><span>' + n + '文</span></div>';
+            var books = [];
+            pool.forEach(function(p) { var bk = books[books.length - 1]; if (!bk || bk.lib !== p.lib) books.push(bk = { lib: p.lib, list: [] }); bk.list.push(p); });
+            if (!rpOpenBooks) rpOpenBooks = {};          // at first, with every book listed, all are closed: an overview of how far each has been read
+            books.forEach(function(bk) {
+                var open = books.length === 1 || !!rpOpenBooks[bk.lib.id], read = bk.list.filter(function(p) { return lastRead[p.q.id]; }).length;
+                html += '<section class="rp-book' + (open ? ' open' : '') + '" data-lib="' + escapeHtml(bk.lib.id) + '">' +
+                    '<button class="rp-book-head" aria-expanded="' + open + '"' + (books.length === 1 ? ' disabled' : '') + '><span class="rp-book-title">' + escapeHtml(bk.lib.title) + '</span>' +
+                    '<span class="rp-book-prog"><b>' + read + '</b> / ' + bk.list.length + '文</span>' + (books.length > 1 ? '<span class="rp-book-chev" aria-hidden="true">›</span>' : '') +
+                    '<span class="rp-book-bar" aria-hidden="true"><i style="width:' + Math.round(read / bk.list.length * 100) + '%"></i></span></button>';
+                if (open) {
+                    var wk = null;
+                    bk.list.forEach(function(p) {
+                        if (p.wk !== wk) { html += (wk === null ? '' : '</div>') + '<div class="rp-wk">' + escapeHtml(p.wk) + '</div><div class="rp-rows">'; wk = p.wk; }
+                        var r = lastRead[p.q.id];
+                        html += '<button class="rp-item' + (r ? ' read' : '') + '" data-id="' + p.q.id + '"><span class="rp-item-main"><span class="rp-item-label">' + escapeHtml(p.part) + '</span>' +
+                            '<span class="rp-item-meta">' + readKindName(p.size) + '・' + p.chars + '字' + (p.q.vertical ? '・縦書き' : '') + '</span></span>' +
+                            '<span class="rp-item-res' + (r ? ' done' : '') + '">' + (r ? charsPerMin(r.chars, r.ms) + '<small>字/分</small>' : '未読') + '</span></button>';
+                    });
+                    html += '</div>';
                 }
-                var r = lastRead[p.q.id];
-                html += '<button class="rp-item" data-id="' + p.q.id + '"><span class="rp-item-main"><span class="rp-item-label">' + escapeHtml(p.label) + '</span>' +
-                    '<span class="rp-item-meta">' + readKindName(p.size) + '・' + p.chars + '字' + (p.q.vertical ? '・縦書き' : '') + '</span></span>' +
-                    '<span class="rp-item-res' + (r ? ' done' : '') + '">' + (r ? '✓ ' + charsPerMin(r.chars, r.ms) + '字/分' : '未読') + '</span></button>';
+                html += '</section>';
             });
             body.innerHTML = html;
             body.querySelectorAll('.rp-item').forEach(function(b) { b.addEventListener('click', function() { rpStart(rpFindPassage(parseInt(b.dataset.id, 10))); }); });
+            body.querySelectorAll('.rp-book-head').forEach(function(b) {
+                b.addEventListener('click', function() {
+                    var id = b.parentNode.getAttribute('data-lib'), y = body.scrollTop;
+                    if (rpOpenBooks[id]) delete rpOpenBooks[id]; else rpOpenBooks[id] = 1;
+                    renderRp(); body.scrollTop = y;
+                });
+            });
             var rb = document.getElementById('rp-random');
             if (rb) rb.addEventListener('click', rpRandom);
-            ['size', 'lib'].forEach(function(k) {
+            var ls = document.getElementById('rp-lib');
+            if (ls) ls.addEventListener('change', function() {
+                var nf = rpFilter(); nf.lib = ls.value; setSetting('rpFilter', nf);
+                if (nf.lib !== 'all') rpOpenBooks[nf.lib] = 1;          // a book chosen is shown open
+                renderRp(); body.scrollTop = 0;
+            });
+            ['size'].forEach(function(k) {
                 body.querySelectorAll('#rp-' + k + ' button').forEach(function(b) {
                     b.addEventListener('click', function() {
                         var nf = rpFilter(); nf[k] = b.dataset.v; setSetting('rpFilter', nf);
