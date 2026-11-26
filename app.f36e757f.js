@@ -36220,7 +36220,7 @@
             Object.keys(lg).forEach(function(k) { if (/^(pace|fastread|measure)(#|$)/.test(k)) delete lg[k]; });
             localStorage.setItem('jlptBadgeLog', JSON.stringify(lg)); } catch (e) {}
     })();
-    var BADGE_CATS = [['habit', '習慣'], ['garden', '学びの庭'], ['skill', '実力'], ['qtype', '問題の種類'], ['qdiff', '難易度'], ['review', '誤答と復習'], ['speed', '読む速さ'], ['words', '単語'], ['write', '書き取り'], ['adv', '読解'], ['mock', '模擬試験'], ['book', '教材'], ['collect', 'コレクション']];
+    var BADGE_CATS = [['habit', '習慣'], ['garden', '学びの庭'], ['skill', '実力'], ['gram', '文型クイズ'], ['qtype', '問題の種類'], ['qdiff', '難易度'], ['review', '誤答と復習'], ['speed', '読む速さ'], ['words', '単語'], ['write', '書き取り'], ['adv', '読解'], ['mock', '模擬試験'], ['book', '教材'], ['collect', 'コレクション']];
     var TIER_NAMES = ['銅', '銀', '金', 'プラチナ', 'ダイヤ'];
     var TIER_COLORS = ['#b0703a', '#8a95a1', '#c4960f', '#4f8f8c', '#2f7fd6'];
     // every tiered badge has five levels: 銅・銀・金・プラチナ・ダイヤ
@@ -36416,7 +36416,7 @@
         var learnedCards = wordAll.mine.concat(wordAll.deck).filter(wordLearnedAny).length;
         var hourDays = function(h0, h1) { var d = {}; attemptLog.forEach(function(a) { var h = new Date(a.t).getHours(); if (h >= h0 && h < h1) d[dateKey(new Date(a.t))] = 1; }); return Object.keys(d).length; };
         var earlyDays = hourDays(5, 8);
-        var nb = newBadgeStats(), wb = writeBadgeStats(), qb = qBadgeStats();
+        var nb = newBadgeStats(), wb = writeBadgeStats(), qb = qBadgeStats(), gq = gidxBadgeStats();
         // 読む速さ badges count only readings since they were last reset (the reading history itself is kept)
         var speedFrom = +(localStorage.getItem('jlptSpeedBadgeFrom') || 0), sinceReset = function(r) { return (r.t || 0) >= speedFrom; };
         var fastReads = readingLog.filter(function(r) { return sinceReset(r) && r.target && r.ms <= r.target; }).length;
@@ -36480,6 +36480,15 @@
             { id: 'review', cat: 'skill', icon: '🔍', name: '復習', value: reviewCount, unit: '問', tiers: tiers([20, 100, 300, 600, 1000], '問'), hint: '「今日の復習」・苦手の練習・間違えた問題の解き直しで解いた問題の数' },
             { id: 'comeback', cat: 'skill', icon: '📈', name: 'リベンジ', value: comebacks, unit: '回', tiers: tiers([1, 5, 20, 50, 100], '回'), hint: '解き直して前回より点数を上げた回数' },
             { id: 'intime', cat: 'skill', icon: '⏱️', name: '時間内', value: beatTargets, unit: '回', tiers: tiers([1, 5, 20, 50, 100], '回'), hint: '目標解答時間がある日を、時間内に正答率75%以上で終えた回数' },
+            // 文型クイズ (gidxBadge keeps what the quiz itself does not)
+            { id: 'gqans', cat: 'gram', icon: '🗂️', name: '文型の問題', value: gq.n, unit: '問', tiers: tiers([50, 200, 500, 1000, 2000], '問'), hint: '文型クイズで答えた問題の数（文章の文法は空欄ごとに数えます）' },
+            { id: 'gqlearn', cat: 'gram', icon: '🧠', name: '覚えた文型', value: gq.learned, unit: '文型', tiers: tiers([10, 50, 150, 300, 500], '文型'), hint: '文型クイズで2回以上正解した文型の数' },
+            { id: 'gqtour', cat: 'gram', icon: '🗺️', name: '文型めぐり', value: gq.met, unit: '文型', tiers: [{ n: 50, label: '50文型' }, { n: 150, label: '150文型' }, { n: 300, label: '300文型' }, { n: 450, label: '450文型' }, { n: gq.total, label: 'すべて（' + gq.total + '）' }], hint: '文型クイズで出会った文型の数（さくいんの' + gq.total + '文型）' },
+            { id: 'gqfix', cat: 'gram', icon: '💪', name: '苦手克服', value: gq.fixed, unit: '文型', tiers: tiers([5, 20, 50, 100, 200], '文型'), hint: '文型クイズで一度間違えた文型を、あとで正解した数' },
+            { id: 'gqrun', cat: 'gram', icon: '🏃', name: '連続正解', value: gq.best, unit: '問', tiers: tiers([10, 20, 30, 50, 100], '問'), hint: '文型クイズで続けて正解した数（いちばん長く続いたとき）' },
+            { id: 'gqperfect', cat: 'gram', icon: '🌟', name: 'クイズ満点', value: gq.perfect, unit: '回', tiers: tiers([1, 5, 20, 50, 100], '回'), hint: '10問以上の文型クイズを全問正解で終えた回数（「まちがえた文型だけ もう一度」は数えません）' },
+            { id: 'gqpass', cat: 'gram', icon: '🖋️', name: '文章の文法', value: gq.pass, unit: '編', tiers: [{ n: 1, label: '1編' }, { n: 5, label: '5編' }, { n: 15, label: '15編' }, { n: 30, label: '30編' }, { n: gq.passTotal, label: 'すべて（' + gq.passTotal + '）' }], hint: '文型クイズの文章の文法で、5つの空欄をすべて正解した文章の数' },
+            { id: 'gqfull', cat: 'gram', icon: '🏯', name: '完全制覇', secret: true, ok: !!gq.p30, hint: '30問の文型クイズを全問正解で終える' },
             // 読む速さ
             { id: 'pace', cat: 'speed', icon: '⚡', name: '読む速さ', value: bestPace, unit: '字/分', tiers: tiers([400, 600, 800, 900, 1000], '字/分'), hint: '文章を1分あたり何字で読めたか（読解〈内容理解・統合理解・情報検索〉・「読む速さを測る」の最高。問いに正解した文章、または理解度「よく分かった」「だいたい」の文章だけを数えます。母語話者は約650〜800字/分）' },
             { id: 'fastread', cat: 'speed', icon: '👀', name: '目標ペース', value: fastReads, unit: '回', tiers: tiers([5, 20, 50, 100, 200], '回'), hint: '読解（内容理解・統合理解・情報検索）の文章を目標ペース内で読んだ回数' },
@@ -37387,6 +37396,43 @@
     function gidxQOrd(rank) { return rank === 4 ? 2.5 : rank; }
     // how many questions have a rank in ranks
     function gidxRankN(ranks) { return Object.keys(gidxSeen.q).filter(function(k) { return ranks.indexOf(gidxQRank(k)[0]) >= 0; }).length; }
+    // ----- 文型クイズ badges: what the quiz itself does not keep (jlptGramBadge) -----
+    // { n: questions answered (each blank of a passage counts), run / best: right answers in a row (the longest),
+    //   perfect: quizzes of 10 or more all right, p30: one of 30 all right, fix: { pattern: 1 } answered wrong and later
+    //   right, pass: { title: 1 } passages with all blanks right }. Started from what the quiz kept before (answers per
+    //   pattern; passages now resting after a full score); a run of right answers counts from then on.
+    var GIDX_BADGE_KEY = 'jlptGramBadge';
+    function gidxBadge() {
+        var g = loadJSON(GIDX_BADGE_KEY, null) || {};
+        if (!g.fix) g.fix = {};
+        if (!g.pass) g.pass = {};
+        if (!g.seeded) {
+            var log = loadJSON(GIDX_QZ_KEY, {}) || {}, n = 0;
+            Object.keys(log).forEach(function(k) { var l = log[k]; if (!Array.isArray(l)) return; n += (l[0] || 0) + (l[1] || 0); if (l[1] > 0 && l[2] === 1) g.fix[k] = 1; });
+            g.n = n; g.run = 0; g.best = 0; g.perfect = 0; g.seeded = 1;
+        }
+        if (!g.passSeeded && window.MogiGramPass && MogiGramPass.p) {
+            var rest = (loadJSON(GIDX_REST_KEY, {}) || {}).q || {};
+            MogiGramPass.p.forEach(function(a) { var r = rest[gidxQKey({ n: '文章の文法' }, 'pass', a[1])]; if (r && r[1] > 0) g.pass[a[1]] = 1; });
+            g.passSeeded = 1;
+        }
+        return g;
+    }
+    // answers given (in order); prev: the pattern's record before this answer (a pattern question), title: the passage's
+    function gidxBadgeAnswer(oks, prev, name, title) {
+        var g = gidxBadge();
+        oks.forEach(function(ok) { g.n = (g.n || 0) + 1; g.run = ok ? (g.run || 0) + 1 : 0; g.best = Math.max(g.best || 0, g.run); });
+        if (name && oks[0] && prev && prev[1] > 0) g.fix[name] = 1;
+        if (title && oks.every(function(ok) { return ok; })) g.pass[title] = 1;
+        gidxStore(GIDX_BADGE_KEY, g);
+    }
+    function gidxBadgeStats() {
+        var g = gidxBadge(), log = loadJSON(GIDX_QZ_KEY, {}) || {}, names = Object.keys(log).filter(function(k) { return Array.isArray(log[k]); });
+        var total = (window.MogiGramIdx && MogiGramIdx.e && MogiGramIdx.e.length) || 577;
+        var passTotal = (window.MogiGramPass && MogiGramPass.p && MogiGramPass.p.length) || 66;
+        return { n: g.n || 0, best: g.best || 0, perfect: g.perfect || 0, p30: !!g.p30, fixed: Object.keys(g.fix).length, pass: Object.keys(g.pass).length, passTotal: passTotal,
+                 learned: names.filter(function(k) { return log[k][0] >= 2; }).length, met: Math.min(total, names.length), total: total };
+    }
     function gidxQMark(key, ok) {
         if (!key) return;
         var r = gidxSeen.q[key];
@@ -37457,7 +37503,7 @@
             if (pos >= Q.items.length) { localStorage.removeItem(GIDX_QZ_RESUME_KEY); return; }
             var cur = null;          // the question on screen, as made (its choices and their order), so that the very same one comes back
             if (!Q.answered && Q.cur) { cur = {}; Object.keys(Q.cur).forEach(function(k) { if (k !== 'e') cur[k] = Q.cur[k]; }); }
-            localStorage.setItem(GIDX_QZ_RESUME_KEY, JSON.stringify({ v: 1, at: Date.now(), pos: pos, cur: cur,
+            localStorage.setItem(GIDX_QZ_RESUME_KEY, JSON.stringify({ v: 1, at: Date.now(), pos: pos, cur: cur, retry: Q.retry ? 1 : 0,
                 items: Q.items.map(function(it) { return [it.t === 'pass' ? '' : gidxE[it.i].n, it.t, it.b == null ? -1 : it.b]; }),
                 log: Q.log.map(function(l) { return l.t === 'pass' ? ['', 'pass', l.ok ? 1 : 0, l.b, l.k] : [gidxE[l.i].n, l.t, l.ok ? 1 : 0]; }) }));
         } catch (e) {}
@@ -37473,11 +37519,11 @@
         var bad = function(x) { return x.t === 'pass' ? !(gidxPass && gidxPass[x.b]) : x.i === undefined || kinds.indexOf(x.t) < 0; };
         if (items.some(bad) || log.some(bad) || !(R.pos >= 0 && R.pos < items.length) || log.length > gidxQzTotal(items.slice(0, R.pos))) return null;
         var cur = R.cur && R.cur.t === items[R.pos].t && (Array.isArray(R.cur.opts) || Array.isArray(R.cur.frags) || Array.isArray(R.cur.ord)) ? R.cur : null;
-        return { items: items, pos: R.pos, log: log, cur: cur };
+        return { items: items, pos: R.pos, log: log, cur: cur, retry: !!R.retry };
     }
     function gidxQuizResume() {
         var R = gidxQzSaved(); if (!R) return false;
-        gidxQuiz = { items: R.items, pos: R.pos, log: R.log, cur: null };
+        gidxQuiz = { items: R.items, pos: R.pos, log: R.log, cur: null, retry: R.retry };
         if (R.cur) { R.cur.e = gidxE[R.items[R.pos].i]; gidxQuiz.cur = R.cur; }
         document.body.classList.add('gx-quiz-on');
         gidxQuizRender();
@@ -37660,7 +37706,7 @@
             if (c && c.b != null && c.b >= 0) it.b = c.b;
             delete it.can; delete it.rs;
         });
-        gidxQuiz = { items: items.concat(passItems), pos: 0, log: [], cur: null };
+        gidxQuiz = { items: items.concat(passItems), pos: 0, log: [], cur: null, retry: !!only };
         document.body.classList.add('gx-quiz-on');
         gidxQuizRender();
     }
@@ -37899,6 +37945,7 @@
             vibrateFor(ok);          // as the problem sets do (off when バイブ is off in 設定)
             Q.log.push({ i: e.i, t: q.t, ok: ok });
             Q.answered = true; gidxQzSave();
+            gidxBadgeAnswer([ok], gidxQzLog[e.n], e.n, null);          // (before the pattern's record takes this answer)
             var l = gidxQzLog[e.n] || [0, 0, 1];
             l[ok ? 0 : 1]++; l[2] = ok ? 1 : 0; gidxQzLog[e.n] = l;
             gidxStore(GIDX_QZ_KEY, gidxQzLog);
@@ -38057,6 +38104,7 @@
                         done = true;
                         var oks = q.picks.map(function(j, x) { return okAt(x); }), all = oks.every(function(x) { return x; });
                         oks.forEach(function(ok, x) { Q.log.push({ i: -1, t: 'pass', ok: ok, b: item.b, k: x }); });
+                        gidxBadgeAnswer(oks, null, null, gidxPass[item.b] && gidxPass[item.b].title);
                         Q.answered = true;
                         gidxQMark(q.key, all);
                     }
@@ -38074,6 +38122,11 @@
     function gidxQuizResult() {
         var Q = gidxQuiz; if (!Q) return;
         var n = Q.log.length, right = Q.log.filter(function(l) { return l.ok; }).length, wrong = Q.log.filter(function(l) { return !l.ok; });
+        if (!Q.badged) {          // a quiz of 10 or more all right (not まちがえた文型だけ もう一度); then any badge just earned is stamped
+            Q.badged = true;
+            if (n >= 10 && right === n && !Q.retry) { var gb = gidxBadge(); gb.perfect = (gb.perfect || 0) + 1; if (n >= 30) gb.p30 = 1; gidxStore(GIDX_BADGE_KEY, gb); }
+            setTimeout(function() { checkNewBadges(); }, 600);
+        }
         var by = GIDX_QZ_TYPES.map(function(t) {          // by kind
             var all = Q.log.filter(function(l) { return l.t === t[0]; });
             return all.length ? '<span>' + t[1] + '　<b>' + all.filter(function(l) { return l.ok; }).length + '</b> / ' + all.length + '</span>' : '';
