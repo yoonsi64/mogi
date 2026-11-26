@@ -36977,7 +36977,7 @@
     //   c: { name: [[difficulty, before, piece ×4 in order, after, ★ place, Korean, readings]] } }
     // (two blanks: the choices are pairs, "a／b"; readings: see gidxFuri). Difficulty is on the app's scale (3 N1標準,
     // 4 むずかしい). A pattern that has them is asked from here, not from its index examples.
-    var GBANK_SRC = 'grambank.8f7aeffe.js';
+    var GBANK_SRC = 'grambank.ab38be40.js';
     // 文章の文法 (grampass): passages of about 750 characters with five blanks each, as in JLPT 問題7, written for the quiz:
     // { p: [[difficulty, title, text (¶ between paragraphs, 【1】…【5】 at the blanks), [[right, wrong, wrong, wrong, note] ×5],
     //        Korean translation, [readings of each paragraph]]] }
